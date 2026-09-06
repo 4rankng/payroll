@@ -1,0 +1,530 @@
+{
+  "Sheets": [
+    {
+      "Position": "Có tay nghề",
+      "Employees": [
+        {
+          "EmployeeCode": "031190010799",
+          "FullName": "Phạm Thị Huệ",
+          "Entries": [
+            {
+              "DayNum": 22,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "001185012642",
+          "FullName": "Vũ Thị Hường",
+          "Entries": [
+            {
+              "DayNum": 22,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031303012155",
+          "FullName": "Vũ Thị Huyền Trang",
+          "Entries": [
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031192020913",
+          "FullName": "Huỳnh Thị Thu Hoa",
+          "Entries": [
+            {
+              "DayNum": 22,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031199003245",
+          "FullName": "Bùi Thị Nga",
+          "Entries": [
+            {
+              "DayNum": 22,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030185019027",
+          "FullName": "Đào Thị Miền",
+          "Entries": [
+            {
+              "DayNum": 22,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031306002190",
+          "FullName": "Lê Thị Hằng",
+          "Entries": [
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031196016335",
+          "FullName": "Nguyễn Vân Anh",
+          "Entries": [
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031185003176",
+          "FullName": "Nguyễn Thị Thủy",
+          "Entries": [
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031195003804",
+          "FullName": "Bùi Thị Thắm",
+          "Entries": [
+            {
+              "DayNum": 22,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031193008655",
+          "FullName": "Nguyễn Thị Thư",
+          "Entries": [
+            {
+              "DayNum": 22,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031197007235",
+          "FullName": "Đỗ Thị Quỳnh Giang",
+          "Entries": [
+            {
+              "DayNum": 22,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031304013018",
+          "FullName": "Trịnh Thanh Thúy",
+          "Entries": [
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 6.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031308015851",
+          "FullName": "Nguyễn Thùy Linh",
+          "Entries": [
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031192012962",
+          "FullName": "Bùi Thị Phượng",
+          "Entries": [
+            {
+              "DayNum": 22,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 24,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 60000,
+              "Hours": 1
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 60000,
+              "Hours": 1
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "037304001514",
+          "FullName": "Nguyễn Thị Loan",
+          "Entries": [
+            {
+              "DayNum": 22,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 25,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 26,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 27,
+              "RateVND": 60000,
+              "Hours": 1
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 43750,
+              "Hours": 8
+            },
+            {
+              "DayNum": 28,
+              "RateVND": 60000,
+              "Hours": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Position": "Không có tay nghề",
+      "Employees": [
+        {
+          "EmployeeCode": "031186000750",
+          "FullName": "Vũ Thị Hằng",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031198007385",
+          "FullName": "Lưu Tuyết Nhung",
+          "Entries": null
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1643 @@
+{
+  "ShiftRates": null,
+  "Employees": [
+    {
+      "EmployeeCode": "070064285",
+      "CCCD": "070064285",
+      "FullName": "Nguyễn Văn Trường",
+      "Department": "",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 21,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-21T00:00:00Z"
+        },
+        {
+          "DayNum": 21,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-21T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 29,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-29T00:00:00Z"
+        },
+        {
+          "DayNum": 30,
+          "ShiftLabel": "CN",
+          "Hours": 0,
+          "FullDate": "2026-08-30T00:00:00Z"
+        },
+        {
+          "DayNum": 30,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-30T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031085013087",
+      "CCCD": "031085013087",
+      "FullName": "Bùi Văn Quân",
+      "Department": "",
+      "BankAccount": "106868624325",
+      "BankName": "Vietinbank",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 8,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031081004374",
+      "CCCD": "031081004374",
+      "FullName": "Phạm Hữu Học",
+      "Department": "",
+      "BankAccount": "107874201537",
+      "BankName": "Vietinbank",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 9,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 1,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 8,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031084013075",
+      "CCCD": "031084013075",
+      "FullName": "Bùi Quang Tú",
+      "Department": "",
+      "BankAccount": "0565919888",
+      "BankName": "MB",
+      "Mobile": "",
+      "Position": "700",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 8,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 8,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "030086017128",
+      "CCCD": "030086017128",
+      "FullName": "Nguyễn Văn Duy",
+      "Department": "",
+      "BankAccount": "1041148703",
+      "BankName": "Vietcombank",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 8,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 8,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031084024182",
+      "CCCD": "031084024182",
+      "FullName": "Nguyễn Viết Hải",
+      "Department": "",
+      "BankAccount": "9931526621",
+      "BankName": "Vietcombank",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 9,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 2,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 9,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 2,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031095003040",
+      "CCCD": "031095003040",
+      "FullName": "Ngô Việt Anh",
+      "Department": "",
+      "BankAccount": "5101234591644",
+      "BankName": "MB",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 8,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031076005825",
+      "CCCD": "031076005825",
+      "FullName": "Vũ Đức Phương",
+      "Department": "",
+      "BankAccount": "19037500270014",
+      "BankName": "Techcombank",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 9,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 1,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 9,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 1,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031093002685",
+      "CCCD": "031093002685",
+      "FullName": "Nguyễn Ngọc Long",
+      "Department": "",
+      "BankAccount": "1014790043",
+      "BankName": "Vietcombank",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 9,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 1,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 8,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031073007962",
+      "CCCD": "031073007962",
+      "FullName": "Hoàng Văn Khánh",
+      "Department": "",
+      "BankAccount": "6373888999",
+      "BankName": "SHB",
+      "Mobile": "",
+      "Position": "800",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 8,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 8,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 8,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 8,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 8,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "036205017017",
+      "CCCD": "036205017017",
+      "FullName": "Nguyễn Mạnh Đức",
+      "Department": "",
+      "BankAccount": "0762910575",
+      "BankName": "MB",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 8,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 9,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 2,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031091011680",
+      "CCCD": "031091011680",
+      "FullName": "Tống Văn Long",
+      "Department": "",
+      "BankAccount": "226847316",
+      "BankName": "VP bank",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 8,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "033092004397",
+      "CCCD": "033092004397",
+      "FullName": "Bùi Văn Long",
+      "Department": "",
+      "BankAccount": "2060961672780",
+      "BankName": "PG Bank",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 9,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 2,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 8,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "030084002976",
+      "CCCD": "030084002976",
+      "FullName": "Bùi Trọng Hùng",
+      "Department": "",
+      "BankAccount": "0934261830",
+      "BankName": "MB",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 9,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 2,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 9,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 2,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031099003004",
+      "CCCD": "031099003004",
+      "FullName": "Vũ Văn Quyết",
+      "Department": "",
+      "BankAccount": "109883880226",
+      "BankName": "Vietinbank",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 8,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031099005571",
+      "CCCD": "031099005571",
+      "FullName": "Lê Văn Sang",
+      "Department": "",
+      "BankAccount": "02101012950063",
+      "BankName": "MSB",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 8,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 2.5,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-27T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-28T00:00:00Z"
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-28T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "031202005625",
+      "CCCD": "031202005625",
+      "FullName": "Lại Đình Duy",
+      "Department": "",
+      "BankAccount": "0337623254",
+      "BankName": "MB",
+      "Mobile": "",
+      "Position": "600",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT T7",
+          "Hours": 0,
+          "FullDate": "2026-08-22T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "OT CN",
+          "Hours": 0,
+          "FullDate": "2026-08-23T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "NT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-24T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT",
+          "Hours": 2,
+          "FullDate": "2026-08-25T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "NT",
+          "Hours": 9,
+          "FullDate": "2026-08-26T00:00:00Z"
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT",
+          "Hours": 0,
+          "FullDate": "2026-08-26T00:00:00Z"
+        }
+      ]
+    }
+  ]
+}

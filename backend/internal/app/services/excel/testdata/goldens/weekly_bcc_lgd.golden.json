@@ -1,0 +1,1363 @@
+{
+  "Sheets": [
+    {
+      "ShiftType": "HC",
+      "Employees": [
+        {
+          "EmployeeCode": "030304002466",
+          "FullName": "Đoàn Thu Phương",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "040201009066",
+          "FullName": "Lương Du Ký",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031306001429",
+          "FullName": "Đào Thị Trang Nhung",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "030302004901",
+          "FullName": "Bùi Thúy Hường",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031308017316",
+          "FullName": "Nguyễn Triệu Vi",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031306005989",
+          "FullName": "Lê Thị Hương Liên",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031098004032",
+          "FullName": "Mai Trung Long",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031206001366",
+          "FullName": "Phạm Ngọc Sơn",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "034307013430",
+          "FullName": "Trần Thị Minh Thư",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031206014812",
+          "FullName": "Đồng Đức Thuận",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031306003851",
+          "FullName": "Phạm Thị Thùy Linh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031098010872",
+          "FullName": "Đỗ Đức Duy",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031208012291",
+          "FullName": "Tô Đức Anh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "030306005374",
+          "FullName": "Đặng Thị Mai Anh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "030306009146",
+          "FullName": "Phạm Thị Thúy Hằng",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "034093010810",
+          "FullName": "Hoàng Ngọc Cường",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031306002752",
+          "FullName": "Bùi Mai Trang",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031308014044",
+          "FullName": "Nguyễn Thùy Linh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031205011557",
+          "FullName": "Phạm Duy Anh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "030306013834",
+          "FullName": "Phạm Quỳnh Dương",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031307011864",
+          "FullName": "Vũ Vân Phương",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031207009914",
+          "FullName": "Phạm Quang Minh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031307014514",
+          "FullName": "Bùi Thị Hải Yến",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031308000461",
+          "FullName": "Bùi Thị Hoà",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031307001500",
+          "FullName": "Bùi Thị Nhâm",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031307007703",
+          "FullName": "Nguyễn Lưu Ly",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031307010472",
+          "FullName": "Phạm Ngọc Thiên Ngân",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031208013002",
+          "FullName": "Nguyễn Thanh Phong",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031098007506",
+          "FullName": "Nguyễn Văn Huy",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031307010960",
+          "FullName": "Nguyễn Thị Mỹ Uyên",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031207012065",
+          "FullName": "Phạm Duy Khánh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031095005792",
+          "FullName": "Bùi Văn Ngọc",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031099012238",
+          "FullName": "Nguyễn Văn Cường",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031207002034",
+          "FullName": "Nguyễn Minh Tú",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "030207018547",
+          "FullName": "Nguyễn Huy Bảo",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "024204009983",
+          "FullName": "Trần Quang Nam",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031094009697",
+          "FullName": "Nguyễn Viết Khang",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "030308005072",
+          "FullName": "Đoàn Khánh Linh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031206004310",
+          "FullName": "Phạm Đắc Trường",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031206002850",
+          "FullName": "Phạm Lê An Khang",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031307005937",
+          "FullName": "Đào Lâm Như",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031082009921",
+          "FullName": "Trần Văn Hợi",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "030202007119",
+          "FullName": "Phạm Tuấn Tho",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "034307014698",
+          "FullName": "Trần Thị Anh Thư",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031207002299",
+          "FullName": "Đào Anh Đức",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031207014895",
+          "FullName": "Nguyễn Anh Bảo Khánh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "022208000290",
+          "FullName": "Trần Thanh Tùng",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031180000525",
+          "FullName": "Đỗ Thị Hường",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031207010020",
+          "FullName": "Phạm Quốc Trượng",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "038307004574",
+          "FullName": "Hà Thị Hạnh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031305014890",
+          "FullName": "Bùi Thu Thảo",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031307006593",
+          "FullName": "Nguyễn Thị Thu Thảo",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031207011361",
+          "FullName": "Vũ Thái Minh Kiệt",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031305014468",
+          "FullName": "Nguyễn Thị Kim Thoa",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "030092017935",
+          "FullName": "Phạm Hồng Phong",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031302004525",
+          "FullName": "Bùi Phương Thảo",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031203011694",
+          "FullName": "Đỗ Quốc Tuấn",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031208007127",
+          "FullName": "Phạm Gia Huy",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "030205001804",
+          "FullName": "Bùi Quang Thịnh",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "030306001967",
+          "FullName": "Phạm Ngọc Trà",
+          "Project": "",
+          "Entries": null
+        },
+        {
+          "EmployeeCode": "031204014796",
+          "FullName": "Nguyễn Mạnh Hùng",
+          "Project": "",
+          "Entries": null
+        }
+      ]
+    },
+    {
+      "ShiftType": "OT30",
+      "Employees": null
+    },
+    {
+      "ShiftType": "OT150",
+      "Employees": null
+    },
+    {
+      "ShiftType": "OT200",
+      "Employees": null
+    },
+    {
+      "ShiftType": "OT270",
+      "Employees": null
+    },
+    {
+      "ShiftType": "OT300",
+      "Employees": null
+    },
+    {
+      "ShiftType": "OT390",
+      "Employees": [
+        {
+          "EmployeeCode": "030304002466",
+          "FullName": "Đoàn Thu Phương",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 1
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "040201009066",
+          "FullName": "Lương Du Ký",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 3.2
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031306001429",
+          "FullName": "Đào Thị Trang Nhung",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 3.3
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030302004901",
+          "FullName": "Bùi Thúy Hường",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 4
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031308017316",
+          "FullName": "Nguyễn Triệu Vi",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 4.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031306005989",
+          "FullName": "Lê Thị Hương Liên",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031098004032",
+          "FullName": "Mai Trung Long",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031206001366",
+          "FullName": "Phạm Ngọc Sơn",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 5.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "034307013430",
+          "FullName": "Trần Thị Minh Thư",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 6
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031206014812",
+          "FullName": "Đồng Đức Thuận",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 6.6
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031306003851",
+          "FullName": "Phạm Thị Thùy Linh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 8.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031098010872",
+          "FullName": "Đỗ Đức Duy",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 8.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031208012291",
+          "FullName": "Tô Đức Anh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 10
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030306005374",
+          "FullName": "Đặng Thị Mai Anh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 10.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030306009146",
+          "FullName": "Phạm Thị Thúy Hằng",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 10.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "034093010810",
+          "FullName": "Hoàng Ngọc Cường",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 10.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031306002752",
+          "FullName": "Bùi Mai Trang",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 10.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031308014044",
+          "FullName": "Nguyễn Thùy Linh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031205011557",
+          "FullName": "Phạm Duy Anh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030306013834",
+          "FullName": "Phạm Quỳnh Dương",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031307011864",
+          "FullName": "Vũ Vân Phương",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 1.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031207009914",
+          "FullName": "Phạm Quang Minh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 3
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031307014514",
+          "FullName": "Bùi Thị Hải Yến",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 3
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031308000461",
+          "FullName": "Bùi Thị Hoà",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 3
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031307001500",
+          "FullName": "Bùi Thị Nhâm",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 3.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031307007703",
+          "FullName": "Nguyễn Lưu Ly",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031307010472",
+          "FullName": "Phạm Ngọc Thiên Ngân",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031208013002",
+          "FullName": "Nguyễn Thanh Phong",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 5.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031098007506",
+          "FullName": "Nguyễn Văn Huy",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 5.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031307010960",
+          "FullName": "Nguyễn Thị Mỹ Uyên",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 6.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031207012065",
+          "FullName": "Phạm Duy Khánh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 7
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031095005792",
+          "FullName": "Bùi Văn Ngọc",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031099012238",
+          "FullName": "Nguyễn Văn Cường",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 8.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031207002034",
+          "FullName": "Nguyễn Minh Tú",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 8.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030207018547",
+          "FullName": "Nguyễn Huy Bảo",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 9
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "024204009983",
+          "FullName": "Trần Quang Nam",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 9
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031094009697",
+          "FullName": "Nguyễn Viết Khang",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 10
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030308005072",
+          "FullName": "Đoàn Khánh Linh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 10
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031206004310",
+          "FullName": "Phạm Đắc Trường",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 10
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031206002850",
+          "FullName": "Phạm Lê An Khang",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 0.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031307005937",
+          "FullName": "Đào Lâm Như",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 1
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031082009921",
+          "FullName": "Trần Văn Hợi",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 1
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030202007119",
+          "FullName": "Phạm Tuấn Tho",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 2
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "034307014698",
+          "FullName": "Trần Thị Anh Thư",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 4.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031207002299",
+          "FullName": "Đào Anh Đức",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 5.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031207014895",
+          "FullName": "Nguyễn Anh Bảo Khánh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 6
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "022208000290",
+          "FullName": "Trần Thanh Tùng",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 7
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031180000525",
+          "FullName": "Đỗ Thị Hường",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 7.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031207010020",
+          "FullName": "Phạm Quốc Trượng",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 9
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "038307004574",
+          "FullName": "Hà Thị Hạnh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 9
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031305014890",
+          "FullName": "Bùi Thu Thảo",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 10
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031307006593",
+          "FullName": "Nguyễn Thị Thu Thảo",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 10
+            },
+            {
+              "Date": "2026-05-27T00:00:00Z",
+              "Hours": 0.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031207011361",
+          "FullName": "Vũ Thái Minh Kiệt",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 10
+            },
+            {
+              "Date": "2026-05-27T00:00:00Z",
+              "Hours": 0.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031305014468",
+          "FullName": "Nguyễn Thị Kim Thoa",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-27T00:00:00Z",
+              "Hours": 1
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030092017935",
+          "FullName": "Phạm Hồng Phong",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-27T00:00:00Z",
+              "Hours": 1.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031302004525",
+          "FullName": "Bùi Phương Thảo",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-27T00:00:00Z",
+              "Hours": 2
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031203011694",
+          "FullName": "Đỗ Quốc Tuấn",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-27T00:00:00Z",
+              "Hours": 3.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031208007127",
+          "FullName": "Phạm Gia Huy",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-27T00:00:00Z",
+              "Hours": 4.5
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030205001804",
+          "FullName": "Bùi Quang Thịnh",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-27T00:00:00Z",
+              "Hours": 7
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030306001967",
+          "FullName": "Phạm Ngọc Trà",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-27T00:00:00Z",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031204014796",
+          "FullName": "Nguyễn Mạnh Hùng",
+          "Project": "",
+          "Entries": [
+            {
+              "Date": "2026-05-24T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-25T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-26T00:00:00Z",
+              "Hours": 11
+            },
+            {
+              "Date": "2026-05-27T00:00:00Z",
+              "Hours": 11
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

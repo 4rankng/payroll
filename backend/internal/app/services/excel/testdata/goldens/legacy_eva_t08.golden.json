@@ -1,0 +1,7070 @@
+{
+  "ShiftRates": {
+    "CB N": 36000,
+    "CB Đ": 46800,
+    "CN N": 72000,
+    "CN Đ": 97200,
+    "OT CN N": 72000,
+    "OT CN Đ": 72000,
+    "OT N": 54000,
+    "OT Đ": 75600
+  },
+  "Employees": [
+    {
+      "EmployeeCode": "LV000774",
+      "CCCD": "038304026938",
+      "FullName": "Trần Thị Ngọc Thành",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "TV000604",
+      "CCCD": "031094015626",
+      "FullName": "Phạm Văn Khương",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "TV000191",
+      "CCCD": "027202000029",
+      "FullName": "Nguyễn Sỹ Hùng",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV000094",
+      "CCCD": "014309004488",
+      "FullName": "Lò Thị Hoạch",
+      "Department": "Nhựa",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001109",
+      "CCCD": "040201023553",
+      "FullName": "Kha Văn Định",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 7.5,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 7.5,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 7.5,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV000384",
+      "CCCD": "031176000320",
+      "FullName": "Đinh Thị Tuyến",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 2.5,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001253",
+      "CCCD": "011206005799",
+      "FullName": "Lò Văn Châu",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 5.5,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001263",
+      "CCCD": "040191005847",
+      "FullName": "Kha Thị Xu Đa",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 11,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001270",
+      "CCCD": "011308007990",
+      "FullName": "Lò Thị Hồng Nhung",
+      "Department": "Đóng gói",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001274",
+      "CCCD": "011189006733",
+      "FullName": "Tòng Thị Hướng",
+      "Department": "Đóng gói",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001293",
+      "CCCD": "011081001104",
+      "FullName": "Lù Văn Tuân",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001290",
+      "CCCD": "031306002218",
+      "FullName": "Vũ Thị Phượng",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001289",
+      "CCCD": "031202001235",
+      "FullName": "Tạ Minh Tuyến",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001318",
+      "CCCD": "031097009890",
+      "FullName": "Đào Trọng Khải",
+      "Department": "Đóng gói",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 2.5,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 10.5,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 2.5,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 2.5,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 2.5,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001310",
+      "CCCD": "031206015688",
+      "FullName": "Phạm Văn Sang",
+      "Department": "Kho",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001309",
+      "CCCD": "031206004634",
+      "FullName": "Trần Đức Ngọc",
+      "Department": "Kho",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001377",
+      "CCCD": "011307004804",
+      "FullName": "Lò Thị Lệ Quyên",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001371",
+      "CCCD": "011308004264",
+      "FullName": "Lò Thị Nhung",
+      "Department": "Nhựa",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 2,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001372",
+      "CCCD": "011087004837",
+      "FullName": "Tòng Văn Diễm",
+      "Department": "Nhựa",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001375",
+      "CCCD": "011207002826",
+      "FullName": "Vì Văn Huy",
+      "Department": "Nhựa",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 2,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001434",
+      "CCCD": "017090005827",
+      "FullName": "Bùi Văn Phú",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001433",
+      "CCCD": "038185018586",
+      "FullName": "Nguyễn Thị Thu",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001435",
+      "CCCD": "011308002759",
+      "FullName": "Lò Thị Bịch Ngọc",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001437",
+      "CCCD": "011207000440",
+      "FullName": "Lường Văn Vũ",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001436",
+      "CCCD": "031087014123",
+      "FullName": "Vũ Đình Dư",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001475",
+      "CCCD": "011208005163",
+      "FullName": "Lò Văn Quyền",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001474",
+      "CCCD": "011208007289",
+      "FullName": "Lù Văn Quyến",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 2,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001473",
+      "CCCD": "002307002861",
+      "FullName": "Nông Thị Thương",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001476",
+      "CCCD": "011304005619",
+      "FullName": "Sùng Thị Nắng",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001464",
+      "CCCD": "030204002198",
+      "FullName": "Trần Quang Việt",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001478",
+      "CCCD": "011204010984",
+      "FullName": "Vàng A Phùa",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001487",
+      "CCCD": "011308003755",
+      "FullName": "Lò Thị Nhung",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 4,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001488",
+      "CCCD": "011207000441",
+      "FullName": "Lò Văn Niệm",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001491",
+      "CCCD": "011307008208",
+      "FullName": "Tòng Thị Thảo",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001489",
+      "CCCD": "022095012864",
+      "FullName": "Vũ Văn Nhạ",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001509",
+      "CCCD": "040200002926",
+      "FullName": "Kha Văn Tâm",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001508",
+      "CCCD": "011307003959",
+      "FullName": "Lò Thị Hiến",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001504",
+      "CCCD": "011206010368",
+      "FullName": "Lò Văn Kiên",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001505",
+      "CCCD": "011205002144",
+      "FullName": "Lò Văn Ninh",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001506",
+      "CCCD": "040306007129",
+      "FullName": "Lương Thị Phương",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001507",
+      "CCCD": "025205014430",
+      "FullName": "Nguyễn Ngọc Bảo",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 3,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    },
+    {
+      "EmployeeCode": "LV001503",
+      "CCCD": "012204007555",
+      "FullName": "Thào A Dao",
+      "Department": "Lắp ráp",
+      "BankAccount": "",
+      "BankName": "",
+      "Mobile": "",
+      "Position": "",
+      "Entries": [
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 22,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 23,
+          "ShiftLabel": "CN Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 24,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 25,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 26,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 27,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB N",
+          "Hours": 8,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT N",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "CB Đ",
+          "Hours": 0,
+          "FullDate": null
+        },
+        {
+          "DayNum": 28,
+          "ShiftLabel": "OT Đ",
+          "Hours": 0,
+          "FullDate": null
+        }
+      ]
+    }
+  ]
+}

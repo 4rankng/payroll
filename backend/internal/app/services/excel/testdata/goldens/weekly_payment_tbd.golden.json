@@ -1,0 +1,1179 @@
+{
+  "Sheets": [
+    {
+      "Position": "Lương 500",
+      "ShiftRows": {
+        "ByCol": {
+          "12": "HC",
+          "13": "TCN",
+          "14": "NN",
+          "15": "TCNN",
+          "16": "HC",
+          "17": "TCN",
+          "18": "HC",
+          "19": "TCN",
+          "20": "HC",
+          "21": "TCN",
+          "22": "HC",
+          "23": "TCN",
+          "24": "HC",
+          "25": "TCN"
+        }
+      },
+      "Employees": [
+        {
+          "EmployeeCode": "030071011056",
+          "FullName": "Nguyễn Hữu Du",
+          "Department": "Lao động phổ thông",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "040201023312",
+          "FullName": "Nguyễn Đức Thông",
+          "Department": "Lao động phổ thông",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "036200001608",
+          "FullName": "Nguyễn Văn Chung",
+          "Department": "Lao động phổ thông",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Position": "Lương 520",
+      "ShiftRows": {
+        "ByCol": {
+          "12": "HC",
+          "13": "TCN",
+          "14": "NN",
+          "15": "TCNN",
+          "16": "HC",
+          "17": "TCN",
+          "18": "HC",
+          "19": "TCN",
+          "20": "HC",
+          "21": "TCN",
+          "22": "HC",
+          "23": "TCN",
+          "24": "HC",
+          "25": "TCN"
+        }
+      },
+      "Employees": [
+        {
+          "EmployeeCode": "012097002916",
+          "FullName": "Đèo Văn Mơi",
+          "Department": "Thợ phụ mài",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 0
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031090004734",
+          "FullName": "Tạ Văn Linh",
+          "Department": "Thợ phụ mài",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 0
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "030073016990",
+          "FullName": "Nguyễn Trung Thủy",
+          "Department": "Thợ phụ mài",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031075002741",
+          "FullName": "Hoàng Văn Khoắc",
+          "Department": "Thợ phụ mài",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 3
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 0
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "038095002174",
+          "FullName": "Nguyễn Ngọc Khang",
+          "Department": "Thợ phụ mài",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 0
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 0
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "044093002047",
+          "FullName": "Trần Ngọc Sơn",
+          "Department": "Thợ phụ mài",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031079002925",
+          "FullName": "Vũ Đức Thắng",
+          "Department": "Thợ phụ mài",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 0
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 0
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Position": "Lương 700",
+      "ShiftRows": {
+        "ByCol": {
+          "12": "HC",
+          "13": "TCN",
+          "14": "NN",
+          "15": "TCNN",
+          "16": "HC",
+          "17": "TCN",
+          "18": "HC",
+          "19": "TCN",
+          "20": "HC",
+          "21": "TCN",
+          "22": "HC",
+          "23": "TCN",
+          "24": "HC",
+          "25": "TCN"
+        }
+      },
+      "Employees": [
+        {
+          "EmployeeCode": "002200003806",
+          "FullName": "Hoàng Trung Quân",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "034072013355",
+          "FullName": "Nguyễn Văn Vĩnh",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "019080015055",
+          "FullName": "Trịnh Văn Hưng",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Position": "Lương 750",
+      "ShiftRows": {
+        "ByCol": {
+          "12": "HC",
+          "13": "TCN",
+          "14": "NN",
+          "15": "TCNN",
+          "16": "HC",
+          "17": "TCN",
+          "18": "HC",
+          "19": "TCN",
+          "20": "HC",
+          "21": "TCN",
+          "22": "HC",
+          "23": "TCN",
+          "24": "HC",
+          "25": "TCN"
+        }
+      },
+      "Employees": [
+        {
+          "EmployeeCode": "030084017892",
+          "FullName": "Phạm Văn Vương",
+          "Department": "Thợ hàn CO2 3G",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 4
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "031091004353",
+          "FullName": "Nguyễn Văn Hoàn",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "010097008276",
+          "FullName": "Vừ A Sài",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "010098002967",
+          "FullName": "Lí A Giấy",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "038082002799",
+          "FullName": "Lê Văn Ái",
+          "Department": "Thợ Lắp ráp",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 4
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 4
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "010203007954",
+          "FullName": "Vừ A Ma",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "024092014233",
+          "FullName": "Bế Quốc Triều",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Position": "Lương 800",
+      "ShiftRows": {
+        "ByCol": {
+          "12": "HC",
+          "13": "TCN",
+          "14": "NN",
+          "15": "TCNN",
+          "16": "HC",
+          "17": "TCN",
+          "18": "HC",
+          "19": "TCN",
+          "20": "HC",
+          "21": "TCN",
+          "22": "HC",
+          "23": "TCN",
+          "24": "HC",
+          "25": "TCN"
+        }
+      },
+      "Employees": [
+        {
+          "EmployeeCode": "038089053247",
+          "FullName": "Chu Hữu Quyết",
+          "Department": "Thợ hàn 6G",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "040090002913",
+          "FullName": "Lê Văn Thuật",
+          "Department": "Thợ hàn 6G",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 4
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 0
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "040205029605",
+          "FullName": "Trịnh Nguyễn Thành",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "010205004943",
+          "FullName": "Giàng A Đông",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "040205014472",
+          "FullName": "Nguyễn Xuân Quyền",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 4
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 4
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "064204013497",
+          "FullName": "Nguyễn Đình Phi",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 4
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "044205002019",
+          "FullName": "Lê Thế Anh",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 0
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        },
+        {
+          "EmployeeCode": "040200011260",
+          "FullName": "Nguyễn Xuân Trung",
+          "Department": "Thợ hàn",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "Position": "Lương 900",
+      "ShiftRows": {
+        "ByCol": {
+          "10": "HC",
+          "11": "TCN",
+          "12": "HC",
+          "13": "TCN",
+          "14": "HC",
+          "15": "TCN",
+          "16": "HC",
+          "17": "TCN",
+          "18": "HC",
+          "19": "TCN",
+          "6": "HC",
+          "7": "TCN",
+          "8": "NN",
+          "9": "TCNN"
+        }
+      },
+      "Employees": [
+        {
+          "EmployeeCode": "042089005176",
+          "FullName": "Nguyễn Xuân Chinh",
+          "Department": "UT chụp phim",
+          "SalaryTier": 0,
+          "Entries": [
+            {
+              "Day": 22,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 24,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 25,
+              "ShiftKey": "HC",
+              "Hours": 8
+            },
+            {
+              "Day": 26,
+              "ShiftKey": "HC",
+              "Hours": 4
+            },
+            {
+              "Day": 27,
+              "ShiftKey": "HC",
+              "Hours": 4
+            },
+            {
+              "Day": 28,
+              "ShiftKey": "HC",
+              "Hours": 8
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
