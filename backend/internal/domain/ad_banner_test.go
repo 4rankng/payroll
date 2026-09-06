@@ -92,6 +92,7 @@ func TestAdBannerValidateRules(t *testing.T) {
 		{"exactly 180 days allowed", func(b *AdBanner) { b.EndsAt = b.StartsAt.Add(180 * 24 * time.Hour) }},
 		{"zero target project id", func(b *AdBanner) { b.TargetProjectIDs = []uint{0} }},
 		{"duplicate target project ids", func(b *AdBanner) { b.TargetProjectIDs = []uint{7, 7} }},
+		{"multiple target projects", func(b *AdBanner) { b.TargetProjectIDs = []uint{7, 8} }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

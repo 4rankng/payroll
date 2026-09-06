@@ -184,6 +184,10 @@ func (b *AdBanner) Validate() error {
 		return NewValidationError("Thời gian hiển thị tối đa 180 ngày")
 	}
 
+	if len(b.TargetProjectIDs) > 1 {
+		return NewValidationError("Chiến dịch chỉ được nhắm đến một dự án")
+	}
+
 	seen := make(map[uint]struct{}, len(b.TargetProjectIDs))
 	for _, id := range b.TargetProjectIDs {
 		if id == 0 {

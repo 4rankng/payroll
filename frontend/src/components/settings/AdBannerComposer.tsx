@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { ProjectMultiSelector } from '@/components/ui/project-multi-selector';
 import { EmployeeAdContent } from '@/components/employees/EmployeeAdSheet';
 import {
   useCreateAdBanner,
@@ -370,14 +369,23 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
         <FieldGroup title="Đối tượng & lịch chạy" description="Ai nhìn thấy chiến dịch này, và trong khoảng thời gian nào.">
         <div className="space-y-1.5">
           <Label>Dự án hiển thị</Label>
-          <ProjectMultiSelector
-            value={targetProjectIds}
-            onChange={setTargetProjectIds}
-            projects={projects.map((p) => ({ id: p.id, code: p.code, name: p.name }))}
-            placeholder="Tất cả dự án"
-          />
+          <select
+            id="ad-project"
+            value={targetProjectIds[0]?.toString() ?? ''}
+            onChange={(e) =>
+              setTargetProjectIds(e.target.value === '' ? [] : [Number(e.target.value)])
+            }
+            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="">Tất cả dự án — mọi nhân viên đang làm việc</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.code} — {project.name}
+              </option>
+            ))}
+          </select>
           <p className="text-xs text-muted-foreground">
-            Không chọn dự án nào = hiển thị cho tất cả nhân viên đang làm việc.
+            Một chiến dịch chỉ chạy trên một dự án; chọn "Tất cả dự án" để hiển thị với mọi nhân viên.
           </p>
         </div>
 
