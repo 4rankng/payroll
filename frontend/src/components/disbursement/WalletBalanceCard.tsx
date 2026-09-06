@@ -107,10 +107,10 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
     <section
       aria-label="Ví tiền"
       className={cn(
-        "treasury-panel--dark relative h-full overflow-hidden p-[22px] px-6 text-white",
+        "treasury-panel--dark relative h-full overflow-hidden text-white",
         "bg-[radial-gradient(130%_130%_at_0%_0%,#0C7A50_0%,#06452E_48%,#032B1D_100%)]",
         "ring-1 ring-inset ring-white/[0.08]",
-        compact && "p-3.5",
+        compact ? "p-3.5" : "p-4 sm:px-6",
         className
       )}
     >
@@ -133,113 +133,188 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
       {/* Light sweep across the glass — same primitive the mobile band uses. */}
       <div className="band-sheen band-sheen--glass pointer-events-none absolute inset-0 z-[1]" aria-hidden />
 
-      <div className="relative z-[2] flex h-full flex-col justify-between">
+      <div className="relative z-[2]">
         {isLoading ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="h-3 w-24 animate-pulse rounded bg-white/10" />
-              <div className="h-7 w-7 animate-pulse rounded-lg bg-white/10" />
+          compact ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-24 animate-pulse rounded bg-white/10" />
+                <div className="h-7 w-7 animate-pulse rounded-lg bg-white/10" />
+              </div>
+              <div className="h-9 w-44 animate-pulse rounded bg-white/10" />
+              <div className="h-3 w-36 animate-pulse rounded bg-white/10" />
+              <div className="grid grid-cols-2 gap-3 pt-4">
+                <div className="h-12 animate-pulse rounded-lg bg-white/10" />
+                <div className="h-12 animate-pulse rounded-lg bg-white/10" />
+              </div>
             </div>
-            <div className="h-9 w-44 animate-pulse rounded bg-white/10" />
-            <div className="h-3 w-36 animate-pulse rounded bg-white/10" />
-            <div className="grid grid-cols-2 gap-3 pt-4">
-              <div className="h-12 animate-pulse rounded-lg bg-white/10" />
-              <div className="h-12 animate-pulse rounded-lg bg-white/10" />
+          ) : (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-3 w-16 animate-pulse rounded bg-white/10" />
+                <div className="h-8 w-44 animate-pulse rounded bg-white/10" />
+              </div>
+              <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-5">
+                <div className="space-y-1.5">
+                  <div className="h-2.5 w-40 animate-pulse rounded bg-white/10" />
+                  <div className="h-2.5 w-28 animate-pulse rounded bg-white/10" />
+                </div>
+                <div className="h-11 w-11 animate-pulse rounded-lg bg-white/10" />
+              </div>
             </div>
-          </div>
+          )
         ) : settings ? (
-          <>
-            {/* Header */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="led-pulse h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.18)]" />
-                  <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-emerald-200">
-                    Ví tiền
-                  </span>
+          compact ? (
+            <>
+              {/* Header */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="led-pulse h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.18)]" />
+                    <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-emerald-200">
+                      Ví tiền
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleSync}
+                    disabled={isSyncing}
+                    title="Đồng bộ số dư với nhà cung cấp"
+                    aria-label="Đồng bộ số dư"
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 touch-manipulation"
+                  >
+                    <RefreshCw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
+                  </button>
                 </div>
-                <button
-                  onClick={handleSync}
-                  disabled={isSyncing}
-                  title="Đồng bộ số dư với nhà cung cấp"
-                  aria-label="Đồng bộ số dư"
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 touch-manipulation"
-                >
-                  <RefreshCw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
-                </button>
+
+                {/* Main Balance */}
+                <div className={cn(
+                  "treasury-value mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal tabular-nums",
+                  "text-[clamp(1.375rem,7.5vw,1.5rem)]",
+                  isLow
+                    ? "text-red-400 [text-shadow:0_0_32px_rgba(248,113,113,0.35)]"
+                    : "text-white [text-shadow:0_0_36px_rgba(110,231,183,0.30)]"
+                )}>
+                  {formatCurrency(available).replace('₫', '')}
+                  <span className="ml-1 text-base font-medium text-emerald-200">₫</span>
+                </div>
+
+                {hasDivergence && showProviderBalance && providerBalance && (
+                  <div className="mt-2 inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    NCC: {formatCurrency(providerBalance.amount)}
+                  </div>
+                )}
+
+                {isLow && !hasDivergence && (
+                  <div className="mt-1.5 text-xs text-red-400/80">
+                    Số dư thấp — cân nhắc nạp thêm
+                  </div>
+                )}
               </div>
 
-              {/* Main Balance */}
-              <div className={cn(
-                "treasury-value mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal tabular-nums",
-                compact ? "text-[clamp(1.375rem,7.5vw,1.5rem)]" : "text-[clamp(1.75rem,8vw,2rem)]",
-                isLow
-                  ? "text-red-400 [text-shadow:0_0_32px_rgba(248,113,113,0.35)]"
-                  : "text-white [text-shadow:0_0_36px_rgba(110,231,183,0.30)]"
-              )}>
-                {formatCurrency(available).replace('₫', '')}
-                <span className={cn("ml-1 font-medium", compact ? "text-base" : "text-lg", isLow ? "text-red-400/80" : "text-emerald-200")}>₫</span>
+              {/* Footer rail — fee grid when fee props are supplied (band
+                  usages); otherwise the pending-out companion. */}
+              <div className="treasury-rail treasury-rail--dark mt-3 pt-3">
+                {showFeeRail ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                        Tổng phí trả
+                      </div>
+                      <div className="mt-1 break-words font-financial text-[13px] font-medium leading-snug text-white tabular-nums">
+                        {formatCurrency(totalProviderFee ?? 0)}
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                        Phí tháng này
+                      </div>
+                      <div className="mt-1 break-words font-financial text-[13px] font-medium leading-snug text-white tabular-nums">
+                        {formatCurrency(monthlyProviderFee ?? 0)}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                      Đang chi trả
+                    </span>
+                    <span className="break-words font-financial text-[13px] font-medium leading-snug tabular-nums text-white">
+                      {walletBalance ? formatCurrency(walletBalance.pending_out) : "—"}
+                    </span>
+                  </div>
+                )}
               </div>
-
-              {hasDivergence && showProviderBalance && providerBalance && (
-                <div className="mt-2 inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  NCC: {formatCurrency(providerBalance.amount)}
-                </div>
-              )}
-
-              {isLow && !hasDivergence && (
-                <div className="mt-1.5 text-xs text-red-400/80">
-                  Số dư thấp — cân nhắc nạp thêm
-                </div>
-              )}
-
-              {!compact && walletBalance?.as_of && (
-                <p className="mt-2 text-xs tabular-nums tracking-wide text-white/55">
-                  Cập nhật {formatVietnameseDateTime(walletBalance.as_of)}
-                </p>
-              )}
-            </div>
-
-            {/* Footer rail — fee grid when fee props are supplied (band
-                usages); otherwise the wallet-page companion: pending out. */}
-            <div
-              className={cn(
-                "treasury-rail treasury-rail--dark",
-                compact ? "mt-3 pt-3" : "mt-[22px] pt-3.5",
-              )}
-            >
-              {showFeeRail ? (
-                <div className={cn("grid grid-cols-2", compact ? "gap-2" : "gap-3.5")}>
-                  <div className="min-w-0">
-                    <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
-                      Tổng phí trả
-                    </div>
-                    <div className={cn("mt-1 break-words font-financial font-medium leading-snug text-white tabular-nums", compact ? "text-[13px]" : "text-[15px]")}>
-                      {formatCurrency(totalProviderFee ?? 0)}
-                    </div>
+            </>
+          ) : (
+            <>
+              {/* Wallet strip — one-row HUD readout. Label + balance on the
+                  left, as-of meta and the pending-out companion on the right.
+                  Zone ownership: pending out lives ONLY here. */}
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                {/* Balance cluster */}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="led-pulse h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.18)]" />
+                    <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-emerald-200">
+                      Ví tiền
+                    </span>
                   </div>
-                  <div className="min-w-0">
-                    <div className={cn("font-semibold uppercase tracking-[0.1em] text-white/45", compact ? "text-[9.5px]" : "text-[10.5px]")}>
-                      Phí tháng này
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <div className={cn(
+                      "treasury-value max-w-full break-words font-financial font-semibold leading-none tracking-normal tabular-nums",
+                      "text-[clamp(1.5rem,3vw,1.75rem)]",
+                      isLow
+                        ? "text-red-400 [text-shadow:0_0_32px_rgba(248,113,113,0.35)]"
+                        : "text-white [text-shadow:0_0_36px_rgba(110,231,183,0.30)]"
+                    )}>
+                      {formatCurrency(available).replace('₫', '')}
+                      <span className={cn("ml-1 text-base font-medium", isLow ? "text-red-400/80" : "text-emerald-200")}>₫</span>
                     </div>
-                    <div className={cn("mt-1 break-words font-financial font-medium leading-snug text-white tabular-nums", compact ? "text-[13px]" : "text-[15px]")}>
-                      {formatCurrency(monthlyProviderFee ?? 0)}
-                    </div>
+                    {hasDivergence && showProviderBalance && providerBalance && (
+                      <div className="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        NCC: {formatCurrency(providerBalance.amount)}
+                      </div>
+                    )}
+                    {isLow && !hasDivergence && (
+                      <span className="text-xs text-red-400/80">
+                        Số dư thấp — cân nhắc nạp thêm
+                      </span>
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
-                    Đang chi trả
-                  </span>
-                  <span className="break-words font-financial text-[15px] font-medium leading-snug tabular-nums text-white">
-                    {walletBalance ? formatCurrency(walletBalance.pending_out) : "—"}
-                  </span>
+
+                {/* Meta + sync cluster */}
+                <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-5">
+                  <div className="min-w-0 leading-tight">
+                    {walletBalance?.as_of && (
+                      <p className="text-[11px] tabular-nums tracking-wide text-white/55">
+                        Cập nhật {formatVietnameseDateTime(walletBalance.as_of)}
+                      </p>
+                    )}
+                    <p className={cn("flex items-baseline gap-2", walletBalance?.as_of && "mt-1")}>
+                      <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                        Đang chi trả
+                      </span>
+                      <span className="font-financial text-[15px] font-medium leading-snug tabular-nums text-white">
+                        {walletBalance ? formatCurrency(walletBalance.pending_out) : "—"}
+                      </span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleSync}
+                    disabled={isSyncing}
+                    title="Đồng bộ số dư với nhà cung cấp"
+                    aria-label="Đồng bộ số dư"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 touch-manipulation"
+                  >
+                    <RefreshCw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
+                  </button>
                 </div>
-              )}
-            </div>
-          </>
+              </div>
+            </>
+          )
         ) : (
           <div className="flex h-24 items-center justify-center">
             <p className="text-sm text-white/50">Không thể tải số dư</p>
