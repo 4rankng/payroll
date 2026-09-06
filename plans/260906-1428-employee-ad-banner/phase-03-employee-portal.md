@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Employee portal"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: [1]
@@ -42,9 +42,9 @@ with the three-stage dismissal state machine, mounted on both home pages.
 5. Mount on both pages.
 
 ## Success Criteria
-- [ ] `pnpm vitest run` green for new tests
-- [ ] `npx tsc -p tsconfig.app.json --noEmit` clean (the real type gate)
-- [ ] Manual: seeded campaign renders on BOTH pages (spec §Employee Portal is the
+- [x] `pnpm vitest run` green for new tests
+- [x] `npx tsc -p tsconfig.app.json --noEmit` clean (the real type gate)
+- [x] Manual: seeded campaign renders on BOTH pages (spec §Employee Portal is the
       highest-risk-omission item)
 
 ## Risk Assessment

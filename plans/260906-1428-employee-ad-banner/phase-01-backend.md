@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Backend vertical slice"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: []
@@ -50,9 +50,9 @@ banner feature, per spec §Data Model / §Domain Layer / §Application Service /
    DI registration ×4, Casbin line.
 
 ## Success Criteria
-- [ ] `cd backend && go build ./... && go test ./... -race -cover` green
-- [ ] Domain tests cover both window edges, targeting cases, every Validate rule
-- [ ] Service tests cover precedence, expiry, wrong-project, no-assignment→nil,
+- [x] `cd backend && go build ./... && go test ./... -race -cover` green
+- [x] Domain tests cover both window edges, targeting cases, every Validate rule
+- [x] Service tests cover precedence, expiry, wrong-project, no-assignment→nil,
       broadcast, invalidate-after-success
 
 ## Risk Assessment

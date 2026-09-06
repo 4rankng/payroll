@@ -1,7 +1,7 @@
 ---
 title: "employee-ad-banner"
 description: "Project-targeted ad banner for the employee portal with an admin campaign composer and mandatory bounded lifetime."
-status: in-progress
+status: completed
 priority: P2
 created: 2026-09-06
 ---
@@ -22,11 +22,11 @@ managed from a new "Quảng cáo" Settings tab.
 
 | # | Phase | Status | Gate |
 |---|-------|--------|------|
-| 1 | [Backend vertical slice](./phase-01-backend.md) | pending | `go build ./... && go test ./... -race -cover` |
-| 2 | [Integration flow](./phase-02-integration.md) | pending | `make api-test` (from `backend/`) all green |
-| 3 | [Employee portal](./phase-03-employee-portal.md) | pending | vitest + `tsc -p tsconfig.app.json --noEmit` + manual both pages |
-| 4 | [Admin settings UI](./phase-04-admin-ui.md) | pending | vitest incl. parity + tsc + lint |
-| 5 | [Verification & rollout](./phase-05-verification.md) | pending | testplan matrix + code-review + deploy chain |
+| 1 | [Backend vertical slice](./phase-01-backend.md) | completed | `go build ./... && go test ./... -race -cover` |
+| 2 | [Integration flow](./phase-02-integration.md) | completed | `make api-test` (from `backend/`) all green |
+| 3 | [Employee portal](./phase-03-employee-portal.md) | completed | vitest + `tsc -p tsconfig.app.json --noEmit` + manual both pages |
+| 4 | [Admin settings UI](./phase-04-admin-ui.md) | completed | vitest incl. parity + tsc + lint |
+| 5 | [Verification & rollout](./phase-05-verification.md) | completed | testplan matrix + code-review + deploy chain |
 
 Dependencies: 1 → 2 → (3, 4) → 5. Phases 3 and 4 are independent of each other.
 

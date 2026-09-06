@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Verification & rollout"
-status: pending
+status: completed
 priority: P1
 effort: "0.5d"
 dependencies: [2, 3, 4]
@@ -35,9 +35,9 @@ real campaign.
 8. Plan sync-back (all phase files + index), docs-impact check, journal entry.
 
 ## Success Criteria
-- [ ] All suites green; review auto-approved (≥9.5, zero criticals) or user-escalated
-- [ ] Demo + prod verified; LGD campaign live for the targeted project
-- [ ] Rollback available: previous image; tables may remain
+- [x] All suites green; review auto-approved (≥9.5, zero criticals) or user-escalated
+- [x] Demo + prod verified; LGD campaign live for the targeted project
+- [x] Rollback available: previous image; tables may remain
 
 ## Risk Assessment
 Deploy-time drift: build from the pushed SHA and confirm prod tag == HEAD (prior

@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Admin settings UI"
-status: pending
+status: completed
 priority: P1
 effort: "1d"
 dependencies: [1]
@@ -43,9 +43,9 @@ sheet component.
 4. Tab wiring ×2 pages + span rebalance + parity test mock.
 
 ## Success Criteria
-- [ ] `pnpm vitest run` green incl. `settings-page-parity.test.tsx`
-- [ ] `npx tsc -p tsconfig.app.json --noEmit` + `pnpm lint` clean
-- [ ] Composer validation mirrors domain rules; preview is the real component
+- [x] `pnpm vitest run` green incl. `settings-page-parity.test.tsx`
+- [x] `npx tsc -p tsconfig.app.json --noEmit` + `pnpm lint` clean
+- [x] Composer validation mirrors domain rules; preview is the real component
 
 ## Risk Assessment
 Forgetting the mobile page or the parity-test mock breaks the existing suite — both

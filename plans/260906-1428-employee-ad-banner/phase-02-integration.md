@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Integration flow"
-status: pending
+status: completed
 priority: P1
 effort: "3h"
 dependencies: [1]
@@ -33,8 +33,8 @@ shared runner.
 4. Run `make api-test` from `backend/`.
 
 ## Success Criteria
-- [ ] All 30+ existing flows still pass (no regression)
-- [ ] New flow passes end-to-end, which also proves the Casbin POST line
+- [x] All 30+ existing flows still pass (no regression)
+- [x] New flow passes end-to-end, which also proves the Casbin POST line
 
 ## Risk Assessment
 If the runner rejects the new flow (helper drift), align with the newest flow file,
