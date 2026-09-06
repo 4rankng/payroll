@@ -44,7 +44,8 @@ function bannerFixture(version = '2026-09-06T00:00:00Z'): AdBanner {
     bullets: ['Chấm công tự động', 'Ứng lương tối đa 70%'],
     ctas: [
       { label: 'Gọi hotline', type: 'phone', value: '0914827988' },
-      { label: 'Nhóm Zalo', type: 'url', value: 'https://zalo.me/g/example' },
+      { label: 'Zalo', type: 'zalo', value: 'https://zalo.me/g/example' },
+      { label: 'Trang web', type: 'url', value: 'https://tingting.vip' },
     ],
     footer: '',
     targetProjectIds: [],
@@ -135,11 +136,40 @@ describe('EmployeeAdBanner CTA behaviour', () => {
     render(<EmployeeAdBanner />);
     fireEvent.click(screen.getByRole('button', { name: 'Đóng' })); // to card stage
 
-    fireEvent.click(screen.getByRole('button', { name: 'Nhóm Zalo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Trang web' }));
 
-    expect(mutate).toHaveBeenCalledWith({ bannerId: 7, ctaIndex: 1 });
-    expect(openSpy).toHaveBeenCalledWith('https://zalo.me/g/example', '_blank', 'noopener,noreferrer');
+    expect(mutate).toHaveBeenCalledWith({ bannerId: 7, ctaIndex: 2 });
+    expect(openSpy).toHaveBeenCalledWith('https://tingting.vip', '_blank', 'noopener,noreferrer');
     openSpy.mockRestore();
+  });
+
+  it('hands zalo CTAs to the Zalo app: same-tab navigation on mobile, not a new tab', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    // jsdom's location is read-only; swap in a stub to observe the handoff.
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: { href: '' },
+    });
+
+    try {
+      render(<EmployeeAdBanner />);
+      fireEvent.click(screen.getByRole('button', { name: 'Đóng' })); // to card stage
+
+      fireEvent.click(screen.getByRole('button', { name: 'Zalo' }));
+
+      expect(mutate).toHaveBeenCalledWith({ bannerId: 7, ctaIndex: 1 });
+      expect(window.location.href).toBe('https://zalo.me/g/example');
+      expect(openSpy).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(window, 'location', {
+        configurable: true,
+        writable: true,
+        value: originalLocation,
+      });
+      openSpy.mockRestore();
+    }
   });
 
   it('records phone CTA taps with the banner id and CTA index', () => {

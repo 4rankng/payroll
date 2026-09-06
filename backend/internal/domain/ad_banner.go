@@ -11,12 +11,15 @@ import (
 
 // AdBannerCTAType determines how the employee portal renders and activates a
 // call-to-action button: phone opens the native dialer via tel:, url opens a
-// new tab. Nothing else is accepted — banners are typed content, never HTML.
+// new tab, zalo hands the tap to the Zalo app through its zalo.me universal
+// link (same-tab navigation on mobile, new tab on desktop). Nothing else is
+// accepted — banners are typed content, never HTML.
 type AdBannerCTAType string
 
 const (
 	AdBannerCTATypePhone AdBannerCTAType = "phone"
 	AdBannerCTATypeURL   AdBannerCTAType = "url"
+	AdBannerCTATypeZalo  AdBannerCTAType = "zalo"
 )
 
 // AdBannerMaxLifetime caps the starts_at→ends_at window so a typo'd year
@@ -162,12 +165,12 @@ func (b *AdBanner) Validate() error {
 			if !isValidCTAPhone(strings.TrimSpace(cta.Value)) {
 				return NewValidationError("Số điện thoại không hợp lệ")
 			}
-		case AdBannerCTATypeURL:
+		case AdBannerCTATypeURL, AdBannerCTATypeZalo:
 			if !strings.HasPrefix(strings.TrimSpace(cta.Value), "https://") {
 				return NewValidationError("Đường dẫn phải bắt đầu bằng https://")
 			}
 		default:
-			return NewValidationError("Loại nút hành động phải là 'phone' hoặc 'url'")
+			return NewValidationError("Loại nút hành động phải là 'phone', 'url' hoặc 'zalo'")
 		}
 	}
 

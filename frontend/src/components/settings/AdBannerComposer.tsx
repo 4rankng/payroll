@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { format, addDays } from 'date-fns';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Smartphone, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import {
   useUpdateAdBanner,
 } from '@/hooks/api/useAdBanners';
 import { useAllProjects } from '@/hooks/api/useProjects';
+import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/utils/error-handler';
 import type { AdBanner, AdBannerCTA, AdBannerPayload } from '@/types/api/ad-banner.types';
 
@@ -49,6 +50,28 @@ const isValidPhone = (value: string) => {
   const digits = value.replace(/^\+/, '');
   return (/^\+?[0-9]{6,15}$/.test(value)) && (digits.length === value.length || value.startsWith('+'));
 };
+
+/**
+ * Titled field block. Groups are separated by a hairline and an eyebrow rather
+ * than by their own borders, so the form never nests a card inside a card.
+ */
+const FieldGroup = ({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) => (
+  <section className="border-t pt-5 first:border-t-0 first:pt-0">
+    <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+      {title}
+    </h3>
+    <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    <div className="mt-4 space-y-4">{children}</div>
+  </section>
+);
 
 const isValidCTAValue = (cta: AdBannerCTA) =>
   cta.type === 'phone' ? isValidPhone(cta.value.trim()) : cta.value.trim().startsWith('https://');
@@ -178,11 +201,16 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
   const ctaTypeOptions: Array<{ value: AdBannerCTA['type']; label: string }> = [
     { value: 'phone', label: 'Gọi điện (tel:)' },
     { value: 'url', label: 'Đường dẫn (https://)' },
+    { value: 'zalo', label: 'Zalo' },
   ];
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_375px]">
-      <div className="space-y-4">
+    <div className="space-y-6">
+    {/* Two columns from `lg` up: the admin canvas caps at 1180px, so waiting
+        for `xl` left the preview stranded under a half-empty form. */}
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
+      <div className="min-w-0 space-y-6">
+        <FieldGroup title="Nội dung" description="Những gì nhân viên đọc được trong thông báo.">
         <div className="space-y-1.5">
           <Label htmlFor="ad-title">Tiêu đề</Label>
           <Input
@@ -209,6 +237,12 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
           <Label>Gạch đầu dòng (tối đa {MAX_BULLETS})</Label>
           {bullets.map((bullet, index) => (
             <div key={index} className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="w-4 shrink-0 text-xs tabular-nums text-muted-foreground"
+              >
+                {index + 1}
+              </span>
               <Input
                 aria-label={`Gạch đầu dòng ${index + 1}`}
                 value={bullet}
@@ -245,10 +279,26 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
           )}
         </div>
 
+        <div className="space-y-1.5">
+          <Label htmlFor="ad-footer">Câu chào kết</Label>
+          <Input
+            id="ad-footer"
+            value={footer}
+            onChange={(e) => setFooter(e.target.value)}
+            placeholder="Ting Ting Software Solutions — Đồng hành cùng người lao động."
+            maxLength={255}
+          />
+        </div>
+        </FieldGroup>
+
+        <FieldGroup title="Nút hành động" description="Nút đầu tiên là hành động chính, hiển thị nổi bật nhất.">
         <div className="space-y-2">
-          <Label>Nút hành động (1–{MAX_CTAS})</Label>
+          <Label>Danh sách nút (1–{MAX_CTAS})</Label>
+          {/* One bordered list with hairline rows instead of a bordered box per
+              CTA — same structure, a quarter of the visual noise. */}
+          <div className="divide-y overflow-hidden rounded-lg border bg-muted/30">
           {ctas.map((cta, index) => (
-            <div key={index} className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_10rem_minmax(0,1.4fr)_auto] sm:items-center">
+            <div key={index} className="grid gap-2 p-3 sm:grid-cols-[1fr_10rem_minmax(0,1.4fr)_auto] sm:items-center">
               <Input
                 aria-label={`Nhãn nút ${index + 1}`}
                 value={cta.label}
@@ -282,7 +332,13 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
                   next[index] = { ...cta, value: e.target.value };
                   setCtas(next);
                 }}
-                placeholder={cta.type === 'phone' ? '0914827988' : 'https://zalo.me/g/...'}
+                placeholder={
+                  cta.type === 'phone'
+                    ? '0914827988'
+                    : cta.type === 'zalo'
+                      ? 'https://zalo.me/g/...'
+                      : 'https://...'
+                }
               />
               <Button
                 type="button"
@@ -296,6 +352,7 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
               </Button>
             </div>
           ))}
+          </div>
           {ctas.length < MAX_CTAS && (
             <Button
               type="button"
@@ -308,18 +365,9 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
             </Button>
           )}
         </div>
+        </FieldGroup>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="ad-footer">Câu chào kết</Label>
-          <Input
-            id="ad-footer"
-            value={footer}
-            onChange={(e) => setFooter(e.target.value)}
-            placeholder="Ting Ting Software Solutions — Đồng hành cùng người lao động."
-            maxLength={255}
-          />
-        </div>
-
+        <FieldGroup title="Đối tượng & lịch chạy" description="Ai nhìn thấy chiến dịch này, và trong khoảng thời gian nào.">
         <div className="space-y-1.5">
           <Label>Dự án hiển thị</Label>
           <ProjectMultiSelector
@@ -343,17 +391,24 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
               onChange={(e) => setStartsAt(e.target.value)}
               className="w-40"
             />
-            <div className="flex flex-wrap gap-1.5">
+            {/* Segmented control: the presets are one choice, so they read as
+                one control rather than five competing buttons. */}
+            <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
               {DURATION_PRESETS.map((option) => (
-                <Button
+                <button
                   key={option.value}
                   type="button"
-                  size="sm"
-                  variant={preset === option.value ? 'default' : 'outline'}
                   onClick={() => setPreset(option.value)}
+                  className={cn(
+                    'h-8 rounded-md px-3 text-sm font-medium transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    preset === option.value
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
                 >
                   {option.label}
-                </Button>
+                </button>
               ))}
             </div>
             {preset === 'custom' && (
@@ -366,20 +421,24 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
               />
             )}
           </div>
-          <p className="text-sm font-medium text-foreground">
-            {endsAtDate ? `Kết thúc: ${format(endsAtDate, DATE_DISPLAY)}` : 'Chọn thời hạn để xem ngày kết thúc'}
+          <p className="text-sm text-muted-foreground">
+            {endsAtDate ? (
+              <>
+                Kết thúc{' '}
+                <span className="font-medium tabular-nums text-foreground">
+                  {format(endsAtDate, DATE_DISPLAY)}
+                </span>
+                {lifetimeDays !== null && (
+                  <span className="tabular-nums"> · {lifetimeDays} ngày</span>
+                )}
+              </>
+            ) : (
+              'Chọn thời hạn để xem ngày kết thúc'
+            )}
             {lifetimeDays !== null && lifetimeDays > MAX_LIFETIME_DAYS && (
-              <span className="ml-2 text-destructive">vượt giới hạn 180 ngày</span>
+              <span className="ml-2 font-medium text-destructive">vượt giới hạn 180 ngày</span>
             )}
           </p>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-3">
-          <div className="space-y-1">
-            <Label htmlFor="ad-active">Trạng thái hiển thị</Label>
-            <p className="text-xs text-muted-foreground">Tạm dừng giữ nguyên chiến dịch, nhân viên không thấy.</p>
-          </div>
-          <Switch id="ad-active" checked={isActive} onCheckedChange={setIsActive} />
         </div>
 
         <div className="space-y-1.5">
@@ -395,29 +454,43 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
             Khi nhiều chiến dịch cùng chạy, ưu tiên cao hơn hiển thị trước.
           </p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Button type="button" onClick={handleSubmit} disabled={isSubmitting || !!validationError} className="gap-2">
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            {initial && !forceFreshWindow ? 'Lưu thay đổi' : 'Đăng chiến dịch'}
-          </Button>
-          <Button type="button" variant="ghost" onClick={onDone}>
-            Hủy
-          </Button>
-        </div>
+        </FieldGroup>
       </div>
 
-      <div className="xl:sticky xl:top-4 xl:self-start">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Xem trước (375px)
-        </p>
+      <aside className="lg:sticky lg:top-4 lg:self-start">
+        <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+          <Smartphone className="h-3.5 w-3.5" aria-hidden="true" />
+          Xem trước trên điện thoại
+        </div>
         <div
           data-theme="employee"
-          className="mx-auto w-[375px] max-w-full overflow-hidden rounded-2xl border bg-[var(--employee-page)]"
+          className="w-full max-w-[375px] overflow-hidden rounded-xl border bg-[var(--employee-page)]"
         >
           <EmployeeAdContent banner={previewBanner} />
         </div>
+      </aside>
+    </div>
+
+    {/* Actions span the whole composer, below both columns — the preview is
+        reference material, not something to scroll past to reach Save. */}
+    <div className="flex flex-wrap items-center gap-3 border-t pt-4">
+      <Button type="button" onClick={handleSubmit} disabled={isSubmitting || !!validationError} className="gap-2">
+        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+        {initial && !forceFreshWindow ? 'Lưu thay đổi' : 'Đăng chiến dịch'}
+      </Button>
+      <Button type="button" variant="ghost" onClick={onDone}>
+        Hủy
+      </Button>
+      <div className="ml-auto flex items-center gap-2">
+        <Label htmlFor="ad-active" className="text-xs font-normal text-muted-foreground">
+          Bật / Tắt
+        </Label>
+        <Switch id="ad-active" checked={isActive} onCheckedChange={setIsActive} />
       </div>
+      {validationError && (
+        <p role="alert" className="w-full text-sm text-destructive">{validationError}</p>
+      )}
+    </div>
     </div>
   );
 };

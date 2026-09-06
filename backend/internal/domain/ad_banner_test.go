@@ -24,7 +24,7 @@ func validAdBanner() *AdBanner {
 		},
 		CTAs: []AdBannerCTA{
 			{Label: "Gọi hotline", Type: AdBannerCTATypePhone, Value: "0914827988"},
-			{Label: "Nhóm Zalo", Type: AdBannerCTATypeURL, Value: "https://zalo.me/g/ekvooqdb9hjcl3qmogof"},
+			{Label: "Zalo", Type: AdBannerCTATypeZalo, Value: "https://zalo.me/g/ekvooqdb9hjcl3qmogof"},
 		},
 		Footer:   "Ting Ting Software Solutions — Đồng hành cùng người lao động.",
 		StartsAt: starts,
@@ -68,7 +68,10 @@ func TestAdBannerValidateRules(t *testing.T) {
 			b.CTAs = []AdBannerCTA{{Label: string(make([]byte, 41)), Type: AdBannerCTATypeURL, Value: "https://a"}}
 		}},
 		{"unknown CTA type", func(b *AdBanner) {
-			b.CTAs = []AdBannerCTA{{Label: "Zalo", Type: "zalo", Value: "https://zalo.me"}}
+			b.CTAs = []AdBannerCTA{{Label: "Zalo", Type: "sms", Value: "https://zalo.me"}}
+		}},
+		{"http zalo rejected", func(b *AdBanner) {
+			b.CTAs = []AdBannerCTA{{Label: "Zalo", Type: AdBannerCTATypeZalo, Value: "http://zalo.me"}}
 		}},
 		{"phone with letters", func(b *AdBanner) {
 			b.CTAs = []AdBannerCTA{{Label: "Gọi", Type: AdBannerCTATypePhone, Value: "0914abc988"}}

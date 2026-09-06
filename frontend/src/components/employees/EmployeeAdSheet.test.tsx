@@ -20,7 +20,7 @@ const banner: AdBanner = {
   ],
   ctas: [
     { label: 'Gọi hotline', type: 'phone', value: '0914827988' },
-    { label: 'Nhóm Zalo', type: 'url', value: 'https://zalo.me/g/example' },
+    { label: 'Zalo', type: 'zalo', value: 'https://zalo.me/g/example' },
   ],
   footer: 'Ting Ting Software Solutions — Đồng hành cùng người lao động.',
   targetProjectIds: [12],
@@ -42,7 +42,7 @@ describe('EmployeeAdSheet', () => {
       expect(screen.getByText(bullet)).toBeInTheDocument();
     });
     expect(screen.getByRole('button', { name: 'Gọi hotline' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Nhóm Zalo' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zalo' })).toBeInTheDocument();
     expect(screen.getByText(banner.footer)).toBeInTheDocument();
   });
 
@@ -58,7 +58,7 @@ describe('EmployeeAdSheet', () => {
     const onCTAClick = vi.fn();
     render(<EmployeeAdSheet open onClose={vi.fn()} banner={banner} onCTAClick={onCTAClick} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Nhóm Zalo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zalo' }));
     expect(onCTAClick).toHaveBeenCalledWith(banner.ctas[1], 1);
   });
 });
