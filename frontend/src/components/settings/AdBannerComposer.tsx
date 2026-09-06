@@ -367,27 +367,36 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
         </FieldGroup>
 
         <FieldGroup title="Đối tượng & lịch chạy" description="Ai nhìn thấy chiến dịch này, và trong khoảng thời gian nào.">
-        <div className="space-y-1.5">
-          <Label>Dự án hiển thị</Label>
-          <select
-            id="ad-project"
-            value={targetProjectIds[0]?.toString() ?? ''}
-            onChange={(e) =>
-              setTargetProjectIds(e.target.value === '' ? [] : [Number(e.target.value)])
-            }
-            className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
-          >
-            <option value="">Tất cả dự án — mọi nhân viên đang làm việc</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.code} — {project.name}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-muted-foreground">
-            Một chiến dịch chỉ chạy trên một dự án; chọn "Tất cả dự án" để hiển thị với mọi nhân viên.
-          </p>
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_10rem]">
+          <div className="space-y-1.5">
+            <Label htmlFor="ad-project">Dự án</Label>
+            <select
+              id="ad-project"
+              value={targetProjectIds[0]?.toString() ?? ''}
+              onChange={(e) =>
+                setTargetProjectIds(e.target.value === '' ? [] : [Number(e.target.value)])
+              }
+              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="">Tất cả dự án</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>{project.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="ad-priority">Độ ưu tiên</Label>
+            <Input
+              id="ad-priority"
+              type="number"
+              value={priority}
+              onChange={(e) => setPriority(Number(e.target.value))}
+            />
+          </div>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Một chiến dịch chọn được một dự án duy nhất — "Tất cả dự án" hiển thị với mọi nhân viên. Ưu tiên cao hơn hiển thị trước.
+        </p>
 
         <div className="space-y-2">
           <Label>Thời gian hiển thị</Label>
@@ -449,19 +458,6 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
           </p>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="ad-priority">Độ ưu tiên</Label>
-          <Input
-            id="ad-priority"
-            type="number"
-            value={priority}
-            onChange={(e) => setPriority(Number(e.target.value))}
-            className="w-32"
-          />
-          <p className="text-xs text-muted-foreground">
-            Khi nhiều chiến dịch cùng chạy, ưu tiên cao hơn hiển thị trước.
-          </p>
-        </div>
         </FieldGroup>
       </div>
 

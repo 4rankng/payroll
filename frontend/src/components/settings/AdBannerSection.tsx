@@ -87,7 +87,7 @@ export const AdBannerSection = () => {
 
   const projectNameById = useMemo(() => {
     const map = new Map<number, string>();
-    projects.forEach((p) => map.set(p.id, `${p.code} — ${p.name}`));
+    projects.forEach((p) => map.set(p.id, p.name));
     return map;
   }, [projects]);
 
