@@ -6,6 +6,10 @@
 // Why each layer matters:
 //   - http.MaxBytesReader BEFORE c.FormFile caps the whole request body, so
 //     an oversized upload is rejected while streaming in, not after.
+//   - the filename/extension gate restores the pre-guard endpoints' contract
+//     (.xlsx only, .xls solely where an endpoint opts in): a .docx or a
+//     renamed ZIP must be rejected up front, not pass the sniff and fail in
+//     the async worker after a junk asset was persisted.
 //   - the fileHeader.Size check catches oversized files even when the
 //     multipart stream lies about its length.
 //   - the magic sniff rejects non-Excel content regardless of what the
@@ -20,11 +24,13 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
+	"api-server/internal/constants"
 	"api-server/internal/transport/http/response"
 )
 
@@ -41,9 +47,10 @@ func MaxBytes() int64 {
 	return DefaultMaxBytes
 }
 
-// Validate checks the "file" multipart field (body cap → size cap → magic
-// sniff) and returns the file header for further use. On rejection it has
-// already written the error response; the bool reports validity.
+// Validate checks the "file" multipart field (body cap → filename/extension
+// gate → size cap → magic sniff) and returns the file header for further
+// use. On rejection it has already written the error response; the bool
+// reports validity.
 func Validate(c *gin.Context, allowXLS bool) (*multipart.FileHeader, bool) {
 	limit := MaxBytes()
 
@@ -60,13 +67,33 @@ func Validate(c *gin.Context, allowXLS bool) (*multipart.FileHeader, bool) {
 		return nil, false
 	}
 
-	// Step 2: declared size check.
+	// Step 2: filename gate — a present, named file with a workbook extension.
+	// The extension check is the pre-guard endpoints' contract (a .docx or a
+	// renamed zip must 400 here, not pass the sniff and die async later);
+	// content is still verified by the magic sniff below, so a bare rename
+	// cannot smuggle non-Excel bytes through.
+	if strings.TrimSpace(fileHeader.Filename) == "" {
+		response.BadRequest(c, constants.MsgFileNameEmptyVN)
+		return nil, false
+	}
+	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+	if ext != ".xlsx" && !(allowXLS && ext == ".xls") {
+		if allowXLS {
+			response.BadRequest(c, "File phải có định dạng .xlsx hoặc .xls")
+		} else {
+			response.BadRequest(c, "File phải có định dạng .xlsx")
+		}
+		return nil, false
+	}
+
+	// Step 3: declared size check.
 	if fileHeader.Size > limit {
 		response.BadRequest(c, "File vượt quá giới hạn dung lượng")
 		return nil, false
 	}
 
-	// Step 3: open + magic sniff, then rewind for the caller.
+	// Step 4: open + magic sniff. The sniffed handle is closed here; callers
+	// get the fileHeader and open their own fresh reader from its start.
 	file, err := fileHeader.Open()
 	if err != nil {
 		response.InternalServerError(c, "Không thể đọc file")

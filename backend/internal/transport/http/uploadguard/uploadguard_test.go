@@ -68,6 +68,52 @@ func TestGuardRejectsMissingFile(t *testing.T) {
 	}
 }
 
+// Valid ZIP bytes under a non-workbook extension are rejected up front — a
+// renamed .docx must 400 here, not pass the sniff and die in the async
+// worker after a junk asset was persisted.
+func TestGuardRejectsWrongExtension(t *testing.T) {
+	src := excelize.NewFile()
+	if err := src.SetCellValue("Sheet1", "A1", "ok"); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	if err := src.Write(&buf); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, name := range []string{"report.docx", "report.txt", "report"} {
+		c := uploadContext(t, name, buf.Bytes())
+		if _, ok := Validate(c, false); ok {
+			t.Fatalf("%q accepted on xlsx-only endpoint", name)
+		}
+		if c.Writer.Status() != 400 {
+			t.Fatalf("%q: status = %d, want 400", name, c.Writer.Status())
+		}
+	}
+
+	// .xls content/extension still needs the explicit opt-in.
+	c := uploadContext(t, "legacy.xls", buf.Bytes())
+	if _, ok := Validate(c, false); ok {
+		t.Fatal(".xls accepted on xlsx-only endpoint")
+	}
+}
+
+func TestGuardRejectsEmptyFilename(t *testing.T) {
+	src := excelize.NewFile()
+	var buf bytes.Buffer
+	if err := src.Write(&buf); err != nil {
+		t.Fatal(err)
+	}
+
+	c := uploadContext(t, "   ", buf.Bytes())
+	if _, ok := Validate(c, false); ok {
+		t.Fatal("blank filename accepted")
+	}
+	if c.Writer.Status() != 400 {
+		t.Fatalf("status = %d, want 400", c.Writer.Status())
+	}
+}
+
 func uploadContext(t *testing.T, filename string, content []byte) *gin.Context {
 	t.Helper()
 	var body bytes.Buffer

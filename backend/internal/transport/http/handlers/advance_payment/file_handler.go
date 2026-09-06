@@ -183,14 +183,18 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 		return
 	}
 
-	forceReprocess, err := strconv.ParseBool(c.DefaultPostForm("force_reprocess", "false"))
-	if err != nil {
-		response.BadRequest(c, "force_reprocess không hợp lệ")
+	// Guarded multipart receive FIRST (body cap, filename/extension gate,
+	// size cap, magic sniff): it must wrap the request body before any
+	// PostForm read consumes it. After Receive has parsed the form, the
+	// PostForm read below is memory-only.
+	fileContent, filename, ok := uploadguard.Receive(c, false)
+	if !ok {
 		return
 	}
 
-	fileContent, filename, ok := uploadguard.Receive(c, false)
-	if !ok {
+	forceReprocess, err := strconv.ParseBool(c.DefaultPostForm("force_reprocess", "false"))
+	if err != nil {
+		response.BadRequest(c, "force_reprocess không hợp lệ")
 		return
 	}
 

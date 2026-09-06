@@ -66,6 +66,16 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		return
 	}
 
+	// Guarded multipart parse FIRST: body cap, filename/extension gate, size
+	// cap, magic sniff. It must wrap the request body before ANY PostForm
+	// read — PostForm triggers the multipart parse, which would otherwise
+	// consume the whole unbounded body ahead of the cap. After Validate has
+	// parsed the form, the PostForm reads below are memory-only.
+	header, ok := uploadguard.Validate(c, false)
+	if !ok {
+		return
+	}
+
 	projectIDStr := c.PostForm("project_id")
 	if projectIDStr == "" {
 		response.BadRequest(c, "project_id là bắt buộc")
@@ -112,10 +122,6 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		}
 	}
 
-	header, ok := uploadguard.Validate(c, false)
-	if !ok {
-		return
-	}
 	file, err := header.Open()
 	if err != nil {
 		response.InternalServerError(c, "Không thể đọc file")
