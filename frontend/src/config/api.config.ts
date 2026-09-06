@@ -319,6 +319,12 @@ export const API_ENDPOINTS = {
     byId: (id: number) => `/settings/${id}`,
     byKey: (key: string) => `/settings/key/${key}`,
   },
+  adBanners: {
+    base: '/ad-banners',
+    byId: (id: number) => `/ad-banners/${id}`,
+    myBanner: '/me/ad-banner',
+    click: (id: number) => `/me/ad-banner/${id}/click`,
+  },
 
   // Zalo ZNS connection management (Admin only). The admin pastes all OA
   // fields directly — there is no OAuth authorization-code flow.

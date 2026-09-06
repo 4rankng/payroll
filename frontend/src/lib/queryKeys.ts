@@ -128,6 +128,18 @@ export function bankTransferHistoriesKey(filters: Record<string, unknown>) {
   return ['payrolls', 'bank-transfer-histories', filters] as const;
 }
 
+// ========== AD BANNER KEYS ==========
+
+/** Employee resolve endpoint — the single campaign addressing the user. */
+export function employeeAdBannerKey() {
+  return ['ad-banner', 'me'] as const;
+}
+
+/** Admin campaign list with click stats. */
+export function adminAdBannersKey() {
+  return ['ad-banners', 'list'] as const;
+}
+
 
 // ========== QUERY KEY PREDICATES ==========
 

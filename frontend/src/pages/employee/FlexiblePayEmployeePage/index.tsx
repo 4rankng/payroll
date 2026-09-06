@@ -28,6 +28,7 @@ import { EmployeeMonthNavigator } from "@/components/employees/EmployeeMonthNavi
 import { useEmployeeMonth } from "@/hooks/useEmployeeMonth";
 import { ChangePasswordSheet } from "@/components/employees/ChangePasswordSheet";
 import { AdvancePaymentRequestForm } from "@/components/advance-payment/AdvancePaymentRequestForm";
+import { EmployeeAdBanner } from "@/components/employees/EmployeeAdBanner";
 import { AdvancePaymentHistoryCard } from "@/components/advance-payment/AdvancePaymentHistoryCard";
 import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/AdvancePaymentConfirmSheet";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
@@ -315,6 +316,10 @@ const FlexiblePayEmployeePage = () => {
         />
       }
     >
+      {/* Ad slot: sibling ABOVE the pinned grid — grid children have explicit
+          lg:col-start/row-start placement and must not gain a sibling inside. */}
+      <EmployeeAdBanner />
+
       <div className="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:items-start lg:gap-6">
         {infoError ? (
           <section
