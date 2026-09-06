@@ -119,3 +119,25 @@ date-row fingerprint deferred to a second classification phase (restores the
 old detector's early exit, outcome-identical); dead helpers deleted. Caps
 (50/10 MiB excelkit, 20 MiB guard) deliberately untouched — policy pending
 with the user (legit ~12k-row workbooks vs decompression-bomb bound).
+
+## Caps policy resolved + live-sweep closures (user: "fix per recommendation")
+
+User delegated the caps decision. Resolution: excelkit caps are now
+env-tunable (`EXCEL_UNZIP_MAX_BYTES`, `EXCEL_XML_MAX_BYTES`) with defaults
+raised 50/10 → 64/32 MiB — the total still bounds a decompression bomb while
+dense legitimate workbooks (12k-row imports, re-uploaded sao-kê exports)
+clear the per-stream limit. Also fixed in the same pass: `AcceptUpload`'s
+secondary size check was still 10 MiB and returned a plain error, so a 10–20
+MiB BCC file passed the guard then 500'd — now 20 MiB and a 400 validation
+error; and bulk-failure assignment errors ("chưa được phân công") map to an
+explicit reason instead of the generic "Không thể tạo bảng chấm công" bucket
+(found live: 161 identical opaque errors on a mis-targeted upload).
+
+Live-sweep findings closed: the "LGD" fixture belongs to **LGDISPLAY (70)**
+(not project 58) — read-only prod query shows 58's config never had `OT390`
+on prod either, while 70's payrate carries the `HC/OT30…OT390` keys and all
+the OT-keyed history; re-run against 70 completed 122/0/134/0. BUMHAN T08
+stays a partner-config action: the 09-04 payrate reshape left its August
+window keyed differently from the file's labels (true on prod too, since
+local is a post-reshape restore). Lesson: partner filenames carry ambiguous
+short aliases — resolve the target project from assignments/payrate keys.
