@@ -11,6 +11,8 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	"api-server/internal/transport/http/middleware"
 )
 
 type APIClient struct {
@@ -202,6 +204,9 @@ func (c *APIClient) doRequest(method, path string, body any) (*http.Response, er
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	// Tag test traffic so the backend excludes it from api_metrics;
+	// System Health dashboards then reflect real usage only.
+	req.Header.Set(middleware.ClientSourceHeader, middleware.ClientSourceIntegrationTest)
 	if c.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.Token)
 	}
@@ -421,6 +426,7 @@ func (c *APIClient) UploadBytes(path, fileField, filename string, data []byte) (
 		return nil, 0, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set(middleware.ClientSourceHeader, middleware.ClientSourceIntegrationTest)
 	if strings.HasSuffix(path, "/timesheets/partner-import") {
 		req.Header.Set("Idempotency-Key", fmt.Sprintf("integration-%d", time.Now().UnixNano()))
 	}
@@ -475,6 +481,7 @@ func (c *APIClient) UploadFile(path, fileField, filePath string, fields map[stri
 		return nil, 0, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set(middleware.ClientSourceHeader, middleware.ClientSourceIntegrationTest)
 	if strings.HasSuffix(path, "/timesheets/partner-import") {
 		req.Header.Set("Idempotency-Key", fmt.Sprintf("integration-%d", time.Now().UnixNano()))
 	}

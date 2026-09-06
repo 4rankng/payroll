@@ -116,6 +116,14 @@ func isNumeric(s string) bool {
 	return regexp.MustCompile(`^\d+$`).MatchString(s)
 }
 
+// ClientSourceHeader marks the origin of API traffic. The integration suite
+// tags its requests with it so they can be excluded from api_metrics.
+const ClientSourceHeader = "X-Client-Source"
+
+// ClientSourceIntegrationTest marks a request as coming from the integration
+// test suite (backend/tests/integration).
+const ClientSourceIntegrationTest = "integration-test"
+
 // APIMetrics middleware collects API call statistics
 func APIMetrics(repo domain.APIMetricRepository) gin.HandlerFunc {
 	logger := observability.GetLogger()
@@ -134,6 +142,12 @@ func APIMetrics(repo domain.APIMetricRepository) gin.HandlerFunc {
 		// Skip metrics collection for certain paths
 		path := c.Request.URL.Path
 		if shouldSkipMetrics(path) {
+			return
+		}
+
+		// Skip integration-test traffic so the dashboards reflect real usage
+		// instead of expected negative-case responses from the test suite.
+		if c.Request.Header.Get(ClientSourceHeader) == ClientSourceIntegrationTest {
 			return
 		}
 
