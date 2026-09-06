@@ -142,7 +142,29 @@ func TestOpenReader(t *testing.T) {
 	}
 
 	// Caps are the documented defaults.
-	if DefaultUnzipSizeLimit != 50<<20 || DefaultUnzipXMLSizeLimit != 10<<20 {
+	if DefaultUnzipSizeLimit != 64<<20 || DefaultUnzipXMLSizeLimit != 32<<20 {
 		t.Errorf("unexpected caps: %d / %d", DefaultUnzipSizeLimit, DefaultUnzipXMLSizeLimit)
+	}
+}
+
+func TestUnzipLimitEnvOverrides(t *testing.T) {
+	t.Setenv("EXCEL_UNZIP_MAX_BYTES", "104857600")
+	t.Setenv("EXCEL_XML_MAX_BYTES", "52428800")
+	if got := UnzipSizeLimit(); got != 100<<20 {
+		t.Errorf("UnzipSizeLimit() = %d, want 100 MiB override", got)
+	}
+	if got := UnzipXMLSizeLimit(); got != 50<<20 {
+		t.Errorf("UnzipXMLSizeLimit() = %d, want 50 MiB override", got)
+	}
+}
+
+func TestUnzipLimitInvalidEnvFallsBack(t *testing.T) {
+	t.Setenv("EXCEL_UNZIP_MAX_BYTES", "not-a-number")
+	t.Setenv("EXCEL_XML_MAX_BYTES", "-5")
+	if got := UnzipSizeLimit(); got != DefaultUnzipSizeLimit {
+		t.Errorf("UnzipSizeLimit() = %d, want default %d", got, DefaultUnzipSizeLimit)
+	}
+	if got := UnzipXMLSizeLimit(); got != DefaultUnzipXMLSizeLimit {
+		t.Errorf("UnzipXMLSizeLimit() = %d, want default %d", got, DefaultUnzipXMLSizeLimit)
 	}
 }

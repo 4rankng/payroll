@@ -156,6 +156,10 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		response.Conflict(c, err.Error())
 		return
 	}
+	if domain.IsValidationError(err) {
+		response.HandleDomainError(c, err)
+		return
+	}
 	if err != nil {
 		slog.Error("BCC import acceptance failed", "project_id", projectID, "user_id", userID, "error", err)
 		response.InternalServerError(c, "Không thể nhận tệp BCC. Vui lòng thử lại.")

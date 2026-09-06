@@ -16,7 +16,11 @@ import (
 	"api-server/internal/pkg/clock"
 )
 
-const maxBCCUploadSize = 10 << 20
+// maxBCCUploadSize bounds the durable-accept read of an uploaded BCC file.
+// It matches uploadguard's default body cap (20 MiB, EXCEL_UPLOAD_MAX_BYTES);
+// the guard rejects at the door, this is the defense-in-depth re-check on
+// the stored/replayed read.
+const maxBCCUploadSize = 20 << 20
 
 type deferBCCTerminalMetadataKey struct{}
 
@@ -46,7 +50,7 @@ func (s *BCCImportService) AcceptUpload(
 		return nil, fmt.Errorf("BCCImportService.AcceptUpload: read file: %w", err)
 	}
 	if len(data) > maxBCCUploadSize {
-		return nil, fmt.Errorf("file quá lớn (tối đa 10MB)")
+		return nil, domain.NewValidationError("file quá lớn (tối đa 20MB)")
 	}
 	if _, _, err := parseForMonth(forMonth); err != nil {
 		return nil, fmt.Errorf("tháng không hợp lệ: %w", err)
@@ -318,7 +322,7 @@ func (s *BCCImportService) ProcessUpload(
 		return nil, fmt.Errorf("BCCImportService.ProcessUpload: read file: %w", err)
 	}
 	if len(data) > maxBCCUploadSize {
-		return nil, fmt.Errorf("BCCImportService.ProcessUpload: file quá lớn (tối đa 10MB)")
+		return nil, domain.NewValidationError("file quá lớn (tối đa 20MB)")
 	}
 
 	// 2. Save raw file to storage.

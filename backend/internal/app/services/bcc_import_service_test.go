@@ -472,3 +472,14 @@ func TestPlanBCCReplacementZeroHourEntryDeletesPendingOnly(t *testing.T) {
 		t.Fatalf("countZeroHourEntries = %d, want 2", got)
 	}
 }
+
+func TestImportErrorsFromBulkFailuresMapsAssignmentError(t *testing.T) {
+	errors := importErrorsFromBulkFailures([]domainservices.BulkCreateFailure{{
+		Request: domainservices.BulkCreateTimesheetEntry{EmployeeID: 10, Date: "2026-08-24"},
+		Error:   "nhân viên chưa được phân công vào dự án này",
+	}}, map[uint]string{10: "Nguyễn Văn Trường"})
+
+	if len(errors) != 1 || errors[0].Reason != "ngày 2026-08-24: Nhân viên chưa được phân công vào dự án cho ngày chấm công" {
+		t.Fatalf("errors = %#v, want explicit assignment-missing reason", errors)
+	}
+}

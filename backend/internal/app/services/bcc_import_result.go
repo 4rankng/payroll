@@ -130,6 +130,8 @@ func safeBulkFailureReason(reason string) string {
 		return "Dữ liệu đã tồn tại"
 	case strings.Contains(normalized, "không tìm thấy mức lương"):
 		return "Chưa cấu hình mức lương phù hợp cho ca làm việc"
+	case strings.Contains(normalized, "phân công"):
+		return "Nhân viên chưa được phân công vào dự án cho ngày chấm công"
 	default:
 		return "Không thể tạo bảng chấm công"
 	}
