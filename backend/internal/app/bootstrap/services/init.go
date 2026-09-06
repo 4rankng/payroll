@@ -8,6 +8,7 @@ import (
 
 	bootstrapRepos "api-server/internal/app/bootstrap/repositories"
 	"api-server/internal/app/services"
+	"api-server/internal/app/services/ad_banner"
 	"api-server/internal/app/services/advance_payment"
 	"api-server/internal/app/services/asset"
 	"api-server/internal/app/services/attendance"
@@ -109,6 +110,7 @@ type Services struct {
 	OnePayFeeImport                   *settlement.OnePayFeeImportService
 	AdvancePayment                    *advance_payment.Service
 	AdvancePaymentFeeSchedule         *advance_payment.FeeScheduleService
+	AdBanner                          *ad_banner.Service
 	ImportProgress                    *advance_payment.ImportProgressService
 	EmployeeImport                    *employee.ImportService
 	EmployeeImportProgress            *infraServices.EmployeeImportProgressService
@@ -286,6 +288,9 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// instead of the retired flat-rate settings keys.
 	feeScheduleService := advance_payment.NewFeeScheduleService(db.DB, cacheService, eventBus, logger)
 	settingsConfigService.BindFeeScheduleResolver(feeScheduleService)
+
+	// Ad banner campaigns (employee portal "Quảng cáo").
+	adBannerService := ad_banner.NewService(repos.AdBanner, repos.ProjectEmployee, repos.Employee, eventBus, cacheService, logger)
 
 	// Pre-declare disbursement registry so the advance payment config closure
 	// can reference it. The actual NewRegistry() + provider registration happens
@@ -741,6 +746,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		OnePayFeeImport:                   onePayFeeImportService,
 		AdvancePayment:                    advancePaymentService,
 		AdvancePaymentFeeSchedule:         feeScheduleService,
+		AdBanner:                          adBannerService,
 		ImportProgress:                    importProgressService,
 		EmployeeImport:                    employeeImportService,
 		EmployeeImportProgress:            employeeImportProgressService,

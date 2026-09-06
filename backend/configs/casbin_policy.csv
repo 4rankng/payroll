@@ -183,6 +183,7 @@ p, employee, /api/v1/me/advance-payment/history, GET, allow
 p, employee, /api/v1/me/advance-payment/calculate-fee, POST, allow
 p, employee, /api/v1/me/check-in-advance, GET, allow
 p, employee, /api/v1/me/check-in-advance/request, POST, allow
+p, employee, /api/v1/me/ad-banner/*, POST, allow
 p, employee, /api/v1/auth/me, GET, allow
 p, employee, /api/v1/auth/change-password, POST, allow
 p, employee, /api/v1/auth/logout, POST, allow

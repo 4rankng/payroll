@@ -45,6 +45,10 @@ const (
 	// handler maps to "projects:list*" / "projects:count*", so staleness is
 	// bounded by event coverage rather than the TTL alone.
 	ProjectListCacheTTL = 60 * time.Second
+	// AdBannerCacheTTL bounds the employee ad-banner resolve cache. Campaign
+	// volume is tiny (tens), so a single live-list entry serves everyone and
+	// staleness after an admin edit is at most one TTL.
+	AdBannerCacheTTL = 60 * time.Second
 
 	// Employee Summary Cache TTLs (different intervals based on data volatility)
 	EmployeeTimesheetSummaryCacheTTL = 5 * time.Minute  // Timesheet data changes frequently

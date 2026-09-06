@@ -120,6 +120,7 @@ func main() {
 	// Phase 11: Extended flows
 	runEmployeeSelfServiceTests(client, testData, reporter, cfg)
 	runTimesheetExtendedTests(client, testData, reporter, cfg)
+	runAdBannerTests(client, testData, reporter, cfg)
 
 	// Summary
 	reporter.PrintSummary()

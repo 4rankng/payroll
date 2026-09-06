@@ -90,6 +90,7 @@ type Handlers struct {
 	Audit                *handlers.AuditHandler
 	AdvancePayment       *advancePaymentHandlers.AdvancePaymentHandler
 	AdvancePaymentFee    *advancePaymentHandlers.FeeScheduleHandler
+	AdBanner             *handlers.AdBannerHandler
 	EmployeeImport       *employeeHandlers.ImportHandler
 	DBExport             *handlers.DBExportHandler
 	Push                 *pushHandlers.Handler
@@ -116,6 +117,7 @@ type Middleware struct {
 	ZaloResetConfirmRateLimit gin.HandlerFunc // per-otp_session_id cap for /zalo-reset/confirm
 	APIRateLimit              gin.HandlerFunc
 	StrictRateLimit           gin.HandlerFunc
+	AdBannerClickRateLimit    gin.HandlerFunc
 	TenantSemaphore           *middleware.TenantSemaphoreMiddleware
 	APIMetrics                gin.HandlerFunc
 }
@@ -429,6 +431,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Audit:                handlers.NewAuditHandler(repos.AuditLog),
 		AdvancePayment:       advancePaymentHandlers.NewAdvancePaymentHandler(services.AdvancePayment, repos.Asset, asynqClient, services.ImportProgress, fileStorage, services.FlexPayReconciliationService, services.FlexPayReconciliationExporter, services.FlexPaySettlementService, services.Email, services.Audit, repos.Notification, repos.WalletPayment, repos.TxWalletPayment, clk),
 		AdvancePaymentFee:    advancePaymentHandlers.NewFeeScheduleHandler(services.AdvancePaymentFeeSchedule, clk),
+		AdBanner:             handlers.NewAdBannerHandler(services.AdBanner, logger),
 		EmployeeImport:       employeeImportHandler,
 		DBExport:             handlers.NewDBExportHandler(dbExportSvc.NewDBExportService(db, services.CacheService, cfg.Asset.StoragePath), services.Audit),
 		Push:                 pushHandlers.NewHandler(services.Push),
@@ -491,6 +494,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 		ZaloResetConfirmRateLimit: middleware.CreateZaloResetConfirmRateLimit(cfg.Redis.Addr),
 		APIRateLimit:              middleware.CreateAPIRateLimit(cfg.Redis.Addr),
 		StrictRateLimit:           middleware.CreateStrictRateLimit(cfg.Redis.Addr),
+		AdBannerClickRateLimit:    middleware.CreateEndpointRateLimit("30-M", cfg.Redis.Addr),
 		TenantSemaphore:           middleware.NewTenantSemaphoreMiddleware(tenantLimit),
 		APIMetrics:                middleware.APIMetrics(apiMetricRepo),
 	}

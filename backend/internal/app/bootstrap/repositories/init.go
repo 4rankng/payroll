@@ -49,6 +49,7 @@ type Repositories struct {
 	BulkTransferBatch         domain.BulkTransferBatchRepository
 	TimesheetImportJob        domain.TimesheetImportJobRepository
 	FlexPaySalaryNotification domain.FlexPaySalaryNotificationRepository
+	AdBanner                  domain.AdBannerRepository
 }
 
 func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositories {
@@ -91,6 +92,7 @@ func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositorie
 		BulkTransferBatch:         persistence.NewBulkTransferBatchRepository(db),
 		TimesheetImportJob:        persistence.NewTimesheetImportJobRepository(db),
 		FlexPaySalaryNotification: persistence.NewFlexPaySalaryNotificationRepository(db),
+		AdBanner:                  persistence.NewAdBannerRepository(db),
 	}
 
 	// Wallet repositories need *sql.DB for raw SQL queries

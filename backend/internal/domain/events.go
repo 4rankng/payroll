@@ -568,6 +568,27 @@ type DisbursementFeeScheduleDeletedEvent struct {
 	Summary       string
 }
 
+// Ad Banner Events — admin campaign lifecycle in the employee portal.
+
+type AdBannerCreatedEvent struct {
+	BaseEvent
+	Title    string
+	StartsAt time.Time
+	EndsAt   time.Time
+}
+
+type AdBannerUpdatedEvent struct {
+	BaseEvent
+	Title    string
+	StartsAt time.Time
+	EndsAt   time.Time
+}
+
+type AdBannerDeletedEvent struct {
+	BaseEvent
+	Title string
+}
+
 // Import/Export Events
 
 type DataImportedEvent struct {
