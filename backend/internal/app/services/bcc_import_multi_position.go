@@ -108,7 +108,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 9. Preserve reviewed rows, replace pending rows, and create missing rows.
 	entries, staleIDs, protectedSkippedCount, flexibleSkippedCount, perr := s.planMonthReplacement(
-		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs)
+		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, false)
 	if perr != nil {
 		return fail(fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", perr))
 	}
