@@ -144,10 +144,12 @@ func (w *BulkTransferPaymentWorker) UpdateForTransfer(ctx context.Context, reque
 		return fmt.Errorf("update payment statuses: %w", err)
 	}
 
-	// Invalidate timesheet caches so list/summary queries reflect the new payment status
+	// Invalidate timesheet caches so list/summary queries reflect the new payment status,
+	// and dashboard analytics that aggregate paid amounts (bank usage, monthly financials)
 	if w.cache != nil {
 		_ = w.cache.InvalidatePattern(ctx, "timesheets:list:*")
 		_ = w.cache.InvalidatePattern(ctx, "timesheets:summary:*")
+		_ = w.cache.InvalidatePattern(ctx, "dashboard:*")
 	}
 
 	// Update revenue_receivable for paid timesheets

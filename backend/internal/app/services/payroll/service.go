@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"mime/multipart"
 	"sort"
 	"strings"
@@ -40,6 +41,7 @@ type PayrollService struct {
 	bankTransferHistoryRepo bankTransferHistoryFileRepository
 	transactionCodeRepo     domain.TransactionCodeRepository
 	simulationService       *SettlementSimulationService
+	events                  domain.EventBus
 }
 
 // SetSimulationService wires the settlement-simulation service. Called from
@@ -113,6 +115,7 @@ func NewPayrollService(
 	return &PayrollService{
 		bulkTransferService:     bulkTransferService,
 		excelService:            excelService,
+		events:                  eventBus,
 		timesheetRepo:           timesheetRepo,
 		employeeRepo:            employeeRepo,
 		projectRepo:             projectRepo,
@@ -702,6 +705,17 @@ func (s *PayrollService) MarkExternallyPaid(ctx context.Context, req *dto.MarkEx
 
 	if err := s.timesheetRepo.BulkUpdatePaymentStatus(ctx, updates); err != nil {
 		return nil, fmt.Errorf("failed to update payment status: %w", err)
+	}
+
+	// Publish payment-status event so cached dashboards (bank usage, monthly
+	// financials) and timesheet list/summary caches reflect the new paid state.
+	timesheetIDs := make([]uint, len(updates))
+	for i, u := range updates {
+		timesheetIDs[i] = u.TimesheetID
+	}
+	event := domain.NewBulkTransferPaymentStatusUpdatedEvent(ctx, 0, timesheetIDs, string(domain.PaymentStatusPaid), len(updates))
+	if err := s.events.Publish(ctx, event); err != nil {
+		slog.Default().Warn("Failed to publish BulkTransferPaymentStatusUpdatedEvent", "count", len(updates), "error", err)
 	}
 
 	return &dto.MarkExternallyPaidResponse{MarkedCount: len(updates)}, nil
