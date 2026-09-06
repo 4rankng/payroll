@@ -1,8 +1,13 @@
 import { useState, useMemo, useCallback } from 'react';
 import { ResponsiveTable } from '@/components/ui/responsive-table';
+import {
+  AdminPageCanvas,
+  AdminPageHeaderCard,
+  AdminSectionCard,
+  AdminFilterRow,
+} from '@/components/shared/AdminPageFrame';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
-import { InlineStatStrip } from '@/components/shared/InlineStatStrip';
 import { SearchBar } from '@/components/shared/SearchBar';
 import { FilterPill } from '@/components/shared/FilterPill';
 import { useLoans, useLenders } from '@/hooks/api/useLoans';
@@ -107,11 +112,28 @@ const LoansPage = () => {
   );
 
   return (
-    <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5">
-      <PageHeader
-        title="Quản lý khoản vay"
-        description="Quản lý chủ nợ và các khoản vay của công ty"
-      />
+    <AdminPageCanvas>
+      <AdminPageHeaderCard>
+        <PageHeader
+          icon={Landmark}
+          title="Quản lý khoản vay"
+          description="Quản lý chủ nợ và các khoản vay của công ty"
+          actions={[
+            {
+              label: 'QL Chủ nợ',
+              onClick: handleOpenLenderSheet,
+              icon: Users2,
+              variant: 'outline' as const,
+            },
+            {
+              label: 'Tạo khoản vay',
+              onClick: handleOpenAddLoan,
+              icon: Plus,
+              variant: 'default' as const,
+            },
+          ]}
+        />
+      </AdminPageHeaderCard>
 
       <div className="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-4 gap-3">
         <KpiHeroCard
@@ -147,64 +169,51 @@ const LoansPage = () => {
         />
       </div>
 
-      {/* Action buttons */}
-      <div className="flex flex-wrap gap-1.5 items-center">
-        <button
-          onClick={handleOpenLenderSheet}
-          className="inline-flex items-center gap-1.5 h-8 px-3 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors"
-        >
-          <Users2 className="h-4 w-4 shrink-0" />
-          QL Chủ nợ
-        </button>
-        <button
-          onClick={handleOpenAddLoan}
-          className="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="h-4 w-4 shrink-0" />
-          Tạo khoản vay
-        </button>
-      </div>
+      <AdminSectionCard aria-label="Danh sách khoản vay">
+        <AdminFilterRow>
+          <p className="text-sm font-semibold text-slate-800">Danh sách</p>
+          <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
+            <SearchBar
+              searchTerm={loanSearch}
+              onSearchChange={setLoanSearch}
+              placeholder="Tìm mã vay, chủ nợ..."
+              className="w-52"
+            />
+            <FilterPill
+              value={loanFilters.status ?? 'all'}
+              onChange={handleStatusChange}
+              placeholder="Trạng thái"
+              options={[
+                { value: 'active', label: 'Đang vay' },
+                { value: 'paid', label: 'Đã trả' },
+                { value: 'overdue', label: 'Quá hạn' },
+              ]}
+            />
+            <FilterPill
+              value={loanFilters.lender_id?.toString() ?? 'all'}
+              onChange={handleLenderChange}
+              placeholder="Chủ nợ"
+              options={lenders.map((l) => ({ value: l.id.toString(), label: l.name }))}
+            />
+          </div>
+        </AdminFilterRow>
 
-      {/* Search + filters */}
-      <div className="flex flex-wrap items-center gap-2">
-        <SearchBar
-          searchTerm={loanSearch}
-          onSearchChange={setLoanSearch}
-          placeholder="Tìm mã vay, chủ nợ..."
-          className="w-52"
+        <ResponsiveTable
+          data={filteredLoans}
+          columns={loanColumns}
+          mobileFields={loanMobileFields}
+          getRowId={getLoanRowId}
+          onRowClick={handleLoanRowClick}
+          pagination={loansPagination}
+          onPageChange={handleLoanPageChange}
+          onPageSizeChange={handleLoanPageSizeChange}
+          emptyState={loansEmptyState}
+          accordionType="single"
+          sorting={sorting}
+          onSortingChange={onSortingChange}
+          embedded
         />
-        <FilterPill
-          value={loanFilters.status ?? 'all'}
-          onChange={handleStatusChange}
-          placeholder="Trạng thái"
-          options={[
-            { value: 'active', label: 'Đang vay' },
-            { value: 'paid', label: 'Đã trả' },
-            { value: 'overdue', label: 'Quá hạn' },
-          ]}
-        />
-        <FilterPill
-          value={loanFilters.lender_id?.toString() ?? 'all'}
-          onChange={handleLenderChange}
-          placeholder="Chủ nợ"
-          options={lenders.map((l) => ({ value: l.id.toString(), label: l.name }))}
-        />
-      </div>
-
-      <ResponsiveTable
-        data={filteredLoans}
-        columns={loanColumns}
-        mobileFields={loanMobileFields}
-        getRowId={getLoanRowId}
-        onRowClick={handleLoanRowClick}
-        pagination={loansPagination}
-        onPageChange={handleLoanPageChange}
-        onPageSizeChange={handleLoanPageSizeChange}
-        emptyState={loansEmptyState}
-        accordionType="single"
-        sorting={sorting}
-        onSortingChange={onSortingChange}
-      />
+      </AdminSectionCard>
 
       <LenderManagementSheet isOpen={isLenderSheetOpen} onClose={handleCloseLenderSheet} />
       <AddLoanSheet isOpen={isAddLoanOpen} onClose={handleCloseAddLoan} />
@@ -213,7 +222,7 @@ const LoansPage = () => {
         onClose={handleCloseLoanDetails}
         loanId={selectedLoanId}
       />
-    </div>
+    </AdminPageCanvas>
   );
 };
 

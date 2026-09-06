@@ -1,10 +1,22 @@
-# Test Plan — Admin UI Shell Redesign (wave: users/projects/employees/payment-history/ledger + transactions removal)
+# Test Plan — Admin UI Shell Redesign
 
 Date: 2026-09-06
 Scope: frontend only. Visual shell unification with the advance-payments/timesheet
 idiom (ambient canvas, glass header card, operations section card with embedded
 table). No API, hook, or data-flow changes. `/admin/transactions` route retired
 (redirects to `/admin/ledger`); "Giao dịch" nav entries removed.
+
+## Wave 2 (same day): wallet / loans / system-health / cron-health / audit-log / settings
+
+| # | Check | Result |
+|---|-------|--------|
+| W2-1 | tsc: 0 new errors in touched files (AdminPageFrame, 6 pages) | ✅ grep empty; total still 144 (= pre-wave baseline) |
+| W2-2 | pnpm lint | ✅ exit 0 |
+| W2-3 | pnpm build | ✅ exit 0 |
+| W2-4 | Full vitest suite | ✅ 121 files / 504 tests |
+| W2-5 | Playwright pass localhost:3000 | ✅ vision review: wallet, loans, settings clean (glass header, KPI/ops cards, no nesting defects); DOM assertions: system-health / cron-health / audit-log glass header + backdrop-blur + canvas + correct titles PASS |
+
+Wave-2 invariants: wallet 3 header actions + dialogs unchanged; loans actions moved to header (QL Chủ nợ / Tạo khoản vay) + sheets unchanged; system-health time-range toggle + health pill in header; cron badges in header; audit-log infinite scroll + filters unchanged; settings all 5 tabs + URL `?tab=` routing + loading/error states unchanged.
 
 ## A. Static gates (must all pass)
 

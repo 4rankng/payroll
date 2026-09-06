@@ -2,6 +2,10 @@ import React, { useMemo, useState } from "react";
 import { useAppState } from "@/contexts";
 import { Activity, AlertTriangle, Gauge, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  AdminPageCanvas,
+  AdminPageHeaderCard,
+} from "@/components/shared/AdminPageFrame";
 import { PageHeader } from "@/components/shared/PageHeader";
 import {
   SummaryPills,
@@ -33,9 +37,8 @@ export default function SystemHealthPage() {
   const healthMeta = healthResult?.meta ?? null;
 
   return (
-    <div className="min-h-full">
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5">
-
+    <AdminPageCanvas>
+      <AdminPageHeaderCard>
         <PageHeader icon={Activity} title="Tình trạng API" description="Giám sát hiệu suất và lỗi của hệ thống">
           <div className="flex items-center gap-3">
             <TimeRangeToggle value={errorDays} onChange={setErrorDays} />
@@ -50,33 +53,32 @@ export default function SystemHealthPage() {
             )}
           </div>
         </PageHeader>
+      </AdminPageHeaderCard>
 
-        <SummaryPills days={errorDays} />
+      <SummaryPills days={errorDays} />
 
-        <section>
-          <SectionLabel icon={Gauge}>Độ Trễ — Endpoint (7 ngày)</SectionLabel>
-          <LatencyGrid days={7} limit={12} />
-        </section>
+      <section>
+        <SectionLabel icon={Gauge}>Độ Trễ — Endpoint (7 ngày)</SectionLabel>
+        <LatencyGrid days={7} limit={12} />
+      </section>
 
-        <section>
-          <SectionLabel icon={AlertTriangle}>Lỗi Theo Endpoint</SectionLabel>
-          <ErrorByEndpointCards days={errorDays} />
-        </section>
+      <section>
+        <SectionLabel icon={AlertTriangle}>Lỗi Theo Endpoint</SectionLabel>
+        <ErrorByEndpointCards days={errorDays} />
+      </section>
 
-        <section>
-          <SectionLabel icon={Eye}>Cần Điều Tra</SectionLabel>
-          <UserInvestigateTable days={errorDays === 1 ? 1 : 7} limit={10} />
-        </section>
+      <section>
+        <SectionLabel icon={Eye}>Cần Điều Tra</SectionLabel>
+        <UserInvestigateTable days={errorDays === 1 ? 1 : 7} limit={10} />
+      </section>
 
-        <section>
-          <FailedLoginBadges days={errorDays === 1 ? 1 : 7} />
-        </section>
+      <section>
+        <FailedLoginBadges days={errorDays === 1 ? 1 : 7} />
+      </section>
 
-        <section>
-          <BrowserPlatformStats days={30} />
-        </section>
-
-      </div>
-    </div>
+      <section>
+        <BrowserPlatformStats days={30} />
+      </section>
+    </AdminPageCanvas>
   );
 }

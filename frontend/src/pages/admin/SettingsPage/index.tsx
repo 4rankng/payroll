@@ -1,6 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AlertCircle, RefreshCw, Settings } from 'lucide-react';
+import {
+  AdminPageCanvas,
+  AdminPageHeaderCard,
+} from '@/components/shared/AdminPageFrame';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -53,25 +57,27 @@ const SettingsPage = () => {
 
   if (form.isLoading) {
     return (
-      <div className="mx-auto max-w-[1180px] space-y-6 p-4 lg:p-6">
-        {headerSkeleton}
+      <AdminPageCanvas contentClassName="max-w-[1180px] space-y-6">
+        <AdminPageHeaderCard>{headerSkeleton}</AdminPageHeaderCard>
         <Skeleton className="h-9 w-72" />
         <div className="space-y-3">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-72 w-full" />
         </div>
-      </div>
+      </AdminPageCanvas>
     );
   }
 
   if (form.loadError) {
     return (
-      <div className="mx-auto max-w-[1180px] space-y-6 p-4 lg:p-6">
-        <PageHeader
-          icon={Settings}
-          title="Cài đặt hệ thống"
-          description="Quản lý các cài đặt nghiệp vụ của hệ thống"
-        />
+      <AdminPageCanvas contentClassName="max-w-[1180px] space-y-6">
+        <AdminPageHeaderCard>
+          <PageHeader
+            icon={Settings}
+            title="Cài đặt hệ thống"
+            description="Quản lý các cài đặt nghiệp vụ của hệ thống"
+          />
+        </AdminPageHeaderCard>
         <div
           role="alert"
           className="flex flex-col gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -85,17 +91,19 @@ const SettingsPage = () => {
             Thử lại
           </Button>
         </div>
-      </div>
+      </AdminPageCanvas>
     );
   }
 
   return (
-    <div className="mx-auto max-w-[1180px] space-y-5 p-4 lg:p-6">
-      <PageHeader
-        icon={Settings}
-        title="Cài đặt hệ thống"
-        description="Quản lý các cài đặt nghiệp vụ của hệ thống"
-      />
+    <AdminPageCanvas contentClassName="max-w-[1180px] space-y-5">
+      <AdminPageHeaderCard>
+        <PageHeader
+          icon={Settings}
+          title="Cài đặt hệ thống"
+          description="Quản lý các cài đặt nghiệp vụ của hệ thống"
+        />
+      </AdminPageHeaderCard>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-5">
         <SettingsTabList />
@@ -122,7 +130,7 @@ const SettingsPage = () => {
           <ZaloConnectionSection />
         </TabsContent>
       </Tabs>
-    </div>
+    </AdminPageCanvas>
   );
 };
 

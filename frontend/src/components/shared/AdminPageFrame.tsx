@@ -12,9 +12,12 @@ import { cn } from '@/lib/utils';
 export const AdminPageCanvas = ({
   children,
   className,
+  contentClassName,
 }: {
   children: React.ReactNode;
   className?: string;
+  /** Override the inner container width (e.g. narrower form pages). */
+  contentClassName?: string;
 }) => (
   <div
     className={cn(
@@ -22,7 +25,12 @@ export const AdminPageCanvas = ({
       className,
     )}
   >
-    <div className="mx-auto max-w-[1480px] space-y-4 p-4 lg:space-y-5 lg:p-6">
+    <div
+      className={cn(
+        'mx-auto max-w-[1480px] space-y-4 p-4 lg:space-y-5 lg:p-6',
+        contentClassName,
+      )}
+    >
       {children}
     </div>
   </div>

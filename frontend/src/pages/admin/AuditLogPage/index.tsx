@@ -3,6 +3,12 @@ import { useAppState } from '@/contexts';
 import { ClipboardList, Loader2 } from 'lucide-react';
 import { useInfiniteAuditLogs } from '@/hooks/api/useAuditLogs';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll.tsx';
+import {
+  AdminPageCanvas,
+  AdminPageHeaderCard,
+  AdminSectionCard,
+  AdminFilterRow,
+} from '@/components/shared/AdminPageFrame';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { AuditLogFilters } from './AuditLogFilters';
@@ -48,9 +54,8 @@ export default function AuditLogPage() {
   }, []);
 
   return (
-    <div className="min-h-full">
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5">
-
+    <AdminPageCanvas>
+      <AdminPageHeaderCard>
         <PageHeader
           icon={ClipboardList}
           title="Nhật ký hoạt động"
@@ -62,18 +67,26 @@ export default function AuditLogPage() {
             </span>
           )}
         </PageHeader>
+      </AdminPageHeaderCard>
 
-        {/* Filters */}
-        <AuditLogFilters filters={filters} onChange={handleFiltersChange} />
-
-        {/* Initial loading */}
-        {isLoading && (
-          <div className="space-y-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <AuditLogCardSkeleton key={i} />
-            ))}
+      {/* Filters */}
+      <AdminSectionCard aria-label="Bộ lọc nhật ký">
+        <AdminFilterRow>
+          <p className="text-sm font-semibold text-slate-800">Nhật ký</p>
+          <div className="flex flex-1 items-center justify-end">
+            <AuditLogFilters filters={filters} onChange={handleFiltersChange} />
           </div>
-        )}
+        </AdminFilterRow>
+      </AdminSectionCard>
+
+      {/* Initial loading */}
+      {isLoading && (
+        <div className="space-y-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <AuditLogCardSkeleton key={i} />
+          ))}
+        </div>
+      )}
 
         {/* Cards */}
         {!isLoading && logs.length === 0 && (
@@ -115,12 +128,11 @@ export default function AuditLogPage() {
             Đã hiển thị tất cả {logs.length.toLocaleString('vi-VN')} bản ghi
           </p>
         )}
-      </div>
 
       <AuditLogDetailSheet
         logId={selectedLogId}
         onClose={() => setSelectedLogId(null)}
       />
-    </div>
+    </AdminPageCanvas>
   );
 }
