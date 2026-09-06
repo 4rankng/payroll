@@ -100,12 +100,12 @@ export const DateTimeSection = memo(
         <div>
           <Label htmlFor="hourType">Khung giờ *</Label>
           {isLoadingPayRate ? (
-            <div className="flex items-center justify-center p-2 border rounded-xl">
+            <div className="flex items-center justify-center p-2 border bg-muted/30 rounded-xl">
               <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
               Đang tải...
             </div>
           ) : !payRateData?.rates ? (
-            <div className="p-2 border rounded-xl text-muted-foreground text-sm">
+            <div className="p-2 border bg-muted/30 rounded-xl text-muted-foreground text-sm">
               Chưa có cấu hình lương
             </div>
           ) : (

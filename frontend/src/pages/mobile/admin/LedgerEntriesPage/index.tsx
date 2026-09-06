@@ -246,7 +246,7 @@ const LedgerEntriesPageMobile = () => {
           onPageSizeChange={handlePageSizeChange}
         />
       ) : (
-        <div className="flex justify-center items-center py-12 rounded-xl border border-border">          <p className="text-sm text-muted-foreground">Đang tải thông tin tài khoản...</p>
+        <div className="flex justify-center items-center py-12 rounded-xl border border-border bg-card">          <p className="text-sm text-muted-foreground">Đang tải thông tin tài khoản...</p>
         </div>
       )}
 

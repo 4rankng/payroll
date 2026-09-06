@@ -305,7 +305,7 @@ function StatCard({
           ? 'text-red-700'
           : 'text-foreground';
   return (
-    <div className="border rounded-lg p-3">
+    <div className="border bg-muted/30 rounded-lg p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`text-lg font-semibold ${toneClass}`}>{value}</div>
       {sub && <div className={`text-xs ${toneClass}`}>{sub}</div>}

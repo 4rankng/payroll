@@ -38,7 +38,7 @@ const gapClasses = {
 };
 
 const ItemSkeleton = ({ className }: { className?: string }) => (
-  <div className={cn("p-4 border rounded-lg", className)}>
+  <div className={cn("p-4 border bg-card rounded-lg", className)}>
     <div className="flex items-start gap-3">
       <Skeleton className="h-10 w-10 rounded-full" />
       <div className="flex-1 space-y-2">

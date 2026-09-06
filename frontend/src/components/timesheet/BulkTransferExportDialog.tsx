@@ -94,15 +94,15 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
             <Progress value={progressPercent} className="h-3" />
 
             <div className="grid grid-cols-1 gap-2 text-center min-[420px]:grid-cols-3 sm:gap-3">
-              <div className="rounded-lg border p-3">
+              <div className="rounded-lg border bg-muted/30 p-3">
                 <p className="text-2xl font-bold text-primary">{status?.total_count ?? '...'}</p>
                 <p className="text-xs text-muted-foreground">Tổng</p>
               </div>
-              <div className="rounded-lg border p-3">
+              <div className="rounded-lg border bg-muted/30 p-3">
                 <p className="text-2xl font-bold text-green-600">{status?.completed ?? 0}</p>
                 <p className="text-xs text-muted-foreground">Hoàn tất</p>
               </div>
-              <div className="rounded-lg border p-3">
+              <div className="rounded-lg border bg-muted/30 p-3">
                 <p className="text-2xl font-bold text-red-500">{status?.failed ?? 0}</p>
                 <p className="text-xs text-muted-foreground">Thất bại</p>
               </div>

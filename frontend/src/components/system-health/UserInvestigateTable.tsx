@@ -72,7 +72,7 @@ export function UserInvestigateTable({ days = 14, limit = 10 }: Props) {
       ) : rows.length === 0 ? (
         <AllClear text="Không có người dùng bất thường" />
       ) : (
-        <div className="divide-y border rounded-xl overflow-hidden">
+        <div className="divide-y border bg-card rounded-xl overflow-hidden">
           {rows.map((row) => {
               const user = userRecord?.[row.userId];
               const isExpanded = expandedUser === row.userId;

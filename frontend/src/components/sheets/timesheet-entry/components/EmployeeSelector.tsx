@@ -37,7 +37,7 @@ export const EmployeeSelector = memo(
         {projectId ? (
           <div className="space-y-2">
             {isLoadingProjectEmployees ? (
-              <div className="flex items-center justify-center p-4 border rounded-xl">
+              <div className="flex items-center justify-center p-4 border bg-muted/30 rounded-xl">
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
                 Đang tải nhân viên...
               </div>
@@ -57,13 +57,13 @@ export const EmployeeSelector = memo(
                 }))}
               />
             ) : (
-              <div className="p-4 border rounded-xl text-muted-foreground">
+              <div className="p-4 border bg-muted/30 rounded-xl text-muted-foreground">
                 Không có nhân viên nào đang làm việc trong dự án này
               </div>
             )}
           </div>
         ) : (
-          <div className="p-4 border rounded-xl text-muted-foreground">
+          <div className="p-4 border bg-muted/30 rounded-xl text-muted-foreground">
             Vui lòng chọn dự án trước
           </div>
         )}

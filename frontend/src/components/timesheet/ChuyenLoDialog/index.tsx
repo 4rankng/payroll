@@ -355,15 +355,15 @@ export const ChuyenLoDialog = memo(function ChuyenLoDialog({
           <div className="px-5 py-4 space-y-4">
             <Progress value={progressPercent} className="h-3" />
             <div className="grid grid-cols-1 gap-2 text-center sm:grid-cols-3 sm:gap-3">
-              <div className="rounded-lg border p-3">
+              <div className="rounded-lg border bg-muted/30 p-3">
                 <p className="text-2xl font-bold text-primary">{ninePayStatus?.total_count ?? '...'}</p>
                 <p className="text-xs text-muted-foreground">Tổng</p>
               </div>
-              <div className="rounded-lg border p-3">
+              <div className="rounded-lg border bg-muted/30 p-3">
                 <p className="text-2xl font-bold text-green-600">{ninePayStatus?.completed ?? 0}</p>
                 <p className="text-xs text-muted-foreground">Hoàn tất</p>
               </div>
-              <div className="rounded-lg border p-3">
+              <div className="rounded-lg border bg-muted/30 p-3">
                 <p className="text-2xl font-bold text-red-500">{ninePayStatus?.failed ?? 0}</p>
                 <p className="text-xs text-muted-foreground">Thất bại</p>
               </div>

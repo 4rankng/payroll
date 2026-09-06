@@ -192,7 +192,7 @@ export function PartnerEmployeeListSheet({ type, month, onClose }: PartnerEmploy
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {isLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="rounded-xl border border-border/60 p-3.5 space-y-3">
+              <div key={i} className="rounded-xl border border-border/60 bg-card p-3.5 space-y-3">
                 <div className="flex items-center gap-3">
                   <Skeleton className="w-9 h-9 rounded-full shrink-0" />
                   <div className="flex-1 space-y-1.5">

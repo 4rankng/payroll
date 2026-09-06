@@ -179,7 +179,7 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
             Đang tải...
           </div>
         ) : allProjectUsers.length === 0 ? (
-          <div className="text-center py-6 text-xs text-muted-foreground border rounded-xl">
+          <div className="text-center py-6 text-xs text-muted-foreground border bg-muted/30 rounded-xl">
             Chưa có người dùng nào được cấp quyền quản lý.
           </div>
         ) : (

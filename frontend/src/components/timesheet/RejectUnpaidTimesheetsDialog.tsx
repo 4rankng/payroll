@@ -148,7 +148,7 @@ export function RejectUnpaidTimesheetsDialog({
                   Bảng công đã thanh toán luôn được giữ nguyên.
                 </p>
               </div>
-              <dl className="min-w-0 divide-y divide-border rounded-xl border px-3">
+              <dl className="min-w-0 divide-y divide-border rounded-xl border bg-muted/30 px-3">
                 <div className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] gap-2 py-3 text-sm">
                   <dt className="text-muted-foreground">Dự án</dt>
                   <dd className="break-words text-right font-medium">{form.selectedProject?.name}</dd>

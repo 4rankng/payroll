@@ -182,7 +182,7 @@ export function EmployeeUserAccessTab({ employee }: EmployeeUserAccessTabProps) 
             Đang tải...
           </div>
         ) : allEmployeeUsers.length === 0 ? (
-          <div className="text-center py-6 text-xs text-muted-foreground border rounded-xl">
+          <div className="text-center py-6 text-xs text-muted-foreground border bg-muted/30 rounded-xl">
             Chưa có quản lý nào được cấp quyền.
           </div>
         ) : (
