@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:d82060a4ae36f877b6e29293e5ca1e702d8a131f5448c01c2d8dc48218b8f033",
+  "claims": [
+    {
+      "id": "claim_255beb4b293d481187d6251a42470beb",
+      "statement": "The cash-readiness forecast uses a statistical baseline (ETS + newsvendor Monte-Carlo) behind a swappable ForecastProvider interface, chosen over Prophet/LightGBM because the target-Kỳ observed value is deterministic and the projection horizon is short with near-constant daily amounts.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-010-statistical-forecast-over-ml.md#L12-L35",
+          "version": "repo-lines-v1:sha256:4226a6dfa5caa390d3131cef912d9c34a0d451f7112f435713614c1339910d99:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkM2RiYzRlN2U3Y2JlNWRkYzg5MWIwODA3MTJmNjM1MWM5NGI3MjhlYzhiZDg1NTZmNDYxMmIwNzBkMjdiNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0YzZjOTYwYTkyODk2MGY3MWUwNGFlNTM3M2I1MTU2MDQzOWJiZGRlMGY5NWE4ZGRhMTg1NDcyOTM3YjkyYTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZjMjI0NTliY2VlZmE4YjIwOTEyMGNmZTk3YTNiZThhMDNmZTc1MTBmY2ZhNjU2N2M5NzkyNmUwZjEwMTc2ZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkyYmM3Yzk0NGExY2JiNTE1MmYyN2I3ZGZiMjc3ZDkzZWY5OGQ4ZGNkMWZmNDUxYzkyYjA2ZWIwZTg4NWE0MTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6c96fca4e71d4a638ff158ec9ff2e81d",
+      "statement": "The forecast covers only the target Kỳ: observed approved value already inside the cycle plus projected approvals still expected before the pay date. Outstanding payments from other cycles belong to the operational Chờ thanh toán KPI and never enter the forecast input.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-010-statistical-forecast-over-ml.md#L16-L28",
+          "version": "repo-lines-v1:sha256:fb00afceda5715f726bc733dc9e64b4d29f6f1ff3aca9488b3e07acb48cc72ef:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhkMmMwYTRkNmZhMTc0MTg1MDg0NTA2YTI2MjRmZDFmZWQ0ZGZhZGE4YjcyZGU3ZWRkZjUzOWVhOTI3NDRhYWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYzMmE2ODNlNjJjMDBlYzVjZTU5MDg3ZDFiZGE2ZmVjNjI0MTcyMGFlMjIyYzBhMzcwMzMwZWNjNGI2MjQ4OGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY4N2MzZDEwZTEyYTU0YTI5ZDAyZmJjZTAzMDNlZDMyNDhiNDA0YTE3OTExYWE4Y2RmNzBjNWMxYjMwMjU4MjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjM0NjY2N2ViNjU1OWZiNWNmNjRjMjJmYWRiYTkxYTU1NjM5NjNhYjdkYjE4YWIzMWQwZjJiMTJlYmJmODgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_73c4ca56459f476db508f9d919723454",
+      "statement": "CashForecastSnapshot rows are uniquely identified by (scope_key, cycle_key, cycle_day, model_version) and are immutable once resolved; only company-scope snapshots participate in accuracy measurement against weekly bulk-transfer outcomes.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/cash_forecast_snapshot.go#L26-L51",
+          "version": "repo-lines-v1:sha256:58f72a90cb28dc49c590d8aafa6f01794ddd69827fe605b276d8a0495437e4d7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxYTZhMDk0MTdiZDAzMGM4Yjc5MzhiZTE5YzYyMjU4NzQ1ZTMzNGRkY2JhMmE1MTA5OWI3Y2VlMDMyNTVjOTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3MDFlNDIyODEyNWY1Yjc4MWE0YjkwNGUxNzJkYzdiM2U1ZmU3YTgzNTBlY2NmYWQ5YzdmMTc3Y2Q2MjQxNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVlYzI4NGM2ZTdlOGFjYmE0NmJhYWEwNjMzY2ZlM2E5ZjdjY2IzZWRjZjM3MTg4ZmFmMDE1NDU0MmE4NTY1MDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0NWZkMWUwZDVkYzExZmRiODgxMmQxMGJhMGQzNDZhMDNkM2Y0NmM2YjMwNmY1NDgyZmQ0OTY3MWY2NzI3MTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b6a11a33115844a689a6f563cb1ba719",
+      "statement": "Reliability is gated on resolved-sample count: fewer than 12 observations stay uncalibrated, 12-23 reports learning, 24 or more reports WAPE, bias, interval coverage, and reserve-shortfall rate measured at the same days-to-pay horizon as the live forecast.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-010-statistical-forecast-over-ml.md#L55-L59",
+          "version": "repo-lines-v1:sha256:fbad1b9f9b351306e677e36e5dc6e7931dc01303aa834a83ba5b6dff4df6a38e:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmQxNzIwNTQ3NmFhMDg1OTdlZjcyNDMzZDhjMThjNmEwNzFkM2U1MTMyM2NiNWQ2ZTNhM2VhNGFmYTY5ZThmZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmUyYTJkYjdiYjUwOGQ0ODczZjgyNDhmOThlYjhiMDMwOTVmMzcyYzljNWRjYzVkZjllNDM2MTA3YjliMmIwNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWI0YmJiZTQxYjBmMTRlMWEwYWJiYTZhOTkyYzJmYzg3ZDQ3YTlmNTc1NjIxN2Q5MzYzNTk1MjlmMjc3ZGMxMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmEwMzk5Y2E0MTdhZWE3OGUzM2I3Y2ZhZGRjMmUzMmZhNDI4ZmI2MjZhNzE0Mzg4NzhjM2QxYTA4YTliZjdkZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d1db68ffb60f472ea42ec2a2c231b40b",
+      "statement": "The forecast service is structurally prevented from driving wallet actions: it consumes a narrowed WalletBalanceReader port exposing only GetBalance, with no type-level path to SyncBalance or CreateTopup.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-010-statistical-forecast-over-ml.md#L81-L83",
+          "version": "repo-lines-v1:sha256:d09f6090223c4f8db63a975830d45fd5f17e9a54d65496adaa203d0c37997632:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjE1MzIxZjM2YTg4NzNlZGYxMjVlYzZjMDU5OGFkNWI0ZDhkOGU3ZGU0OGRlMmJiYjhmNWQ3ZTQ0Njg3ZmM5MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjJkMDBiNmIyNWQwOTFhOTEyYWU1ZjE3YmM5NTk5YTQ0ODFkZTNkOTBiMDY4MWJmYzJjNTAwNjUxNjkyYTUyYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWQ1NGQ4Y2VhNGQ4N2Y4Mjc4ZTM2YzQwN2I5ZTI4OGM2YTViNjUxMTVhZGZkOTE3NjNkMTJjOTBjYWUzMTk5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWY3MzI4OWRlMWJiNWUzYTg0MzRjZmYzNjE2NzM4Zjg1ZTdkNDMyYzkxMzZjYTgwOTQwYjQ1OTgwYThhZWI4ZSJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-08T09:18:16.270Z"
+  }
+}

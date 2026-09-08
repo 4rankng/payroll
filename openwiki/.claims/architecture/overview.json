@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:d956edcc25f77cdbaf453f2c9f8815716acaefae9ebe8e2703dd23e0e8af2c08",
+  "claims": [
+    {
+      "id": "claim_b121d75e72a74e79bff60aed9ea384c7",
+      "statement": "The backend follows strict DDD layering with dependencies pointing inward (transport → app → domain ← infra); the domain package has zero framework imports — no Gin, no GORM, only the Go standard library and internal packages.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-001-ddd-clean-architecture.md#L14-L34",
+          "version": "repo-lines-v1:sha256:627156757d56fea3bd259d344bdc7419f227c8760db5de9be09b2adb222f96e5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1YjUxZDIxZDI5OTllZjcxYmMyZjkwYWEyNzMwZDRiYWQ2MjlkYTEzNTllYmY1NDZmYzU2NzJhZTA4ZjI1MDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MjQ0MjUxZjFjNjZiNWNjMTBjOWRkMjJkYWI1OWNmNTM3MmJhNThmODM1OGMxZGQyMjMxOGM3ZDE1NjkxYjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiMTU3YTZkMjc2N2ZmN2Y0MTMzZWUyNzY1MTM2N2M2ZmRmZjdhYjRmZDliYTNjYjQyNjJlMmFhNDQ5MGNjYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlNDY2ZTIxZTUzOTU0NmU0NGUyZmQxMDliMTZlZTVjZTNjNjU2OGJhNmMxNDFkOWI3OWIyYjI5NTYyZjY0M2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0293d4679e514f348438ac52bffcad25",
+      "statement": "A single HTTP request traverses a fixed middleware chain in order: security headers, request timeout, rate limit, JWT auth, Casbin RBAC authorization, audit context, and partner scoping — before reaching the handler.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md#L72-L80",
+          "version": "repo-lines-v1:sha256:98667ec8e1c85e0f8cea2f938f516be467e7ebba820036877b209dedba1bb266:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzExNTFlMzkyOTdhZmFlOTU1OGQ5NzEyYTQ2MzA3OWViYWZmMzg4MTFlM2QyMzA4YTQ0MjU5M2YxZDIxYjIwZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTRhOWQzNzUyNmY2NWMwMGJhNTNjYTEzOGY1YThkZTFmNmFhOTU3M2RiMjBhZjdjZTc2MDMxNTlkODFjOThmYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODIwZDYwMDY5ZDljNTA4YjYxMzE1Y2FjZDVkZmY0ZDQ0YjE0YjU2ZTVjY2RmZjYxMGIxYzEyYWIyMWM1ODczYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjFjMTkyOWNkMDNiZjNkYmExZmM4MmVmZjU4NDhmOTg2NDBmM2M5ZTdlMDg4NDA0YzExN2E0YjQyMTM5NTYxNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5543bf109bd94729b3c41eeefdb3948d",
+      "statement": "Application services in backend/internal/app/ are the only layer that may depend on both domain ports and infrastructure clients; they never touch GORM models directly, and handlers consume domain types only.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-001-ddd-clean-architecture.md#L20-L34",
+          "version": "repo-lines-v1:sha256:09eaaa5e59d3e977319047532d0b18162c211d4a7a851aa8e4aef9639e8ae3fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YTA2Yzg0NGUxNTVhMmI4ODUzNzM1NWE3YzQ2MzBiZmM3MTZmY2QxOTk0MmY3NTgzNWViZThjZmU5ZmYzOTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MjQ0MjUxZjFjNjZiNWNjMTBjOWRkMjJkYWI1OWNmNTM3MmJhNThmODM1OGMxZGQyMjMxOGM3ZDE1NjkxYjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkM2FkMzAzNzJkMTZlYzVhYjViYzFhMTU4ZWM5YjFhOWM3MzU5ODg2ZDhiNTlkZjM3MGVmODdiZDkzMWI1OGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlNDY2ZTIxZTUzOTU0NmU0NGUyZmQxMDliMTZlZTVjZTNjNjU2OGJhNmMxNDFkOWI3OWIyYjI5NTYyZjY0M2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_328035f9b25847c09094082379d19ba7",
+      "statement": "Infrastructure repositories map GORM models to domain types via ToDomain() and live under backend/internal/infra/persistence/; they implement ports defined in domain/ports/ or scoped within domain aggregates (such as the wallet aggregate).",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/wallet/repository.go#L1-L46",
+          "version": "repo-lines-v1:sha256:98be8fef801200579ec944ac0dbc3013c37fbc71c7e4cb32486819330318afaa:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0ZDdkMGQ5MTg4NDZiNWQ5MWM1YWY0NDUzMGJhYjU4N2RjN2Y1MGM4ODhhYWU1NzY4Mzg4YWRjNmJlM2Q3OTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-001-ddd-clean-architecture.md#L26-L27",
+          "version": "repo-lines-v1:sha256:fd04fa46cf0216d7d1ce04b3959057775448e52ad33430261949c74eb4e78886:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmYxMDMxOTMxYWU5NTkzZTRiOTU1YjI0NmJkZGY0ODdiYzRiMTZlZGI2NWUxMjI0ODNjNTg3NWE4YjE5YzNmZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTIyOTAxNmJmNzdkMmRkOTI0Nzc0OGI4OWViMTI2NWVkZDkzNTJjMmU1OGU3Njc1N2U4OGNlOTUyZjIyNDQzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDE2MWUzOGE4MDI3ZmY5ZDFiYTcyNDJmZTU0ZTVkNTk5OTkzMTFjYjcxYzg0ZmYyODA2M2U2NWRlZDJlNzMyNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTU2MWRmMDNlNDhmZTg5NGQxMTI3YWVhYzgwZmY4Yzk0YWJmZTA1NTRkZDIwOGU0ZjExNTc5Nzg1YmU3ZTE5NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f0c343eb0d33466d88de182f84587ede",
+      "statement": "The dependency injection root lives at backend/internal/app/bootstrap/container.go, with infrastructure wired in bootstrap/infrastructure/, repositories in bootstrap/repositories/, and application services in bootstrap/services/.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/bootstrap/container.go",
+          "version": "repo-file-v1:sha256:9b900aab3512ece5ed5d78f928b7060786f97df1fd4f8d98257c23798f439f09"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-08T09:18:16.270Z"
+  }
+}

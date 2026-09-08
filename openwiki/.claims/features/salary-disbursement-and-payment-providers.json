@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:472bad12490ef644eac84824edb7e44a8ad7b09dc6e1e519d4eb7c1749c283ca",
+  "claims": [
+    {
+      "id": "claim_9a74a69bc7144050b54ff689fb30b52c",
+      "statement": "The disbursement layer is provider-agnostic via the DisbursementProvider interface; the active provider is selected at request time from Settings.disbursement_provider, and switching providers requires only a settings change with no recompile.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-003-payment-provider-abstraction.md#L14-L28",
+          "version": "repo-lines-v1:sha256:b317f5106067645ea0f69368ad7b8bd7c30e84e22a8d80360dc8e9c5cde5ba28:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4ZTI5NjM3MjY0ODUxNmY0N2I3NjA3Y2QxZjYxNWI5YWYxOGU0NzgyOWQ5NDJmYzk3ZTI1YzYwNTg5ZWU0OGIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlNDNlNDZiNDUzNmRkZGNmN2I3MzgzZmEyMmJlMzMzZGQ2YWFhYTk2MDBmZWI5ZjY5MDFhY2M2MzIyYWU3ZjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiMTU3YTZkMjc2N2ZmN2Y0MTMzZWUyNzY1MTM2N2M2ZmRmZjdhYjRmZDliYTNjYjQyNjJlMmFhNDQ5MGNjYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZjZGM0NGE3YzFjYTY4ZGM2NWRiYjFiNzViZjA2ZTNiNDllYjI1M2Q1YzZiNWM1NDdhNTc1NmY5ZTEyMTIzNzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_b2f114acb33e47d99b69fc4f43944328",
+      "statement": "Production uses OnePay; 9Pay is restricted to sandbox and development. Provider-specific capabilities are exposed via optional interfaces (StatusPoller, AccountVerifier, BalanceReporter, ReportExporter, ErrorTranslator, TransferLimiter) discovered by type assertion so 9Pay is not forced to stub methods it does not support.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-003-payment-provider-abstraction.md#L30-L48",
+          "version": "repo-lines-v1:sha256:b74173a2f689c606733658bdc938fea6ecb6d861bbb48df12a1ae43c56b13a30:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY5NzljMmJmZTNlZDM0MzM3MzBhNWRkNThhN2I4OWE5ODZlMDI5ZDk1OTRjY2E2YmI4YzMwZjY4ZWM5M2E1OTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3YzA2YzU2MWQ1YzMyNzM0MzY4NTI2OGE0NmIzMzkxZjM5OThlZWU4OTBkMmJlNTFmMGQyMWNjNGE1M2FlNmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVlMGVhNDc2MTJjY2Q0ZDljOGRhM2I3YmMwYmQ4OTYyMDc1ZWQ4MzNmYWE0MDRjOTllZDAzOGU1MWQzMDU1NmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUwYjNhNzk0Mzc2OGE5YzQ1NGRjMTJiZmMwYzc5NzYxMTQ4MDM4ZjY0MjRiNzk5NzE1YzRkOGQ1NDE1NDRmNWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_223ad07b7780421fa243dce02ee12a3f",
+      "statement": "Inbound IPNs are recorded immutably in WalletIPN rows with processing_status pending -> applied | ignored | error; once terminal the row cannot be rewritten, preserving the audit trail for forensics.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/wallet/wallet_ipn.go#L9-L27",
+          "version": "repo-lines-v1:sha256:eba7ae3814350ffa12ac514956cde84a18fb506a9fa12f90ab7aa586a68d240b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwNTJhOGZlOWU5ODcyNmJlYzJjMDljZGI2ODNiOWE4Y2E0NzM0MzhkZTEwYzE1NGYyMzIwY2M1YjA5MDUxNzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0YmJjZGZhOTRjMmE3YmY5MTczNDA4NjliMzY4YmNlOWY0MzkxYmQwYzkzMWU5YmUxODc1ODM3NDgwY2Q1ZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzOGY0ZTEwMzk5NzNmYjUwMjVhMjZjZTY3YzE3YzgzZTAzMTU5ZGU1NWY3ODM0ZWZiZmQwMmU0Zjc1YjE2MjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ed0c65f0e95142db895a5e954eb79b74",
+      "statement": "Bulk transfer processing is driven by asynq tasks on Redis-backed queues; the asynq client (enqueue with retry policy and unique-task enforcement), mux (task type -> handler), handlers (dispatch), and server (worker pool, concurrency, monitoring) split live in internal/infra/asynq/ while worker functions live in internal/app/workers/.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-005-asynq-background-jobs.md#L11-L36",
+          "version": "repo-lines-v1:sha256:6aca0cf493ef2aab37acac56b0ae3a631d0cb553e1941bb7c9c7cc0f492d9032:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzNjMzYzIyZTE3YjZlMDdjMjg2YWY3OTgwZGVmNDdmNmQzZjY2N2I5Yjk0OTI0OGU3YWYzODkzZTZiMGNiMjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVmZGU2NTVmMzUyYjc3MGFlZDFmYWZhYmY1ODJkMmY2ZjgyNWJiZGEyNDg2MzIyNzkwMWM5YjEwNDMwZjUyOTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmNzMyODlkZTFiYjVlM2E4NDM0Y2ZmMzYxNjczOGY4NWU3ZDQzMmM5MTM2Y2E4MDk0MGI0NTk4MGE4YWViOGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f315175100b14e2996f1e1290453e105",
+      "statement": "Each completed wallet payment that settles posts the corresponding expense/cash pair to the ledger; wallet-vs-ledger reconciliation surfaces drift in the admin dashboard as a flag rather than a failure so the system keeps operating while the discrepancy stays auditable.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/wallet/repository.go#L30-L39",
+          "version": "repo-lines-v1:sha256:bef625b1078a73ee4737fe242b2871a4665c60c2484c0fe362dda117fafd3fc7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjOGViMzgzNzY1NDhlMjgwYWE4NGFiNGEwYmYxMTJmYjU4Njg2YjkwZDQ3NzljODc3YzI3NmVhZGM5ZTZlOTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIxY2I2ZTBmZTE4ODg2MThjZmNhOWZmOTFmMjM5ZDY4NTc5Mjk2OWNlMGQxYzIzMzZiZmU5NGFhNzEzYTY2NDMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFmOWUzNDlkMmQ4YWY1M2RhZDM3NGY5ODZiODI5ZjViNTk2ZDdiYWZkNzVkNTZjZjZhNWYxNjg3ODBhZjhmNmYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-08T09:18:16.270Z"
+  }
+}

@@ -108,3 +108,11 @@ make adminer          # SSH tunnel to production DB UI at localhost:18081
 - **Review agent output at architectural boundaries**, not line by line.
 - **Use the [review checklist](docs/standards/review-checklist.md) before submitting changes.**
 - **Graphify is available:** `graphify query "<question>"` for codebase navigation when `graphify-out/graph.json` exists.
+
+<!-- OPENWIKI:START -->
+
+## OpenWiki
+
+See [AGENTS.md](AGENTS.md) for OpenWiki agent instructions.
+
+<!-- OPENWIKI:END -->

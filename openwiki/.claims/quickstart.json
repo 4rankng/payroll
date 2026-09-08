@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:16e8a155efa03bcee5d5f53a8825fd9f2974466c09faa4589f3889a9c598d307",
+  "claims": [
+    {
+      "id": "claim_cdd8ebfd97134eb49d82ce5cf4e635b6",
+      "statement": "The backend follows strict DDD layering under backend/internal/ (domain with zero framework imports, app for use-case orchestration, transport/http for the HTTP edge, infra for GORM/Redis/asynq/disbursement adapters); the wallet transactional state machine lives at backend/internal/domain/transactions/state_machine.go.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/AGENTS.md",
+          "version": "repo-file-v1:sha256:a7967221365cbe15e869ba792b7b23c32eea5eab50bf85fc02c2c6350b0d2fb4"
+        },
+        {
+          "resource": "repo://backend/internal/domain/transactions/state_machine.go",
+          "version": "repo-file-v1:sha256:7f07c86a81689a831153e90929feaa6892a1bac872af638f5b1e65ea066a475c"
+        }
+      ]
+    },
+    {
+      "id": "claim_76e3253f3cc4432bbd7f7f936bdb4591",
+      "statement": "The frontend SPA under frontend/src/ separates pages by role (admin, partner, adv-partner, accountant, employee) and by viewport (mobile/ for each role), with the file responsibility rule that .tsx is UI-only and .ts holds logic/API calls.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/AGENTS.md",
+          "version": "repo-file-v1:sha256:01e2491d9d21550a68a11d748d63d87479d5652c2a80739bd8bf357d02f17ff7"
+        },
+        {
+          "resource": "repo://frontend/src/App.tsx",
+          "version": "repo-file-v1:sha256:2fc4c6071c920fcbe04c9cdc1e52eb784c9c9700faa497c8fe4a6f69614c5df4"
+        }
+      ]
+    },
+    {
+      "id": "claim_df4b12cfd5b34b1cb8be7d5454dd821a",
+      "statement": "All business time goes through clock.Now() with the Asia/Ho_Chi_Minh timezone via the centralized backend/internal/pkg/clock package; production runs x86_64/amd64 images only and uses OnePay (not 9Pay) as the disbursement provider.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-08T09:18:16.270Z"
+  }
+}

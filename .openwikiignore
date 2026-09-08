@@ -1,0 +1,104 @@
+# OpenWiki ignore file
+# Keep generated docs from reading or describing these paths.
+# Supports comments, blank lines, * and ** globs, directory rules, and ! negation.
+
+# === Vendor / dependencies ===
+node_modules/
+**/node_modules/
+**/vendor/
+**/dist/
+**/dist-ssr/
+**/build/
+**/coverage/
+**/tmp/
+**/temp/
+
+# === Backend build / runtime ===
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+**/bin/
+backend/integration
+backend/coverage.out
+sandbox/onepay/onepay-mock
+
+# === Frontend build / PWA ===
+**/dev-dist/
+**/.vite/
+**/*.tsbuildinfo
+**/playwright-report/
+**/test-results/
+frontend/dist
+frontend/coverage
+frontend/demo
+frontend/fix-dates.mjs
+
+# === Local logs / uploads ===
+**/logs/
+**/uploads/
+**/*.log
+
+# === Generated / snapshot artifacts ===
+**/repomix-output.xml
+**/release-manifest.json
+**/coverage/
+mysql_data/
+redis_data/
+
+# === Other AI tooling (parallel knowledge graphs) ===
+.codegraph/
+graphify-out/
+.ua/
+.understand-anything/
+.kiro
+.claude/
+.crush/
+.antigravitycli/
+.opencode/
+.superpowers/
+.agents/
+.agentkit/
+.omc/
+.omx/
+.zcode/
+.mimocode/
+.codex/
+.opencode.json
+.opencode.jsonc
+
+# === Project-local QA artifacts ===
+qa/
+qa-agent.txt
+qa-*.cjs
+qa-*.mjs
+screenshot-*.cjs
+screenshot-*.mjs
+
+# === Local secrets ===
+.env
+.env.local
+.env.docker
+
+# === Editor / IDE ===
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*~
+.DS_Store
+
+# === Generated wiki artifacts (OpenWiki owns these) ===
+# The `openwiki/` directory is the wiki's own output space — OpenWiki must
+# be allowed to read back the pages it writes, so do not exclude it.
+.openwiki/
+
+# === Generated reference images we don't need to re-describe ===
+uui-dashboard-reference.png

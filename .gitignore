@@ -95,3 +95,10 @@ frontend/test-results/
 frontend/playwright-report/
 frontend/coverage/
 .agentkit
+
+# === OpenWiki (langchain-ai/openwiki) ===
+# Generated code wiki lives next to the source. Keep it in-repo so claims
+# stay versioned; only ignore local CLI state.
+openwiki/.run.json
+openwiki/.last-update.json
+.openwiki/
