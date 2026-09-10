@@ -209,9 +209,11 @@ export function useUpdateEmployeeProjectAssignment() {
       employeeId: number;
       data: {
         project_id: number;
+        assignment_id?: number;
         position?: string;
         start_date?: string;
-        end_date?: string | null;
+        // Empty string clears the end date; null is a silent no-op server-side.
+        end_date?: string;
       }
     }) => projectEmployeeService.updateEmployeeProjectAssignment(employeeId, data),
     onSuccess: (updatedAssignment, { employeeId, data }) => {

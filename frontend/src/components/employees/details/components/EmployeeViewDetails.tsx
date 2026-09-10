@@ -6,11 +6,54 @@ import {
   Hash,
   Clock,
 } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
+import { useUpdateEmployeeProjectAssignment } from "@/hooks/api/useProjectEmployees";
+import { getErrorMessage } from "@/utils/error-handler";
 import type { EmployeeDetailsProps } from "../types";
 import { EmployeeProjectSection } from "./EmployeeProjectSection";
 import { EmployeeBankInfo } from "./EmployeeBankInfo";
 
 export function EmployeeViewDetails({ employee }: EmployeeDetailsProps) {
+  const updateAssignment = useUpdateEmployeeProjectAssignment();
+
+  const handleApplyProjectChanges = async (projectId: number, changes) => {
+    if (!employee?.id) {
+      return;
+    }
+    const data: {
+      project_id: number;
+      assignment_id?: number;
+      position?: string;
+      start_date?: string;
+      end_date?: string;
+    } = { project_id: projectId };
+    if (changes.assignmentId) {
+      data.assignment_id = changes.assignmentId;
+    }
+    if (changes.position !== undefined) {
+      data.position = changes.position;
+    }
+    if (changes.start_date !== undefined) {
+      data.start_date = changes.start_date;
+    }
+    // An empty string clears the end date (assignment stays open-ended).
+    if (changes.end_date !== undefined) {
+      data.end_date = changes.end_date;
+    }
+    try {
+      await updateAssignment.mutateAsync({ employeeId: employee.id, data });
+      toast({
+        title: "Thành công",
+        description: "Đã cập nhật phân công dự án.",
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: getErrorMessage(error),
+        variant: "destructive",
+      });
+    }
+  };
   return (
     <div className="space-y-6 p-1">
       {/* Personal Information */}
@@ -64,7 +107,10 @@ export function EmployeeViewDetails({ employee }: EmployeeDetailsProps) {
           </div>
         </div>
 
-        <EmployeeProjectSection employee={employee} />
+        <EmployeeProjectSection
+          employee={employee}
+          onProjectApply={handleApplyProjectChanges}
+        />
       </div>
 
       {/* Address and Bank Info */}

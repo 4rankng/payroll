@@ -60,6 +60,7 @@ type BatchRemoveEmployeesRequest []RemoveEmployeeFromProjectRequest
 type UpdateAssignmentRequest struct {
 	ProjectID       uint    `json:"project_id,omitempty"`
 	EmployeeID      uint    `json:"employee_id,omitempty"`
+	AssignmentID    *uint   `json:"assignment_id,omitempty"`
 	EmployeeCode    *string `json:"employee_code,omitempty"`
 	Position        *string `json:"position,omitempty"`
 	StartDate       *string `json:"start_date,omitempty"`

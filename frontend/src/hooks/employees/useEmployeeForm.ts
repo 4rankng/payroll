@@ -13,8 +13,46 @@ interface UseEmployeeFormProps {
 type AssignmentChange = {
   position?: string;
   start_date?: string;
+  end_date?: string;
   payment_schedule?: 'weekly' | 'monthly';
   assignmentId?: number;
+};
+
+// Maps an assignment draft onto the PUT /employees/:id/projects payload.
+// An end_date of "" clears the end date (open-ended assignment). JSON null is
+// never sent: the backend binds end_date to *string, so null arrives as nil
+// and the handler skips the field — a silent no-op with a success toast.
+const buildProjectUpdateData = (
+  changes: AssignmentChange,
+  projectId: number
+): {
+  project_id: number;
+  assignment_id?: number;
+  position?: string;
+  start_date?: string;
+  end_date?: string;
+} => {
+  const data: {
+    project_id: number;
+    assignment_id?: number;
+    position?: string;
+    start_date?: string;
+    end_date?: string;
+  } = { project_id: projectId };
+
+  if (changes.assignmentId) {
+    data.assignment_id = changes.assignmentId;
+  }
+  if (changes.position !== undefined) {
+    data.position = changes.position;
+  }
+  if (changes.start_date !== undefined) {
+    data.start_date = changes.start_date;
+  }
+  if (changes.end_date !== undefined) {
+    data.end_date = changes.end_date;
+  }
+  return data;
 };
 
 export const useEmployeeForm = ({ employee, onUpdate }: UseEmployeeFormProps) => {
@@ -114,8 +152,8 @@ export const useEmployeeForm = ({ employee, onUpdate }: UseEmployeeFormProps) =>
       return;
     }
 
-    const { position, start_date, payment_schedule, assignmentId } = changes;
-    const hasAssignmentUpdates = position !== undefined || start_date !== undefined;
+    const { position, start_date, end_date, payment_schedule, assignmentId } = changes;
+    const hasAssignmentUpdates = position !== undefined || start_date !== undefined || end_date !== undefined;
 
     if (!hasAssignmentUpdates && payment_schedule === undefined) {
       return;
@@ -131,22 +169,7 @@ export const useEmployeeForm = ({ employee, onUpdate }: UseEmployeeFormProps) =>
     };
 
     if (hasAssignmentUpdates) {
-      const projectUpdateData: {
-        project_id: number;
-        position?: string;
-        start_date?: string;
-        end_date?: string | null;
-      } = {
-        project_id: projectId
-      };
-
-      if (position !== undefined) {
-        projectUpdateData.position = position;
-      }
-
-      if (start_date !== undefined) {
-        projectUpdateData.start_date = start_date;
-      }
+      const projectUpdateData = buildProjectUpdateData(changes, projectId);
 
       await updateEmployeeProjectMutation.mutateAsync({
         employeeId: employee.id,
@@ -215,22 +238,7 @@ export const useEmployeeForm = ({ employee, onUpdate }: UseEmployeeFormProps) =>
 
           // Only call API if there are actual changes
           if (hasAssignmentUpdates) {
-            const projectUpdateData: {
-              project_id: number;
-              position?: string;
-              start_date?: string;
-              end_date?: string | null;
-            } = {
-              project_id: projectId
-            };
-
-            if (position !== undefined) {
-              projectUpdateData.position = position;
-            }
-
-            if (start_date !== undefined) {
-              projectUpdateData.start_date = start_date;
-            }
+            const projectUpdateData = buildProjectUpdateData(changes, projectId);
 
             await updateEmployeeProjectMutation.mutateAsync({
               employeeId: employee.id,

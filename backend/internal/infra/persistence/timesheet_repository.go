@@ -490,6 +490,30 @@ func (r *TimesheetRepository) HasNonEditableTimesheetsAfterDate(ctx context.Cont
 	return count > 0, nil
 }
 
+// HasNonEditableTimesheetsInRange reports whether an approved or paid timesheet
+// exists for the pair with date within [from, to]; nil bounds are unbounded.
+func (r *TimesheetRepository) HasNonEditableTimesheetsInRange(ctx context.Context, projectID, employeeID uint, from, to *time.Time) (bool, error) {
+	var count int64
+	query := r.DB.WithContext(ctx).
+		Model(&domain.Timesheet{}).
+		Where("project_id = ? AND employee_id = ?", projectID, employeeID).
+		Where("timesheet_status = ? OR payment_status = ?", domain.TimesheetStatusApproved, domain.PaymentStatusPaid)
+	if from != nil {
+		// DATE() makes the bound day-granular: callers pass times parsed in
+		// varying locations (UTC handler parse vs DB-local round-trip), and a
+		// bare datetime comparison would exclude same-day DATE rows otherwise.
+		query = query.Where("date >= DATE(?)", *from)
+	}
+	if to != nil {
+		query = query.Where("date <= DATE(?)", *to)
+	}
+	err := query.Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 // HasTimesheetsForAssignment checks if there are any timesheets for the given assignment
 func (r *TimesheetRepository) HasTimesheetsForAssignment(ctx context.Context, projectID, employeeID uint) (bool, error) {
 	var count int64

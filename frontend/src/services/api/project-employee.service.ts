@@ -120,9 +120,13 @@ export class ProjectEmployeeService {
     employeeId: number,
     data: {
       project_id: number;
+      assignment_id?: number;
       position?: string;
       start_date?: string;
-      end_date?: string | null;
+      // Empty string clears the end date (open-ended). Never send null: the
+      // backend's *string is nil on JSON null and the handler skips it — a
+      // silent no-op.
+      end_date?: string;
     }
   ): Promise<UpdateAssignmentResponse> {
     const response = await apiClient.put<UpdateAssignmentResponse>(

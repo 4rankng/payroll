@@ -861,6 +861,21 @@ func (mr *MockTimesheetRepositoryMockRecorder) HasNonEditableTimesheetsAfterDate
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasNonEditableTimesheetsAfterDate", reflect.TypeOf((*MockTimesheetRepository)(nil).HasNonEditableTimesheetsAfterDate), arg0, arg1, arg2, arg3)
 }
 
+// HasNonEditableTimesheetsInRange mocks base method.
+func (m *MockTimesheetRepository) HasNonEditableTimesheetsInRange(arg0 context.Context, arg1, arg2 uint, arg3, arg4 *time.Time) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasNonEditableTimesheetsInRange", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// HasNonEditableTimesheetsInRange indicates an expected call of HasNonEditableTimesheetsInRange.
+func (mr *MockTimesheetRepositoryMockRecorder) HasNonEditableTimesheetsInRange(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasNonEditableTimesheetsInRange", reflect.TypeOf((*MockTimesheetRepository)(nil).HasNonEditableTimesheetsInRange), arg0, arg1, arg2, arg3, arg4)
+}
+
 // HasProtectedTimesheetsByEmployeeID mocks base method.
 func (m *MockTimesheetRepository) HasProtectedTimesheetsByEmployeeID(arg0 context.Context, arg1 uint) (bool, error) {
 	m.ctrl.T.Helper()

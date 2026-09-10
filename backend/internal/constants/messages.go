@@ -405,13 +405,14 @@ const (
 	MsgBankDeletedSuccessfullyVN   = "Xóa ngân hàng thành công"
 
 	// Project Employee Messages - Vietnamese
-	MsgAssignmentNotFoundVN           = "Không tìm thấy phân công nhân viên"
-	MsgActiveAssignmentNotFoundVN     = "Không tìm thấy phân công hiện tại cho nhân viên trong dự án này"
-	MsgAssignmentOverlapVN            = "Khoảng thời gian phân công bị trùng lặp với phân công hiện có"
-	MsgCannotAssignToProjectStatusVN  = "Không thể phân công nhân viên cho dự án có trạng thái"
-	MsgAtLeastOneAssignmentRequiredVN = "Cần ít nhất một phân công nhân viên"
-	MsgAssignmentSuccessVN            = "Phân công nhân viên vào dự án thành công"
-	MsgMultipleAssignmentsSuccessVN   = "Phân công %d nhân viên vào dự án thành công"
+	MsgAssignmentNotFoundVN                     = "Không tìm thấy phân công nhân viên"
+	MsgActiveAssignmentNotFoundVN               = "Không tìm thấy phân công hiện tại cho nhân viên trong dự án này"
+	MsgAssignmentOverlapVN                      = "Khoảng thời gian phân công bị trùng lặp với phân công hiện có"
+	MsgAssignmentUpdateExcludesPaidTimesheetsVN = "Không thể rút ngắn phân công vì có bảng chấm công đã được duyệt hoặc thanh toán trong khoảng thời gian bị loại bỏ"
+	MsgCannotAssignToProjectStatusVN            = "Không thể phân công nhân viên cho dự án có trạng thái"
+	MsgAtLeastOneAssignmentRequiredVN           = "Cần ít nhất một phân công nhân viên"
+	MsgAssignmentSuccessVN                      = "Phân công nhân viên vào dự án thành công"
+	MsgMultipleAssignmentsSuccessVN             = "Phân công %d nhân viên vào dự án thành công"
 
 	// Employee Domain Service Messages - Vietnamese
 	MsgEmployeeWithCCCDExistsVN  = "Nhân viên với CCCD này đã tồn tại"

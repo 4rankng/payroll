@@ -70,6 +70,12 @@ func (s *EmployeeAssignmentService) ValidateAssignmentForUpdate(ctx context.Cont
 		return err
 	}
 
+	// Load the stored assignment so guards only fire on the boundary that actually shrinks.
+	current, err := s.projectEmployeeRepo.GetByID(ctx, assignment.ID)
+	if err != nil {
+		return err
+	}
+
 	// Load overlapping assignments
 	overlapping, err := s.projectEmployeeRepo.GetOverlappingAssignments(ctx, assignment.EmployeeID, &assignment.StartDate, assignment.LastDate)
 	if err != nil {
@@ -88,14 +94,33 @@ func (s *EmployeeAssignmentService) ValidateAssignmentForUpdate(ctx context.Cont
 		}
 	}
 
-	// Check for non-editable timesheets
-	hasNonEditable, err := s.timesheetChecker.HasNonEditableTimesheetsAfterDate(ctx, assignment.ProjectID, assignment.EmployeeID, assignment.StartDate)
-	if err != nil {
-		return err
+	// The update may not leave an approved or paid timesheet outside the
+	// resulting [start_date, last_date] window:
+	//   - moving start later drops the strip [oldStart, newStart-1], which must
+	//     hold no approved or paid timesheet;
+	//   - keeping or setting a finite end date means any approved or paid
+	//     timesheet after it falls outside the window — that also blocks an
+	//     insufficient extension, since the timesheet stays uncovered;
+	//   - clearing the end date (open-ended) always covers every existing
+	//     timesheet, so it never blocks.
+	var hasPaidBeforeNewStart, hasPaidAfterNewEnd bool
+	if assignment.StartDate.After(current.StartDate) {
+		windowEnd := assignment.StartDate.AddDate(0, 0, -1)
+		hasPaidBeforeNewStart, err = s.timesheetChecker.HasNonEditableTimesheetsInRange(ctx, assignment.ProjectID, assignment.EmployeeID, &current.StartDate, &windowEnd)
+		if err != nil {
+			return err
+		}
+	}
+	if assignment.LastDate != nil {
+		windowStart := assignment.LastDate.AddDate(0, 0, 1)
+		hasPaidAfterNewEnd, err = s.timesheetChecker.HasNonEditableTimesheetsInRange(ctx, assignment.ProjectID, assignment.EmployeeID, &windowStart, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Delegate to pure validation method
-	return s.ValidateAssignmentUpdateWithData(assignment, overlapping, overlappingCounts, hasNonEditable)
+	return s.ValidateAssignmentUpdateWithData(assignment, overlapping, overlappingCounts, hasPaidBeforeNewStart, hasPaidAfterNewEnd)
 }
 
 // ValidateAssignmentUpdateWithData performs pure domain validation with pre-loaded data
@@ -104,11 +129,12 @@ func (s *EmployeeAssignmentService) ValidateAssignmentUpdateWithData(
 	assignment *domain.ProjectEmployee,
 	overlappingAssignments []*domain.ProjectEmployee,
 	overlappingTimesheetCounts map[uint]int64,
-	hasNonEditableTimesheets bool,
+	hasPaidBeforeNewStart bool,
+	hasPaidAfterNewEnd bool,
 ) error {
 	// Check for overlaps with OTHER assignments for the same project
 	for _, other := range overlappingAssignments {
-		// Skip the current assignment being updated
+		// Skip the assignment being updated itself
 		if other.ID == assignment.ID {
 			continue
 		}
@@ -122,9 +148,12 @@ func (s *EmployeeAssignmentService) ValidateAssignmentUpdateWithData(
 		}
 	}
 
-	// Check if there are non-editable timesheets on or after the new start date
-	if hasNonEditableTimesheets {
-		return domain.NewValidationError("Không thể cập nhật phân công vì có bảng chấm công đã được duyệt hoặc thanh toán từ ngày bắt đầu mới")
+	// The update may not leave an approved or paid timesheet outside the
+	// resulting window: paid work before the new start or after the new finite
+	// end stays uncovered, which blocks the update. Clearing the end date is
+	// open-ended and always covers existing work.
+	if hasPaidBeforeNewStart || hasPaidAfterNewEnd {
+		return domain.NewValidationError(constants.MsgAssignmentUpdateExcludesPaidTimesheetsVN)
 	}
 
 	return nil

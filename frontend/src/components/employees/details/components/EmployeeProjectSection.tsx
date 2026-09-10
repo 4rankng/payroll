@@ -19,9 +19,10 @@ import { dateToString } from "@/utils/dateHelpers";
 import type { EmployeeDetailsProps } from "../types";
 import type { CurrentProject } from "@/types/api/employee.types";
 
-type ProjectChange = {
+export type ProjectChange = {
   position?: string;
   start_date?: string;
+  end_date?: string;
   payment_schedule?: 'weekly' | 'monthly' | 'flexible';
   assignmentId?: number;
 };
@@ -220,7 +221,9 @@ function ProjectCard({
   const todayDateString = useMemo(() => dateToString(new Date()), []);
 
   const updateProjectChanges = (delta: ProjectChange) => {
-    const nextChange: ProjectChange = { ...delta };
+    // Merge on top of the current draft so multi-field edits compose
+    // (e.g. an end-date tweak keeps a previously drafted position change).
+    const nextChange: ProjectChange = { ...changes, ...delta };
     const targetAssignmentId = assignmentId ?? project.project_employee_id;
     if (targetAssignmentId !== undefined) {
       nextChange.assignmentId = targetAssignmentId;
@@ -241,6 +244,11 @@ function ProjectCard({
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateProjectChanges({ start_date: e.target.value });
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // An empty value clears the end date: the assignment stays open-ended.
+    updateProjectChanges({ end_date: e.target.value });
   };
 
   const handleScheduleDraftChange = (schedule: 'weekly' | 'monthly' | 'flexible') => {
@@ -466,17 +474,35 @@ function ProjectCard({
               )}
             </div>
           </div>
+
         </div>
 
-        {/* End Date Display */}
-        {project.last_date && (
-          <div className="flex items-center gap-1 text-foreground/80">
-            <span className="text-foreground/80">Đến:</span>
-            <span className="text-foreground/80">
-              {format(new Date(project.last_date), 'dd/MM/yyyy')}
-            </span>
-          </div>
-        )}
+        {/* End Date */}
+        <div>
+          <label className="block typography-label-medium font-medium mb-1 text-foreground">Ngày kết thúc:</label>
+          {canEditFields ? (
+            <div className="space-y-1">
+              <Input
+                type="date"
+                value={changes?.end_date !== undefined ? changes.end_date : (project.last_date ?? '')}
+                onChange={handleEndDateChange}
+                disabled={isSubmitting}
+                className="h-7 typography-body-small"
+              />
+              <p className="typography-label-small text-muted-foreground">
+                Để trống = vô thời hạn
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 text-foreground/80 typography-body-small">
+              {project.last_date ? (
+                <span>{format(new Date(project.last_date), 'dd/MM/yyyy')}</span>
+              ) : (
+                <span className="text-primary font-medium">Vô thời hạn</span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

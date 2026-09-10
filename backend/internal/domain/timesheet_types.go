@@ -64,6 +64,7 @@ type TimesheetRepository interface {
 	HasTimesheetsAfterDate(ctx context.Context, projectID, employeeID uint, date time.Time) (bool, error)
 	HasTimesheetsForAssignment(ctx context.Context, projectID, employeeID uint) (bool, error)
 	HasNonEditableTimesheetsAfterDate(ctx context.Context, projectID, employeeID uint, date time.Time) (bool, error)
+	HasNonEditableTimesheetsInRange(ctx context.Context, projectID, employeeID uint, from, to *time.Time) (bool, error)
 	SetForcePayroll(ctx context.Context, id uint, flag bool) error
 
 	// Payment history methods
@@ -201,6 +202,7 @@ type TimesheetAssignmentChecker interface {
 	HasTimesheetsAfterDate(ctx context.Context, projectID, employeeID uint, date time.Time) (bool, error)
 	HasTimesheetsForAssignment(ctx context.Context, projectID, employeeID uint) (bool, error)
 	HasNonEditableTimesheetsAfterDate(ctx context.Context, projectID, employeeID uint, date time.Time) (bool, error)
+	HasNonEditableTimesheetsInRange(ctx context.Context, projectID, employeeID uint, from, to *time.Time) (bool, error)
 }
 
 // TimesheetDashboardReader provides dashboard summary queries.

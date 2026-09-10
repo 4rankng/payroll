@@ -410,16 +410,35 @@ func (h *Handler) UpdateProjectEmployee(c *gin.Context) {
 		return
 	}
 
-	// Find existing assignment
-	assignment, err := h.projectEmployeeService.GetAssignmentByProjectAndEmployee(c.Request.Context(), uint(projectID), req.EmployeeID)
-	if err != nil {
-		h.logger.ErrorContext(c.Request.Context(), "Assignment not found",
-			"project_id", projectID,
-			"employee_id", req.EmployeeID,
-			"error", err.Error(),
-		)
-		response.HandleDomainError(c, err)
-		return
+	// Locate the assignment to edit: prefer an explicit assignment_id because an
+	// employee may hold several historical assignments for the same project and
+	// the pair lookup picks the oldest row.
+	var assignment *domain.ProjectEmployee
+	if req.AssignmentID != nil && *req.AssignmentID > 0 {
+		assignment, err = h.projectEmployeeService.GetAssignmentByID(c.Request.Context(), *req.AssignmentID)
+		if err != nil {
+			h.logger.ErrorContext(c.Request.Context(), "Assignment not found by id",
+				"assignment_id", *req.AssignmentID,
+				"error", err.Error(),
+			)
+			response.HandleDomainError(c, err)
+			return
+		}
+		if assignment.EmployeeID != req.EmployeeID || assignment.ProjectID != uint(projectID) {
+			response.NotFound(c, constants.MsgAssignmentNotFoundVN)
+			return
+		}
+	} else {
+		assignment, err = h.projectEmployeeService.GetAssignmentByProjectAndEmployee(c.Request.Context(), uint(projectID), req.EmployeeID)
+		if err != nil {
+			h.logger.ErrorContext(c.Request.Context(), "Assignment not found",
+				"project_id", projectID,
+				"employee_id", req.EmployeeID,
+				"error", err.Error(),
+			)
+			response.HandleDomainError(c, err)
+			return
+		}
 	}
 
 	// Update assignment fields

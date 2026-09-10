@@ -402,6 +402,12 @@ func (s *ProjectEmployeeService) GetAssignmentByProjectAndEmployee(ctx context.C
 	return s.projectEmployeeRepo.GetByProjectAndEmployee(ctx, projectID, employeeID)
 }
 
+// GetAssignmentByID orchestrates assignment retrieval by primary key
+func (s *ProjectEmployeeService) GetAssignmentByID(ctx context.Context, id uint) (*domain.ProjectEmployee, error) {
+	// Simple delegation to repository - no business logic needed
+	return s.projectEmployeeRepo.GetByID(ctx, id)
+}
+
 // AssignEmployeesBatch orchestrates batch employee assignment
 func (s *ProjectEmployeeService) AssignEmployeesBatch(ctx context.Context, assignments []*domain.ProjectEmployee, assignedBy uint) ([]*domain.ProjectEmployee, error) {
 	var results []*domain.ProjectEmployee

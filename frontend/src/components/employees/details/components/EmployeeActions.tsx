@@ -15,8 +15,8 @@ import type { EmployeeActionsProps } from "../types";
  *   - Tablet/desktop (>=sm): space-between with grouped actions
  *
  * Two modes:
- *   - View: destructive "Xóa" + neutral "Đổi mật khẩu" on the left,
- *     primary "Đóng" on the right.
+ *   - View: destructive "Xóa" (admin-only) + neutral "Đổi mật khẩu"
+ *     (admin/partner) on the left, primary "Đóng" on the right.
  *   - Edit: full-width row with ghost "Hủy" (left) and primary
  *     "Lưu thay đổi" (right).
  */
@@ -30,6 +30,8 @@ export const EmployeeActions = memo(({
 }: EmployeeActionsProps) => {
   const userRole = authManager.getUserRole();
   const canResetPassword = userRole === 'admin' || userRole === 'partner';
+  // Employee deletion is admin-only — partners never see the "Xóa" button.
+  const canDelete = userRole === 'admin';
 
   // ─── Editing mode — save/cancel ──────────────────────────────────────────
   if (onSave && onCancel) {
@@ -65,7 +67,7 @@ export const EmployeeActions = memo(({
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       {/* Secondary actions group */}
       <div className="flex flex-wrap items-center gap-2">
-        {onDelete && (
+        {canDelete && onDelete && (
           <Button
             type="button"
             variant="ghost"

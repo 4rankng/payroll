@@ -3,6 +3,7 @@ package main
 import (
 	"api-server/internal/pkg/clock"
 	"fmt"
+	"strings"
 )
 
 const flowProject = "ProjectCRUD"
@@ -380,6 +381,225 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 			return fmt.Errorf("cleanup remove employee: %w", err)
 		}
 		fmt.Printf("    Cleaned up employee %d from project %d\n", updateEmployee.ID, testProjectID)
+		return nil
+	})
+
+	// --- Paid-assignment end-date edits (extend/clear over approved+paid timesheets) ---
+
+	var paidEmployee EmployeeResponse
+	var paidAssignmentID uint
+
+	reporter.RunTest(flowProject, "Setup: assignment with planted approved+paid timesheets", func() error {
+		if testProjectID == 0 {
+			return fmt.Errorf("missing test project ID")
+		}
+		empBody := CreateEmployeeRequest{
+			Fullname: cfg.UniquePrefix() + " Paid Employee",
+			CCCD:     cfg.UniquePrefix() + "PP",
+			Address:  "123 Test Street",
+			Mobile:   "0909123458",
+		}
+		if _, err := admin.PostInto("/api/v1/employees", empBody, &paidEmployee); err != nil {
+			return fmt.Errorf("create paid-test employee: %w", err)
+		}
+		assignBody := []map[string]any{
+			{
+				"employee_id":      paidEmployee.ID,
+				"position":         "Phổ thông",
+				"payment_schedule": "weekly",
+				"start_date":       "2026-05-01",
+			},
+		}
+		var assignResp []ProjectEmployeeResponse
+		if _, err := admin.PostInto(fmt.Sprintf("/api/v1/projects/%d/employees", testProjectID), assignBody, &assignResp); err != nil {
+			return fmt.Errorf("assign paid-test employee: %w", err)
+		}
+		if len(assignResp) == 0 {
+			return fmt.Errorf("no assignment returned")
+		}
+		paidAssignmentID = assignResp[0].ID
+		if err := plantPaidTimesheet(testProjectID, paidEmployee.ID, "2026-06-15"); err != nil {
+			return fmt.Errorf("plant paid timesheet: %w", err)
+		}
+		fmt.Printf("    Planted approved+paid timesheet 2026-06-15 for employee %d (assignment %d)\n", paidEmployee.ID, paidAssignmentID)
+		return AssertGreaterThan("assignment_id", uint(0), paidAssignmentID)
+	})
+
+	reporter.RunTest(flowProject, "Extend end date over paid timesheets succeeds", func() error {
+		if paidAssignmentID == 0 {
+			return fmt.Errorf("missing paid-test assignment")
+		}
+		body := map[string]any{
+			"project_id":  testProjectID,
+			"employee_id": paidEmployee.ID,
+			"end_date":    "2026-08-31",
+		}
+		var resp AssignmentResponse
+		if _, err := admin.PutInto(fmt.Sprintf("/api/v1/employees/%d/projects", paidEmployee.ID), body, &resp); err != nil {
+			return fmt.Errorf("extend end_date: %w", err)
+		}
+		if resp.LastDate == nil || !strings.Contains(*resp.LastDate, "2026-08-31") {
+			return fmt.Errorf("expected last_date 2026-08-31, got %v", resp.LastDate)
+		}
+		dbLast, err := getAssignmentDateColumn(paidAssignmentID, "last_date")
+		if err != nil {
+			return err
+		}
+		return AssertEqual("db last_date", "2026-08-31", dbLast)
+	})
+
+	reporter.RunTest(flowProject, "Paid timesheet exactly on new end date stays covered", func() error { // boundary inclusivity
+		if paidAssignmentID == 0 {
+			return fmt.Errorf("missing paid-test assignment")
+		}
+		if err := plantPaidTimesheet(testProjectID, paidEmployee.ID, "2026-07-10"); err != nil {
+			return fmt.Errorf("plant boundary timesheet: %w", err)
+		}
+		body := map[string]any{
+			"project_id":  testProjectID,
+			"employee_id": paidEmployee.ID,
+			"end_date":    "2026-07-10",
+		}
+		var resp AssignmentResponse
+		if _, err := admin.PutInto(fmt.Sprintf("/api/v1/employees/%d/projects", paidEmployee.ID), body, &resp); err != nil {
+			return fmt.Errorf("set end_date onto paid timesheet date (must be allowed, date inclusive): %w", err)
+		}
+		dbLast, err := getAssignmentDateColumn(paidAssignmentID, "last_date")
+		if err != nil {
+			return err
+		}
+		return AssertEqual("db last_date", "2026-07-10", dbLast)
+	})
+
+	reporter.RunTest(flowProject, "Insufficient extension stranding paid timesheet rejected", func() error {
+		if paidAssignmentID == 0 {
+			return fmt.Errorf("missing paid-test assignment")
+		}
+		if err := plantPaidTimesheet(testProjectID, paidEmployee.ID, "2026-08-20"); err != nil {
+			return fmt.Errorf("plant stranded timesheet: %w", err)
+		}
+		body := map[string]any{
+			"project_id":  testProjectID,
+			"employee_id": paidEmployee.ID,
+			"end_date":    "2026-08-15",
+		}
+		_, statusCode, _ := admin.Put(fmt.Sprintf("/api/v1/employees/%d/projects", paidEmployee.ID), body)
+		if err := AssertGreaterOrEqual("status", 400, statusCode); err != nil {
+			return err
+		}
+		dbLast, err := getAssignmentDateColumn(paidAssignmentID, "last_date")
+		if err != nil {
+			return err
+		}
+		if err := AssertEqual("db last_date unchanged", "2026-07-10", dbLast); err != nil {
+			return err
+		}
+		fmt.Printf("    Correctly rejected extension stopping short of paid timesheet 2026-08-20 (HTTP %d)\n", statusCode)
+		return nil
+	})
+
+	reporter.RunTest(flowProject, "Shrink stranding paid timesheet rejected", func() error {
+		if paidAssignmentID == 0 {
+			return fmt.Errorf("missing paid-test assignment")
+		}
+		body := map[string]any{
+			"project_id":  testProjectID,
+			"employee_id": paidEmployee.ID,
+			"end_date":    "2026-06-01",
+		}
+		_, statusCode, _ := admin.Put(fmt.Sprintf("/api/v1/employees/%d/projects", paidEmployee.ID), body)
+		if err := AssertGreaterOrEqual("status", 400, statusCode); err != nil {
+			return err
+		}
+		dbLast, err := getAssignmentDateColumn(paidAssignmentID, "last_date")
+		if err != nil {
+			return err
+		}
+		return AssertEqual("db last_date unchanged", "2026-07-10", dbLast)
+	})
+
+	reporter.RunTest(flowProject, "Clear end date over paid timesheets succeeds (open-ended)", func() error {
+		if paidAssignmentID == 0 {
+			return fmt.Errorf("missing paid-test assignment")
+		}
+		body := map[string]any{
+			"project_id":  testProjectID,
+			"employee_id": paidEmployee.ID,
+			"end_date":    "",
+		}
+		var resp AssignmentResponse
+		if _, err := admin.PutInto(fmt.Sprintf("/api/v1/employees/%d/projects", paidEmployee.ID), body, &resp); err != nil {
+			return fmt.Errorf("clear end_date: %w", err)
+		}
+		if resp.LastDate != nil {
+			return fmt.Errorf("expected open-ended assignment, got last_date %v", *resp.LastDate)
+		}
+		dbLast, err := getAssignmentDateColumn(paidAssignmentID, "last_date")
+		if err != nil {
+			return err
+		}
+		return AssertEqual("db last_date NULL", "", dbLast)
+	})
+
+	reporter.RunTest(flowProject, "Start move stranding paid timesheet rejected", func() error {
+		if paidAssignmentID == 0 {
+			return fmt.Errorf("missing paid-test assignment")
+		}
+		body := map[string]any{
+			"project_id":  testProjectID,
+			"employee_id": paidEmployee.ID,
+			"start_date":  "2026-06-20",
+		}
+		_, statusCode, _ := admin.Put(fmt.Sprintf("/api/v1/employees/%d/projects", paidEmployee.ID), body)
+		if err := AssertGreaterOrEqual("status", 400, statusCode); err != nil {
+			return err
+		}
+		dbStart, err := getAssignmentDateColumn(paidAssignmentID, "start_date")
+		if err != nil {
+			return err
+		}
+		if err := AssertEqual("db start_date unchanged", "2026-05-01", dbStart); err != nil {
+			return err
+		}
+		fmt.Printf("    Correctly rejected start_date move past paid timesheet 2026-06-15 (HTTP %d)\n", statusCode)
+		return nil
+	})
+
+	reporter.RunTest(flowProject, "Re-assign over timesheet-holding assignment still 409 (regression)", func() error {
+		if paidEmployee.ID == 0 || testProjectID == 0 {
+			return fmt.Errorf("missing paid-test fixtures")
+		}
+		req := []map[string]any{
+			{
+				"employee_id": paidEmployee.ID,
+				"position":    "Nhân viên test",
+				"start_date":  "2026-06-01",
+			},
+		}
+		_, statusCode, _ := admin.Post(fmt.Sprintf("/api/v1/projects/%d/employees", testProjectID), req)
+		if err := AssertEqual("status", 409, statusCode); err != nil {
+			return err
+		}
+		fmt.Printf("    Create-overlap still rejected as before (HTTP 409)\n")
+		return nil
+	})
+
+	reporter.RunTest(flowProject, "Cleanup: paid-assignment fixtures", func() error {
+		if paidEmployee.ID == 0 {
+			return nil
+		}
+		if err := deleteTimesheetsForPair(testProjectID, paidEmployee.ID); err != nil {
+			return fmt.Errorf("delete planted timesheets: %w", err)
+		}
+		if paidAssignmentID != 0 {
+			if err := execPayrollSQL(fmt.Sprintf("DELETE FROM project_employees WHERE id = %d", paidAssignmentID)); err != nil {
+				return fmt.Errorf("delete test assignment row: %w", err)
+			}
+		}
+		if _, _, err := admin.Delete(fmt.Sprintf("/api/v1/employees/%d", paidEmployee.ID)); err != nil {
+			return fmt.Errorf("delete paid-test employee: %w", err)
+		}
+		fmt.Printf("    Cleaned up paid-assignment fixtures (employee %d)\n", paidEmployee.ID)
 		return nil
 	})
 
