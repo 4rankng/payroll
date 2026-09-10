@@ -145,10 +145,19 @@ func (s *BCCImportService) processAssetData(
 			assignment = byCode[emp.EmployeeCode]
 		}
 		if assignment == nil {
+			// Match the wording used by multi-position and weekly-rate lookup
+			// paths: quote the lookup key so the partner sees whether the
+			// miss is a typo or a missing project assignment. Prefer CCCD
+			// (date-row / multi-position identifier) when both are present;
+			// otherwise fall back to the employee code (legacy templates).
+			lookupKey := emp.CCCD
+			if lookupKey == "" {
+				lookupKey = emp.EmployeeCode
+			}
 			importErrors = append(importErrors, domain.ImportError{
 				Row:      rowNum,
 				Employee: emp.FullName,
-				Reason:   "nhân viên không tìm thấy trong hệ thống",
+				Reason:   fmt.Sprintf("không tìm thấy nhân viên \"%s\" trong dự án", lookupKey),
 			})
 			rowNum++
 			continue
@@ -190,6 +199,16 @@ func (s *BCCImportService) processAssetData(
 
 			target, ok := resolveBCCEntryTarget(parsed.ShiftRates, rateToTarget, flatRates, entry.ShiftLabel, date, ratelessFile, labelKeyedFile)
 			if !ok {
+				// A zero-hour cell carries no rate burden, so an unpriced column
+				// is not an error — the weekly paths skip rate resolution for
+				// these outright. Templates routinely ship a spare sub-column
+				// (EPE's Sunday TCNN) filled with zeros and no rate in the rate
+				// row; erroring on it fails an import that has nothing to book.
+				// Legacy deletion is keyed on employee+date, which this date's
+				// priced cells already cover, so dropping it loses no intent.
+				if entry.Hours <= 0 {
+					continue
+				}
 				// Rateless files have no VND figure to quote — "(0 VND)" would
 				// read as a zero-rate config error rather than an unmapped code.
 				reason := fmt.Sprintf("không tìm thấy mức lương cho ca %s", entry.ShiftLabel)
@@ -221,6 +240,7 @@ func (s *BCCImportService) processAssetData(
 	totalRows := len(parsed.Employees)
 
 	// 9. Preserve reviewed rows, replace pending rows, and create missing rows.
+	// Same-bucket entries are collapsed inside planMonthReplacement.
 	entries, staleIDs, protectedSkippedCount, flexibleSkippedCount, replErr := s.planMonthReplacement(
 		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, false)
 	if replErr != nil {
@@ -275,11 +295,13 @@ func (s *BCCImportService) processAssetData(
 	}
 
 	// 11-12. Count results and persist the completed import's stats via the
-	// shared tail (counts skipped as deleted + protected + flexible + zero-hour).
+	// shared tail. Skipped no longer includes zero-hour no-ops: a zero cell
+	// whose day has no pending row did nothing visible to the partner and
+	// would only inflate the "Skipped" number on screen.
 	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	return s.finalizeCreatedBCCImport(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth,
 		totalRows, len(result.CreatedTimesheets), protectedSkippedCount, flexibleSkippedCount,
-		len(result.DeletedTimesheets), countZeroHourEntries(entries), importErrors)
+		len(result.DeletedTimesheets), importErrors)
 }
 
 // parseLegacyRoute handles the default (BCC-sheet-named) dispatch branch: the

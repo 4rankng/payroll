@@ -139,7 +139,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	return s.finalizeCreatedBCCImport(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth,
 		totalRows, len(result.CreatedTimesheets), protectedSkippedCount, flexibleSkippedCount,
-		len(result.DeletedTimesheets), countZeroHourEntries(entries), importErrors)
+		len(result.DeletedTimesheets), importErrors)
 }
 
 // weeklyBCCConfigError returns a failure reason when a sheet's shift type is

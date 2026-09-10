@@ -468,8 +468,22 @@ func TestPlanBCCReplacementZeroHourEntryDeletesPendingOnly(t *testing.T) {
 			t.Fatalf("filtered entry for employee %d = %.1f h, want 0", e.EmployeeID, e.HoursWorked)
 		}
 	}
-	if got := countZeroHourEntries(filtered); got != 2 {
-		t.Fatalf("countZeroHourEntries = %d, want 2", got)
+}
+
+// Zero-cell no-ops must not contribute to the "Skipped" count surfaced on the
+// import dialog. The EVA T09.2026 import created 217 rows but reported 692
+// skipped because the old formula added every zero-hour cell in the file,
+// even ones whose day had no pending row to delete — the partner read that
+// as "almost everything failed".
+func TestBCCImportSkippedCountIgnoresZeroCellNoOps(t *testing.T) {
+	if got := bccImportSkippedCount(3, 1, 0); got != 4 {
+		t.Fatalf("deleted=3 protected=1 flexible=0: got %d, want 4", got)
+	}
+	if got := bccImportSkippedCount(0, 5, 2); got != 7 {
+		t.Fatalf("deleted=0 protected=5 flexible=2: got %d, want 7", got)
+	}
+	if got := bccImportSkippedCount(0, 0, 0); got != 0 {
+		t.Fatalf("all zero: got %d, want 0", got)
 	}
 }
 

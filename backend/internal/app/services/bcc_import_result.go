@@ -126,6 +126,12 @@ func safeBulkFailureReason(reason string) string {
 		return "Bảng chấm công đã được phê duyệt"
 	case strings.Contains(normalized, "thanh toán"), strings.Contains(normalized, "paid"):
 		return "Bảng chấm công đã thanh toán"
+	// An in-batch collision is the uploaded file disagreeing with itself, not a
+	// conflict with stored data. It must be checked before the generic
+	// duplicate case below, which would otherwise relabel it "Dữ liệu đã tồn
+	// tại" and send the partner hunting for existing timesheets that are fine.
+	case strings.Contains(normalized, "trùng lặp trong yêu cầu"):
+		return "Tệp có nhiều ô chấm công trùng loại giờ cho cùng một ngày"
 	case strings.Contains(normalized, "trùng"), strings.Contains(normalized, "duplicate"):
 		return "Dữ liệu đã tồn tại"
 	case strings.Contains(normalized, "không tìm thấy mức lương"):

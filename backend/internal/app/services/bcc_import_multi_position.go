@@ -138,7 +138,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	return s.finalizeCreatedBCCImport(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth,
 		totalRows, len(result.CreatedTimesheets), protectedSkippedCount, flexibleSkippedCount,
-		len(result.DeletedTimesheets), countZeroHourEntries(entries), importErrors)
+		len(result.DeletedTimesheets), importErrors)
 }
 
 // validateSheetPositions returns a failure reason when any sheet's position is

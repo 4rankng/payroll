@@ -145,7 +145,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
 	return s.finalizeCreatedBCCImport(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth,
 		totalRows, len(result.CreatedTimesheets), protectedSkippedCount, flexibleSkippedCount,
-		len(result.DeletedTimesheets), countZeroHourEntries(entries), importErrors)
+		len(result.DeletedTimesheets), importErrors)
 }
 
 // autoCreateWeeklyPaymentSTK upserts employees from the STK sheet with the

@@ -110,20 +110,6 @@ func planBCCReplacement(
 	return filteredEntries, staleIDs, protectedSkippedCount, flexibleSkippedCount
 }
 
-// countZeroHourEntries counts entries whose cell explicitly held 0 — deletion
-// requests. They surface as skipped rows: nothing is created for them, the
-// matching pending row (when it existed) was hard-deleted as stale. Negative
-// hours are invalid data on the failure path, not deletion requests.
-func countZeroHourEntries(entries []domainservices.BulkCreateTimesheetEntry) int {
-	n := 0
-	for _, e := range entries {
-		if e.HoursWorked == 0 {
-			n++
-		}
-	}
-	return n
-}
-
 func (s *BCCImportService) applyTimesheetReplacement(
 	ctx context.Context,
 	staleIDs []uint,
