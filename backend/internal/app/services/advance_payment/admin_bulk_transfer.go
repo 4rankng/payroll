@@ -110,20 +110,10 @@ func (s *Service) ProcessBankResult(ctx context.Context, file *excelize.File) (*
 	var detectedForMonth string
 	var allCompletedRequestIDs []uint64
 
-	for i := 2; i < len(rows); i++ {
-		row := rows[i]
-
-		if len(row) < 9 {
-			continue
-		}
-
-		txCode := strings.TrimSpace(row[5])
-		status := strings.TrimSpace(row[6])
-		paymentRef := strings.TrimSpace(row[8])
-
-		if txCode == "" {
-			continue
-		}
+	for _, br := range extractBankResultRows(rows) {
+		txCode := br.TxCode
+		status := br.Status
+		paymentRef := br.PaymentRef
 
 		tc, err := s.config.TransactionCodeRepo.GetByCode(ctx, txCode)
 		if err != nil {
@@ -177,7 +167,7 @@ func (s *Service) ProcessBankResult(ctx context.Context, file *excelize.File) (*
 		}
 
 		resultItems = append(resultItems, dto.AdvancePaymentResultItem{
-			Row:                   i + 1,
+			Row:                   br.Row,
 			EmployeeName:          employeeName,
 			EmployeeBank:          employeeBank,
 			EmployeeAccountNumber: employeeAccountNumber,
