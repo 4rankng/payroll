@@ -172,13 +172,18 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 		return
 	}
 
-	// The salary month is always DERIVED from the upload date — the admin no
-	// longer selects it in the UI: an upload between day 20 of month M and
-	// day 8 of M+1 belongs to M's salary period (GetCurrentMonth resolves the
-	// advance-period month from the injected clock). A stale form value, if
-	// still sent by an old client, is ignored.
-	forMonth := advance_payment.GetCurrentMonth()
+	// The salary month defaults to the server-derived period (day 20 of month
+	// M through day 8 of M+1 belongs to M), but the client may override it by
+	// sending a forMonth form field (YYYY-MM).
+	forMonth := c.DefaultPostForm("forMonth", "")
+	if forMonth == "" {
+		forMonth = advance_payment.GetCurrentMonth()
+	}
 	if len(forMonth) != 7 {
+		response.BadRequest(c, "Tháng (forMonth) không hợp lệ với định dạng YYYY-MM")
+		return
+	}
+	if _, err := time.Parse("2006-01", forMonth); err != nil {
 		response.BadRequest(c, "Tháng (forMonth) không hợp lệ với định dạng YYYY-MM")
 		return
 	}
