@@ -26,14 +26,14 @@ interface ImportPayrollDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/** Generate month options: current month + 11 previous months. */
+/** Generate month options: current month and next month only. */
 function getMonthOptions(): Array<{ value: string; label: string; isCurrent: boolean }> {
-  return Array.from({ length: 12 }, (_, i) => {
-    const now = new Date();
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+  const now = new Date();
+  return [0, 1].map((offset) => {
+    const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const label = `Tháng ${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-    return { value, label, isCurrent: i === 0 };
+    return { value, label, isCurrent: offset === 0 };
   });
 }
 
