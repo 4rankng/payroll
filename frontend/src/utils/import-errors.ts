@@ -31,6 +31,21 @@ export function getSafeImportErrorReason(reason: string): string {
   if (normalized.includes('không tìm thấy mức lương')) {
     return 'Chưa cấu hình mức lương phù hợp cho ca làm việc';
   }
+  // "ca làm \"OT400\" không có trong cấu hình lương…" / "vị trí … không có
+  // trong cấu hình lương…": name the offending shift or position so the
+  // partner can align the sheet name (or add the shift) in the payrate
+  // config; without a safe name fall back to the payrate category hint.
+  if (normalized.includes('cấu hình lương')) {
+    const named = reason.match(
+      /(ca làm|vị trí)\s+"([^"]{1,40})"\s+không có trong cấu hình lương/u,
+    );
+    if (named && !TECHNICAL_VALUE_PATTERN.test(named[2].trim())) {
+      const noun = named[1];
+      const label = named[2].trim();
+      return `${noun.charAt(0).toUpperCase()}${noun.slice(1)} "${label}" chưa có trong bảng lương của dự án`;
+    }
+    return 'Chưa cấu hình bảng lương cho dự án';
+  }
   if (normalized.includes('bảng lương') || normalized.includes('payrate')) {
     return 'Chưa cấu hình bảng lương cho dự án';
   }

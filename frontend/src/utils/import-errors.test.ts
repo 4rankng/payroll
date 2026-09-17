@@ -63,6 +63,46 @@ describe('parseImportErrors', () => {
     }]);
   });
 
+  it('names the missing shift or position when the payrate config lacks it', () => {
+    expect(parseImportErrors(JSON.stringify([
+      {
+        row: 0,
+        employee: '',
+        reason: 'ca làm "OT400" không có trong cấu hình lương cho ngày 2026-09-08. Các ca làm khả dụng: OT30, HC, OT150',
+      },
+      {
+        row: 0,
+        employee: '',
+        reason: 'vị trí "Bảo vệ" không có trong cấu hình lương. Các vị trí khả dụng: HC',
+      },
+    ]))).toEqual([
+      {
+        row: 0,
+        employee: '',
+        reason: 'Ca làm "OT400" chưa có trong bảng lương của dự án',
+        date: '08/09/2026',
+      },
+      {
+        row: 0,
+        employee: '',
+        reason: 'Vị trí "Bảo vệ" chưa có trong bảng lương của dự án',
+      },
+    ]);
+  });
+
+  it('falls back to the payrate hint when the config error names no safe shift', () => {
+    expect(parseImportErrors(JSON.stringify([{
+      row: 0,
+      employee: '',
+      reason: 'không tìm thấy cấu hình lương cho ngày 2026-09-08',
+    }]))).toEqual([{
+      row: 0,
+      employee: '',
+      reason: 'Chưa cấu hình bảng lương cho dự án',
+      date: '08/09/2026',
+    }]);
+  });
+
   it('maps a missing project payrate to a config hint instead of the generic fallback', () => {
     expect(parseImportErrors(JSON.stringify([{
       row: 0,
