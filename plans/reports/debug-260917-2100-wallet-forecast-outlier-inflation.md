@@ -79,7 +79,9 @@ p95 ≈ 953,7M ≈ chu kỳ xấu nhất từng quan sát (881,8M + margin 8%) �
 
 ## Câu hỏi còn mở
 
-1. Request tạo trong locked gap (9–19) nên gắn `for_month` kỳ nào để cohort
-   không mất dữ liệu? (hiện tại bị pivot loại bỏ hoàn toàn)
+1. ~~Request tạo trong locked gap (9–19) nên gắn `for_month` kỳ nào để cohort
+   không mất dữ liệu?~~ **ĐÃ QUYẾT (17/09/2026, product owner):** request tạo
+   trong locked gap bị cohort loại là hành vi mong muốn — bỏ qua, không sửa.
+   Ghi chú đã thêm vào `pivotCohort`.
 2. Có nên hiển thị nhãn phương pháp/confidence ("growth-adjusted",
    "monte-carlo") trên card để admin tự đánh giá độ tin cậy của con số này?

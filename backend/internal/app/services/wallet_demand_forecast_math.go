@@ -121,6 +121,10 @@ func cycleDayFor(t time.Time, forMonth string) int {
 
 // pivotCohort builds the per-period series from raw cohort rows, dropping rows
 // outside [1, maxCycleDay] (locked-gap stragglers / out-of-window noise) and
+// rows tagged with a different forMonth. Excluding locked-gap stragglers is
+// intended product behavior (confirmed 2026-09-17): requests created after the
+// cutoff (days 9-19) are ignored by the forecast history — do not "fix" them
+// into the cohort.
 // rows tagged with a different forMonth.
 func pivotCohort(rows []domain.CohortRow, forMonth string, isCurrent bool) cohortSeries {
 	maxDay := maxCycleDay(forMonth)
