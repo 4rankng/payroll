@@ -47,13 +47,15 @@ const (
 	DefaultWeeklyPaymentPercentage   = 0.70
 	DefaultMonthlyPaymentPercentage  = 0.70
 	DefaultAdvanceCashFeePercentage  = 0.02
+	DefaultWeeklyPaymentFeePercentage = 0.02
 	DefaultPartnerCompany            = "VFIC Manpower"
 	DefaultAdvancePaymentPercentage  = 0.60  // 60% max advance
 	DefaultAdvancePaymentFeeMin      = 10000 // 10,000 VND minimum fee
 	DefaultBulkTransferWorkbookLimit = int64(400_000_000)
 	DefaultSelfCheckInAdvancePercent = domain.DefaultSelfCheckInAdvancePercentage
 	DefaultSelfCheckInAdvanceHold    = domain.QuotaCreditHoldDuration
-	MinBulkTransferWorkbookLimit     = int64(2)
+	MinBulkTransferWorkbookLimit     = int64(100_000_000)
+	MaxBulkTransferWorkbookLimit     = int64(500_000_000)
 	MaxSelfCheckInAdvanceHoldHours   = uint64(720)
 	CacheTTL                         = constants.SettingsCacheTTL // Use centralized cache TTL
 
@@ -93,6 +95,14 @@ type FeeScheduleResolver interface {
 	MinFeeAt(ctx context.Context, at time.Time) uint64
 }
 
+// WeeklyFeeScheduleResolver is the read-side surface of the weekly-payment
+// fee schedule. Implemented by *payroll.WeeklyPaymentFeeScheduleService;
+// bound at bootstrap via BindWeeklyFeeScheduleResolver. Kept as an interface
+// here because package config cannot import package payroll (cycle).
+type WeeklyFeeScheduleResolver interface {
+	PercentageAt(ctx context.Context, at time.Time) float64
+}
+
 type SettingReader interface {
 	GetSettingByKey(ctx context.Context, key string) (*domain.Settings, error)
 	GetSettingByKeyAuthoritative(ctx context.Context, key string) (*domain.Settings, error)
@@ -101,9 +111,10 @@ type SettingReader interface {
 
 // SettingsConfigService provides methods to retrieve business configuration settings
 type SettingsConfigService struct {
-	settingsService SettingReader
-	cache           sync.Map // key -> *cacheEntry
-	feeSchedule     FeeScheduleResolver
+	settingsService   SettingReader
+	cache             sync.Map // key -> *cacheEntry
+	feeSchedule       FeeScheduleResolver
+	weeklyFeeSchedule WeeklyFeeScheduleResolver
 }
 
 // NewSettingsConfigService creates a new settings configuration service
@@ -160,8 +171,8 @@ func parseBulkTransferWorkbookLimit(setting *domain.Settings) (int64, error) {
 		return 0, domain.NewValidationError("giới hạn tổng tiền file Chuyển lô phải là số nguyên")
 	}
 	value, err := strconv.ParseInt(raw, 10, 64)
-	if err != nil || value < MinBulkTransferWorkbookLimit {
-		return 0, domain.NewValidationError("giới hạn tổng tiền file Chuyển lô phải là số nguyên từ 2 đ trở lên")
+	if err != nil || value < MinBulkTransferWorkbookLimit || value > MaxBulkTransferWorkbookLimit {
+		return 0, domain.NewValidationError("giới hạn tổng tiền file Chuyển lô phải từ 100.000.000 đ đến 500.000.000 đ")
 	}
 	return value, nil
 }
@@ -302,6 +313,13 @@ func (s *SettingsConfigService) BindFeeScheduleResolver(r FeeScheduleResolver) {
 	s.feeSchedule = r
 }
 
+// BindWeeklyFeeScheduleResolver binds the weekly-payment fee schedule service
+// so GetWeeklyPaymentFeePercentage reads the decoupled weekly schedule
+// instead of the shared legacy default.
+func (s *SettingsConfigService) BindWeeklyFeeScheduleResolver(r WeeklyFeeScheduleResolver) {
+	s.weeklyFeeSchedule = r
+}
+
 // getFromCache retrieves a value from cache if valid
 func (s *SettingsConfigService) getFromCache(key string) (interface{}, bool) {
 	if entry, ok := s.cache.Load(key); ok {
@@ -419,6 +437,18 @@ func (s *SettingsConfigService) GetAdvanceCashFeePercentage(ctx context.Context)
 		return s.feeSchedule.FeePercentageAt(ctx, clock.Now())
 	}
 	return DefaultAdvanceCashFeePercentage
+}
+
+// GetWeeklyPaymentFeePercentage returns the service fee percentage (as a
+// fraction, 0.02 == 2%) charged on weekly salary disbursements. Once the
+// WeeklyFeeScheduleResolver is bound, this reads the weekly schedule's active
+// entry for today; unbound callers fall back to the same 2% default the
+// shared schedule provided before the two fee domains were decoupled.
+func (s *SettingsConfigService) GetWeeklyPaymentFeePercentage(ctx context.Context) float64 {
+	if s.weeklyFeeSchedule != nil {
+		return s.weeklyFeeSchedule.PercentageAt(ctx, clock.Now())
+	}
+	return DefaultWeeklyPaymentFeePercentage
 }
 
 // GetPartnerCompany retrieves the partner company name setting (with caching)

@@ -75,6 +75,7 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, container *Container) {
 	setupDBRoutes(protected, container)
 	setupMetricsRoutes(protected, container)
 	setupAdvancePaymentRoutes(protected, container)
+	setupWeeklyPaymentFeeRoutes(protected, container)
 	setupAdBannerRoutes(protected, container)
 	setupAuditRoutes(protected, container)
 	setupSettingsRoutes(v1, container) // Admin-only routes, use v1 directly

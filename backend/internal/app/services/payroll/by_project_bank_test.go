@@ -43,7 +43,7 @@ func TestByProjectExcelShowsConfiguredBank(t *testing.T) {
 	reportData := []*domainServices.ProjectReportData{
 		{Project: &domain.Project{ID: 1, Name: "Dự án A"}, EmployeeCount: 1, TotalAmount: 500_000},
 	}
-	exporter := NewPayrollReportByProjectExporter(stubBankProvider{})
+	exporter := NewPayrollReportByProjectExporter(stubBankProvider{}, stubWeeklyFeeProvider{pct: 0.02})
 	out, _, err := exporter.GenerateExcel(context.Background(), reportData, time.Date(2026, time.August, 19, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("generate: %v", err)
@@ -66,4 +66,13 @@ func TestByProjectExcelShowsConfiguredBank(t *testing.T) {
 			t.Errorf("Summary!%s = %q, want %q", cell, got, want)
 		}
 	}
+}
+
+// stubWeeklyFeeProvider feeds buildSummary a fixed weekly fee percentage.
+type stubWeeklyFeeProvider struct {
+	pct float64
+}
+
+func (s stubWeeklyFeeProvider) GetWeeklyPaymentFeePercentage(context.Context) float64 {
+	return s.pct
 }

@@ -82,7 +82,7 @@ func (r *bookingRunner) WithTransactionResult(ctx context.Context, fn func(conte
 type bookingSettings struct{}
 
 func (bookingSettings) GetPartnerCompany(context.Context) string            { return "VFIC Manpower" }
-func (bookingSettings) GetAdvanceCashFeePercentage(context.Context) float64 { return 0.02 }
+func (bookingSettings) GetWeeklyPaymentFeePercentage(context.Context) float64 { return 0.02 }
 
 type bookingLedgerWriter struct{ entries []*domain.LedgerEntry }
 

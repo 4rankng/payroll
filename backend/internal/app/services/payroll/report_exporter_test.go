@@ -25,7 +25,7 @@ func (f *fakeSettingsConfigProvider) GetWeeklyPaymentPercentage(ctx context.Cont
 	return f.bulkPercent
 }
 
-func (f *fakeSettingsConfigProvider) GetAdvanceCashFeePercentage(ctx context.Context) float64 {
+func (f *fakeSettingsConfigProvider) GetWeeklyPaymentFeePercentage(ctx context.Context) float64 {
 	return f.feePercent
 }
 

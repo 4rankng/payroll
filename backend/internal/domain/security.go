@@ -67,6 +67,7 @@ const (
 	EntityTypeBulkTransferFile          EntityType = "bulk_transfer_file"
 	EntityTypeAdvancePaymentFeeSchedule EntityType = "advance_payment_fee_schedule"
 	EntityTypeDisbursementFeeSchedule   EntityType = "disbursement_fee_schedule"
+	EntityTypeWeeklyPaymentFeeSchedule  EntityType = "weekly_payment_fee_schedule"
 	EntityTypeAdBanner                  EntityType = "ad_banner"
 )
 

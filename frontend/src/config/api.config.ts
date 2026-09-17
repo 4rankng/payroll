@@ -469,6 +469,12 @@ export const API_ENDPOINTS = {
     byId: (id: string) => `/admin/advance-payment-fees/${id}`,
   },
 
+  // Admin: Weekly Payment Fee Schedule (Phí trả lương tuần)
+  weeklyPaymentFees: {
+    base: '/admin/weekly-payment-fees',
+    byId: (id: string) => `/admin/weekly-payment-fees/${id}`,
+  },
+
   // Admin: Disbursement Fee Schedule (Cấu hình phí giao dịch chi hộ)
   disbursementFees: {
     base: '/admin/disbursement-fees',

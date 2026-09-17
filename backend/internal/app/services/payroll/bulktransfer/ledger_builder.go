@@ -17,16 +17,18 @@ type LedgerPlan struct {
 	RevenueOffset    int64
 }
 
-// AdvanceCashFeeProvider is the only settings contract needed to build a
+// WeeklyPaymentFeeProvider is the only settings contract needed to build a
 // ledger plan. Keeping it narrow lets every payroll-disbursement path reuse
-// the same accounting calculation.
-type AdvanceCashFeeProvider interface {
-	GetAdvanceCashFeePercentage(ctx context.Context) float64
+// the same accounting calculation. It reads the weekly-payment fee schedule
+// (phí trả lương tuần), which is decoupled from the FlexPay advance-payment
+// fee schedule.
+type WeeklyPaymentFeeProvider interface {
+	GetWeeklyPaymentFeePercentage(ctx context.Context) float64
 }
 
 // BuildLedgerPlan computes amounts for receivable, cash out, and revenue offset
-func BuildLedgerPlan(ctx context.Context, cfg AdvanceCashFeeProvider, totalTransfer float64, partnerCompany, filename string) LedgerPlan {
-	feePct := cfg.GetAdvanceCashFeePercentage(ctx)
+func BuildLedgerPlan(ctx context.Context, cfg WeeklyPaymentFeeProvider, totalTransfer float64, partnerCompany, filename string) LedgerPlan {
+	feePct := cfg.GetWeeklyPaymentFeePercentage(ctx)
 	fee := totalTransfer * feePct
 	receivable := int64(math.Round(totalTransfer + fee))
 	cashOut := int64(math.Round(totalTransfer))

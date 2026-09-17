@@ -347,6 +347,7 @@ export const QueryKeys = {
       availableMonths: ['admin', 'advance-payments', 'available-months'] as const,
       feeSchedules: ['admin', 'advance-payments', 'fee-schedules'] as const,
       disbursementFeeSchedules: ['admin', 'advance-payments', 'disbursement-fee-schedules'] as const,
+      weeklyPaymentFeeSchedules: ['admin', 'advance-payments', 'weekly-payment-fee-schedules'] as const,
     },
   },
 

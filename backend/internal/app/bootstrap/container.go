@@ -99,6 +99,7 @@ type Handlers struct {
 	DisbursementFee      *disbursementHandlers.FeeScheduleHandler
 	DisbursementSettings *disbursementHandlers.SettingsHandler
 	ManualDisbursement   *disbursementHandlers.ManualDisbursementHandler
+	WeeklyPaymentFee     *handlers.WeeklyPaymentFeeHandler
 	ReconciliationExport *disbursementHandlers.ReconciliationExportHandler
 	ProviderTransactions *adminHandlers.WalletPaymentStatsHandler
 	Wallet               *handlers.WalletHandler
@@ -452,6 +453,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 			cfg.Disbursement.Ninepay.EnabledForBulkTransfer,
 		),
 		DisbursementFee: disbursementHandlers.NewFeeScheduleHandler(services.DisbursementFeeSchedule, clk),
+		WeeklyPaymentFee: handlers.NewWeeklyPaymentFeeHandler(services.WeeklyPaymentFeeSchedule, clk),
 		ManualDisbursement: disbursementHandlers.NewManualDisbursementHandler(services.DisbursementRegistry, services.ProviderTransactions, repos.Employee, repos.Bank, repos.TransactionCode, services.Wallet, logger, func() *slog.Logger {
 			if cfg.Disbursement.Onepay.Enabled {
 				l, _ := observability.NewFileLogger("logs/payment-gateway.log")

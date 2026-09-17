@@ -131,7 +131,7 @@ type DisbursementFeeProvider interface {
 // Mirrors the legacy BuildLedgerPlan logic in payroll/bulktransfer.
 type PartnerInfoProvider interface {
 	GetPartnerCompany(ctx context.Context) string
-	GetAdvanceCashFeePercentage(ctx context.Context) float64
+	GetWeeklyPaymentFeePercentage(ctx context.Context) float64
 }
 
 // LedgerEntryWriter writes additional ledger entries for a transaction.

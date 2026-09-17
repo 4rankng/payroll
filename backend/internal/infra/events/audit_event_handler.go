@@ -403,6 +403,12 @@ func (h *AuditEventHandler) buildMetadata(event domain.DomainEvent) map[string]i
 		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
 	case domain.DisbursementFeeScheduleDeletedEvent:
 		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
+	case domain.WeeklyPaymentFeeScheduleCreatedEvent:
+		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
+	case domain.WeeklyPaymentFeeScheduleUpdatedEvent:
+		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
+	case domain.WeeklyPaymentFeeScheduleDeletedEvent:
+		return feeScheduleMetadata(e.ScheduleID, e.EffectiveDate, e.Summary)
 
 	// --- Import/Export events ---
 	case domain.DataImportedEvent:

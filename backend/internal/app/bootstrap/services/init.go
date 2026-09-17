@@ -110,6 +110,7 @@ type Services struct {
 	OnePayFeeImport                   *settlement.OnePayFeeImportService
 	AdvancePayment                    *advance_payment.Service
 	AdvancePaymentFeeSchedule         *advance_payment.FeeScheduleService
+	WeeklyPaymentFeeSchedule          *payroll.WeeklyPaymentFeeScheduleService
 	AdBanner                          *ad_banner.Service
 	ImportProgress                    *advance_payment.ImportProgressService
 	EmployeeImport                    *employee.ImportService
@@ -167,7 +168,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	emailNotificationPublisher := notification.NewEmailNotificationPublisher(repos.Notification, logger)
 	payCycleNotificationPublisher := notification.NewPaymentCycleNotificationPublisher(repos.Notification, logger)
 	payrollReportByProjectService := payroll.NewPayrollReportByProjectService(repos.Timesheet, repos.Project, repos.Employee)
-	payrollReportByProjectExporter := payroll.NewPayrollReportByProjectExporter(settingsConfigService)
+	payrollReportByProjectExporter := payroll.NewPayrollReportByProjectExporter(settingsConfigService, settingsConfigService)
 	payrollReportAdapter := notification.NewPayrollReportAdapter(payrollReportByProjectService, payrollReportByProjectExporter)
 
 	// Select email provider based on environment
@@ -288,6 +289,12 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// instead of the retired flat-rate settings keys.
 	feeScheduleService := advance_payment.NewFeeScheduleService(db.DB, cacheService, eventBus, logger)
 	settingsConfigService.BindFeeScheduleResolver(feeScheduleService)
+
+	// Weekly-payment fee schedule (phí trả lương tuần): decoupled from the
+	// FlexPay schedule; bound into settingsConfigService so weekly bulk
+	// transfers and statement reports resolve the weekly rate.
+	weeklyPaymentFeeScheduleService := payroll.NewWeeklyPaymentFeeScheduleService(db.DB, eventBus, logger)
+	settingsConfigService.BindWeeklyFeeScheduleResolver(weeklyPaymentFeeScheduleService)
 
 	// Ad banner campaigns (employee portal "Quảng cáo").
 	adBannerService := ad_banner.NewService(repos.AdBanner, repos.ProjectEmployee, repos.Employee, eventBus, cacheService, logger)
@@ -746,6 +753,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		OnePayFeeImport:                   onePayFeeImportService,
 		AdvancePayment:                    advancePaymentService,
 		AdvancePaymentFeeSchedule:         feeScheduleService,
+		WeeklyPaymentFeeSchedule:          weeklyPaymentFeeScheduleService,
 		AdBanner:                          adBannerService,
 		ImportProgress:                    importProgressService,
 		EmployeeImport:                    employeeImportService,

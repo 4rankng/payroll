@@ -18,6 +18,7 @@ import {
 } from '@/components/settings/SettingsTabList';
 import { useSettingsForm } from '@/hooks/settings/useSettingsForm';
 import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule/FeeScheduleSection';
+import { WeeklyPaymentFeeScheduleSection } from '@/components/admin/WeeklyPaymentFeeSchedule/WeeklyPaymentFeeScheduleSection';
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
 import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
 import { SendNotificationComposer } from '@/components/settings/SendNotificationComposer';
@@ -115,6 +116,8 @@ const SettingsPage = () => {
 
         <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-8">
           <FeeScheduleSection />
+          <Separator />
+          <WeeklyPaymentFeeScheduleSection />
           <Separator />
           <DisbursementFeeScheduleSection />
         </TabsContent>

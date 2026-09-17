@@ -568,6 +568,33 @@ type DisbursementFeeScheduleDeletedEvent struct {
 	Summary       string
 }
 
+// Weekly Payment Fee Schedule Events
+//
+// Same shape as the disbursement counterpart but for the percentage service
+// fee charged on weekly salary disbursements (lương tuần). The Summary field
+// carries the human-readable percentage (e.g. "1,8%") so admins see the rate
+// change in audit without having to join other tables.
+type WeeklyPaymentFeeScheduleCreatedEvent struct {
+	BaseEvent
+	ScheduleID    string
+	EffectiveDate string // YYYY-MM-DD
+	Summary       string // e.g. "1,8%" (formatted percentage)
+}
+
+type WeeklyPaymentFeeScheduleUpdatedEvent struct {
+	BaseEvent
+	ScheduleID    string
+	EffectiveDate string
+	Summary       string
+}
+
+type WeeklyPaymentFeeScheduleDeletedEvent struct {
+	BaseEvent
+	ScheduleID    string
+	EffectiveDate string
+	Summary       string
+}
+
 // Ad Banner Events — admin campaign lifecycle in the employee portal.
 
 type AdBannerCreatedEvent struct {

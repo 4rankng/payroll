@@ -143,7 +143,7 @@ type LedgerRepository interface {
 type SettingsConfigService interface {
 	GetWeeklyPaymentPercentage(ctx context.Context) float64
 	GetMonthlyPaymentPercentage(ctx context.Context) float64
-	GetAdvanceCashFeePercentage(ctx context.Context) float64
+	GetWeeklyPaymentFeePercentage(ctx context.Context) float64
 	GetPartnerCompany(ctx context.Context) string
 	GetPaymentPercentageForSchedule(ctx context.Context, schedule string) float64
 }

@@ -24,17 +24,25 @@ type TransferBankInfoProvider interface {
 	GetTransferBankInfo(ctx context.Context) appconfig.TransferBankInfo
 }
 
+// WeeklyPaymentFeeSettingsProvider supplies the weekly-payment fee percentage
+// for the statement summary. Implemented by *config.SettingsConfigService.
+type WeeklyPaymentFeeSettingsProvider interface {
+	GetWeeklyPaymentFeePercentage(ctx context.Context) float64
+}
+
 // PayrollReportByProjectExporter handles Excel generation for payroll report by project
 type PayrollReportByProjectExporter struct {
 	logger       *slog.Logger
 	bankSettings TransferBankInfoProvider
+	feeSettings  WeeklyPaymentFeeSettingsProvider
 }
 
 // NewPayrollReportByProjectExporter creates a new exporter
-func NewPayrollReportByProjectExporter(bankSettings TransferBankInfoProvider) *PayrollReportByProjectExporter {
+func NewPayrollReportByProjectExporter(bankSettings TransferBankInfoProvider, feeSettings WeeklyPaymentFeeSettingsProvider) *PayrollReportByProjectExporter {
 	return &PayrollReportByProjectExporter{
 		logger:       observability.GetLogger(),
 		bankSettings: bankSettings,
+		feeSettings:  feeSettings,
 	}
 }
 
@@ -172,7 +180,7 @@ func (e *PayrollReportByProjectExporter) GenerateExcel(ctx context.Context, repo
 	}
 
 	// Update Summary sheet
-	summary := e.buildSummary(totalAmountAllProjects, atDate)
+	summary := e.buildSummary(ctx, totalAmountAllProjects, atDate)
 
 	if err := e.updateSummarySheet(ctx, f, reportData, summary, atDate, currencyStyleWhite, currencyStyleGray); err != nil {
 		return nil, nil, fmt.Errorf("failed to update summary sheet: %w", err)
@@ -218,9 +226,14 @@ func (e *PayrollReportByProjectExporter) resolveBankInfo(ctx context.Context) ap
 	return e.bankSettings.GetTransferBankInfo(ctx)
 }
 
-func (e *PayrollReportByProjectExporter) buildSummary(totalAmount int64, atDate time.Time) *PayrollReportSummary {
+func (e *PayrollReportByProjectExporter) buildSummary(ctx context.Context, totalAmount int64, atDate time.Time) *PayrollReportSummary {
+	// The statement fee line and the ledger receivable must both resolve from
+	// the weekly-payment fee schedule so invoices match what partners owe.
 	feePercentage := 0.02
-	feeAmount := (totalAmount * 2) / 100
+	if e.feeSettings != nil {
+		feePercentage = e.feeSettings.GetWeeklyPaymentFeePercentage(ctx)
+	}
+	feeAmount := int64(float64(totalAmount) * feePercentage)
 	totalWithFee := totalAmount + feeAmount
 
 	return &PayrollReportSummary{

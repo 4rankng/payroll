@@ -28,6 +28,7 @@ var AuditMatrix = map[AuditAction]map[EntityType]string{
 		EntityTypePayrate:                   "%s đã tạo mức lương cho dự án %s",
 		EntityTypeAdvancePaymentFeeSchedule: "%s đã thêm cấu hình phí ứng lương hiệu lực từ %s (%s)",
 		EntityTypeDisbursementFeeSchedule:   "%s đã thêm cấu hình phí giao dịch chi hộ hiệu lực từ %s (%s VND)",
+		EntityTypeWeeklyPaymentFeeSchedule:  "%s đã thêm cấu hình phí trả lương tuần hiệu lực từ %s (%s)",
 		EntityTypeAdBanner:                  "%s đã tạo chiến dịch quảng cáo %s",
 	},
 	AuditActionUpdate: {
@@ -48,6 +49,7 @@ var AuditMatrix = map[AuditAction]map[EntityType]string{
 		EntityTypePayrate:                   "%s đã cập nhật mức lương cho dự án %s",
 		EntityTypeAdvancePaymentFeeSchedule: "%s đã cập nhật cấu hình phí ứng lương hiệu lực từ %s (%s)",
 		EntityTypeDisbursementFeeSchedule:   "%s đã cập nhật cấu hình phí giao dịch chi hộ hiệu lực từ %s (%s VND)",
+		EntityTypeWeeklyPaymentFeeSchedule:  "%s đã cập nhật cấu hình phí trả lương tuần hiệu lực từ %s (%s)",
 		EntityTypeAdBanner:                  "%s đã cập nhật chiến dịch quảng cáo %s",
 	},
 	AuditActionDelete: {
@@ -69,6 +71,7 @@ var AuditMatrix = map[AuditAction]map[EntityType]string{
 		EntityTypePayrate:                   "%s đã xóa mức lương cho dự án %s",
 		EntityTypeAdvancePaymentFeeSchedule: "%s đã xóa cấu hình phí ứng lương hiệu lực từ %s (%s)",
 		EntityTypeDisbursementFeeSchedule:   "%s đã xóa cấu hình phí giao dịch chi hộ hiệu lực từ %s (%s VND)",
+		EntityTypeWeeklyPaymentFeeSchedule:  "%s đã xóa cấu hình phí trả lương tuần hiệu lực từ %s (%s)",
 	},
 	AuditActionApprove: {
 		EntityTypeTimesheet: "%s đã duyệt bảng công của nhân viên %s trong dự án %s",

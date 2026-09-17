@@ -145,7 +145,7 @@ type stubSettings struct {
 
 func (s *stubSettings) GetWeeklyPaymentPercentage(context.Context) float64  { return s.pct }
 func (s *stubSettings) GetMonthlyPaymentPercentage(context.Context) float64 { return s.pct }
-func (s *stubSettings) GetAdvanceCashFeePercentage(context.Context) float64 { return 0 }
+func (s *stubSettings) GetWeeklyPaymentFeePercentage(context.Context) float64 { return 0 }
 func (s *stubSettings) GetPartnerCompany(context.Context) string            { return "TestCo" }
 func (s *stubSettings) GetPaymentPercentageForSchedule(_ context.Context, _ string) float64 {
 	return s.pct

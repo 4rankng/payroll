@@ -58,6 +58,9 @@ vi.mock('@/hooks/settings/useSettingsForm', () => ({
 vi.mock('@/components/admin/AdvancePaymentFeeSchedule/FeeScheduleSection', () => ({
   FeeScheduleSection: () => null,
 }));
+vi.mock('@/components/admin/WeeklyPaymentFeeSchedule/WeeklyPaymentFeeScheduleSection', () => ({
+  WeeklyPaymentFeeScheduleSection: () => null,
+}));
 vi.mock('@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection', () => ({
   DisbursementFeeScheduleSection: () => null,
 }));
@@ -91,12 +94,15 @@ describe.each([
       </MemoryRouter>,
     );
 
-    const limitInput = screen.getByLabelText('Giới hạn tổng tiền mỗi file Chuyển lô');
-    expect(limitInput).toHaveValue('400.000.000');
+    const limitSlider = screen.getByRole('slider', { name: 'Giới hạn tổng tiền mỗi file Chuyển lô' });
+    expect(limitSlider).toHaveAttribute('aria-valuenow', '400000000');
+    expect(limitSlider).toHaveAttribute('aria-valuemin', '100000000');
+    expect(limitSlider).toHaveAttribute('aria-valuemax', '500000000');
+    expect(screen.getByText('400.000.000')).toBeInTheDocument();
     expect(screen.getByText(
       'Hệ thống tự tách file để tổng tiền mỗi file luôn nhỏ hơn giới hạn này.',
     )).toBeInTheDocument();
-    expect(limitInput.closest('.grid')?.querySelector('input')).toBe(limitInput);
+    expect(limitSlider.closest('.grid')?.querySelector('input')).toBeNull();
   });
 
   it('allows admins to configure the self-check-in advance percentage', () => {

@@ -154,7 +154,7 @@ func (w *BulkTransferPaymentWorker) UpdateForTransfer(ctx context.Context, reque
 
 	// Update revenue_receivable for paid timesheets
 	if completed {
-		feePercentage := w.settingsConfig.GetAdvanceCashFeePercentage(ctx)
+		feePercentage := w.settingsConfig.GetWeeklyPaymentFeePercentage(ctx)
 		if err := w.updateRevenueReceivable(ctx, updates, feePercentage); err != nil {
 			w.logger.Error("failed to update revenue_receivable", "error", err)
 		}

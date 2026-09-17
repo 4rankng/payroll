@@ -37,7 +37,7 @@ type PayrollReportExcelData struct {
 // SettingsConfigProvider exposes the subset of settings config methods required by the exporter.
 type SettingsConfigProvider interface {
 	GetWeeklyPaymentPercentage(ctx context.Context) float64
-	GetAdvanceCashFeePercentage(ctx context.Context) float64
+	GetWeeklyPaymentFeePercentage(ctx context.Context) float64
 	GetTransferBankInfo(ctx context.Context) appconfig.TransferBankInfo
 }
 
@@ -217,7 +217,7 @@ func (e *PayrollReportExporter) GenerateExcel(ctx context.Context, fromDate, toD
 		return nil, nil, fmt.Errorf("failed to set E3 currency style: %w", err)
 	}
 
-	feePercentage := e.settingsConfigService.GetAdvanceCashFeePercentage(ctx)
+	feePercentage := e.settingsConfigService.GetWeeklyPaymentFeePercentage(ctx)
 	feeAmount := int64(float64(totalAmount) * feePercentage)
 	if err := f.SetCellValue(sheetName, "E4", feeAmount); err != nil {
 		return nil, nil, fmt.Errorf("failed to set E4 advance cash fee: %w", err)
