@@ -1,8 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import {
   Activity,
-  CreditCard,
-  Wallet,
+  AlertTriangle,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -40,16 +39,13 @@ interface CheckInHealthStripProps {
 }
 
 /**
- * Compact 3-section health strip for the admin dashboard.
+ * Two-section health strip for the admin dashboard.
  *
- * Sections:
- *   A. Check-in / Check-out throughput + anomalies
- *   B. Quota invariant health
- *   C. Advance request pipeline
- *
- * Anomaly tiles (healthy = 0) render green when 0, red/amber when > 0.
- * Throughput tiles render in the default neutral style.
- * Clicking an anomaly tile opens a drill-down sheet (rendered internally).
+ *   A. "Lỗi cần xử lý" — every anomaly across attendance, quota, and advance
+ *      requests, rendered only when non-zero (each row keeps its drill-down).
+ *      A single green all-clear row stands in when nothing is wrong.
+ *   B. "Hoạt động" — the period's throughput figures: successful checkouts,
+ *      advance request completion, salary credited, max advanceable amount.
  */
 function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
   const { data, isLoading } = useCheckInHealth(month);
@@ -79,81 +75,76 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
     });
   }, [openAttendanceList]);
 
-  // ── Section A: Check-in / Check-out ─────────────────────────────────────
-  const sectionA = useMemo(() => buildSectionItems(
-    data,
-    isLoading,
-    [
-      { key: 'failed_check_in_today', label: 'Lỗi vào làm', anomaly: true, drilldown: () => openFailedAttempts(undefined, 'check_in') },
-      { key: 'failed_check_out_today', label: 'Lỗi tan ca', anomaly: true, drilldown: () => openFailedAttempts(undefined, 'check_out') },
-      { key: 'open_checked_in', label: 'Đang chấm công', anomaly: true, drilldown: () => openAttendanceList({ type: 'attendance-list', label: 'Đang chấm công', status: 'checked_in', emptyLabel: 'Không có ca đang chấm công trong tháng này' }) },
-      { key: 'orphaned', label: 'Thiếu dữ liệu ghép cặp', anomaly: true, drilldown: () => openAttendanceList({ type: 'attendance-list', label: 'Thiếu dữ liệu ghép cặp', status: 'orphaned', emptyLabel: 'Không có ca thiếu dữ liệu ghép cặp trong tháng này' }) },
-      { key: 'auto_rejected_today', label: 'Tự động huỷ', anomaly: true, drilldown: () => openAttendanceList({ type: 'attendance-list', label: 'Tự động huỷ', status: 'rejected', emptyLabel: 'Không có ca tự động huỷ trong tháng này' }) },
-      { key: 'completed_zero_earning_today', label: 'Ca không có lương', anomaly: true, drilldown: () => openAttendanceList({ type: 'attendance-list', label: 'Ca không có lương', zeroEarning: true, emptyLabel: 'Không có ca không có lương trong tháng này' }) },
-      { key: 'successful_checkouts_today', label: 'Chấm công ra thành công', anomaly: false, drilldown: () => openSuccessfulCheckouts() },
-    ],
-    'Không có lỗi chấm công',
-  ), [data, isLoading, openAttendanceList, openFailedAttempts, openSuccessfulCheckouts]);
-
-  // ── Section B: Quota ────────────────────────────────────────────────────
-  const sectionB = useMemo(() => buildSectionItems(
-    data,
-    isLoading,
-    [
-      { key: 'quota_invariant_drift', label: 'Sai lệch hạn mức', anomaly: true, drilldown: () => openQuotaAnomaly('drift') },
-      { key: 'missing_quota_rows', label: 'Thiếu dòng hạn mức', anomaly: true, drilldown: () => openQuotaAnomaly('missing') },
-      { key: 'stale_quota_after_disable', label: 'Hạn mức cũ còn tồn tại', anomaly: true, drilldown: () => openQuotaAnomaly('stale') },
-      { key: 'quota_salary_this_month', label: 'Lương tháng này', anomaly: false },
-      { key: 'quota_max_adv_this_month', label: 'Số tiền ứng tối đa', anomaly: false },
-    ],
-    'Không có sai lệch hạn mức',
-  ), [data, isLoading, openQuotaAnomaly]);
-
-  // ── Section C: Advance requests ─────────────────────────────────────────
-  const sectionC = useMemo(() => {
+  // ── Section A: every anomaly, one card ─────────────────────────────────
+  const issues = useMemo(() => {
     if (!data) return [];
-    const stuck = data.requests_stuck_pending ?? 0;
-    const failed = data.requests_failed_today ?? 0;
+    const anomaly = (
+      value: number,
+      label: string,
+      onClick?: () => void,
+    ): InlineStatItem => ({
+      label,
+      value,
+      highlight: value > 0,
+      valueClassName: cn(value > 0 && 'text-financial-negative'),
+      onClick,
+    });
+
+    const items: InlineStatItem[] = [
+      anomaly(data.failed_check_in_today ?? 0, 'Lỗi vào làm', () => openFailedAttempts(undefined, 'check_in')),
+      anomaly(data.failed_check_out_today ?? 0, 'Lỗi tan ca', () => openFailedAttempts(undefined, 'check_out')),
+      anomaly(data.open_checked_in ?? 0, 'Đang chấm công', () => openAttendanceList({ type: 'attendance-list', label: 'Đang chấm công', status: 'checked_in', emptyLabel: 'Không có ca đang chấm công trong tháng này' })),
+      anomaly(data.orphaned ?? 0, 'Thiếu dữ liệu ghép cặp', () => openAttendanceList({ type: 'attendance-list', label: 'Thiếu dữ liệu ghép cặp', status: 'orphaned', emptyLabel: 'Không có ca thiếu dữ liệu ghép cặp trong tháng này' })),
+      anomaly(data.auto_rejected_today ?? 0, 'Tự động huỷ', () => openAttendanceList({ type: 'attendance-list', label: 'Tự động huỷ', status: 'rejected', emptyLabel: 'Không có ca tự động huỷ trong tháng này' })),
+      anomaly(data.completed_zero_earning_today ?? 0, 'Ca không có lương', () => openAttendanceList({ type: 'attendance-list', label: 'Ca không có lương', zeroEarning: true, emptyLabel: 'Không có ca không có lương trong tháng này' })),
+      anomaly(data.quota_invariant_drift ?? 0, 'Sai lệch hạn mức', () => openQuotaAnomaly('drift')),
+      anomaly(data.missing_quota_rows ?? 0, 'Thiếu dòng hạn mức', () => openQuotaAnomaly('missing')),
+      anomaly(data.stale_quota_after_disable ?? 0, 'Hạn mức cũ còn tồn tại', () => openQuotaAnomaly('stale')),
+      anomaly(data.requests_stuck_pending ?? 0, 'Đang chờ quá lâu', () => openFailedAttempts('stuck_pending')),
+      anomaly(data.requests_failed_today ?? 0, 'Lỗi yêu cầu hôm nay', () => openFailedAttempts('request_failed')),
+    ].filter((item) => (item.value as number) > 0);
+
+    if (items.length === 0) {
+      items.push({ label: 'Không có lỗi', value: 0, valueClassName: 'text-financial-positive' });
+    }
+    return items;
+  }, [data, openAttendanceList, openFailedAttempts, openQuotaAnomaly]);
+
+  // ── Section B: throughput figures ──────────────────────────────────────
+  const activity = useMemo(() => {
+    if (!data) return [];
     const completed = data.requests_completed_today ?? 0;
     const total = data.requests_total_today ?? 0;
 
-    const items: InlineStatItem[] = [];
-    if (stuck + failed === 0) {
-      items.push({ label: 'Không có yêu cầu lỗi', value: 0, valueClassName: 'text-financial-positive' });
-    } else {
-      if (stuck > 0) items.push({ label: 'Đang chờ quá lâu', value: stuck, highlight: true, valueClassName: 'text-financial-negative', onClick: () => openFailedAttempts('stuck_pending') });
-      if (failed > 0) items.push({ label: 'Lỗi hôm nay', value: failed, highlight: true, valueClassName: 'text-financial-negative', onClick: () => openFailedAttempts('request_failed') });
-    }
+    const items: InlineStatItem[] = [
+      { label: 'Chấm công ra thành công', value: data.successful_checkouts_today ?? 0, onClick: openSuccessfulCheckouts },
+    ];
 
     // Same number ⇒ one row says it all; differ ⇒ show both.
     if (completed === total) {
-      items.push({ label: 'Hoàn tất/Tổng cộng', value: `${completed}/${total}` });
+      items.push({ label: 'Yêu cầu ứng hoàn tất/tổng', value: `${completed}/${total}` });
     } else {
-      items.push({ label: 'Hoàn tất', value: completed });
-      items.push({ label: 'Tổng cộng', value: total });
+      items.push({ label: 'Yêu cầu ứng hoàn tất', value: completed });
+      items.push({ label: 'Yêu cầu ứng tổng cộng', value: total });
     }
+    items.push({ label: 'Lương tháng này', value: data.quota_salary_this_month ?? 0 });
+    items.push({ label: 'Số tiền ứng tối đa', value: data.quota_max_adv_this_month ?? 0 });
     return items;
-  }, [data, openFailedAttempts]);
+  }, [data, openSuccessfulCheckouts]);
 
   return (
     <div className={cn('space-y-3', className)}>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <SectionCard
-          title="Chấm công"
+          title="Lỗi cần xử lý"
+          icon={AlertTriangle}
+          items={issues}
+          isLoading={isLoading}
+        />
+        <SectionCard
+          title="Hoạt động"
           icon={Activity}
-          items={sectionA}
-          isLoading={isLoading}
-        />
-        <SectionCard
-          title="Hạn mức ứng lương"
-          icon={Wallet}
-          items={sectionB}
-          isLoading={isLoading}
-        />
-        <SectionCard
-          title="Yêu cầu ứng lương"
-          icon={CreditCard}
-          items={sectionC}
+          items={activity}
           isLoading={isLoading}
         />
       </div>
@@ -203,55 +194,6 @@ const SectionCard = memo(function SectionCard({ title, icon: Icon, items, isLoad
     </section>
   );
 });
-
-interface ItemSpec {
-  key: keyof CheckInHealthResponse;
-  label: string;
-  anomaly: boolean;
-  drilldown?: () => void;
-}
-
-/**
- * Build a condensed InlineStatItem[] for a section:
- *   - anomaly rows render only when non-zero (they carry drill-downs, so they
- *     appear exactly when admins need to click them)
- *   - when every anomaly row is zero, one green "all clear" row stands in
- *   - throughput rows always render
- */
-function buildSectionItems(
-  data: CheckInHealthResponse | undefined,
-  _isLoading: boolean,
-  specs: ItemSpec[],
-  cleanLabel: string,
-): InlineStatItem[] {
-  if (!data) return [];
-
-  const items: InlineStatItem[] = [];
-  let anomaliesShown = 0;
-  for (const { key, label, anomaly, drilldown } of specs) {
-    const value = (data[key] as number) ?? 0;
-    const isAnomalyHit = anomaly && value > 0;
-    if (anomaly && value === 0) continue;
-    if (isAnomalyHit) anomaliesShown++;
-
-    items.push({
-      label,
-      value,
-      highlight: isAnomalyHit,
-      valueClassName: cn(isAnomalyHit && 'text-financial-negative'),
-      onClick: drilldown,
-    } satisfies InlineStatItem);
-  }
-
-  if (anomaliesShown === 0) {
-    items.unshift({
-      label: cleanLabel,
-      value: 0,
-      valueClassName: 'text-financial-positive',
-    });
-  }
-  return items;
-}
 
 // 4-row placeholder so the vertical skeleton renders while loading
 const LOADING_PLACEHOLDER_ITEMS: InlineStatItem[] = Array.from({ length: 4 }, (_, i) => ({
