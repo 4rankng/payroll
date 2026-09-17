@@ -96,7 +96,10 @@ func ExtractShiftType(sheetName string) string {
 	if idx < 0 {
 		return ""
 	}
-	shiftType := sheetName[idx+1:]
+	// Trim stray whitespace: partners routinely leave a trailing space in the
+	// sheet name (e.g. "BCC-OT150 "), and the untrimmed value then misses the
+	// payrate config match and fails the whole import.
+	shiftType := strings.TrimSpace(sheetName[idx+1:])
 	if shiftType == "" {
 		return ""
 	}

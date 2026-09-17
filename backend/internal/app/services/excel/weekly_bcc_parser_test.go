@@ -38,6 +38,13 @@ func TestExtractShiftType(t *testing.T) {
 		{"Something", ""},
 		{"bcc-HC", "HC"},       // lowercase prefix — case-insensitive
 		{"Bcc-OT150", "OT150"}, // mixed case
+		// Excel sheet names often carry stray surrounding whitespace (prod
+		// GEORIM incident 2026-09-17: "BCC-OT150 " failed the payrate config
+		// match). The extracted shift type must be trimmed.
+		{"BCC-OT150 ", "OT150"},
+		{"BCC-OT150  ", "OT150"},
+		{"BCC- OT150", "OT150"},
+		{"BCC- ", ""}, // only whitespace after the dash
 	}
 	for _, tt := range tests {
 		t.Run(tt.sheetName, func(t *testing.T) {
