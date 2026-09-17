@@ -37,16 +37,18 @@ describe('ImportPayrollDialog', () => {
     await waitFor(() => expect(mutate).toHaveBeenCalledOnce());
     const formData = mutate.mock.calls[0][0] as FormData;
     expect(formData.get('force_reprocess')).toBe('true');
-    // The salary month is derived server-side from the upload date — the
-    // client no longer sends it.
-    expect(formData.get('forMonth')).toBeNull();
+    // The month selector defaults to the current month (YYYY-MM) and sends it
+    // explicitly; the server only derives it when the field is absent.
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    expect(formData.get('forMonth')).toBe(currentMonth);
   });
 
-  it('shows the derived salary period instead of a month selector', () => {
+  it('shows the salary period selector defaulting to the current month', () => {
     render(<ImportPayrollDialog open onOpenChange={vi.fn()} />);
 
     expect(screen.getByText('Kỳ lương')).toBeInTheDocument();
-    // No month chips to select.
+    // Months render as a Select dropdown, not standalone MM/2026 buttons.
     expect(screen.queryByRole('button', { name: /\/2026/ })).not.toBeInTheDocument();
   });
 });
