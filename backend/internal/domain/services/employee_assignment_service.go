@@ -212,3 +212,15 @@ func (s *EmployeeAssignmentService) ValidateDateOverlap(ctx context.Context, emp
 func (s *EmployeeAssignmentService) GetConflictingAssignments(ctx context.Context, employeeID uint, startDate time.Time, endDate *time.Time) ([]*domain.ProjectEmployee, error) {
 	return s.projectEmployeeRepo.GetOverlappingAssignments(ctx, employeeID, &startDate, endDate)
 }
+
+// SuggestAssignmentStart is the pure default-start rule shared by every
+// assignment-creation path: last recorded timesheet + 1 day when the employee
+// has history, else the 1st of the current month (uploaded BCC files cover the
+// current month, so a mid-month "today" default would reject their entries).
+func SuggestAssignmentStart(latest *time.Time, now time.Time) time.Time {
+	if latest != nil {
+		return latest.AddDate(0, 0, 1)
+	}
+	y, m, _ := now.Date()
+	return time.Date(y, m, 1, 0, 0, 0, 0, now.Location())
+}

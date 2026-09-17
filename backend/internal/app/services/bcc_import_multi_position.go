@@ -74,7 +74,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 6. STK auto-creation with CCCD→position lookup.
 	positionCorrections, stkErrors := s.autoCreateMultiPositionSTK(
-		ctx, xf, cccdToPosition, getPositions(flatRates), projectID, uploaderID, monthStart)
+		ctx, xf, cccdToPosition, getPositions(flatRates), projectID, uploaderID)
 	importErrors = append(importErrors, stkErrors...)
 
 	// 6.5. Apply position corrections via ProjectEmployeeService (outside STK transaction)
@@ -105,6 +105,9 @@ func (s *BCCImportService) processMultiPositionUpload(
 		ctx, parsed, flatRates, year, month, loc,
 		byCCCD, byCode, byCCCDAndPosition, projectID, uploaderID, includeFlexibleEmployees)
 	importErrors = append(importErrors, entryErrors...)
+
+	// 8b. Align assignment start dates with the entries this file proves.
+	s.backdateAssignmentsForImport(ctx, assignments, entries, uploaderID, filename)
 
 	// 9. Preserve reviewed rows, replace pending rows, and create missing rows.
 	entries, staleIDs, protectedSkippedCount, flexibleSkippedCount, perr := s.planMonthReplacement(
@@ -194,7 +197,6 @@ func (s *BCCImportService) autoCreateMultiPositionSTK(
 	availablePositions []string,
 	projectID uint,
 	uploaderID uint,
-	monthStart time.Time,
 ) ([]posCorrection, []domain.ImportError) {
 	var positionCorrections []posCorrection
 	var importErrors []domain.ImportError
@@ -309,13 +311,24 @@ func (s *BCCImportService) autoCreateMultiPositionSTK(
 				if empPosition == "" && len(availablePositions) > 0 {
 					empPosition = availablePositions[0]
 				}
+				// Continue coverage from the employee's last recorded timesheet
+				// instead of the import month start, so uploads covering earlier
+				// days still pass assignment validation.
+				startDate, suggestErr := s.employeeService.SuggestAssignmentStart(txCtx, emp.ID)
+				if suggestErr != nil {
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: fullName,
+						Reason:   fmt.Sprintf("lỗi xác định ngày bắt đầu cho %s: %v", fullName, suggestErr),
+					})
+					continue
+				}
 				assignment := &domain.ProjectEmployee{
 					ProjectID:       projectID,
 					EmployeeID:      emp.ID,
 					EmployeeName:    emp.Fullname,
 					EmployeeCCCD:    emp.CCCD,
 					Position:        empPosition,
-					StartDate:       monthStart,
+					StartDate:       startDate,
 					PaymentSchedule: string(domain.PaymentScheduleWeekly),
 					// New assignments start advance-request enabled (explicit;
 					// guards later full-row Saves from persisting the zero value).

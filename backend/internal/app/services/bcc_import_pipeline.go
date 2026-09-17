@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -149,6 +150,65 @@ func dedupBCCEntries(entries []domainservices.BulkCreateTimesheetEntry) []domain
 // guarantee no format ships a same-bucket collision downstream — see
 // dedupBCCEntries. Both rate-keyed paths (legacy, multi-position) and both
 // label-keyed ones (weekly BCC, weekly payment) can produce them.
+// backdateAssignmentsForImport aligns assignment start dates with the earliest
+// positive-hours entry the file proves for each employee, so assignment
+// validation cannot reject rows for dates the upload itself covers
+// (the 2026-09-17 CBS incident: assignment created mid-month rejected a weekly
+// BCC file covering the 10th-14th). Backdating only extends coverage backward;
+// it never touches timesheet rows, and a concurrent earlier edit wins the
+// compare-and-set. Mutates the assignment structs in place so downstream steps
+// see aligned coverage.
+func (s *BCCImportService) backdateAssignmentsForImport(
+	ctx context.Context,
+	assignments []*domain.ProjectEmployee,
+	entries []domainservices.BulkCreateTimesheetEntry,
+	uploaderID uint,
+	filename string,
+) {
+	earliest := earliestEntryDateByEmployee(entries)
+	for _, a := range assignments {
+		e, hasEntries := earliest[a.EmployeeID]
+		if !hasEntries || !a.StartDate.After(e) {
+			continue
+		}
+		backdated, err := s.projectEmployeeSvc.BackdateAssignmentStartIfLater(ctx, a.ID, e, uploaderID)
+		if err != nil {
+			// Non-fatal: the row will surface as a per-entry validation error
+			// if it still fails, which carries the employee and date.
+			slog.Warn("BCCImport: failed to backdate assignment start for import",
+				"assignment_id", a.ID, "employee_id", a.EmployeeID, "error", err)
+			continue
+		}
+		if backdated {
+			a.StartDate = e
+			slog.Info("BCCImport: backdated assignment start to cover imported entries",
+				"assignment_id", a.ID, "employee_id", a.EmployeeID,
+				"start_date", e.Format("2006-01-02"), "file", filename)
+		}
+	}
+}
+
+// earliestEntryDateByEmployee returns each employee's earliest positive-hours
+// entry date in the import batch. Zero-hour entries are deletion requests and
+// carry no coverage requirement.
+func earliestEntryDateByEmployee(entries []domainservices.BulkCreateTimesheetEntry) map[uint]time.Time {
+	earliest := make(map[uint]time.Time)
+	for _, entry := range entries {
+		if entry.HoursWorked <= 0 {
+			continue
+		}
+		d, err := time.ParseInLocation("2006-01-02", entry.Date, time.Local)
+		if err != nil {
+			continue
+		}
+		if prev, ok := earliest[entry.EmployeeID]; ok && !d.Before(prev) {
+			continue
+		}
+		earliest[entry.EmployeeID] = d
+	}
+	return earliest
+}
+
 func (s *BCCImportService) planMonthReplacement(
 	ctx context.Context,
 	projectID uint,

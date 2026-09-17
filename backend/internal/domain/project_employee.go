@@ -76,6 +76,11 @@ type ProjectEmployeeRepository interface {
 	// UpdatePositionIfCurrent performs a compare-and-swap update so imports never
 	// overwrite a concurrent assignment edit made after their initial read.
 	UpdatePositionIfCurrent(ctx context.Context, id uint, currentPosition, newPosition string) error
+	// BackdateStartDateIfLater moves an assignment's start date earlier to the
+	// given date, but only while the stored start is still later
+	// (compare-and-set). Returns whether the row changed. Used by imports that
+	// prove earlier worked days than the assignment currently covers.
+	BackdateStartDateIfLater(ctx context.Context, id uint, newStart time.Time) (bool, error)
 	Delete(ctx context.Context, id uint) error
 	DeleteByProjectID(ctx context.Context, projectID uint) error
 	DeleteAssignmentsByEmployeeID(ctx context.Context, employeeID uint) error

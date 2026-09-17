@@ -407,6 +407,27 @@ func (r *TimesheetRepository) GetLatestTimesheetDate(ctx context.Context, projec
 	return &latestDate.Time, nil
 }
 
+// GetLatestTimesheetDateByEmployeeID returns the employee's most recent
+// timesheet date across all projects, or nil when they have none.
+func (r *TimesheetRepository) GetLatestTimesheetDateByEmployeeID(ctx context.Context, employeeID uint) (*time.Time, error) {
+	var latestDate sql.NullTime
+	err := r.DB.WithContext(ctx).
+		Model(&domain.Timesheet{}).
+		Select("MAX(date)").
+		Where("employee_id = ?", employeeID).
+		Scan(&latestDate).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !latestDate.Valid {
+		return nil, nil
+	}
+
+	return &latestDate.Time, nil
+}
+
 // CountTimesheets returns the total number of timesheets for an employee in a project
 func (r *TimesheetRepository) CountTimesheets(ctx context.Context, projectID, employeeID uint) (int64, error) {
 	var count int64

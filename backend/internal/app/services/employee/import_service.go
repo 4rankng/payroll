@@ -436,15 +436,23 @@ func (s *ImportService) getOrCreateAssignment(ctx context.Context, projectID, em
 		return false, nil
 	}
 
-	now := clock.NowUTC()
-	startDate := now
-
-	// Parse start date if provided
+	// Start date: explicit row value wins; otherwise continue coverage from
+	// the employee's last recorded timesheet (else 1st of current month)
+	// instead of defaulting to today, which would reject same-month import
+	// entries dated before the assignment start.
+	var startDate time.Time
 	if row.StartDate != "" {
 		parsedDate, err := time.Parse("2006-01-02", row.StartDate)
 		if err == nil {
 			startDate = parsedDate
 		}
+	}
+	if startDate.IsZero() {
+		suggested, err := s.employeeService.SuggestAssignmentStart(ctx, employeeID)
+		if err != nil {
+			return false, fmt.Errorf("failed to suggest start date: %w", err)
+		}
+		startDate = suggested
 	}
 
 	position := row.Position

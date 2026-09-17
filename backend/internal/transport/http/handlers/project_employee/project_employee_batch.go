@@ -10,7 +10,6 @@ import (
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	pkgConstants "api-server/internal/pkg/constants"
-	"api-server/internal/pkg/timeutil"
 	"api-server/internal/transport/http/response"
 
 	"github.com/gin-gonic/gin"
@@ -98,7 +97,8 @@ func (h *Handler) handleBatchAssignment(c *gin.Context, projectID uint, batchReq
 	var assignments []*domain.ProjectEmployee
 
 	for _, req := range batchReq {
-		// Set default start date to today if not provided
+		// Start date: explicit value wins; otherwise the backend continues
+		// coverage (last recorded timesheet + 1 day, else 1st of month).
 		var startDate time.Time
 		if req.StartDate != nil && *req.StartDate != "" {
 			parsedDate, err := time.Parse("2006-01-02", *req.StartDate)
@@ -113,7 +113,20 @@ func (h *Handler) handleBatchAssignment(c *gin.Context, projectID uint, batchReq
 			}
 			startDate = parsedDate
 		} else {
-			startDate = timeutil.StartOfDay(h.clock.NowUTC()) // Today at 00:00:00
+			// Default continues coverage instead of "today": day after the
+			// employee's last recorded timesheet, else 1st of current month.
+			// BCC uploads cover earlier days of the month, which a today
+			// default would reject in assignment validation.
+			suggested, err := h.employeeService.SuggestAssignmentStart(c.Request.Context(), req.EmployeeID)
+			if err != nil {
+				h.logger.ErrorContext(c.Request.Context(), "Failed to suggest assignment start date",
+					"employee_id", req.EmployeeID,
+					"error", err,
+				)
+				response.InternalServerError(c, constants.MsgFailedToSuggestStartDateVN)
+				return
+			}
+			startDate = suggested
 		}
 
 		// Parse end date if provided

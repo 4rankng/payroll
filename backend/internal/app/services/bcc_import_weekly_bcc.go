@@ -101,16 +101,20 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	// 6.5. Auto-create employees that appear in BCC sheets but don't exist in
 	// the project yet. The STK sheet may cover a different set of employees —
 	// BCC employees must also be created.
-	autoErrors := s.autoCreateMissingWeeklyBCCEmployees(
+	autoErrors, createdAssignments := s.autoCreateMissingWeeklyBCCEmployees(
 		ctx, parsed, stkRows, byCCCD, empNames, blockedEmployeeCCCDs,
 		defaultPosition, year, month, loc, projectID, uploaderID)
 	importErrors = append(importErrors, autoErrors...)
+	assignments = append(assignments, createdAssignments...)
 
 	// 7. Build timesheet entries for each shift-type sheet.
 	entries, flexibleEmployeeIDs, totalRows, entryErrors := s.buildWeeklyBCCEntries(
 		ctx, parsed, year, month, loc, byCCCD, empNames, stkNameByCCCD,
 		blockedEmployeeCCCDs, rates.forDate, projectID, includeFlexibleEmployees)
 	importErrors = append(importErrors, entryErrors...)
+
+	// 7b. Align assignment start dates with the entries this file proves.
+	s.backdateAssignmentsForImport(ctx, assignments, entries, uploaderID, filename)
 
 	// 8. Preserve reviewed rows, replace pending rows, and create missing rows.
 	// HourType is part of the key so an OT import cannot replace HC.
@@ -129,6 +133,17 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 
 	result, err := s.applyTimesheetReplacement(ctx, staleIDs, entries, uploaderID, uploaderRole)
 	if err != nil {
+		// Row-level failures must reach the uploader (employee + date + safe
+		// reason); the generic "N dòng không hợp lệ" gives nothing to correct.
+		if result != nil && len(result.FailedEntries) > 0 {
+			importErrors = append(importErrors, importErrorsFromBulkFailures(result.FailedEntries, empNames)...)
+			return s.failWithImportErrors(ctx, createdAsset, uploaderID, BCCImportStats{
+				ProjectID:    projectID,
+				OriginalName: filename,
+				ForMonth:     effectiveMonth,
+				TotalRows:    totalRows,
+			}, importErrors)
+		}
 		return fail(fmt.Sprintf("lỗi tạo bảng chấm công: %v", err))
 	}
 
@@ -206,8 +221,6 @@ func (s *BCCImportService) autoCreateWeeklyBCCSTK(
 
 	slog.Info("BCCImport(WBCC): found STK sheet, processing employee auto-creation",
 		"count", len(stkRows))
-
-	monthStartDate := time.Date(year, month, 1, 0, 0, 0, 0, loc)
 
 	stkErr = s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		bankCache := make(map[string]*uint)
@@ -307,13 +320,25 @@ func (s *BCCImportService) autoCreateWeeklyBCCSTK(
 				continue
 			}
 			if existingAssignment == nil {
+				// Continue coverage from the employee's last recorded timesheet
+				// instead of the import month start, so uploads covering earlier
+				// days still pass assignment validation.
+				startDate, suggestErr := s.employeeService.SuggestAssignmentStart(txCtx, emp.ID)
+				if suggestErr != nil {
+					blockedEmployeeCCCDs[cccd] = struct{}{}
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: fullName,
+						Reason:   fmt.Sprintf("lỗi xác định ngày bắt đầu cho %s: %v", fullName, suggestErr),
+					})
+					continue
+				}
 				assignment := &domain.ProjectEmployee{
 					ProjectID:       projectID,
 					EmployeeID:      emp.ID,
 					EmployeeName:    emp.Fullname,
 					EmployeeCCCD:    emp.CCCD,
 					Position:        defaultPosition,
-					StartDate:       monthStartDate,
+					StartDate:       startDate,
 					PaymentSchedule: string(domain.PaymentScheduleWeekly),
 					// New assignments start advance-request enabled (explicit;
 					// guards later full-row Saves from persisting the zero value).
@@ -343,7 +368,8 @@ func (s *BCCImportService) autoCreateWeeklyBCCSTK(
 // autoCreateMissingWeeklyBCCEmployees creates employees that appear in the
 // BCC sheets but have no project assignment yet, filling bank info from STK
 // when available. byCCCD and empNames are updated in place so subsequent
-// entry building finds the new hires.
+// entry building finds the new hires. Returns the created assignments so the
+// import's backdate pass can align their start dates too.
 func (s *BCCImportService) autoCreateMissingWeeklyBCCEmployees(
 	ctx context.Context,
 	parsed *excelparser.WeeklyBCCImportData,
@@ -355,8 +381,9 @@ func (s *BCCImportService) autoCreateMissingWeeklyBCCEmployees(
 	year int, month time.Month, loc *time.Location,
 	projectID uint,
 	uploaderID uint,
-) []domain.ImportError {
+) ([]domain.ImportError, []*domain.ProjectEmployee) {
 	var importErrors []domain.ImportError
+	var createdAssignments []*domain.ProjectEmployee
 
 	var missingCCCDs []struct {
 		cccd     string
@@ -386,13 +413,11 @@ func (s *BCCImportService) autoCreateMissingWeeklyBCCEmployees(
 	}
 
 	if len(missingCCCDs) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	slog.Info("BCCImport(WBCC): auto-creating missing employees from BCC sheets",
 		"count", len(missingCCCDs))
-
-	monthStartDate := time.Date(year, month, 1, 0, 0, 0, 0, loc)
 
 	autoErr := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		for _, m := range missingCCCDs {
@@ -479,14 +504,25 @@ func (s *BCCImportService) autoCreateMissingWeeklyBCCEmployees(
 				}
 			}
 
-			// Ensure employee is assigned to the project.
+			// Ensure employee is assigned to the project. Continue coverage
+			// from the employee's last recorded timesheet instead of the import
+			// month start, so uploads covering earlier days still validate.
+			startDate, suggestErr := s.employeeService.SuggestAssignmentStart(txCtx, emp.ID)
+			if suggestErr != nil {
+				blockedEmployeeCCCDs[m.cccd] = struct{}{}
+				importErrors = append(importErrors, domain.ImportError{
+					Employee: m.fullName,
+					Reason:   fmt.Sprintf("lỗi xác định ngày bắt đầu cho %s: %v", m.fullName, suggestErr),
+				})
+				continue
+			}
 			assignment := &domain.ProjectEmployee{
 				ProjectID:       projectID,
 				EmployeeID:      emp.ID,
 				EmployeeName:    emp.Fullname,
 				EmployeeCCCD:    emp.CCCD,
 				Position:        defaultPosition,
-				StartDate:       monthStartDate,
+				StartDate:       startDate,
 				PaymentSchedule: string(domain.PaymentScheduleWeekly),
 				// New assignments start advance-request enabled (explicit;
 				// guards later full-row Saves from persisting the zero value).
@@ -504,6 +540,7 @@ func (s *BCCImportService) autoCreateMissingWeeklyBCCEmployees(
 			// Update lookup maps so subsequent processing finds this employee.
 			byCCCD[emp.CCCD] = assignment
 			empNames[emp.ID] = emp.Fullname
+			createdAssignments = append(createdAssignments, assignment)
 		}
 		return nil
 	})
@@ -511,7 +548,7 @@ func (s *BCCImportService) autoCreateMissingWeeklyBCCEmployees(
 		slog.Error("BCCImport(WBCC): BCC employee auto-creation transaction failed", "error", autoErr)
 	}
 
-	return importErrors
+	return importErrors, createdAssignments
 }
 
 // buildWeeklyBCCEntries converts parsed shift-type sheets into bulk timesheet

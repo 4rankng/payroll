@@ -398,3 +398,29 @@ func TestValidateAssignmentForUpdateBaseValidation(t *testing.T) {
 		require.Equal(t, "NOT_FOUND", domainErr.Code)
 	})
 }
+
+// The rule: last recorded timesheet + 1 day when the employee has history,
+// else the 1st of the current month — never "today", which would reject
+// same-month BCC uploads covering earlier days (2026-09-17 CBS incident).
+func TestSuggestAssignmentStart(t *testing.T) {
+	now := time.Date(2026, 9, 17, 15, 0, 0, 0, time.UTC)
+
+	cases := []struct {
+		name   string
+		latest *time.Time
+		want   time.Time
+	}{
+		{"no history falls back to month start", nil, time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)},
+		{"mid-month history continues next day", parseDayPtr("2026-09-10"), time.Date(2026, 9, 11, 0, 0, 0, 0, time.UTC)},
+		{"history equals today starts tomorrow", parseDayPtr("2026-09-17"), time.Date(2026, 9, 18, 0, 0, 0, 0, time.UTC)},
+		{"previous-month history still continues next day", parseDayPtr("2026-08-31"), time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := SuggestAssignmentStart(tc.latest, now)
+			if !got.Equal(tc.want) {
+				t.Fatalf("SuggestAssignmentStart(%v, %v) = %v, want %v", tc.latest, now, got, tc.want)
+			}
+		})
+	}
+}

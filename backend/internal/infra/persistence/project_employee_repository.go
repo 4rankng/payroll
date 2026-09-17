@@ -304,6 +304,21 @@ func (r *ProjectEmployeeRepository) UpdatePositionIfCurrent(
 	return nil
 }
 
+func (r *ProjectEmployeeRepository) BackdateStartDateIfLater(
+	ctx context.Context,
+	id uint,
+	newStart time.Time,
+) (bool, error) {
+	result := r.getDB(ctx).
+		Model(&domain.ProjectEmployee{}).
+		Where("id = ? AND start_date > ?", id, newStart).
+		Update("start_date", newStart)
+	if result.Error != nil {
+		return false, fmt.Errorf("failed to backdate assignment start: %w", result.Error)
+	}
+	return result.RowsAffected > 0, nil
+}
+
 func (r *ProjectEmployeeRepository) Delete(ctx context.Context, id uint) error {
 	return r.SafeDelete(ctx, &domain.ProjectEmployee{}, id)
 }

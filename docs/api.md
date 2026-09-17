@@ -55,7 +55,7 @@ CRUD, payrates per project, timesheets per project, entry table, employee assign
 
 ### Project Employees (`/api/v1/project-employees`)
 
-Assignment management, batch operations.
+Assignment management, batch operations. An omitted `start_date` is computed by the backend: the day after the employee's most recent recorded timesheet (any project), else the 1st of the current month — never "today", so same-month timesheet uploads covering earlier days are not rejected by assignment validation. BCC imports also backdate an existing assignment's start to the file's earliest entry when the upload proves earlier worked days.
 
 ### Timesheets (`/api/v1/timesheets`)
 

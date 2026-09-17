@@ -56,6 +56,10 @@ type TimesheetRepository interface {
 	GetLatestTimesheetDate(ctx context.Context, projectID, employeeID uint) (*time.Time, error)
 	CountTimesheets(ctx context.Context, projectID, employeeID uint) (int64, error)
 	CountTimesheetsByEmployeeID(ctx context.Context, employeeID uint) (int64, error)
+	// GetLatestTimesheetDateByEmployeeID returns the employee's most recent
+	// timesheet date across all projects, or nil when they have none. Used to
+	// suggest assignment start dates that continue coverage without day overlap.
+	GetLatestTimesheetDateByEmployeeID(ctx context.Context, employeeID uint) (*time.Time, error)
 	// HasProtectedTimesheetsByEmployeeID reports whether the employee has a
 	// financial or approved/rejected-payroll record that must remain auditable.
 	// A bank-result worker can settle exported rows after an Admin rejection.

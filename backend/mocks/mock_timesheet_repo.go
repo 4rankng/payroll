@@ -638,6 +638,21 @@ func (mr *MockTimesheetRepositoryMockRecorder) GetLatestTimesheetDate(arg0, arg1
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestTimesheetDate", reflect.TypeOf((*MockTimesheetRepository)(nil).GetLatestTimesheetDate), arg0, arg1, arg2)
 }
 
+// GetLatestTimesheetDateByEmployeeID mocks base method.
+func (m *MockTimesheetRepository) GetLatestTimesheetDateByEmployeeID(arg0 context.Context, arg1 uint) (*time.Time, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLatestTimesheetDateByEmployeeID", arg0, arg1)
+	ret0, _ := ret[0].(*time.Time)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLatestTimesheetDateByEmployeeID indicates an expected call of GetLatestTimesheetDateByEmployeeID.
+func (mr *MockTimesheetRepositoryMockRecorder) GetLatestTimesheetDateByEmployeeID(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestTimesheetDateByEmployeeID", reflect.TypeOf((*MockTimesheetRepository)(nil).GetLatestTimesheetDateByEmployeeID), arg0, arg1)
+}
+
 // GetPaidSalaryByEmployee mocks base method.
 func (m *MockTimesheetRepository) GetPaidSalaryByEmployee(arg0 context.Context, arg1, arg2 time.Time) (map[uint]int64, error) {
 	m.ctrl.T.Helper()

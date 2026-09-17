@@ -61,6 +61,11 @@ func (m *MockProjectEmployeeRepository) UpdatePositionIfCurrent(ctx context.Cont
 	return args.Error(0)
 }
 
+func (m *MockProjectEmployeeRepository) BackdateStartDateIfLater(ctx context.Context, id uint, newStart time.Time) (bool, error) {
+	args := m.Called(ctx, id, newStart)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *MockProjectEmployeeRepository) Delete(ctx context.Context, id uint) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)

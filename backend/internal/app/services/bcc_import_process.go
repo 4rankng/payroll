@@ -106,12 +106,10 @@ func (s *BCCImportService) processAssetData(
 	// 6.5 Auto-create and assign employees from STK sheet if it exists.
 	// Deduce the best position from payrate rates matching BCC shift rates.
 	position := deducePosition(flatRates, parsed.ShiftRates)
-	monthStartDate := time.Date(year, month, 1, 0, 0, 0, 0, loc)
-
 	stkRows := collectSTKRows(xf, parsed, formatResult.Format)
 	stkNameByCCCD, stkImportErrors := s.autoCreateEmployeesFromSTK(
 		ctx, stkRows, parsed, formatResult.Format,
-		projectID, uploaderID, position, monthStartDate, flatRates,
+		projectID, uploaderID, position, flatRates,
 	)
 	importErrors := stkImportErrors
 
@@ -238,6 +236,9 @@ func (s *BCCImportService) processAssetData(
 	}
 
 	totalRows := len(parsed.Employees)
+
+	// 8b. Align assignment start dates with the entries this file proves.
+	s.backdateAssignmentsForImport(ctx, assignments, entries, uploaderID, filename)
 
 	// 9. Preserve reviewed rows, replace pending rows, and create missing rows.
 	// Same-bucket entries are collapsed inside planMonthReplacement.

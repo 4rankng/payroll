@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
-	"time"
 
 	excelparser "api-server/internal/app/services/excel"
 	"api-server/internal/domain"
@@ -54,7 +53,6 @@ func (s *BCCImportService) autoCreateEmployeesFromSTK(
 	projectID uint,
 	uploaderID uint,
 	position string,
-	monthStartDate time.Time,
 	flatRates map[string]int,
 ) (map[string]string, []domain.ImportError) {
 	stkNameByCCCD := make(map[string]string, len(stkRows))
@@ -177,13 +175,25 @@ func (s *BCCImportService) autoCreateEmployeesFromSTK(
 			if assignErr != nil || existingAssignment == nil {
 				empPosition := resolveImportPosition(parsed, format, cccd, position, flatRates)
 
+				// Continue coverage from the employee's last recorded timesheet
+				// instead of the import month start, so uploads covering earlier
+				// days still pass assignment validation.
+				startDate, suggestErr := s.employeeService.SuggestAssignmentStart(txCtx, emp.ID)
+				if suggestErr != nil {
+					importErrors = append(importErrors, domain.ImportError{
+						Employee: fullName,
+						Reason:   fmt.Sprintf("lỗi xác định ngày bắt đầu cho %s: %v", fullName, suggestErr),
+					})
+					continue
+				}
+
 				assignment := &domain.ProjectEmployee{
 					ProjectID:       projectID,
 					EmployeeID:      emp.ID,
 					EmployeeName:    emp.Fullname,
 					EmployeeCCCD:    emp.CCCD,
 					Position:        empPosition,
-					StartDate:       monthStartDate,
+					StartDate:       startDate,
 					PaymentSchedule: string(domain.PaymentScheduleWeekly),
 					// New assignments start advance-request enabled (explicit;
 					// guards later full-row Saves from persisting the zero value).
@@ -201,7 +211,7 @@ func (s *BCCImportService) autoCreateEmployeesFromSTK(
 				} else {
 					slog.Info("BCCImport: auto-assigned employee to project",
 						"employee_id", emp.ID, "project_id", projectID,
-						"position", empPosition, "start_date", monthStartDate.Format("2006-01-02"))
+						"position", empPosition, "start_date", startDate.Format("2006-01-02"))
 				}
 			}
 		}

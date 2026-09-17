@@ -270,6 +270,72 @@ func (s *ProjectEmployeeService) UpdateAssignmentPositionIfCurrent(
 	})
 }
 
+// BackdateAssignmentStartIfLater moves an assignment's start date EARLIER so
+// it covers worked days an import proves, but only while the stored start is
+// still later than the target (compare-and-set — a concurrent earlier edit
+// wins). When ctx already carries a transaction, the update joins it. Cache
+// invalidation, event publication, and timesheet recalculation run after
+// commit, mirroring UpdateAssignmentPositionIfCurrent.
+func (s *ProjectEmployeeService) BackdateAssignmentStartIfLater(
+	ctx context.Context,
+	assignmentID uint,
+	newStart time.Time,
+	updatedBy uint,
+) (bool, error) {
+	backdated := false
+	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		existing, err := s.projectEmployeeRepo.GetByID(txCtx, assignmentID)
+		if err != nil {
+			return err
+		}
+		if !existing.StartDate.After(newStart) {
+			return nil // already covers the earlier date
+		}
+		changed, err := s.projectEmployeeRepo.BackdateStartDateIfLater(txCtx, existing.ID, newStart)
+		if err != nil || !changed {
+			return err
+		}
+		backdated = true
+
+		existing.StartDate = newStart
+		assignmentCopy := *existing
+		afterCommitCtx := domain.WithoutTransactionContext(context.WithoutCancel(ctx))
+		// Register on txCtx so hooks fire only after the backdate commits —
+		// registering on the outer ctx runs them immediately when no ambient
+		// transaction exists, letting a concurrent validation re-cache the
+		// stale start (ADR-007).
+		domain.RegisterAfterCommit(txCtx, func() {
+			if s.cache != nil {
+				cacheKey := fmt.Sprintf("assignment:%d:%d", assignmentCopy.ProjectID, assignmentCopy.EmployeeID)
+				if err := s.cache.Delete(afterCommitCtx, cacheKey); err != nil {
+					observability.GetLogger().Warn("failed to invalidate assignment cache after start-date backdate", "error", err)
+				}
+			}
+
+			if s.eventBus != nil {
+				if employee, err := s.employeeRepo.GetByID(afterCommitCtx, assignmentCopy.EmployeeID); err == nil {
+					assignmentCopy.Employee = *employee
+				}
+				if project, err := s.projectRepo.GetByID(afterCommitCtx, assignmentCopy.ProjectID); err == nil {
+					assignmentCopy.Project = *project
+				}
+				event := domain.NewProjectEmployeeUpdatedEvent(afterCommitCtx, &assignmentCopy)
+				if err := s.eventBus.Publish(afterCommitCtx, event); err != nil {
+					observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (start-date backdate)", "error", err)
+				}
+			}
+
+			if s.timesheetRecalculator != nil {
+				if err := s.timesheetRecalculator.RecalculateTimesheetsForAssignment(afterCommitCtx, &assignmentCopy, updatedBy); err != nil {
+					observability.GetLogger().Warn("failed to recalculate timesheets after start-date backdate", "assignmentID", assignmentCopy.ID, "error", err)
+				}
+			}
+		})
+		return nil
+	})
+	return backdated, err
+}
+
 func (s *ProjectEmployeeService) updateAssignmentPosition(
 	ctx context.Context,
 	existing *domain.ProjectEmployee,

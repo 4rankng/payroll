@@ -511,8 +511,13 @@ func (s *Service) getOrCreateAssignment(ctx context.Context, projectID, employee
 		position = "phổ thông"
 	}
 
-	now := clock.NowUTC()
-	startDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	// Continue coverage from the employee's last recorded timesheet (else 1st
+	// of current month) instead of a fixed month start, so imported advance
+	// records never fall before the assignment's coverage.
+	startDate, suggestErr := s.config.EmployeeService.SuggestAssignmentStart(ctx, employeeID)
+	if suggestErr != nil {
+		return nil, false, fmt.Errorf("failed to suggest assignment start date: %w", suggestErr)
+	}
 
 	assignment := &domain.ProjectEmployee{
 		ProjectID:       projectID,
