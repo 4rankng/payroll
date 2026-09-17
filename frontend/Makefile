@@ -1,9 +1,11 @@
-# Load environment variables from .env file.
+# Load environment variables from .env file (optional — local dev only;
+# push/deploy must run without it: GHCR_OWNER has a ?= fallback and the GHCR
+# token is resolved at runtime via ../scripts/ghcr-token.sh).
 # Export ONLY real KEY=value assignments — the naive `sed 's/=.*//'` form also
 # turned comment text (e.g. "# GHCR_TOKEN is a secret...") into empty exported
 # variable names, clobbering GHCR_TOKEN's ?= fallback below.
-include .env
-export $(shell grep -E '^[A-Za-z_][A-Za-z0-9_]*=' .env | sed 's/=.*//')
+-include .env
+export $(shell test -f .env && grep -E '^[A-Za-z_][A-Za-z0-9_]*=' .env | sed 's/=.*//' || true)
 
 # Variables
 GHCR_OWNER ?= 4rankng
@@ -45,7 +47,6 @@ push:
 		--build-arg VITE_API_BASE_URL=https://tingting.vip \
 		--build-arg VITE_API_VERSION=/api/v1 \
 		--build-arg VITE_API_TIMEOUT=30000 \
-		--build-arg VITE_GOOGLE_CLIENT_ID=$(VITE_GOOGLE_CLIENT_ID) \
 		--tag $(FULL_IMAGE_NAME) \
 		--push \
 		.

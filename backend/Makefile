@@ -1,7 +1,9 @@
 .PHONY: backend db dev push deploy backup restore adminer-on adminer-off test api-test sync clean frontend sandbox sandbox-logs sandbox-rebuild onepay-topup
 
-# Load environment variables from .env file
-include .env
+# Load environment variables from .env file (optional — local dev only;
+# push/deploy must run without it: GHCR_OWNER has a ?= fallback below and the
+# GHCR token is resolved at runtime via ../scripts/ghcr-token.sh)
+-include .env
 export
 
 COMPOSE_FILE := docker-compose.dev.yml
@@ -77,7 +79,8 @@ dev:
 # - Uses registry cache for fast rebuilds
 # - Pushes to GHCR (ghcr.io/<GHCR_OWNER>/payroll-backend), NOT Docker Hub —
 #   Docker Hub TLS-handshake timeouts were the #1 deploy failure. GHCR auth
-#   uses GHCR_OWNER + GHCR_TOKEN (exported from backend/.env).
+#   uses GHCR_OWNER (?= fallback above) + GHCR_TOKEN (resolved at runtime
+#   via ../scripts/ghcr-token.sh, not from .env).
 
 GHCR_OWNER ?= 4rankng
 IMAGE_NAME := ghcr.io/$(GHCR_OWNER)/payroll-backend

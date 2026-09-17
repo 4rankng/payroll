@@ -13,10 +13,10 @@ Both targets use SSH deploy: images are built/pushed to **GHCR** (`ghcr.io/4rank
 
 ## Common Prerequisites
 
-- GHCR auth: `docker login ghcr.io -u 4rankng` once; the stored credential is picked up automatically on every deploy by `scripts/ghcr-token.sh` (resolution order: env `GHCR_TOKEN` → Docker keychain → legacy `~/.zshrc` export; each candidate is validated against ghcr.io before use, and a rejected one is skipped with a warning instead of failing the login with `denied: denied`). `GHCR_OWNER` lives in `.env`.
+- GHCR auth: `docker login ghcr.io -u 4rankng` once; the stored credential is picked up automatically on every deploy by `scripts/ghcr-token.sh` (resolution order: env `GHCR_TOKEN` → Docker keychain → legacy `~/.zshrc` export; each candidate is validated against ghcr.io before use, and a rejected one is skipped with a warning instead of failing the login with `denied: denied`). `GHCR_OWNER` defaults to `4rankng` via `?=` fallback in the Makefiles.
 - Base images vendored into GHCR via `make mirror-bases` (run once per base-image bump; pinned by digest in the Dockerfiles)
 - SSH access to target servers (root)
-- Production DB credentials in `.env` (`MYSQL_ROOT_PASSWORD_PROD`, `DB_DSN`, etc.)
+- Deploy (`make push` / `make deploy`) requires **no `.env`** — it is optional and only needed for local dev targets (`dev`, `db`) and `backup`/`adminer` (`MYSQL_ROOT_PASSWORD_PROD`, `DB_DSN`, etc.)
 - `make` available locally
 
 ## Production Deploy

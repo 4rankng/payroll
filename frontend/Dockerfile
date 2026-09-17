@@ -51,13 +51,11 @@ RUN corepack enable
 ARG VITE_API_BASE_URL=https://tingting.vip
 ARG VITE_API_VERSION=/api/v1
 ARG VITE_API_TIMEOUT=30000
-ARG VITE_GOOGLE_CLIENT_ID
 
 # Set environment variables for build
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 ENV VITE_API_VERSION=${VITE_API_VERSION}
 ENV VITE_API_TIMEOUT=${VITE_API_TIMEOUT}
-ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
