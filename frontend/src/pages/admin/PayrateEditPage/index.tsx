@@ -17,7 +17,7 @@ import {
   createDefaultPayrateStructure,
   createFlexiblePayrateStructure,
 } from '@/components/payrates/types';
-import { dateToString } from '@/utils/dateHelpers';
+import { dateToString, formatIsoDateDisplay } from '@/utils/dateHelpers';
 import { useProject } from '@/hooks/api/useProjects';
 import { authManager } from '@/lib/auth';
 import {
@@ -59,7 +59,7 @@ function FieldFeedback({ field, onApplySuggestion }: {
           )}
         >
           <CornerDownRight className="h-3 w-3" />
-          Dùng giá trị: {field.suggested_value}
+          Dùng giá trị: {formatIsoDateDisplay(field.suggested_value)}
         </button>
       )}
     </div>
@@ -392,14 +392,14 @@ export default function PayrateEditPage() {
                       <div className="ml-12 mt-2 space-y-1 border-l-2 border-amber-300 pl-3 text-xs text-amber-800">
                         <p className="font-medium">Cần tạo cấu hình mới để thay đổi mức lương.</p>
                         <p>Các bảng công chưa thanh toán và chưa duyệt từ ngày này sẽ được cập nhật theo mức lương mới.</p>
-                        <p>Ngày bắt đầu sớm nhất: <strong>{sf.rates.suggested_value}</strong>.</p>
+                        <p>Ngày bắt đầu sớm nhất: <strong>{formatIsoDateDisplay(sf.rates.suggested_value)}</strong>.</p>
                       </div>
                     )}
                     {!fromDateIsActionable && (
                       <div className="ml-12 max-w-xl">
                         {isEnded && (
                           <p className="mb-1 text-xs text-muted-foreground">
-                            Cấu hình đã kết thúc (hiệu lực đến {targetPayrate?.toDate}) — chỉ xem lịch sử. Hãy chỉnh sửa cấu hình lương hiện hành.
+                            Cấu hình đã kết thúc (hiệu lực đến {formatIsoDateDisplay(targetPayrate!.toDate!)}) — chỉ xem lịch sử. Hãy chỉnh sửa cấu hình lương hiện hành.
                           </p>
                         )}
                         <FieldFeedback
@@ -425,7 +425,7 @@ export default function PayrateEditPage() {
                 )}
 
                 <div className="md:pt-1">
-                  <p className="mb-1 text-[11px] font-medium text-muted-foreground">Chế độ chỉnh sửa</p>
+                  <p className="mb-1 text-xs font-medium text-muted-foreground">Chế độ chỉnh sửa</p>
                   <div className="flex border-b border-border" role="tablist" aria-label="Chế độ chỉnh sửa cấu hình lương">
                     <button
                       type="button"

@@ -216,7 +216,7 @@ export const BulkTransferProgress = memo(function BulkTransferProgress({
           </div>
 
           {isRunning && (
-            <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
               Đang xử lý — cập nhật mỗi 5 giây.
             </p>
@@ -437,7 +437,7 @@ const STAT_TONE: Record<StatTone, string> = {
 function Stat({ label, value, tone }: StatProps) {
   return (
     <div className="min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       <p className={cn('mt-0.5 font-financial text-sm font-bold tabular-nums', STAT_TONE[tone])}>

@@ -119,7 +119,7 @@ export function PartnerTimesheetActions({
                 <span className="block text-[13px] font-semibold leading-5 text-foreground">
                   {action.label}
                 </span>
-                <span className="block text-[11px] font-normal leading-4 text-muted-foreground">
+                <span className="block text-xs font-normal leading-4 text-muted-foreground">
                   {action.description}
                 </span>
               </span>

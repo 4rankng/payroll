@@ -29,7 +29,7 @@ export const DashboardSectionHeader = ({
       )}
       <div className="min-w-0 space-y-0.5">
         {eyebrow && (
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
             {eyebrow}
           </p>
         )}

@@ -213,7 +213,7 @@ export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps
                         )}
                       >
                         <div className="text-xs font-medium break-words">{project.name}</div>
-                        <div className="mt-0.5 break-all text-[10px] text-muted-foreground">{project.code}</div>
+                        <div className="mt-0.5 break-all text-xs text-muted-foreground">{project.code}</div>
                       </button>
                     );
                   })

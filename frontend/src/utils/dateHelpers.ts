@@ -160,6 +160,24 @@ export function dateToString(date: Date): string {
 }
 
 /**
+ * Renders an ISO date (YYYY-MM-DD, optionally with a time part) as dd/MM/yyyy.
+ *
+ * Server field suggestions and payrate bounds arrive as raw ISO strings; showing
+ * them verbatim next to dates the rest of the app formats as dd/MM/yyyy reads as
+ * a bug. Values that are not ISO dates pass through untouched, so mixed payloads
+ * (numbers, labels) still render unchanged.
+ */
+export function formatIsoDateDisplay(value: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}([T ]|$)/.test(value)) return value;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  const year = parsed.getFullYear();
+  const month = (parsed.getMonth() + 1).toString().padStart(2, '0');
+  const day = parsed.getDate().toString().padStart(2, '0');
+  return `${day}/${month}/${year}`;
+}
+
+/**
  * Get the day type description in Vietnamese
  */
 export function getDayTypeDescription(dayType: DayType): string {

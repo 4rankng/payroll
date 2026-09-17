@@ -160,7 +160,7 @@ export function AttendanceReviewDialogs({
               placeholder="VD: Nhân viên rời dự án sớm"
               className="min-h-[112px]"
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Lý do này sẽ được lưu vào ghi chú từ chối lương của bản ghi.
             </p>
           </div>

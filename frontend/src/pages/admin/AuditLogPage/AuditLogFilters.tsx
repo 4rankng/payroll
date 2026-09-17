@@ -50,7 +50,7 @@ function ActionMultiSelect({
         <Button variant="outline" size="sm" className="min-h-11 gap-1.5 text-xs">
           Hành động
           {selected.length > 0 && (
-            <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-[10px] text-primary-foreground">
+            <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-xs text-primary-foreground">
               {selected.length}
             </Badge>
           )}
@@ -96,7 +96,7 @@ function EntityTypeMultiSelect({
         <Button variant="outline" size="sm" className="min-h-11 gap-1.5 text-xs">
           Đối tượng
           {selected.length > 0 && (
-            <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-[10px] text-primary-foreground">
+            <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-xs text-primary-foreground">
               {selected.length}
             </Badge>
           )}
@@ -167,7 +167,7 @@ function FilterBody({ filters, onChange }: AuditLogFiltersProps) {
         >
           <X className="h-3 w-3" />
           Xóa bộ lọc
-          <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[10px]">
+          <Badge variant="secondary" className="h-4 min-w-4 px-1 text-xs">
             {activeCount}
           </Badge>
         </Button>
@@ -200,7 +200,7 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
               <Filter className="h-3.5 w-3.5" />
               Bộ lọc
               {activeCount > 0 && (
-                <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-[10px] text-primary-foreground">
+                <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-xs text-primary-foreground">
                   {activeCount}
                 </Badge>
               )}

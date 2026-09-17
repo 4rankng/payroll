@@ -244,7 +244,7 @@ function LimitBreakdownCell({
 }) {
   return (
     <div className="px-3 py-3 text-center">
-      <p className="text-[11px] text-slate-400 mb-1">{label}</p>
+      <p className="text-xs text-slate-400 mb-1">{label}</p>
       <p className={`text-xs font-bold tabular-nums ${valueClassName}`}>{value}</p>
     </div>
   );
@@ -253,7 +253,7 @@ function LimitBreakdownCell({
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-3 py-2.5">
-      <p className="text-[11px] text-slate-400 mb-0.5">{label}</p>
+      <p className="text-xs text-slate-400 mb-0.5">{label}</p>
       <p className="text-sm font-bold text-slate-800 tabular-nums">{value}</p>
     </div>
   );
@@ -269,7 +269,7 @@ function BankInfoCard({
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-3 py-2.5 flex items-center justify-between">
       <div>
-        <p className="text-[11px] text-slate-400 mb-0.5">Ngân hàng</p>
+        <p className="text-xs text-slate-400 mb-0.5">Ngân hàng</p>
         <p className="text-sm font-semibold text-slate-800">{bankName || "—"}</p>
       </div>
       <p className="text-xs font-mono text-slate-500 tabular-nums">{accountNumber}</p>
@@ -323,7 +323,7 @@ function RequestCard({ request: req }: { request: AdvancePaymentListItem }) {
           <span className="text-sm font-bold text-slate-900 tabular-nums">
             {formatCurrency(req.requestAmount)}
           </span>
-          <Badge variant="outline" className={`${statusColor} text-[11px] px-1.5 py-0 h-4 shrink-0`}>
+          <Badge variant="outline" className={`${statusColor} text-xs px-1.5 py-0 h-4 shrink-0`}>
             {getVietnameseAdvancePaymentStatus(req.status)}
           </Badge>
         </div>

@@ -156,7 +156,7 @@ function TimesheetStatsRow({
           <div className="relative pr-10">
             <div className="flex items-center gap-1.5">
               <Icon className={cn("h-3 w-3 shrink-0", iconText)} strokeWidth={2.2} />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight truncate">
+              <span className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground leading-tight truncate">
                 {label}
               </span>
             </div>
@@ -452,7 +452,7 @@ export default function TimesheetsPage() {
               <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card px-3 py-2 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)]">
                 <div className="hidden items-center gap-2 border-r border-border pr-3 lg:flex">
                   <SlidersHorizontal className="h-4 w-4 text-primary" />
-                  <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc dữ liệu</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc dữ liệu</span>
                 </div>
                 <TimesheetFilters />
               </div>
@@ -462,9 +462,9 @@ export default function TimesheetsPage() {
               <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-3 py-2 sm:px-4">
                 <div>
                   <p className="text-[12px] font-bold text-foreground">Chi tiết bảng công</p>
-                  <p className="mt-0.5 text-[10.5px] text-muted-foreground">Nhấn vào một dòng để xem hoặc xử lý</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Nhấn vào một dòng để xem hoặc xử lý</p>
                 </div>
-                <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-bold tabular-nums text-muted-foreground">{timesheetManagement.timesheets.length} bản ghi</span>
+                <span className="rounded-full bg-muted px-2 py-1 text-xs font-bold tabular-nums text-muted-foreground">{timesheetManagement.timesheets.length} bản ghi</span>
               </div>
               {isMobile ? <TimesheetMobileList /> : <TimesheetListTable />}
             </div>

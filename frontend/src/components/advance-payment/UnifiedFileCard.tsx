@@ -118,7 +118,7 @@ export function UnifiedFileCard({ file, isNew, alwaysShowActions }: UnifiedFileC
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <p className="min-w-0 break-words text-sm font-semibold leading-snug sm:truncate" title={file.filename}>{file.filename}</p>
           {showNewBadge && (
-            <Badge className="bg-emerald-100 text-emerald-700 text-[11px] px-1.5 py-0 rounded-sm font-bold shrink-0 border-0 leading-4">
+            <Badge className="bg-emerald-100 text-emerald-700 text-xs px-1.5 py-0 rounded-sm font-bold shrink-0 border-0 leading-4">
               MỚI
             </Badge>
           )}
@@ -128,7 +128,7 @@ export function UnifiedFileCard({ file, isNew, alwaysShowActions }: UnifiedFileC
           <span className="text-border">·</span>
           <span className="min-w-0 break-words sm:truncate">{file.uploadedBy}</span>
           <span className="text-border">·</span>
-          <span className="font-mono text-[11px] shrink-0">
+          <span className="font-mono text-xs shrink-0">
             {file.date ? format(parseISO(file.date), 'dd/MM · HH:mm', { locale: vi }) : ''}
           </span>
         </div>

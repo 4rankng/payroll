@@ -62,23 +62,23 @@ const UserGridCard = React.memo(function UserGridCard({
     <button
       type="button"
       onClick={() => onRowClick?.(user)}
-      className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all active:scale-95 active:brightness-95 touch-manipulation w-full ${cfg.card}`}
+      className={`flex w-full flex-col items-center gap-1.5 rounded-xl border p-2.5 text-center transition-all active:scale-[0.98] active:brightness-95 touch-manipulation ${cfg.card}`}
       aria-label={`Xem chi tiết ${user.fullname}`}
     >
       <div className="relative">
         <UserAvatar
           name={user.fullname}
           username={user.username}
-          size="lg"
-          className="ring-2 ring-background shadow-sm"
+          size="md"
+          className="ring-2 ring-background"
         />
         {/* Role dot */}
         <span className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-background ${cfg.dot}`} />
       </div>
       <div className="w-full min-w-0">
-        <p className={`min-h-8 break-words text-xs font-semibold leading-4 line-clamp-2 ${cfg.name}`}>{user.fullname}</p>
-        <p className={`text-[11px] break-all line-clamp-2 mt-0.5 ${cfg.sub}`}>@{user.username}</p>
-        <p className={`mt-1 text-[10px] font-medium leading-4 ${cfg.sub}`}>{cfg.label}</p>
+        <p className={`line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 ${cfg.name}`}>{user.fullname}</p>
+        <p className={`mt-0.5 truncate text-xs ${cfg.sub}`}>@{user.username}</p>
+        <p className={`mt-0.5 text-xs font-medium leading-4 ${cfg.sub}`}>{cfg.label}</p>
       </div>
     </button>
   );

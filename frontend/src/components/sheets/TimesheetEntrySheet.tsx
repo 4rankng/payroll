@@ -430,7 +430,7 @@ function TimesheetEntrySheetComponent({
             </span>
             <div>
               <h1 className="text-sm font-bold text-foreground">Nhập chấm công</h1>
-              <p className="text-[10.5px] text-muted-foreground">Thiết lập dự án, nhân viên và khoảng ngày</p>
+              <p className="text-xs text-muted-foreground">Thiết lập dự án, nhân viên và khoảng ngày</p>
             </div>
           </div>
           <div className="hidden w-px h-7 bg-border shrink-0 sm:block" />
@@ -647,15 +647,15 @@ function TimesheetEntrySheetComponent({
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <span className="inline-block w-4 h-3.5 rounded border border-emerald-300 bg-emerald-50/70 shrink-0" />
                   Mới tạo
                 </span>
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <span className="inline-block w-4 h-3.5 rounded border border-amber-300 bg-amber-50/70 shrink-0" />
                   Đã sửa
                 </span>
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <span className="inline-block w-4 h-3.5 rounded border border-red-300 bg-red-50/70 shrink-0" />
                   Sẽ xóa
                 </span>

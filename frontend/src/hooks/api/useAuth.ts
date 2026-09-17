@@ -38,7 +38,7 @@ export const useLogin = () => {
         name: data.user.fullname,
         username: data.user.username,
         role: data.user.role,
-        avatar: generateAvatarUrl(data.user.username)
+        avatar: generateAvatarUrl()
       });
 
       // Navigate based on role
@@ -89,7 +89,7 @@ export const useGoogleLogin = () => {
         name: data.user.fullname,
         username: data.user.username,
         role: data.user.role,
-        avatar: generateAvatarUrl(data.user.username)
+        avatar: generateAvatarUrl()
       });
 
       // Navigate based on role

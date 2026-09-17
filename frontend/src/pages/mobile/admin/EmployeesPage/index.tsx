@@ -39,8 +39,10 @@ import {
   Plus,
   Download,
   X,
-  ArrowDownUp,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
+import { MobileStatStrip } from "@/components/shared/MobileStatStrip";
 import type { Employee } from "@/types/api/employee.types";
 
 const getMonthOptions = () => {
@@ -263,38 +265,24 @@ const EmployeesPageMobile = () => {
         }
       />
 
-      {/* Stats strip */}
+      {/* Stats strip — one bordered surface, matching the other mobile pages. */}
       {!summaryLoading && stats.length > 0 && (
         <div className="px-4 pb-3">
-          <div className="grid grid-cols-4 gap-1.5">
-            {stats.map((stat) => {
-                            const isActive =
-                stat.filter !== null && statusFilter === stat.filter;
-              return (
-                <button
-                  key={stat.label}
-                  onClick={() => {
-                    if (stat.filter === null) return;
+          <MobileStatStrip
+            items={stats.map((stat) => ({
+              key: stat.label,
+              label: stat.label,
+              value: stat.value.toLocaleString("vi-VN"),
+              active: stat.filter !== null && statusFilter === stat.filter,
+              onClick: stat.filter
+                ? () =>
                     updateFilters({
-                      status: isActive ? undefined : stat.filter,
-                    });
-                  }}
-                  className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-2 transition-all ${isActive ? "border-primary/40 bg-primary/5" : "border-border bg-card"} ${stat.filter !== null ? "active:scale-95" : "cursor-default"}`}
-                >
-                  <span
-                    className={`text-sm font-bold tabular-nums leading-none ${isActive ? "text-primary" : "text-foreground"}`}
-                  >
-                    {stat.value.toLocaleString("vi-VN")}
-                  </span>
-                  <span
-                    className={`text-xs leading-tight ${isActive ? "text-primary" : "text-muted-foreground"}`}
-                  >
-                    {stat.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                      status:
+                        statusFilter === stat.filter ? undefined : stat.filter,
+                    })
+                : undefined,
+            }))}
+          />
         </div>
       )}
       {summaryLoading && (
@@ -324,38 +312,6 @@ const EmployeesPageMobile = () => {
               {activeFilterCount}
             </span>
           )}
-        </Button>
-      </div>
-
-      {/* Sort selector — restores desktop sorting capability */}
-      <div className="px-4 pb-2 flex items-center gap-2">
-        <ArrowDownUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        <Select
-          value={sortBy ?? "created_at"}
-          onValueChange={(v) => updateFilters({ sortBy: v })}
-        >
-          <SelectTrigger aria-label="Sắp xếp nhân viên" className="min-h-11 flex-1 text-xs">
-            <SelectValue placeholder="Sắp xếp" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="created_at">Ngày tạo</SelectItem>
-            <SelectItem value="fullname">Tên</SelectItem>
-            <SelectItem value="bank_name">Ngân hàng</SelectItem>
-            <SelectItem value="project_name">Dự án</SelectItem>
-            <SelectItem value="date_of_birth">Ngày sinh</SelectItem>
-            <SelectItem value="mobile">Số điện thoại</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          size="sm"
-          className="min-h-11 px-3 text-xs"
-          onClick={() =>
-            updateFilters({ sortOrder: sortOrder === "asc" ? "desc" : "asc" })
-          }
-          aria-label="Đảo chiều sắp xếp"
-        >
-          {sortOrder === "asc" ? "Tăng" : "Giảm"}
         </Button>
       </div>
 
@@ -532,6 +488,53 @@ const EmployeesPageMobile = () => {
                 />
               </div>
             )}
+            {/* Sort lives with the other filters: keeping it off the page body
+                leaves one readable toolbar row instead of two crammed ones. */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Sắp xếp theo</label>
+              <div className="flex gap-2">
+                <Select
+                  value={sortBy ?? "created_at"}
+                  onValueChange={(v) => updateFilters({ sortBy: v })}
+                >
+                  <SelectTrigger
+                    aria-label="Sắp xếp nhân viên"
+                    className="h-11 flex-1"
+                  >
+                    <SelectValue placeholder="Sắp xếp" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="created_at">Ngày tạo</SelectItem>
+                    <SelectItem value="fullname">Tên</SelectItem>
+                    <SelectItem value="bank_name">Ngân hàng</SelectItem>
+                    <SelectItem value="project_name">Dự án</SelectItem>
+                    <SelectItem value="date_of_birth">Ngày sinh</SelectItem>
+                    <SelectItem value="mobile">Số điện thoại</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-11 w-11 shrink-0 rounded-xl border-border bg-card"
+                  onClick={() =>
+                    updateFilters({
+                      sortOrder: sortOrder === "asc" ? "desc" : "asc",
+                    })
+                  }
+                  aria-label={
+                    sortOrder === "asc"
+                      ? "Sắp xếp tăng dần"
+                      : "Sắp xếp giảm dần"
+                  }
+                >
+                  {sortOrder === "asc" ? (
+                    <ArrowUp className="h-4 w-4" />
+                  ) : (
+                    <ArrowDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
             {/* Date-range filter — restores desktop capability */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Ngày tuyển (từ — đến)</label>

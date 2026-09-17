@@ -115,7 +115,7 @@ function OSGroupCard({
               {stat.unique_users.toLocaleString()}
             </span>
           </div>
-          <span className="text-[11px] text-muted-foreground">người dùng</span>
+          <span className="text-xs text-muted-foreground">người dùng</span>
         </button>
       </div>
 
@@ -145,7 +145,7 @@ function OSGroupCard({
             <button
               type="button"
               onClick={() => setExpanded((e) => !e)}
-              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors mt-0.5 w-fit"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-0.5 w-fit"
             >
               {expanded ? (
                 <><ChevronUp className="h-3 w-3" /> Thu gọn</>
@@ -217,7 +217,7 @@ function BrowserGroupCard({
               {stat.unique_users.toLocaleString()}
             </span>
           </div>
-          <span className="text-[11px] text-muted-foreground">người dùng</span>
+          <span className="text-xs text-muted-foreground">người dùng</span>
         </button>
       </div>
 
@@ -245,7 +245,7 @@ function BrowserGroupCard({
             <button
               type="button"
               onClick={() => setExpanded((e) => !e)}
-              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors mt-0.5 w-fit"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-0.5 w-fit"
             >
               {expanded ? (
                 <><ChevronUp className="h-3 w-3" /> Thu gọn</>

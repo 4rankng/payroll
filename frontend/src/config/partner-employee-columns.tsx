@@ -113,7 +113,7 @@ export function createPartnerEmployeeColumns({
                 {project.payment_schedule && (
                   <Badge
                     variant="outline"
-                    className={`text-[10px] px-1.5 py-0 h-4 shrink-0 rounded-[4px] ${getPaymentScheduleBadgeConfig(project.payment_schedule).className}`}
+                    className={`text-xs px-1.5 py-0 h-4 shrink-0 rounded-[4px] ${getPaymentScheduleBadgeConfig(project.payment_schedule).className}`}
                   >
                     {
                       getPaymentScheduleBadgeConfig(project.payment_schedule)
@@ -149,7 +149,7 @@ export function createPartnerEmployeeColumns({
               {firstProject.payment_schedule && (
                 <Badge
                   variant="outline"
-                  className={`text-[10px] px-1.5 py-0 h-4 shrink-0 rounded-[4px] ${getPaymentScheduleBadgeConfig(firstProject.payment_schedule).className}`}
+                  className={`text-xs px-1.5 py-0 h-4 shrink-0 rounded-[4px] ${getPaymentScheduleBadgeConfig(firstProject.payment_schedule).className}`}
                 >
                   {
                     getPaymentScheduleBadgeConfig(firstProject.payment_schedule)

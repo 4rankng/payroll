@@ -95,7 +95,7 @@ export function PayrateConfigTab({ project }: PayrateConfigTabProps) {
     <div className="space-y-3 w-full">
       {/* Section header: label + actions */}
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
           Cấu hình lương
         </p>
         {canModifyPayrates && (
@@ -129,7 +129,7 @@ export function PayrateConfigTab({ project }: PayrateConfigTabProps) {
         <div className="rounded-xl border border-border bg-card">
           {/* Meta row */}
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50">
-            <Badge variant={getPayrateStatus(activePayrate) === 'active' ? 'default' : 'secondary'} className="text-[10px] px-1.5 py-0">
+            <Badge variant={getPayrateStatus(activePayrate) === 'active' ? 'default' : 'secondary'} className="text-xs px-1.5 py-0">
               {STATUS_LABELS[getPayrateStatus(activePayrate)]}
             </Badge>
             <span className="text-xs text-muted-foreground">
@@ -170,7 +170,7 @@ export function PayrateConfigTab({ project }: PayrateConfigTabProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground gap-1"
+                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
                 onClick={handleStartEditUpcoming}
               >
                 <Edit3 className="h-2.5 w-2.5" />

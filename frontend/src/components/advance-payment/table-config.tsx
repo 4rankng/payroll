@@ -340,7 +340,7 @@ export const requestMobileFields: MobileField<AdvancePaymentListItem>[] = [
         </span>
         <Badge
           variant="outline"
-          className={`text-[11px] px-1.5 py-0.5 font-semibold leading-none h-auto ${getAdvancePaymentStatusColor(row.status)}`}
+          className={`text-xs px-1.5 py-0.5 font-semibold leading-none h-auto ${getAdvancePaymentStatusColor(row.status)}`}
         >
           {getVietnameseAdvancePaymentStatus(row.status)}
         </Badge>

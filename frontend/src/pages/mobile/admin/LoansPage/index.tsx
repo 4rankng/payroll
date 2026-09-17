@@ -3,13 +3,14 @@ import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
+import { MobileStatStrip } from "@/components/shared/MobileStatStrip";
 import { MobilePagination } from '@/components/shared/MobilePagination';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLoans, useLenders } from '@/hooks/api/useLoans';
 import { formatVND, daysUntil, getPaymentUrgencyColor } from '@/utils/loanHelpers';
-import { Plus, Landmark, ArrowDownUp } from 'lucide-react';
+import { Plus, Landmark, ArrowUp, ArrowDown } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import type { Lender, LoanStatus, Loan, LoanFilters } from '@/types/api/loan.types';
@@ -19,7 +20,6 @@ import { MobileSearchInput } from '@/components/shared/MobileSearchInput';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { cn } from '@/lib/utils';
 import { vietnameseIncludes } from '@/utils/vietnameseNormalization';
-import { splitCurrencyDisplay } from '@/utils/formatters';
 
 const LOAN_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   active: { label: "Đang vay", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -157,31 +157,20 @@ const LoansPageMobile = () => {
         }
       />
 
-      {/* Stats strip */}
-      {!isError && <div className="px-4 pb-3">
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { label: "Tổng vay", value: formatVND(loansSummary.total_borrowed) },
-            { label: "Dư nợ", value: formatVND(loansSummary.total_outstanding) },
-            { label: "Lãi đã trả", value: formatVND(loansSummary.total_interest_paid) },
-            { label: "Khoản vay", value: String(loansSummary.active_loans_count) },
-          ].map((stat) => {
-            const { amount, unit } = splitCurrencyDisplay(stat.value);
-            return (
-            <div key={stat.label} className="flex min-w-0 flex-col items-center gap-1 rounded-xl border border-border bg-card px-3 py-2.5">
-              <span className={cn(
-                "font-bold tabular-nums leading-none text-foreground",
-                unit ? "whitespace-nowrap text-[clamp(0.75rem,3.3vw,0.875rem)] tracking-[-0.025em]" : "text-sm",
-              )}>
-                <span>{amount}</span>
-                {unit && <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">{unit}</span>}
-              </span>
-              <span className="text-xs leading-none text-muted-foreground">{stat.label}</span>
-            </div>
-            );
-          })}
+      {/* Stats strip — 2 columns so full VND totals keep their digits. */}
+      {!isError && (
+        <div className="px-4 pb-3">
+          <MobileStatStrip
+            columns={2}
+            items={[
+              { key: "borrowed", label: "Tổng vay", value: formatVND(loansSummary.total_borrowed) },
+              { key: "outstanding", label: "Dư nợ", value: formatVND(loansSummary.total_outstanding) },
+              { key: "interest", label: "Lãi đã trả", value: formatVND(loansSummary.total_interest_paid) },
+              { key: "count", label: "Khoản vay", value: String(loansSummary.active_loans_count) },
+            ]}
+          />
         </div>
-      </div>}
+      )}
 
       {/* Search + filters */}
       <div className="px-4 pb-3 space-y-2">
@@ -218,14 +207,13 @@ const LoansPageMobile = () => {
             ]}
           />
         </div>
-        {/* Sort selector — restores desktop sorting capability */}
+        {/* Sort row — same field + square-icon-button rhythm as the other rows. */}
         <div className="flex items-center gap-2">
-          <ArrowDownUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <Select
             value={loanFilters.sortBy ?? 'created_at'}
             onValueChange={(v) => setLoanFilters((prev) => ({ ...prev, sortBy: v, page: 1 }))}
           >
-            <SelectTrigger aria-label="Sắp xếp khoản vay" className="min-h-11 flex-1 text-xs">
+            <SelectTrigger aria-label="Sắp xếp khoản vay" className="min-h-11 flex-1 text-sm">
               <SelectValue placeholder="Sắp xếp" />
             </SelectTrigger>
             <SelectContent>
@@ -240,17 +228,25 @@ const LoansPageMobile = () => {
           </Select>
           <Button
             variant="outline"
-            size="sm"
-            className="min-h-11 px-3 text-xs"
+            size="icon"
+            className="h-11 w-11 shrink-0 rounded-xl border-border bg-card"
             onClick={() =>
               setLoanFilters((prev) => ({
                 ...prev,
                 sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc',
               }))
             }
-            aria-label="Đảo chiều sắp xếp"
+            aria-label={
+              loanFilters.sortOrder === 'asc'
+                ? 'Sắp xếp tăng dần'
+                : 'Sắp xếp giảm dần'
+            }
           >
-            {loanFilters.sortOrder === 'asc' ? 'Tăng' : 'Giảm'}
+            {loanFilters.sortOrder === 'asc' ? (
+              <ArrowUp className="h-4 w-4" />
+            ) : (
+              <ArrowDown className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>

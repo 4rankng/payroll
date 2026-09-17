@@ -98,7 +98,7 @@ function MetricContent({ item }: { item: DashboardMetricItem }) {
     <>
       <div className="relative z-[1] flex items-center gap-1.5">
         <span className={cn('treasury-signal', SIGNAL_TONE[item.tone])} aria-hidden="true" />
-        <p className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
           {item.label}
         </p>
       </div>
@@ -162,7 +162,7 @@ export function DashboardPriorityList({
     <section className="overflow-hidden rounded-xl border border-border/80 bg-card">
       <div className="flex flex-col gap-2.5 border-b border-border/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Hàng đợi vận hành
           </p>
           <h2 className="mt-1 text-base font-semibold text-foreground">Việc cần xử lý</h2>
@@ -207,7 +207,7 @@ export function DashboardPriorityList({
                   <h3 className="text-sm font-semibold text-foreground">{item.title}</h3>
                   <span
                     className={cn(
-                      'rounded-full border px-2 py-0.5 text-[11px] font-semibold',
+                      'rounded-full border px-2 py-0.5 text-xs font-semibold',
                       styles.badge,
                     )}
                   >
@@ -255,7 +255,7 @@ export function DashboardActivityPanel({
   return (
     <section className="overflow-hidden rounded-xl border border-border/80 bg-card">
       <div className="border-b border-border/70 px-3 py-3 sm:px-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           Tín hiệu sử dụng · {monthLabel}
         </p>
         <div className="mt-2 flex items-end justify-between gap-3">
@@ -271,7 +271,7 @@ export function DashboardActivityPanel({
                 ? '--'
                 : totalActive.toLocaleString('vi-VN')}
             </p>
-            <p className="text-[11px] text-muted-foreground">tổng hoạt động</p>
+            <p className="text-xs text-muted-foreground">tổng hoạt động</p>
           </div>
         </div>
       </div>
@@ -331,7 +331,7 @@ export function DashboardAreaHeader({
       )}
     >
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           {eyebrow}
         </p>
         <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">{title}</h2>

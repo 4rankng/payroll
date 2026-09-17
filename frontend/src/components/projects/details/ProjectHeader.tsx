@@ -30,7 +30,7 @@ export function ProjectHeader({ project, showName = true }: ProjectHeaderProps) 
             <Badge className={statusColor} variant="secondary">
               {statusLabel}
             </Badge>
-            <span className="text-[11px] font-mono bg-muted/60 px-1.5 py-0.5 rounded text-muted-foreground">
+            <span className="text-xs font-mono bg-muted/60 px-1.5 py-0.5 rounded text-muted-foreground">
               {project.code}
             </span>
           </div>

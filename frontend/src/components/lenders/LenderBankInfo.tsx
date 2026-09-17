@@ -36,17 +36,17 @@ export function LenderBankInfo({ lender }: LenderBankInfoProps) {
   return (
     <div className="rounded-xl border bg-card grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border/50">
       <div className="flex flex-col gap-0.5 px-3 py-2.5">
-        <span className="text-[10px] text-muted-foreground">Ngân hàng</span>
+        <span className="text-xs text-muted-foreground">Ngân hàng</span>
         <span className="text-sm font-semibold">
           {isBankLoading ? 'Đang tải...' : (bank?.branch_name || lender.bank?.branch_name || '-')}
         </span>
       </div>
       <div className="flex flex-col gap-0.5 px-3 py-2.5">
-        <span className="text-[10px] text-muted-foreground">Số tài khoản</span>
+        <span className="text-xs text-muted-foreground">Số tài khoản</span>
         <span className="text-sm font-semibold font-mono">{lender.bank_account_number || '-'}</span>
       </div>
       <div className="flex flex-col gap-0.5 px-3 py-2.5">
-        <span className="text-[10px] text-muted-foreground">Chủ tài khoản</span>
+        <span className="text-xs text-muted-foreground">Chủ tài khoản</span>
         <span className="text-sm font-semibold">{lender.bank_account_name || '-'}</span>
       </div>
     </div>

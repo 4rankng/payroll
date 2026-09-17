@@ -201,13 +201,13 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
                         {projectUser.user_fullname}
                       </span>
                       {projectUser.user_id === project.created_by && (
-                        <Badge variant="secondary" className="text-[11px] px-1.5 py-0">
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0">
                           Người tạo
                         </Badge>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">{projectUser.user_email}</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Cấp quyền: {format(new Date(projectUser.granted_at), 'dd/MM/yyyy')}
                     </p>
                   </div>

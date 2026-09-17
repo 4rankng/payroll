@@ -64,7 +64,7 @@ const FieldGroup = ({
   children: React.ReactNode;
 }) => (
   <section className="border-t pt-5 first:border-t-0 first:pt-0">
-    <h3 className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+    <h3 className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
       {title}
     </h3>
     <p className="mt-1 text-sm text-muted-foreground">{description}</p>
@@ -463,7 +463,7 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
       </div>
 
       <aside className="lg:sticky lg:top-4 lg:self-start">
-        <div className="mb-2 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        <div className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
           <Smartphone className="h-3.5 w-3.5" aria-hidden="true" />
           Xem trước trên điện thoại
         </div>

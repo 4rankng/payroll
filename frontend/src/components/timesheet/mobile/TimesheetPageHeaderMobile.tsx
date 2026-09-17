@@ -272,7 +272,7 @@ export function TimesheetPageHeaderMobile({
       />
 
       <div className="flex items-center gap-3 border-t border-border/70 bg-muted/25 px-3 py-2.5 sm:px-4">
-        <span className="hidden shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground sm:inline">
+        <span className="hidden shrink-0 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground sm:inline">
           Kỳ công
         </span>
         <TimesheetMonthSelector

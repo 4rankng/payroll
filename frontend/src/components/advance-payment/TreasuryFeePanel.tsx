@@ -68,7 +68,7 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
           {/* Label */}
           <div className="relative z-[1] flex items-center gap-1.5">
             <span className="treasury-signal bg-emerald-500" />
-            <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
               Phí thu kỳ này
             </span>
           </div>
@@ -78,10 +78,10 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
             <span className="treasury-value max-w-full break-words font-financial text-[22px] font-semibold leading-[1.08] tracking-normal text-foreground tabular-nums">
               <AnimatedCurrency target={totalFeeEarned} />
             </span>
-            <span className="rounded bg-emerald-50 px-1.5 py-px font-financial text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200/60 shadow-[0_0_14px_rgba(16,185,129,0.18)]">
+            <span className="rounded bg-emerald-50 px-1.5 py-px font-financial text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200/60 shadow-[0_0_14px_rgba(16,185,129,0.18)]">
               {feePercentage.toFixed(1)}%
             </span>
-            <span className="text-[11px] text-muted-foreground">trên giải ngân</span>
+            <span className="text-xs text-muted-foreground">trên giải ngân</span>
           </div>
 
           {/* Footer rail — pinned via mt-auto to the shared band baseline. */}
@@ -89,7 +89,7 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
             <div className="treasury-rail grid grid-cols-2 gap-3 pt-2.5">
               {footerCols.map((col) => (
                 <div key={col.label} className="min-w-0">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     {col.label}
                   </div>
                   <div className="mt-0.5 truncate font-financial text-[15px] font-semibold leading-snug text-foreground tabular-nums">

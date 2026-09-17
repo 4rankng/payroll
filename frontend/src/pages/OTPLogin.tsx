@@ -78,7 +78,7 @@ const OTPLogin = () => {
           name: data.user.fullname,
           username: data.user.username,
           role: data.user.role,
-          avatar: generateAvatarUrl(data.user.username),
+          avatar: generateAvatarUrl(),
         });
         // Navigate by role (mirrors useLogin).
         if (data.user.role === "admin") navigate("/admin", { replace: true });

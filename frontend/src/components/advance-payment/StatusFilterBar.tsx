@@ -56,7 +56,7 @@ export const StatusFilterBar = memo(function StatusFilterBar({
         <SelectValue>
           {selected.label}
           {selectedCount !== undefined && selectedCount > 0 && (
-            <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[11px] tabular-nums font-semibold bg-foreground/10">
+            <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-xs tabular-nums font-semibold bg-foreground/10">
               {selectedCount}
             </span>
           )}
@@ -75,7 +75,7 @@ export const StatusFilterBar = memo(function StatusFilterBar({
                 )}
                 <span>{opt.label}</span>
                 {count !== undefined && count > 0 && (
-                  <span className="ml-auto pl-3 text-[11px] tabular-nums text-muted-foreground font-medium">
+                  <span className="ml-auto pl-3 text-xs tabular-nums text-muted-foreground font-medium">
                     {count}
                   </span>
                 )}

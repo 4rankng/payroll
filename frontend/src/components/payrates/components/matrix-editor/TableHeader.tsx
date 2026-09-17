@@ -72,7 +72,7 @@ export function TableHeader({
                 title={readOnly ? hourType : `Nhấn để đổi tên: ${hourType}`}
               >
                 <span className="break-words text-xs font-semibold text-foreground">{hourType}</span>
-                <span className="text-[10px] font-normal text-muted-foreground">
+                <span className="text-xs font-normal text-muted-foreground">
                   {isFlexible ? '₫/ca' : '₫/giờ'}
                 </span>
               </button>

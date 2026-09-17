@@ -59,7 +59,7 @@ export const EarningsPill = memo(function EarningsPill({
         <span
           className={cn(
             'tabular-nums text-muted-foreground',
-            size === 'default' ? 'text-xs' : 'text-[11px]',
+            size === 'default' ? 'text-xs' : 'text-xs',
           )}
         >
           {subtitle}

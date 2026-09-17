@@ -17,7 +17,7 @@ interface MobileSectionHeaderProps {
  * Small icon in a rounded container + bold title + optional trailing content.
  *
  * Pattern extracted from the Dashboard's local SectionHeader.
- * Typography: font-display text-[13px] font-bold tracking-tight.
+ * Typography: font-display text-sm font-bold tracking-tight.
  */
 export const MobileSectionHeader = ({
   icon: Icon,
@@ -30,7 +30,7 @@ export const MobileSectionHeader = ({
       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/5">
         <Icon className="h-3.5 w-3.5 text-primary/70" strokeWidth={2} />
       </div>
-      <h2 className="font-display text-[13px] font-bold text-foreground tracking-tight leading-tight">
+      <h2 className="font-display text-sm font-bold text-foreground tracking-tight leading-tight">
         {title}
       </h2>
       {children}

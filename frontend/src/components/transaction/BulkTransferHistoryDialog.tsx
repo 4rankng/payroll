@@ -97,7 +97,7 @@ const HistoryRow = memo(function HistoryRow({ history, onClick, isLast }: Histor
           {allSuccess ? (
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
           ) : (
-            <Badge variant="destructive" className="h-4 px-1.5 text-[10px] shrink-0">
+            <Badge variant="destructive" className="h-4 px-1.5 text-xs shrink-0">
               {history.failed_txn} lỗi
             </Badge>
           )}

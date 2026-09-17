@@ -165,7 +165,7 @@ export const BulkTransferUploadDialog = memo(function BulkTransferUploadDialog({
                   </div>
                 </div>
               )}
-              <p className="text-[11px] leading-snug text-muted-foreground">
+              <p className="text-xs leading-snug text-muted-foreground">
                 File tối đa 10MB. Hệ thống sẽ tạo một lô chuyển tiền và xử lý từng dòng
                 bất đồng bộ qua OnePay.
               </p>
@@ -289,7 +289,7 @@ interface SummaryStatProps {
 function SummaryStat({ label, value }: SummaryStatProps) {
   return (
     <div className="min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       <p className="mt-0.5 break-words font-financial text-sm font-bold tabular-nums text-foreground">

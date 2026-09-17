@@ -96,7 +96,7 @@ function ViewTabs({
             {tab.count != null && (
               <span
                 className={cn(
-                  "tabular-nums text-[10px] px-1.5 py-px rounded font-semibold leading-none",
+                  "tabular-nums text-xs px-1.5 py-px rounded font-semibold leading-none",
                   isActive
                     ? "bg-muted text-foreground/70"
                     : "bg-transparent text-muted-foreground/70",
@@ -335,7 +335,7 @@ const AdvPartnerAdvancePaymentsPage = () => {
               activeTab={activeTab}
               onTabChange={setActiveTab}
             />
-            <span className="sm:hidden text-[11px] font-medium text-muted-foreground tabular-nums whitespace-nowrap">
+            <span className="sm:hidden text-xs font-medium text-muted-foreground tabular-nums whitespace-nowrap">
               <span className="text-foreground/80 font-semibold">{resultCount}</span> kết quả
             </span>
           </div>
@@ -397,7 +397,7 @@ const AdvPartnerAdvancePaymentsPage = () => {
               />
             )}
 
-            <span className="hidden sm:inline text-[11px] font-medium text-muted-foreground tabular-nums tracking-wide whitespace-nowrap">
+            <span className="hidden sm:inline text-xs font-medium text-muted-foreground tabular-nums tracking-wide whitespace-nowrap">
               <span className="text-foreground/80 font-semibold">{resultCount}</span> kết quả
             </span>
           </div>

@@ -178,7 +178,7 @@ export function MobileDayListView({
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={cn(
-                      'text-[10px] font-medium',
+                      'text-xs font-medium',
                       status === 'paid' ? 'text-amber-700' :
                       status === 'approved' ? 'text-green-700' :
                       status === 'rejected' ? 'text-red-700' :
@@ -187,7 +187,7 @@ export function MobileDayListView({
                       {STATUS_LABEL[status] ?? status}
                     </span>
                     {entries.length > 1 && (
-                      <span className="text-[10px] text-muted-foreground">{entries.length} bản ghi</span>
+                      <span className="text-xs text-muted-foreground">{entries.length} bản ghi</span>
                     )}
                     {hasForcePayroll && (
                       <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 shrink-0" />

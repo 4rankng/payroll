@@ -349,7 +349,7 @@ function ProjectDetailsSheet({
               >
                 <Users className="h-3.5 w-3.5" />
                 <span className="text-xs font-semibold">Nhân viên</span>
-                <span className="ml-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-muted px-1.5 py-px text-[10px] font-bold tabular-nums leading-none">
+                <span className="ml-0.5 inline-flex min-w-4 items-center justify-center rounded-full bg-muted px-1.5 py-px text-xs font-bold tabular-nums leading-none">
                   {activeEmployeesCount}
                 </span>
               </TabsTrigger>
@@ -375,7 +375,7 @@ function ProjectDetailsSheet({
           {/* ── Overview tab ── */}
           <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
             <div className="flex items-center justify-between gap-3 mb-2">
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                 Thông tin dự án
               </p>
               {canEditProject && (
@@ -406,7 +406,7 @@ function ProjectDetailsSheet({
             {canDeleteProject && (
               <div className="mt-5">
                 <div className="py-2 mb-2">
-                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                     Vùng nguy hiểm
                   </p>
                 </div>
@@ -432,7 +432,7 @@ function ProjectDetailsSheet({
           {/* ── Employees tab ── */}
           <TabsContent value="employees" className="mt-0 focus-visible:outline-none">
             <div className="flex items-center justify-between gap-3 mb-3">
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                 Nhân viên ({activeEmployeesCount})
               </p>
               {canManageEmployees && (
@@ -470,7 +470,7 @@ function ProjectDetailsSheet({
           {canManageProjectAccess && (
             <TabsContent value="access" className="mt-0 focus-visible:outline-none">
               <div className="flex items-center justify-between gap-3 mb-3">
-                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                   Phân quyền
                 </p>
               </div>

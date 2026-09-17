@@ -294,9 +294,9 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                     {/* corner */}
                     <th style={{ position:'sticky', top:0, left:0, zIndex:4, background:'#fff', borderRight:'1px solid #e2e8f0', borderBottom:'1px solid #cbd5e1', padding:'12px 14px', width:176, minWidth:176, textAlign:'left' }}>
                       <div className="flex flex-col leading-tight">
-                        <span className="text-[10px] text-muted-foreground/60 font-semibold">Ca làm việc →</span>
+                        <span className="text-xs text-muted-foreground/60 font-semibold">Ca làm việc →</span>
                         <span className="text-sm font-bold text-foreground">Vị trí ↓</span>
-                        <span className="mt-1 text-[10px] font-semibold text-emerald-700">Lương trọn ca (₫)</span>
+                        <span className="mt-1 text-xs font-semibold text-emerald-700">Lương trọn ca (₫)</span>
                       </div>
                     </th>
                     {/* shift columns */}
@@ -338,8 +338,8 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                               )}
                             </div>
                             <div className="flex items-center gap-1.5">
-                              {s.label && <span className="text-[11px] text-muted-foreground">{s.label}</span>}
-                              <span className={`text-[11px] font-semibold ${ov?'text-emerald-600':'text-muted-foreground/50'}`}>
+                              {s.label && <span className="text-xs text-muted-foreground">{s.label}</span>}
+                              <span className={`text-xs font-semibold ${ov?'text-emerald-600':'text-muted-foreground/50'}`}>
                                 {ov && '🌙'}{durH(s.start,s.end)}h
                               </span>
                             </div>
@@ -426,7 +426,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                                   fontWeight: has ? 600 : 400,
                                 }}
                               />
-                              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
+                              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs"
                                 style={{ color: has ? '#047857' : '#94a3b8' }}>₫/ca</span>
                             </div>
                           </td>
@@ -478,7 +478,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                 <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
                   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3"/><path d="M22 19v-1a4 4 0 0 0-3-3.87M16 4.13A4 4 0 0 1 16 11"/></svg>
                   <h3 id="payrate-positions-heading" className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Vị trí</h3>
-                  <span className="w-full pl-[22px] text-[11px] text-muted-foreground/70 sm:ml-auto sm:w-auto sm:pl-0">Chọn để thêm hoặc bỏ</span>
+                  <span className="w-full pl-[22px] text-xs text-muted-foreground/70 sm:ml-auto sm:w-auto sm:pl-0">Chọn để thêm hoặc bỏ</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {ALL_POSITIONS.map(name => (
@@ -508,7 +508,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                 <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
                   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                   <h3 id="payrate-shifts-heading" className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Ca làm việc</h3>
-                  <span className="w-full pl-[22px] text-[11px] text-muted-foreground/70 sm:ml-auto sm:w-auto sm:pl-0">Chọn ca phổ biến</span>
+                  <span className="w-full pl-[22px] text-xs text-muted-foreground/70 sm:ml-auto sm:w-auto sm:pl-0">Chọn ca phổ biến</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {PRESET_SHIFTS.map(p => {

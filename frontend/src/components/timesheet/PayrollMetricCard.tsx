@@ -87,7 +87,7 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
           {label}
         </span>
         {supportText && (
-          <span className="mt-0.5 text-[11px] leading-tight text-muted-foreground/80">
+          <span className="mt-0.5 text-xs leading-tight text-muted-foreground/80">
             {supportText}
           </span>
         )}

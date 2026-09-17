@@ -121,7 +121,7 @@ const ActiveCard = ({
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {isLikelyBootstrap(active) && (
-            <Badge variant="outline" className="text-[10px] font-normal">
+            <Badge variant="outline" className="text-xs font-normal">
               Cấu hình mặc định
             </Badge>
           )}

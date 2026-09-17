@@ -73,13 +73,13 @@ export function CheckInEmployeeCard({
 
       <div className="grid flex-1 grid-cols-[minmax(0,0.72fr)_minmax(0,1.28fr)] gap-3 p-3 py-2.5">
         <div>
-          <p className="text-[11px] font-medium text-muted-foreground">Lượt điểm danh</p>
+          <p className="text-xs font-medium text-muted-foreground">Lượt điểm danh</p>
           <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
             {employee.attendance_count}
           </p>
         </div>
         <div className="min-w-0 border-l border-border/70 pl-3">
-          <p className="text-[11px] font-medium text-muted-foreground">Lần gần nhất</p>
+          <p className="text-xs font-medium text-muted-foreground">Lần gần nhất</p>
           <p className="mt-1 truncate text-xs tabular-nums text-foreground" title={formatLastCheckIn(employee.last_check_in_at)}>
             {formatLastCheckIn(employee.last_check_in_at)}
           </p>

@@ -55,6 +55,7 @@ import { useAuth } from "@/contexts";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { MODAL_IDS } from "@/constants/modalRegistry";
 import { useUnreadNotifications } from "@/hooks/api/useNotifications";
+import { generateAvatarUrl } from "@/utils/avatarHelpers";
 
 
 type MenuItem = {
@@ -138,12 +139,12 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
           </span>
         )}
         {item.badge && !isCollapsed && (
-          <span className="ml-auto bg-destructive text-destructive-foreground text-[9px] px-1.5 py-0.5 rounded-full shrink-0 font-semibold">
+          <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-1.5 py-0.5 rounded-full shrink-0 font-semibold">
             {item.badge}
           </span>
         )}
         {item.badge && isCollapsed && (
-          <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">
+          <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold">
             {item.badge}
           </span>
         )}
@@ -449,6 +450,12 @@ const AdminSidebar = () => {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
+                aria-label={
+                  user
+                    ? `Tài khoản: ${user.name}${unreadCount > 0 ? `, ${unreadCount} thông báo chưa đọc` : ""}`
+                    : "Tài khoản"
+                }
+                aria-haspopup="menu"
                 className={cn(
                   "admin-sidebar-account relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer outline-none",
                   "bg-card/[0.04] border border-white/[0.06]",
@@ -457,14 +464,20 @@ const AdminSidebar = () => {
                 )}
               >
                 {isCollapsed && user && (
-                  <span className="text-xs font-bold text-white/80">
-                    {user.name?.charAt(0)?.toUpperCase() || "U"}
-                  </span>
+                  // Neutral glyph rather than a letter monogram, so the
+                  // collapsed rail matches the avatar language used everywhere
+                  // else.
+                  <img
+                    src={generateAvatarUrl()}
+                    alt=""
+                    aria-hidden="true"
+                    className="h-6 w-6 rounded-full"
+                  />
                 )}
                 {!isCollapsed && user && (
                   <>
                     <div className="flex flex-col min-w-0 flex-1 text-left">
-                      <span className="text-[10px] text-white/60 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
+                      <span className="text-xs text-white/60 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
                       <span className="text-base font-medium truncate leading-tight text-white/90">{user.name}</span>
                     </div>
                     <ChevronUp className="w-3.5 h-3.5 shrink-0 text-white/45" />
@@ -473,7 +486,7 @@ const AdminSidebar = () => {
                 {unreadCount > 0 && (
                   <span className={cn(
                     "absolute -top-1.5 -right-1.5 h-4 min-w-4 flex items-center justify-center px-1",
-                    "text-[10px] font-semibold rounded-full bg-red-500 text-white",
+                    "text-xs font-semibold rounded-full bg-red-500 text-white",
                     "animate-badge-pulse"
                   )}>
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -520,7 +533,7 @@ const AdminSidebar = () => {
           </DropdownMenu>
 
           {!isCollapsed && (
-            <p className="text-[10px] text-white/70 text-center pt-1 pb-1 tracking-wide select-none">
+            <p className="text-xs text-white/70 text-center pt-1 pb-1 tracking-wide select-none">
               v{__APP_VERSION__}
             </p>
           )}

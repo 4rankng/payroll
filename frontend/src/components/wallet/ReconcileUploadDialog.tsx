@@ -207,7 +207,7 @@ export default function ReconcileUploadDialog({
         <div className="px-4 pb-4">
           {tab === "auto" ? (
             <div>
-              <label className="text-[11px] font-bold uppercase tracking-tight text-slate-400 flex items-center gap-1 mb-1.5">
+              <label className="text-xs font-bold uppercase tracking-tight text-slate-400 flex items-center gap-1 mb-1.5">
                 <Calendar size={10} className="text-slate-400" />
                 Khoảng thời gian
               </label>
@@ -270,7 +270,7 @@ export default function ReconcileUploadDialog({
                     <span className="text-xs font-bold text-blue-500 block">
                       Nhấn để chọn file
                     </span>
-                    <p className="text-[11px] text-slate-400">CSV (Max 10MB)</p>
+                    <p className="text-xs text-slate-400">CSV (Max 10MB)</p>
                   </div>
                 </div>
               )}
@@ -307,17 +307,17 @@ export default function ReconcileUploadDialog({
             {job && (
               <div className="grid grid-cols-3 gap-3 text-xs">
                 <div>
-                  <p className="text-[11px] text-slate-500">Tổng dòng</p>
+                  <p className="text-xs text-slate-500">Tổng dòng</p>
                   <p className="font-semibold tabular-nums">{job.total_rows}</p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-slate-500">Khớp</p>
+                  <p className="text-xs text-slate-500">Khớp</p>
                   <p className="font-semibold text-emerald-700 tabular-nums">
                     {job.matched}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[11px] text-slate-500">Không khớp</p>
+                  <p className="text-xs text-slate-500">Không khớp</p>
                   <p className="font-semibold text-rose-700 tabular-nums">
                     {job.unmatched}
                   </p>

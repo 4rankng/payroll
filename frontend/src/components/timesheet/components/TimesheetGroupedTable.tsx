@@ -354,7 +354,7 @@ const ProjectSection = memo(function ProjectSection({
               </span>
               <div className="min-w-0">
                 <p className="truncate text-xs font-bold text-foreground">{project.projectName}</p>
-                <p className="mt-0.5 truncate text-[10.5px] text-muted-foreground">
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                   {[project.projectCode, project.positions.join(', '), `${project.entries.length} mục`].filter(Boolean).join(' · ')}
                 </p>
               </div>
@@ -423,13 +423,13 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
         <div className="flex min-h-9 items-center gap-2">
           {showDate ? (
             <div className="flex items-center gap-2">
-              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded-md bg-slate-100 px-1.5 text-[10px] font-bold uppercase text-slate-600">
+              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded-md bg-slate-100 px-1.5 text-xs font-bold uppercase text-slate-600">
                 {format(entryDate, "EEE", { locale: vi }).replace("Th ", "T")}
               </span>
               <p className="text-xs font-bold tabular-nums text-foreground">{format(entryDate, "dd/MM/yyyy")}</p>
             </div>
           ) : (
-            <span className="ml-4 flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground" aria-label="Cùng ngày">
+            <span className="ml-4 flex items-center gap-1.5 text-xs font-medium text-muted-foreground" aria-label="Cùng ngày">
               <span className="h-4 w-px bg-border" />
               <span className="h-1.5 w-1.5 rounded-full bg-border" />
             </span>

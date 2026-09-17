@@ -42,7 +42,7 @@ const ProjectCard = React.memo(function ProjectCard({
           <span className="min-w-0 break-words text-sm font-semibold leading-snug line-clamp-2">
             {project.name}
           </span>
-          <ProjectStatusBadge status={project.status} className="shrink-0 text-[11px] h-5 px-1.5" />
+          <ProjectStatusBadge status={project.status} className="shrink-0 text-xs h-5 px-1.5" />
         </div>
 
         {/* Line 2: code · dates · employee badges */}
@@ -60,16 +60,16 @@ const ProjectCard = React.memo(function ProjectCard({
           </span>
           <span className="text-gray-300 shrink-0">·</span>
           <Users className="h-3 w-3 text-muted-foreground shrink-0" />
-          <Badge className="font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 border text-[11px] h-4 px-1 shrink-0">
+          <Badge className="font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 border text-xs h-4 px-1 shrink-0">
             {project.employee_count || 0}
           </Badge>
           {(project.weekly_salary_employee_count ?? 0) > 0 && (
-            <Badge className="font-semibold bg-sky-50 text-sky-700 border-border border text-[11px] h-4 px-1 shrink-0">
+            <Badge className="font-semibold bg-sky-50 text-sky-700 border-border border text-xs h-4 px-1 shrink-0">
               {project.weekly_salary_employee_count}T
             </Badge>
           )}
           {(project.monthly_salary_employee_count ?? 0) > 0 && (
-            <Badge className="font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 border text-[11px] h-4 px-1 shrink-0">
+            <Badge className="font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 border text-xs h-4 px-1 shrink-0">
               {project.monthly_salary_employee_count}M
             </Badge>
           )}

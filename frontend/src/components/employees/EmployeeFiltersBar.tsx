@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { SearchBar } from '@/components/shared/SearchBar';
 import { FilterPill } from '@/components/shared/FilterPill';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { EmployeeStatusFilter } from './EmployeeStatusFilter';
 import { cn } from '@/lib/utils';
 import { generateMonthOptions } from '@/utils/dateHelpers';
@@ -61,11 +62,23 @@ export const EmployeeFiltersBar = ({
       <div className="h-5 w-px bg-border/50 shrink-0 hidden sm:block" />
 
       {projects && onProjectChange && (
-        <FilterPill
+        <SearchableSelect
           value={projectId ? projectId.toString() : 'all'}
           onChange={(v) => onProjectChange(v === 'all' ? null : parseInt(v))}
           placeholder="Dự án"
-          options={projects.map((p) => ({ value: p.id.toString(), label: `${p.name} (${p.code})` }))}
+          searchPlaceholder="Tìm dự án..."
+          emptyMessage="Không tìm thấy dự án."
+          triggerAriaLabel="Lọc theo dự án"
+          triggerClassName="min-h-11 sm:min-h-9 w-44 justify-between rounded-xl border-border/60 bg-background text-sm font-medium"
+          contentClassName="w-72 max-w-[calc(100vw-2rem)]"
+          options={[
+            { value: 'all', label: 'Tất cả dự án' },
+            ...projects.map((p) => ({
+              value: p.id.toString(),
+              label: `${p.name} (${p.code})`,
+              searchText: p.code,
+            })),
+          ]}
         />
       )}
 

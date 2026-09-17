@@ -36,7 +36,7 @@ const ALL_VALUE = 'all';
    ─────────────────────────────────────────────── */
 
 const RANK_STYLES: Record<number, { badge: string }> = {
-  1: { badge: 'bg-warning/10 text-warning border-warning/30' },
+  1: { badge: 'bg-warning/10 text-amber-700 border-warning/30' },
   2: { badge: 'bg-muted text-muted-foreground border-border' },
   3: { badge: 'bg-primary/10 text-primary border-primary/30' },
 };

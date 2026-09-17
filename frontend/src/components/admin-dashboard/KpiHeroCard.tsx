@@ -89,7 +89,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
             <div className="flex min-h-7 flex-wrap items-center justify-end gap-1.5">
               {trend && (
                 <span className={cn(
-                  'inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums',
+                  'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold tabular-nums',
                   trend.positive ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive',
                 )}>
                   <span aria-hidden="true">{trend.positive ? '↑' : '↓'}</span>
@@ -98,7 +98,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
               )}
               {badge && (
                 <span className={cn(
-                  'inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold whitespace-nowrap',
+                  'inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold whitespace-nowrap',
                   BADGE_STYLES[badge.variant],
                 )}>
                   {badge.label}
@@ -128,7 +128,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
         </div>
 
         {(sublabel || footer) && (
-          <div className="mt-auto pt-2 text-[11px] leading-snug text-muted-foreground">
+          <div className="mt-auto pt-2 text-xs leading-snug text-muted-foreground">
             {sublabel && <p>{sublabel}</p>}
             {footer && (
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">

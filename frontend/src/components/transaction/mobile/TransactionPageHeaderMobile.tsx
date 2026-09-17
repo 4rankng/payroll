@@ -100,7 +100,7 @@ export function TransactionPageHeaderMobile({
               >
                 {/* Exports — sao-ke */}
                 {(onExportSaoKePayroll || onExportSaoKeAdvance) && (
-                  <div className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <div className="px-3 pb-1 pt-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Xuất sao kê
                   </div>
                 )}

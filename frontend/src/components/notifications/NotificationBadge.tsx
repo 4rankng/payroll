@@ -15,7 +15,7 @@ export const NotificationBadge = ({ count, className }: NotificationBadgeProps) 
     <Badge
       variant="destructive"
       className={cn(
-        "absolute top-1 right-1 h-4 min-w-4 flex items-center justify-center px-1 text-[10px] font-semibold rounded-full",
+        "absolute top-1 right-1 h-4 min-w-4 flex items-center justify-center px-1 text-xs font-semibold rounded-full",
         "animate-badge-pulse",
         className
       )}

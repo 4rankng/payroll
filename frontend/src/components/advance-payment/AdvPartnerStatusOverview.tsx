@@ -112,11 +112,11 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
           <h2 className="text-[13px] font-bold tracking-tight text-foreground">
             Tiến độ yêu cầu
           </h2>
-          <span className="rounded bg-muted px-1.5 py-px font-financial text-[11px] font-medium tabular-nums text-muted-foreground">
+          <span className="rounded bg-muted px-1.5 py-px font-financial text-xs font-medium tabular-nums text-muted-foreground">
             {totalRequests}
           </span>
           {totalRequests > 0 && (
-            <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-px font-financial text-[11px] font-medium tabular-nums text-foreground/70">
+            <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-px font-financial text-xs font-medium tabular-nums text-foreground/70">
               <CheckCircle2 className="h-3 w-3" />
               {successRate.toFixed(0)}%
             </span>
@@ -192,7 +192,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
                 <div key={cell.key} className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", cell.dotClass)} />
-                    <span className="truncate text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-muted-foreground">
+                    <span className="truncate text-xs font-semibold uppercase leading-tight tracking-[0.08em] text-muted-foreground">
                       {cell.label}
                     </span>
                   </div>
@@ -201,7 +201,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
                       {value}
                     </span>
                     {amount !== undefined && (
-                      <span className="font-financial text-[10.5px] font-medium leading-none text-muted-foreground tabular-nums">
+                      <span className="font-financial text-xs font-medium leading-none text-muted-foreground tabular-nums">
                         {formatCurrency(amount)}
                       </span>
                     )}

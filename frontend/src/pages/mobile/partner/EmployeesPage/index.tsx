@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
+import { MobileStatStrip } from "@/components/shared/MobileStatStrip";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { MobilePagination } from "@/components/shared/MobilePagination";
 import { Button } from "@/components/ui/button";
@@ -219,43 +220,24 @@ const EmployeesPageMobile = () => {
 
       {/* ── Stats strip ── */}
       {!summaryLoading && stats.length > 0 && (
-        <MobileSurface className="p-2">
-          <div className="grid grid-cols-4 gap-1.5">
-            {stats.map((stat) => {
-                            const isActive =
+        <div className="px-4 pb-3">
+          <MobileStatStrip
+            items={stats.map((stat) => {
+              const isActive =
                 stat.filter !== null && statusFilter === stat.filter;
-              return (
-                <button
-                  key={stat.label}
-                  onClick={() => {
-                    if (stat.filter === null) return;
-                    if (isActive) {
-                      updateStatusFilter(undefined);
-                    } else {
-                      updateStatusFilter(stat.filter);
-                    }
-                  }}
-                  className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-2 transition-all duration-200 ${
-                    isActive
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-card"
-                  } ${stat.filter !== null ? "active:scale-95" : "cursor-default"}`}
-                >
-                  <span
-                    className={`text-xs font-bold tabular-nums leading-none ${isActive ? "text-primary" : "text-foreground"}`}
-                  >
-                    {stat.value.toLocaleString("vi-VN")}
-                  </span>
-                  <span
-                    className={`text-xs leading-tight ${isActive ? "text-primary" : "text-muted-foreground"}`}
-                  >
-                    {stat.label}
-                  </span>
-                </button>
-              );
+              return {
+                key: stat.label,
+                label: stat.label,
+                value: stat.value.toLocaleString("vi-VN"),
+                active: isActive,
+                onClick: stat.filter
+                  ? () =>
+                      updateStatusFilter(isActive ? undefined : stat.filter)
+                  : undefined,
+              };
             })}
-          </div>
-        </MobileSurface>
+          />
+        </div>
       )}
       {summaryLoading && (
         <div className="grid grid-cols-4 gap-1.5 px-4 pb-3">
@@ -289,38 +271,42 @@ const EmployeesPageMobile = () => {
         </Button>
       </MobileSurface>
 
-      {/* ── Active filter chips ── */}
+      {/* ── Active filter chips — real buttons so they are keyboard reachable
+             and meet the 44px touch target. ── */}
       {activeFilterCount > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           {statusFilter && (
-            <Badge
-              variant="secondary"
-              className="gap-1 cursor-pointer rounded-xl"
+            <button
+              type="button"
               onClick={() => updateStatusFilter(undefined)}
+              aria-label={`Bỏ lọc trạng thái: ${statusFilter === "working" ? "Đang làm việc" : "Chưa phân công"}`}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 text-xs font-medium text-secondary-foreground"
             >
               {statusFilter === "working" ? "Đang làm việc" : "Chưa phân công"}
-              <X className="h-3 w-3" />
-            </Badge>
+              <X aria-hidden="true" className="h-3.5 w-3.5" />
+            </button>
           )}
           {month && (
-            <Badge
-              variant="secondary"
-              className="gap-1 cursor-pointer rounded-xl"
+            <button
+              type="button"
               onClick={() => updateMonth(undefined)}
+              aria-label={`Bỏ lọc tháng: ${monthOptions.find((m) => m.value === month)?.label ?? month}`}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 text-xs font-medium text-secondary-foreground"
             >
               {monthOptions.find((m) => m.value === month)?.label ?? month}
-              <X className="h-3 w-3" />
-            </Badge>
+              <X aria-hidden="true" className="h-3.5 w-3.5" />
+            </button>
           )}
           {projectId && (
-            <Badge
-              variant="secondary"
-              className="gap-1 cursor-pointer rounded-xl"
+            <button
+              type="button"
               onClick={() => filterByProject(null)}
+              aria-label={`Bỏ lọc dự án: ${projects.find((p) => p.id === projectId)?.name ?? "Dự án"}`}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 text-xs font-medium text-secondary-foreground"
             >
               {projects.find((p) => p.id === projectId)?.name ?? "Dự án"}
-              <X className="h-3 w-3" />
-            </Badge>
+              <X aria-hidden="true" className="h-3.5 w-3.5" />
+            </button>
           )}
           <button
             onClick={clearAllFilters}

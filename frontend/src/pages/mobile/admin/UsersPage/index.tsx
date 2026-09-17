@@ -1,6 +1,7 @@
 import { ErrorState } from "@/components/ui/error-state";
 import { useState, useCallback, useMemo } from "react";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
+import { MobileStatStrip } from "@/components/shared/MobileStatStrip";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -153,36 +154,25 @@ const UsersPageMobile = () => {
       {/* Stats strip */}
       {!isAdvPartner && !summaryLoading && stats.length > 0 && (
         <div className="px-4 pb-3">
-          <div className="grid grid-cols-4 gap-1.5">
-            {stats.map((stat) => {
-                            const isActive =
+          <MobileStatStrip
+            items={stats.map((stat) => {
+              const isActive =
                 stat.role !== null && filterState.role === stat.role;
-              return (
-                <button
-                  key={stat.label}
-                  onClick={() => {
-                    if (stat.role === null) {
-                      handleRoleSelect(undefined);
-                      return;
-                    }
-                    handleRoleSelect(isActive ? undefined : stat.role);
-                  }}
-                  className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-2 transition-all active:scale-95 ${isActive ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}
-                >
-                  <span
-                    className={`text-sm font-bold tabular-nums leading-none ${isActive ? "text-primary" : "text-foreground"}`}
-                  >
-                    {stat.value.toLocaleString("vi-VN")}
-                  </span>
-                  <span
-                    className={`text-xs leading-tight ${isActive ? "text-primary" : "text-muted-foreground"}`}
-                  >
-                    {stat.label}
-                  </span>
-                </button>
-              );
+              return {
+                key: stat.label,
+                label: stat.label,
+                value: stat.value.toLocaleString("vi-VN"),
+                active: isActive,
+                onClick: () => {
+                  if (stat.role === null) {
+                    handleRoleSelect(undefined);
+                    return;
+                  }
+                  handleRoleSelect(isActive ? undefined : stat.role);
+                },
+              };
             })}
-          </div>
+          />
         </div>
       )}
       {summaryLoading && !isAdvPartner && (

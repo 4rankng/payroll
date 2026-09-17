@@ -153,7 +153,7 @@ function LeaderRow({ item, rank }: { item: TopPaidEmployeeItem; rank: number }) 
   const badge = RANK_BADGE[rank - 1] ?? 'bg-muted/60 text-muted-foreground ring-1 ring-border/60';
   return (
     <div className="group grid grid-cols-[2rem_2.25rem_minmax(0,1fr)] items-center gap-2 rounded-xl border border-transparent px-2 py-2 transition-colors hover:border-border/60 hover:bg-muted/30">
-      <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums', badge)}>
+      <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums', badge)}>
         {rank}
       </span>
       <UserAvatar name={item.employee_name} size="sm" className="shrink-0" />
@@ -161,7 +161,7 @@ function LeaderRow({ item, rank }: { item: TopPaidEmployeeItem; rank: number }) 
         <div className="flex items-center gap-2">
           <span className="truncate text-[13px] font-semibold text-foreground">{item.employee_name}</span>
           {!item.is_active && (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] font-semibold text-destructive shrink-0">
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-xs font-semibold text-destructive shrink-0">
               <UserX className="h-2.5 w-2.5" />
               Nghỉ
             </span>
@@ -222,7 +222,7 @@ function BannerHeader({
     <header className="rounded-2xl border border-border/60 bg-card px-5 py-4 shadow-soft sm:px-6 sm:py-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
             <CalendarDays className="h-4 w-4" />
             Kỳ báo cáo
           </div>
@@ -340,7 +340,7 @@ const PartnerDashboardPage = () => {
                 </div>
               </div>
               {!isLoading && topEmployees.length > 0 && (
-                <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
                   {topEmployees.length} nhân viên
                 </span>
               )}

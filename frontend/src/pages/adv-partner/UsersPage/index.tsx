@@ -101,7 +101,7 @@ function ColHead({
   icon?: React.ElementType;
 }) {
   return (
-    <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/30 whitespace-nowrap">
+    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted/30 whitespace-nowrap">
       <span className="inline-flex items-center gap-1.5">
         {Icon && <Icon className="w-3 h-3 opacity-60" />}
         {children}
@@ -146,11 +146,11 @@ function EmployeeCard({
             {emp.fullname}
           </div>
           {emp.username ? (
-            <div className="break-all font-mono text-[11px] text-muted-foreground mt-0.5">
+            <div className="break-all font-mono text-xs text-muted-foreground mt-0.5">
               @{emp.username}
             </div>
           ) : (
-            <div className="text-[11px] text-muted-foreground italic mt-0.5">
+            <div className="text-xs text-muted-foreground italic mt-0.5">
               chưa có tài khoản
             </div>
           )}
@@ -162,7 +162,7 @@ function EmployeeCard({
       {/* Info strip — project · bank · account */}
       <div className="border-t border-border/40 bg-muted/25 px-4 py-2 flex items-center gap-0 flex-wrap min-h-[34px]">
         {/* Project */}
-        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 pr-2.5">
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 pr-2.5">
           <Building2 className="w-3 h-3 shrink-0 text-emerald-600/80" />
           {emp.project?.name || "—"}
         </span>
@@ -171,7 +171,7 @@ function EmployeeCard({
         {hasBank ? (
           <>
             <span className="text-border mr-2.5" aria-hidden>·</span>
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-700 dark:text-blue-400 pr-2.5">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-400 pr-2.5">
               <CreditCard className="w-3 h-3 shrink-0 text-blue-500/80" />
               {emp.bank!.bankName}
             </span>
@@ -179,7 +179,7 @@ function EmployeeCard({
         ) : (
           <>
             <span className="text-border mr-2.5" aria-hidden>·</span>
-            <span className="text-[11px] text-muted-foreground italic">
+            <span className="text-xs text-muted-foreground italic">
               Chưa có ngân hàng
             </span>
           </>
@@ -189,7 +189,7 @@ function EmployeeCard({
         {emp.bank?.accountNumber && (
           <>
             <span className="text-border mr-2.5" aria-hidden>·</span>
-            <span className="break-all font-mono text-[11px] text-muted-foreground tabular-nums">
+            <span className="break-all font-mono text-xs text-muted-foreground tabular-nums">
               {emp.bank.accountNumber}
             </span>
           </>
@@ -339,7 +339,7 @@ const AdvPartnerUsersPage = () => {
               )}
 
               {!isError && employees.length > 0 && !hasNextPage && (
-                <p className="text-center text-[11px] text-muted-foreground pb-1">
+                <p className="text-center text-xs text-muted-foreground pb-1">
                   {employees.length} nhân viên
                 </p>
               )}
@@ -350,13 +350,13 @@ const AdvPartnerUsersPage = () => {
         {/* ── Desktop table ───────────────────────────────────────────────── */}
         <div className="hidden sm:block bg-card rounded-2xl border border-border/40 shadow-sm overflow-hidden">
           <div className="px-4 pt-3 pb-1">
-            <p className="text-[11px] text-muted-foreground">Nhấn vào hàng để xem chi tiết</p>
+            <p className="text-xs text-muted-foreground">Nhấn vào hàng để xem chi tiết</p>
           </div>
           <div role="region" aria-label="Danh sách nhân viên" tabIndex={0} className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <table className="w-full min-w-[1040px] border-collapse text-[13px]">
               <thead>
                 <tr>
-                  <th className="w-10 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/30">
+                  <th className="w-10 px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted/30">
                     #
                   </th>
                   <ColHead icon={User}>Nhân viên</ColHead>
@@ -381,7 +381,7 @@ const AdvPartnerUsersPage = () => {
                       <div className="flex items-center gap-2.5">
                         <div
                           className={cn(
-                            "h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-white text-[10px] font-bold bg-gradient-to-br select-none",
+                            "h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-white text-xs font-bold bg-gradient-to-br select-none",
                             getGradient(emp.fullname)
                           )}
                           aria-hidden
@@ -398,11 +398,11 @@ const AdvPartnerUsersPage = () => {
                             {emp.fullname}
                           </button>
                           {emp.username ? (
-                            <div className="font-mono text-[11px] text-muted-foreground">
+                            <div className="font-mono text-xs text-muted-foreground">
                               @{emp.username}
                             </div>
                           ) : (
-                            <div className="text-[11px] text-muted-foreground italic">
+                            <div className="text-xs text-muted-foreground italic">
                               chưa có tài khoản
                             </div>
                           )}

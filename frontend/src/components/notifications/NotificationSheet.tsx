@@ -185,7 +185,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                 >
                   {tab.label}
                   {tab.count != null && tab.count > 0 && (
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
+                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none ${
                       activeView === tab.value ? theme.activeTabCount : 'bg-neutral-content/15 text-neutral-content'
                     }`}>
                       {tab.count > 99 ? '99+' : tab.count}

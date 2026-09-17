@@ -100,7 +100,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
   return (
     <div className="border-t pt-2 pb-4">
       <div className="flex items-center justify-between px-4 sm:px-6 py-2">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
           Vị trí check-in
         </p>
         {!adding && editingIndex === null && (
@@ -122,7 +122,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-medium">Bán kính chấm công</p>
-              <p className="text-[11px] text-muted-foreground">Cho phép từ 10 đến 1000 mét.</p>
+              <p className="text-xs text-muted-foreground">Cho phép từ 10 đến 1000 mét.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Input
@@ -164,7 +164,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
             </div>
           </div>
           {!isRadiusValid && (
-            <p className="mt-1 text-[11px] text-destructive">
+            <p className="mt-1 text-xs text-destructive">
               Bán kính phải nằm trong khoảng 10-1000 mét.
             </p>
           )}
@@ -181,7 +181,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
         ) : (
           <div className="rounded-lg border overflow-hidden">
             {/* Header */}
-            <div className="grid grid-cols-[1fr_100px_100px_72px] gap-2 bg-muted/50 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <div className="grid grid-cols-[1fr_100px_100px_72px] gap-2 bg-muted/50 px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <span>Tên cổng</span>
               <span>Vĩ độ</span>
               <span>Kinh độ</span>
@@ -246,8 +246,8 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
                   className="grid grid-cols-[1fr_100px_100px_72px] gap-2 px-3 py-2 text-xs border-t items-center group"
                 >
                   <span className="truncate">{gate.name}</span>
-                  <span className="text-muted-foreground font-mono text-[11px]">{gate.lat.toFixed(6)}</span>
-                  <span className="text-muted-foreground font-mono text-[11px]">{gate.lng.toFixed(6)}</span>
+                  <span className="text-muted-foreground font-mono text-xs">{gate.lat.toFixed(6)}</span>
+                  <span className="text-muted-foreground font-mono text-xs">{gate.lng.toFixed(6)}</span>
                   <div className="flex gap-1">
                     <Button
                       variant="ghost"

@@ -55,14 +55,19 @@ export const FilterPill = React.memo(function FilterPill({
           position="popper"
           sideOffset={4}
           className={cn(
+            // The list must never outgrow the viewport, and long option sets
+            // must scroll rather than be clipped by the rounded overflow-hidden
+            // shell. `--radix-select-content-available-height` is the space
+            // Radix measured between the trigger and the viewport edge.
             'z-50 min-w-[10rem] overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-sm',
+            'max-h-[min(20rem,var(--radix-select-content-available-height))]',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
             'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
             'data-[side=bottom]:slide-in-from-top-2',
           )}
         >
-          <SelectPrimitive.Viewport className="p-1">
+          <SelectPrimitive.Viewport className="max-h-[inherit] overflow-y-auto overscroll-contain p-1">
             <FilterPillItem value={defaultValue} label={placeholder} />
             {options.map(o => (
               <FilterPillItem key={o.value} value={o.value} label={o.label} />

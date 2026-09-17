@@ -98,7 +98,7 @@ export function QuickActions({
               <button
                 key={pos}
                 onClick={() => handleSuggestedPosition(pos)}
-                className="min-h-11 rounded-full border border-border bg-background px-3 text-[10px] capitalize transition-colors hover:border-primary hover:text-primary"
+                className="min-h-11 rounded-full border border-border bg-background px-3 text-xs capitalize transition-colors hover:border-primary hover:text-primary"
               >
                 {pos}
               </button>
@@ -163,7 +163,7 @@ export function QuickActions({
                 <button
                   key={hour}
                   onClick={() => handleSuggestedHourType(hour)}
-                  className="min-h-11 rounded-full border border-border bg-background px-3 text-[10px] transition-colors hover:border-primary hover:text-primary"
+                  className="min-h-11 rounded-full border border-border bg-background px-3 text-xs transition-colors hover:border-primary hover:text-primary"
                 >
                   {hour}
                 </button>

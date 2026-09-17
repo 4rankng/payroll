@@ -72,13 +72,13 @@ export function ExportEmployeesModal({
 
         {/* Select all / clear */}
         <div className="flex items-center justify-between px-1 py-1.5">
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             Đã chọn {selectedIds.size} dự án
           </span>
           <button
             onClick={isAllSelected ? deselectAll : selectAll}
             disabled={isExporting}
-            className="text-[10px] font-medium text-primary hover:underline"
+            className="text-xs font-medium text-primary hover:underline"
           >
             {isAllSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}
           </button>
@@ -112,7 +112,7 @@ export function ExportEmployeesModal({
                     <span className="text-xs font-medium truncate">{project.name}</span>
                   </div>
                   {project.code && (
-                    <span className="text-[10px] text-muted-foreground truncate pl-5">
+                    <span className="text-xs text-muted-foreground truncate pl-5">
                       {project.code}
                     </span>
                   )}

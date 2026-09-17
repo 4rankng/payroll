@@ -113,10 +113,10 @@ const ProfitRow = memo(({ item, isHighlighted, onHover }: ProfitRowProps) => {
       </td>
       <td className="py-2 px-2">
         <div className="font-medium text-foreground leading-tight text-xs">{item.project_name}</div>
-        <div className="text-[11px] text-muted-foreground mt-0.5">{item.client_name}</div>
+        <div className="text-xs text-muted-foreground mt-0.5">{item.client_name}</div>
       </td>
       <td className="py-2 px-2 text-center">
-        <div className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+        <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
           <Users className="h-3 w-3 text-muted-foreground/50" />
           <span className="tabular-nums font-medium">{item.employee_count}</span>
         </div>
@@ -406,10 +406,10 @@ export const ProjectProfitabilityCard = memo(() => {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border/40">
-                    <th className="py-2 pl-3 pr-2 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider w-8">#</th>
-                    <th className="py-2 px-2 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Dự án</th>
-                    <th className="py-2 px-2 text-center text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">NV</th>
-                    <th className="py-2 pl-2 pr-3 text-right text-[11px] font-semibold text-foreground uppercase tracking-wider">Lợi nhuận</th>
+                    <th className="py-2 pl-3 pr-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider w-8">#</th>
+                    <th className="py-2 px-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dự án</th>
+                    <th className="py-2 px-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">NV</th>
+                    <th className="py-2 pl-2 pr-3 text-right text-xs font-semibold text-foreground uppercase tracking-wider">Lợi nhuận</th>
                   </tr>
                 </thead>
                 <tbody>

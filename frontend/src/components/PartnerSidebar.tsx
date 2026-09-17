@@ -191,7 +191,7 @@ const PartnerSidebar = () => {
                 {!isCollapsed && user && (
                   <>
                     <div className="flex flex-col min-w-0 flex-1 text-left">
-                      <span className="text-[10px] text-white/45 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
+                      <span className="text-xs text-white/45 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
                       <span className="text-[12.5px] font-semibold truncate leading-tight text-white/90">{user.name}</span>
                     </div>
                     <ChevronUp className="w-3.5 h-3.5 shrink-0 text-white/45" />
@@ -200,7 +200,7 @@ const PartnerSidebar = () => {
                 {unreadCount > 0 && (
                   <span className={cn(
                     "absolute -top-1.5 -right-1.5 h-4 min-w-4 flex items-center justify-center px-1",
-                    "text-[10px] font-semibold rounded-full bg-red-500 text-white",
+                    "text-xs font-semibold rounded-full bg-red-500 text-white",
                     "animate-badge-pulse"
                   )}>
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -247,7 +247,7 @@ const PartnerSidebar = () => {
           </DropdownMenu>
 
           {!isCollapsed && (
-            <p className="text-[10px] text-white/70 text-center pt-1 pb-1 tracking-wide select-none">
+            <p className="text-xs text-white/70 text-center pt-1 pb-1 tracking-wide select-none">
               v{__APP_VERSION__}
             </p>
           )}

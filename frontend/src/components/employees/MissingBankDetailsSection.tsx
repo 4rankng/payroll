@@ -68,40 +68,60 @@ export const MissingBankDetailsSection = ({
 
   return (
     <div className="overflow-hidden rounded-xl border border-amber-200/80 bg-amber-50/50">
-      {/* Header row */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-4 sm:py-3">
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-          <div className="flex w-full items-start gap-2">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
-          <span className="min-w-0 text-pretty text-sm font-semibold text-amber-900">
+      {/* Header: title keeps one line with the toggle pinned to it; the counts
+          sit underneath as plain dot-led text so they never read as buttons. */}
+      <div className="px-3 py-2 sm:px-4 sm:py-3">
+        <div className="flex items-start gap-2">
+          <AlertTriangle
+            className="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
+            aria-hidden="true"
+          />
+          <span className="min-w-0 flex-1 text-pretty text-sm font-semibold text-amber-900">
             Thông tin ngân hàng không hợp lệ
           </span>
-          </div>
-          {invalidCount > 0 && (
-            <Badge className="border-rose-300 bg-rose-100 text-xs font-semibold text-rose-800 hover:bg-rose-100 shrink-0">
-              Sai thông tin: {invalidCount}
-            </Badge>
-          )}
-          {missingCount > 0 && (
-            <Badge className="border-amber-300 bg-amber-100 text-xs font-semibold text-amber-800 hover:bg-amber-100 shrink-0">
-              Thiếu thông tin: {missingCount}
-            </Badge>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggle}
+            aria-expanded={isExpanded}
+            aria-controls="missing-bank-details-table"
+            className="-my-2 h-11 w-11 shrink-0 gap-1.5 px-0 text-xs text-amber-700 hover:bg-amber-100 hover:text-amber-900"
+          >
+            {isExpanded ? (
+              <>
+                <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="sr-only">Ẩn danh sách</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="sr-only">Xem danh sách</span>
+              </>
+            )}
+          </Button>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggle}
-          aria-expanded={isExpanded}
-          aria-controls="missing-bank-details-table"
-          className="h-11 w-11 shrink-0 gap-1.5 px-0 text-xs text-amber-700 hover:bg-amber-100 hover:text-amber-900 sm:h-9 sm:w-auto sm:px-3"
-        >
-          {isExpanded ? (
-            <><ChevronUp className="h-3.5 w-3.5" aria-hidden="true" /><span className="sr-only sm:not-sr-only">Ẩn</span></>
-          ) : (
-            <><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" /><span className="sr-only sm:not-sr-only">Xem danh sách</span></>
-          )}
-        </Button>
+        {(invalidCount > 0 || missingCount > 0) && (
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-6 text-xs font-medium text-amber-800">
+            {invalidCount > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500"
+                />
+                Sai thông tin: {invalidCount}
+              </span>
+            )}
+            {missingCount > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"
+                />
+                Thiếu thông tin: {missingCount}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Expandable table */}

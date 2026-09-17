@@ -124,7 +124,7 @@ export function FlexibleShiftManager({
         <div className="space-y-2 pt-2 border-t border-border/40">
           {/* Time pickers */}
           <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-1.5 min-[380px]:grid-cols-[auto_minmax(0,1fr)_auto_minmax(0,1fr)]">
-            <span className="text-[10px] text-muted-foreground w-6 shrink-0">Từ</span>
+            <span className="text-xs text-muted-foreground w-6 shrink-0">Từ</span>
             <Input
               type="time"
               value={startTime}
@@ -132,7 +132,7 @@ export function FlexibleShiftManager({
               className="h-11 text-xs font-mono"
               autoFocus
             />
-            <span className="text-[10px] text-muted-foreground shrink-0">đến</span>
+            <span className="text-xs text-muted-foreground shrink-0">đến</span>
             <Input
               type="time"
               value={endTime}
@@ -149,7 +149,7 @@ export function FlexibleShiftManager({
                 {previewKey}
               </span>
               {alreadyExists && (
-                <span className="text-amber-600 text-[10px] shrink-0">(đã tồn tại)</span>
+                <span className="text-amber-600 text-xs shrink-0">(đã tồn tại)</span>
               )}
             </div>
             <button
@@ -176,7 +176,7 @@ export function FlexibleShiftManager({
             <button
               key={preset.value}
               onClick={() => handlePreset(preset.value)}
-              className="flex min-h-11 items-center gap-1 rounded-full border border-border bg-background px-3 text-[10px] transition-colors hover:border-primary hover:text-primary"
+              className="flex min-h-11 items-center gap-1 rounded-full border border-border bg-background px-3 text-xs transition-colors hover:border-primary hover:text-primary"
             >
               <span className="font-mono">{preset.value}</span>
               <span className="text-muted-foreground/60">({preset.label})</span>

@@ -519,7 +519,7 @@ function SharedExportForm({ form, projects, isMobile }: SharedExportFormProps) {
     <div className="space-y-2.5">
       {/* Payment Schedule */}
       <div className="space-y-1">
-        <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+        <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           Chu kỳ trả lương <span className="text-red-500">*</span>
         </Label>
         <ButtonGroup

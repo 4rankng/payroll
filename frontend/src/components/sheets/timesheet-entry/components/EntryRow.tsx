@@ -267,7 +267,7 @@ export const EntryRow = memo(({
             </span>
             {weekdayInfo && (
               <span className={cn(
-                'text-[11px] font-medium px-1.5 py-0.5 rounded-full leading-none',
+                'text-xs font-medium px-1.5 py-0.5 rounded-full leading-none',
                 weekdayInfo.isSunday ? 'bg-red-100 text-red-700' :
                 weekdayInfo.isSaturday ? 'bg-orange-100 text-orange-700' :
                 'bg-muted text-muted-foreground'
@@ -371,7 +371,7 @@ export const EntryRow = memo(({
                           <button
                             onClick={() => handleUndoHourType(hourType)}
                             disabled={isLoading}
-                            className="flex items-center gap-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors leading-none"
+                            className="flex items-center gap-0.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors leading-none"
                             title={`Hoàn tác ${hourType}`}
                           >
                             <Undo2 className="h-2.5 w-2.5" />
@@ -380,7 +380,7 @@ export const EntryRow = memo(({
                         )}
                       </div>
                       {slotEarnings > 0 && (
-                        <span className="text-[11px] text-emerald-700 tabular-nums leading-none pl-0.5">
+                        <span className="text-xs text-emerald-700 tabular-nums leading-none pl-0.5">
                           {formatVND(slotEarnings)}
                         </span>
                       )}
@@ -389,7 +389,7 @@ export const EntryRow = memo(({
                 })}
                 {hourStatus !== 'normal' && (
                   <span className={cn(
-                    'inline-flex items-center gap-0.5 text-[11px] font-bold px-1 py-0.5 rounded-full self-start',
+                    'inline-flex items-center gap-0.5 text-xs font-bold px-1 py-0.5 rounded-full self-start',
                     hourStatus === 'excessive' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-600'
                   )}>
                     <AlertTriangle className="h-2 w-2" />

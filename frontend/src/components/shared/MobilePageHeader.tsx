@@ -17,7 +17,8 @@ interface MobilePageHeaderProps {
   actions?: React.ReactNode;
   /** Layout for header actions. Compact inline placement is the default for mobile. */
   actionsLayout?: 'stacked' | 'inline';
-  /** Whether the header sticks to top on scroll (default: true) */
+  /** Whether the header sticks to top on scroll (default: false — the header
+   *  scrolls away with the page so the full viewport belongs to content). */
   sticky?: boolean;
   /** Whether to show the bottom border (default: true) */
   bordered?: boolean;
@@ -41,7 +42,7 @@ export const MobilePageHeader = ({
   back,
   actions,
   actionsLayout = 'inline',
-  sticky = true,
+  sticky = false,
   bordered = true,
   className,
 }: MobilePageHeaderProps) => {
@@ -52,7 +53,7 @@ export const MobilePageHeader = ({
         sticky || bordered ? 'bg-white' : 'bg-transparent',
         bordered && 'border-b border-slate-200 shadow-[0_1px_0_rgba(15,23,42,0.04)]',
         sticky && 'sticky top-0',
-        'px-4 pb-2 pt-3',
+        'px-4 pb-2 pt-2.5',
         className,
       )}
       style={{
@@ -88,16 +89,16 @@ export const MobilePageHeader = ({
             </Button>
           )}
           {Icon && (
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/[0.07] shadow-sm">
-              <Icon className="h-[18px] w-[18px] text-primary/75" strokeWidth={2} />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/[0.07]">
+              <Icon className="h-4 w-4 text-primary/75" strokeWidth={2} />
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h1 className="break-words font-display text-[clamp(1.125rem,5.2vw,1.3125rem)] font-extrabold leading-tight tracking-normal text-slate-950">
+            <h1 className="break-words font-display text-[clamp(1.0625rem,4.6vw,1.1875rem)] font-extrabold leading-tight tracking-normal text-slate-950">
               {title}
             </h1>
             {subtitle && (
-              <p className="mt-0.5 break-words text-xs font-medium leading-normal text-slate-600">
+              <p className="mt-0.5 break-words text-xs font-medium leading-normal text-slate-500">
                 {subtitle}
               </p>
             )}

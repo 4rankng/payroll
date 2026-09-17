@@ -86,7 +86,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
 
   const navLabelClass = (isActive: boolean) =>
     cn(
-      "w-full max-w-full px-0.5 text-center text-[11px] font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words max-[359px]:text-[10px] min-[360px]:truncate",
+      "w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate",
       isActive ? "text-[hsl(var(--foreground))]" : "text-[hsl(var(--muted-foreground))]"
     );
 
@@ -234,7 +234,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
                   username={user.username}
                   size="sm"
                   className={cn(
-                    "h-9 w-9 border border-white/70 bg-white/80 text-[10px] transition-all",
+                    "h-9 w-9 border border-white/70 bg-white/80 text-xs transition-all",
                     openGroup === ACCOUNT_GROUP && "ring-2 ring-[hsl(var(--secondary))/0.35]"
                   )}
                 />

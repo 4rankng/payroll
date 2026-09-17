@@ -96,7 +96,7 @@ function Field({
         {label}
       </Label>
       {children}
-      {error && <p className="text-[11px] text-destructive">{error}</p>}
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   );
 }
@@ -496,7 +496,7 @@ export default function EditAdvPartnerUserSheet({
                     <div className="w-full border-t border-border/40" />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="px-3 bg-background text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+                    <span className="px-3 bg-background text-xs text-muted-foreground uppercase tracking-wider font-medium">
                       Bảo mật tài khoản
                     </span>
                   </div>

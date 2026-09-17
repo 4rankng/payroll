@@ -185,7 +185,7 @@ export function TimesheetMobileList() {
                         <div className="flex items-center gap-2 mt-0.5">
                           <p className="text-xs text-muted-foreground">{getPaytypeText(entry.paytype)}</p>
                           {entry.request_edit_id != null && (
-                            <Badge variant="warning" className="inline-flex items-center gap-0.5 text-[10px] h-4 px-1.5">
+                            <Badge variant="warning" className="inline-flex items-center gap-0.5 text-xs h-4 px-1.5">
                               <ClipboardEdit className="w-2.5 h-2.5" />
                               Yêu cầu sửa
                             </Badge>

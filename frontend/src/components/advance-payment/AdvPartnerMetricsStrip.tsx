@@ -59,7 +59,7 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
         </div>
       ) : (
         <div className="px-4 py-3">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             Thời gian xử lý
           </div>
           <div className="mt-1.5 grid grid-cols-3 divide-x divide-border/70 rounded-lg border border-border/70 bg-muted/30">
@@ -78,7 +78,7 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
                 >
                   {cell.count}
                 </div>
-                <div className="mt-1 text-[9.5px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+                <div className="mt-1 text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">
                   {cell.label}
                 </div>
               </div>

@@ -59,10 +59,10 @@ export const MonthlyFinancialTable = memo(() => {
             <table className="w-full min-w-[640px] text-xs">
               <thead>
                 <tr className="border-b border-border/40">
-                  <th className="text-left px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-foreground">Tháng</th>
-                  <th className="text-right px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-foreground">Chi phí</th>
-                  <th className="text-right px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-foreground">Doanh thu</th>
-                  <th className="text-right px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-foreground">Lợi nhuận</th>
+                  <th className="text-left px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-foreground">Tháng</th>
+                  <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-foreground">Chi phí</th>
+                  <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-foreground">Doanh thu</th>
+                  <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-foreground">Lợi nhuận</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/20">

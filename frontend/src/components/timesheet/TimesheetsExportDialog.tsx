@@ -327,7 +327,7 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
                                 )}
                               >
                                 <div className="break-words text-xs font-medium leading-snug">{project.name}</div>
-                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                <div className="text-xs text-muted-foreground mt-0.5">
                                   {project.code}
                                 </div>
                               </button>

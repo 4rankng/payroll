@@ -145,13 +145,13 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
                     </div>
                   ) : f.displayAmount != null ? (
                     <>
-                      <div className="text-[10px] text-slate-500 font-medium mb-0.5">Tạm tính:</div>
+                      <div className="text-xs text-slate-500 font-medium mb-0.5">Tạm tính:</div>
                       <div className="text-xl font-bold text-blue-600 tabular-nums leading-none">
                         {f.displayAmount.toLocaleString("vi-VN")}
                         <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
                       </div>
                       {f.displayPayrate != null && (
-                        <div className="text-[10px] text-slate-400 mt-0.5">
+                        <div className="text-xs text-slate-400 mt-0.5">
                           {f.isFlexibleProject ? "Lương trọn ca" : "Đơn giá"}:{" "}
                           {f.displayPayrate.toLocaleString("vi-VN")}
                           {getPayrateUnit(f.isFlexibleProject)}

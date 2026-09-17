@@ -169,7 +169,7 @@ function LedgerEntryDetailsSheetComponent({
             <div className="w-full min-w-0">
               <div className="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:justify-between min-[360px]:gap-3">
                 <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     Giá trị bút toán
                   </p>
                   <div className={`mt-1 max-w-full whitespace-nowrap font-financial text-xl font-bold leading-none tabular-nums min-[360px]:text-2xl ${
@@ -314,7 +314,7 @@ function LedgerEntryDetailsSheetComponent({
                 </h2>
                 <dl className="grid w-full grid-cols-2 overflow-hidden rounded-xl border border-border/70 bg-muted/20 min-[440px]:grid-cols-3">
                   <div className="ct-stat min-w-0 border-r border-border/60 px-3 py-3">
-                    <dt className="ct-stat-title flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                    <dt className="ct-stat-title flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span className="h-1.5 w-1.5 rounded-full bg-destructive" aria-hidden="true" />
                       Nợ
                     </dt>
@@ -323,7 +323,7 @@ function LedgerEntryDetailsSheetComponent({
                     </dd>
                   </div>
                   <div className="ct-stat min-w-0 px-3 py-3 min-[440px]:border-r min-[440px]:border-border/60">
-                    <dt className="ct-stat-title flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                    <dt className="ct-stat-title flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
                       Có
                     </dt>
@@ -332,7 +332,7 @@ function LedgerEntryDetailsSheetComponent({
                     </dd>
                   </div>
                   <div className="ct-stat col-span-2 min-w-0 border-t border-border/60 px-3 py-3 min-[440px]:col-span-1 min-[440px]:border-t-0">
-                    <dt className="ct-stat-title flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                    <dt className="ct-stat-title flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span className="h-1.5 w-1.5 rounded-full bg-info" aria-hidden="true" />
                       Số dư
                     </dt>

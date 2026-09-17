@@ -124,7 +124,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
             <h2 className="font-display text-[13px] font-bold tracking-tight text-foreground">
               Chỉ số vận hành
             </h2>
-            <span className="hidden text-[11px] text-muted-foreground sm:inline">
+            <span className="hidden text-xs text-muted-foreground sm:inline">
               Chọn một chỉ số để lọc danh sách
             </span>
           </div>

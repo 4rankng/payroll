@@ -85,7 +85,7 @@ const EmailCol = memo(function EmailCol({ label, sublabel, placeholder, value, e
       <div className="flex items-center gap-1.5">
         <span className="text-xs font-semibold">{label}</span>
         <span className="text-xs text-muted-foreground">{sublabel}</span>
-        <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground tabular-nums">{emails.length}</span>
+        <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground tabular-nums">{emails.length}</span>
       </div>
       <div className="flex gap-2">
         <Input

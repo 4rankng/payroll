@@ -361,7 +361,7 @@ export function ManualDisbursementForm(props: Props) {
               <p className="text-sm font-semibold text-amber-900 leading-tight">
                 Tên chủ tài khoản không khớp
               </p>
-              <p className="text-[11.5px] text-amber-800/80 mt-0.5 leading-snug">
+              <p className="text-xs text-amber-800/80 mt-0.5 leading-snug">
                 Ngân hàng trả về một tên khác với tên bạn nhập. Kiểm tra lại hoặc dùng tên ngân hàng xác nhận.
               </p>
             </div>
@@ -369,7 +369,7 @@ export function ManualDisbursementForm(props: Props) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="rounded-lg border border-amber-200/70 bg-white px-3 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700/70 mb-0.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-amber-700/70 mb-0.5">
                 Bạn nhập
               </p>
               <p className="font-mono text-xs font-semibold text-foreground break-words leading-snug">
@@ -377,7 +377,7 @@ export function ManualDisbursementForm(props: Props) {
               </p>
             </div>
             <div className="rounded-lg border border-emerald-200 bg-white px-3 py-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700/70 mb-0.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700/70 mb-0.5">
                 Ngân hàng xác nhận
               </p>
               <p className="font-mono text-xs font-semibold text-foreground break-words leading-snug">

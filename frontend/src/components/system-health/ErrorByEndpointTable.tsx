@@ -63,7 +63,7 @@ export function ErrorByEndpointTable() {
       ) : (
         <div className="border rounded-xl overflow-hidden">
           <div className="grid grid-cols-[1fr_64px_72px_160px] gap-x-4 px-4 py-2 border-b bg-muted/30
-                          text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <button onClick={() => handleSort("endpoint")} className="text-left hover:text-foreground transition-colors">
               Endpoint <SortIcon col="endpoint" sortKey={sortKey} sortDir={sortDir} />
             </button>
@@ -107,7 +107,7 @@ export function ErrorByEndpointTable() {
                     <Badge
                       key={code}
                       variant={code >= 500 ? "destructive" : "outline"}
-                      className="text-[11px] px-1.5 py-0 h-5 font-mono"
+                      className="text-xs px-1.5 py-0 h-5 font-mono"
                     >
                       {code} ×{count}
                     </Badge>

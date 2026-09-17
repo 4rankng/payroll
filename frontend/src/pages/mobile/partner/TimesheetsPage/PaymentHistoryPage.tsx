@@ -123,7 +123,7 @@ const PaymentHistoryPage = () => {
               <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
               Xuất
             </Button>
-            <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-slate-300 bg-white" onClick={() => navigate(-1)}>
+            <Button variant="outline" size="icon" aria-label="Quay lại" className="h-11 w-11 rounded-xl border-slate-300 bg-white" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </>

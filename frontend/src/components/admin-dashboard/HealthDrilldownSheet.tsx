@@ -529,7 +529,7 @@ function AttendanceRowsTable({
                 </Td>
                 <Td className="text-muted-foreground">
                   <span className="block">{row.check_in_gate || '—'}</span>
-                  <span className="mt-1 block text-[11px] text-muted-foreground/80">{formatGpsAccuracy(row.check_in_accuracy)}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground/80">{formatGpsAccuracy(row.check_in_accuracy)}</span>
                 </Td>
                 {isRejected ? (
                   <>
@@ -549,7 +549,7 @@ function AttendanceRowsTable({
                     </Td>
                     <Td className="text-muted-foreground">
                       <span className="block">{row.check_out_gate || '—'}</span>
-                      <span className="mt-1 block text-[11px] text-muted-foreground/80">{formatGpsAccuracy(row.check_out_accuracy)}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground/80">{formatGpsAccuracy(row.check_out_accuracy)}</span>
                       <MapButton onClick={() => setMapRow(row)} />
                     </Td>
                     <Td className="whitespace-nowrap tabular-nums font-medium text-financial-positive">
@@ -724,7 +724,7 @@ function RejectedAttendanceCard({ row, onOpenMap }: { row: AdminAttendanceRespon
           <p className="text-sm font-semibold text-foreground tabular-nums">
             {formatDistanceMeters(row.nearest_checkpoint_distance_meters)}
           </p>
-          <p className="text-[11px] leading-tight text-muted-foreground">tới điểm chấm</p>
+          <p className="text-xs leading-tight text-muted-foreground">tới điểm chấm</p>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-x-4 gap-y-1 border-y border-border/50 py-2 text-xs min-[380px]:grid-cols-2">
@@ -788,7 +788,7 @@ function CountSummary({ total, isFetching, noun }: { total: number; isFetching: 
 
 function Th({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <TableHead className={cn('h-auto whitespace-normal px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground', className)}>
+    <TableHead className={cn('h-auto whitespace-normal px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground', className)}>
       {children}
     </TableHead>
   );
@@ -828,7 +828,7 @@ function Monogram({ name }: { name?: string | null }) {
   return (
     <span
       className={cn(
-        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-[11px] font-bold uppercase',
+        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-xs font-bold uppercase',
         monogramColor(label),
       )}
       aria-hidden
@@ -848,7 +848,7 @@ function AttemptTypeBadge({ attemptType }: { attemptType: string }) {
         ? 'bg-teal-500/10 text-teal-600 border-teal-500/20'
         : 'bg-muted text-muted-foreground border-border/60';
   return (
-    <span className={cn('inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11px] font-medium leading-tight', tone)}>
+    <span className={cn('inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium leading-tight', tone)}>
       <Icon className="h-3 w-3 shrink-0" />
       <span className="min-w-0 whitespace-normal break-words">{label}</span>
     </span>
@@ -872,7 +872,7 @@ function TimeCell({ iso }: { iso: string }) {
   return (
     <div className="whitespace-nowrap">
       <span className="block text-sm font-medium tabular-nums text-foreground">{time}</span>
-      <span className="block text-[11px] tabular-nums text-muted-foreground">{date}</span>
+      <span className="block text-xs tabular-nums text-muted-foreground">{date}</span>
     </div>
   );
 }
@@ -900,7 +900,7 @@ function ContextualDistance({ row }: { row: AdminFailedAttempt }) {
       <span className={cn('font-display text-base font-bold leading-none tabular-nums', s.text)}>
         {formatDistanceMeters(distance)}
       </span>
-      {delta ? <span className="text-[11px] leading-tight text-muted-foreground">{delta}</span> : null}
+      {delta ? <span className="text-xs leading-tight text-muted-foreground">{delta}</span> : null}
     </div>
   );
 }
@@ -970,7 +970,7 @@ function FailedAttemptOverrideAction({ row }: { row: AdminFailedAttempt }) {
   // resolved previously (e.g. via the backend API).
   if (!state.canOverride || !state.isResolved) return null;
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
       <CheckCircle2 className="h-3 w-3" />
       {state.resolvedLabel}
     </span>
@@ -979,7 +979,7 @@ function FailedAttemptOverrideAction({ row }: { row: AdminFailedAttempt }) {
 
 function FailedAttemptHeader({ children }: { children: ReactNode }) {
   return (
-    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
       {children}
     </span>
   );
@@ -1065,11 +1065,11 @@ function FailedAttemptCard({
 
       <div className="mt-3 grid grid-cols-1 gap-2 rounded-lg border border-border/60 bg-muted/50 p-3 min-[380px]:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="min-w-0">
-          <p className="mb-1 text-[11px] font-semibold uppercase text-muted-foreground/80">Khoảng cách</p>
+          <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground/80">Khoảng cách</p>
           <ContextualDistance row={row} />
         </div>
         <div className="min-w-0 border-t border-border pt-2 min-[380px]:border-l min-[380px]:border-t-0 min-[380px]:pl-3 min-[380px]:pt-0">
-          <p className="mb-1 text-[11px] font-semibold uppercase text-muted-foreground/80">Địa điểm</p>
+          <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground/80">Địa điểm</p>
           <p className="break-words text-sm font-semibold text-foreground">
             {row.nearest_checkpoint_name?.trim() || 'Điểm chấm gần nhất'}
           </p>

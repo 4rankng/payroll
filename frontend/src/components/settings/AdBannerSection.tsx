@@ -55,7 +55,7 @@ const STATUS_TEXT: Record<Status, string> = {
 };
 
 /** Tiny uppercase caption used for section eyebrows and metric labels. */
-const microLabel = 'text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground';
+const microLabel = 'text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground';
 
 /** One cell of the metric rail. Cells share a single bordered strip. */
 const Metric = ({ label, value }: { label: string; value: number }) => (

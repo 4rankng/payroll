@@ -189,7 +189,7 @@ function DetailRow({
 }) {
   return (
     <div className={`flex flex-col gap-0.5 py-2.5 ${className ?? ""}`}>
-      <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{label}</span>
+      <span className="text-xs font-medium uppercase tracking-wider text-slate-500">{label}</span>
       <div className={`flex items-center gap-1 text-sm text-slate-800 ${mono ? "font-mono text-xs" : ""}`}>
         {typeof value === "string" && mono ? (
           <span className="break-all">{value}</span>
@@ -254,7 +254,7 @@ function TransactionDetailSheet({
             </SheetClose>
           </div>
 
-          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-1">
             {tx?.type === "topup" ? "Nạp tiền" : "Chi trả"}
           </p>
           <p className={`text-3xl font-bold tabular-nums leading-none mb-3 ${isInflow ? "text-emerald-700" : "text-slate-900"}`}>
@@ -444,7 +444,7 @@ export default function WalletTransactionsList(
             Lịch sử giao dịch
           </h2>
           {total > 0 && (
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-[11px] font-bold text-slate-600 tabular-nums tracking-wide">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-xs font-bold text-slate-600 tabular-nums tracking-wide">
               {total.toLocaleString("vi-VN")}
             </span>
           )}
@@ -706,7 +706,7 @@ function MobileTransactionList({
                 <StatusBadge status={tx.status} />
               </div>
               {cpDetail && <div className="text-xs text-slate-500 truncate leading-snug">{cpDetail}</div>}
-              <div className="text-[11px] text-slate-500 mt-1 tabular-nums tracking-wide">{formatDateTime(tx.occurred_at)}</div>
+              <div className="text-xs text-slate-500 mt-1 tabular-nums tracking-wide">{formatDateTime(tx.occurred_at)}</div>
             </div>
 
             {/* Amount + chevron */}

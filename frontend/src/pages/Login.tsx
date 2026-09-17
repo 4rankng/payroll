@@ -231,11 +231,11 @@ const Login = () => {
             <div className="absolute inset-y-0 left-0 w-[62%] bg-gradient-to-r from-base-100 via-base-100/95 to-transparent" />
             <div className="ct-hero-content relative z-10 flex h-full w-full max-w-none items-start justify-start px-5 py-5 text-base-content sm:px-8 sm:py-7">
               <div className="max-w-[56%]">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">Lương về đúng nhịp</p>
+                <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-primary">Lương về đúng nhịp</p>
                 <p className="mt-1.5 max-w-[280px] font-display text-2xl font-black leading-[1.05] tracking-[-0.035em] sm:text-3xl">
                   Ứng lương khi cần.<br /><span className="text-primary">Trả lương mỗi tuần.</span>
                 </p>
-                <p className="mt-2.5 text-[10.5px] font-medium leading-[1.45] text-base-content/60 sm:text-xs">
+                <p className="mt-2.5 text-xs font-medium leading-[1.45] text-base-content/60 sm:text-xs">
                   Dòng tiền linh hoạt cho người lao động. Một chu kỳ lương gọn gàng, dễ kiểm soát cho doanh nghiệp.
                 </p>
               </div>
@@ -394,7 +394,7 @@ const Login = () => {
             </div>
           </div>
 
-          <footer className="px-5 pb-6 text-center text-[11px] text-base-content/40 lg:px-10">
+          <footer className="px-5 pb-6 text-center text-xs text-base-content/40 lg:px-10">
             <p>© {new Date().getFullYear()} TingTing · Ứng lương nhanh · Trả lương tuần</p>
             <div className="mt-2 flex items-center justify-center gap-3">
               <span>Điều khoản</span>

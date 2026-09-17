@@ -63,7 +63,7 @@ export const EmptyState = memo(function EmptyState({
       <div className="min-w-0 max-w-md">
         <p className="text-xs font-semibold text-foreground">{title}</p>
         {description && (
-          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{description}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
         )}
         {action && (
           <Button variant="outline" size="sm" onClick={action.onClick} className="mt-2">

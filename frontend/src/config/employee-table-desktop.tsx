@@ -117,7 +117,7 @@ export const createEmployeeColumns = (
               </span>
               {first.payment_schedule && (
                 <span className={cn(
-                  "inline-flex items-center px-1.5 py-px rounded text-[10px] font-semibold border shrink-0",
+                  "inline-flex items-center px-1.5 py-px rounded text-xs font-semibold border shrink-0",
                   SCHEDULE_STYLES[first.payment_schedule],
                 )}>
                   {VIETNAMESE_EMPLOYEE_LABELS.schedule[first.payment_schedule]}
@@ -132,7 +132,7 @@ export const createEmployeeColumns = (
                 <TooltipProvider delayDuration={200}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded text-[10px] font-bold bg-primary/5 text-primary/60 border border-primary/10 shrink-0">
+                      <span className="inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded text-xs font-bold bg-primary/5 text-primary/60 border border-primary/10 shrink-0">
                         +{more}
                       </span>
                     </TooltipTrigger>

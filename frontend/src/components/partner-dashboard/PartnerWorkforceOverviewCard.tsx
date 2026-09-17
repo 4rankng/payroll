@@ -95,7 +95,7 @@ function PartnerWorkforceDonut({
           <span className="text-3xl font-extrabold tabular-nums leading-none text-foreground">
             {total.toLocaleString('vi-VN')}
           </span>
-          <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+          <span className="mt-1 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             Nhân viên
           </span>
         </div>
@@ -103,7 +103,7 @@ function PartnerWorkforceDonut({
       <div className="grid grid-cols-2 gap-2">
         {chartData.map((item) => (
           <div key={item.name} className="rounded-xl bg-muted/40 p-3">
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
               <span>{item.name}</span>
             </div>

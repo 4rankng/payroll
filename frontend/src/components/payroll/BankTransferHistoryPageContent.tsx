@@ -135,11 +135,11 @@ function TransferReferences({ item }: { item: BankTransferHistory }) {
   return (
     <div className="border-t border-slate-200/80 bg-slate-50/80">
       <div className="hidden grid-cols-[36px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] gap-4 border-b border-slate-200/80 px-4 py-1.5 xl:grid">
-        <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">STT</span>
-        <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Ghi chú chuyển khoản</span>
-        <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Mã giao dịch ngân hàng</span>
-        <span className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Thời gian xử lý</span>
-        <span className="text-right font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400">Số tiền</span>
+        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-400">STT</span>
+        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-400">Ghi chú chuyển khoản</span>
+        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-400">Mã giao dịch ngân hàng</span>
+        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-400">Thời gian xử lý</span>
+        <span className="text-right font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-400">Số tiền</span>
       </div>
 
       <div className="divide-y divide-slate-200/70 px-1 pb-1 xl:px-0 xl:pb-0" aria-label={`${item.transfers.length} chi tiết thanh toán`} role="list">
@@ -149,33 +149,33 @@ function TransferReferences({ item }: { item: BankTransferHistory }) {
             className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1.5 px-2 py-2.5 xl:min-h-10 xl:grid-cols-[36px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] xl:items-center xl:gap-4 xl:px-4 xl:py-1.5"
             role="listitem"
           >
-            <span className="inline-flex h-6 items-center justify-center rounded-md border border-slate-200 bg-white px-2 font-display text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500 xl:h-6 xl:w-6 xl:px-0 xl:font-financial xl:text-[10px] xl:tracking-normal">
+            <span className="inline-flex h-6 items-center justify-center rounded-md border border-slate-200 bg-white px-2 font-display text-xs font-bold uppercase tracking-[0.08em] text-slate-500 xl:h-6 xl:w-6 xl:px-0 xl:font-financial xl:text-xs xl:tracking-normal">
               <span className="mr-1 xl:hidden">Giao dịch</span>
               {String(index + 1).padStart(2, '0')}
             </span>
 
             <div className="min-w-0 text-right xl:col-start-5 xl:row-start-1">
-              <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Số tiền</p>
+              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Số tiền</p>
               <p className="mt-0.5 whitespace-nowrap font-financial text-[14px] font-bold tabular-nums text-emerald-700 xl:mt-0 xl:text-[13px]">
                 {formatCurrency(transfer.amount)}
               </p>
             </div>
 
             <div className="col-span-2 min-w-0 xl:col-span-1 xl:col-start-2 xl:row-start-1">
-              <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Ghi chú chuyển khoản</p>
-              <p className="mt-1 break-all font-financial text-[11px] font-bold text-slate-800 xl:mt-0">{transfer.transfer_code || '—'}</p>
+              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Ghi chú chuyển khoản</p>
+              <p className="mt-1 break-all font-financial text-xs font-bold text-slate-800 xl:mt-0">{transfer.transfer_code || '—'}</p>
             </div>
 
             <div className="col-span-2 min-w-0 sm:col-span-1 xl:col-start-3 xl:row-start-1">
-              <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Mã giao dịch ngân hàng</p>
-              <p className="mt-1 break-all font-financial text-[11px] font-semibold text-slate-800 xl:mt-0">{transfer.bank_reference}</p>
+              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Mã giao dịch ngân hàng</p>
+              <p className="mt-1 break-all font-financial text-xs font-semibold text-slate-800 xl:mt-0">{transfer.bank_reference}</p>
             </div>
 
             <div className="col-span-2 min-w-0 sm:col-span-1 xl:col-start-4 xl:row-start-1">
-              <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Thời gian xử lý</p>
+              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Thời gian xử lý</p>
               <p className="mt-1 flex items-center gap-1.5 xl:mt-0">
                 <Clock3 className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-                <time className="font-financial text-[11px] font-semibold tabular-nums text-slate-700" dateTime={transfer.paid_at}>
+                <time className="font-financial text-xs font-semibold tabular-nums text-slate-700" dateTime={transfer.paid_at}>
                   {formatBankTransferDateTime(transfer.paid_at)}
                 </time>
               </p>
@@ -226,13 +226,13 @@ function HistoryRecord({ item, isOpen, onToggle }: { item: BankTransferHistory; 
                 {item.employee_name}
               </p>
               <span className="hidden text-slate-300 xl:inline" aria-hidden="true">·</span>
-              <p className="mt-0.5 font-financial text-[10px] font-semibold tabular-nums tracking-[0.02em] text-slate-600 xl:mt-0">
+              <p className="mt-0.5 font-financial text-xs font-semibold tabular-nums tracking-[0.02em] text-slate-600 xl:mt-0">
                 CCCD {item.employee_cccd || '—'}
               </p>
               {item.project_names.length > 0 && (
                 <>
                   <span className="hidden text-slate-300 xl:inline" aria-hidden="true">·</span>
-                  <p className="mt-0.5 truncate text-[10px] text-slate-500 xl:mt-0" title={item.project_names.join(', ')}>
+                  <p className="mt-0.5 truncate text-xs text-slate-500 xl:mt-0" title={item.project_names.join(', ')}>
                     {item.project_names.join(', ')}
                   </p>
                 </>
@@ -241,8 +241,8 @@ function HistoryRecord({ item, isOpen, onToggle }: { item: BankTransferHistory; 
           </div>
 
           <div className="order-3 min-w-0 border-l-2 border-slate-100 pl-2.5 xl:order-none xl:border-0 xl:pl-0">
-            <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Kỳ thanh toán</p>
-            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold tabular-nums text-slate-800 xl:mt-0">
+            <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Kỳ thanh toán</p>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs font-semibold tabular-nums text-slate-800 xl:mt-0">
               <span className="flex min-w-0 items-center gap-1.5">
                 <CalendarDays className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
                 <span
@@ -252,27 +252,27 @@ function HistoryRecord({ item, isOpen, onToggle }: { item: BankTransferHistory; 
                   {formatBankTransferPeriod(item.from_date, item.to_date)}
                 </span>
               </span>
-              <Badge className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0 font-display text-[9px] font-bold text-slate-600 hover:bg-slate-50">
+              <Badge className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0 font-display text-xs font-bold text-slate-600 hover:bg-slate-50">
                 Kỳ {item.cycle}
               </Badge>
             </div>
           </div>
 
           <div className="order-3 min-w-0 border-l-2 border-slate-100 pl-2.5 xl:order-none xl:border-0 xl:pl-0">
-            <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Ngày thanh toán</p>
-            <time dateTime={item.payment_date} className="mt-1 block font-financial text-[11px] font-bold tabular-nums text-slate-800 xl:mt-0 xl:text-right">
+            <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Ngày thanh toán</p>
+            <time dateTime={item.payment_date} className="mt-1 block font-financial text-xs font-bold tabular-nums text-slate-800 xl:mt-0 xl:text-right">
               {formatBankTransferDate(item.payment_date)}
             </time>
           </div>
 
           <div className="order-2 col-span-2 flex items-end justify-between border-y border-slate-100 py-2.5 xl:order-none xl:col-span-1 xl:block xl:border-0 xl:py-0 xl:text-right">
             <div>
-              <p className="font-display text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Thực nhận</p>
+              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Thực nhận</p>
               <p className="mt-0.5 whitespace-nowrap font-financial text-[20px] font-bold tabular-nums tracking-[-0.03em] text-emerald-700 xl:mt-0 xl:text-[13px] xl:tracking-normal">
                 {formatCurrency(item.total_amount)}
               </p>
             </div>
-            <p className="pb-0.5 text-right text-[10px] leading-snug text-slate-500 xl:mt-0.5 xl:pb-0">
+            <p className="pb-0.5 text-right text-xs leading-snug text-slate-500 xl:mt-0.5 xl:pb-0">
               {item.transfers.length} bút toán ngân hàng
             </p>
           </div>
@@ -404,10 +404,10 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
               data-slot="payment-history-header"
               className={`hidden gap-4 border-b border-slate-200/90 bg-slate-50/80 px-4 py-2 xl:sticky xl:top-0 xl:z-10 xl:grid xl:bg-slate-50/95 xl:backdrop-blur ${RECORD_GRID_COLS}`}
             >
-              <span className="font-display text-[9px] font-bold uppercase tracking-[0.11em] text-slate-500">Nhân viên</span>
-              <span className="font-display text-[9px] font-bold uppercase tracking-[0.11em] text-slate-500">Kỳ thanh toán</span>
-              <span className="font-display text-[9px] font-bold uppercase tracking-[0.11em] text-slate-500 xl:text-right">Ngày thanh toán</span>
-              <span className="text-right font-display text-[9px] font-bold uppercase tracking-[0.11em] text-slate-500">Thực nhận</span>
+              <span className="font-display text-xs font-bold uppercase tracking-[0.11em] text-slate-500">Nhân viên</span>
+              <span className="font-display text-xs font-bold uppercase tracking-[0.11em] text-slate-500">Kỳ thanh toán</span>
+              <span className="font-display text-xs font-bold uppercase tracking-[0.11em] text-slate-500 xl:text-right">Ngày thanh toán</span>
+              <span className="text-right font-display text-xs font-bold uppercase tracking-[0.11em] text-slate-500">Thực nhận</span>
               <span className="sr-only">Chi tiết</span>
             </div>
             <div data-slot="payment-history-records" aria-label="Giao dịch đã hoàn tất" className="divide-y divide-slate-200/80">

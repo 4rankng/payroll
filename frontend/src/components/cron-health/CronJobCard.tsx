@@ -37,7 +37,7 @@ export function CronJobCard({ job, onToggle, isPending }: CronJobCardProps) {
             <span className={cn("flex h-6 w-10 items-center rounded-full p-0.5 transition-colors", job.is_enabled ? "bg-primary" : "bg-slate-300")} aria-hidden="true">
               <span className={cn("h-5 w-5 rounded-full bg-white shadow-sm transition-transform", job.is_enabled ? "translate-x-4" : "translate-x-0")} />
             </span>
-            <span className="text-[10px] font-semibold leading-none text-muted-foreground" aria-hidden="true">{job.is_enabled ? "Bật" : "Tắt"}</span>
+            <span className="text-xs font-semibold leading-none text-muted-foreground" aria-hidden="true">{job.is_enabled ? "Bật" : "Tắt"}</span>
           </button>
 
           {/* Name */}

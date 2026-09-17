@@ -84,7 +84,7 @@ export const PremiumDashboardHero = ({
                     )}
                     {metric.trend !== undefined && (
                       <span className={cn(
-                        'text-[10px] font-bold uppercase tracking-wider',
+                        'text-xs font-bold uppercase tracking-wider',
                         metric.trend >= 0 ? 'text-financial-positive' : 'text-financial-negative'
                       )}>
                         {metric.trend >= 0 ? '↑' : '↓'} {Math.abs(metric.trend)}%

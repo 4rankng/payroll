@@ -87,7 +87,7 @@ const SaoKeRow = memo(function SaoKeRow({ record, onSettle, isSettling, localSet
           </span>
 
           <span className={cn(
-            'inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold shrink-0',
+            'inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-semibold shrink-0',
             isAdvancePayment
               ? 'bg-blue-50 text-blue-700 border border-blue-200'
               : 'bg-slate-100 text-slate-600 border border-slate-200',

@@ -46,7 +46,7 @@ export function PayrateRateGrid({ rates, isFlexible = false }: PayrateRateGridPr
         <div className="grid gap-x-2" style={gridStyle}>
           <div /> {/* day label column */}
           {hourTypes.map(ht => (
-            <div key={ht} className="px-1 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <div key={ht} className="px-1 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {ht}
             </div>
           ))}
@@ -73,7 +73,7 @@ export function PayrateRateGrid({ rates, isFlexible = false }: PayrateRateGridPr
                   >
                     {/* Day type badge */}
                     <span className={cn(
-                      "inline-flex items-center justify-center text-[10px] font-semibold px-1.5 py-0.5 rounded border w-fit",
+                      "inline-flex items-center justify-center text-xs font-semibold px-1.5 py-0.5 rounded border w-fit",
                       DAY_COLORS[dayType]
                     )}>
                       {DAY_LABELS[dayType]}
@@ -88,12 +88,12 @@ export function PayrateRateGrid({ rates, isFlexible = false }: PayrateRateGridPr
                           {active ? (
                             <span className="text-xs font-semibold tabular-nums text-foreground">
                               {rate.toLocaleString('vi-VN')}
-                              <span className="ml-0.5 text-[9px] font-normal text-muted-foreground">
+                              <span className="ml-0.5 text-xs font-normal text-muted-foreground">
                                 {isFlexible ? "₫/ca" : "₫/giờ"}
                               </span>
                             </span>
                           ) : (
-                            <span className="text-[10px] text-muted-foreground">—</span>
+                            <span className="text-xs text-muted-foreground">—</span>
                           )}
                         </div>
                       );

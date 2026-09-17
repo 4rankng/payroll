@@ -66,7 +66,7 @@ function StatusBadges({
   const reviewStatusLabel = getAttendanceReviewStatusLabel(attendance);
   if (needsAttendanceApprovalRepair(attendance)) {
     return (
-      <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+      <div className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
         {reviewStatusLabel}
       </div>
     );
@@ -74,7 +74,7 @@ function StatusBadges({
   if (reviewAction === "approved") {
     const review = REVIEW_BADGE_CONFIG.approved;
     return (
-      <div className={cn("inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold", review.className)}>
+      <div className={cn("inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-xs font-semibold", review.className)}>
         <Check className="h-2.5 w-2.5" />
         {reviewStatusLabel ?? review.label}
       </div>
@@ -85,17 +85,17 @@ function StatusBadges({
   const review = reviewAction ? REVIEW_BADGE_CONFIG[reviewAction] : null;
   return (
     <div className="flex flex-col items-start gap-1">
-      <div className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border", sys.className)}>
+      <div className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border", sys.className)}>
         {sys.label}
       </div>
       {review && (
-        <div className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold border", review.className)}>
+        <div className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-semibold border", review.className)}>
           <X className="h-2.5 w-2.5" />
           {reviewStatusLabel ?? review.label}
         </div>
       )}
       {canCreditAttendanceQuota(attendance) && (
-        <div className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold border border-amber-200 bg-amber-50 text-amber-700">
+        <div className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold border border-amber-200 bg-amber-50 text-amber-700">
           Chờ cộng hạn mức
         </div>
       )}
@@ -140,7 +140,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
           return (
             <div>
               <div className="text-xs font-medium text-slate-700">{format(new Date(row.original.check_in_time), "HH:mm")}</div>
-              <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">{row.original.check_in_gate || "Chưa xác định"}</div>
+              <div className="text-xs text-muted-foreground truncate max-w-[120px]">{row.original.check_in_gate || "Chưa xác định"}</div>
             </div>
           );
         } catch {
@@ -158,7 +158,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
           return (
             <div>
               <div className="text-xs font-medium text-slate-700">{format(new Date(row.original.check_out_time), "HH:mm")}</div>
-              <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">{row.original.check_out_gate || "Chưa xác định"}</div>
+              <div className="text-xs text-muted-foreground truncate max-w-[120px]">{row.original.check_out_gate || "Chưa xác định"}</div>
             </div>
           );
         } catch {

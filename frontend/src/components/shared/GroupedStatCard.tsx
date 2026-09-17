@@ -63,14 +63,26 @@ export const GroupedStatCard = ({ title, icon: Icon, stats, onClick, isLoading, 
 
       <div className={stripCls}>
         {stats.map((stat, i) => (
-          <AnimatedStatCell key={i} stat={stat} />
+          <AnimatedStatCell
+            key={i}
+            stat={stat}
+            // With an odd number of stats the two-column strip would leave a
+            // blank cell in the last row; let the final stat fill it instead.
+            span={stats.length % 2 === 1 && i === stats.length - 1 ? 2 : undefined}
+          />
         ))}
       </div>
     </div>
   );
 };
 
-const AnimatedStatCell = memo(function AnimatedStatCell({ stat }: { stat: StatItem }) {
+const AnimatedStatCell = memo(function AnimatedStatCell({
+  stat,
+  span,
+}: {
+  stat: StatItem;
+  span?: number;
+}) {
   const isNumeric = typeof stat.value === 'number';
   const animatedValue = useCountUp(isNumeric ? (stat.value as number) : 0, 600);
 
@@ -78,6 +90,8 @@ const AnimatedStatCell = memo(function AnimatedStatCell({ stat }: { stat: StatIt
     ? animatedValue.toLocaleString('vi-VN')
     : (stat.value as string);
 
+  // gridColumn is inert once the strip switches to flex at sm+.
+  const gridStyle = span ? { gridColumn: `span ${span}` } : undefined;
   const isAccent = stat.variant === 'accent';
   const cellClassName = cn(
     'flex flex-col items-center justify-center gap-1 px-3 py-3 flex-1 min-w-0 transition-colors',
@@ -97,7 +111,7 @@ const AnimatedStatCell = memo(function AnimatedStatCell({ stat }: { stat: StatIt
           </span>
         )}
       </span>
-      <span className="mt-0.5 w-full break-words px-1 text-center text-[11px] font-medium leading-tight text-muted-foreground">
+      <span className="mt-0.5 w-full break-words px-1 text-center text-xs font-medium leading-tight text-muted-foreground">
         {stat.label}
       </span>
     </>
@@ -113,6 +127,7 @@ const AnimatedStatCell = memo(function AnimatedStatCell({ stat }: { stat: StatIt
           stat.onClick?.();
         }}
         className={cellClassName}
+        style={gridStyle}
       >
         {content}
       </button>
@@ -120,7 +135,7 @@ const AnimatedStatCell = memo(function AnimatedStatCell({ stat }: { stat: StatIt
   }
 
   return (
-    <div className={cellClassName}>
+    <div className={cellClassName} style={gridStyle}>
       {content}
     </div>
   );

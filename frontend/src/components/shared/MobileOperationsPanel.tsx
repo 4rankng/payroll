@@ -137,7 +137,7 @@ export function MobileOperationsPanel({
                     {action.label}
                   </span>
                   {action.badge && (
-                    <span className="absolute right-1.5 top-1.5 rounded-full bg-warning px-1.5 text-xs font-bold leading-4 text-warning-foreground">
+                    <span className="absolute right-1.5 top-1.5 rounded-full bg-warning px-1.5 text-xs font-bold leading-4 text-amber-950">
                       {action.badge}
                     </span>
                   )}

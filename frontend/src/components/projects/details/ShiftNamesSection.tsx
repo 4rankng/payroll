@@ -99,7 +99,7 @@ export function ShiftNamesSection({
     return (
       <div className="border-t pt-2 pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6">
-          <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
             Tên ca làm việc
           </p>
           {editActions}
@@ -142,19 +142,19 @@ export function ShiftNamesSection({
   return (
     <div className="border-t pt-2 pb-4">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
           Tên ca làm việc
         </p>
         {editActions}
       </div>
 
       <div className="px-4 sm:px-6 space-y-2">
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Đặt tên hiển thị cho từng ca. Khung giờ và lương trọn ca được thay đổi trong bảng lương.
         </p>
 
         <div className="overflow-hidden rounded-lg border">
-          <div className="hidden min-[640px]:grid min-[640px]:grid-cols-[180px_200px_minmax(0,1fr)] gap-3 bg-muted/50 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+          <div className="hidden min-[640px]:grid min-[640px]:grid-cols-[180px_200px_minmax(0,1fr)] gap-3 bg-muted/50 px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             <span>Khung giờ</span>
             <span>Lương trọn ca</span>
             <span>Tên hiển thị</span>
@@ -168,10 +168,10 @@ export function ShiftNamesSection({
                 className="grid grid-cols-1 gap-2 border-t px-3 py-3 text-xs min-[640px]:grid-cols-[180px_200px_minmax(0,1fr)] min-[640px]:items-center min-[640px]:gap-3"
               >
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="font-mono text-[11px] text-muted-foreground">{range}</span>
+                  <span className="font-mono text-xs text-muted-foreground">{range}</span>
                   {overnight && (
                     <span
-                      className="inline-flex items-center gap-0.5 rounded bg-emerald-50 px-1 py-0.5 text-[11px] font-medium text-emerald-600 shrink-0"
+                      className="inline-flex items-center gap-0.5 rounded bg-emerald-50 px-1 py-0.5 text-xs font-medium text-emerald-600 shrink-0"
                       title="Ca qua đêm"
                     >
                       <Moon className="h-2.5 w-2.5" />
@@ -180,7 +180,7 @@ export function ShiftNamesSection({
                   )}
                 </div>
                 <div className="min-w-0">
-                  <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground min-[640px]:hidden">
+                  <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted-foreground min-[640px]:hidden">
                     Lương trọn ca
                   </span>
                   <div className="space-y-1">

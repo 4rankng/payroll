@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
+import { MobileStatStrip } from "@/components/shared/MobileStatStrip";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { Button } from "@/components/ui/button";
 import {
@@ -133,28 +134,16 @@ const ProjectsPageMobile = () => {
 
       {/* ── Stats strip ── */}
       {!summaryLoading && summary && (
-        <MobileSurface className="p-2">
-          <div className="grid grid-cols-4 gap-1.5">
-            {[
-              { label: "Tổng", value: summary.total_projects, icon: Briefcase, color: "text-primary", bg: "bg-primary/10" },
-              { label: "Đang dùng", value: summary.active_projects, icon: CheckCircle, color: "text-success", bg: "bg-success/10" },
-              { label: "Hoàn thành", value: summary.completed_projects, icon: CheckCircle, color: "text-info", bg: "bg-info/10" },
-              { label: "Nhân viên", value: summary.total_employees, icon: Users, color: "text-warning", bg: "bg-warning/10" },
-            ].map((stat) => {
-                            return (
-                <div
-                  key={stat.label}
-                  className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-card px-1.5 py-2 transition-all duration-200 active:scale-95"
-                >
-                  <span className="text-xs font-bold tabular-nums leading-none text-foreground">
-                    {stat.value.toLocaleString("vi-VN")}
-                  </span>
-                  <span className="text-xs leading-tight text-muted-foreground">{stat.label}</span>
-                </div>
-              );
-            })}
-          </div>
-        </MobileSurface>
+        <div className="px-4 pb-3">
+          <MobileStatStrip
+            items={[
+              { key: "total", label: "Tổng", value: summary.total_projects.toLocaleString("vi-VN") },
+              { key: "active", label: "Đang dùng", value: summary.active_projects.toLocaleString("vi-VN") },
+              { key: "completed", label: "Hoàn thành", value: summary.completed_projects.toLocaleString("vi-VN") },
+              { key: "employees", label: "Nhân viên", value: summary.total_employees.toLocaleString("vi-VN") },
+            ]}
+          />
+        </div>
       )}
       {summaryLoading && (
         <div className="grid grid-cols-4 gap-1.5 px-4 pb-3">

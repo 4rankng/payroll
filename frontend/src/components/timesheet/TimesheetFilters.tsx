@@ -95,7 +95,7 @@ export const TimesheetFilters = () => {
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
               {activeFilterCount > 1 && (
-                <Badge className="absolute -top-1.5 -right-1.5 h-4 min-w-4 p-0 text-[10px] flex items-center justify-center rounded-full">
+                <Badge className="absolute -top-1.5 -right-1.5 h-4 min-w-4 p-0 text-xs flex items-center justify-center rounded-full">
                   {activeFilterCount - 1}
                 </Badge>
               )}

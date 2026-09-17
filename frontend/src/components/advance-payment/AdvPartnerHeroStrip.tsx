@@ -50,7 +50,7 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
         </div>
       ) : (
         <>
-          <div className="relative z-[1] flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          <div className="relative z-[1] flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
             <span className="treasury-signal bg-emerald-500" />
             Giải ngân kỳ này
           </div>
@@ -62,7 +62,7 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
               wallet, disbursement and fee panels read as one instrument strip. */}
           <div className="mt-auto pt-3">
             <div className="treasury-rail pt-2.5">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 Trung bình /yc
               </div>
               <div className="mt-0.5 truncate font-financial text-[15px] font-semibold leading-snug text-foreground tabular-nums">

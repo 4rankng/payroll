@@ -161,7 +161,7 @@ const EmployeesPage = () => {
                     </span>
                   </div>
                   {accessible ? (
-                    <span className="inline-flex items-center gap-1 shrink-0 text-[11px] font-semibold text-emerald-700 bg-success/10 border border-success/30 rounded-full px-2 py-0.5">
+                    <span className="inline-flex items-center gap-1 shrink-0 text-xs font-semibold text-emerald-700 bg-success/10 border border-success/30 rounded-full px-2 py-0.5">
                       <Check className="h-3 w-3" />
                       Đang quản lý
                     </span>
@@ -172,7 +172,7 @@ const EmployeesPage = () => {
                         handleClaim(employee);
                       }}
                       disabled={requestAccess.isPending}
-                      className="inline-flex items-center gap-1.5 shrink-0 rounded-lg bg-primary px-2.5 py-1.5 text-[11px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 shrink-0 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
                     >
                       <HandHeart className="h-3.5 w-3.5" />
                       Yêu cầu quản lý
@@ -218,7 +218,7 @@ const EmployeesPage = () => {
                               e.stopPropagation();
                               navigate(`/partner/timesheet?employee=${employee.id}`);
                             }}
-                            className="inline-flex items-center gap-0.5 shrink-0 text-[10px] font-semibold text-amber-800 bg-warning/10 border border-warning/30 rounded px-1.5 py-0.5 hover:bg-warning/20 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-0.5 shrink-0 text-xs font-semibold text-amber-800 bg-warning/10 border border-warning/30 rounded px-1.5 py-0.5 hover:bg-warning/20 transition-colors cursor-pointer"
                           >
                             <Clock className="h-2.5 w-2.5" />
                             {pendingCount}
@@ -295,7 +295,7 @@ const EmployeesPage = () => {
                 </span>
                 {first.payment_schedule && !first.last_date && (
                   <span className={cn(
-                    "inline-flex items-center px-1.5 py-px rounded-md text-[10px] font-semibold border shrink-0",
+                    "inline-flex items-center px-1.5 py-px rounded-md text-xs font-semibold border shrink-0",
                     SCHEDULE_STYLES[first.payment_schedule],
                   )}>
                     {SCHEDULE_LABELS[first.payment_schedule]}
@@ -311,7 +311,7 @@ const EmployeesPage = () => {
                   <TooltipProvider delayDuration={200}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded text-[10px] font-bold bg-primary/5 text-primary border border-primary/10 shrink-0">
+                        <span className="inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded text-xs font-bold bg-primary/5 text-primary border border-primary/10 shrink-0">
                           +{more}
                         </span>
                       </TooltipTrigger>
@@ -386,7 +386,7 @@ const EmployeesPage = () => {
                 <span className="typography-body-medium text-foreground">{p.name}</span>
                 {p.payment_schedule && (
                   <span className={cn(
-                    "ml-1.5 inline-flex items-center px-1.5 py-px rounded text-[10px] font-semibold border",
+                    "ml-1.5 inline-flex items-center px-1.5 py-px rounded text-xs font-semibold border",
                     SCHEDULE_STYLES[p.payment_schedule],
                   )}>
                     {SCHEDULE_LABELS[p.payment_schedule]}
@@ -644,10 +644,10 @@ const EmployeesPage = () => {
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10 text-success"><UserRoundCheck className="h-3.5 w-3.5" /></span>
               <div>
                 <p className="text-[12px] font-bold text-foreground">Danh sách nhân sự</p>
-                <p className="text-[10.5px] text-muted-foreground">Chọn một nhân viên để xem hồ sơ chi tiết</p>
+                <p className="text-xs text-muted-foreground">Chọn một nhân viên để xem hồ sơ chi tiết</p>
               </div>
             </div>
-            <span className="rounded-full bg-muted px-2 py-1 text-[10px] font-bold tabular-nums text-muted-foreground">{pagination?.totalRecords ?? employees.length} người</span>
+            <span className="rounded-full bg-muted px-2 py-1 text-xs font-bold tabular-nums text-muted-foreground">{pagination?.totalRecords ?? employees.length} người</span>
           </div>
           <ResponsiveTable
             data={employees}

@@ -12,7 +12,7 @@ const DAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 // Small inline icon + label heading for each info section.
 function SectionLabel({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
-    <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+    <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
       <Icon className="h-3 w-3 opacity-70" />
       {children}
     </p>
@@ -108,7 +108,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
                   {DAY_LABELS.map((label, bit) => (
                     <span
                       key={bit}
-                      className={`px-1.5 py-0.5 rounded text-[11px] font-semibold border ${
+                      className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${
                         isOffDay(offDays, bit)
                           ? 'bg-red-100 text-red-600 border-red-400'
                           : 'bg-emerald-50 text-emerald-700 border-emerald-300'
@@ -118,7 +118,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
                     </span>
                   ))}
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-100 border border-emerald-300" />
                     Ngày thường

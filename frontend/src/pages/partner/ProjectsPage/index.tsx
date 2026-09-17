@@ -112,7 +112,7 @@ function ProjectAvatar({ project, size = 'md' }: { project: Project; size?: 'sm'
         'bg-gradient-to-br',
         gradient,
         size === 'md' && 'h-12 w-12 text-[13px] tracking-tight',
-        size === 'sm' && 'h-9 w-9 text-[11px] tracking-tight',
+        size === 'sm' && 'h-9 w-9 text-xs tracking-tight',
       )}
     >
       {initials}
@@ -124,7 +124,7 @@ function ProjectAvatar({ project, size = 'md' }: { project: Project; size?: 'sm'
 function SalaryPeriodChip({ project }: { project: Project }) {
   if (project.is_weekly) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-info/10 px-2 py-0.5 text-[10.5px] font-semibold text-info ring-1 ring-inset ring-info/30">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-info/10 px-2 py-0.5 text-xs font-semibold text-info ring-1 ring-inset ring-info/30">
         <CalendarDays className="h-3 w-3" />
         Lương tuần
       </span>
@@ -136,7 +136,7 @@ function SalaryPeriodChip({ project }: { project: Project }) {
         ? `· ngày ${project.salary_period_from}–${project.salary_period_to}`
         : '';
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10.5px] font-semibold text-primary ring-1 ring-inset ring-primary/30">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary ring-1 ring-inset ring-primary/30">
         <Calendar className="h-3 w-3" />
         Lương tháng {period}
       </span>
@@ -179,11 +179,11 @@ function ProjectCard({
             <ProjectAvatar project={project} />
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold', status.pill)}>
+                <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-bold', status.pill)}>
                   <StatusIcon className="h-3 w-3" />
                   {status.label}
                 </span>
-                {project.code && <span className="font-mono text-[10.5px] font-semibold tracking-wide text-muted-foreground">{project.code}</span>}
+                {project.code && <span className="font-mono text-xs font-semibold tracking-wide text-muted-foreground">{project.code}</span>}
               </div>
               <h3 className="mt-2 line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-foreground">
                 {project.name}
@@ -198,12 +198,12 @@ function ProjectCard({
             <Building2 className="h-3.5 w-3.5 shrink-0 text-primary/75" />
             <span className="truncate font-medium text-foreground/85">{project.client_name || 'Chưa cập nhật khách hàng'}</span>
           </div>
-          {project.description && <p className="mt-2 line-clamp-1 text-[11.5px] text-muted-foreground">{project.description}</p>}
+          {project.description && <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">{project.description}</p>}
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               <Users className="h-3.5 w-3.5" />
               <span className="font-bold tabular-nums text-foreground">{project.employee_count}</span>
               nhân sự
@@ -217,7 +217,7 @@ function ProjectCard({
               e.stopPropagation();
               onTimesheet();
             }}
-            className="relative z-20 inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 text-[11.5px] font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="relative z-20 inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             <CalendarDays className="h-3.5 w-3.5" />
             Bảng công
@@ -301,7 +301,7 @@ const ProjectsPage = () => {
                   <item.icon className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground">{item.label}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.09em] text-muted-foreground">{item.label}</p>
                   <p className="mt-0.5 text-xl font-bold tabular-nums text-foreground">{item.value.toLocaleString('vi-VN')}</p>
                 </div>
               </div>
@@ -315,7 +315,7 @@ const ProjectsPage = () => {
         <div className="flex items-center gap-2.5 flex-wrap">
           <div className="hidden items-center gap-2 border-r border-border pr-3 lg:flex">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><FolderKanban className="h-4 w-4" /></div>
-            <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc danh sách</span>
+            <span className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc danh sách</span>
           </div>
 
           {/* Status filter (single-select, matches D3's FilterPill pattern) */}
@@ -344,7 +344,7 @@ const ProjectsPage = () => {
             <button
               type="button"
               onClick={filterControls.clearFilters}
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-[11.5px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <FilterX className="h-3.5 w-3.5" />
               Xóa lọc
@@ -377,7 +377,7 @@ const ProjectsPage = () => {
         />
       ) : (
         <div className="animate-fade-in-up">
-          <div className="flex items-center gap-1.5 mb-2.5 px-1 text-[11.5px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 mb-2.5 px-1 text-xs text-muted-foreground">
             <ArrowRight className="h-3 w-3" />
             <span>Nhấn vào dự án để xem chi tiết</span>
           </div>
@@ -440,7 +440,7 @@ const ProjectsPage = () => {
                 const gap = prev !== undefined && p - prev > 1;
                 return (
                   <span key={p} className="inline-flex items-center gap-1">
-                    {gap && <span className="text-muted-foreground/60 px-1 text-[11px]">…</span>}
+                    {gap && <span className="text-muted-foreground/60 px-1 text-xs">…</span>}
                     <button
                       type="button"
                       onClick={() => filterControls.setPage(p)}

@@ -261,7 +261,7 @@ export function LocationMap({
                 {badge ? (
                   <span
                     className={cn(
-                      'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ring-1 ring-inset',
+                      'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset',
                       ATTEMPT_BADGE_TONES[badge.tone],
                     )}
                   >
@@ -295,7 +295,7 @@ export function LocationMap({
                 {hasRadius ? (
                   <span
                     className={cn(
-                    'inline-flex min-h-8 w-fit items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold min-[380px]:ml-auto min-[380px]:shrink-0',
+                    'inline-flex min-h-8 w-fit items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold min-[380px]:ml-auto min-[380px]:shrink-0',
                       statusTone === 'emerald' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700',
                     )}
                   >
@@ -348,7 +348,7 @@ export function LocationMap({
           ) : null}
 
           <div className="grid grid-cols-1 gap-2 border-t border-border/50 bg-muted/20 px-3 py-2 min-[380px]:flex min-[380px]:items-center">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Lớp bản đồ</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Lớp bản đồ</span>
             <div className="flex w-fit items-center gap-0.5 rounded-full bg-background/70 p-0.5 ring-1 ring-inset ring-border/50 min-[380px]:ml-auto">
               <LayerButton
                 active={baseLayer === 'satellite'}
@@ -452,7 +452,7 @@ function FitBounds({
 
 function StatChip({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border/60 bg-background/65 px-2.5 py-1 text-[11px] font-medium text-foreground/80">
+    <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border/60 bg-background/65 px-2.5 py-1 text-xs font-medium text-foreground/80">
       <Icon className="h-3 w-3 text-muted-foreground" />
       {label}
     </span>
@@ -461,7 +461,7 @@ function StatChip({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
 
 function LegendItem({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
       {children}
     </span>
   );
@@ -484,7 +484,7 @@ function LayerButton({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium transition-colors',
+        'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
         active ? 'bg-primary text-primary-foreground shadow-none' : 'text-muted-foreground hover:text-foreground',
       )}
     >

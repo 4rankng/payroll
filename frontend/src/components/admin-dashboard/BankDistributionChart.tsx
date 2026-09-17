@@ -22,7 +22,7 @@ const BankDistributionRow = memo(function BankDistributionRow({
     <li className="rounded-lg border border-border/60 bg-muted/20 p-2.5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-2.5">
-          <span className="pt-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground">
+          <span className="pt-0.5 text-xs font-semibold tabular-nums text-muted-foreground">
             {String(rank).padStart(2, '0')}
           </span>
           <span
@@ -83,7 +83,7 @@ export const BankDistributionChart = memo(function BankDistributionChart({
         {leadingBank ? (
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 sm:min-w-44">
             <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Ngân hàng phổ biến nhất
               </p>
               <p className="truncate text-sm font-medium text-foreground">{leadingBank.shortName}</p>

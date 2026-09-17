@@ -133,7 +133,7 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
         {visibleGroups.map(group => (
           <div key={group.key}>
             <div className="flex items-center gap-3 px-4 py-3">
-              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
                 {group.label}
               </span>
               <div className="flex-1 border-t border-border" />
@@ -171,7 +171,7 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold tracking-tight">Lịch sử File</h2>
                 {allFiles.length > 0 && (
-                  <Badge variant="secondary" className="rounded-full px-2 py-0 text-[11px] font-mono">
+                  <Badge variant="secondary" className="rounded-full px-2 py-0 text-xs font-mono">
                     {allFiles.length} file
                   </Badge>
                 )}

@@ -62,7 +62,7 @@ export const DateStrip = memo(
                         : "bg-muted/50 text-muted-foreground",
             )}
           >
-            <span className="text-[11px] font-semibold leading-none uppercase">
+            <span className="text-xs font-semibold leading-none uppercase">
               {WEEKDAY[d.getDay()]}
             </span>
             <span

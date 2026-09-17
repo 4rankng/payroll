@@ -160,7 +160,7 @@ export function PayratePositionList({
                       const rate = (rates[position]?.[dayType]?.[hourType] as number) || 0;
                       return (
                         <label key={hourType} className="min-w-0 space-y-1">
-                          <span className="block truncate text-[11px] font-medium text-muted-foreground">{hourType}</span>
+                          <span className="block truncate text-xs font-medium text-muted-foreground">{hourType}</span>
                           <RateCell
                             position={position}
                             dayType={dayType}

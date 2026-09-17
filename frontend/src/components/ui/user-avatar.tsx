@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { generateAvatarUrl, getUserInitials } from "@/utils/avatarHelpers";
+import { generateAvatarUrl } from "@/utils/avatarHelpers";
 import { cn } from "@/lib/utils";
 
 interface UserAvatarProps {
@@ -19,40 +19,28 @@ const sizeClasses = {
   xl: 'h-12 w-12'
 };
 
-const textSizes = {
-  sm: 'typography-body-small',
-  md: 'typography-body-medium',
-  lg: 'typography-body-large',
-  xl: 'typography-title-large'
-};
-
 export function UserAvatar({
-  email,
   name,
-  username,
-  cccd,
   src,
   size = 'md',
   className
 }: UserAvatarProps) {
-  const seed = username || cccd || name || 'default';
-  const generatedUrl = generateAvatarUrl(seed);
-  const avatarUrl = src || generatedUrl;
-  const initials = getUserInitials(name);
+  // Without an uploaded photo every account falls back to the same neutral
+  // profile glyph — never initials, never a portrait. Identity comes from the
+  // name rendered next to the avatar.
+  const avatarUrl = src || generateAvatarUrl();
 
   return (
     <Avatar className={cn(sizeClasses[size], className)}>
-      <AvatarImage 
-        src={avatarUrl} 
-        alt={name || 'User avatar'}
+      <AvatarImage
+        src={avatarUrl}
+        alt={name ? `Ảnh đại diện của ${name}` : 'Ảnh đại diện'}
         className="object-cover"
       />
-      <AvatarFallback className={cn(
-        'bg-white text-black border border-gray-300 font-medium',
-        textSizes[size]
-      )}>
-        {initials}
-      </AvatarFallback>
+      <AvatarFallback
+        aria-hidden="true"
+        className="border border-primary/10 bg-primary/5"
+      />
     </Avatar>
   );
 }

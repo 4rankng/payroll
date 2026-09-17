@@ -25,7 +25,7 @@ export function EndpointLabel({ endpoint, className }: Props) {
     <span className={cn("font-mono text-sm whitespace-nowrap", className)}>
       <span
         className={cn(
-          "inline-block text-[11px] font-bold px-1.5 py-0.5 rounded mr-2 align-middle leading-none",
+          "inline-block text-xs font-bold px-1.5 py-0.5 rounded mr-2 align-middle leading-none",
           METHOD_COLORS[parsed.method] ?? "bg-muted text-muted-foreground"
         )}
       >

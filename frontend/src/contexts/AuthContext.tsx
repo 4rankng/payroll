@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           username: payload.username,
           role: payload.role,
           status: (localStorage.getItem('userStatus') as 'active' | 'inactive') || 'active',
-          avatar: generateAvatarUrl(payload.username),
+          avatar: generateAvatarUrl(),
           created_at: localStorage.getItem('userCreatedAt') || undefined,
           updated_at: localStorage.getItem('userUpdatedAt') || undefined,
           last_login: localStorage.getItem('userLastLogin') || undefined,

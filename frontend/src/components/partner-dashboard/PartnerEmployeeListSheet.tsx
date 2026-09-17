@@ -49,7 +49,7 @@ function InfoRow({ icon: Icon, label, children }: {
   return (
     <div className="flex items-center gap-1.5 min-w-0">
       <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
-      <span className="text-[10px] text-muted-foreground shrink-0">{label}</span>
+      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
       <span className="min-w-0 break-words text-xs text-foreground tabular-nums">{children}</span>
     </div>
   );
@@ -69,7 +69,7 @@ const EmployeeCard = memo(function EmployeeCard({
         <span className="text-sm font-semibold text-foreground truncate">{item.employee_name}</span>
         <Badge
           variant="outline"
-          className={`text-[10px] px-1.5 py-0 h-4 shrink-0 ${item.is_active ? TYPE_CONFIG.active.badgeClass : TYPE_CONFIG.dropped.badgeClass}`}
+          className={`text-xs px-1.5 py-0 h-4 shrink-0 ${item.is_active ? TYPE_CONFIG.active.badgeClass : TYPE_CONFIG.dropped.badgeClass}`}
         >
           {item.is_active
             ? <><UserCheck className="w-2.5 h-2.5 mr-0.5" />Đang làm</>

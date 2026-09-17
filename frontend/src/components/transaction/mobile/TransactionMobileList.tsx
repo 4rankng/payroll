@@ -106,10 +106,10 @@ export function TransactionMobileList({
                 <span className="min-w-0 max-w-full truncate text-xs text-muted-foreground min-[380px]:max-w-[120px]">{tx.party}</span>
                 <span className="text-xs text-muted-foreground">·</span>
                 <span className="text-xs text-muted-foreground shrink-0">{fmtDate(tx.created_at)}</span>
-                <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0', typeColors[tx.transaction_type] || 'bg-muted text-foreground')}>
+                <span className={cn('text-xs font-medium px-1.5 py-0.5 rounded-full shrink-0', typeColors[tx.transaction_type] || 'bg-muted text-foreground')}>
                   {typeLabel}
                 </span>
-                <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0', statusColors[tx.status] || 'bg-muted text-foreground')}>
+                <span className={cn('text-xs font-medium px-1.5 py-0.5 rounded-full shrink-0', statusColors[tx.status] || 'bg-muted text-foreground')}>
                   {statusLabel}
                 </span>
               </div>
