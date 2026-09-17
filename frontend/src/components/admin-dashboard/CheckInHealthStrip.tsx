@@ -92,6 +92,7 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
       { key: 'completed_zero_earning_today', label: 'Ca không có lương', anomaly: true, drilldown: () => openAttendanceList({ type: 'attendance-list', label: 'Ca không có lương', zeroEarning: true, emptyLabel: 'Không có ca không có lương trong tháng này' }) },
       { key: 'successful_checkouts_today', label: 'Chấm công ra thành công', anomaly: false, drilldown: () => openSuccessfulCheckouts() },
     ],
+    'Không có lỗi chấm công',
   ), [data, isLoading, openAttendanceList, openFailedAttempts, openSuccessfulCheckouts]);
 
   // ── Section B: Quota ────────────────────────────────────────────────────
@@ -105,19 +106,34 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
       { key: 'quota_salary_this_month', label: 'Lương tháng này', anomaly: false },
       { key: 'quota_max_adv_this_month', label: 'Số tiền ứng tối đa', anomaly: false },
     ],
+    'Không có sai lệch hạn mức',
   ), [data, isLoading, openQuotaAnomaly]);
 
   // ── Section C: Advance requests ─────────────────────────────────────────
-  const sectionC = useMemo(() => buildSectionItems(
-    data,
-    isLoading,
-    [
-      { key: 'requests_stuck_pending', label: 'Đang chờ quá lâu', anomaly: true, drilldown: () => openFailedAttempts('stuck_pending') },
-      { key: 'requests_failed_today', label: 'Lỗi hôm nay', anomaly: true, drilldown: () => openFailedAttempts('request_failed') },
-      { key: 'requests_completed_today', label: 'Hoàn tất', anomaly: false },
-      { key: 'requests_total_today', label: 'Tổng cộng', anomaly: false },
-    ],
-  ), [data, isLoading, openFailedAttempts]);
+  const sectionC = useMemo(() => {
+    if (!data) return [];
+    const stuck = data.requests_stuck_pending ?? 0;
+    const failed = data.requests_failed_today ?? 0;
+    const completed = data.requests_completed_today ?? 0;
+    const total = data.requests_total_today ?? 0;
+
+    const items: InlineStatItem[] = [];
+    if (stuck + failed === 0) {
+      items.push({ label: 'Không có yêu cầu lỗi', value: 0, valueClassName: 'text-financial-positive' });
+    } else {
+      if (stuck > 0) items.push({ label: 'Đang chờ quá lâu', value: stuck, highlight: true, valueClassName: 'text-financial-negative', onClick: () => openFailedAttempts('stuck_pending') });
+      if (failed > 0) items.push({ label: 'Lỗi hôm nay', value: failed, highlight: true, valueClassName: 'text-financial-negative', onClick: () => openFailedAttempts('request_failed') });
+    }
+
+    // Same number ⇒ one row says it all; differ ⇒ show both.
+    if (completed === total) {
+      items.push({ label: 'Hoàn tất/Tổng cộng', value: `${completed}/${total}` });
+    } else {
+      items.push({ label: 'Hoàn tất', value: completed });
+      items.push({ label: 'Tổng cộng', value: total });
+    }
+    return items;
+  }, [data, openFailedAttempts]);
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -196,34 +212,45 @@ interface ItemSpec {
 }
 
 /**
- * Build an InlineStatItem[] for a section. Anomaly tiles:
- *   - value 0 → green-muted styling
- *   - value > 0 → red/amber with highlight + onClick to open drill-down
- * Throughput tiles: default neutral styling, no onClick.
+ * Build a condensed InlineStatItem[] for a section:
+ *   - anomaly rows render only when non-zero (they carry drill-downs, so they
+ *     appear exactly when admins need to click them)
+ *   - when every anomaly row is zero, one green "all clear" row stands in
+ *   - throughput rows always render
  */
 function buildSectionItems(
   data: CheckInHealthResponse | undefined,
   _isLoading: boolean,
   specs: ItemSpec[],
+  cleanLabel: string,
 ): InlineStatItem[] {
   if (!data) return [];
 
-  return specs.map(({ key, label, anomaly, drilldown }) => {
+  const items: InlineStatItem[] = [];
+  let anomaliesShown = 0;
+  for (const { key, label, anomaly, drilldown } of specs) {
     const value = (data[key] as number) ?? 0;
-    const isHealthyZero = anomaly && value === 0;
     const isAnomalyHit = anomaly && value > 0;
+    if (anomaly && value === 0) continue;
+    if (isAnomalyHit) anomaliesShown++;
 
-    return {
+    items.push({
       label,
       value,
       highlight: isAnomalyHit,
-      valueClassName: cn(
-        isHealthyZero && 'text-financial-positive',
-        isAnomalyHit && 'text-financial-negative',
-      ),
+      valueClassName: cn(isAnomalyHit && 'text-financial-negative'),
       onClick: drilldown,
-    } satisfies InlineStatItem;
-  });
+    } satisfies InlineStatItem);
+  }
+
+  if (anomaliesShown === 0) {
+    items.unshift({
+      label: cleanLabel,
+      value: 0,
+      valueClassName: 'text-financial-positive',
+    });
+  }
+  return items;
 }
 
 // 4-row placeholder so the vertical skeleton renders while loading
