@@ -17,6 +17,8 @@ export interface DisbursementFeeScheduleEntry {
 
 export interface DisbursementFeeScheduleListResponse {
   entries: DisbursementFeeScheduleEntry[];
+  // Providers enabled in this environment; the admin form offers only these.
+  providers?: string[];
 }
 
 export interface CreateDisbursementFeeScheduleRequest {

@@ -19,9 +19,11 @@ type DisbursementFeeScheduleEntryResponse struct {
 }
 
 // DisbursementFeeScheduleListResponse is the response for
-// GET /admin/disbursement-fees.
+// GET /admin/disbursement-fees. Providers lists the disbursement providers
+// enabled in this environment so the admin form only offers those.
 type DisbursementFeeScheduleListResponse struct {
-	Entries []DisbursementFeeScheduleEntryResponse `json:"entries"`
+	Entries   []DisbursementFeeScheduleEntryResponse `json:"entries"`
+	Providers []string                               `json:"providers,omitempty"`
 }
 
 // CreateDisbursementFeeScheduleRequest is the body for

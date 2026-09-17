@@ -22,6 +22,7 @@ import {
 
 import {
   useCreateDisbursementFeeSchedule,
+  useDisbursementFeeProviders,
   useUpdateDisbursementFeeSchedule,
 } from "@/hooks/api/useDisbursementFeeSchedules";
 
@@ -34,7 +35,6 @@ import {
   type DisbursementFeeFormState,
 } from "./helpers";
 import {
-  DISBURSEMENT_PROVIDERS,
   PROVIDER_LABELS,
   type DisbursementProvider,
 } from "@/types/api/disbursement-fee-schedule.types";
@@ -51,16 +51,17 @@ export const DisbursementFeeFormDialog = ({
   onOpenChange,
 }: Props) => {
   const [state, setState] = useState<DisbursementFeeFormState>(() =>
-    buildInitialFormState(mode),
+    buildInitialFormState(mode, providers),
   );
+  const providers = useDisbursementFeeProviders();
   const createMutation = useCreateDisbursementFeeSchedule();
   const updateMutation = useUpdateDisbursementFeeSchedule();
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   // Re-seed when reopening so the form reflects the new mode/entry.
   useEffect(() => {
-    if (open) setState(buildInitialFormState(mode));
-  }, [open, mode]);
+    if (open) setState(buildInitialFormState(mode, providers));
+  }, [open, mode, providers]);
 
   const validationError = useMemo(() => validateFormState(state), [state]);
   const isEdit = mode.kind === "edit";
@@ -115,9 +116,9 @@ export const DisbursementFeeFormDialog = ({
                 <SelectValue placeholder="Chọn nhà cung cấp" />
               </SelectTrigger>
               <SelectContent>
-                {DISBURSEMENT_PROVIDERS.map((p) => (
+                {providers.map((p) => (
                   <SelectItem key={p} value={p}>
-                    {PROVIDER_LABELS[p]}
+                    {PROVIDER_LABELS[p as DisbursementProvider] ?? p}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -25,6 +25,17 @@ export function useDisbursementFeeSchedules() {
   });
 }
 
+// Enabled disbursement providers for this environment, straight from the
+// schedule list response. Empty until the list query resolves; fall back to
+// the static catalog when the backend omits the field.
+export function useDisbursementFeeProviders(): string[] {
+  return useQuery({
+    queryKey: QueryKeys.advancePayments.admin.disbursementFeeSchedules,
+    queryFn: () => disbursementFeeScheduleService.list(),
+    select: (res) => res.data?.providers ?? [],
+  }).data ?? [];
+}
+
 export function useCreateDisbursementFeeSchedule() {
   const queryClient = useQueryClient();
   return useMutation({

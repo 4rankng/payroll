@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"log/slog"
 
 	bootstrapInfra "api-server/internal/app/bootstrap/infrastructure"
@@ -452,7 +453,9 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 			cfg.Disbursement.Onepay.EnabledForBulkTransfer,
 			cfg.Disbursement.Ninepay.EnabledForBulkTransfer,
 		),
-		DisbursementFee: disbursementHandlers.NewFeeScheduleHandler(services.DisbursementFeeSchedule, clk),
+		DisbursementFee: disbursementHandlers.NewFeeScheduleHandler(services.DisbursementFeeSchedule, clk, func(ctx context.Context) []string {
+			return services.DisbursementRegistry.Names()
+		}),
 		WeeklyPaymentFee: handlers.NewWeeklyPaymentFeeHandler(services.WeeklyPaymentFeeSchedule, clk),
 		ManualDisbursement: disbursementHandlers.NewManualDisbursementHandler(services.DisbursementRegistry, services.ProviderTransactions, repos.Employee, repos.Bank, repos.TransactionCode, services.Wallet, logger, func() *slog.Logger {
 			if cfg.Disbursement.Onepay.Enabled {

@@ -41,6 +41,7 @@ export function tomorrowISO(): string {
 
 export function buildInitialFormState(
   mode: DisbursementFeeFormMode,
+  providers: string[] = [],
 ): DisbursementFeeFormState {
   if (mode.kind === "edit") {
     const e = mode.entry;
@@ -51,8 +52,11 @@ export function buildInitialFormState(
       notes: e.notes ?? "",
     };
   }
+  // Default to the first enabled provider so the form never preselects a
+  // provider that this environment doesn't use.
+  const fallback = providers[0] ?? "1pay";
   return {
-    provider: "9pay",
+    provider: (providers.includes("1pay") ? "1pay" : fallback) as DisbursementProvider,
     effectiveDate: tomorrowISO(),
     feeVnd: DEFAULT_FEE_VND,
     notes: "",

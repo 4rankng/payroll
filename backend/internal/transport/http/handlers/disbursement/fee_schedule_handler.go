@@ -1,6 +1,9 @@
 package disbursement
 
 import (
+	"context"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 
 	"api-server/internal/app/dto"
@@ -16,14 +19,43 @@ import (
 type FeeScheduleHandler struct {
 	service *disbursement.FeeScheduleService
 	clock   clock.Clock
+	// enabledProviders reports which disbursement providers are registered
+	// (enabled in config). List filters out disabled providers so admins only
+	// see fee history relevant to this environment; Create rejects them.
+	enabledProviders func(ctx context.Context) []string
 }
 
-// NewFeeScheduleHandler wires the handler with the schedule service.
-func NewFeeScheduleHandler(service *disbursement.FeeScheduleService, clk clock.Clock) *FeeScheduleHandler {
+// NewFeeScheduleHandler wires the handler with the schedule service and the
+// enabled-provider lookup. enabledProviders may be nil — the handler then
+// shows all providers (used by tests and legacy wiring).
+func NewFeeScheduleHandler(service *disbursement.FeeScheduleService, clk clock.Clock, enabledProviders func(ctx context.Context) []string) *FeeScheduleHandler {
 	if clk == nil {
 		clk = clock.New()
 	}
-	return &FeeScheduleHandler{service: service, clock: clk}
+	return &FeeScheduleHandler{service: service, clock: clk, enabledProviders: enabledProviders}
+}
+
+// filterEnabled keeps only entries whose provider is enabled. A nil or
+// empty lookup keeps everything so no wiring change can silently hide data.
+func (h *FeeScheduleHandler) filterEnabled(ctx context.Context, entries []domain.DisbursementFeeScheduleEntry) []domain.DisbursementFeeScheduleEntry {
+	if h.enabledProviders == nil {
+		return entries
+	}
+	enabled := h.enabledProviders(ctx)
+	if len(enabled) == 0 {
+		return entries
+	}
+	allowed := make(map[string]bool, len(enabled))
+	for _, p := range enabled {
+		allowed[strings.ToLower(p)] = true
+	}
+	filtered := make([]domain.DisbursementFeeScheduleEntry, 0, len(entries))
+	for _, e := range entries {
+		if allowed[strings.ToLower(e.Provider)] {
+			filtered = append(filtered, e)
+		}
+	}
+	return filtered
 }
 
 // List returns every schedule entry, newest effective_date first, with flags
@@ -37,6 +69,14 @@ func (h *FeeScheduleHandler) List(c *gin.Context) {
 
 	now := h.clock.Now()
 	today := now.Format(domain.DisbursementFeeScheduleDateLayout)
+
+	entries = h.filterEnabled(c.Request.Context(), entries)
+
+	// Enabled providers ride along so the admin form only offers them.
+	enabledProviders := []string(nil)
+	if h.enabledProviders != nil {
+		enabledProviders = h.enabledProviders(c.Request.Context())
+	}
 
 	// Pre-compute the active entry per provider — O(n) instead of O(n²).
 	activeByProvider := make(map[string]string) // provider → active entry ID
@@ -63,7 +103,7 @@ func (h *FeeScheduleHandler) List(c *gin.Context) {
 		out = append(out, toFeeScheduleResponse(e, isActive, isPending))
 	}
 
-	response.Success(c, dto.DisbursementFeeScheduleListResponse{Entries: out}, "Lấy danh sách phí giao dịch chi hộ thành công")
+	response.Success(c, dto.DisbursementFeeScheduleListResponse{Entries: out, Providers: enabledProviders}, "Lấy danh sách phí giao dịch chi hộ thành công")
 }
 
 // Create appends a new schedule entry. Validation (effective_date not past,
@@ -72,6 +112,11 @@ func (h *FeeScheduleHandler) Create(c *gin.Context) {
 	var req dto.CreateDisbursementFeeScheduleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, constants.MsgInvalidRequestBodyVN)
+		return
+	}
+
+	if !h.providerEnabled(c.Request.Context(), req.Provider) {
+		response.BadRequest(c, "Nhà cung cấp "+req.Provider+" chưa được kích hoạt trên hệ thống")
 		return
 	}
 
@@ -142,6 +187,24 @@ func (h *FeeScheduleHandler) Delete(c *gin.Context) {
 	}
 
 	response.Success(c, gin.H{"id": id}, "Xóa cấu hình phí giao dịch chi hộ thành công")
+}
+
+// providerEnabled reports whether the given provider is enabled. When no
+// lookup is wired every provider passes so legacy wiring keeps working.
+func (h *FeeScheduleHandler) providerEnabled(ctx context.Context, provider string) bool {
+	if h.enabledProviders == nil {
+		return true
+	}
+	enabled := h.enabledProviders(ctx)
+	if len(enabled) == 0 {
+		return true
+	}
+	for _, p := range enabled {
+		if strings.EqualFold(p, provider) {
+			return true
+		}
+	}
+	return false
 }
 
 func toFeeScheduleResponse(e domain.DisbursementFeeScheduleEntry, isActive, isPending bool) dto.DisbursementFeeScheduleEntryResponse {
