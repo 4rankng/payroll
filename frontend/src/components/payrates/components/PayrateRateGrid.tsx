@@ -37,6 +37,8 @@ export function PayrateRateGrid({ rates, isFlexible = false }: PayrateRateGridPr
   return (
     <div
       className="overflow-x-auto pb-1"
+      role="region"
+      tabIndex={0}
       aria-label={isFlexible ? "Bảng lương trọn ca" : "Bảng mức lương theo giờ"}
     >
       <div className="space-y-3">
@@ -91,7 +93,7 @@ export function PayrateRateGrid({ rates, isFlexible = false }: PayrateRateGridPr
                               </span>
                             </span>
                           ) : (
-                            <span className="text-[10px] text-muted-foreground/50">—</span>
+                            <span className="text-[10px] text-muted-foreground">—</span>
                           )}
                         </div>
                       );

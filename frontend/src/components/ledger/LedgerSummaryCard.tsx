@@ -1,6 +1,6 @@
 import { InlineStatStrip } from '@/components/shared/InlineStatStrip';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Calendar } from 'lucide-react';
+import { Calendar, ChevronDown } from 'lucide-react';
 import { formatDate } from '@/utils/formatters';
 import { useLedgerStatsConfig } from '@/hooks/ledger/useLedgerStatsConfig';
 import type { LedgerSummary } from '@/types/api/financial.types';
@@ -44,8 +44,36 @@ export function LedgerSummaryCard({ summary, isLoading, className }: LedgerSumma
         <span>{formatDate(summary.period.from)} – {formatDate(summary.period.to)}</span>
       </div>
 
-      {mainItems.length > 0 && <InlineStatStrip items={mainItems} />}
-      {accountItems.length > 0 && <InlineStatStrip items={accountItems} />}
+      <div className="space-y-2 lg:hidden">
+        <dl className="divide-y divide-border rounded-xl border border-border bg-card px-3">
+          {mainItems.map(item => (
+            <div key={item.label} className="flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2">
+              <dt className="text-xs text-muted-foreground">{item.label}</dt>
+              <dd className="min-w-0 break-words text-right text-sm font-semibold tabular-nums">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+        {accountItems.length > 0 && (
+          <details className="group rounded-xl border border-border bg-card">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 text-xs font-medium [&::-webkit-details-marker]:hidden">
+              Số dư theo tài khoản ({accountItems.length})
+              <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
+            </summary>
+            <dl className="divide-y divide-border border-t border-border px-3">
+              {accountItems.map(item => (
+                <div key={item.label} className="flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2">
+                  <dt className="text-xs text-muted-foreground">{item.label}</dt>
+                  <dd className="min-w-0 break-words text-right text-sm font-semibold tabular-nums">{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </details>
+        )}
+      </div>
+      <div className="hidden space-y-3 lg:block">
+        {mainItems.length > 0 && <InlineStatStrip items={mainItems} />}
+        {accountItems.length > 0 && <InlineStatStrip items={accountItems} />}
+      </div>
     </div>
   );
 }

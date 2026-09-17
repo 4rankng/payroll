@@ -4,10 +4,13 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetClose,
 } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/ui/error-state';
 import { MetadataRenderer } from './MetadataRenderer';
 import {
   getActionLabel,
@@ -19,7 +22,7 @@ import {
   VARIANT_CLASSES,
 } from './utils';
 import { useAuditLogDetail } from '@/hooks/api/useAuditLogs';
-import { Monitor, Globe, User, Clock, Hash, FileText, MapPin, LogIn } from 'lucide-react';
+import { Monitor, Globe, User, Clock, Hash, FileText, MapPin, LogIn, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AuditLogDetailSheetProps {
@@ -48,7 +51,7 @@ function DetailRow({
 }
 
 export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps) {
-  const { data: log, isLoading } = useAuditLogDetail(logId);
+  const { data: log, isLoading, isError, refetch } = useAuditLogDetail(logId);
   const isMobile = useIsMobile();
   const variant = log ? getActionVariant(log.action) : 'gray';
 
@@ -60,14 +63,21 @@ export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps
       <SheetContent
         side={isMobile ? "bottom" : "right"}
         className={cn(
-          "w-full overflow-y-auto sm:max-w-lg",
+          "w-full overflow-y-auto p-4 sm:max-w-lg",
           isMobile && "max-h-[92dvh] rounded-t-2xl pb-[calc(env(safe-area-inset-bottom)+1rem)]",
         )}
       >
         <SheetHeader className="pb-4 border-b border-border">
-          <SheetTitle className="text-base font-semibold">
-            Chi tiết Audit Log
-          </SheetTitle>
+          <div className="flex items-center justify-between gap-3">
+            <SheetTitle className="text-left text-base font-semibold">
+              Chi tiết nhật ký
+            </SheetTitle>
+            <SheetClose asChild>
+              <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0" aria-label="Đóng chi tiết nhật ký">
+                <X className="h-4 w-4" />
+              </Button>
+            </SheetClose>
+          </div>
           {log && (
             <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
               <Badge
@@ -92,7 +102,9 @@ export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps
           </div>
         )}
 
-        {log && (
+        {isError && <div role="alert"><ErrorState onRetry={() => void refetch()} /></div>}
+
+        {!isError && log && (
           <div className="pt-4 space-y-5">
             {/* Core fields */}
             <div className="rounded-lg border border-border bg-muted/20 px-3">

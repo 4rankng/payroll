@@ -230,7 +230,8 @@ export function EmployeeDetailsSheet({
         size="sm"
         onClick={handleExport}
         disabled={isExporting}
-        className={isNarrowViewport ? "min-h-11 px-3 gap-1 text-xs" : "min-h-11 px-3 gap-1.5"}
+        aria-label={isExporting ? "Đang xuất hồ sơ nhân viên" : "Xuất Excel hồ sơ nhân viên"}
+        className={isNarrowViewport ? "min-h-11 min-w-11 px-3 gap-1 text-xs" : "min-h-11 px-3 gap-1.5"}
       >
         <FileDown className="h-3.5 w-3.5" />
         {!isNarrowViewport && "Xuất Excel"}

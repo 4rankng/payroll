@@ -87,6 +87,49 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 		return nil
 	})
 
+	reporter.RunTest(flowAuth, "AdvPartner bank reference access preserves administrative restrictions", func() error {
+		username := prefix + "_bank_reader"
+		password := "TestPass123!"
+		var created UserResponse
+		if _, err := admin.PostInto("/api/v1/users", CreateUserRequest{
+			Username: username,
+			Password: password,
+			Fullname: "ITest Bank Reference Reader",
+			Role:     "adv_partner",
+		}, &created); err != nil {
+			return fmt.Errorf("create scoped user: %w", err)
+		}
+		defer func() { _, _, _ = admin.Delete(fmt.Sprintf("/api/v1/users/%d", created.ID)) }()
+
+		reader := NewAPIClient(client.BaseURL)
+		if _, err := reader.Login(username, password); err != nil {
+			return fmt.Errorf("login scoped user: %w", err)
+		}
+		bankPath := fmt.Sprintf("/api/v1/banks/%d", nonexistentID)
+		for _, tc := range []struct {
+			method string
+			path   string
+			status int
+		}{
+			{http.MethodGet, "/api/v1/banks", http.StatusOK},
+			{http.MethodPost, "/api/v1/banks", http.StatusForbidden},
+			{http.MethodGet, bankPath, http.StatusForbidden},
+			{http.MethodPut, bankPath, http.StatusForbidden},
+			{http.MethodDelete, bankPath, http.StatusForbidden},
+			{http.MethodGet, "/api/v1/advance-payments/files", http.StatusForbidden},
+		} {
+			resp, err := reader.doRequest(tc.method, tc.path, nil)
+			if err != nil {
+				return fmt.Errorf("%s %s: %w", tc.method, tc.path, err)
+			}
+			_ = resp.Body.Close()
+			if resp.StatusCode != tc.status {
+				return fmt.Errorf("%s %s: expected %d, got %d", tc.method, tc.path, tc.status, resp.StatusCode)
+			}
+		}
+		return nil
+	})
+
 	// --- User CRUD ---
 
 	var testUserID uint
@@ -255,7 +298,7 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 	})
 
 	reporter.RunTest(flowAuth, "Edge: get non-existent user", func() error {
-		_, statusCode, _ := admin.Get("/api/v1/users/999999")
+		_, statusCode, _ := admin.Get(fmt.Sprintf("/api/v1/users/%d", nonexistentID))
 		if statusCode < 400 {
 			return fmt.Errorf("expected error for non-existent user, got HTTP %d", statusCode)
 		}
@@ -264,7 +307,7 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 
 	reporter.RunTest(flowAuth, "Edge: update non-existent user", func() error {
 		body := map[string]interface{}{"fullname": "Ghost"}
-		_, statusCode, _ := admin.Put("/api/v1/users/999999", body)
+		_, statusCode, _ := admin.Put(fmt.Sprintf("/api/v1/users/%d", nonexistentID), body)
 		if statusCode < 400 {
 			return fmt.Errorf("expected error updating non-existent user, got HTTP %d", statusCode)
 		}

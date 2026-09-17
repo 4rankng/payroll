@@ -4,7 +4,7 @@ import { PayrollMetricCard } from './PayrollMetricCard';
 import { formatCurrency } from '@/utils/formatters';
 import { cn } from '@/lib/utils';
 import type { CashReadinessResponse } from '@/types/api/cash-readiness.types';
-import type { TimesheetSummaryResponse } from '@/types/api/timesheet.types';
+import type { TimesheetSummary } from '@/types/api/timesheet.types';
 
 /** Filter values a metric can apply. Subset of the management hook's status union. */
 export type MetricFilter =
@@ -27,7 +27,7 @@ interface MetricDef {
 interface PayrollControlCenterProps {
   cashReadiness: { data?: CashReadinessResponse; isLoading: boolean; isError: boolean };
   stats: {
-    summary?: TimesheetSummaryResponse;
+    summary?: TimesheetSummary;
     isLoading: boolean;
   };
   /** Current status filter applied to the table — drives KPI selection. */
@@ -81,12 +81,13 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
       label: 'Đã duyệt',
       value: fmtInt(summary?.approvedEntries),
       filter: 'approved',
+      className: 'col-span-2 min-[480px]:col-span-1',
     },
     {
       key: 'paid',
       label: 'Đã thanh toán',
       value: formatCurrency(summary?.paidAmount ?? 0),
-      className: 'lg:col-span-3',
+      className: 'col-span-2 min-[480px]:col-span-1 lg:col-span-3',
       filter: 'paid',
     },
   ];
@@ -128,7 +129,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
             </span>
           </div>
 
-          <div className="grid auto-rows-fr grid-cols-1 gap-2 min-[480px]:grid-cols-2 lg:grid-cols-4">
+          <div className="grid auto-rows-fr grid-cols-2 gap-2 lg:grid-cols-4">
             {metrics.map((m) => (
               <PayrollMetricCard
                 key={m.key}

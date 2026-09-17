@@ -38,6 +38,7 @@ const attendanceRecords: AttendanceRecord[] = [
     project_id: 10,
     employee_id: 20,
     date: "2026-07-07",
+    check_in_gate: "Cổng chính",
     check_in_time: "2026-07-07T08:05:00+07:00",
     check_out_time: "2026-07-07T17:01:00+07:00",
     earning_amount: 282_400,
@@ -49,6 +50,7 @@ const attendanceRecords: AttendanceRecord[] = [
     project_id: 10,
     employee_id: 20,
     date: "2026-07-06",
+    check_in_gate: "Cổng chính",
     check_in_time: "2026-07-06T08:02:00+07:00",
     check_out_time: "2026-07-06T17:04:00+07:00",
     earning_amount: 282_400,
@@ -56,6 +58,8 @@ const attendanceRecords: AttendanceRecord[] = [
     status: "completed",
   },
 ];
+
+const monthProps = { fromDate: "2026-07-01", toDate: "2026-07-31", monthLabel: "07/2026" };
 
 describe("EmployeeAttendanceHistoryCard", () => {
   beforeEach(() => {
@@ -66,7 +70,7 @@ describe("EmployeeAttendanceHistoryCard", () => {
   });
 
   it("shows a three-record preview and exposes month summary counts", () => {
-    render(<EmployeeAttendanceHistoryCard />);
+    render(<EmployeeAttendanceHistoryCard {...monthProps} />);
 
     expect(screen.getByText("3 ngày công")).toBeInTheDocument();
     expect(screen.getByText("1 cần kiểm tra")).toBeInTheDocument();
@@ -79,7 +83,7 @@ describe("EmployeeAttendanceHistoryCard", () => {
   });
 
   it("reveals the current month history and expands only the problem detail", () => {
-    render(<EmployeeAttendanceHistoryCard />);
+    render(<EmployeeAttendanceHistoryCard {...monthProps} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Xem toàn bộ lịch chấm công" }));
     expect(screen.getByText("Ngày 6/7/2026")).toBeInTheDocument();
@@ -92,7 +96,7 @@ describe("EmployeeAttendanceHistoryCard", () => {
   });
 
   it("shows the advanceable amount per shift when the percentage is provided", () => {
-    const { container } = render(<EmployeeAttendanceHistoryCard advancePercentage={70} />);
+    const { container } = render(<EmployeeAttendanceHistoryCard {...monthProps} advancePercentage={70} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Xem toàn bộ lịch chấm công" }));
 
@@ -105,8 +109,26 @@ describe("EmployeeAttendanceHistoryCard", () => {
   });
 
   it("hides the advanceable line when no percentage is provided", () => {
-    render(<EmployeeAttendanceHistoryCard />);
+    render(<EmployeeAttendanceHistoryCard {...monthProps} />);
 
     expect(screen.queryByText("Được ứng (70%)")).not.toBeInTheDocument();
+  });
+
+  it("distinguishes a failed request from an empty month and exposes retry", () => {
+    const refetch = vi.fn();
+    vi.mocked(useAttendanceHistory).mockReturnValue({ data: undefined, isLoading: false, isError: true, isFetching: false, refetch } as unknown as ReturnType<typeof useAttendanceHistory>);
+    render(<EmployeeAttendanceHistoryCard {...monthProps} />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Chưa tải được lịch chấm công");
+    expect(screen.queryByText("0 ngày công")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Chưa có ca làm/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Tải lại" }));
+    expect(refetch).toHaveBeenCalledOnce();
+  });
+
+  it("disables retry while attendance is refetching", () => {
+    vi.mocked(useAttendanceHistory).mockReturnValue({ data: undefined, isLoading: false, isError: true, isFetching: true, refetch: vi.fn() } as unknown as ReturnType<typeof useAttendanceHistory>);
+    render(<EmployeeAttendanceHistoryCard {...monthProps} />);
+    expect(screen.getByRole("button", { name: "Đang tải lại…" })).toBeDisabled();
   });
 });

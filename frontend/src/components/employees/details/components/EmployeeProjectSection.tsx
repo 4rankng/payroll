@@ -167,7 +167,7 @@ function ProjectPaymentScheduleControl({
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0"
+            className="h-11 w-11 p-0 sm:h-6 sm:w-6"
             onClick={handleCancelPending}
             disabled={cancelScheduleMutation.isPending}
           >
@@ -329,7 +329,7 @@ function ProjectCard({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-7 w-7"
+                  className="h-11 w-11 shrink-0 sm:h-7 sm:w-7"
                   onClick={handleCancelEditing}
                   disabled={isSubmitting}
                   title="Hủy chỉnh sửa"
@@ -340,7 +340,7 @@ function ProjectCard({
                 <Button
                   size="icon"
                   variant="default"
-                  className="h-7 w-7"
+                  className="h-11 w-11 shrink-0 sm:h-7 sm:w-7"
                   onClick={handleApplyEditing}
                   disabled={isSubmitting}
                   title="Áp dụng thay đổi"
@@ -353,7 +353,7 @@ function ProjectCard({
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-7 w-7"
+                className="h-11 w-11 shrink-0 sm:h-7 sm:w-7"
                 onClick={handleStartEditing}
                 title="Chỉnh sửa phân công"
               >
@@ -406,9 +406,10 @@ function ProjectCard({
                 value={(changes?.position ?? project.position) || ""}
                 onChange={(e) => handlePositionChange(e.target.value)}
                 placeholder="Nhập vị trí công việc"
+                aria-label="Vị trí công việc"
                 disabled={!canEditFields || isSubmitting}
                 className={cn(
-                  "h-7 typography-body-small",
+                  "h-11 typography-body-small sm:h-7",
                   !canEditFields && "opacity-100" // Ensure proper contrast in read-only mode
                 )}
               />
@@ -418,8 +419,8 @@ function ProjectCard({
                 onValueChange={handlePositionChange}
                 disabled={!canEditFields || isSubmitting}
               >
-                <SelectTrigger className={cn(
-                  "h-7 typography-body-small",
+                <SelectTrigger aria-label="Vị trí công việc" className={cn(
+                  "h-11 typography-body-small sm:h-7",
                   !canEditFields && "opacity-100" // Ensure proper contrast in read-only mode
                 )}>
                   <SelectValue
@@ -454,9 +455,10 @@ function ProjectCard({
                 type="date"
                 value={(changes?.start_date ?? project.start_date) || ''}
                 onChange={handleDateChange}
+                aria-label="Ngày bắt đầu phân công"
                 disabled={!canEditFields || isSubmitting}
                 className={cn(
-                  "h-7 typography-body-small flex-1",
+                  "h-11 min-w-0 typography-body-small flex-1 sm:h-7",
                   !canEditFields && "opacity-100" // Ensure proper contrast in read-only mode
                 )}
               />
@@ -464,10 +466,11 @@ function ProjectCard({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                  className="h-11 w-11 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0 sm:h-7 sm:w-7"
                   onClick={() => onRemove?.(project.project_id)}
                   disabled={isRemoving || isSubmitting}
                   title="Gỡ khỏi dự án"
+                  aria-label="Gỡ khỏi dự án"
                 >
                   <Unlink className="h-3 w-3" />
                 </Button>
@@ -486,8 +489,9 @@ function ProjectCard({
                 type="date"
                 value={changes?.end_date !== undefined ? changes.end_date : (project.last_date ?? '')}
                 onChange={handleEndDateChange}
+                aria-label="Ngày kết thúc phân công"
                 disabled={isSubmitting}
-                className="h-7 typography-body-small"
+                className="h-11 typography-body-small sm:h-7"
               />
               <p className="typography-label-small text-muted-foreground">
                 Để trống = vô thời hạn
@@ -561,9 +565,9 @@ export function EmployeeProjectSection({
       {/* Projects Header */}
       <div className="flex items-center gap-3">
         <Building className="w-4 h-4 text-muted-foreground" />
-        <dt className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Dự án hiện tại
-        </dt>
+        </h3>
         {projectCount > 0 && (
           <Badge variant="secondary">
             {projectCount} dự án

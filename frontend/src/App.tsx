@@ -316,7 +316,7 @@ const AppContent = () => {
           <Route path="advance-payments/employees" element={<AdvancePaymentsEmployeeListPageMobile />} />
           <Route
             path="users"
-            element={<ResponsivePage desktopComponent={AdvPartnerUsersPage} mobileComponent={UsersPageMobile} />}
+            element={<AdvPartnerUsersPage />}
           />
           <Route path="*" element={<NotFound />} />
         </Route>
@@ -343,7 +343,7 @@ const App = () => {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
-          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <BrowserRouter>
             <SecureModalProvider>
               <AppProviders>
                 <AppContent />

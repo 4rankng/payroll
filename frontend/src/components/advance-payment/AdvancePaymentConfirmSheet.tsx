@@ -56,7 +56,7 @@ export function AdvancePaymentConfirmSheet({
             <p className="employee-type-label-caps text-slate-500">
               Số tiền thực nhận
             </p>
-            <p className="employee-type-confirm-amount mt-1 break-words text-employee tabular-nums">
+            <p className="employee-type-confirm-amount mt-1 break-words text-employee-700 tabular-nums">
               {feeDetails ? formatCurrency(feeDetails.netAmount) : "Đang tính..."}
             </p>
 
@@ -69,7 +69,7 @@ export function AdvancePaymentConfirmSheet({
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-slate-500">Phí giao dịch</span>
-                <span className="font-semibold text-red-500 tabular-nums">
+                <span className="font-semibold text-red-600 tabular-nums">
                   {feeDetails ? `−${formatCurrency(feeDetails.fee)}` : "Đang tính..."}
                 </span>
               </div>
@@ -88,7 +88,7 @@ export function AdvancePaymentConfirmSheet({
             <p className="employee-type-label-caps text-slate-500">
               Chuyển đến chủ tài khoản
             </p>
-            <p className="employee-type-card-amount mt-1 break-words text-employee">
+            <p className="employee-type-card-amount mt-1 break-words text-employee-700">
               {bankAccountName || "Chưa cập nhật"}
             </p>
             <div className="employee-type-body mt-4 space-y-2.5">
@@ -122,7 +122,7 @@ export function AdvancePaymentConfirmSheet({
             <button
               onClick={onConfirm}
               disabled={isPending || !feeDetails}
-              className="employee-type-action min-h-14 flex-[1.4] rounded-2xl bg-employee py-3 text-white shadow-none transition-colors active:bg-employee-700 disabled:opacity-50"
+              className="employee-type-action min-h-14 flex-[1.4] rounded-2xl bg-employee-700 py-3 text-white shadow-none transition-colors active:bg-employee-800 disabled:opacity-50"
             >
               {isPending ? (
                 <span className="inline-flex items-center gap-1.5">

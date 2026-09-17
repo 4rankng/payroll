@@ -45,7 +45,7 @@ export interface UseContinuousLocationResult {
   /** A fatal geolocation error from the watch (permission denied). The card
    *  surfaces this via its existing recovery banner + failed-attempt log. Null
    *  while the watch is healthy. */
-  fatalError: GeolocationPositionError | null;
+  fatalError: Pick<GeolocationPositionError, "code" | "message"> | null;
   /** Start GPS acquisition from an employee action, so the browser can display
    *  its native location-permission prompt in a clear user context. */
   requestPermission: () => void;
@@ -63,11 +63,11 @@ export interface UseContinuousLocationResult {
 const DEFAULT_SUBMIT_TIMEOUT_MS = 30000;
 const PERMISSION_DENIED = 1;
 
-function createPermissionDeniedError(): GeolocationPositionError {
+function createPermissionDeniedError(): Pick<GeolocationPositionError, "code" | "message"> {
   return createGeolocationError(
     PERMISSION_DENIED,
     "Quyền truy cập vị trí đang bị chặn"
-  ) as GeolocationPositionError;
+  );
 }
 
 /**
@@ -108,7 +108,7 @@ export function useContinuousLocation({
 }: UseContinuousLocationOptions): UseContinuousLocationResult {
   const [sample, setSample] = useState<LocationSample | null>(null);
   const [progress, setProgress] = useState<LocationAcquisitionProgress | null>(null);
-  const [fatalError, setFatalError] = useState<GeolocationPositionError | null>(null);
+  const [fatalError, setFatalError] = useState<UseContinuousLocationResult["fatalError"]>(null);
   const [isWatching, setIsWatching] = useState(false);
   const [permissionState, setPermissionState] = useState<LocationPermissionState>("unknown");
   const [hasRequestedPermission, setHasRequestedPermission] = useState(false);
@@ -124,7 +124,7 @@ export function useContinuousLocation({
   // (awaitSubmitReady / awaiter drain) without stale closures or resubscribing.
   const sampleRef = useRef<LocationSample | null>(null);
   const progressRef = useRef<LocationAcquisitionProgress | null>(null);
-  const fatalErrorRef = useRef<GeolocationPositionError | null>(null);
+  const fatalErrorRef = useRef<UseContinuousLocationResult["fatalError"]>(null);
   const isSubmitReadyRef = useRef(false);
   const isWatchingRef = useRef(false);
   const retainSampleOnWatchStopRef = useRef(false);

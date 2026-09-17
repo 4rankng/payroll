@@ -6,7 +6,7 @@ import {
 } from './bank-information-warning';
 
 const completeBankInformation = {
-  bank: { id: 1 },
+  bank: { id: 1, branch_name: 'Ngân hàng kiểm thử' },
   bank_account_number: '123456789',
   bank_account_name: 'NGUYEN VAN AN',
   bank_account_status: 'valid' as const,

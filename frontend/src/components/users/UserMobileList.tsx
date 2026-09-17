@@ -15,14 +15,28 @@ const ROLE_CONFIG = {
     dot: "bg-red-500",
     card: "border-red-200 bg-red-50/60",
     name: "text-red-900",
-    sub: "text-red-700/70",
+    sub: "text-red-700",
   },
   partner: {
     label: "Quản lý",
     dot: "bg-blue-500",
     card: "border-blue-200 bg-blue-50/60",
     name: "text-blue-900",
-    sub: "text-blue-700/70",
+    sub: "text-blue-700",
+  },
+  adv_partner: {
+    label: "Quản lý ứng lương",
+    dot: "bg-violet-500",
+    card: "border-violet-200 bg-violet-50/60",
+    name: "text-violet-900",
+    sub: "text-violet-700",
+  },
+  accountant: {
+    label: "Kế toán",
+    dot: "bg-amber-500",
+    card: "border-amber-200 bg-amber-50/60",
+    name: "text-amber-900",
+    sub: "text-amber-800",
   },
   employee: {
     label: "Nhân viên",
@@ -62,8 +76,9 @@ const UserGridCard = React.memo(function UserGridCard({
         <span className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-background ${cfg.dot}`} />
       </div>
       <div className="w-full min-w-0">
-        <p className={`text-xs font-semibold leading-tight truncate ${cfg.name}`}>{user.fullname}</p>
-        <p className={`text-[11px] truncate mt-0.5 ${cfg.sub}`}>@{user.username}</p>
+        <p className={`min-h-8 break-words text-xs font-semibold leading-4 line-clamp-2 ${cfg.name}`}>{user.fullname}</p>
+        <p className={`text-[11px] break-all line-clamp-2 mt-0.5 ${cfg.sub}`}>@{user.username}</p>
+        <p className={`mt-1 text-[10px] font-medium leading-4 ${cfg.sub}`}>{cfg.label}</p>
       </div>
     </button>
   );
@@ -79,7 +94,7 @@ export function UserMobileList({ users, onRowClick, emptyState }: UserMobileList
   return (
     <div className="w-full space-y-3">
       {/* Grid */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {users.map((user) => (
           <UserGridCard key={user.id} user={user} onRowClick={onRowClick} />
         ))}

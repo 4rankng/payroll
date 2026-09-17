@@ -17,6 +17,7 @@ export type ModalAction =
 
 export type ModalSubject =
   | 'User'
+  | 'SelfAccount'
   | 'Project'
   | 'Employee'
   | 'Timesheet'

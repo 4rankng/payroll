@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AdvanceRequestToggle } from "./AdvanceRequestToggle";
 
@@ -16,7 +16,8 @@ const renderToggle = (enabled: boolean, onParentClick?: () => void) =>
   );
 
 beforeEach(() => {
-  mutateAsyncMock.mockClear();
+  mutateAsyncMock.mockReset();
+  mutateAsyncMock.mockResolvedValue(undefined);
 });
 
 describe("AdvanceRequestToggle", () => {
@@ -65,4 +66,25 @@ describe("AdvanceRequestToggle", () => {
 
     expect(parentClick).not.toHaveBeenCalled();
   });
+  it("contains a failed immediate enable without navigating the parent card", async () => {
+    mutateAsyncMock.mockRejectedValueOnce(new Error("network unavailable"));
+    const parentClick = vi.fn();
+    renderToggle(false, parentClick);
+    fireEvent.click(screen.getByRole("switch", { name: "Cho phép ứng lương" }));
+    await waitFor(() => expect(mutateAsyncMock).toHaveBeenCalledTimes(1));
+    expect(parentClick).not.toHaveBeenCalled();
+    expect(screen.getByRole("switch")).not.toBeChecked();
+  });
+
+  it("does not let keyboard activation bubble to a containing card", () => {
+    const parentKeyDown = vi.fn();
+    render(
+      <div onKeyDown={parentKeyDown}>
+        <AdvanceRequestToggle projectId={7} employeeId={42} employeeName="Nguyễn An" enabled />
+      </div>,
+    );
+    fireEvent.keyDown(screen.getByRole("switch", { name: "Cho phép ứng lương cho Nguyễn An" }), { key: " " });
+    expect(parentKeyDown).not.toHaveBeenCalled();
+  });
+
 });

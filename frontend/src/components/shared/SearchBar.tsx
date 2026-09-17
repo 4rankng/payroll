@@ -78,10 +78,11 @@ export const SearchBar = React.memo(function SearchBar({
         onChange={handleChange}
         aria-label={inputId ? undefined : placeholder}
         placeholder={placeholder}
-        className="flex-1 min-w-0 bg-transparent outline-none placeholder:text-muted-foreground/60 text-foreground"
+        className="h-11 flex-1 min-w-0 bg-transparent outline-none placeholder:text-muted-foreground/60 text-foreground sm:h-8"
       />
       {showClearButton && localValue && (
         <button
+          type="button"
           onClick={handleClear}
           className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg opacity-50 transition-all hover:bg-muted hover:opacity-100 sm:-mr-1.5 sm:h-8 sm:w-8"
           aria-label="Xóa tìm kiếm"

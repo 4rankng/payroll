@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts';
+import type { AppRole } from '@/lib/auth';
 
 interface QuickAction {
   id: string;
@@ -23,7 +24,7 @@ interface QuickAction {
   icon: LucideIcon;
   action: () => void;
   variant?: 'default' | 'secondary' | 'outline';
-  roles?: ('admin' | 'partner' | 'employee' | 'adv_partner')[];
+  roles?: AppRole[];
 }
 
 interface QuickActionBarProps {

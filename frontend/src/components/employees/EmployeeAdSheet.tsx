@@ -51,13 +51,13 @@ export const EmployeeAdContent = ({
     {/* The header exists to carry the headline, not a label bar: the emerald
         wash and the icon are the only chrome, and the close control floats so
         it costs no vertical space. */}
-    <header className="relative bg-[linear-gradient(135deg,var(--employee-accent)_0%,var(--employee-accent-strong)_100%)] px-4 py-3.5 pr-12">
+    <header className="relative min-h-14 bg-[linear-gradient(135deg,var(--employee-accent)_0%,var(--employee-accent-strong)_100%)] px-4 py-3.5 pr-14">
       {onDismiss && (
         <button
           type="button"
           aria-label="Đóng thông báo"
           onClick={onDismiss}
-          className="absolute right-1.5 top-1.5 flex h-9 w-9 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+          className="absolute right-1.5 top-1.5 flex h-11 w-11 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         >
           <X className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -151,7 +151,7 @@ export const EmployeeAdSheet = ({ open, onClose, banner, onCTAClick }: EmployeeA
         description="Quảng cáo"
         data-theme="employee"
         className={cn(
-          '!w-full sm:!w-[420px] flex flex-col overflow-hidden bg-[var(--employee-surface)] p-0 text-[var(--employee-text)]',
+          'w-full lg:w-[420px] flex flex-col overflow-hidden bg-[var(--employee-surface)] p-0 text-[var(--employee-text)]',
           isMobile
             ? 'max-h-[88vh] rounded-t-[1.5rem] shadow-[0_-8px_32px_rgba(16,24,40,0.16)]'
             : 'shadow-none',

@@ -1,14 +1,21 @@
 import type { TimesheetFilters } from '@/types/api/timesheet.types';
 
-export type TimesheetStatusFilter =
-  | 'all'
-  | 'pending_approval'
-  | 'pending_payment'
-  | 'approved'
-  | 'rejected'
-  | 'paid'
-  | 'failed'
-  | 'cancelled';
+const TIMESHEET_STATUS_FILTERS = [
+  'all',
+  'pending_approval',
+  'pending_payment',
+  'approved',
+  'rejected',
+  'paid',
+  'failed',
+  'cancelled',
+] as const;
+
+export type TimesheetStatusFilter = (typeof TIMESHEET_STATUS_FILTERS)[number];
+
+export function parseTimesheetStatusFilter(value: string | null): TimesheetStatusFilter | undefined {
+  return TIMESHEET_STATUS_FILTERS.find((status) => status === value);
+}
 
 export function buildTimesheetStatusFilters(
   statusFilter: TimesheetStatusFilter,

@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/ui/error-state";
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
@@ -37,7 +38,7 @@ const LoanMobileCard = ({ loan, onClick }: { loan: Loan; onClick: (loan: Loan) =
       className="bg-card border border-border rounded-xl px-3.5 py-3 shadow-sm card-lift active:bg-muted/50 transition-all cursor-pointer touch-manipulation"
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(loan); }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(loan); } }}
       aria-label={`Khoản vay ${loan.loan_code}`}
     >
       {/* Line 1: code + status badge */}
@@ -75,7 +76,7 @@ const LoansPageMobile = () => {
   const [isLoanDetailsOpen, setIsLoanDetailsOpen] = useState(false);
   const [selectedLoanId, setSelectedLoanId] = useState<number | null>(null);
 
-  const { data: loansResponse, isLoading } = useLoans(loanFilters);
+  const { data: loansResponse, isLoading, isError, refetch } = useLoans(loanFilters);
   const { data: lendersResponse } = useLenders({ page: 1, pageSize: 100, sortBy: 'name', sortOrder: 'asc' });
 
   const lenders: Lender[] = useMemo(() => (
@@ -147,16 +148,16 @@ const LoansPageMobile = () => {
             <Button variant="outline" size="sm" className="min-h-11" onClick={() => navigate('lenders')}>
               Chủ nợ
             </Button>
-            <Button className="btn-admin-primary min-h-11" onClick={() => setIsAddLoanOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" />
-              Tạo vay
+            <Button className="btn-admin-primary h-11 w-11 p-0 min-[380px]:w-auto min-[380px]:px-3" aria-label="Tạo khoản vay" onClick={() => setIsAddLoanOpen(true)}>
+              <Plus className="h-4 w-4 min-[380px]:mr-1" />
+              <span className="hidden min-[380px]:inline">Tạo vay</span>
             </Button>
           </div>
         }
       />
 
       {/* Stats strip */}
-      <div className="px-4 pb-3">
+      {!isError && <div className="px-4 pb-3">
         <div className="grid grid-cols-2 gap-2">
           {[
             { label: "Tổng vay", value: formatVND(loansSummary.total_borrowed) },
@@ -179,7 +180,7 @@ const LoansPageMobile = () => {
             );
           })}
         </div>
-      </div>
+      </div>}
 
       {/* Search + filters */}
       <div className="px-4 pb-3 space-y-2">
@@ -192,7 +193,7 @@ const LoansPageMobile = () => {
         </div>
         <div className="flex gap-2">
           <Select onValueChange={handleStatusChange} defaultValue="all">
-            <SelectTrigger className="min-h-11 flex-1"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
+            <SelectTrigger aria-label="Lọc trạng thái khoản vay" className="min-h-11 flex-1"><SelectValue placeholder="Trạng thái" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
               <SelectItem value="active">Đang vay</SelectItem>
@@ -204,6 +205,7 @@ const LoansPageMobile = () => {
             value={loanFilters.lender_id ? String(loanFilters.lender_id) : 'all'}
             onChange={handleLenderChange}
             placeholder="Chủ nợ"
+            triggerAriaLabel="Lọc chủ nợ"
             searchPlaceholder="Tìm chủ nợ..."
             triggerClassName="min-h-11 flex-1"
             options={[
@@ -222,7 +224,7 @@ const LoansPageMobile = () => {
             value={loanFilters.sortBy ?? 'created_at'}
             onValueChange={(v) => setLoanFilters((prev) => ({ ...prev, sortBy: v, page: 1 }))}
           >
-            <SelectTrigger className="min-h-11 flex-1 text-xs">
+            <SelectTrigger aria-label="Sắp xếp khoản vay" className="min-h-11 flex-1 text-xs">
               <SelectValue placeholder="Sắp xếp" />
             </SelectTrigger>
             <SelectContent>
@@ -254,7 +256,11 @@ const LoansPageMobile = () => {
 
       {/* Loan list */}
       <div className="flex-1 px-4">
-        {filteredLoans.length === 0 ? (
+        {isError ? (
+          <div role="alert">
+            <ErrorState message="Không thể tải danh sách khoản vay. Vui lòng thử lại." onRetry={() => void refetch()} />
+          </div>
+        ) : filteredLoans.length === 0 ? (
           <EmptyState
             title="Chưa có khoản vay nào"
             description="Tạo khoản vay đầu tiên để bắt đầu quản lý."

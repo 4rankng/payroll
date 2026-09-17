@@ -3,6 +3,7 @@ package asynq
 import (
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -50,7 +51,7 @@ func (c *Client) EnqueueEmployeeImport(importID string) error {
 
 	info, err := c.client.Enqueue(task)
 	if err != nil {
-		if err == asynqlib.ErrDuplicateTask {
+		if errors.Is(err, asynqlib.ErrDuplicateTask) {
 			return nil
 		}
 		return fmt.Errorf("failed to enqueue employee import task: %w", err)
@@ -76,7 +77,7 @@ func (c *Client) EnqueueBCCImport(assetID uint) error {
 		asynqlib.Unique(time.Minute),
 	)
 	_, err := c.client.Enqueue(task)
-	if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+	if errors.Is(err, asynqlib.ErrDuplicateTask) || errors.Is(err, asynqlib.ErrTaskIDConflict) {
 		return nil
 	}
 	if err != nil {
@@ -97,7 +98,7 @@ func (c *Client) EnqueueImportJob(jobID uint, forMonth string) error {
 
 	info, err := c.client.Enqueue(task)
 	if err != nil {
-		if err == asynqlib.ErrDuplicateTask {
+		if errors.Is(err, asynqlib.ErrDuplicateTask) {
 			return nil
 		}
 		return fmt.Errorf("failed to enqueue import job task: %w", err)
@@ -176,7 +177,7 @@ func (c *Client) EnqueueIPNProcess(p IPNProcessPayload) error {
 
 	info, err := c.client.Enqueue(task)
 	if err != nil {
-		if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+		if errors.Is(err, asynqlib.ErrDuplicateTask) || errors.Is(err, asynqlib.ErrTaskIDConflict) {
 			// Provider redelivered the same IPN — already queued or processed.
 			return nil
 		}
@@ -220,7 +221,7 @@ func (c *Client) enqueueBulkTransferTask(taskType, prefix string, payload bulktr
 
 	info, err := c.client.Enqueue(task)
 	if err != nil {
-		if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+		if errors.Is(err, asynqlib.ErrDuplicateTask) || errors.Is(err, asynqlib.ErrTaskIDConflict) {
 			return nil
 		}
 		return fmt.Errorf("failed to enqueue %s task: %w", taskType, err)
@@ -267,7 +268,7 @@ func (c *Client) EnqueuePayrollReportEmail(req dto.SendPayrollReportEmailRequest
 
 	info, err := c.client.Enqueue(task)
 	if err != nil {
-		if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+		if errors.Is(err, asynqlib.ErrDuplicateTask) || errors.Is(err, asynqlib.ErrTaskIDConflict) {
 			logger.Info("Payroll report email task already queued",
 				"task_id", idempotencyKey,
 				"initiated_by", initiatedBy,
@@ -382,7 +383,7 @@ func (c *Client) EnqueueAutoRejectCheckout(attendanceID uint, at time.Time) erro
 
 	info, err := c.client.Enqueue(task)
 	if err != nil {
-		if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+		if errors.Is(err, asynqlib.ErrDuplicateTask) || errors.Is(err, asynqlib.ErrTaskIDConflict) {
 			return nil
 		}
 		return fmt.Errorf("failed to enqueue auto-reject checkout task: %w", err)
@@ -420,7 +421,7 @@ func (c *Client) EnqueueCreditQuota(attendanceID uint, at time.Time) error {
 
 	info, err := c.client.Enqueue(task)
 	if err != nil {
-		if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+		if errors.Is(err, asynqlib.ErrDuplicateTask) || errors.Is(err, asynqlib.ErrTaskIDConflict) {
 			return nil
 		}
 		return fmt.Errorf("failed to enqueue quota credit task: %w", err)

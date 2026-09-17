@@ -113,7 +113,7 @@ export const EmployeeAdBanner = () => {
             type="button"
             aria-label="Đóng quảng cáo"
             onClick={() => persistStage('hidden')}
-            className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-full text-[var(--employee-text-muted)] transition-colors hover:bg-[var(--employee-surface-muted)] hover:text-[var(--employee-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]"
+            className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-[var(--employee-text-muted)] transition-colors hover:bg-[var(--employee-surface-muted)] hover:text-[var(--employee-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -126,7 +126,7 @@ export const EmployeeAdBanner = () => {
               </span>
             </div>
 
-            <h3 className="employee-type-strong mt-1 font-semibold leading-snug text-[var(--employee-text)]">
+            <h3 className="employee-type-strong mt-1 pr-10 font-semibold leading-snug text-[var(--employee-text)]">
               {banner.title}
             </h3>
 
@@ -139,7 +139,7 @@ export const EmployeeAdBanner = () => {
             <button
               type="button"
               onClick={() => setSheetOpen(true)}
-              className="employee-type-body-sm mt-0.5 inline-flex items-center gap-0.5 font-semibold text-[var(--employee-accent)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]"
+              className="employee-type-body-sm mt-0.5 inline-flex min-h-11 items-center gap-0.5 font-semibold text-[var(--employee-accent)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]"
             >
               Xem chi tiết
               <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -152,7 +152,7 @@ export const EmployeeAdBanner = () => {
                   type="button"
                   onClick={() => handleCTAClick(cta, index)}
                   className={cn(
-                    'employee-type-body-sm inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 font-semibold transition-colors active:scale-[0.98]',
+                    'employee-type-body-sm inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 py-2 font-semibold transition-colors active:scale-[0.98]',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] focus-visible:ring-offset-2',
                     index === 0
                       ? 'bg-[var(--employee-accent)] text-white hover:bg-[var(--employee-accent-strong)]'

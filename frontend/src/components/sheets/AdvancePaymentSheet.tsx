@@ -156,6 +156,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
+        title="Ứng lương"
         side="bottom"
         className="h-[92vh] rounded-t-2xl p-0 flex flex-col overflow-hidden bg-primary/5 shadow-[0_-4px_24px_rgba(0,0,0,0.08)]"
       >

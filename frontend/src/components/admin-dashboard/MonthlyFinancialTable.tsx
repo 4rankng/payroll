@@ -48,7 +48,7 @@ export const MonthlyFinancialTable = memo(() => {
             Không có dữ liệu trong 12 tháng gần đây
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring" tabIndex={0} role="region" aria-label="Tài chính theo tháng">
             {/* Total profit summary banner */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-border/40">
               <span className="text-xs font-medium text-foreground">Lợi nhuận tích lũy</span>

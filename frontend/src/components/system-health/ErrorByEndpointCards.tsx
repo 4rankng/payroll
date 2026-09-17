@@ -65,7 +65,7 @@ export function ErrorByEndpointCards({ days = 1 }: ErrorByEndpointCardsProps) {
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <span className="text-xs text-muted-foreground">Tổng lỗi:</span>
-              <span className="font-bold text-red-600 tabular-nums">
+              <span className="font-bold text-red-700 tabular-nums">
                 {row.errorTotal.toLocaleString()}
               </span>
             </div>

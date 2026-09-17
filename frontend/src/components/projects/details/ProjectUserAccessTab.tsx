@@ -222,7 +222,8 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
                       setIsRevokeModalOpen(true);
                     }}
                     disabled={revokeAccessMutation.isPending}
-                    className="text-destructive hover:text-destructive h-7 w-7 p-0"
+                    aria-label={`Thu hồi quyền của ${projectUser.user_fullname}`}
+                    className="text-destructive hover:text-destructive h-11 w-11 shrink-0 p-0"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

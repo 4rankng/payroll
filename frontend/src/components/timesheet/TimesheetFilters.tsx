@@ -79,7 +79,7 @@ export const TimesheetFilters = () => {
         )}
         <div className="flex items-center gap-1.5">
         <Select value={selectedMonth} onValueChange={onMonthChange}>
-          <SelectTrigger className="h-11 w-[112px] shrink-0 text-xs border-border/60">
+          <SelectTrigger aria-label="Lọc tháng bảng công" className="h-11 w-[112px] shrink-0 text-xs border-border/60">
             <SelectValue placeholder="Tháng" />
           </SelectTrigger>
           <SelectContent>
@@ -101,7 +101,7 @@ export const TimesheetFilters = () => {
               )}
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-auto">
+          <SheetContent side="bottom" className="h-auto max-h-[85dvh] overflow-y-auto px-4 pt-4">
             <SheetHeader className="mb-4">
               <SheetTitle className="text-base">Bộ lọc</SheetTitle>
             </SheetHeader>
@@ -109,7 +109,7 @@ export const TimesheetFilters = () => {
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-muted-foreground">Trạng thái</Label>
                 <Select value={statusFilter} onValueChange={onStatusChange}>
-                  <SelectTrigger className="h-11"><SelectValue placeholder="Tất cả trạng thái" /></SelectTrigger>
+                  <SelectTrigger aria-label="Lọc trạng thái bảng công" className="h-11"><SelectValue placeholder="Tất cả trạng thái" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tất cả trạng thái</SelectItem>
                     {STATUS_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}

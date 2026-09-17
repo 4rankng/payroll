@@ -66,7 +66,7 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 	endpoint := "/api/v1/timesheets/partner-import"
 
 	// BCC sample file shipped with the repo (path relative to backend/ working dir).
-	bccFile := "../docs/timesheets-excel/BCC LƯƠNG DỰ ÁN EVA Sample.xlsx"
+	bccFile := getEnvOrDefault("PAYROLL_BCC_FIXTURE", "../docs/WeeklyBCC/BCC LGD.xlsx")
 	if _, err := os.Stat(bccFile); os.IsNotExist(err) {
 		reporter.Skip(flowBCC, "All BCC file upload tests", "sample BCC Excel file not found: "+bccFile)
 		return
@@ -211,8 +211,8 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 		return AssertEqual("http_status", 200, status)
 	})
 
-	// ── 6. Re-upload after approval → rejected entirely ───────────────────────
-	reporter.RunTest(flowBCC, "Re-upload after timesheet approval is rejected", func() error {
+	// ── 6. Re-upload preserves approved rows ─────────────────────────────────
+	reporter.RunTest(flowBCC, "Re-upload preserves approved timesheets", func() error {
 		// First upload to get some timesheets.
 		apiResp1, status1, err := partnerClient.UploadFile(endpoint, "file", bccFile,
 			map[string]string{"project_id": projectIDStr, "for_month": time.Now().Format("2006-01")})
@@ -231,15 +231,48 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 		}
 		r1 = *terminal1
 		if r1.Status != "completed" || r1.CreatedCount == 0 {
-			fmt.Println("    sub-test skipped: no timesheets created on first upload")
-			return nil
+			return fmt.Errorf("approval prerequisite: import status=%s created=%d", r1.Status, r1.CreatedCount)
 		}
 
-		// Admin approve all pending for this project.
-		_, _, _ = adminClient.Post("/api/v1/timesheets/bulk-approve",
-			map[string]any{"project_id": projectID, "approve_all": true})
+		// Approve the actual imported rows. The endpoint accepts explicit IDs,
+		// and reviewed rows are preserved while pending rows may be replaced.
+		rows, err := loadAllPages[TimesheetResponse](adminClient, fmt.Sprintf("/api/v1/timesheets?project_ids=%d", projectID))
+		if err != nil {
+			return err
+		}
+		var ids []uint
+		before := make(map[uint]TimesheetResponse)
+		for _, row := range rows {
+			if row.Status == "pending_approval" && strings.HasPrefix(row.Date, time.Now().Format("2006-01")) {
+				ids = append(ids, row.ID)
+				before[row.ID] = row
+			}
+		}
+		if len(ids) == 0 {
+			return fmt.Errorf("no pending imported rows to approve")
+		}
+		defer func() {
+			_, status, resetErr := adminClient.Post("/api/v1/timesheets/bulk-reset", BulkApproveRequest{TimesheetIDs: ids})
+			if resetErr != nil || status >= 400 {
+				fmt.Printf("    cleanup reset failed: HTTP %d, %v\n", status, resetErr)
+			}
+		}()
+		approval, status, err := adminClient.Post("/api/v1/timesheets/bulk-approve", BulkApproveRequest{TimesheetIDs: ids})
+		if err != nil {
+			return err
+		}
+		if status != 200 {
+			return fmt.Errorf("approve rows: HTTP %d", status)
+		}
+		var approved BulkOperationResponse
+		if err := json.Unmarshal(approval.Data, &approved); err != nil {
+			return err
+		}
+		if approved.Approved != len(ids) {
+			return fmt.Errorf("approved %d of %d rows", approved.Approved, len(ids))
+		}
 
-		// Re-upload — must be rejected.
+		// Re-upload should complete with protected rows skipped.
 		apiResp2, status2, err2 := partnerClient.UploadFile(endpoint, "file", bccFile,
 			map[string]string{"project_id": projectIDStr, "for_month": time.Now().Format("2006-01")})
 		if err2 != nil {
@@ -256,8 +289,27 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 			return err
 		}
 		r2 = *terminal2
-		fmt.Printf("    re-upload after approval: status=%s\n", r2.Status)
-		return AssertEqual("status_after_approval", "failed", r2.Status)
+		if r2.Status != "completed" || r2.CreatedCount != 0 || r2.SkippedCount == 0 {
+			return fmt.Errorf("protected re-upload: status=%s created=%d skipped=%d", r2.Status, r2.CreatedCount, r2.SkippedCount)
+		}
+		rows, err = loadAllPages[TimesheetResponse](adminClient, fmt.Sprintf("/api/v1/timesheets?project_ids=%d", projectID))
+		if err != nil {
+			return err
+		}
+		verified := 0
+		for _, row := range rows {
+			if original, ok := before[row.ID]; ok {
+				if row.Status != "approved" || row.Amount != original.Amount || row.HoursWorked != original.HoursWorked || row.Date != original.Date || row.PayType != original.PayType {
+					return fmt.Errorf("approved timesheet %d changed on re-upload", row.ID)
+				}
+				verified++
+			}
+		}
+		if verified != len(ids) {
+			return fmt.Errorf("approved rows missing: found %d of %d", verified, len(ids))
+		}
+		fmt.Printf("    re-upload preserved %d approved rows; skipped=%d\n", verified, r2.SkippedCount)
+		return nil
 	})
 
 }

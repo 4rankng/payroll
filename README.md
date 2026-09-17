@@ -57,7 +57,15 @@ cd backend && make db
 make dev
 ```
 
-Sandbox mode activates 9Pay mock (localhost:9001) and OnePay mock (localhost:9002). Email is captured in-process, not sent.
+Sandbox mode serves both the 9Pay and OnePay mocks on localhost:9001. Email is captured in-process, not sent.
+
+Fresh local MySQL volumes use `backend/scripts/init-local-db.sh`. It applies
+only forward schema migrations, excludes the production-specific transaction
+repair, and reconciles historical schema omissions before dependent migrations.
+It refuses to run against a non-empty database. Existing local volumes are
+preserved; migrations are never applied automatically to them or to production.
+Run `make -C backend db-bootstrap-test` to verify a fresh schema in a separate
+Docker container without published ports.
 
 ### Testing
 
@@ -71,6 +79,16 @@ cd frontend && pnpm lint && pnpm type-check
 # Integration tests (requires running backend)
 make api-test
 ```
+
+Use synthetic local accounts through `PAYROLL_ADMIN_USER`, `PAYROLL_ADMIN_PASS`,
+`PAYROLL_PARTNER_USERS`, and `PAYROLL_COMMON_PASS`. `PAYROLL_TEST_DB_DSN` can point
+repository unit tests at a separate local schema to keep their cleanup isolated.
+Import fixtures can be overridden with `PAYROLL_BCC_FIXTURE` and
+`PAYROLL_FLEXPAY_FIXTURE`. To run the wallet payment happy path, set
+`PAYROLL_WALLET_BULK_FIXTURE` to a fresh OnePay export and
+`PAYROLL_WALLET_BULK_TIMESHEET_IDS` to its comma-separated timesheet IDs. That test
+requires the local provider and verifies completion, ledger linkage, recorded
+payment totals, and the KQ workbook; without a fixture it reports an explicit skip.
 
 ### Deployment
 

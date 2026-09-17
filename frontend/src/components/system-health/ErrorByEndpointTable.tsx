@@ -63,7 +63,7 @@ export function ErrorByEndpointTable() {
       ) : (
         <div className="border rounded-xl overflow-hidden">
           <div className="grid grid-cols-[1fr_64px_72px_160px] gap-x-4 px-4 py-2 border-b bg-muted/30
-                          text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                          text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <button onClick={() => handleSort("endpoint")} className="text-left hover:text-foreground transition-colors">
               Endpoint <SortIcon col="endpoint" sortKey={sortKey} sortDir={sortDir} />
             </button>
@@ -91,13 +91,13 @@ export function ErrorByEndpointTable() {
                 <div className="overflow-x-auto">
                   <EndpointLabel endpoint={row.endpoint} />
                 </div>
-                <span className="text-right text-sm font-bold text-red-600 tabular-nums">
+                <span className="text-right text-sm font-bold text-red-700 tabular-nums">
                   {row.errorTotal.toLocaleString()}
                 </span>
                 <span className={cn(
                   "text-right text-sm font-semibold tabular-nums",
-                  row.errorRate > 20 ? "text-red-600"
-                    : row.errorRate > 5 ? "text-amber-600"
+                  row.errorRate > 20 ? "text-red-700"
+                    : row.errorRate > 5 ? "text-amber-700"
                     : "text-muted-foreground"
                 )}>
                   {row.errorRate.toFixed(1)}%

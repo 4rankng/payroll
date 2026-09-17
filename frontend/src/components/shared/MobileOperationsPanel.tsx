@@ -51,8 +51,8 @@ interface MobileTaskListProps {
 
 const toneClasses: Record<MobileOperationTone, { icon: string; value: string }> = {
   primary: { icon: 'bg-primary/10 text-primary', value: 'text-primary' },
-  success: { icon: 'bg-success/10 text-success', value: 'text-success' },
-  warning: { icon: 'bg-warning/10 text-warning', value: 'text-warning' },
+  success: { icon: 'bg-success/10 text-success', value: 'text-emerald-700' },
+  warning: { icon: 'bg-warning/10 text-warning', value: 'text-amber-700' },
   danger: { icon: 'bg-destructive/10 text-destructive', value: 'text-destructive' },
   neutral: { icon: 'bg-muted text-muted-foreground', value: 'text-foreground' },
 };
@@ -71,19 +71,19 @@ export function MobileOperationsPanel({
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-[28px] border border-[hsl(var(--surface-border))] bg-white shadow-none',
+        'overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white shadow-none',
         className,
       )}
     >
-      <div className="px-4 pb-4 pt-4">
-        <div className="flex flex-col items-start gap-3 min-[420px]:flex-row min-[420px]:justify-between">
+      <div className="px-3 py-3">
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
           <div className="min-w-0">
             {eyebrow && (
-              <div className="mb-2 inline-flex min-h-7 items-center rounded-full bg-muted px-2.5 text-[11px] font-semibold text-muted-foreground">
+              <div className="mb-1 inline-flex items-center text-[11px] font-semibold text-muted-foreground">
                 {eyebrow}
               </div>
             )}
-            <h2 className="font-display text-[20px] font-extrabold leading-tight tracking-normal text-foreground">
+            <h2 className="font-display text-base font-extrabold leading-tight tracking-normal text-foreground">
               {title}
             </h2>
             {subtitle && (
@@ -92,7 +92,7 @@ export function MobileOperationsPanel({
               </p>
             )}
           </div>
-          <div className="min-w-0 w-full text-left min-[420px]:w-auto min-[420px]:shrink-0 min-[420px]:text-right">
+          <div className="min-w-0 text-right">
             <p className="text-[11px] font-semibold uppercase tracking-normal text-muted-foreground">
               {primaryLabel}
             </p>
@@ -109,22 +109,18 @@ export function MobileOperationsPanel({
       </div>
 
       {metrics.length > 0 && (
-        <div className="grid grid-cols-1 border-t border-border/60 min-[420px]:grid-cols-2">
+        <div className="divide-y divide-border/60 border-t border-border/60">
           {metrics.map((metric, index) => (
             <OperationMetricCell
               key={`${metric.label}-${index}`}
               metric={metric}
-              className={cn(
-                index % 2 === 1 && 'min-[420px]:border-l',
-                index < 2 && 'min-[420px]:border-t-0',
-              )}
             />
           ))}
         </div>
       )}
 
       {actions.length > 0 && (
-        <div className="border-t border-border/60 px-2 py-2">
+        <div className="border-t border-border/60 px-1 py-1">
           <div className="grid grid-cols-4 gap-1">
             {actions.map((action) => {
               const Icon = action.icon;
@@ -134,7 +130,7 @@ export function MobileOperationsPanel({
                   type="button"
                   onClick={action.onClick}
                   disabled={action.disabled}
-                  className="relative flex min-h-[66px] min-w-0 touch-manipulation flex-col items-center justify-center gap-1 rounded-2xl px-1.5 text-center transition-colors active:bg-muted disabled:pointer-events-none disabled:opacity-45"
+                  className="relative flex min-h-[48px] min-w-0 touch-manipulation flex-col items-center justify-center gap-1 rounded-lg px-1.5 text-center transition-colors active:bg-muted disabled:pointer-events-none disabled:opacity-45"
                 >
                   <Icon className="h-5 w-5 text-primary" />
                   <span className="max-w-full text-[11px] font-semibold leading-tight text-foreground">
@@ -167,19 +163,19 @@ function OperationMetricCell({
   const content = (
     <>
       {Icon && (
-        <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full', tone.icon)}>
+        <span className={cn('flex h-6 w-6 shrink-0 items-center justify-center rounded-md', tone.icon)}>
           <Icon className="h-4 w-4" />
         </span>
       )}
-      <span className="min-w-0 flex-1">
+      <span className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2">
         <span className="block text-xs font-medium leading-tight text-muted-foreground">
           {metric.label}
         </span>
-        <span className={cn('mt-1 block break-words text-base font-extrabold leading-tight tabular-nums', tone.value)}>
+        <span className={cn('block break-words text-sm font-extrabold leading-tight tabular-nums', tone.value)}>
           {metric.value}
         </span>
         {metric.helper && (
-          <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">
+          <span className="col-span-2 block text-[11px] leading-snug text-muted-foreground">
             {metric.helper}
           </span>
         )}
@@ -188,7 +184,7 @@ function OperationMetricCell({
   );
 
   const itemClassName = cn(
-    'flex min-h-[76px] items-start gap-3 border-t border-border/60 px-4 py-3 text-left first:border-t-0',
+    'flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left',
     metric.onClick && 'touch-manipulation transition-colors active:bg-muted',
     className,
   );
@@ -210,11 +206,11 @@ export function MobileTaskList({ title, subtitle, items, className }: MobileTask
   return (
     <section
       className={cn(
-        'overflow-hidden rounded-[28px] border border-[hsl(var(--surface-border))] bg-white shadow-none',
+        'overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white shadow-none',
         className,
       )}
     >
-      <div className="px-4 py-3">
+      <div className="px-3 py-2">
         <h2 className="text-sm font-extrabold leading-tight text-foreground">{title}</h2>
         {subtitle && (
           <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{subtitle}</p>
@@ -235,7 +231,7 @@ function TaskRow({ item }: { item: MobileTaskRow }) {
   const content = (
     <>
       {Icon && (
-        <span className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full', tone.icon)}>
+        <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full', tone.icon)}>
           <Icon className="h-4 w-4" />
         </span>
       )}
@@ -261,7 +257,7 @@ function TaskRow({ item }: { item: MobileTaskRow }) {
   );
 
   const className =
-    'flex min-h-[64px] w-full items-center gap-3 px-4 py-3 text-left touch-manipulation transition-colors active:bg-muted';
+    'flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left touch-manipulation transition-colors active:bg-muted';
 
   if (item.onClick) {
     return (

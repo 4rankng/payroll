@@ -150,7 +150,7 @@ export const DisbursementFeeScheduleSection = () => {
             description="Thêm cấu hình đầu tiên để bắt đầu áp dụng cho các giao dịch chi hộ"
           />
         ) : (
-          <div className="rounded-lg border overflow-x-auto">
+          <div tabIndex={0} role="region" aria-label="Lịch sử cấu hình phí chi hộ" className="rounded-lg border overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <Table>
               <TableHeader>
                 <TableRow>

@@ -7,7 +7,6 @@ import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useEmployeeProfile,
-  useEmployeeSummary,
   useUpdateEmployeePassword,
   useEmployeeTimesheetsInfinite,
 } from "@/hooks/api/useEmployeePortal";
@@ -38,9 +37,13 @@ const EmployeePage = () => {
   const [notificationSheetOpen, setNotificationSheetOpen] = useState(false);
 
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
-  const { data: summaryData, isLoading: summaryLoading } = useEmployeeSummary(4);
-  const summary = summaryData?.data;
-  const { data: bulkTransferSetting } = useSettingByKey("bulk_transfer_payment_percentage", !!summary);
+  const {
+    data: bulkTransferSetting,
+    isLoading: paymentSettingLoading,
+    isError: paymentSettingError,
+    isFetching: paymentSettingFetching,
+    refetch: refetchPaymentSetting,
+  } = useSettingByKey("bulk_transfer_payment_percentage", !!profile);
   const { data: unreadNotifications } = useUnreadNotifications();
   const bulkTransferPercentage = bulkTransferSetting?.value ? parseFloat(bulkTransferSetting.value) : 0;
 
@@ -54,7 +57,7 @@ const EmployeePage = () => {
     [month.fromDate, month.toDate]
   );
 
-  const { data: infiniteData, isLoading: timesheetsLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data: infiniteData, isLoading: timesheetsLoading, isError: timesheetsError, isFetching: timesheetsFetching, refetch: refetchTimesheets, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useEmployeeTimesheetsInfinite(baseFilters, 50);
 
   const {
@@ -88,7 +91,7 @@ const EmployeePage = () => {
     };
   }, [bulkTransferPercentage, infiniteData]);
   const { observerRef } = useInfiniteScroll({
-    hasMore: !!hasNextPage,
+    hasMore: !!hasNextPage && !timesheetsError && !paymentSettingError,
     isLoading: isFetchingNextPage || timesheetsLoading,
     onLoadMore: () => { fetchNextPage(); },
   });
@@ -140,7 +143,12 @@ const EmployeePage = () => {
     setPasswordSheetOpen(false);
   };
 
-  const isInitialLoading = profileLoading || summaryLoading || timesheetsLoading;
+  const payrollError = timesheetsError || paymentSettingError;
+  const isInitialLoading = profileLoading || paymentSettingLoading || timesheetsLoading;
+  const handleRetryPayroll = () => {
+    if (timesheetsFetching || paymentSettingFetching) return;
+    void Promise.all([refetchTimesheets(), refetchPaymentSetting()]);
+  };
 
   if (isInitialLoading) {
     return (
@@ -172,7 +180,7 @@ const EmployeePage = () => {
           onNotificationClick={() => setNotificationSheetOpen(true)}
           onChangePassword={() => setPasswordSheetOpen(true)}
           onLogout={handleLogout}
-          wallet={{ model: homeModel, paidAmount: totalPaid, totalAmount: monthlyTotalSalary }}
+          wallet={payrollError ? undefined : { model: homeModel, paidAmount: totalPaid, totalAmount: monthlyTotalSalary }}
         />
       }
     >
@@ -184,6 +192,9 @@ const EmployeePage = () => {
           days={groupedDays}
           bulkTransferPercentage={bulkTransferPercentage}
           isLoading={timesheetsLoading}
+          isError={payrollError}
+          isRetrying={timesheetsFetching || paymentSettingFetching}
+          onRetry={handleRetryPayroll}
           isFetchingNextPage={isFetchingNextPage}
           observerRef={observerRef}
         />

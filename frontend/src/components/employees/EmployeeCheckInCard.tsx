@@ -1309,7 +1309,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
                 style={{
                   boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
                 }}
@@ -1453,7 +1453,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className={`employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex ${showReadyPop ? "check-in-ready-pop" : ""}`}
+                className={`employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex ${showReadyPop ? "check-in-ready-pop" : ""}`}
                 style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}
@@ -1485,7 +1485,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
                 style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}
@@ -1515,7 +1515,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
                 style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
                 onClick={location.requestPermission}
               >
@@ -1574,7 +1574,7 @@ export function EmployeeCheckInCard({
               <Button
                 size="lg"
                 variant="outline"
-                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl border-red-300 bg-white font-semibold text-red-950 hover:bg-red-100 lg:inline-flex"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl border-red-300 bg-white font-semibold text-red-950 hover:bg-red-100 lg:inline-flex"
                 onClick={location.retry}
               >
                 Tôi đã bật vị trí
@@ -1595,7 +1595,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
                 style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}

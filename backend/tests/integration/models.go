@@ -136,6 +136,7 @@ type EmployeeProjectInfo struct {
 	StartDate              string  `json:"start_date"`
 	LastDate               *string `json:"last_date"`
 	PaymentSchedule        string  `json:"payment_schedule"`
+	CheckInEnabled         bool    `json:"check_in_enabled"`
 	PendingPaymentSchedule *string `json:"pending_payment_schedule"`
 }
 
@@ -151,6 +152,7 @@ type BankResponse struct {
 	BranchName string `json:"branch_name"`
 	BankCode   string `json:"bank_code"`
 	Bin        string `json:"bin"`
+	SwiftCode  string `json:"swift_code"`
 }
 
 type ListBanksResponse struct {

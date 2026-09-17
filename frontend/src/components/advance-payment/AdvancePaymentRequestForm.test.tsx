@@ -70,6 +70,17 @@ const legacyJuneHistory: AdvancePaymentHistoryItem[] = [
 ];
 
 describe("AdvancePaymentRequestForm", () => {
+  it("shows fee failure with retry and keeps the money request disabled", () => {
+    const onRetryFee = vi.fn();
+    render(<AdvancePaymentRequestForm {...baseProps} info={info} feeDetails={null} feeError onRetryFee={onRetryFee} />);
+    fireEvent.click(screen.getByRole("button", { name: "50%" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Không thể tính phí chuyển tiền");
+    expect(screen.queryByText("Đang tính...")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Yêu cầu ứng lương" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Tính lại phí" }));
+    expect(onRetryFee).toHaveBeenCalledTimes(1);
+  });
+
   it("shows the compact quick choices and submits a valid selected amount", () => {
     const onSubmit = vi.fn();
     render(<AdvancePaymentRequestForm {...baseProps} info={info} onSubmit={onSubmit} />);

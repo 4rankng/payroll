@@ -1,3 +1,4 @@
+import { parseTimesheetStatusFilter } from "@/utils/timesheetFilterHelpers";
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
@@ -49,7 +50,7 @@ const TimesheetPage = () => {
 
   // Get initial values from URL parameters
   const urlEmployeeId = searchParams.get('employee');
-  const urlStatus = searchParams.get('status');
+  const urlStatus = parseTimesheetStatusFilter(searchParams.get('status'));
 
   const timesheetManagement = useTimesheetManagement({ userRole: 'admin' });
   const queryClient = useQueryClient();
@@ -72,7 +73,7 @@ const TimesheetPage = () => {
       timesheetManagement.setSelectedEmployee(urlEmployeeId);
     }
     if (urlStatus && urlStatus !== timesheetManagement.statusFilter) {
-      timesheetManagement.setStatusFilter(urlStatus as Timesheet['status'] | Timesheet['payment_status']);
+      timesheetManagement.setStatusFilter(urlStatus);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

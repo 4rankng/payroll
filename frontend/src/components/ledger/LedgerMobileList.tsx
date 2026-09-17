@@ -40,8 +40,8 @@ const ACCOUNT_COLORS: Record<string, string> = {
 
 function getAmountColor(account: string, amount: number) {
   if (['cash', 'receivable', 'revenue'].includes(account)) return amount >= 0 ? 'text-emerald-700' : 'text-red-600';
-  if (account === 'expense') return amount > 0 ? 'text-orange-600' : 'text-muted-foreground';
-  if (account === 'payable') return amount > 0 ? 'text-red-600' : 'text-emerald-600';
+  if (account === 'expense') return amount > 0 ? 'text-orange-700' : 'text-muted-foreground';
+  if (account === 'payable') return amount > 0 ? 'text-red-600' : 'text-emerald-700';
   return 'text-foreground';
 }
 
@@ -152,7 +152,7 @@ export function LedgerMobileList({
                     {evidence.type === 'url' ? (
                       <ExternalLink className="h-3 w-3 text-blue-500" />
                     ) : (
-                      <Download className="h-3 w-3 text-emerald-600" />
+                      <Download className="h-3 w-3 text-emerald-700" />
                     )}
                   </span>
                 )}

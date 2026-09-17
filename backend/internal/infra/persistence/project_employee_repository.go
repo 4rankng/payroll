@@ -60,7 +60,7 @@ func (r *ProjectEmployeeRepository) Create(ctx context.Context, assignment *doma
 
 func (r *ProjectEmployeeRepository) GetByID(ctx context.Context, id uint) (*domain.ProjectEmployee, error) {
 	var assignment domain.ProjectEmployee
-	query := r.DB.WithContext(ctx)
+	query := r.getDB(ctx)
 	err := r.applyCommonPreloads(query).First(&assignment, id).Error
 
 	if err != nil {
@@ -245,7 +245,7 @@ func (r *ProjectEmployeeRepository) GetActiveAssignmentsByProjectsAndEmployees(c
 
 	// Fetch all active assignments for the given projects and employees, excluding deleted projects and employees
 	// This uses the composite index we created: idx_project_employees_project_employee
-	query := r.DB.WithContext(ctx).
+	query := r.getDB(ctx).
 		Joins("INNER JOIN projects ON project_employees.project_id = projects.id AND projects.deleted_at IS NULL").
 		Joins("INNER JOIN employees ON project_employees.employee_id = employees.id AND employees.deleted_at IS NULL").
 		Where("project_employees.project_id IN ? AND project_employees.employee_id IN ? AND (project_employees.last_date IS NULL OR project_employees.last_date >= ?)",

@@ -117,7 +117,7 @@ export function UserInvestigateTable({ days = 14, limit = 10 }: Props) {
                         <span className="text-xs text-muted-foreground">Tổng lỗi:</span>
                         <span className={cn(
                           "text-base font-bold tabular-nums",
-                          isCritical ? "text-red-600" : isWarn ? "text-amber-600" : "text-foreground"
+                          isCritical ? "text-red-700" : isWarn ? "text-amber-700" : "text-foreground"
                         )}>
                           {row.totalCount.toLocaleString()}
                         </span>

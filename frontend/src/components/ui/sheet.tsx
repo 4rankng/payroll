@@ -4,6 +4,8 @@ import { X } from "lucide-react"
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { useDialogFocusReturn } from "@/hooks/useDialogFocusReturn"
+import { useIsMobile } from "@/hooks/useBreakpoint"
 
 const Sheet = SheetPrimitive.Root
 
@@ -57,22 +59,31 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, title, description, ...props }, ref) => (
+>(({ side = "right", className, children, title, description, onOpenAutoFocus, onCloseAutoFocus, style, ...props }, ref) => {
+  const isMobile = useIsMobile();
+  const focusReturn = useDialogFocusReturn(onOpenAutoFocus, onCloseAutoFocus);
+  // Tablet still uses the mobile sheet; callers' sm/md desktop widths must
+  // not leave a gap between a horizontal sheet and either viewport edge.
+  const edgeToEdge = isMobile && (side === 'bottom' || side === 'top');
+  return (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
       className={cn(sheetVariants({ side }), className)}
       {...props}
+      style={edgeToEdge ? { ...style, width: '100%', maxWidth: 'none', left: 0, right: 0, marginLeft: 0, marginRight: 0 } : style}
+      {...focusReturn}
     >
-      {/* Provide sr-only fallbacks so screen readers have Title/Description when omitted */}
-      <SheetPrimitive.Title className="sr-only">{title ?? 'Sheet'}</SheetPrimitive.Title>
-      <SheetPrimitive.Description className="sr-only">{description ?? ''}</SheetPrimitive.Description>
+      {/* Prefer a caller's visible SheetTitle to a competing generic label. */}
+      {title ? <SheetPrimitive.Title className="sr-only">{title}</SheetPrimitive.Title> : null}
+      {description !== undefined ? <SheetPrimitive.Description className="sr-only">{description}</SheetPrimitive.Description> : null}
       {children}
 {/* Close button removed - handled by custom templates */}
     </SheetPrimitive.Content>
   </SheetPortal>
-))
+  );
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({

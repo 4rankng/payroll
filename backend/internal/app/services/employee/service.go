@@ -129,13 +129,17 @@ func (s *EmployeeService) createEmployee(
 
 	createdEmployee := result.(*domain.Employee)
 
-	// Publish domain event (outside transaction)
+	// Imports may own an outer transaction. Publish only after it commits so
+	// consumers never observe a missing employee or audit a rolled-back import.
 	actorFullName := audit.GetActorFullName(ctx, s.UserRepo, createdBy)
 	event := domain.NewEmployeeCreatedEvent(ctx, createdEmployee, createdBy, actorFullName)
-	if err := s.events.Publish(ctx, event); err != nil {
-		logger := observability.GetLogger()
-		logger.Warn("Failed to publish EmployeeCreatedEvent", "employee_id", createdEmployee.ID, "error", err)
-	}
+	afterCommitCtx := domain.WithoutTransactionContext(context.WithoutCancel(ctx))
+	domain.RegisterAfterCommit(ctx, func() {
+		if err := s.events.Publish(afterCommitCtx, event); err != nil {
+			logger := observability.GetLogger()
+			logger.Warn("Failed to publish EmployeeCreatedEvent", "employee_id", createdEmployee.ID, "error", err)
+		}
+	})
 
 	return createdEmployee, nil
 }

@@ -157,22 +157,31 @@ func runEmployeeCRUDTests(client *APIClient, data *TestData, reporter *Reporter,
 		}
 		bankAcc := "1234567890"
 		bankName := "Test Account"
+		var bankID uint
+		for _, bank := range data.Banks {
+			if bank.SwiftCode != "" {
+				bankID = bank.ID
+				break
+			}
+		}
+		if bankID == 0 {
+			return fmt.Errorf("bank fixture with SWIFT code is required for account update")
+		}
 		body := UpdateEmployeeRequest{
+			BankID:            &bankID,
 			BankAccountNumber: &bankAcc,
 			BankAccountName:   &bankName,
 		}
-		if _, _, err := admin.Put(fmt.Sprintf("/api/v1/employees/%d", testEmpID), body); err != nil {
+		if _, status, err := admin.Put(fmt.Sprintf("/api/v1/employees/%d", testEmpID), body); err != nil {
 			return fmt.Errorf("update bank: %w", err)
+		} else if status >= 400 {
+			return fmt.Errorf("update bank returned HTTP %d", status)
 		}
 		var resp EmployeeResponse
 		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/employees/%d", testEmpID), &resp); err != nil {
 			return fmt.Errorf("get after bank update: %w", err)
 		}
 		fmt.Printf("    Bank account after update: number=%q, name=%q\n", resp.BankAccountNumber, resp.BankAccountName)
-		if resp.BankAccountNumber == "" {
-			fmt.Printf("    Bank update may require bank_id - skipping assertion\n")
-			return nil
-		}
 		return AssertEqual("bank_account_number", bankAcc, resp.BankAccountNumber)
 	})
 
@@ -233,7 +242,7 @@ func runEmployeeCRUDTests(client *APIClient, data *TestData, reporter *Reporter,
 	})
 
 	reporter.RunTest(flowEmployee, "Edge: get non-existent employee", func() error {
-		_, statusCode, _ := admin.Get("/api/v1/employees/999999")
+		_, statusCode, _ := admin.Get(fmt.Sprintf("/api/v1/employees/%d", nonexistentID))
 		if statusCode < 400 {
 			return fmt.Errorf("expected error for non-existent employee, got HTTP %d", statusCode)
 		}
@@ -391,7 +400,7 @@ func runEmployeeCRUDTests(client *APIClient, data *TestData, reporter *Reporter,
 	reporter.RunTest(flowEmployee, "Edge: update non-existent employee", func() error {
 		newName := "Ghost"
 		body := UpdateEmployeeRequest{Fullname: &newName}
-		_, statusCode, _ := admin.Put("/api/v1/employees/999999", body)
+		_, statusCode, _ := admin.Put(fmt.Sprintf("/api/v1/employees/%d", nonexistentID), body)
 		if statusCode < 400 {
 			return fmt.Errorf("expected error updating non-existent employee, got HTTP %d", statusCode)
 		}
@@ -399,7 +408,7 @@ func runEmployeeCRUDTests(client *APIClient, data *TestData, reporter *Reporter,
 	})
 
 	reporter.RunTest(flowEmployee, "Edge: delete non-existent employee", func() error {
-		_, statusCode, _ := admin.Delete("/api/v1/employees/999999")
+		_, statusCode, _ := admin.Delete(fmt.Sprintf("/api/v1/employees/%d", nonexistentID))
 		if statusCode < 400 {
 			return fmt.Errorf("expected error deleting non-existent employee, got HTTP %d", statusCode)
 		}

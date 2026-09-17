@@ -89,7 +89,7 @@ export const useZaloStatus = () =>
 export const useSaveZaloCredentials = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: zaloAdminService.saveCredentials.bind(zaloAdminService),
+    mutationFn: (payload: Parameters<typeof zaloAdminService.saveCredentials>[0]) => zaloAdminService.saveCredentials(payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: STATUS_KEY }),
   });
 };
@@ -114,7 +114,7 @@ export const useSetFlexPayZNSEnabled = () => {
 export const useRefreshZaloToken = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: zaloAdminService.refreshNow.bind(zaloAdminService),
+    mutationFn: () => zaloAdminService.refreshNow(),
     meta: { skipGlobalError: true },
     onSuccess: () => qc.invalidateQueries({ queryKey: STATUS_KEY }),
   });
@@ -123,6 +123,6 @@ export const useRefreshZaloToken = () => {
 /** Fire a test ZNS to verify the connection. See ZaloTestSendResult for shape. */
 export const useTestZaloSend = () =>
   useMutation({
-    mutationFn: zaloAdminService.testSend.bind(zaloAdminService),
+    mutationFn: (payload: Parameters<typeof zaloAdminService.testSend>[0]) => zaloAdminService.testSend(payload),
     meta: { skipGlobalError: true },
   });

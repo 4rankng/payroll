@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -76,6 +78,20 @@ func runSaoKeTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 
 	var payrollEmailID uint
 	var advanceEmailID uint
+	var payrollSettlementFile string
+	defer func() {
+		if payrollSettlementFile != "" {
+			_ = os.Remove(payrollSettlementFile)
+		}
+	}()
+	var previousPayrollEmailID uint
+	if items, err := fetchEmailHistory(admin, 50); err == nil {
+		for _, item := range items {
+			if item.Type == "payroll_report" && item.ID > previousPayrollEmailID {
+				previousPayrollEmailID = item.ID
+			}
+		}
+	}
 
 	// ── 1. Send payroll report email (bảng công sao kê) ──
 	// Use 1st of current month so the date always passes ValidateDate (days 11-23 are rejected).
@@ -86,14 +102,15 @@ func runSaoKeTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 			Recipients:   []string{"test@example.com"},
 		}
 
-		resp, _, err := admin.Post("/api/v1/timesheets/payroll/report/send-email", body)
+		emailClient := *admin
+		emailClient.Headers = map[string]string{"Idempotency-Key": fmt.Sprintf("integration-payroll-%d", time.Now().UnixNano())}
+		resp, status, err := emailClient.Post("/api/v1/timesheets/payroll/report/send-email", body)
 		if err != nil {
 			return fmt.Errorf("send payroll report email: %w", err)
 		}
 
-		if resp.Status != "success" {
-			fmt.Printf("    Payroll report email skipped: %s\n", resp.Message)
-			return nil
+		if status >= 400 || resp.Status != "success" {
+			return fmt.Errorf("payroll report email rejected (HTTP %d): %s", status, resp.Message)
 		}
 
 		fmt.Printf("    Sent payroll report email for %s\n", body.ReportAtDate)
@@ -120,6 +137,23 @@ func runSaoKeTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 
 	// ── 3. Get email history ──
 	reporter.RunTest(flowSaoKe, "Get email history", func() error {
+		// Sending payroll mail is queued: wait for this run's record rather than
+		// reading an empty history or accepting a settled record from an older run.
+		if _, err := admin.PollUntil("/api/v1/email/history?pageSize=50", 250*time.Millisecond, 30*time.Second, func(resp *APIResponse) bool {
+			var items []EmailHistoryItem
+			if json.Unmarshal(resp.Data, &items) != nil {
+				return false
+			}
+			for _, item := range items {
+				if item.Type == "payroll_report" && item.ID > previousPayrollEmailID {
+					payrollEmailID = item.ID
+					return true
+				}
+			}
+			return false
+		}); err != nil {
+			return fmt.Errorf("wait for queued payroll report email: %w", err)
+		}
 		items, err := fetchEmailHistory(admin, 20)
 		if err != nil {
 			return err
@@ -177,6 +211,23 @@ func runSaoKeTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 		if found.PayrollMeta.SaoKeAssetID == 0 {
 			return fmt.Errorf("expected saoKeAssetId to be set")
 		}
+		contents, _, status, err := admin.DownloadGet(fmt.Sprintf("/api/v1/assets/%d/download", found.PayrollMeta.SaoKeAssetID))
+		if err != nil || status != 200 {
+			return fmt.Errorf("download generated payroll statement: HTTP %d: %v", status, err)
+		}
+		file, err := os.CreateTemp("", "payroll-settlement-*.xlsx")
+		if err != nil {
+			return err
+		}
+		payrollSettlementFile = file.Name()
+		_, writeErr := file.Write(contents)
+		closeErr := file.Close()
+		if writeErr != nil {
+			return writeErr
+		}
+		if closeErr != nil {
+			return closeErr
+		}
 
 		fmt.Printf("    Payroll email: subject=%q, saoKeAssetId=%d, settled=%v\n",
 			found.Subject, found.PayrollMeta.SaoKeAssetID, found.SettledAt != nil)
@@ -195,8 +246,7 @@ func runSaoKeTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 		}
 
 		if resp.Status != "success" {
-			fmt.Printf("    Settle payroll email result: %s - %s (may be already settled)\n", resp.Status, resp.Message)
-			return nil
+			return fmt.Errorf("settle payroll email rejected: %s", resp.Message)
 		}
 
 		fmt.Printf("    Settled payroll report email ID %d\n", payrollEmailID)
@@ -284,7 +334,7 @@ func runSaoKeTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 		resp, _, err := admin.UploadFile(
 			fmt.Sprintf("/api/v1/email/history/%d/upload-settlement", payrollEmailID),
 			"file",
-			"tests/fixtures/sao_ke_tt_testdata.xlsx",
+			payrollSettlementFile,
 			nil,
 		)
 		if err != nil {
@@ -299,7 +349,23 @@ func runSaoKeTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 
 	// ── 10. Export reconciliation preview (advance payment) ──
 	reporter.RunTest(flowSaoKe, "Export reconciliation preview", func() error {
-		_, _, statusCode, err := admin.DownloadGet(
+		before, err := fetchEmailHistory(admin, 50)
+		if err != nil {
+			return err
+		}
+		var lastNotificationID uint
+		for _, item := range before {
+			if item.ID > lastNotificationID {
+				lastNotificationID = item.ID
+			}
+		}
+		var exporter struct {
+			ID uint `json:"id"`
+		}
+		if _, err := admin.GetInto("/api/v1/auth/me", &exporter); err != nil {
+			return fmt.Errorf("get authenticated exporter: %w", err)
+		}
+		_, headers, statusCode, err := admin.DownloadGet(
 			fmt.Sprintf("/api/v1/advance-payments/reconciliation/export?forMonth=%s", currentMonth()),
 		)
 		if err != nil {
@@ -309,6 +375,28 @@ func runSaoKeTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 		if statusCode != 200 {
 			return fmt.Errorf("expected HTTP 200, got %d", statusCode)
 		}
+		if !strings.Contains(headers.Get("Content-Type"), "spreadsheetml") {
+			fmt.Printf("    No completed advances to export; history creation not exercised\n")
+			return nil
+		}
+		after, err := fetchEmailHistory(admin, 50)
+		if err != nil {
+			return err
+		}
+		var exported *EmailHistoryItem
+		for i := range after {
+			item := &after[i]
+			if item.ID > lastNotificationID && item.Type == "advance_payment_report" && item.PayrollMeta != nil && item.PayrollMeta.ReportAtDate == currentMonth() {
+				exported = item
+				break
+			}
+		}
+		if exported == nil {
+			return fmt.Errorf("statement downloaded but its new history notification was not created")
+		}
+		if exporter.ID == 0 || exported.SenderID != exporter.ID || exported.PayrollMeta.SaoKeAssetID == 0 {
+			return fmt.Errorf("statement history must retain authenticated sender %d and its asset: %+v", exporter.ID, exported)
+		}
 
 		fmt.Printf("    Exported reconciliation for %s\n", currentMonth())
 		return nil
@@ -316,7 +404,7 @@ func runSaoKeTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 
 	// ── 10. Invalid settle returns error ──
 	reporter.RunTest(flowSaoKe, "Settle invalid email ID returns error", func() error {
-		resp, _, err := admin.Post("/api/v1/email/history/999999/settle", nil)
+		resp, _, err := admin.Post(fmt.Sprintf("/api/v1/email/history/%d/settle", nonexistentID), nil)
 		if err != nil {
 			// Server returned an error — expected behavior
 			fmt.Printf("    Correctly rejected invalid settle: %v\n", err)

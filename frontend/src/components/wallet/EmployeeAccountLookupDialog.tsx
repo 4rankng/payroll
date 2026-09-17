@@ -380,8 +380,6 @@ export function EmployeeAccountLookupDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        title="Tra cứu tài khoản"
-        description="Chọn nhân viên để đối chiếu thông tin tài khoản đã lưu với nhà cung cấp."
         contentPadding="none"
         hideCloseButton
         className="gap-0 p-0 sm:max-w-xl"

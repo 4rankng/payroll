@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/ui/error-state";
 import React, { useState, useCallback, useMemo } from 'react';
 import { useAppState } from '@/contexts';
 import { ClipboardList, Loader2 } from 'lucide-react';
@@ -29,6 +30,9 @@ export default function AuditLogPage() {
   const {
     data,
     isLoading,
+    isError,
+    isFetchNextPageError,
+    refetch,
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
@@ -42,7 +46,7 @@ export default function AuditLogPage() {
   const totalRecords = data?.pages[0]?.pagination?.totalRecords ?? 0;
 
   const { observerRef } = useInfiniteScroll({
-    hasMore: hasNextPage ?? false,
+    hasMore: !isError && (hasNextPage ?? false),
     isLoading: isFetchingNextPage,
     onLoadMore: () => { fetchNextPage(); },
     rootMargin: '300px',
@@ -79,6 +83,18 @@ export default function AuditLogPage() {
         </AdminFilterRow>
       </AdminSectionCard>
 
+      {isError && (
+        <div role="alert">
+          <ErrorState
+            message={isFetchNextPageError
+              ? "Không thể tải thêm nhật ký. Các bản ghi đã tải vẫn được giữ lại."
+              : "Không thể tải nhật ký hoạt động. Vui lòng thử lại."}
+            onRetry={() => void (isFetchNextPageError ? fetchNextPage() : refetch())}
+            className="px-4"
+          />
+        </div>
+      )}
+
       {/* Initial loading */}
       {isLoading && (
         <div className="space-y-3">
@@ -89,7 +105,7 @@ export default function AuditLogPage() {
       )}
 
         {/* Cards */}
-        {!isLoading && logs.length === 0 && (
+        {!isLoading && !isError && logs.length === 0 && (
           <EmptyState
             title="Không có dữ liệu"
             description="Thử thay đổi bộ lọc để xem kết quả khác"
@@ -110,7 +126,7 @@ export default function AuditLogPage() {
         )}
 
         {/* Infinite scroll sentinel */}
-        {hasNextPage && !isFetchingNextPage && (
+        {!isError && hasNextPage && !isFetchingNextPage && (
           <div ref={observerRef} className="h-px w-full" aria-hidden="true" />
         )}
 
@@ -123,7 +139,7 @@ export default function AuditLogPage() {
         )}
 
         {/* End of list */}
-        {!hasNextPage && !isLoading && logs.length > 0 && (
+        {!isError && !hasNextPage && !isLoading && logs.length > 0 && (
           <p className="text-center py-4 text-xs text-muted-foreground">
             Đã hiển thị tất cả {logs.length.toLocaleString('vi-VN')} bản ghi
           </p>

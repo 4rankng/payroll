@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/ui/error-state";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import {
   AdminPageCanvas,
@@ -71,7 +72,7 @@ const UsersPage = () => {
   );
 
   const { observerRef } = useInfiniteScroll({
-    hasMore: userData.hasMore,
+    hasMore: !userData.error && userData.hasMore,
     isLoading: userData.isFetchingNextPage,
     onLoadMore: () => {
       userData.fetchNextPage();
@@ -135,7 +136,18 @@ const UsersPage = () => {
           </div>
         </AdminFilterRow>
 
-        <ResponsiveTable
+        {userData.error && (
+          <div role="alert">
+            <ErrorState
+              message={userData.isFetchNextPageError
+                ? "Không thể tải thêm người dùng. Danh sách đã tải vẫn được giữ lại."
+                : "Không thể tải danh sách người dùng. Vui lòng thử lại."}
+              onRetry={() => void (userData.isFetchNextPageError ? userData.fetchNextPage() : userData.refetch())}
+              className="px-4"
+            />
+          </div>
+        )}
+        {(!userData.error || userData.users.length > 0) && <ResponsiveTable
           data={userData.users.filter((u) => u.role !== 'adv_partner')}
           columns={columns}
           mobileFields={mobileConfig.mobileFields}
@@ -156,9 +168,9 @@ const UsersPage = () => {
           }
           accordionType="single"
           embedded
-        />
+        />}
 
-        {userData.hasMore && !userData.isFetchingNextPage && (
+        {!userData.error && userData.hasMore && !userData.isFetchingNextPage && (
           <div ref={observerRef} className="h-px w-full" aria-hidden="true" />
         )}
 
@@ -171,7 +183,7 @@ const UsersPage = () => {
           </div>
         )}
 
-        {!userData.hasMore &&
+        {!userData.error && !userData.hasMore &&
           !userData.isFetchingNextPage &&
           userData.users.length > 0 && (
             <p className="border-t border-slate-200/70 py-3 text-center text-xs text-muted-foreground">

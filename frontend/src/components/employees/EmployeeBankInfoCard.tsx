@@ -42,29 +42,29 @@ export function EmployeeBankInfoCard({
         </h2>
 
         {hasBankInfo ? (
-          <dl className="mt-5 flex flex-1 flex-col sm:mt-6">
-            <div className="min-w-0">
+          <div className="mt-5 flex flex-1 flex-col sm:mt-6">
+            <dl className="min-w-0">
               <dt className="employee-type-label-caps text-base-content/55">Số tài khoản</dt>
-              <dd className="mt-1.5 min-w-0 break-all font-financial text-xl font-semibold leading-tight tracking-[0.055em] text-base-content tabular-nums sm:text-2xl">
+              <dd className="employee-type-bank-value mt-1.5 min-w-0 break-all text-base-content tabular-nums">
                 {profile.bank_account_number || "—"}
               </dd>
-            </div>
+            </dl>
 
             <div className="mt-auto grid grid-cols-2 gap-4 border-t border-base-content/10 pt-4">
-              <div className="min-w-0">
+              <dl className="min-w-0">
                 <dt className="employee-type-label-caps text-base-content/55">Ngân hàng</dt>
                 <dd className="employee-type-bank-value mt-1 break-words text-base-content">
                   {profile.bank?.branch_name || "—"}
                 </dd>
-              </div>
-              <div className="min-w-0 text-right">
+              </dl>
+              <dl className="min-w-0 text-right">
                 <dt className="employee-type-label-caps text-base-content/55">Chủ tài khoản</dt>
                 <dd className="employee-type-bank-value mt-1 break-words text-base-content">
                   {accountOwner || "—"}
                 </dd>
-              </div>
+              </dl>
             </div>
-          </dl>
+          </div>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
             <p className="employee-type-strong text-base-content">

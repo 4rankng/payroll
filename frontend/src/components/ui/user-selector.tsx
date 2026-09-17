@@ -113,7 +113,7 @@ export function UserSelector({
 
   return (
     <Select value={value} onValueChange={handleValueChange} open={isOpen} onOpenChange={setIsOpen}>
-      <SelectTrigger className={className}>
+      <SelectTrigger className={className} aria-label={placeholder}>
         <SelectValue placeholder={placeholder}>
           {selectedUser ? (
             <div className="flex items-center gap-2">
@@ -134,6 +134,7 @@ export function UserSelector({
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
+              aria-label="Tìm kiếm người dùng"
               placeholder="Tìm kiếm người dùng..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -177,6 +178,8 @@ export function UserSelector({
                     {user.email} • {
                       user.role === 'admin' ? 'Quản trị viên' :
                       user.role === 'partner' ? 'Quản lý' :
+                      user.role === 'adv_partner' ? 'Quản lý ứng lương' :
+                      user.role === 'accountant' ? 'Kế toán' :
                       'Nhân viên'
                     }
                   </span>

@@ -7,6 +7,9 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/xuri/excelize/v2"
@@ -20,7 +23,6 @@ const flowWalletBulk = "WalletBulkTransfer"
 // existing runBulkTransferTests.
 func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Reporter) {
 	reporter.PrintSection("FLOW: Wallet Bulk Transfer Pipeline (OnePay)")
-	var knownBatchID uint64
 
 	// Probe the upload endpoint — if it 404s, the whole flow is skipped.
 	_, probeStatus, _ := client.Get("/api/v1/wallet/bulk-transfer/batches")
@@ -49,9 +51,6 @@ func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Rep
 		}
 		if resp.PageSize != 10 {
 			return fmt.Errorf("page_size: got %d, want 10", resp.PageSize)
-		}
-		if len(resp.Batches) > 0 {
-			knownBatchID = resp.Batches[0].ID
 		}
 		return nil
 	})
@@ -112,16 +111,104 @@ func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Rep
 		return nil
 	})
 
-	// Note: a full happy-path test (upload → process → KQ) requires a live
-	// OnePay provider + seeded employees with bank info + approved timesheets
-	// exported via /admin/timesheet → "Chuyển OnePay". That sequence is
-	// covered by the wallet_bulk_transfer_smoke_test.md runbook (manual).
-	reporter.Skip(flowWalletBulk, "Full happy-path upload → process → KQ",
-		"requires OnePay provider + seeded export file — see docs/runbooks/wallet-bulk-transfer-smoke-test.md")
+	// A configured fixture is an exported file backed by approved local
+	// timesheets. Providing it makes provider completion a required assertion.
+	if fixture := os.Getenv("PAYROLL_WALLET_BULK_FIXTURE"); fixture != "" {
+		reporter.RunTest(flowWalletBulk, "Full happy-path upload → process → KQ", func() error {
+			content, err := os.ReadFile(fixture)
+			if err != nil {
+				return err
+			}
+			resp, err := uploadBulkTransferFile(client, "synthetic-wallet-bulk.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", content)
+			if err != nil {
+				return err
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusAccepted {
+				body, _ := io.ReadAll(resp.Body)
+				return fmt.Errorf("upload: HTTP %d: %s", resp.StatusCode, body)
+			}
+			var upload struct {
+				Data struct {
+					BatchID    uint64 `json:"batch_id"`
+					TotalCount int    `json:"total_count"`
+				} `json:"data"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&upload); err != nil {
+				return err
+			}
+			if upload.Data.BatchID == 0 || upload.Data.TotalCount == 0 {
+				return fmt.Errorf("upload did not create a non-empty batch")
+			}
+			var batch struct {
+				Status         string  `json:"status"`
+				SuccessCount   int     `json:"success_count"`
+				FailedCount    int     `json:"failed_count"`
+				LedgerTxnID    *uint64 `json:"ledger_txn_id"`
+				TransferAmount int64   `json:"transfer_amount"`
+			}
+			path := fmt.Sprintf("/api/v1/wallet/bulk-transfer/batches/%d", upload.Data.BatchID)
+			_, err = client.PollUntil(path, time.Second, 2*time.Minute, func(response *APIResponse) bool {
+				if json.Unmarshal(response.Data, &batch) != nil {
+					return false
+				}
+				return batch.Status == "completed" || batch.Status == "failed" || batch.Status == "partial"
+			})
+			if err != nil {
+				return fmt.Errorf("provider completion: %w", err)
+			}
+			if batch.Status != "completed" || batch.FailedCount != 0 || batch.SuccessCount != upload.Data.TotalCount {
+				return fmt.Errorf("batch %d: status=%s success=%d failed=%d expected=%d", upload.Data.BatchID, batch.Status, batch.SuccessCount, batch.FailedCount, upload.Data.TotalCount)
+			}
+			if batch.LedgerTxnID == nil {
+				return fmt.Errorf("completed batch has no ledger transaction")
+			}
+			ids := strings.Split(os.Getenv("PAYROLL_WALLET_BULK_TIMESHEET_IDS"), ",")
+			var totalPaid int64
+			for _, rawID := range ids {
+				id, err := strconv.ParseUint(strings.TrimSpace(rawID), 10, 64)
+				if err != nil || id == 0 {
+					return fmt.Errorf("PAYROLL_WALLET_BULK_TIMESHEET_IDS must identify the exported fixture rows")
+				}
+				var timesheet TimesheetResponse
+				if _, err := client.GetInto(fmt.Sprintf("/api/v1/timesheets/%d", id), &timesheet); err != nil {
+					return err
+				}
+				if timesheet.PaymentStatus != "paid" || timesheet.PaidAt == nil {
+					return fmt.Errorf("timesheet %d is not marked paid", id)
+				}
+				totalPaid += timesheet.PaidAmount
+			}
+			if totalPaid != batch.TransferAmount {
+				return fmt.Errorf("financial mismatch: provider transferred %d but timesheets record %d", batch.TransferAmount, totalPaid)
+			}
+			fmt.Printf("    provider and paid-timesheet totals match: %d VND\n", totalPaid)
+			kq, err := client.doRequest(http.MethodGet, path+"/kq?scope=successful", nil)
+			if err != nil {
+				return err
+			}
+			defer kq.Body.Close()
+			if kq.StatusCode != http.StatusOK {
+				return fmt.Errorf("KQ download: HTTP %d", kq.StatusCode)
+			}
+			file, err := excelize.OpenReader(kq.Body)
+			if err != nil {
+				return fmt.Errorf("KQ workbook: %w", err)
+			}
+			defer file.Close()
+			if len(file.GetSheetList()) == 0 {
+				return fmt.Errorf("KQ workbook has no sheets")
+			}
+			fmt.Printf("    batch=%d success=%d ledger_transaction=%d KQ verified\n", upload.Data.BatchID, batch.SuccessCount, *batch.LedgerTxnID)
+			return nil
+		})
+	} else {
+		reporter.Skip(flowWalletBulk, "Full happy-path upload → process → KQ", "PAYROLL_WALLET_BULK_FIXTURE must point to a fresh local payroll export")
+	}
 
 	// Test 5: GetBatch returns 404 for a non-existent id.
 	reporter.RunTest(flowWalletBulk, "GetBatch returns 404 for unknown id", func() error {
-		_, status, err := client.Get("/api/v1/wallet/bulk-transfer/batches/99999999")
+		_, status, err := client.Get(fmt.Sprintf("/api/v1/wallet/bulk-transfer/batches/%d", nonexistentID))
 		if err != nil {
 			return fmt.Errorf("get unknown batch: %w", err)
 		}
@@ -133,7 +220,7 @@ func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Rep
 
 	// Test 6: KQ download on unknown id returns 404.
 	reporter.RunTest(flowWalletBulk, "KQ download returns 404 for unknown id", func() error {
-		_, status, err := client.Get("/api/v1/wallet/bulk-transfer/batches/99999999/kq")
+		_, status, err := client.Get(fmt.Sprintf("/api/v1/wallet/bulk-transfer/batches/%d/kq", nonexistentID))
 		if err != nil {
 			return fmt.Errorf("download unknown kq: %w", err)
 		}
@@ -145,10 +232,9 @@ func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Rep
 
 	// Test 7: KQ scope is explicit and validated before generation.
 	reporter.RunTest(flowWalletBulk, "KQ download rejects invalid scope", func() error {
-		if knownBatchID == 0 {
-			return fmt.Errorf("no existing wallet bulk batch available")
-		}
-		_, status, err := client.Get(fmt.Sprintf("/api/v1/wallet/bulk-transfer/batches/%d/kq?scope=invalid", knownBatchID))
+		// Scope validation precedes batch lookup, so this contract can be
+		// verified on a fresh database without initiating a payment.
+		_, status, err := client.Get(fmt.Sprintf("/api/v1/wallet/bulk-transfer/batches/%d/kq?scope=invalid", nonexistentID))
 		if err != nil {
 			return fmt.Errorf("download invalid scope: %w", err)
 		}
@@ -201,7 +287,7 @@ func uploadBulkTransferFile(client *APIClient, filename, contentType string, con
 	if client.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+client.Token)
 	}
-	return http.DefaultClient.Do(req)
+	return client.HTTPClient.Do(req)
 }
 
 // buildXlsxWithoutSwiftColumn constructs a valid .xlsx with the

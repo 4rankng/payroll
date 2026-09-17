@@ -18,14 +18,8 @@ const NotFound = () => {
   }, [location.pathname]);
 
   const handleDashboardNavigation = useCallback(() => {
-    if (isAuthenticated && userRole === 'admin') {
-      navigate('/admin');
-    } else if (isAuthenticated && userRole === 'partner') {
-      navigate('/partner');
-    } else {
-      navigate('/login');
-    }
-  }, [isAuthenticated, userRole, navigate]);
+    navigate(isAuthenticated ? '/' : '/login');
+  }, [isAuthenticated, navigate]);
 
   const handleGoBack = useCallback(() => {
     if (window.history.length > 1) {
@@ -77,7 +71,7 @@ const NotFound = () => {
             </Button>
           </div>
 
-          {isAuthenticated && (
+          {isAuthenticated && (userRole === 'admin' || userRole === 'partner') && (
             <div className="pt-4 border-t">
               <p className="typography-body-medium text-muted-foreground text-center mb-3">
                 Hoặc điều hướng đến:

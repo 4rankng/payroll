@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/ui/error-state";
 import { useState, useMemo, useCallback } from 'react';
 import { ResponsiveTable } from '@/components/ui/responsive-table';
 import {
@@ -39,7 +40,7 @@ const LoansPage = () => {
   const [isLoanDetailsOpen, setIsLoanDetailsOpen] = useState(false);
   const [selectedLoanId, setSelectedLoanId] = useState<number | null>(null);
 
-  const { data: loansResponse, isLoading: isLoadingLoans } = useLoans(loanFilters);
+  const { data: loansResponse, isLoading: isLoadingLoans, isError, refetch } = useLoans(loanFilters);
   const { data: lendersResponse } = useLenders({
     page: 1,
     pageSize: 100,
@@ -135,7 +136,7 @@ const LoansPage = () => {
         />
       </AdminPageHeaderCard>
 
-      <div className="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-4 gap-3">
+      {!isError && <div className="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-4 gap-3">
         <KpiHeroCard
           label="Tổng vay"
           value={loansSummary.total_borrowed}
@@ -167,7 +168,7 @@ const LoansPage = () => {
           color="teal"
           variant="stack"
         />
-      </div>
+      </div>}
 
       <AdminSectionCard aria-label="Danh sách khoản vay">
         <AdminFilterRow>
@@ -198,6 +199,11 @@ const LoansPage = () => {
           </div>
         </AdminFilterRow>
 
+        {isError ? (
+          <div role="alert">
+            <ErrorState message="Không thể tải danh sách khoản vay. Vui lòng thử lại." onRetry={() => void refetch()} className="px-4" />
+          </div>
+        ) : (
         <ResponsiveTable
           data={filteredLoans}
           columns={loanColumns}
@@ -213,6 +219,7 @@ const LoansPage = () => {
           onSortingChange={onSortingChange}
           embedded
         />
+        )}
       </AdminSectionCard>
 
       <LenderManagementSheet isOpen={isLenderSheetOpen} onClose={handleCloseLenderSheet} />

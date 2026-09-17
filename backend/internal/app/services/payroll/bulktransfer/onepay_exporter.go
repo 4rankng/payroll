@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -148,7 +149,7 @@ func (e *OnePayExporter) Export(ctx context.Context, req *dto.ExportBulkTransfer
 	}
 	data := plan.ValidatedData.ValidData
 
-	rows, skipped, txnCodes, err := e.buildRowsWithSwift(ctx, data, plan.Cycle, plan.FromDate, plan.ToDate)
+	rows, skipped, txnCodes, err := e.buildRowsWithSwift(ctx, data, plan.Cycle, plan.FromDate, plan.ToDate, plan.PaymentPercentage)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +205,11 @@ func (e *OnePayExporter) buildRowsWithSwift(
 	data *excel.BulkTransferData,
 	cycle string,
 	fromDate, toDate time.Time,
+	paymentPercentage float64,
 ) ([]OnePayExportRow, []OnePaySkippedEmployee, []*domain.TransactionCode, error) {
+	if math.IsNaN(paymentPercentage) || math.IsInf(paymentPercentage, 0) || paymentPercentage <= 0 || paymentPercentage > 1 {
+		return nil, nil, nil, fmt.Errorf("OnePay payment percentage must be finite and between 0 and 1")
+	}
 	// Deterministic iteration order: by (employee_id, project_id) ascending.
 	keys := make([]excel.EmployeeProjectKey, 0, len(data.EmployeeProjectAmounts))
 	for k := range data.EmployeeProjectAmounts {
@@ -225,10 +230,17 @@ func (e *OnePayExporter) buildRowsWithSwift(
 	txnCodes := make([]*domain.TransactionCode, 0, len(keys))
 
 	for i, key := range keys {
-		amount := data.EmployeeProjectAmounts[key]
-		if amount <= 0 {
+		grossAmount := data.EmployeeProjectAmounts[key]
+		if grossAmount <= 0 {
 			continue
 		}
+		// Match the bank-file exporter: use the percentage captured by the
+		// plan and round down to whole VND exactly once per employee/project.
+		calculated := float64(grossAmount) * paymentPercentage
+		if calculated < 1 || calculated >= float64(math.MaxInt64) {
+			return nil, nil, nil, fmt.Errorf("OnePay transfer amount for employee %d is outside the supported VND range", key.EmployeeID)
+		}
+		amount := int64(calculated)
 		emp, ok := data.EmployeeData[key.EmployeeID]
 		if !ok {
 			e.logger.Warn("onepay export: employee data missing", "employee_id", key.EmployeeID)
@@ -331,25 +343,27 @@ func buildTransactionCode(vfic string, emp excel.Employee, project excel.Project
 	if cycle == string(domain.PaymentScheduleMonthly) {
 		tcData = domain.TransactionCodeData{
 			MonthlyPay: &domain.CyclePayData{
-				TimesheetIDs: timesheetIDs,
-				EmployeeID:   emp.ID,
-				ProjectID:    project.ID,
-				Amount:       amount,
-				FromDate:     &fd,
-				ToDate:       &td,
-				CycleNum:     cycleNum,
+				TimesheetIDs:           timesheetIDs,
+				EmployeeID:             emp.ID,
+				ProjectID:              project.ID,
+				Amount:                 amount,
+				TransferAmountSnapshot: &amount,
+				FromDate:               &fd,
+				ToDate:                 &td,
+				CycleNum:               cycleNum,
 			},
 		}
 	} else {
 		tcData = domain.TransactionCodeData{
 			WeeklyPay: &domain.CyclePayData{
-				TimesheetIDs: timesheetIDs,
-				EmployeeID:   emp.ID,
-				ProjectID:    project.ID,
-				Amount:       amount,
-				FromDate:     &fd,
-				ToDate:       &td,
-				CycleNum:     cycleNum,
+				TimesheetIDs:           timesheetIDs,
+				EmployeeID:             emp.ID,
+				ProjectID:              project.ID,
+				Amount:                 amount,
+				TransferAmountSnapshot: &amount,
+				FromDate:               &fd,
+				ToDate:                 &td,
+				CycleNum:               cycleNum,
 			},
 		}
 	}

@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
@@ -21,12 +19,13 @@ import {
 } from "@/components/ui/select";
 import { ProjectMobileList } from "@/components/projects/ProjectMobileList";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorState } from "@/components/ui/error-state";
 import { useProjects } from "@/hooks/api/useProjects";
 import { useProjectFilters } from "@/hooks/projects/useProjectFilters";
 import { useProjectModals } from "@/hooks/useModalNavigation";
 import { getVietnameseProjectStatus } from "@/utils/vietnamese";
 import { generateMonthOptions } from "@/utils/dateHelpers";
-import { Briefcase, Plus, Search, SlidersHorizontal, X } from "lucide-react";
+import { Briefcase, Plus, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
 import type { Project } from "@/types/api/project.types";
 
 const ITEMS_PER_PAGE = 20;
@@ -42,15 +41,17 @@ const STATUS_OPTIONS: { value: Project["status"]; label: string }[] = [
 const ProjectsPageMobile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-  const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const loaderRef = useRef<HTMLDivElement>(null);
 
-  const filterControls = useProjectFilters({ initialFilters: { page: 1, pageSize: 100 } });
-  const { data: response, isLoading } = useProjects(filterControls.apiFilters);
+  const filterControls = useProjectFilters({ initialFilters: { page: 1, pageSize: ITEMS_PER_PAGE } });
+  const { data: response, isLoading, isError, isFetching, refetch } = useProjects(filterControls.apiFilters);
   const projects = response?.data || [];
   const monthOptions = useMemo(() => generateMonthOptions(), []);
   const { openCreateProject, openProjectDetails } = useProjectModals();
+
+  const pagination = response?.pagination;
+  const currentPage = pagination?.page ?? filterControls.page;
+  const totalPages = pagination?.totalPages ?? 1;
+  const { setStatusFilter } = filterControls;
 
   // Handle URL params from dashboard
   useEffect(() => {
@@ -62,30 +63,8 @@ const ProjectsPageMobile = () => {
       setSearchParams(p, { replace: true });
     }
     const status = searchParams.get("status");
-    if (status === "active") filterControls.setStatusFilter(["active"]);
-  }, [searchParams, setSearchParams, filterControls]);
-
-  const paginatedProjects = projects.slice(0, displayCount);
-  const hasMore = displayCount < projects.length;
-
-  useEffect(() => {
-    setDisplayCount(ITEMS_PER_PAGE);
-  }, [filterControls.searchTerm, filterControls.statusFilter, filterControls.monthFilter]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
-          setIsLoadingMore(true);
-          setTimeout(() => { setDisplayCount((p) => p + ITEMS_PER_PAGE); setIsLoadingMore(false); }, 300);
-        }
-      },
-      { threshold: 0.1 },
-    );
-    const el = loaderRef.current;
-    if (el) observer.observe(el);
-    return () => { if (el) observer.unobserve(el); };
-  }, [hasMore, isLoadingMore, isLoading]);
+    if (status === "active") setStatusFilter(["active"]);
+  }, [searchParams, setSearchParams, setStatusFilter]);
 
   const activeFilterCount = useMemo(() => {
     let c = 0;
@@ -160,14 +139,14 @@ const ProjectsPageMobile = () => {
       {activeFilterCount > 0 && (
         <div className="px-4 pb-3 flex gap-2 flex-wrap">
           {currentStatusLabel && (
-            <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => filterControls.setStatusFilter("all")}>
+            <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-secondary px-3 text-xs font-semibold text-secondary-foreground" onClick={() => filterControls.setStatusFilter("all")} aria-label={`Xóa lọc trạng thái ${currentStatusLabel}`}>
               {currentStatusLabel}<X className="h-3 w-3" />
-            </Badge>
+            </button>
           )}
           {currentMonthLabel && (
-            <Badge variant="secondary" className="gap-1 cursor-pointer" onClick={() => filterControls.setMonthFilter(undefined)}>
+            <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-secondary px-3 text-xs font-semibold text-secondary-foreground" onClick={() => filterControls.setMonthFilter(undefined)} aria-label={`Xóa lọc tháng ${currentMonthLabel}`}>
               {currentMonthLabel}<X className="h-3 w-3" />
-            </Badge>
+            </button>
           )}
           <button onClick={filterControls.clearFilters} className="min-h-11 px-1 text-xs text-muted-foreground underline underline-offset-2">Xóa tất cả</button>
         </div>
@@ -175,24 +154,60 @@ const ProjectsPageMobile = () => {
 
       {/* List */}
       <div className="flex-1 px-4">
+        {isError ? (
+          <div role="alert">
+            <ErrorState message="Không thể tải danh sách dự án. Vui lòng thử lại." onRetry={() => void refetch()} />
+          </div>
+        ) : (
         <ProjectMobileList
-          projects={paginatedProjects}
+          projects={projects}
           onRowClick={handleProjectClick}
           emptyState={
             <EmptyState
               title="Không tìm thấy dự án nào"
-              description="Hãy tạo dự án đầu tiên để bắt đầu quản lý."
+              description={filterControls.hasFilters
+                ? "Không có dự án phù hợp. Thử thay đổi từ khóa hoặc xóa bộ lọc."
+                : "Hãy tạo dự án đầu tiên để bắt đầu quản lý."}
+              action={filterControls.hasFilters
+                ? { label: "Xóa bộ lọc", onClick: filterControls.clearFilters }
+                : { label: "Tạo dự án", onClick: () => openCreateProject() }}
               size="sm"
             />
           }
         />
-        {hasMore && (
-          <div ref={loaderRef} className="flex justify-center py-4">
-            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          </div>
         )}
-        {!hasMore && paginatedProjects.length > 0 && (
-          <p className="text-center py-3 text-xs text-muted-foreground">{projects.length} dự án</p>
+        {!isError && pagination && pagination.totalRecords > pagination.pageSize && (
+          <nav aria-label="Phân trang dự án" className="mt-3 flex items-center justify-between gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-11 min-w-11 rounded-xl px-3"
+              onClick={() => filterControls.setPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage <= 1 || isFetching}
+              aria-label="Trang dự án trước"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only min-[360px]:not-sr-only">Trước</span>
+            </Button>
+            <p className="text-center text-xs text-muted-foreground tabular-nums" aria-live="polite">
+              Trang {currentPage} / {totalPages}
+              <span className="block">{pagination.totalRecords} dự án</span>
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-11 min-w-11 rounded-xl px-3"
+              onClick={() => filterControls.setPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage >= totalPages || isFetching}
+              aria-label="Trang dự án sau"
+            >
+              <span className="sr-only min-[360px]:not-sr-only">Sau</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </nav>
+        )}
+        {!isError && projects.length > 0 && (!pagination || pagination.totalRecords <= pagination.pageSize) && (
+          <p className="text-center py-3 text-xs text-muted-foreground">{pagination?.totalRecords ?? projects.length} dự án</p>
         )}
       </div>
 
@@ -200,7 +215,7 @@ const ProjectsPageMobile = () => {
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
         <SheetContent
           side="bottom"
-          className="max-h-[85dvh] overflow-y-auto rounded-t-2xl pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+          className="max-h-[85dvh] overflow-y-auto rounded-t-2xl px-4 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
         >
           <SheetHeader className="pb-4"><SheetTitle>Bộ lọc</SheetTitle></SheetHeader>
           <div className="space-y-4">
@@ -216,6 +231,7 @@ const ProjectsPageMobile = () => {
                       key={option.value}
                       type="button"
                       variant={selected ? "default" : "outline"}
+                      aria-pressed={selected}
                       className="min-h-11 justify-start"
                       onClick={() => {
                         const current = Array.isArray(filterControls.statusFilter)

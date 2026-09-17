@@ -7,10 +7,10 @@ import (
 
 const flowFlexPay = "FlexPayImport"
 
-func runFlexPayImportTests(client *APIClient, data *TestData, reporter *Reporter) {
+func runFlexPayImportTests(client *APIClient, data *TestData, reporter *Reporter, cfg *TestConfig) {
 	reporter.PrintSection("FLOW 3: FlexPay Import (Upload Bảng Lương)")
 
-	fixturePath := "tests/fixtures/LGD- TINGTING 05.05.26 đợt 1.xlsx"
+	fixturePath := cfg.FlexPayFixturePath
 
 	adminClient := client.WithToken(data.AdminToken)
 
@@ -21,13 +21,13 @@ func runFlexPayImportTests(client *APIClient, data *TestData, reporter *Reporter
 		// Upload for the current advance payment period (2026-04 if today is May 1–16)
 		forMonth := currentMonth()
 		fmt.Printf("    Uploading for current period month: %s\n", forMonth)
-		apiResp, _, err := adminClient.UploadFile("/api/v1/advance-payments/import", "file", fixturePath,
+		apiResp, status, err := adminClient.UploadFile("/api/v1/advance-payments/import", "file", fixturePath,
 			map[string]string{"forMonth": forMonth})
 		if err != nil {
-			apiResp, _, err = adminClient.UploadFile("/api/v1/advance-payments/import", "file", fixturePath, nil)
-			if err != nil {
-				return fmt.Errorf("upload flexpay file: %w", err)
-			}
+			return fmt.Errorf("upload flexpay file: %w", err)
+		}
+		if status >= 400 {
+			return fmt.Errorf("upload flexpay file: HTTP %d: %s", status, apiResp.Message)
 		}
 		raw, _ := json.Marshal(apiResp.Data)
 		if err := json.Unmarshal(raw, &resp); err != nil {

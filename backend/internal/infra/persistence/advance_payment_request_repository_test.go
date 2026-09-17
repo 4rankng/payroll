@@ -3,6 +3,7 @@ package persistence
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -481,14 +482,18 @@ func requireSeedEmployeeAndProject(t *testing.T, repo *AdvancePaymentRequestRepo
 	return empID, projectID
 }
 
-// getTestDB connects to the local test database.
+// getTestDB connects to the test database. A dedicated schema can be supplied
+// so repository fixtures never collide with a running local UI session.
 func getTestDB() (*gorm.DB, error) {
-	dsn := "root:rootpassword@tcp(localhost:3306)/payroll_db?parseTime=true&loc=Local"
+	dsn := os.Getenv("PAYROLL_TEST_DB_DSN")
+	if dsn == "" {
+		dsn = "root:rootpassword@tcp(localhost:3306)/payroll_db?parseTime=true&loc=Local"
+	}
 	return gorm.Open(mysql.Open(dsn), &gorm.Config{})
 }
 
 // setupTestRepo creates a test database connection and cleans up test data.
-// It uses the same DB config as the running server (localhost:3306/payroll_db).
+// PAYROLL_TEST_DB_DSN can isolate these writes from the development server.
 func setupTestRepo(t *testing.T) (*AdvancePaymentRequestRepository, func()) {
 	t.Helper()
 

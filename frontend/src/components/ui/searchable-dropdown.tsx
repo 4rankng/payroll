@@ -98,6 +98,7 @@ export const SearchableDropdown = ({
     <button
       ref={triggerRef}
       role="combobox"
+      aria-label={selectedOption?.label ? `${placeholder}: ${selectedOption.label}` : placeholder}
       aria-expanded={open}
       onClick={isMobile ? () => setOpen(true) : undefined}
       className={cn(
@@ -109,7 +110,7 @@ export const SearchableDropdown = ({
         className,
       )}
     >
-      <span>{isActive ? selectedOption?.label : placeholder}</span>
+      <span>{isActive ? (selectedOption?.label ?? placeholder) : placeholder}</span>
       <ChevronsUpDown className="size-3 shrink-0 opacity-50" />
     </button>
   ) : (
@@ -117,6 +118,7 @@ export const SearchableDropdown = ({
       ref={triggerRef}
       variant="outline"
       role="combobox"
+      aria-label={selectedOption?.label ? `${placeholder}: ${selectedOption.label}` : placeholder}
       aria-expanded={open}
       onClick={isMobile ? () => setOpen(true) : undefined}
       className={cn('h-auto justify-between py-2', isMobile ? 'min-h-11' : 'min-h-10', className)}

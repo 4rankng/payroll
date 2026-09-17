@@ -170,6 +170,7 @@ func TestAdvPartnerRole_AllowList(t *testing.T) {
 		{"/api/v1/users", "GET"},
 		{"/api/v1/users/summary", "GET"},
 		{"/api/v1/users/1", "GET"},
+		{"/api/v1/banks", "GET"},
 
 		// Employees - read
 		{"/api/v1/employees", "GET"},
@@ -215,6 +216,12 @@ func TestAdvPartnerRole_DenyList(t *testing.T) {
 		{"/api/v1/users", "POST"},
 		{"/api/v1/users/1", "DELETE"},
 		{"/api/v1/users/1", "PUT"},
+
+		// Bank reference data is readable, but bank administration is not.
+		{"/api/v1/banks", "POST"},
+		{"/api/v1/banks/1", "GET"},
+		{"/api/v1/banks/1", "PUT"},
+		{"/api/v1/banks/1", "DELETE"},
 
 		// Employee data
 		{"/api/v1/employees/import", "POST"},
@@ -262,6 +269,29 @@ func TestAdvPartnerRole_DenyList(t *testing.T) {
 			svc.CanAccess("adv_partner", tc.path, tc.method),
 			"adv_partner should be DENIED %s %s", tc.method, tc.path,
 		)
+	}
+}
+
+func TestBankReferencePermissions(t *testing.T) {
+	svc := newTestAuthorizationService(t)
+
+	for _, tc := range []struct {
+		role     string
+		readList bool
+		write    bool
+	}{
+		{"admin", true, true},
+		{"partner", true, false},
+		{"adv_partner", true, false},
+		{"employee", false, false},
+		{"accountant", false, false},
+	} {
+		t.Run(tc.role, func(t *testing.T) {
+			assert.Equal(t, tc.readList, svc.CanAccess(tc.role, "/api/v1/banks", "GET"))
+			assert.Equal(t, tc.write, svc.CanAccess(tc.role, "/api/v1/banks", "POST"))
+			assert.Equal(t, tc.write, svc.CanAccess(tc.role, "/api/v1/banks/1", "PUT"))
+			assert.Equal(t, tc.write, svc.CanAccess(tc.role, "/api/v1/banks/1", "DELETE"))
+		})
 	}
 }
 

@@ -46,6 +46,8 @@ interface AdvancePaymentRequestFormProps {
   isSelfCheckInFlow?: boolean;
   history?: AdvancePaymentHistoryItem[];
   feeDetails: { fee: number; netAmount: number } | null;
+  feeError?: boolean;
+  onRetryFee?: () => void;
   hasBankDestination: boolean;
   onSubmit: (data: { amount: number; forMonth: string }) => void;
   onAmountChange?: (amount: number) => void;
@@ -67,6 +69,8 @@ export function AdvancePaymentRequestForm({
   isSelfCheckInFlow = false,
   history,
   feeDetails,
+  feeError = false,
+  onRetryFee,
   hasBankDestination,
   onSubmit,
   onAmountChange,
@@ -257,6 +261,7 @@ export function AdvancePaymentRequestForm({
     !!numericAmount &&
     numericAmount >= ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT &&
     !!feeDetails &&
+    !feeError &&
     !validationError &&
     !isPending &&
     selectedQuotaRemaining > 0;
@@ -359,7 +364,7 @@ export function AdvancePaymentRequestForm({
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
           <h2
             id="employee-advance-title"
-            className="min-w-0 truncate text-[0.6875rem] font-semibold tracking-[0.08em] text-slate-400 uppercase"
+            className="employee-type-label-caps min-w-0 break-words text-[var(--employee-text-secondary)]"
           >
             Ứng lương tháng {viewedMonthLabel}
           </h2>
@@ -377,7 +382,7 @@ export function AdvancePaymentRequestForm({
         </div>
 
         {/* Period date */}
-        <p className="mt-2.5 text-[0.75rem] font-medium text-slate-400 tabular-nums">
+        <p className="employee-type-label mt-2.5 text-[var(--employee-text-secondary)] tabular-nums">
           {formatPayrollMonthRange(selectedMonth)}
         </p>
 
@@ -520,17 +525,26 @@ export function AdvancePaymentRequestForm({
           )}
 
           {/* Fee preview */}
-          {canShowFeePreview && (
+          {canShowFeePreview && feeError ? (
+            <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+              <p>Không thể tính phí chuyển tiền. Vui lòng thử lại.</p>
+              {onRetryFee && (
+                <button type="button" onClick={onRetryFee} className="mt-2 min-h-11 rounded-lg border border-red-300 bg-white px-3 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
+                  Tính lại phí
+                </button>
+              )}
+            </div>
+          ) : canShowFeePreview && (
             <div className="mt-4 grid grid-cols-2 divide-x divide-slate-200 rounded-xl border border-slate-200 bg-slate-50/50">
               <div className="px-4 py-3">
-                <p className="text-[0.75rem] font-medium text-slate-400">Phí chuyển tiền</p>
+                <p className="text-[0.75rem] font-medium text-slate-600">Phí chuyển tiền</p>
                 <p className="mt-1 text-[1rem] font-semibold tabular-nums text-slate-600">
                   {feeDetails ? formatCurrency(feeDetails.fee) : "Đang tính..."}
                 </p>
               </div>
               <div className="px-4 py-3 text-right">
-                <p className="text-[0.75rem] font-medium text-slate-400">Bạn thực nhận</p>
-                <p className="mt-1 text-[1rem] font-semibold tabular-nums text-emerald-600">
+                <p className="text-[0.75rem] font-medium text-slate-600">Bạn thực nhận</p>
+                <p className="mt-1 text-[1rem] font-semibold tabular-nums text-emerald-700">
                   {feeDetails ? formatCurrency(feeDetails.netAmount) : "Đang tính..."}
                 </p>
               </div>

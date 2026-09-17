@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { authManager } from '@/lib/auth';
+import { authManager, type AppRole } from '@/lib/auth';
 import { generateAvatarUrl } from '@/utils/avatarHelpers';
 
 interface User {
@@ -8,7 +8,7 @@ interface User {
   email: string;
   name: string;
   username: string;
-  role: 'admin' | 'partner' | 'employee' | 'adv_partner';
+  role: AppRole;
   status?: 'active' | 'inactive';
   avatar?: string;
   created_at?: string;
@@ -134,11 +134,12 @@ export const useAuth = (): AuthContextValue => {
 };
 
 // Helper functions
-const getDisplayName = (username: string, role: 'admin' | 'partner' | 'employee' | 'adv_partner'): string => {
+const getDisplayName = (username: string, role: AppRole): string => {
   if (!username) {
     if (role === 'admin') return 'Quản trị viên';
     if (role === 'partner') return 'Quản lý';
     if (role === 'adv_partner') return 'Quản lý ứng lương';
+    if (role === 'accountant') return 'Kế toán';
     return 'Nhân viên';
   }
 
@@ -152,5 +153,6 @@ const getDisplayName = (username: string, role: 'admin' | 'partner' | 'employee'
   if (role === 'admin') return 'Quản trị viên';
   if (role === 'partner') return 'Quản lý';
   if (role === 'adv_partner') return 'Quản lý ứng lương';
+  if (role === 'accountant') return 'Kế toán';
   return 'Nhân viên';
 };

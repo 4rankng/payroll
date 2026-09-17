@@ -20,6 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectMobileList } from "@/components/projects/ProjectMobileList";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorState } from "@/components/ui/error-state";
 import { useProjects } from "@/hooks/api/useProjects";
 import { useProjectFilters } from "@/hooks/projects/useProjectFilters";
 import { useProjectModals } from "@/hooks/useModalNavigation";
@@ -56,7 +57,7 @@ const ProjectsPageMobile = () => {
     initialFilters: { page: 1, pageSize: ITEMS_PER_PAGE },
   });
 
-  const { data: response, isLoading } = useProjects(filterControls.apiFilters);
+  const { data: response, isLoading, isError, isFetching, refetch } = useProjects(filterControls.apiFilters);
   const { data: summary, isLoading: summaryLoading } = usePartnerProjectSummary();
   const projects = response?.data || [];
   const pagination = response?.pagination;
@@ -132,27 +133,23 @@ const ProjectsPageMobile = () => {
 
       {/* ── Stats strip ── */}
       {!summaryLoading && summary && (
-        <MobileSurface className="p-3">
-          <div className="grid grid-cols-2 gap-2">
+        <MobileSurface className="p-2">
+          <div className="grid grid-cols-4 gap-1.5">
             {[
               { label: "Tổng", value: summary.total_projects, icon: Briefcase, color: "text-primary", bg: "bg-primary/10" },
               { label: "Đang dùng", value: summary.active_projects, icon: CheckCircle, color: "text-success", bg: "bg-success/10" },
               { label: "Hoàn thành", value: summary.completed_projects, icon: CheckCircle, color: "text-info", bg: "bg-info/10" },
               { label: "Nhân viên", value: summary.total_employees, icon: Users, color: "text-warning", bg: "bg-warning/10" },
             ].map((stat) => {
-              const Icon = stat.icon;
-              return (
+                            return (
                 <div
                   key={stat.label}
-                  className="flex min-h-16 min-w-0 flex-col items-center gap-1 rounded-2xl border border-border bg-card px-2.5 py-2 transition-all duration-200 active:scale-95"
+                  className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-card px-1.5 py-2 transition-all duration-200 active:scale-95"
                 >
-                  <div className={`p-1.5 rounded-xl ${stat.bg}`}>
-                    <Icon className={`h-3 w-3 ${stat.color}`} />
-                  </div>
                   <span className="text-xs font-bold tabular-nums leading-none text-foreground">
                     {stat.value.toLocaleString("vi-VN")}
                   </span>
-                  <span className="text-[9px] leading-none text-muted-foreground">{stat.label}</span>
+                  <span className="text-[11px] leading-tight text-muted-foreground">{stat.label}</span>
                 </div>
               );
             })}
@@ -160,7 +157,7 @@ const ProjectsPageMobile = () => {
         </MobileSurface>
       )}
       {summaryLoading && (
-        <div className="grid grid-cols-2 gap-2 px-4 pb-3">
+        <div className="grid grid-cols-4 gap-1.5 px-4 pb-3">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
@@ -227,6 +224,11 @@ const ProjectsPageMobile = () => {
 
       {/* ── Project list ── */}
       <div className="flex-1">
+        {isError ? (
+          <div role="alert">
+            <ErrorState message="Không thể tải danh sách dự án. Vui lòng thử lại." onRetry={() => void refetch()} />
+          </div>
+        ) : (
         <ProjectMobileList
           projects={projects}
           onRowClick={handleProjectClick}
@@ -236,20 +238,26 @@ const ProjectsPageMobile = () => {
           emptyState={
             <EmptyState
               title="Không có dự án nào"
-              description="Bạn chưa được phân quyền truy cập vào dự án nào."
+              description={filterControls.hasFilters
+                ? "Không có dự án phù hợp. Thử thay đổi từ khóa hoặc xóa bộ lọc."
+                : "Bạn chưa được phân quyền truy cập vào dự án nào."}
+              action={filterControls.hasFilters
+                ? { label: "Xóa bộ lọc", onClick: filterControls.clearFilters }
+                : undefined}
               size="sm"
             />
           }
         />
+        )}
 
-        {pagination && pagination.totalRecords > pagination.pageSize && (
+        {!isError && pagination && pagination.totalRecords > pagination.pageSize && (
           <div className="mt-3 flex items-center justify-between gap-3">
             <Button
               variant="outline"
               size="sm"
               className="h-11 min-w-11 rounded-xl px-3"
               onClick={() => filterControls.setPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage <= 1 || isLoading}
+              disabled={currentPage <= 1 || isFetching}
               aria-label="Trang dự án trước"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -264,7 +272,7 @@ const ProjectsPageMobile = () => {
               size="sm"
               className="h-11 min-w-11 rounded-xl px-3"
               onClick={() => filterControls.setPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage >= totalPages || isLoading}
+              disabled={currentPage >= totalPages || isFetching}
               aria-label="Trang dự án sau"
             >
               <span className="sr-only min-[360px]:not-sr-only">Sau</span>

@@ -23,6 +23,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchBar } from '@/components/shared/SearchBar';
 import { FilterPill } from '@/components/shared/FilterPill';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ErrorState } from "@/components/ui/error-state";
 import { useProjects } from '@/hooks/api/useProjects';
 import { useProjectFilters } from '@/hooks/projects/useProjectFilters';
 import { useProjectModals } from '@/hooks/useModalNavigation';
@@ -159,21 +160,18 @@ function ProjectCard({
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onOpen();
-        }
-      }}
       className={cn(
         'group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card cursor-pointer',
         'shadow-[0_1px_2px_-1px_rgba(15,15,30,0.06),0_8px_18px_-16px_rgba(15,15,30,0.18)]',
         'hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_18px_34px_-22px_rgba(6,101,52,0.38)] transition-all duration-200',
       )}
     >
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Xem chi tiết dự án ${project.name}`}
+        className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+      />
       <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary via-primary/65 to-primary/30" />
       <div className="p-4 pl-5 md:p-5 md:pl-6">
         <div className="flex items-start justify-between gap-3">
@@ -219,7 +217,7 @@ function ProjectCard({
               e.stopPropagation();
               onTimesheet();
             }}
-            className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 text-[11.5px] font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="relative z-20 inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 text-[11.5px] font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             <CalendarDays className="h-3.5 w-3.5" />
             Bảng công
@@ -237,6 +235,7 @@ const STATUS_FILTERS: Array<{ value: ProjectStatus | 'all'; label: string }> = [
   { value: 'paused', label: 'Tạm dừng' },
   { value: 'completed', label: 'Hoàn thành' },
   { value: 'draft', label: 'Bản nháp' },
+  { value: 'cancelled', label: 'Đã hủy' },
 ];
 
 // ─── Main page ────────────────────────────────────────────────────────────
@@ -245,7 +244,7 @@ const ProjectsPage = () => {
   const filterControls = useProjectFilters({
     initialFilters: { page: 1, pageSize: 10 },
   });
-  const { data: response, isLoading } = useProjects(filterControls.apiFilters);
+  const { data: response, isLoading, isError, isFetching, refetch } = useProjects(filterControls.apiFilters);
   const { data: summary } = usePartnerProjectSummary();
   const { openCreateProject, openPartnerProjectDetails } = useProjectModals();
 
@@ -361,6 +360,10 @@ const ProjectsPage = () => {
             <Skeleton key={i} className="h-[108px] w-full rounded-2xl bg-white/70" />
           ))}
         </div>
+      ) : isError ? (
+        <div role="alert">
+          <ErrorState message="Không thể tải danh sách dự án. Vui lòng thử lại." onRetry={() => void refetch()} />
+        </div>
       ) : projects.length === 0 ? (
         <EmptyState
           title="Không có dự án nào"
@@ -392,7 +395,7 @@ const ProjectsPage = () => {
       )}
 
       {/* ── PAGINATION ── */}
-      {pagination && pagination.totalRecords > pagination.pageSize && (
+      {!isError && pagination && pagination.totalRecords > pagination.pageSize && (
         <div className="flex items-center justify-between gap-3 px-1 flex-wrap">
           <p className="text-[12px] text-muted-foreground">
             Hiển thị{' '}
@@ -414,7 +417,7 @@ const ProjectsPage = () => {
             <button
               type="button"
               onClick={() => filterControls.setPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage <= 1}
+              disabled={currentPage <= 1 || isFetching}
               className={cn(
                 'inline-flex items-center justify-center h-8 w-8 rounded-lg text-foreground/70 transition-all',
                 'hover:bg-muted/60 hover:text-foreground',
@@ -441,6 +444,9 @@ const ProjectsPage = () => {
                     <button
                       type="button"
                       onClick={() => filterControls.setPage(p)}
+                      disabled={isFetching}
+                      aria-label={`Trang ${p}`}
+                      aria-current={p === currentPage ? "page" : undefined}
                       className={cn(
                         'min-w-8 h-8 px-2 rounded-lg text-[12px] font-semibold transition-all tabular-nums',
                         p === currentPage
@@ -457,7 +463,7 @@ const ProjectsPage = () => {
             <button
               type="button"
               onClick={() => filterControls.setPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage >= totalPages}
+              disabled={currentPage >= totalPages || isFetching}
               className={cn(
                 'inline-flex items-center justify-center h-8 w-8 rounded-lg text-foreground/70 transition-all',
                 'hover:bg-muted/60 hover:text-foreground',

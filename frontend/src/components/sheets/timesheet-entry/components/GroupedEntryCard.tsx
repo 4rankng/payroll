@@ -139,12 +139,12 @@ export const GroupedEntryCard = memo(({
           <div className="flex items-center gap-2">
             <div className="text-right">
               <div className="text-xs font-semibold text-foreground tabular-nums leading-none">{workDays}</div>
-              <div className="text-[11px] text-muted-foreground/70 leading-none mt-0.5">ngày</div>
+              <div className="text-[11px] text-muted-foreground leading-none mt-0.5">ngày</div>
             </div>
             <div className="w-px h-5 bg-border shrink-0" />
             <div className="text-right">
               <div className="text-xs font-semibold text-foreground tabular-nums leading-none">{totalHours}h</div>
-              <div className="text-[11px] text-muted-foreground/70 leading-none mt-0.5">giờ</div>
+              <div className="text-[11px] text-muted-foreground leading-none mt-0.5">giờ</div>
             </div>
           </div>
           <ChevronDown className={cn(
@@ -186,13 +186,13 @@ export const GroupedEntryCard = memo(({
         <Table className="w-full [&_td]:px-2 [&_th]:px-2">
           <ShadcnTableHeader>
             <TableRow className="border-b border-border/40 bg-muted/30 hover:bg-muted/30">
-              <TableHead className="w-[76px] text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-widest py-2">
+              <TableHead className="w-[76px] text-[11px] font-semibold text-muted-foreground uppercase tracking-widest py-2">
                 Ngày
               </TableHead>
-              <TableHead className="w-px whitespace-nowrap text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-widest py-2">
+              <TableHead className="w-px whitespace-nowrap text-[11px] font-semibold text-muted-foreground uppercase tracking-widest py-2">
                 Loại ngày
               </TableHead>
-              <TableHead className="text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-widest py-2">
+              <TableHead className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest py-2">
                 Ca làm việc
               </TableHead>
             </TableRow>

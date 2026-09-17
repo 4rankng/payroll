@@ -78,7 +78,7 @@ func runAssetTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 	})
 
 	reporter.RunTest(flowAssets, "Edge: get non-existent asset", func() error {
-		_, statusCode, _ := admin.Get("/api/v1/assets/999999")
+		_, statusCode, _ := admin.Get(fmt.Sprintf("/api/v1/assets/%d", nonexistentID))
 		if statusCode < 400 {
 			return fmt.Errorf("expected error for non-existent asset, got HTTP %d", statusCode)
 		}

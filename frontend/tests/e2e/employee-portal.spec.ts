@@ -1,10 +1,15 @@
 import { test, expect, type Page } from "@playwright/test";
 
+// Service-worker fetches bypass Playwright's page routes, particularly in
+// WebKit. This synthetic suite must never send fixture tokens to the live API.
+test.use({ serviceWorkers: "block" });
+
 const json = (data: unknown) => ({ status: "success", data });
+const EMPLOYEE_TEST_DATE = new Date("2026-07-10T12:00:00+07:00");
 
 function employeeToken(): string {
   const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url");
-  const now = Math.floor(Date.now() / 1000);
+  const now = Math.floor(EMPLOYEE_TEST_DATE.getTime() / 1000);
   return `${encode({ alg: "HS256", typ: "JWT" })}.${encode({
     exp: now + 3600,
     user_id: 77,
@@ -18,6 +23,8 @@ function employeeToken(): string {
 }
 
 async function mockEmployeePortal(page: Page) {
+  // Keep July payroll fixtures deterministic while allowing time-based UI to run.
+  await page.clock.install({ time: EMPLOYEE_TEST_DATE });
   await page.addInitScript((token) => {
     localStorage.setItem("auth_token", token);
     localStorage.setItem("userRole", "employee");
@@ -29,6 +36,11 @@ async function mockEmployeePortal(page: Page) {
   await page.route("**/api/v1/**", (route) => {
     throw new Error(`Unexpected employee portal API request: ${route.request().url()}`);
   });
+
+  await page.route("**/api/v1/auth/me", (route) => route.fulfill({
+    json: json({ id: 77, username: "employee.mobile", fullname: "Nguyễn Thị Nhân Viên Có Tên Rất Dài", role: "employee", must_change_password: false }),
+  }));
+  await page.route("**/api/v1/me/ad-banner", (route) => route.fulfill({ json: json(null) }));
 
   await page.route("**/api/v1/me", (route) => route.fulfill({
     json: json({
@@ -127,21 +139,20 @@ async function clearPersistedEmployeeQueries(page: Page) {
 
 test.describe("mobile employee payroll dashboard", () => {
   test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await mockEmployeePortal(page);
-    await page.goto("/employee");
-    await expect(page.getByText("Số tiền có thể ứng")).toBeVisible();
+    await page.goto("/employee", { waitUntil: "domcontentloaded" });
+    await expect(page.getByText("Có thể ứng", { exact: true })).toBeVisible();
   });
 
   test("preserves hierarchy and prevents overflow at supported widths", async ({ page }) => {
-    const walletArtwork = page.locator('img[src="/employee-pay-wallet.png"]');
-    await expect(walletArtwork).toBeVisible();
-    expect(await walletArtwork.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
-
     for (const viewport of [
+      { width: 320, height: 800 },
       { width: 360, height: 800 },
       { width: 390, height: 844 },
       { width: 393, height: 873 },
       { width: 430, height: 932 },
+      { width: 1280, height: 900 },
     ]) {
       await page.setViewportSize(viewport);
       await expect(page.getByRole("heading", { name: "Nguyễn Thị Nhân Viên Có Tên Rất Dài" })).toBeVisible();
@@ -184,8 +195,8 @@ test.describe("mobile employee payroll dashboard", () => {
         updated_at: "2026-07-01T00:00:00Z",
       }),
     }));
-    await page.unroute("**/api/v1/me/advance-payment");
-    await page.route("**/api/v1/me/advance-payment", (route) => route.fulfill({
+    await page.unroute("**/api/v1/me/check-in-advance");
+    await page.route("**/api/v1/me/check-in-advance", (route) => route.fulfill({
       json: json({
         forMonth: "2026-07",
         maxAdvanceAmount: 5_000_000,
@@ -250,23 +261,10 @@ test.describe("mobile employee payroll dashboard", () => {
     expect(sectionOrder[1]).toBeLessThan(sectionOrder[2]);
   });
 
-  test("keeps illustration motion subtle and honors reduced-motion", async ({ page }) => {
-    const artwork = page.locator(".employee-pay-art");
-    await expect(artwork).toBeVisible();
-
-    const activeAnimation = await artwork.evaluate((element) => getComputedStyle(element).animationName);
-    expect(activeAnimation).toContain("employee-pay-float");
-
+  test("shows the final available amount with reduced-motion enabled", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    const reducedMotion = await artwork.evaluate((element) => {
-      const style = getComputedStyle(element);
-      return {
-        duration: style.animationDuration,
-        iterations: style.animationIterationCount,
-      };
-    });
-    expect(reducedMotion.iterations).toBe("1");
-    expect(["0.01ms", "1e-05s"]).toContain(reducedMotion.duration);
+    await page.reload();
+    await expect(page.getByText("4.000.000 ₫", { exact: true })).toBeVisible();
   });
 
   test("renders exhausted and empty states without duplicating history navigation", async ({ page }) => {
@@ -306,9 +304,6 @@ test.describe("mobile employee payroll dashboard", () => {
     await expect(page.getByRole("button", { name: "Xem lịch sử yêu cầu" })).toHaveCount(0);
     await expect(page.getByText("Chưa có yêu cầu ứng lương")).toBeVisible();
     await expect(page.getByText("0 yêu cầu")).toBeVisible();
-    const emptyArtwork = page.locator('img[src="/advance-payment-empty-state.png"]');
-    await expect(emptyArtwork).toBeVisible();
-    expect(await emptyArtwork.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
   });
 
   test("shows all-time requests newest first with five visible rows", async ({ page }) => {
@@ -365,6 +360,57 @@ test.describe("mobile employee payroll dashboard", () => {
     await expect(page.getByRole("dialog").getByText("123456789012345678901234567890")).toBeVisible();
   });
 
+  test("recovers a failed fee preview and disables stale quotes when the amount changes", async ({ page }) => {
+    let failFee = true;
+    let holdFee = false;
+    let releaseFee: (() => void) | undefined;
+    await page.route("**/api/v1/me/advance-payment/calculate-fee", async (route) => {
+      if (failFee) {
+        await route.fulfill({ status: 503, json: { status: "error", message: "Fee unavailable" } });
+        return;
+      }
+      if (holdFee) await new Promise<void>((resolve) => { releaseFee = resolve; });
+      const { amount } = route.request().postDataJSON() as { amount: number };
+      await route.fulfill({ json: json({ fee: 40_000, netAmount: amount - 40_000 }) });
+    });
+    await page.getByRole("button", { name: "50%" }).click();
+    const request = page.getByRole("button", { name: "Yêu cầu ứng lương" });
+    await expect(page.getByRole("alert")).toContainText("Không thể tính phí chuyển tiền");
+    await expect(request).toBeDisabled();
+    failFee = false;
+    await page.getByRole("button", { name: "Tính lại phí" }).click();
+    await expect(request).toBeEnabled();
+    holdFee = true;
+    await page.getByRole("button", { name: "25%" }).click();
+    await expect(request).toBeDisabled();
+    await expect(page.locator("#employee-advance-request").getByText("1.960.000 ₫", { exact: true })).toHaveCount(0);
+    await expect.poll(() => Boolean(releaseFee)).toBe(true);
+    releaseFee?.();
+    await expect(request).toBeEnabled();
+    await request.click();
+    await expect(page.getByRole("dialog").getByText("960.000 ₫", { exact: true })).toBeVisible();
+  });
+
+  test("clears the fee preview and amount after a synthetic successful request", async ({ page }) => {
+    let submitted = 0;
+    await page.route("**/api/v1/me/advance-payment/request", async (route) => {
+      expect(route.request().method()).toBe("POST");
+      expect(route.request().postDataJSON()).toEqual({ amount: 2_000_000, forMonth: "2026-07" });
+      submitted += 1;
+      await route.fulfill({ json: json({ id: 11, status: "PENDING", requestAmount: 2_000_000, forMonth: "2026-07" }) });
+    });
+    await page.getByRole("button", { name: "50%" }).click();
+    const request = page.getByRole("button", { name: "Yêu cầu ứng lương" });
+    await expect(request).toBeEnabled();
+    await request.click();
+    await page.getByRole("button", { name: "Xác nhận giao dịch", exact: true }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(page.getByRole("textbox", { name: "Số tiền muốn ứng" })).toHaveValue("");
+    await expect(request).toBeDisabled();
+    await expect(page.locator("#employee-advance-request").getByText("1.960.000 ₫", { exact: true })).toHaveCount(0);
+    expect(submitted).toBe(1);
+  });
+
   test("keeps failed profile chrome non-interactive and retryable", async ({ page }) => {
     await page.unroute("**/api/v1/me");
     // A redacted synthetic null payload exercises the same unresolved-profile
@@ -415,4 +461,89 @@ test.describe("mobile employee payroll dashboard", () => {
     expect(layout.reservedBottom).toBeGreaterThanOrEqual(layout.dockHeight);
     expect(layout.labelOverflow).toBe(false);
   });
+});
+
+const regularTimesheets = {
+  ...json([{
+    id: 81,
+    date: '2026-07-09',
+    project: { id: 10, name: 'Dự án kiểm thử', code: 'QA', client_name: 'Khách hàng kiểm thử' },
+    hours_worked: 8,
+    amount: 12_345_678,
+    paid_amount: 2_345_678,
+    timesheet_status: 'approved',
+    payment_status: 'pending',
+    payment_date: null,
+    approved_at: null,
+    approved_by: null,
+    created_at: '2026-07-09T00:00:00+07:00',
+  }]),
+  pagination: { page: 1, pageSize: 50, totalPages: 1, totalRecords: 1 },
+};
+const paymentSetting = json({ id: 1, key: 'bulk_transfer_payment_percentage', value: '0.70' });
+
+async function mockRegularEmployee(page: Page) {
+  await mockEmployeePortal(page);
+  await page.route('**/api/v1/me', (route) => route.fulfill({ json: json({
+    id: 77,
+    fullname: 'Nguyễn Thị Nhân Viên Có Tên Rất Dài',
+    username: 'employee.mobile',
+    payment_schedule: 'weekly',
+    check_in_enabled: false,
+    bank: { id: 1, branch_name: 'Ngân hàng kiểm thử' },
+    bank_account_number: '123456789012345678901234567890',
+    bank_account_name: 'NGUYEN THI NHAN VIEN',
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-07-01T00:00:00Z',
+  }) }));
+  await page.route('**/api/v1/me/timesheet?*', (route) => route.fulfill({ json: regularTimesheets }));
+  await page.route('**/api/v1/settings/key/bulk_transfer_payment_percentage', (route) => route.fulfill({ json: paymentSetting }));
+}
+
+test.describe('regular employee payroll recovery', () => {
+  test('keeps full wage values and accessible account controls at desktop and narrow mobile sizes', async ({ page }) => {
+    await mockRegularEmployee(page);
+    await page.goto('/employee');
+    await expect(page.getByRole('button', { name: 'Ẩn số tiền' })).toBeVisible();
+    for (const width of [1280, 390, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      await expect(page.getByText('12.345.678 ₫', { exact: true }).first()).toBeVisible();
+      const metrics = await page.evaluate(() => ({
+        width: innerWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        clipped: Array.from(document.querySelectorAll('h1, [aria-label="Thu nhập tháng"] p, main p, main dd'))
+          .filter((element) => element.clientWidth > 0 && element.scrollWidth > element.clientWidth + 1)
+          .map((element) => element.textContent),
+      }));
+      expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.width);
+      expect(metrics.clipped).toEqual([]);
+      await page.getByRole('button', { name: 'Menu tài khoản' }).click();
+      await page.getByRole('menuitem', { name: 'Đổi mật khẩu' }).click();
+      await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
+      await expect(page.getByLabel('Mật khẩu hiện tại', { exact: true })).toHaveAttribute('aria-invalid', 'true');
+      await expect(page.getByText('Nhập mật khẩu hiện tại.', { exact: true })).toBeVisible();
+      const buttons = await page.getByRole('dialog').locator('button:visible').evaluateAll((elements) => elements.map((element) => ({ name: element.getAttribute('aria-label') || element.textContent, width: element.getBoundingClientRect().width, height: element.getBoundingClientRect().height })));
+      expect(buttons.filter((button) => button.width < 44 || button.height < 44)).toEqual([]);
+      await page.keyboard.press('Escape');
+    }
+  });
+
+  for (const failedDependency of ['timesheet', 'payment-setting']) {
+    test(`shows a recoverable error instead of empty or paid wages when ${failedDependency} fails`, async ({ page }) => {
+      await mockRegularEmployee(page);
+      const endpoint = failedDependency === 'timesheet' ? '**/api/v1/me/timesheet?*' : '**/api/v1/settings/key/bulk_transfer_payment_percentage';
+      await page.route(endpoint, (route) => route.fulfill({ status: 400, json: { status: 'error', message: 'Dữ liệu tạm thời chưa sẵn sàng' } }));
+      await page.goto('/employee');
+      const panel = page.locator('#employee-timesheets');
+      await expect(panel.getByRole('alert')).toContainText('Chưa tải được bảng công', { timeout: 15_000 });
+      await expect(page.getByRole('button', { name: 'Ẩn số tiền' })).toHaveCount(0);
+      await expect(page.getByText('Chưa có bảng công')).toHaveCount(0);
+      await expect(page.getByText('Đã trả đủ')).toHaveCount(0);
+      await page.route(endpoint, (route) => route.fulfill({ json: failedDependency === 'timesheet' ? regularTimesheets : paymentSetting }));
+      await panel.getByRole('button', { name: 'Tải lại', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Ẩn số tiền' })).toBeVisible();
+      await expect(page.getByText('12.345.678 ₫', { exact: true }).first()).toBeVisible();
+      await expect(panel.getByRole('alert')).toHaveCount(0);
+    });
+  }
 });

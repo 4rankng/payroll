@@ -49,10 +49,8 @@ func runWalletTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 
 	reporter.RunTest(flowWallet, "Sync balance", func() error {
 		var resp interface{}
-		if _, err := admin.PostInto("/api/v1/wallet/sync", nil, &resp); err != nil {
-			// Sync may fail if no wallet provider configured - that's ok
-			fmt.Printf("    Sync skipped (no provider): %v\n", err)
-			return nil
+		if _, err := admin.PostInto("/api/v1/wallet/balance/sync", nil, &resp); err != nil {
+			return fmt.Errorf("sync wallet balance: %w", err)
 		}
 		return nil
 	})
@@ -74,7 +72,7 @@ func runWalletTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 	})
 
 	reporter.RunTest(flowWallet, "Edge: resolve non-existent payment", func() error {
-		_, statusCode, _ := admin.Post("/api/v1/wallet/payments/999999/resolve", nil)
+		_, statusCode, _ := admin.Post(fmt.Sprintf("/api/v1/wallet/payments/%d/resolve", nonexistentID), nil)
 		if statusCode < 400 {
 			return fmt.Errorf("expected error resolving non-existent payment")
 		}

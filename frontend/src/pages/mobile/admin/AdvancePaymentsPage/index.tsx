@@ -472,7 +472,7 @@ const AdvancePaymentsPageMobile = () => {
       <MobileSurface className="space-y-3 p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
               Yêu cầu
             </p>
             <h2 className="text-[15px] font-bold leading-tight text-slate-900">
@@ -523,7 +523,7 @@ const AdvancePaymentsPageMobile = () => {
         <MobileSurface className="space-y-3 p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600">
                 Chấm công
               </p>
               <h2 className="text-[15px] font-bold leading-tight text-slate-900">

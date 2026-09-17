@@ -44,9 +44,9 @@ import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 
 const SCHEDULE_STYLES: Record<string, string> = {
-  weekly: "bg-info/10 text-info border-info/30",
+  weekly: "bg-info/10 text-teal-700 border-info/30",
   monthly: "bg-primary/10 text-primary border-primary/30",
-  flexible: "bg-success/10 text-success border-success/30",
+  flexible: "bg-success/10 text-emerald-700 border-success/30",
 };
 
 const SCHEDULE_LABELS: Record<string, string> = {
@@ -154,14 +154,14 @@ const EmployeesPage = () => {
                     <span className="typography-body-medium text-foreground/80 truncate block" title={employee.creator_name}>
                       {employee.creator_name || "—"}
                     </span>
-                    <span className="typography-label-medium text-muted-foreground/50">
+                    <span className="typography-label-medium text-muted-foreground">
                       {employee.created_at
                         ? format(new Date(employee.created_at), 'dd/MM/yyyy')
                         : ""}
                     </span>
                   </div>
                   {accessible ? (
-                    <span className="inline-flex items-center gap-1 shrink-0 text-[11px] font-semibold text-success bg-success/10 border border-success/30 rounded-full px-2 py-0.5">
+                    <span className="inline-flex items-center gap-1 shrink-0 text-[11px] font-semibold text-emerald-700 bg-success/10 border border-success/30 rounded-full px-2 py-0.5">
                       <Check className="h-3 w-3" />
                       Đang quản lý
                     </span>
@@ -218,7 +218,7 @@ const EmployeesPage = () => {
                               e.stopPropagation();
                               navigate(`/partner/timesheet?employee=${employee.id}`);
                             }}
-                            className="inline-flex items-center gap-0.5 shrink-0 text-[10px] font-semibold text-warning bg-warning/10 border border-warning/30 rounded px-1.5 py-0.5 hover:bg-warning/20 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-0.5 shrink-0 text-[10px] font-semibold text-amber-800 bg-warning/10 border border-warning/30 rounded px-1.5 py-0.5 hover:bg-warning/20 transition-colors cursor-pointer"
                           >
                             <Clock className="h-2.5 w-2.5" />
                             {pendingCount}
@@ -245,7 +245,7 @@ const EmployeesPage = () => {
                     </TooltipProvider>
                   )}
                 </div>
-                <div className="flex items-center gap-2.5 text-muted-foreground/60">
+                <div className="flex items-center gap-2.5 text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <CreditCard className="h-3 w-3 shrink-0" />
                     <span className="typography-label-medium font-mono truncate">{employee.cccd}</span>
@@ -278,7 +278,7 @@ const EmployeesPage = () => {
 
           if (projectCount === 0) {
             return (
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/60 px-2 py-1 rounded-lg bg-muted/45">
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground px-2 py-1 rounded-lg bg-muted/45">
                 Chưa phân công
               </span>
             );
@@ -303,7 +303,7 @@ const EmployeesPage = () => {
                 )}
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="typography-label-medium text-muted-foreground/50 font-mono truncate">
+                <span className="typography-label-medium text-muted-foreground font-mono truncate">
                   {first.code}
                   {first.position && ` · ${first.position}`}
                 </span>
@@ -311,7 +311,7 @@ const EmployeesPage = () => {
                   <TooltipProvider delayDuration={200}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded text-[10px] font-bold bg-primary/5 text-primary/60 border border-primary/10 shrink-0">
+                        <span className="inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded text-[10px] font-bold bg-primary/5 text-primary border border-primary/10 shrink-0">
                           +{more}
                         </span>
                       </TooltipTrigger>
@@ -334,7 +334,7 @@ const EmployeesPage = () => {
         cell: ({ row }) => {
           const employee = row.original;
           const branch = employee.bank?.branch_name;
-          if (!branch) return <span className="text-muted-foreground/40">—</span>;
+          if (!branch) return <span className="text-muted-foreground">—</span>;
           return (
             <div className="space-y-0.5 min-w-0">
               <div className="flex items-center gap-2">
@@ -346,7 +346,7 @@ const EmployeesPage = () => {
                 </span>
               </div>
               {employee.bank_account_number && (
-                <span className="typography-label-medium text-muted-foreground/50 tabular-nums pl-7 truncate block">
+                <span className="typography-label-medium text-muted-foreground tabular-nums pl-7 truncate block">
                   {employee.bank_account_number}
                 </span>
               )}
@@ -379,7 +379,7 @@ const EmployeesPage = () => {
           render: (row: Employee) => {
             const projects = getEmployeeProjects(row);
             const count = getEmployeeProjectCount(row);
-            if (count === 0) return <span className="text-muted-foreground/50">Chưa phân công</span>;
+            if (count === 0) return <span className="text-muted-foreground">Chưa phân công</span>;
             const p = projects[0];
             return (
               <div className="space-y-0.5">
@@ -393,7 +393,7 @@ const EmployeesPage = () => {
                   </span>
                 )}
                 {count > 1 && (
-                  <span className="ml-1 text-xs text-primary/60 font-bold">+{count - 1}</span>
+                  <span className="ml-1 text-xs text-primary font-bold">+{count - 1}</span>
                 )}
               </div>
             );
@@ -414,7 +414,7 @@ const EmployeesPage = () => {
           <UserAvatar name={row.fullname} email={row.email} cccd={row.cccd} size="sm" />
           <div className="min-w-0">
             <p className="typography-body-medium font-semibold text-foreground truncate">{row.fullname}</p>
-            <div className="flex items-center gap-2 text-muted-foreground/60">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <div className="flex items-center gap-1">
                 <CreditCard className="h-3 w-3" />
                 <span className="typography-label-medium font-mono">{row.cccd || "—"}</span>

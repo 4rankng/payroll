@@ -22,6 +22,6 @@ export const useRequestZaloReset = () =>
  */
 export const useConfirmZaloReset = () =>
   useMutation({
-    mutationFn: authService.confirmZaloReset.bind(authService),
+    mutationFn: (payload: Parameters<typeof authService.confirmZaloReset>[0]) => authService.confirmZaloReset(payload),
     meta: { skipGlobalError: true },
   });

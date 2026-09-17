@@ -210,7 +210,7 @@ func runSettingsTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 	reporter.RunTest(flowSettings, "Edge: update non-existent setting", func() error {
 		newVal := "ghost"
 		body := UpdateSettingRequest{Value: &newVal}
-		_, statusCode, _ := admin.Put("/api/v1/settings/999999", body)
+		_, statusCode, _ := admin.Put(fmt.Sprintf("/api/v1/settings/%d", nonexistentID), body)
 		if statusCode < 400 {
 			return fmt.Errorf("expected error updating non-existent setting")
 		}

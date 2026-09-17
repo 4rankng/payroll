@@ -5,8 +5,60 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
+
+func TestFundsTransferAcceptsStringAmountAndRejectsInvalidAmounts(t *testing.T) {
+	for _, tc := range []struct {
+		name, amount string
+		wantStatus   int
+	}{
+		{"provider string", `"190000"`, http.StatusOK},
+		{"numeric", `190000`, http.StatusOK},
+		{"invalid", `"invalid"`, http.StatusInternalServerError},
+		{"zero", `0`, http.StatusInternalServerError},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &Server{cfg: Config{SkipVerify: true, AccountID: "qa"}, transfers: make(map[string]*transferRecord)}
+			body := `{"amount":` + tc.amount + `,"remark":"mock_no_ipn"}`
+			response := httptest.NewRecorder()
+			server.requestFundsTransfer(response, httptest.NewRequest(http.MethodPut, "/onepayout/api/v1/accounts/qa/funds_transfers/test1", strings.NewReader(body)))
+			if response.Code != tc.wantStatus {
+				t.Fatalf("status = %d, want %d; body %s", response.Code, tc.wantStatus, response.Body.String())
+			}
+			if tc.wantStatus == http.StatusOK && server.transfers["test1"].Amount != 190000 {
+				t.Fatalf("amount = %d, want 190000", server.transfers["test1"].Amount)
+			}
+		})
+	}
+}
+
+func TestGetBalanceUsesProviderBalanceField(t *testing.T) {
+	db, err := sql.Open("sqlite", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	if _, err := db.Exec("CREATE TABLE balance (id INTEGER PRIMARY KEY, amount INTEGER NOT NULL); INSERT INTO balance VALUES (1, 2000000)"); err != nil {
+		t.Fatal(err)
+	}
+	server := &Server{cfg: Config{SkipVerify: true, AccountID: "qa-account"}, balDB: db}
+	response := httptest.NewRecorder()
+	server.getBalanceHandler(response, httptest.NewRequest(http.MethodGet, "/onepayout/api/v1/accounts/qa-account", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d", response.Code)
+	}
+	var body struct {
+		Balance json.Number `json:"balance"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Balance != "2000000" {
+		t.Fatalf("balance = %q, want 2000000", body.Balance)
+	}
+}
 
 func TestGetAccountInfoReturnsEmployeeAccountHolderName(t *testing.T) {
 	t.Setenv("MOCK_ONEPAY_HOLDER_NAME", "")

@@ -1,5 +1,5 @@
 import { memo, useCallback } from "react";
-import { Users } from "lucide-react";
+import { ChevronRight, Users } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { AccentStripCard } from "@/components/shared/AccentStripCard";
@@ -23,19 +23,19 @@ const EmployeeCard = memo(function EmployeeCard({
   return (
     <AccentStripCard
       accentColor={emp.availableAmount > 0 ? "green" : "orange"}
-      onClick={() => onPress(emp)}
     >
       <div className="px-4 pt-3.5 pb-3">
-        <div className="flex items-start justify-between gap-2 mb-2">
+        <button type="button" onClick={() => onPress(emp)} aria-label={`Xem chi tiết ứng lương của ${emp.fullname}`} className="mb-2 flex min-h-11 w-full items-center justify-between gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-foreground truncate">
+            <p className="break-words text-sm font-semibold text-foreground">
               {emp.fullname}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">{emp.cccd}</p>
           </div>
-        </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+        </button>
 
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
           <div>
             <span className="text-muted-foreground">Hạn mức: </span>
             <span className="font-semibold text-foreground tabular-nums">
@@ -73,7 +73,7 @@ const EmployeeCard = memo(function EmployeeCard({
         {emp.project && (
           <>
             {emp.project.name && (
-              <p className="text-xs text-muted-foreground mt-2 truncate">
+              <p className="mt-2 break-words text-xs text-muted-foreground">
                 {emp.project.name}
               </p>
             )}

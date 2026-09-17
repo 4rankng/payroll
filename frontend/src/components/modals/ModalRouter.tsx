@@ -16,7 +16,7 @@ import { useTransaction } from '@/hooks/transactions/useTransactions';
 // Import working sheet components (default exports)
 import AddUserSheet from '@/components/sheets/AddUserSheet';
 import AddEmployeeSheet from '@/components/sheets/AddEmployeeSheet';
-import { AddEmployeesToProject as AddEmployeeToProjectSheet } from '@/components/project-employees/AddEmployeesToProject';
+import { AddEmployeeToProjectSheetContainer } from '@/components/project-employees/AddEmployeeToProjectSheetContainer';
 import AddProjectSheet from '@/components/sheets/AddProjectSheet';
 import UserDetailsSheetContainer from '@/components/sheets/UserDetailsSheetContainer';
 import UserProfileSheet from '@/components/sheets/UserProfileSheet';
@@ -147,35 +147,6 @@ function ProjectAssignmentSheetContainer({
       employee={employee || null}
       selectedProject={project || undefined}
       loading={assignEmployeeMutation.isPending || isDataLoading}
-    />
-  );
-}
-
-// Container component for AddEmployeeToProjectSheet to handle hooks properly
-function AddEmployeeToProjectSheetContainer({
-  isOpen,
-  onClose,
-  projectId: projectIdParam
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  projectId?: string | null;
-}) {
-  const { closeModal } = useModalNavigation();
-
-  // Handle deeplink parameters for add employee to project
-  const projectIdParsed = projectIdParam ? parseInt(String(projectIdParam), 10) : undefined;
-  const { data: projectData } = useProject(projectIdParsed || 0, !!projectIdParsed);
-
-  return (
-    <AddEmployeeToProjectSheet
-      project={projectData || null}
-      isOpen={isOpen}
-      onClose={onClose}
-      onEmployeesAdded={() => {
-        // Keep the modal open to allow adding more employees
-        // User can manually close when done
-      }}
     />
   );
 }

@@ -68,16 +68,15 @@ export const PayrollReportExportDialog = memo(function PayrollReportExportDialog
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[95vw] sm:max-w-md"
+        className="max-w-full sm:max-w-md"
         contentPadding="none"
-        title="Xuất sao kê thanh toán"
         description="Chọn ngày để tải báo cáo sao kê"
       >
-        <DialogHeader className="mx-0 mt-0 px-6 pt-5 pb-4">
+        <DialogHeader className="mx-0 mt-0 px-6 pr-16 pt-5 pb-4 sm:mx-0 sm:mt-0 sm:pr-20">
           <DialogTitle>Xuất sao kê thanh toán</DialogTitle>
         </DialogHeader>
 
-        <div className="flex justify-center px-6 py-4">
+        <div className="flex justify-center px-1 py-4 sm:px-6">
           <Calendar
             mode="single"
             selected={reportDate}
@@ -85,7 +84,7 @@ export const PayrollReportExportDialog = memo(function PayrollReportExportDialog
             initialFocus
             locale={vi}
             formatters={formatters}
-            className="rounded-xl"
+            className="rounded-xl p-0 sm:p-3"
           />
         </div>
 

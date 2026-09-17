@@ -20,16 +20,16 @@ type adBannerFlowBanner struct {
 
 // adBannerFlowPayload is the create/update request body.
 type adBannerFlowPayload struct {
-	Title            string             `json:"title"`
-	Body             string             `json:"body"`
-	Bullets          []string           `json:"bullets"`
+	Title            string              `json:"title"`
+	Body             string              `json:"body"`
+	Bullets          []string            `json:"bullets"`
 	CTAs             []map[string]string `json:"ctas"`
-	Footer           string             `json:"footer"`
-	TargetProjectIDs []uint             `json:"targetProjectIds"`
-	Priority         int                `json:"priority"`
-	StartsAt         time.Time          `json:"startsAt"`
-	EndsAt           time.Time          `json:"endsAt"`
-	IsActive         bool               `json:"isActive"`
+	Footer           string              `json:"footer"`
+	TargetProjectIDs []uint              `json:"targetProjectIds"`
+	Priority         int                 `json:"priority"`
+	StartsAt         time.Time           `json:"startsAt"`
+	EndsAt           time.Time           `json:"endsAt"`
+	IsActive         bool                `json:"isActive"`
 }
 
 func adBannerFlowPayloadFor(title string, targets []uint, priority int, startsAt, endsAt time.Time, active bool) adBannerFlowPayload {
@@ -86,7 +86,7 @@ func runAdBannerTests(client *APIClient, data *TestData, reporter *Reporter, _ *
 
 	now := clock.Now()
 	// Sentinel project id no employee belongs to: proves targeting exclusion.
-	const foreignProjectID = 999999
+	const foreignProjectID = nonexistentID
 
 	var idA, idB, idC uint
 	defer func() {

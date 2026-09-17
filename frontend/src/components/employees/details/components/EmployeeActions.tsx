@@ -73,8 +73,8 @@ export const EmployeeActions = memo(({
             variant="ghost"
             onClick={onDelete}
             className={cn(
-              "min-h-11 border border-destructive/30 bg-destructive/10 text-destructive",
-              "hover:bg-destructive/20 hover:text-destructive",
+              "min-h-11 border border-destructive/30 bg-destructive/10 text-red-700 dark:text-red-300",
+              "hover:bg-destructive/20 hover:text-red-800 dark:hover:text-red-200",
             )}
           >
             <Trash2 className="h-4 w-4" />

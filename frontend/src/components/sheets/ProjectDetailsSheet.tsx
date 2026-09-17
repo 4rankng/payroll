@@ -338,14 +338,14 @@ function ProjectDetailsSheet({
             <TabsList className="bg-transparent p-0 h-auto w-full inline-flex gap-1 overflow-x-auto">
               <TabsTrigger
                 value="overview"
-                className="min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="min-h-11 sm:min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
                 <span className="text-xs font-semibold">Tổng quan</span>
               </TabsTrigger>
               <TabsTrigger
                 value="employees"
-                className="min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="min-h-11 sm:min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <Users className="h-3.5 w-3.5" />
                 <span className="text-xs font-semibold">Nhân viên</span>
@@ -355,7 +355,7 @@ function ProjectDetailsSheet({
               </TabsTrigger>
               <TabsTrigger
                 value="payrates"
-                className="min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="min-h-11 sm:min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
               >
                 <DollarSign className="h-3.5 w-3.5" />
                 <span className="text-xs font-semibold">Lương</span>
@@ -363,7 +363,7 @@ function ProjectDetailsSheet({
               {canManageProjectAccess && (
                 <TabsTrigger
                   value="access"
-                  className="min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className="min-h-11 sm:min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   <ShieldCheck className="h-3.5 w-3.5" />
                   <span className="text-xs font-semibold">Phân quyền</span>
@@ -382,7 +382,7 @@ function ProjectDetailsSheet({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="min-h-9 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                  className="min-h-11 sm:min-h-9 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5"
                   onClick={() => setIsEditProjectOpen(true)}
                 >
                   <Edit3 className="h-3 w-3" />
@@ -439,7 +439,7 @@ function ProjectDetailsSheet({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="min-h-9 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                  className="min-h-11 sm:min-h-9 px-3 text-xs text-muted-foreground hover:text-foreground gap-1.5"
                   onClick={() => setIsAddEmployeeOpen(true)}
                 >
                   <Plus className="h-3 w-3" />

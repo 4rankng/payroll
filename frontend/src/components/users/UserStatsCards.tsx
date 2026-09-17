@@ -8,8 +8,8 @@ interface UserStatsCardsProps {
   stats?: UserSummary;
   isLoading?: boolean;
   error?: boolean;
-  onRoleSelect?: (role?: 'admin' | 'partner' | 'employee') => void;
-  selectedRole?: 'admin' | 'partner' | 'employee';
+  onRoleSelect?: (role?: 'admin' | 'partner' | 'employee' | 'accountant') => void;
+  selectedRole?: 'admin' | 'partner' | 'employee' | 'accountant';
   lastLoginToday?: boolean;
 }
 

@@ -3,7 +3,7 @@ import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 export const STATUS_META = {
   success: {
     icon: CheckCircle2,
-    color: "text-emerald-500",
+    color: "text-emerald-700",
     bg: "bg-emerald-50",
     border: "border-emerald-200",
     label: "Thành công",
@@ -11,7 +11,7 @@ export const STATUS_META = {
   },
   failed: {
     icon: XCircle,
-    color: "text-red-500",
+    color: "text-red-700",
     bg: "bg-red-50",
     border: "border-red-200",
     label: "Thất bại",
@@ -19,7 +19,7 @@ export const STATUS_META = {
   },
   running: {
     icon: Loader2,
-    color: "text-amber-500",
+    color: "text-amber-800",
     bg: "bg-amber-50",
     border: "border-amber-200",
     label: "Đang chạy",

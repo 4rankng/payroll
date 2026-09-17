@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/ui/error-state";
 import React, { useMemo } from "react";
 import { useAppState } from "@/contexts";
 import { Clock, Loader2 } from "lucide-react";
@@ -14,7 +15,7 @@ export default function CronHealthPage() {
   const { setPageTitle } = useAppState();
   React.useEffect(() => { setPageTitle("Tác vụ định kỳ"); }, [setPageTitle]);
 
-  const { data: jobs, isLoading } = useCronJobs();
+  const { data: jobs, isLoading, isError, refetch } = useCronJobs();
   const toggleMutation = useToggleCronJob();
 
   const summary = useMemo(() => {
@@ -27,6 +28,16 @@ export default function CronHealthPage() {
       <AdminPageCanvas>
         <div className="flex min-h-64 items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </AdminPageCanvas>
+    );
+  }
+
+  if (isError) {
+    return (
+      <AdminPageCanvas>
+        <div role="alert" className="p-4">
+          <ErrorState message="Không thể tải danh sách tác vụ. Vui lòng thử lại." onRetry={() => void refetch()} />
         </div>
       </AdminPageCanvas>
     );

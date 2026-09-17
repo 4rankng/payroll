@@ -19,8 +19,10 @@ function makePosition(accuracy: number, timestamp = Date.now()): GeolocationPosi
       altitudeAccuracy: null,
       heading: null,
       speed: null,
+      toJSON() { return { latitude: this.latitude, longitude: this.longitude, accuracy: this.accuracy }; },
     },
     timestamp,
+    toJSON() { return { coords: this.coords.toJSON(), timestamp: this.timestamp }; },
   };
 }
 

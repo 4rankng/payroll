@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
+import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { TimesheetFilters } from "@/components/timesheet/TimesheetFilters";
 import { TimesheetListTable } from "@/components/timesheet/TimesheetListTable";
 import { TimesheetMobileList } from "@/components/timesheet/TimesheetMobileList";
@@ -21,7 +22,7 @@ import { useExportApprovedTimesheets } from "@/hooks/api/usePayrolls";
 import { useSettingByKey } from "@/hooks/api/useSettings";
 import { useCreateEditRequest } from "@/hooks/api/useTimesheetEditRequests";
 import { useTimesheetStatsConfig } from "@/hooks/useTimesheetStatsConfig";
-import { ChevronLeft, ChevronRight, Clock, Users, ClipboardList, AlertCircle, Wallet, CheckCircle2, SlidersHorizontal } from "lucide-react";
+import { Clock, Users, ClipboardList, AlertCircle, Wallet, CheckCircle2, SlidersHorizontal } from "lucide-react";
 import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
 import { UploadHistorySheet } from "@/components/timesheet/UploadHistorySheet";
 import { PartnerTimesheetActions } from "@/components/timesheet/PartnerTimesheetActions";
@@ -136,7 +137,7 @@ function TimesheetStatsRow({
           onClick={onClick}
           role={onClick ? "button" : undefined}
           tabIndex={onClick ? 0 : undefined}
-          onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
+          onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
           aria-pressed={onClick ? active : undefined}
           className={cn(
             "group relative rounded-2xl border bg-card px-3.5 py-3 overflow-hidden shadow-[0_8px_18px_-17px_rgba(15,23,42,0.42)] transition-all",
@@ -244,26 +245,6 @@ export default function TimesheetsPage() {
 
   const timesheetStats = useTimesheetStatsConfig(statsFilters);
 
-  const handlePrevMonth = useCallback(() => {
-    const [y, m] = displayMonth.split("-").map(Number);
-    const d = new Date(y, m - 2, 1);
-    timesheetManagement.setSelectedMonth(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-    );
-  }, [displayMonth, timesheetManagement]);
-
-  const handleNextMonth = useCallback(() => {
-    const [y, m] = displayMonth.split("-").map(Number);
-    const d = new Date(y, m, 1);
-    timesheetManagement.setSelectedMonth(
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-    );
-  }, [displayMonth, timesheetManagement]);
-
-  const monthLabel = useMemo(() => {
-    const [y, m] = displayMonth.split("-").map(Number);
-    return `Tháng ${m} / ${y}`;
-  }, [displayMonth]);
   const { data: bulkTransferSetting } = useSettingByKey(
     "bulk_transfer_payment_percentage",
   );
@@ -413,25 +394,10 @@ export default function TimesheetsPage() {
               </h1>
               <p className="text-sm text-muted-foreground mt-1">Theo dõi bảng công, yêu cầu sửa và lịch sử chi trả theo tháng</p>
             </div>
-            <div className="flex items-center gap-1 rounded-2xl border border-border/70 bg-muted/35 p-1 shadow-soft">
-              <button
-                onClick={handlePrevMonth}
-                className="flex items-center justify-center h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
-                aria-label="Tháng trước"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <span className="min-w-[124px] text-center text-sm font-bold text-foreground tabular-nums px-1">
-                {monthLabel}
-              </span>
-              <button
-                onClick={handleNextMonth}
-                className="flex items-center justify-center h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
-                aria-label="Tháng sau"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
+            <TimesheetMonthSelector
+              value={timesheetManagement.selectedMonth}
+              onChange={timesheetManagement.setSelectedMonth}
+            />
           </div>
         </div>
 

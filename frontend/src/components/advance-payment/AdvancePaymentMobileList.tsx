@@ -76,7 +76,7 @@ const RequestCard = memo(function RequestCard({
       <div className="px-4 pt-3.5 pb-3">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-foreground truncate">
+            <p className="break-words text-sm font-semibold text-foreground">
               {item.employeeName}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -98,7 +98,7 @@ const RequestCard = memo(function RequestCard({
             </Badge>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
           <div className="flex items-center gap-1.5">
             <Banknote className="h-3 w-3 text-muted-foreground shrink-0" />
             <span className="font-semibold text-foreground tabular-nums">
@@ -112,7 +112,7 @@ const RequestCard = memo(function RequestCard({
             </span>
           </div>
         </div>
-        <div className="flex items-center justify-between mt-2">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Clock className="h-3 w-3 shrink-0" />
             <span className="tabular-nums">
@@ -124,14 +124,14 @@ const RequestCard = memo(function RequestCard({
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleDismiss}
-                  className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-1"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors px-1"
                 >
                   Không
                 </button>
                 <Button
                   variant="destructive"
                   size="sm"
-                  className="h-7 px-2 text-xs"
+                  className="h-11 min-w-11 px-2 text-xs bg-red-700 hover:bg-red-800"
                   onClick={handleCancelClick}
                   disabled={isCancelling}
                 >
@@ -143,7 +143,7 @@ const RequestCard = memo(function RequestCard({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                  className="h-11 min-w-11 px-2 text-xs text-red-700 hover:text-red-800 hover:bg-red-50"
                   onClick={handleCancelClick}
                   disabled={isCancelling}
                 >
@@ -153,7 +153,7 @@ const RequestCard = memo(function RequestCard({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    className="h-11 min-w-11 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                     onClick={() => onRetry(item.id)}
                     disabled={isRetrying}
                   >
@@ -167,7 +167,7 @@ const RequestCard = memo(function RequestCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              className="h-11 min-w-11 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
               onClick={() => onRetry(item.id)}
               disabled={isRetrying}
             >

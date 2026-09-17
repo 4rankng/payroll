@@ -80,11 +80,11 @@ export function EmployeeCanopy({
 
       <div className="mx-auto max-w-lg px-4 sm:px-5">
         {/* Identity row */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[0.8125rem] font-medium tracking-wide text-white/70">{todayLabel}</p>
+            <p className="employee-type-header-date text-white/80">{todayLabel}</p>
             <h1
-              className="mt-0.5 truncate text-[1.375rem] font-bold tracking-tight text-white drop-shadow-sm"
+              className="employee-type-header-name mt-0.5 break-words text-white"
               title={employeeName}
             >
               {employeeName || "bạn"}
@@ -95,7 +95,7 @@ export function EmployeeCanopy({
               type="button"
               onClick={onNotificationClick}
               aria-label="Thông báo"
-              className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-white/90 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95"
+              className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-white/90 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--employee-accent)]"
             >
               <Bell className="h-[1.125rem] w-[1.125rem]" strokeWidth={2} aria-hidden="true" />
               {unreadCount != null && unreadCount > 0 && (
@@ -108,7 +108,7 @@ export function EmployeeCanopy({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/15 p-1 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95"
+                  className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/15 p-1 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--employee-accent)]"
                   aria-label="Menu tài khoản"
                 >
                   <img
@@ -126,14 +126,14 @@ export function EmployeeCanopy({
                 data-employee-ui=""
                 data-theme="employee"
               >
-                <DropdownMenuItem onClick={onChangePassword} className="gap-3 rounded-xl py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-900">
+                <DropdownMenuItem onClick={onChangePassword} className="min-h-11 gap-3 rounded-xl py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-900">
                   <Settings className="h-4 w-4 text-slate-400" />
-                  <span className="text-[0.875rem] font-medium">Đổi mật khẩu</span>
+                  <span className="employee-type-action">Đổi mật khẩu</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="my-1 bg-slate-100" />
-                <DropdownMenuItem onClick={onLogout} className="gap-3 rounded-xl py-2.5 text-red-600 focus:bg-red-50 focus:text-red-700">
+                <DropdownMenuItem onClick={onLogout} className="min-h-11 gap-3 rounded-xl py-2.5 text-red-600 focus:bg-red-50 focus:text-red-700">
                   <LogOut className="h-4 w-4" />
-                  <span className="text-[0.875rem] font-medium">Đăng xuất</span>
+                  <span className="employee-type-action">Đăng xuất</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -143,15 +143,15 @@ export function EmployeeCanopy({
         {/* Wallet section */}
         {wallet && (
           <div className="mt-6">
-            <p className="text-[0.8125rem] font-medium text-white/65">{wallet.model.amountLabel}</p>
+            <p className="employee-type-label text-white/80">{wallet.model.amountLabel}</p>
             <div className="mt-2 flex items-end justify-between gap-3">
-              <p className="truncate text-[2rem] font-bold tabular-nums tracking-tight text-white drop-shadow-md">
+              <p className="employee-type-hero-amount min-w-0 break-words text-white tabular-nums">
                 {amountVisible ? wallet.model.amount : MASKED_AMOUNT}
               </p>
               <button
                 type="button"
                 onClick={() => setAmountVisible((visible) => !visible)}
-                className="mb-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/15 text-white/80 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/15 text-white/80 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--employee-accent)]"
                 aria-label={amountVisible ? "Ẩn số tiền" : "Hiện số tiền"}
                 aria-pressed={!amountVisible}
               >
@@ -172,16 +172,16 @@ export function EmployeeCanopy({
                     style={{ width: `${amountVisible ? progressPercent : 0}%` }}
                   />
                 </div>
-                <div className="mt-3 flex items-baseline justify-between gap-3">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[0.75rem] font-medium text-white/60">Đã nhận</span>
-                    <span className="text-[0.875rem] font-bold tabular-nums text-white">
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div className="min-w-0">
+                    <span className="employee-type-label block text-white/80">Đã nhận</span>
+                    <span className="employee-type-action mt-1 block break-words tabular-nums text-white">
                       {amountVisible ? formatCurrency(paidAmount) : MASKED_AMOUNT}
                     </span>
                   </div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[0.75rem] font-medium text-white/60">Còn lại</span>
-                    <span className="text-[0.875rem] font-bold tabular-nums text-white">
+                  <div className="min-w-0 text-right">
+                    <span className="employee-type-label block text-white/80">Còn lại</span>
+                    <span className="employee-type-action mt-1 block break-words tabular-nums text-white">
                       {amountVisible ? formatCurrency(remainingAmount) : MASKED_AMOUNT}
                     </span>
                   </div>

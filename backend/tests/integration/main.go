@@ -71,7 +71,7 @@ func main() {
 	runSettlementSimulationTests(client, testData, reporter, cfg)
 
 	// Phase 5: Run Flow 3 - FlexPay Import (must run before advance payment)
-	runFlexPayImportTests(client, testData, reporter)
+	runFlexPayImportTests(client, testData, reporter, cfg)
 
 	// Phase 6: Run Flow 2 - Advance Payment (needs FlexPay data)
 	runAdvancePaymentTests(client, testData, reporter)
@@ -139,19 +139,19 @@ func discoverTestData(client *APIClient, cfg *TestConfig) (*TestData, error) {
 	fmt.Printf("  Logged in as admin: %s (ID %d)\n", loginResp.User.Username, loginResp.User.ID)
 
 	// Fetch projects
-	if _, err := client.GetInto("/api/v1/projects", &data.Projects); err != nil {
+	if data.Projects, err = loadAllPages[ProjectResponse](client, "/api/v1/projects"); err != nil {
 		return nil, fmt.Errorf("fetch projects: %w", err)
 	}
 	fmt.Printf("  Found %d projects\n", len(data.Projects))
 
 	// Fetch employees
-	if _, err := client.GetInto("/api/v1/employees?pageSize=100", &data.Employees); err != nil {
+	if data.Employees, err = loadAllPages[EmployeeResponse](client, "/api/v1/employees"); err != nil {
 		return nil, fmt.Errorf("fetch employees: %w", err)
 	}
 	fmt.Printf("  Found %d employees\n", len(data.Employees))
 
 	// Fetch banks
-	if _, err := client.GetInto("/api/v1/banks?pageSize=100", &data.Banks); err != nil {
+	if data.Banks, err = loadAllPages[BankResponse](client, "/api/v1/banks"); err != nil {
 		return nil, fmt.Errorf("fetch banks: %w", err)
 	}
 	fmt.Printf("  Found %d banks\n", len(data.Banks))
@@ -257,6 +257,11 @@ func findEmployeeForAdvance(client *APIClient, data *TestData, cfg *TestConfig) 
 			if ae.AvailableAmount == 0 || ae.MaxAdvanceAmount == 0 {
 				continue
 			}
+			// The cutoff scenarios exercise imported monthly quotas. Self check-in
+			// assignments deliberately use a different eligibility policy.
+			if ae.Project != nil && ae.Project.CheckInEnabled {
+				continue
+			}
 			// Try to login as this employee
 			empClient := NewAPIClient(client.BaseURL)
 			loginResp, err := empClient.Login(ae.Username, cfg.CommonPassword)
@@ -267,6 +272,9 @@ func findEmployeeForAdvance(client *APIClient, data *TestData, cfg *TestConfig) 
 			// Get employee detail
 			var detail EmployeeDetailedResponse
 			if _, err := client.GetInto(fmt.Sprintf("/api/v1/employees/%d", ae.EmployeeID), &detail); err != nil {
+				continue
+			}
+			if !hasImportedAdvanceAssignment(detail.CurrentProjects) {
 				continue
 			}
 
@@ -280,14 +288,7 @@ func findEmployeeForAdvance(client *APIClient, data *TestData, cfg *TestConfig) 
 
 	// Fallback: look for employees with flexible payment schedule who have user accounts
 	for _, emp := range data.Employees {
-		hasFlexible := false
-		for _, proj := range emp.CurrentProjects {
-			if proj.PaymentSchedule == "flexible" {
-				hasFlexible = true
-				break
-			}
-		}
-		if !hasFlexible {
+		if !hasImportedAdvanceAssignment(emp.CurrentProjects) {
 			continue
 		}
 
@@ -377,10 +378,11 @@ func setupMonthlyData(client *APIClient, data *TestData) error {
 	}
 
 	// Re-fetch projects and employees to pick up the change
-	if _, err := client.GetInto("/api/v1/projects", &data.Projects); err != nil {
+	var err error
+	if data.Projects, err = loadAllPages[ProjectResponse](client, "/api/v1/projects"); err != nil {
 		return fmt.Errorf("re-fetch projects: %w", err)
 	}
-	if _, err := client.GetInto("/api/v1/employees?pageSize=100", &data.Employees); err != nil {
+	if data.Employees, err = loadAllPages[EmployeeResponse](client, "/api/v1/employees"); err != nil {
 		return fmt.Errorf("re-fetch employees: %w", err)
 	}
 

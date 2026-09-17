@@ -95,13 +95,13 @@ export const RecentEmployeesCard: React.FC<RecentEmployeesCardProps> = ({
                     className="flex-shrink-0 ring-2 ring-border/60"
                   />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate leading-tight">
+                    <p className="text-sm font-medium text-foreground break-words leading-tight">
                       {employee.fullname}
                     </p>
-                    <p className="text-xs text-muted-foreground/70 mt-0.5 truncate">
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">
                       {formatVietnameseRelativeTime(employee.created_at)}
                     </p>
-                    <p className="text-xs text-muted-foreground/50 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {employee.created_by_name}
                     </p>
                   </div>
@@ -114,11 +114,11 @@ export const RecentEmployeesCard: React.FC<RecentEmployeesCardProps> = ({
               ))}
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t pt-3">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-1 border-t pt-2">
               <p className="text-xs text-muted-foreground">
                 {employeesArray.length} nhân viên
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {hasMore && (
                   <button
                     type="button"

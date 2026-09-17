@@ -51,7 +51,7 @@ function StatusBadges({
   earningAmount,
 }: {
   status: string;
-  reviewAction?: string | null;
+  reviewAction?: AdminAttendanceResponse["review_action"];
   checkOutTime?: string | null;
   quotaCreditedAt?: string | null;
   earningAmount?: number;
@@ -90,7 +90,7 @@ function StatusBadges({
       </div>
       {review && (
         <div className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-semibold border", review.className)}>
-          {reviewAction === "approved" ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
+          <X className="h-2.5 w-2.5" />
           {reviewStatusLabel ?? review.label}
         </div>
       )}

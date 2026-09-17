@@ -12,6 +12,7 @@ export const PROJECT_MODAL_IDS = {
   PROJECT_CREATE: 'project_create',
   PROJECT_EDIT: 'project_edit',
   PROJECT_ASSIGNMENT: 'project_assignment',
+  ADD_EMPLOYEE_TO_PROJECT: 'add_employee_to_project',
   REMOVE_EMPLOYEE: 'remove_employee',
 } as const;
 
@@ -31,6 +32,9 @@ export const projectModalSchemas = {
   [PROJECT_MODAL_IDS.PROJECT_ASSIGNMENT]: z.object({
     projectId: z.string().min(1, 'Project ID is required'),
     employeeId: z.string().optional(),
+  }),
+  [PROJECT_MODAL_IDS.ADD_EMPLOYEE_TO_PROJECT]: z.object({
+    projectId: z.string().min(1, 'Project ID is required'),
   }),
   [PROJECT_MODAL_IDS.REMOVE_EMPLOYEE]: z.object({
     projectId: z.string().min(1, 'Project ID is required'),
@@ -124,6 +128,21 @@ export const projectModals: Record<ProjectModalId, ProjectModalMetadata> = {
     componentPath: 'ProjectAssignmentSheet',
     hasParams: true,
     schema: PROJECT_MODAL_IDS.PROJECT_ASSIGNMENT,
+    permissions: {
+      action: 'update',
+      subject: 'Project',
+    },
+  },
+  [PROJECT_MODAL_IDS.ADD_EMPLOYEE_TO_PROJECT]: {
+    id: PROJECT_MODAL_IDS.ADD_EMPLOYEE_TO_PROJECT,
+    name: 'Thêm nhân viên vào dự án',
+    description: 'Thêm nhân viên vào dự án',
+    category: 'project',
+    requiresAuth: true,
+    roles: ['admin', 'partner'],
+    componentPath: 'AddEmployeeToProjectSheetContainer',
+    hasParams: true,
+    schema: PROJECT_MODAL_IDS.ADD_EMPLOYEE_TO_PROJECT,
     permissions: {
       action: 'update',
       subject: 'Project',

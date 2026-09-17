@@ -58,7 +58,8 @@ function TimesheetCard({ entry, index }: { entry: EmployeeTimesheetEntry; index:
     <div className="border rounded-xl overflow-hidden">
       {/* Main row — always visible */}
       <button
-        className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/40 transition-colors"
+        type="button"
+        className="w-full min-h-11 flex flex-wrap items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/40 transition-colors"
         onClick={() => setExpanded(v => !v)}
         aria-expanded={expanded}
       >
@@ -159,13 +160,13 @@ export const EmployeeTimesheetHistory = memo(({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-muted-foreground" />
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lịch sử chấm công</p>
         </div>
         <Select value={selectedMonth} onValueChange={handleMonthChange}>
-          <SelectTrigger className="h-11 w-40 text-xs">
+          <SelectTrigger aria-label="Tháng chấm công" className="h-11 w-40 text-xs">
             <SelectValue placeholder="Chọn tháng" />
           </SelectTrigger>
           <SelectContent>
@@ -192,7 +193,7 @@ export const EmployeeTimesheetHistory = memo(({
       )}
 
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
           <span className="text-xs text-muted-foreground">
             Trang {pagination.page}/{pagination.totalPages} · {pagination.totalRecords} bản ghi
           </span>
@@ -200,7 +201,8 @@ export const EmployeeTimesheetHistory = memo(({
             <Button
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-11 w-11 p-0 sm:h-8 sm:w-8"
+              aria-label="Trang chấm công trước"
               onClick={() => onPageChange(pagination.page - 1)}
               disabled={pagination.page <= 1}
             >
@@ -209,7 +211,8 @@ export const EmployeeTimesheetHistory = memo(({
             <Button
               variant="outline"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-11 w-11 p-0 sm:h-8 sm:w-8"
+              aria-label="Trang chấm công tiếp"
               onClick={() => onPageChange(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages}
             >

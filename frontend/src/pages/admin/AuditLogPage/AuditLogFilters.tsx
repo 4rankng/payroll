@@ -134,6 +134,7 @@ function FilterBody({ filters, onChange }: AuditLogFiltersProps) {
     <div className="flex flex-wrap items-center gap-2">
       <Input
         type="date"
+        aria-label="Từ ngày"
         value={filters.fromDate ?? ''}
         onChange={(e) => onChange({ ...filters, fromDate: e.target.value || undefined, page: 1 })}
         className="h-11 w-40 text-xs"
@@ -141,6 +142,7 @@ function FilterBody({ filters, onChange }: AuditLogFiltersProps) {
       <span className="text-muted-foreground text-xs">—</span>
       <Input
         type="date"
+        aria-label="Đến ngày"
         value={filters.toDate ?? ''}
         onChange={(e) => onChange({ ...filters, toDate: e.target.value || undefined, page: 1 })}
         className="h-11 w-40 text-xs"

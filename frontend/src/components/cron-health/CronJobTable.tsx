@@ -43,10 +43,11 @@ export function CronJobTable({ jobs, onToggle, isPending }: CronJobTableProps) {
           </TableHeader>
           <TableBody>
             {jobs.map((job) => (
-              <TableRow key={job.name} className={cn(!job.is_enabled && "opacity-50")}>
+              <TableRow key={job.name} className={cn(!job.is_enabled && "bg-muted/30")}>
                 <TableCell>
                   <Switch
                     checked={job.is_enabled}
+                    aria-label={`${job.is_enabled ? "Tắt" : "Bật"} tác vụ ${job.name.replace(/_/g, " ")}`}
                     onCheckedChange={(checked) => onToggle(job.name, checked)}
                     disabled={isPending}
                     className={cn(
@@ -76,7 +77,7 @@ export function CronJobTable({ jobs, onToggle, isPending }: CronJobTableProps) {
                 <TableCell className="text-xs text-muted-foreground">
                   {job.last_duration_ms != null ? formatDuration(job.last_duration_ms) : "—"}
                 </TableCell>
-                <TableCell className="max-w-[200px] text-xs text-red-500 truncate">
+                <TableCell className="max-w-[200px] text-xs text-red-700 truncate">
                   {job.last_error ? (
                     <Tooltip>
                       <TooltipTrigger asChild>

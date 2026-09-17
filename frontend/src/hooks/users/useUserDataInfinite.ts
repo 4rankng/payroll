@@ -16,6 +16,8 @@ export const useUserDataInfinite = (filters?: Omit<UserFilters, "page">) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isFetchNextPageError,
+    refetch,
   } = useUsersInfinite(filters);
 
   const createUserMutation = useCreateUser();
@@ -38,6 +40,8 @@ export const useUserDataInfinite = (filters?: Omit<UserFilters, "page">) => {
     isLoading,
     error,
     isFetchingNextPage,
+    isFetchNextPageError,
+    refetch,
     hasMore: hasNextPage ?? false,
     fetchNextPage,
     handleAddUser: (userData: CreateUserData) =>

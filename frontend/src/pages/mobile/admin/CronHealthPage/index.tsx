@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/ui/error-state";
 import React, { useMemo } from "react";
 import { Loader2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,7 @@ import { CronJobCard, computeCronSummary } from "@/components/cron-health";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 
 export default function CronHealthPageMobile() {
-  const { data: jobs, isLoading } = useCronJobs();
+  const { data: jobs, isLoading, isError, refetch } = useCronJobs();
   const toggleMutation = useToggleCronJob();
 
   const summary = useMemo(() => {
@@ -22,6 +23,16 @@ export default function CronHealthPageMobile() {
     );
   }
 
+  if (isError) {
+    return (
+      <div>
+        <div role="alert" className="p-4">
+          <ErrorState message="Không thể tải danh sách tác vụ. Vui lòng thử lại." onRetry={() => void refetch()} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-full pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
@@ -32,7 +43,7 @@ export default function CronHealthPageMobile() {
             <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
               {summary.total} jobs
             </Badge>
-            <Badge variant="outline" className="text-xs font-medium text-emerald-600 border-emerald-200 bg-emerald-50">
+            <Badge variant="outline" className="text-xs font-medium text-emerald-700 border-emerald-200 bg-emerald-50">
               {summary.enabled} bật
             </Badge>
             {summary.failed > 0 && (

@@ -1,6 +1,6 @@
 import { apiClient, ApiResponse } from './client';
 import { API_ENDPOINTS } from '@/config/api.config';
-import { authManager } from '@/lib/auth';
+import { authManager, type AppRole } from '@/lib/auth';
 import type {
   User,
   BasicUserProfile,
@@ -297,21 +297,21 @@ class AuthService {
   /**
    * Get user role from stored token
    */
-  getUserRole(): 'admin' | 'partner' | 'employee' | 'adv_partner' | null {
+  getUserRole(): AppRole | null {
     return authManager.getUserRole();
   }
 
   /**
    * Check if user has required role
    */
-  hasRole(role: 'admin' | 'partner' | 'employee' | 'adv_partner'): boolean {
+  hasRole(role: AppRole): boolean {
     return authManager.hasRole(role);
   }
 
   /**
    * Check if user has any of the required roles
    */
-  hasAnyRole(roles: ('admin' | 'partner' | 'employee' | 'adv_partner')[]): boolean {
+  hasAnyRole(roles: AppRole[]): boolean {
     return authManager.hasAnyRole(roles);
   }
 

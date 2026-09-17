@@ -31,48 +31,46 @@ export const NotificationItem = ({ notification, showMarkAsRead = true, onClick,
   return (
     <div
       className={cn(
-        'group flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors',
-        isUnread ? 'bg-base-100 hover:bg-base-200/60' : 'bg-base-100 hover:bg-base-200/60 opacity-75',
+        'group flex items-start gap-3 bg-base-100 px-4 py-3.5 transition-colors hover:bg-base-200/60',
         className
       )}
-      onClick={handleClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
-      tabIndex={0}
-      role="button"
-      aria-label={`${notification.title}. ${isUnread ? 'Chưa đọc' : 'Đã đọc'}.`}
     >
       {/* Accent dot */}
       <div className="mt-1.5 shrink-0">
         <div className="w-2.5 h-2.5 rounded-full" style={{ background: isUnread ? accent : '#D1D5DB' }} />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-0.5">
-          <h4 className={cn('text-sm leading-snug truncate', isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-500')}>
+      <button
+        type="button"
+        className="min-h-11 min-w-0 flex-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        onClick={handleClick}
+        aria-label={`${notification.title}. ${isUnread ? 'Chưa đọc' : 'Đã đọc'}.`}
+      >
+        <span className="mb-0.5 flex items-start justify-between gap-2">
+          <span className={cn('line-clamp-2 break-words text-sm leading-snug', isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-600')}>
             {notification.title}
-          </h4>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-xs text-gray-400 tabular-nums">{formatNotificationDate(notification.created_at)}</span>
-            {isUnread && <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />}
-          </div>
-        </div>
+          </span>
+          <span className="flex items-center gap-1.5 shrink-0">
+            <span className="text-xs text-gray-600 tabular-nums">{formatNotificationDate(notification.created_at)}</span>
+            {isUnread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />}
+          </span>
+        </span>
 
-        <div className="flex items-end justify-between gap-2">
-          <p className="text-xs text-gray-400 leading-relaxed line-clamp-2 flex-1">
+          <span className="text-xs text-gray-600 leading-relaxed line-clamp-2">
             {getNotificationPreview(notification.message)}
-          </p>
-          {isUnread && showMarkAsRead && (
-            <button
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full opacity-0 transition-opacity hover:bg-success/10 group-hover:opacity-100"
-              onClick={handleMarkAsRead}
-              disabled={markAsRead.isPending}
-              aria-label="Đánh dấu đã đọc"
-            >
-              <Check className="h-3.5 w-3.5 text-success" />
-            </button>
-          )}
-        </div>
-      </div>
+          </span>
+      </button>
+      {isUnread && showMarkAsRead && (
+        <button
+          type="button"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-opacity hover:bg-success/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+          onClick={handleMarkAsRead}
+          disabled={markAsRead.isPending}
+          aria-label="Đánh dấu đã đọc"
+        >
+          <Check className="h-4 w-4 text-emerald-700" />
+        </button>
+      )}
     </div>
   );
 };

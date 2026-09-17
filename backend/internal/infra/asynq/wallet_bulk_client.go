@@ -2,6 +2,7 @@ package asynq
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	asynqlib "github.com/hibiken/asynq"
@@ -23,7 +24,7 @@ func (c *Client) EnqueueBulkTransferRow(payload wallet_bulk.RowTaskPayload) erro
 	)
 	info, err := c.client.Enqueue(task)
 	if err != nil {
-		if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+		if errors.Is(err, asynqlib.ErrDuplicateTask) || errors.Is(err, asynqlib.ErrTaskIDConflict) {
 			return nil // already enqueued — idempotent
 		}
 		return fmt.Errorf("enqueue %s: %w", wallet_bulk.TaskBulkTransferRow, err)
@@ -46,7 +47,7 @@ func (c *Client) EnqueueBookBatchLedger(payload wallet_bulk.BookLedgerPayload) e
 	)
 	info, err := c.client.Enqueue(task)
 	if err != nil {
-		if err == asynqlib.ErrDuplicateTask || err == asynqlib.ErrTaskIDConflict {
+		if errors.Is(err, asynqlib.ErrDuplicateTask) || errors.Is(err, asynqlib.ErrTaskIDConflict) {
 			return nil
 		}
 		return fmt.Errorf("enqueue %s: %w", wallet_bulk.TaskBookBatchLedger, err)

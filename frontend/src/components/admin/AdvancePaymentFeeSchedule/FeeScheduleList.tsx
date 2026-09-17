@@ -52,7 +52,7 @@ export const FeeScheduleList = ({
   }
 
   return (
-    <div className="rounded-lg border overflow-x-auto">
+    <div tabIndex={0} role="region" aria-label="Lịch sử cấu hình phí ứng lương" className="rounded-lg border overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
       <Table>
         <TableHeader>
           <TableRow>

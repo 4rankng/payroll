@@ -105,6 +105,7 @@ export function AsyncSearchableDropdown<T>({
         <Button
           variant="outline"
           role="combobox"
+          aria-label={value ? `${placeholder}: ${getOptionFilterValue(value)}` : placeholder}
           aria-expanded={open}
           disabled={disabled}
           className={cn("justify-between", triggerClassName)}

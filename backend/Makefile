@@ -1,4 +1,4 @@
-.PHONY: backend db dev push deploy backup restore adminer-on adminer-off test api-test sync clean frontend sandbox sandbox-logs sandbox-rebuild onepay-topup
+.PHONY: backend db dev push deploy backup restore adminer-on adminer-off test api-test db-bootstrap-test sync clean frontend sandbox sandbox-logs sandbox-rebuild onepay-topup
 
 # Load environment variables from .env file (optional — local dev only;
 # push/deploy must run without it: GHCR_OWNER has a ?= fallback below and the
@@ -218,6 +218,10 @@ test:
 api-test:
 	@echo "🧪 Running API integration tests..."
 	go run ./tests/integration/
+
+# Cold-start schema verification in an isolated, unpublished MySQL container.
+db-bootstrap-test:
+	./scripts/test-local-db-bootstrap.sh
 
 # Enable adminer access from internet
 adminer-on:

@@ -34,8 +34,8 @@ func runPayratePartnerVisibilityTests(client *APIClient, data *TestData, reporte
 	partnerID := data.Partners[0].ID
 
 	// Projects the partner can access (created / shared / employee-assigned).
-	var partnerProjects []ProjectResponse
-	if _, err := partner.GetInto("/api/v1/projects?pageSize=100", &partnerProjects); err != nil {
+	partnerProjects, err := loadAllPages[ProjectResponse](partner, "/api/v1/projects")
+	if err != nil {
 		reporter.Skip(flowPayratePartnerVisibility, "All tests", fmt.Sprintf("could not list partner projects: %v", err))
 		return
 	}

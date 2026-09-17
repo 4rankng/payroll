@@ -66,7 +66,7 @@ export function CheckInMonthSelector({
       role="group"
       aria-label={`Tháng điểm danh ${label}`}
       className={cn(
-        "inline-flex h-11 items-center rounded-lg border border-border bg-background p-0.5 sm:h-9",
+        "inline-flex min-h-12 items-center rounded-lg border border-border bg-background p-0.5 sm:min-h-9",
         className,
       )}
     >
@@ -74,7 +74,7 @@ export function CheckInMonthSelector({
         type="button"
         variant="ghost"
         size="icon"
-        className="h-10 w-10 rounded-md sm:h-8 sm:w-8"
+        className="h-11 w-11 rounded-md sm:h-8 sm:w-8"
         aria-label="Xem tháng điểm danh trước"
         title="Tháng trước"
         disabled={disabled || !canGoPrevious}
@@ -88,7 +88,7 @@ export function CheckInMonthSelector({
           <Button
             type="button"
             variant="ghost"
-            className="h-10 min-w-[8.75rem] gap-2 rounded-md px-2.5 tabular-nums sm:h-8"
+            className="h-11 min-w-[8.75rem] gap-2 rounded-md px-2.5 tabular-nums sm:h-8"
             aria-label={`Chọn tháng điểm danh. Đang chọn tháng ${label}`}
             disabled={disabled}
           >
@@ -153,7 +153,7 @@ export function CheckInMonthSelector({
         type="button"
         variant="ghost"
         size="icon"
-        className="h-10 w-10 rounded-md sm:h-8 sm:w-8"
+        className="h-11 w-11 rounded-md sm:h-8 sm:w-8"
         aria-label="Xem tháng điểm danh sau"
         title="Tháng sau"
         disabled={disabled || !canGoNext}

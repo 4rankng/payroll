@@ -21,8 +21,8 @@ export default function WalletPageMobile() {
   return (
     <div className="min-h-dvh bg-neutral text-neutral-content">
       {/* Dark hero zone */}
-      <div className="px-4 pt-[var(--mobile-header-top-padding,calc(env(safe-area-inset-top)+1rem))] pb-10">
-        <div className="relative z-10 mb-6 flex items-center gap-2 pt-1">
+      <div className="px-4 pt-[var(--mobile-header-top-padding,calc(env(safe-area-inset-top)+1rem))] pb-6">
+        <div className="relative z-10 mb-3 flex items-center gap-2 pt-1">
           <WalletIcon className="h-5 w-5 shrink-0 text-neutral-content/60" />
           <h1 className="truncate text-[17px] font-semibold text-neutral-content tracking-tight">Ví điện tử</h1>
         </div>
@@ -32,11 +32,11 @@ export default function WalletPageMobile() {
             Zone ownership: pending out lives ONLY here on this page. */}
         <WalletBalanceCard className="rounded-2xl" />
 
-        <div className="mt-4 grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
+        <div className="mt-3 grid grid-cols-3 gap-1.5">
           <button
             type="button"
             onClick={() => setEmployeeAccountLookupOpen(true)}
-            className="ct-btn ct-btn-outline h-11 min-h-11 gap-2 rounded-xl border-base-100/20 bg-base-100/5 text-sm font-semibold normal-case text-neutral-content shadow-none min-[360px]:col-span-2"
+            className="ct-btn ct-btn-outline h-auto min-h-11 flex-col gap-1 rounded-xl px-1 py-2 border-base-100/20 bg-base-100/5 text-[11px] font-semibold normal-case text-neutral-content shadow-none"
           >
             <SearchCheck className="h-4 w-4" />
             Tra cứu tài khoản
@@ -44,7 +44,7 @@ export default function WalletPageMobile() {
           <button
             type="button"
             onClick={() => setBulkTransferDialogOpen(true)}
-            className="ct-btn ct-btn-outline h-11 min-h-11 gap-2 rounded-xl border-base-100/20 bg-base-100/5 text-sm font-semibold normal-case text-neutral-content shadow-none"
+            className="ct-btn ct-btn-outline h-auto min-h-11 flex-col gap-1 rounded-xl px-1 py-2 border-base-100/20 bg-base-100/5 text-[11px] font-semibold normal-case text-neutral-content shadow-none"
           >
             <Upload className="h-4 w-4" />
             Tải file
@@ -52,7 +52,7 @@ export default function WalletPageMobile() {
           <button
             type="button"
             onClick={() => setDisbursementOpen(true)}
-            className="ct-btn ct-btn-primary h-11 min-h-11 gap-2 rounded-xl text-sm font-semibold normal-case shadow-none"
+            className="ct-btn ct-btn-primary h-auto min-h-11 flex-col gap-1 rounded-xl px-1 py-2 text-[11px] font-semibold normal-case shadow-none"
           >
             <ArrowRightLeft className="h-4 w-4" />
             Chuyển tiền

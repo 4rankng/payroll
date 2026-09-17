@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { MonthPicker } from '@/components/ui/month-picker';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, RefreshCcw } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, parse } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -29,11 +29,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ value, onChang
     onChange(format(addMonths(current, 1), 'yyyy-MM'));
   }, [value, selectedDate, onChange]);
 
-  const handleMonthSelect = useCallback((date: Date | undefined) => {
-    if (date) {
-      onChange(format(startOfMonth(date), 'yyyy-MM'));
-      setIsCalendarOpen(false);
-    }
+  const handleMonthSelect = useCallback((month: string) => {
+    onChange(month);
+    setIsCalendarOpen(false);
   }, [onChange]);
 
   const handleShowAll = useCallback(() => {
@@ -75,6 +73,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ value, onChang
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
+                aria-label="Chọn tháng"
                 className={`h-11 min-w-0 rounded-xl border-transparent bg-muted/55 px-3 text-sm font-semibold sm:h-9 sm:min-w-[136px] ${
                   value === 'all' ? 'opacity-70' : ''
                 }`}
@@ -86,13 +85,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ value, onChang
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="single"
-                selected={value !== 'all' ? selectedDate : undefined}
-                onSelect={handleMonthSelect}
-                defaultMonth={selectedDate}
-                locale={vi}
-              />
+              <MonthPicker value={value} onChange={handleMonthSelect} />
             </PopoverContent>
           </Popover>
 

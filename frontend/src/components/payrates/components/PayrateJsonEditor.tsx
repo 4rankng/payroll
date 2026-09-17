@@ -27,12 +27,12 @@ export function PayrateJsonEditor({ rates, onChange, readOnly = false }: Payrate
     try {
       const parsed = JSON.parse(text);
       if (typeof parsed !== 'object' || parsed === null) {
-        throw new Error("Must be a valid JSON object");
+        throw new Error("Cấu hình phải là một đối tượng JSON hợp lệ");
       }
       setError(null);
       onChange(parsed as PayrateStructure);
     } catch (err: unknown) {
-      setError((err as Error).message || "Invalid JSON");
+      setError((err as Error).message || "JSON không hợp lệ");
     }
   };
 
@@ -40,16 +40,18 @@ export function PayrateJsonEditor({ rates, onChange, readOnly = false }: Payrate
     <Card className="shadow-sm">
       <CardContent className="p-0">
         <Textarea
+          aria-label="Cấu hình mức lương dạng JSON"
+          aria-invalid={!!error}
           value={jsonText}
           onChange={handleChange}
           readOnly={readOnly}
           className={`font-mono text-xs w-full h-[600px] rounded-xl border-0 p-4 focus-visible:ring-0 resize-y ${error ? 'bg-red-50 text-red-900' : 'bg-muted/10'}`}
-          placeholder="Enter payrate configuration as JSON..."
+          placeholder="Nhập cấu hình mức lương dạng JSON..."
           spellCheck={false}
         />
         {error && (
-          <div className="p-3 text-xs text-red-600 bg-red-50 font-medium">
-            Error: {error}
+          <div role="alert" className="p-3 text-xs text-red-700 bg-red-50 font-medium">
+            Lỗi: {error}
           </div>
         )}
       </CardContent>

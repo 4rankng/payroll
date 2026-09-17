@@ -696,8 +696,8 @@ export function MobileTimesheetEntry({
                             handleDayTypeChange(globalIdx, v)
                           }
                         >
-                          <SelectTrigger className="h-11 w-auto min-w-[130px] rounded-lg border-0 bg-muted/40 px-2.5 text-xs shadow-none focus:ring-1">
-                            <SelectValue />
+                          <SelectTrigger aria-label={`Loại ngày cho ${emp.fullname}, ${activeDate}`} className="h-11 w-auto min-w-[130px] rounded-lg border-0 bg-muted/40 px-2.5 text-xs shadow-none focus:ring-1">
+                            <SelectValue placeholder="Chọn loại ngày" />
                           </SelectTrigger>
                           <SelectContent>
                             {activeEntry.originalValues &&

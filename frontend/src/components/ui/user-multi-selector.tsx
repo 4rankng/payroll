@@ -28,6 +28,8 @@ interface UserMultiSelectorProps {
 const getRoleLabel = (role: User['role']) => {
   if (role === 'admin') return 'Quản trị viên';
   if (role === 'partner') return 'Đối tác';
+  if (role === 'adv_partner') return 'Quản lý ứng lương';
+  if (role === 'accountant') return 'Kế toán';
   return 'Nhân viên';
 };
 
@@ -252,6 +254,7 @@ export function UserMultiSelector({
 
           <Command shouldFilter={false}>
             <CommandInput
+              aria-label="Tìm kiếm người nhận"
               value={searchValue}
               onValueChange={handleSearchValueChange}
               placeholder="Tìm kiếm người dùng..."

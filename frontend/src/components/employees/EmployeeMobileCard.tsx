@@ -61,7 +61,7 @@ export const EmployeeMobileCard = React.memo(function EmployeeMobileCard({
           <div className="flex-1 min-w-0">
             {/* Row 1: name + bank indicator */}
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold truncate leading-tight">
+              <span className="min-w-0 break-words text-sm font-semibold leading-tight line-clamp-2">
                 {employee.fullname}
               </span>
               <div
@@ -94,7 +94,7 @@ export const EmployeeMobileCard = React.memo(function EmployeeMobileCard({
                 <>
                   <span className="text-gray-300 shrink-0">·</span>
                   <IdCard className="h-3 w-3 text-muted-foreground shrink-0" />
-                  <span className="text-xs font-mono text-gray-400 shrink-0">
+                  <span className="text-xs font-mono text-gray-600 shrink-0">
                     {employee.cccd}
                   </span>
                 </>

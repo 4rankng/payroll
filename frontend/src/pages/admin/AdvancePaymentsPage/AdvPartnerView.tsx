@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Wallet, Users, Calendar, ChevronLeft, ChevronRight, Download, FileText, History, ScanFace } from "lucide-react";
+import { Wallet, Users, Calendar, ChevronLeft, ChevronRight, Download, FileText, ScanFace } from "lucide-react";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { SearchBar } from "@/components/shared/SearchBar";
 import {
@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/select";
 import { ImportPayrollDialog } from "@/components/advance-payment/ImportPayrollDialog";
 import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/FlexibleEmployeeListUploadDialog";
-import { FileHistorySheet } from "@/components/advance-payment/FileHistorySheet";
 import { EmployeeAdvancePaymentDetailSheet } from "@/components/advance-payment/EmployeeAdvancePaymentDetailSheet";
 import { AdvPartnerHeroStrip } from "@/components/advance-payment/AdvPartnerHeroStrip";
 import { AdvPartnerStatusOverview } from "@/components/advance-payment/AdvPartnerStatusOverview";
@@ -181,8 +180,6 @@ const AdvPartnerAdvancePaymentsPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ActiveTab>("requests");
   const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
-  const [isEmployeeListUploadDialogOpen, setIsEmployeeListUploadDialogOpen] =
-    useState(false);
   const [selectedEmployee, setSelectedEmployee] =
     useState<FlexPayEmployeeListItem | null>(null);
 
@@ -338,16 +335,9 @@ const AdvPartnerAdvancePaymentsPage = () => {
               activeTab={activeTab}
               onTabChange={setActiveTab}
             />
-            <span className="sm:hidden text-[11px] font-medium text-muted-foreground/80 tabular-nums whitespace-nowrap">
+            <span className="sm:hidden text-[11px] font-medium text-muted-foreground tabular-nums whitespace-nowrap">
               <span className="text-foreground/80 font-semibold">{resultCount}</span> kết quả
             </span>
-            <button
-              onClick={() => setIsEmployeeListUploadDialogOpen(true)}
-              className="sm:hidden inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-card/90 text-foreground text-[13px] font-medium whitespace-nowrap hover:bg-accent transition-all"
-            >
-              <History className="h-3.5 w-3.5 shrink-0" />
-              Lịch sử file
-            </button>
           </div>
 
           {/* Row 2: Search + filter (count shows here on desktop) */}
@@ -364,8 +354,8 @@ const AdvPartnerAdvancePaymentsPage = () => {
                   value={(page.filters.status as AdvancePaymentRequestStatus) || "all"}
                   onValueChange={page.handleStatusChange}
                 >
-                  <SelectTrigger className="h-8 min-h-0 shrink-0 w-auto min-w-[90px] sm:min-w-[120px] text-[13px] font-medium gap-1">
-                    <SelectValue />
+                  <SelectTrigger aria-label="Lọc trạng thái yêu cầu ứng lương" className="h-8 min-h-0 shrink-0 w-auto min-w-[90px] sm:min-w-[120px] text-[13px] font-medium gap-1">
+                    <SelectValue placeholder="Trạng thái" />
                   </SelectTrigger>
                   <SelectContent className="min-w-[140px]">
                     <SelectItem value="all" className="text-[13px] py-1">Tất cả</SelectItem>
@@ -407,16 +397,9 @@ const AdvPartnerAdvancePaymentsPage = () => {
               />
             )}
 
-            <span className="hidden sm:inline text-[11px] font-medium text-muted-foreground/80 tabular-nums tracking-wide whitespace-nowrap">
+            <span className="hidden sm:inline text-[11px] font-medium text-muted-foreground tabular-nums tracking-wide whitespace-nowrap">
               <span className="text-foreground/80 font-semibold">{resultCount}</span> kết quả
             </span>
-            <button
-              onClick={() => setIsEmployeeListUploadDialogOpen(true)}
-              className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-card/90 text-foreground text-[13px] font-medium whitespace-nowrap hover:bg-accent transition-all"
-            >
-              <History className="h-3.5 w-3.5 shrink-0" />
-              Lịch sử file
-            </button>
           </div>
         </div>
 
@@ -477,11 +460,6 @@ const AdvPartnerAdvancePaymentsPage = () => {
       <ImportPayrollDialog
         open={isImportSheetOpen}
         onOpenChange={setIsImportSheetOpen}
-      />
-
-      <FileHistorySheet
-        open={isEmployeeListUploadDialogOpen}
-        onOpenChange={setIsEmployeeListUploadDialogOpen}
       />
 
       <EmployeeAdvancePaymentDetailSheet

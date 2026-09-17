@@ -31,12 +31,12 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
   onClick,
   className,
 }: PayrollMetricCardProps) {
-  const spanCls = mobileSpan ? 'min-[480px]:col-span-2 lg:col-span-2' : '';
+  const spanCls = mobileSpan ? 'col-span-2' : '';
   if (isLoading) {
     return (
       <div
         className={cn(
-          'flex h-full min-h-[76px] flex-col justify-center gap-1.5 rounded-lg border border-border/70 bg-card px-3 py-2.5 sm:min-h-[64px] sm:py-2',
+          'flex h-full min-h-[64px] flex-col justify-center gap-1.5 rounded-lg border border-border/70 bg-card px-3 py-2.5 sm:min-h-[64px] sm:py-2',
           spanCls,
           className,
         )}
@@ -60,7 +60,7 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
       aria-label={`${label}: ${value}${supportText ? `. ${supportText}` : ''}`}
       title={supportText ? `${label} — ${supportText}` : undefined}
       className={cn(
-        'group flex h-full min-h-[76px] min-w-0 overflow-hidden flex-col justify-center gap-1.5 rounded-lg border border-border/70 bg-card px-3 py-2.5 text-left sm:min-h-[64px] sm:py-2',
+        'group flex h-full min-h-[64px] min-w-0 overflow-hidden flex-col justify-center gap-1.5 rounded-lg border border-border/70 bg-card px-3 py-2.5 text-left sm:min-h-[64px] sm:py-2',
         'transition-colors duration-150',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         spanCls,

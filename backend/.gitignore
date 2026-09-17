@@ -61,6 +61,7 @@ build-errors.log
 # Database volumes (local development)
 mysql_data/
 redis_data/
+*_mock_balance.db*
 
 # Python
 __pycache__/

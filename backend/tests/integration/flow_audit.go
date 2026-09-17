@@ -29,7 +29,7 @@ func runAuditTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 	})
 
 	reporter.RunTest(flowAudit, "Edge: get non-existent audit log", func() error {
-		_, statusCode, _ := admin.Get("/api/v1/audit/logs/999999")
+		_, statusCode, _ := admin.Get(fmt.Sprintf("/api/v1/audit/logs/%d", nonexistentID))
 		if statusCode < 400 {
 			return fmt.Errorf("expected error for non-existent audit log")
 		}

@@ -317,7 +317,7 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
                   next[index] = { ...cta, type: e.target.value as AdBannerCTA['type'] };
                   setCtas(next);
                 }}
-                className="h-9 rounded-md border bg-background px-3 text-sm"
+                className="h-11 rounded-md border bg-background px-3 text-sm sm:h-9"
               >
                 {ctaTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -410,14 +410,15 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
             />
             {/* Segmented control: the presets are one choice, so they read as
                 one control rather than five competing buttons. */}
-            <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
+            <div className="grid w-full grid-cols-5 rounded-lg border bg-muted/40 p-0.5 sm:inline-flex sm:w-auto">
               {DURATION_PRESETS.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setPreset(option.value)}
+                  aria-pressed={preset === option.value}
                   className={cn(
-                    'h-8 rounded-md px-3 text-sm font-medium transition-colors',
+                    'min-h-11 min-w-0 rounded-md px-1.5 text-xs font-medium transition-colors sm:min-h-8 sm:px-3 sm:text-sm',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     preset === option.value
                       ? 'bg-background text-foreground shadow-sm'

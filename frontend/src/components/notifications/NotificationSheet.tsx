@@ -128,7 +128,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
           description="Danh sách thông báo của bạn"
           data-theme={variant === 'employee' ? 'employee' : 'congtruong'}
           className={cn(
-            "!w-full sm:!w-[420px] flex flex-col overflow-hidden bg-card p-0 text-card-foreground shadow-none",
+            "w-full lg:w-[420px] flex flex-col overflow-hidden bg-card p-0 text-card-foreground shadow-none",
             isMobile
               ? "h-[100dvh] max-h-none rounded-none"
               : "h-full"
@@ -152,7 +152,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                 <button
                   onClick={() => markAllAsRead.mutate()}
                   disabled={markAllAsRead.isPending}
-                  className="inline-flex items-center justify-center gap-1.5 h-11 min-h-11 max-w-[6.75rem] shrink-0 rounded-md border-0 bg-transparent px-2 text-xs font-medium text-neutral-content/80 transition-colors hover:bg-neutral-content/10 disabled:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-content/30"
+                  className="inline-flex items-center justify-center gap-1.5 h-11 min-h-11 max-w-[6.75rem] shrink-0 rounded-md border-0 bg-transparent px-2 text-xs font-medium text-white transition-colors hover:bg-neutral-content/10 disabled:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-content/30"
                   aria-label="Đánh dấu tất cả đã đọc"
                 >
                   {markAllAsRead.isPending
@@ -180,7 +180,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                   className={`inline-flex items-center justify-center h-11 min-h-11 w-full gap-1.5 rounded-lg border-0 py-0 text-sm font-semibold transition-colors ${
                     activeView === tab.value
                       ? `bg-card ${theme.activeTabText}`
-                      : 'text-neutral-content/65 hover:text-neutral-content'
+                      : 'text-white hover:text-white'
                   }`}
                 >
                   {tab.label}

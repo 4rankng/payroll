@@ -38,8 +38,8 @@ const ProjectCard = React.memo(function ProjectCard({
         className="min-h-11 w-full text-left touch-manipulation"
       >
         {/* Line 1: name + status badge */}
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-semibold truncate leading-tight">
+        <div className="flex items-start justify-between gap-2">
+          <span className="min-w-0 break-words text-sm font-semibold leading-snug line-clamp-2">
             {project.name}
           </span>
           <ProjectStatusBadge status={project.status} className="shrink-0 text-[11px] h-5 px-1.5" />

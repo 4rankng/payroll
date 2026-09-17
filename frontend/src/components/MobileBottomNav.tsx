@@ -337,7 +337,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
         <SheetContent
           side="bottom"
           className={sheetSurfaceClass}
-          title=""
+          title="Chức năng khác"
         >
           <div className="flex justify-center pt-2.5">
             <div className="h-1.5 w-12 rounded-full bg-[hsl(var(--border))]" />

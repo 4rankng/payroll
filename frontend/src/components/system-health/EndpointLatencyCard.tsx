@@ -41,8 +41,8 @@ export function EndpointLatencyCard({ endpoint }: Props) {
           <span>P95: </span>
           <span className={cn(
             "font-bold",
-            p95Status === "danger" ? "text-red-600"
-              : p95Status === "warn" ? "text-amber-500"
+            p95Status === "danger" ? "text-red-700"
+              : p95Status === "warn" ? "text-amber-700"
               : "text-foreground"
           )}>
             {endpoint.p95_ms.toLocaleString()}ms

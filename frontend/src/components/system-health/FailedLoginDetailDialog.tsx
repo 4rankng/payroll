@@ -46,7 +46,7 @@ function AttemptCard({ attempt, index }: { attempt: FailedLoginAttempt; index: n
       {/* Header row: index + reason + name / time */}
       <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[11px] font-mono text-muted-foreground/60 shrink-0">
+          <span className="text-[11px] font-mono text-muted-foreground shrink-0">
             #{index + 1}
           </span>
           <ReasonBadge reason={attempt.reason} />

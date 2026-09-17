@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/query_builders"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -34,6 +35,7 @@ func (r *EmployeeRepository) GetByIDs(ctx context.Context, ids []int64) ([]*doma
 
 	var employees []*domain.Employee
 	const batchSize = 1000 // Safe batch size to stay under MySQL's 32KB query limit
+	queryBuilder := query_builders.NewEmployeeQueryBuilder(r.dbForContext(ctx))
 
 	// Fetch employees in batches to avoid exceeding MySQL max query length
 	for i := 0; i < len(ids); i += batchSize {
@@ -44,7 +46,7 @@ func (r *EmployeeRepository) GetByIDs(ctx context.Context, ids []int64) ([]*doma
 		batch := ids[i:end]
 
 		var batchEmployees []*domain.Employee
-		query := r.queryBuilder.BuildGetByIDsQuery(ctx, batch)
+		query := queryBuilder.BuildGetByIDsQuery(ctx, batch)
 
 		err := query.Find(&batchEmployees).Error
 

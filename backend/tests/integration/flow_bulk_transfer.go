@@ -52,15 +52,6 @@ func runBulkTransferTests(client *APIClient, data *TestData, reporter *Reporter)
 		return AssertTrue("enabled", autoBulkConfig.Enabled)
 	})
 
-	// Probe 9Pay IPN webhook — the route is only mounted when ENABLE_NINEPAY=true.
-	// GET returns 405 (method not allowed) when mounted, 404 when not mounted.
-	_, ninePayProbeCode, _ := client.Get("/api/v1/webhooks/disbursement/9pay")
-	ninePayIPNActive := ninePayProbeCode != 404
-
-	if !ninePayIPNActive {
-		fmt.Printf("    9Pay IPN webhook not mounted (ENABLE_NINEPAY=false) — IPN-dependent tests will be skipped\n")
-	}
-
 	// --- Weekly estimate fee ---
 	if data.WeeklyProject == nil || data.WeeklyEmployee == nil {
 		reporter.Skip(flowBulk, "Estimate fee (weekly, before approval)", "no weekly project or employee found")
@@ -152,5 +143,4 @@ func runBulkTransferTests(client *APIClient, data *TestData, reporter *Reporter)
 		return AssertContains("message", apiErr.Message, "bắt buộc")
 	})
 
-	_ = ninePayIPNActive
 }

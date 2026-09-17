@@ -102,7 +102,7 @@ const Login = () => {
   // Track login failures + fetch CAPTCHA image when threshold is reached.
   useEffect(() => {
     if (loginMutation.isError) {
-      const error = loginMutation.error as ApiError;
+      const error = loginMutation.error;
       if (error?.message?.toLowerCase().includes("captcha")) {
         setFailedAttempts((attempts) => Math.max(attempts, 3));
       } else {

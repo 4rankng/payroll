@@ -225,7 +225,7 @@
     --admin-primary: 151 87% 25%;
     --admin-primary-foreground: 0 0% 100%;
     --admin-secondary: 36 73% 44%;
-    --admin-secondary-foreground: 43 100% 97%;
+    --admin-secondary-foreground: 220 43% 11%;
     --admin-muted: 210 20% 95%;
     --admin-muted-foreground: 145 13% 38%;
     --admin-accent-soft: 148 38% 90%;
@@ -274,7 +274,7 @@
     --partner-primary: 151 87% 25%;
     --partner-primary-foreground: 0 0% 100%;
     --partner-secondary: 36 73% 44%;
-    --partner-secondary-foreground: 43 100% 97%;
+    --partner-secondary-foreground: 220 43% 11%;
     --partner-muted: 210 20% 95%;
     --partner-muted-foreground: 145 13% 38%;
     --partner-accent-soft: 148 38% 90%;

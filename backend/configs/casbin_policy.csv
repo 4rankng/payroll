@@ -134,6 +134,9 @@ p, adv_partner, /api/v1/projects/:id/employees/:employeeId/advance-request-enabl
 p, adv_partner, /api/v1/users, GET, allow
 p, adv_partner, /api/v1/users/*, GET, allow
 
+# Bank reference data for the existing scoped user editor. Bank writes remain admin-only.
+p, adv_partner, /api/v1/banks, GET, allow
+
 # Adv partner user management
 p, adv_partner, /api/v1/adv-partner/users/*, *, allow
 

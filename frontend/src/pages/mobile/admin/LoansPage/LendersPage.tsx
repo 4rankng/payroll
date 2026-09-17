@@ -50,7 +50,7 @@ const LendersPage = () => {
     <div className="flex min-h-full flex-col pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
         icon={HandCoins}
-        title="Người cho vay"
+        title="Chủ nợ"
         subtitle="Danh sách chủ nợ và thông tin liên quan"
         sticky={false}
         bordered={false}
@@ -58,13 +58,14 @@ const LendersPage = () => {
           <>
             <Button
               size="sm"
-              className="btn-admin-primary shrink-0"
+              className="btn-admin-primary h-11 w-11 shrink-0 p-0 min-[380px]:w-auto min-[380px]:px-3"
+              aria-label="Thêm chủ nợ"
               onClick={() => setShowAddSheet(true)}
             >
               <Plus className="h-4 w-4" />
-              Thêm
+              <span className="hidden min-[380px]:inline">Thêm</span>
             </Button>
-            <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => navigate(-1)} aria-label="Quay lại khoản vay">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </>

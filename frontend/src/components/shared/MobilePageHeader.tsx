@@ -94,7 +94,7 @@ export const MobilePageHeader = ({
               {title}
             </h1>
             {subtitle && (
-              <p className="mt-0.5 break-words text-xs font-medium leading-normal text-slate-500">
+              <p className="mt-0.5 break-words text-xs font-medium leading-normal text-slate-600">
                 {subtitle}
               </p>
             )}

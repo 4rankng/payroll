@@ -43,19 +43,22 @@ export const DateStrip = memo(
         return (
           <button
             key={date}
+            type="button"
+            aria-pressed={isActive}
+            aria-label={`Ngày ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`}
             onClick={() => onDateSelect(date)}
             className={cn(
-              "flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl shrink-0 min-w-[40px] transition-all active:scale-95",
+              "flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl shrink-0 min-h-11 min-w-11 transition-all active:scale-95",
               isActive
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : markedDel
-                  ? "bg-red-50 text-red-400 border border-red-200"
+                  ? "bg-red-50 text-red-700 border border-red-200"
                   : hasEntryError
                     ? "bg-red-50 text-red-600 border border-red-200"
                     : filled
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : weekend
-                        ? "bg-orange-50/80 text-orange-500"
+                        ? "bg-orange-50/80 text-orange-700"
                         : "bg-muted/50 text-muted-foreground",
             )}
           >

@@ -42,7 +42,7 @@ const STATUS_CONFIG = {
   CANCELLED: {
     icon: Ban,
     rail: "bg-[var(--employee-border-strong)]",
-    text: "text-[var(--employee-text-muted)]",
+    text: "text-[var(--employee-text-secondary)]",
   },
 } as const;
 
@@ -203,7 +203,7 @@ function HistoryItem({
                 {getVietnameseAdvancePaymentStatus(item.status)}
               </span>
             </span>
-            <span className="employee-type-pill mt-0.5 block tabular-nums text-[var(--employee-text-muted)]">
+            <span className="employee-type-pill mt-0.5 block tabular-nums text-[var(--employee-text-secondary)]">
               <span className="sr-only">Yêu cầu ngày </span>
               {safeDate(item.createdAt)}
             </span>

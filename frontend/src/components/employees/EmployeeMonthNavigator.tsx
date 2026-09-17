@@ -78,7 +78,7 @@ export function EmployeeMonthNavigator({
           aria-label="Xem tháng trước"
           title="Tháng trước"
           className={cn(
-            "flex h-12 w-12 items-center justify-center justify-self-center rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent",
+            "flex h-12 w-12 items-center justify-center justify-self-center rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current",
             isCanopy
               ? "text-white/70 hover:bg-white/15 hover:text-white disabled:hover:text-white/70"
               : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 disabled:hover:text-slate-500"
@@ -92,7 +92,7 @@ export function EmployeeMonthNavigator({
             <button
               type="button"
               className={cn(
-                "mx-auto flex min-w-0 flex-nowrap items-center gap-3 rounded-xl px-3 transition-all duration-150 active:scale-[0.98] max-[359px]:gap-1.5 max-[359px]:px-0",
+                "mx-auto flex min-w-0 flex-nowrap items-center gap-3 rounded-xl px-3 transition-all duration-150 active:scale-[0.98] max-[359px]:gap-1.5 max-[359px]:px-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current",
                 isCanopy ? "h-12 hover:bg-white/15" : "h-14 hover:bg-emerald-50/60"
               )}
               aria-label={`Kỳ lương tháng ${month.shortLabel}. Nhấn để chọn tháng và năm khác`}
@@ -110,7 +110,7 @@ export function EmployeeMonthNavigator({
               <span className="min-w-0 text-left">
                 <span
                   className={cn(
-                    "block truncate text-[1rem] font-semibold tabular-nums",
+                    "employee-type-card-title block tabular-nums",
                     isCanopy ? "text-white" : "text-slate-900"
                   )}
                 >
@@ -118,8 +118,8 @@ export function EmployeeMonthNavigator({
                 </span>
                 <span
                   className={cn(
-                    "block text-[0.75rem] font-medium tracking-wide uppercase",
-                    isCanopy ? "text-white/65" : "text-emerald-600/80"
+                    "employee-type-label-caps block",
+                    isCanopy ? "text-white/65" : "text-[var(--employee-accent-strong)]"
                   )}
                 >
                   Kỳ bảng công
@@ -127,18 +127,18 @@ export function EmployeeMonthNavigator({
               </span>
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-[min(340px,calc(100vw-32px))] rounded-2xl border border-slate-200/80 p-4 shadow-xl shadow-slate-900/10" align="center">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <PopoverContent data-employee-ui="" data-theme="employee" className="w-[min(340px,calc(100vw-32px))] rounded-2xl border border-slate-200/80 p-4 shadow-xl shadow-slate-900/10" align="center">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
-                <p className="text-[1rem] font-semibold text-slate-900">Chọn tháng</p>
-                <p className="mt-0.5 text-[0.8125rem] text-slate-500">Xem lịch sử lương và yêu cầu</p>
+                <p className="employee-type-card-title text-slate-900">Chọn tháng</p>
+                <p className="employee-type-body-sm mt-0.5 text-slate-500">Xem lịch sử lương và yêu cầu</p>
               </div>
               <label className="text-[0.8125rem] font-medium text-slate-600">
                 <span className="sr-only">Chọn năm</span>
                 <select
                   value={pickerYear}
                   onChange={(event) => setPickerYear(Number(event.target.value))}
-                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[0.875rem] font-medium text-slate-800 outline-none transition-colors focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                  className="employee-type-action h-11 rounded-xl border border-slate-200 bg-white px-3 text-slate-800 outline-none transition-colors focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
                   aria-label="Chọn năm"
                 >
                   {years.map((year) => (
@@ -160,7 +160,7 @@ export function EmployeeMonthNavigator({
                     aria-pressed={selected}
                     onClick={() => handleMonthSelect(monthIndex)}
                     className={cn(
-                      "h-11 rounded-xl text-[0.875rem] font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
+                      "employee-type-action min-h-11 rounded-xl px-1 py-2 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
                       selected
                         ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/25"
                         : "border border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-700 active:scale-95",
@@ -182,7 +182,7 @@ export function EmployeeMonthNavigator({
           title="Tháng sau"
           disabled={!month.canGoNext}
           className={cn(
-            "flex h-12 w-12 items-center justify-center justify-self-center rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent",
+            "flex h-12 w-12 items-center justify-center justify-self-center rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current",
             isCanopy
               ? "text-white/70 hover:bg-white/15 hover:text-white disabled:hover:text-white/70"
               : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-700 disabled:hover:text-slate-500"

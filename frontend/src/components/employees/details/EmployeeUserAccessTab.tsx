@@ -192,14 +192,14 @@ export function EmployeeUserAccessTab({ employee }: EmployeeUserAccessTabProps) 
                 key={employeeUser.id === 0 ? `creator-${employeeUser.user_id}` : employeeUser.id}
                 className="flex items-center justify-between px-3 py-2.5 border rounded-xl hover:bg-accent/50 transition-colors"
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex min-w-0 items-center gap-2.5">
                   <UserAvatar
                     email={employeeUser.user_email}
                     name={employeeUser.user_fullname}
                     size="sm"
                   />
-                  <div>
-                    <div className="flex items-center gap-1.5">
+                  <div className="min-w-0 break-words">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-sm font-medium leading-tight">
                         {employeeUser.user_fullname}
                       </span>
@@ -225,7 +225,8 @@ export function EmployeeUserAccessTab({ employee }: EmployeeUserAccessTabProps) 
                       setIsRevokeModalOpen(true);
                     }}
                     disabled={revokeAccessMutation.isPending}
-                    className="text-destructive hover:text-destructive h-7 w-7 p-0"
+                    className="text-destructive hover:text-destructive h-11 w-11 shrink-0 p-0 sm:h-7 sm:w-7"
+                    aria-label={`Thu hồi quyền của ${employeeUser.user_fullname}`}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

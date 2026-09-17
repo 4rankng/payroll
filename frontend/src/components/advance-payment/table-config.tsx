@@ -46,7 +46,7 @@ export function getAdvancePaymentColumns(
           <div className="text-xs text-muted-foreground mt-0.5 tabular-nums">
             {row.original.employeeCCCD}
           </div>
-          <div className="text-xs text-muted-foreground/70 mt-0.5 truncate max-w-[120px]">
+          <div className="text-xs text-muted-foreground mt-0.5 truncate max-w-[120px]">
             {row.original.projectName || "-"}
           </div>
         </div>
@@ -77,7 +77,7 @@ export function getAdvancePaymentColumns(
       header: "Thực nhận",
       size: 100,
       cell: ({ row }) => (
-        <div className="text-xs font-semibold text-emerald-600 tabular-nums">
+        <div className="text-xs font-semibold text-emerald-700 tabular-nums">
           {formatCurrency(row.original.netAmount)}
         </div>
       ),
@@ -163,10 +163,10 @@ export function getAdvancePaymentColumns(
         const isRetrying = ctx.isRetrying && ctx.retryingId === id;
 
         return (
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
+                <Button variant="ghost" size="icon" aria-label={`Thao tác yêu cầu ứng lương của ${row.original.employeeName}`} className="h-9 w-9 shrink-0">
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -184,7 +184,7 @@ export function getAdvancePaymentColumns(
                 {isCancellable && (
                   <DropdownMenuItem
                     onClick={() => ctx.onCancel(id)}
-                    className="text-destructive focus:text-destructive"
+                    className="text-red-700 focus:text-red-800"
                   >
                     <X className="mr-2 h-3.5 w-3.5" />
                     Hủy yêu cầu
@@ -228,6 +228,7 @@ export function renderAdvanceToggle(row: FlexPayEmployeeListItem) {
     <AdvanceRequestToggle
       projectId={row.project.id}
       employeeId={row.employeeId}
+      employeeName={row.fullname}
       enabled={row.project.advance_request_enabled !== false}
     />
   );
@@ -243,7 +244,7 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
       <div>
         <div className="text-xs font-medium leading-tight">{row.original.fullname}</div>
         <div className="text-xs text-muted-foreground mt-0.5 tabular-nums">{row.original.cccd}</div>
-        <div className="text-xs text-muted-foreground/70 mt-0.5 truncate max-w-[120px]">
+        <div className="text-xs text-muted-foreground mt-0.5 truncate max-w-[120px]">
           {row.original.project?.name || "-"}
         </div>
       </div>
@@ -283,7 +284,7 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
     header: () => <SortHeader label="Đã dùng" field="utilized_amount" ctx={sort} />,
     size: 90,
     cell: ({ row }) => (
-      <div className="text-xs text-orange-600 tabular-nums">
+      <div className="text-xs text-orange-700 tabular-nums">
         {formatCurrency(row.original.utilizedAmount)}
       </div>
     ),
@@ -293,7 +294,7 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
     header: () => <SortHeader label="Chờ xử lý" field="pending_amount" ctx={sort} />,
     size: 90,
     cell: ({ row }) => (
-      <div className="text-xs text-amber-600 tabular-nums">
+      <div className="text-xs text-amber-700 tabular-nums">
         {formatCurrency(row.original.pendingAmount)}
       </div>
     ),
@@ -303,7 +304,7 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
     header: () => <SortHeader label="Còn lại" field="available_amount" ctx={sort} />,
     size: 90,
     cell: ({ row }) => (
-      <div className="text-xs font-semibold text-emerald-600 tabular-nums">
+      <div className="text-xs font-semibold text-emerald-700 tabular-nums">
         {formatCurrency(row.original.availableAmount)}
       </div>
     ),
@@ -351,7 +352,7 @@ export const requestMobileFields: MobileField<AdvancePaymentListItem>[] = [
     label: "Thực nhận",
     priority: 2,
     render: (row) => (
-      <div className="text-[13px] font-semibold text-emerald-600 tabular-nums">
+      <div className="text-[13px] font-semibold text-emerald-700 tabular-nums">
         {formatCurrency(row.netAmount)}
       </div>
     ),
@@ -424,7 +425,7 @@ export const flexPayMobileFields: MobileField<FlexPayEmployeeListItem>[] = [
     label: "Còn lại",
     priority: 1,
     render: (row) => (
-      <div className="text-[14px] font-bold text-emerald-600">
+      <div className="text-[14px] font-bold text-emerald-700">
         {formatCurrency(row.availableAmount)}
       </div>
     ),
@@ -434,7 +435,7 @@ export const flexPayMobileFields: MobileField<FlexPayEmployeeListItem>[] = [
     label: "Đã dùng",
     priority: 2,
     render: (row) => (
-      <div className="text-orange-600">
+      <div className="text-orange-700">
         {formatCurrency(row.utilizedAmount)}
       </div>
     ),

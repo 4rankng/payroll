@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Lock, Eye, EyeOff, AlertCircle, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useConfirmPasswordReset } from "@/hooks/api/usePasswordReset";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
-import type { ApiError } from "@/services/api/client";
 
 /**
  * ResetPassword — step 2 of the self-service password-reset flow.
@@ -105,7 +104,7 @@ const ResetPassword = () => {
     );
   }
 
-  const apiError = mutation.error as ApiError | null;
+  const apiError = mutation.error;
   const isTokenInvalid = (apiError?.message ?? "").toLowerCase().includes("không hợp lệ") || (apiError?.message ?? "").toLowerCase().includes("hết hạn");
 
   return (

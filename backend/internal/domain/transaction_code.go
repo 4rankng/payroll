@@ -50,7 +50,11 @@ type CyclePayData struct {
 	EmployeeID   uint   `json:"employee_id"`
 	ProjectID    uint   `json:"project_id"`
 	Amount       int64  `json:"amount"`
-	FileID       *uint  `json:"file_id"`
+	// TransferAmountSnapshot is the actual amount written into a new OnePay
+	// export. Legacy Amount is ambiguous: regular bank exports stored gross
+	// wages while OnePay stored transfer amounts. Nil preserves legacy handling.
+	TransferAmountSnapshot *int64 `json:"transfer_amount_snapshot,omitempty"`
+	FileID                 *uint  `json:"file_id"`
 	// FromDate / ToDate / CycleNum are populated at transaction-code creation
 	// time so the bank-transfer-history view can resolve the weekly cycle
 	// WITHOUT fetching timesheet dates. Legacy rows decode these as nil/0 and
@@ -92,6 +96,16 @@ func (t *TransactionCodeData) GetAmount() int64 {
 		return t.MonthlyPay.Amount
 	}
 	return 0
+}
+
+func (t *TransactionCodeData) GetTransferAmountSnapshot() *int64 {
+	if t.WeeklyPay != nil {
+		return t.WeeklyPay.TransferAmountSnapshot
+	}
+	if t.MonthlyPay != nil {
+		return t.MonthlyPay.TransferAmountSnapshot
+	}
+	return nil
 }
 
 // GetFileID returns file ID from whichever pay field is set

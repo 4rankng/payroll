@@ -102,7 +102,7 @@ export async function getLocationPermissionState(): Promise<LocationPermissionSt
 
 function getAccuracyStatus(
   accuracy: number | undefined,
-  options: LocationAcquisitionOptions
+  options: Pick<LocationAcquisitionOptions, "excellentAccuracyMeters" | "requiredAccuracyMeters">
 ): LocationAcquisitionProgress["status"] {
   if (typeof accuracy !== "number") return "warming";
   const excellentThreshold = Math.min(

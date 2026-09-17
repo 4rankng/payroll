@@ -254,7 +254,7 @@ function AddUserSheet({
                       value={formData.role}
                       onValueChange={(value) => handleInputChange("role", value)}
                     >
-                      <SelectTrigger className={errors.role ? 'border-red-500 h-11' : 'h-11'}>
+                      <SelectTrigger id="role" className={errors.role ? 'border-red-500 h-11' : 'h-11'}>
                         <SelectValue placeholder="Chọn vai trò" />
                       </SelectTrigger>
                       <SelectContent>
@@ -330,6 +330,8 @@ function AddUserSheet({
                       size="sm"
                       className="absolute right-0 top-0 h-11 w-11 px-0 hover:bg-transparent"
                       onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                      aria-pressed={showPassword}
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4 text-muted-foreground" />

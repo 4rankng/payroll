@@ -14,7 +14,7 @@ import { transactionService, type TransactionType, type TransactionStatus, type 
 import { useUploadAsset } from '@/hooks/api/useAssets';
 import { SlideSheetTemplate } from '@/components/sheets/templates/SlideSheetTemplate';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
-import { useAuth, useMetadata } from '@/contexts';
+import { useMetadata } from '@/contexts';
 import type { ModalConfig } from '@/types/modal-config.types';
 import { useCreateTransaction } from '@/hooks/transactions/useCreateTransaction';
 import { UserSelector } from '@/components/ui/user-selector';
@@ -58,7 +58,6 @@ function TransactionFormComponent({
   onClose
 }: TransactionFormProps) {
   const createTransaction = useCreateTransaction();
-  const { user } = useAuth();
   // Safe access to metadata; fall back if provider not mounted for non-admin roles
   let transactionMetadata: TransactionMetadata | undefined;
   let isLoadingTransactionMetadata = false;
@@ -92,19 +91,18 @@ function TransactionFormComponent({
   ]), []);
 
   const transactionTypeOptions = useMemo(() => {
-    return (transactionMetadata?.transaction_types?.map((t: TransactionMetadataItem) => ({ value: t.type, label: t.label }))
-      || fallbackTypeOptions);
+    const options = transactionMetadata?.transaction_types?.map((t: TransactionMetadataItem) => ({ value: t.type, label: t.label }));
+    return options?.length ? options : fallbackTypeOptions;
   }, [transactionMetadata?.transaction_types, fallbackTypeOptions]);
 
   const statusOptions = useMemo(() => {
-    return (
-      (transactionMetadata?.statuses?.filter((s: TransactionMetadataItem) => s.type !== 'partially_settled')
-        .map((s: TransactionMetadataItem) => ({
-          value: s.type,
-          label: transactionService.getStatusDisplay(s.type, transactionMetadata),
-        })))
-    );
-  }, [transactionMetadata]);
+    const options = transactionMetadata?.statuses?.filter((s: TransactionMetadataItem) => s.type !== 'partially_settled')
+      .map((s: TransactionMetadataItem) => ({
+        value: s.type,
+        label: transactionService.getStatusDisplay(s.type, transactionMetadata),
+      }));
+    return options?.length ? options : fallbackStatusOptions;
+  }, [transactionMetadata, fallbackStatusOptions]);
 
   // Parse URL parameters
   const urlParams = useMemo(() => {
@@ -521,6 +519,7 @@ function TransactionFormComponent({
                     variant="ghost"
                     size="sm"
                     onClick={handleRemoveFile}
+                    aria-label="Xóa chứng từ đã chọn"
                     className="h-11 w-11 shrink-0 p-0 text-muted-foreground hover:text-red-600"
                   >
                     <X className="h-4 w-4" />

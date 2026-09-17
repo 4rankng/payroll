@@ -520,7 +520,7 @@ const AdminSidebar = () => {
           </DropdownMenu>
 
           {!isCollapsed && (
-            <p className="text-[10px] text-white/40 text-center pt-1 pb-1 tracking-wide select-none">
+            <p className="text-[10px] text-white/70 text-center pt-1 pb-1 tracking-wide select-none">
               v{__APP_VERSION__}
             </p>
           )}

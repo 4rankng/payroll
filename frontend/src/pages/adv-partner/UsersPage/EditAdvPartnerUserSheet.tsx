@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { BankSelector } from "@/components/ui/bank-selector";
 import { toast } from "@/components/ui/sonner";
+import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { employeeService } from "@/services/api/employee.service";
 import { formatVietnameseName } from "@/lib/validation";
@@ -80,16 +81,18 @@ function Section({
 
 function Field({
   label,
+  id,
   error,
   children,
 }: {
   label: string;
+  id?: string;
   error?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-[12px] font-medium text-muted-foreground">
+      <Label htmlFor={id} className="text-[12px] font-medium text-muted-foreground">
         {label}
       </Label>
       {children}
@@ -127,10 +130,10 @@ function Avatar({ name, username }: { name: string; username?: string }) {
       >
         {initials || "?"}
       </div>
-      <div>
-        <div className="font-bold text-[15px] leading-tight">{name}</div>
+      <div className="min-w-0">
+        <div className="break-words font-bold text-[15px] leading-tight">{name}</div>
         {username && (
-          <div className="font-mono text-[12px] text-muted-foreground">
+          <div className="break-all font-mono text-[12px] text-muted-foreground">
             @{username}
           </div>
         )}
@@ -143,7 +146,7 @@ function Avatar({ name, username }: { name: string; username?: string }) {
 
 function ProjectPill({ project }: { project: CurrentProject }) {
   return (
-    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[12px]">
+    <div className="inline-flex min-w-0 flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[12px]">
       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
       <span className="font-medium text-emerald-700 dark:text-emerald-400">
         {project.name}
@@ -183,6 +186,8 @@ export default function EditAdvPartnerUserSheet({
   const [savedInfo, setSavedInfo] = useState(false);
   const [savedPassword, setSavedPassword] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [projects, setProjects] = useState<CurrentProject[]>([]);
   const [currentUsername, setCurrentUsername] = useState(initialUsername);
   const queryClient = useQueryClient();
@@ -191,6 +196,7 @@ export default function EditAdvPartnerUserSheet({
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setLoadError(false);
     employeeService.getEmployeeById(employeeId).then((res) => {
       if (cancelled) return;
       const emp = res;
@@ -207,10 +213,13 @@ export default function EditAdvPartnerUserSheet({
       setCurrentUsername(emp.username || initialUsername);
       setLoading(false);
     }).catch(() => {
-      if (!cancelled) setLoading(false);
+      if (!cancelled) {
+        setLoadError(true);
+        setLoading(false);
+      }
     });
     return () => { cancelled = true; };
-  }, [employeeId, initialUsername]);
+  }, [employeeId, initialUsername, loadAttempt]);
 
   const set = (field: keyof FormData, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -234,7 +243,7 @@ export default function EditAdvPartnerUserSheet({
   };
 
   const handleSaveInfo = async () => {
-    if (!validateInfo()) return;
+    if (loading || loadError || !validateInfo()) return;
     setIsSaving(true);
     try {
       await employeeService.updateAdvPartnerUser(employeeId, {
@@ -262,6 +271,7 @@ export default function EditAdvPartnerUserSheet({
   };
 
   const handleChangePassword = async () => {
+    if (loading || loadError) return;
     if (!password) {
       setErrors((prev) => ({
         ...prev,
@@ -318,7 +328,8 @@ export default function EditAdvPartnerUserSheet({
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0 mt-0.5"
+              aria-label="Đóng chỉnh sửa nhân viên"
+              className="w-11 h-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0 mt-0.5"
             >
               <X className="w-4 h-4" />
             </button>
@@ -335,14 +346,19 @@ export default function EditAdvPartnerUserSheet({
                 <Skeleton className="h-32 w-full rounded-xl" />
                 <Skeleton className="h-10 w-full rounded-lg" />
               </div>
+            ) : loadError ? (
+              <div role="alert">
+                <ErrorState message="Không thể tải thông tin nhân viên. Vui lòng thử lại trước khi chỉnh sửa." onRetry={() => setLoadAttempt((attempt) => attempt + 1)} />
+              </div>
             ) : (
               <>
                 {/* ── Personal info ──────────────────────────────────────── */}
                 <Section icon={User} title="Thông tin cá nhân">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="col-span-2">
-                      <Field label="Họ và tên *" error={errors.fullname}>
+                  <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3">
+                    <div className="min-[380px]:col-span-2">
+                      <Field id="adv-partner-fullname" label="Họ và tên *" error={errors.fullname}>
                         <Input
+                          id="adv-partner-fullname"
                           value={form.fullname}
                           onChange={(e) => set("fullname", e.target.value)}
                           onBlur={(e) => {
@@ -350,42 +366,45 @@ export default function EditAdvPartnerUserSheet({
                             if (formatted !== e.target.value) set("fullname", formatted);
                           }}
                           className={cn(
-                            "h-9 text-sm",
+                            "h-11 text-sm",
                             errors.fullname && "border-destructive focus-visible:ring-destructive/20"
                           )}
                         />
                       </Field>
                     </div>
 
-                    <Field label="CCCD *" error={errors.cccd}>
+                    <Field id="adv-partner-cccd" label="CCCD *" error={errors.cccd}>
                       <Input
+                        id="adv-partner-cccd"
                         value={form.cccd}
                         onChange={(e) => set("cccd", e.target.value)}
                         className={cn(
-                          "h-9 text-sm font-mono tracking-wide",
+                          "h-11 text-sm font-mono tracking-wide",
                           errors.cccd && "border-destructive focus-visible:ring-destructive/20"
                         )}
                         placeholder="012345678901"
                       />
                     </Field>
 
-                    <Field label="Số điện thoại">
+                    <Field id="adv-partner-mobile" label="Số điện thoại">
                       <Input
+                        id="adv-partner-mobile"
                         value={form.mobile}
                         onChange={(e) => set("mobile", e.target.value)}
-                        className="h-9 text-sm"
+                        className="h-11 text-sm"
                         placeholder="0901234567"
                       />
                     </Field>
 
-                    <div className="col-span-2">
-                      <Field label="Email" error={errors.email}>
+                    <div className="min-[380px]:col-span-2">
+                      <Field id="adv-partner-email" label="Email" error={errors.email}>
                         <Input
                           type="email"
+                          id="adv-partner-email"
                           value={form.email}
                           onChange={(e) => set("email", e.target.value)}
                           className={cn(
-                            "h-9 text-sm",
+                            "h-11 text-sm",
                             errors.email && "border-destructive focus-visible:ring-destructive/20"
                           )}
                           placeholder="email@example.com"
@@ -415,23 +434,25 @@ export default function EditAdvPartnerUserSheet({
                     />
                   </Field>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Số tài khoản">
+                  <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3">
+                    <Field id="adv-partner-bank_account_number" label="Số tài khoản">
                       <Input
+                        id="adv-partner-bank_account_number"
                         value={form.bank_account_number}
                         onChange={(e) => set("bank_account_number", e.target.value)}
-                        className="h-9 text-sm font-mono tracking-wide"
+                        className="h-11 text-sm font-mono tracking-wide"
                         placeholder="0123456789"
                       />
                     </Field>
-                    <Field label="Tên chủ tài khoản">
+                    <Field id="adv-partner-bank_account_name" label="Tên chủ tài khoản">
                       <Input
+                        id="adv-partner-bank_account_name"
                         value={form.bank_account_name}
                         onChange={(e) => {
                           const upper = e.target.value.toUpperCase();
                           set("bank_account_name", upper);
                         }}
-                        className="h-9 text-sm uppercase"
+                        className="h-11 text-sm uppercase"
                         placeholder="NGUYEN VAN A"
                       />
                     </Field>
@@ -451,7 +472,7 @@ export default function EditAdvPartnerUserSheet({
 
                 {/* ── Save info button ───────────────────────────────────── */}
                 <Button
-                  className="w-full h-10"
+                  className="w-full h-11"
                   onClick={handleSaveInfo}
                   disabled={isSaving}
                 >
@@ -484,11 +505,13 @@ export default function EditAdvPartnerUserSheet({
                 {/* ── Password change ────────────────────────────────────── */}
                 <Section icon={Lock} title="Đổi mật khẩu">
                   <Field
+                    id="adv-partner-password"
                     label="Mật khẩu mới"
                     error={errors.password}
                   >
                     <div className="relative">
                       <Input
+                        id="adv-partner-password"
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => {
@@ -501,7 +524,7 @@ export default function EditAdvPartnerUserSheet({
                             });
                         }}
                         className={cn(
-                          "h-9 text-sm pr-10",
+                          "h-11 text-sm pr-10",
                           errors.password && "border-destructive focus-visible:ring-destructive/20"
                         )}
                         placeholder="Tối thiểu 8 ký tự"
@@ -509,7 +532,8 @@ export default function EditAdvPartnerUserSheet({
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                        className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                       >
                         {showPassword ? (
                           <EyeOff className="w-4 h-4" />
@@ -522,7 +546,7 @@ export default function EditAdvPartnerUserSheet({
 
                   <Button
                     variant="outline"
-                    className="w-full h-9 text-[13px]"
+                    className="w-full h-11 text-[13px]"
                     onClick={handleChangePassword}
                     disabled={isSaving || !password}
                   >

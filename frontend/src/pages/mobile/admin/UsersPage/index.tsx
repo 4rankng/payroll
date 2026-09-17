@@ -1,8 +1,8 @@
+import { ErrorState } from "@/components/ui/error-state";
 import { useState, useCallback, useMemo } from "react";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
@@ -115,7 +115,7 @@ const UsersPageMobile = () => {
           <Skeleton className="h-7 w-32" />
           <Skeleton className="h-9 w-16" />
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-4 gap-1.5">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
@@ -153,10 +153,9 @@ const UsersPageMobile = () => {
       {/* Stats strip */}
       {!isAdvPartner && !summaryLoading && stats.length > 0 && (
         <div className="px-4 pb-3">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             {stats.map((stat) => {
-              const Icon = stat.icon;
-              const isActive =
+                            const isActive =
                 stat.role !== null && filterState.role === stat.role;
               return (
                 <button
@@ -168,18 +167,15 @@ const UsersPageMobile = () => {
                     }
                     handleRoleSelect(isActive ? undefined : stat.role);
                   }}
-                  className={`flex min-h-16 min-w-0 flex-col items-center gap-1 rounded-xl border px-3 py-2.5 transition-all active:scale-95 ${isActive ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}
+                  className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-2 transition-all active:scale-95 ${isActive ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card"}`}
                 >
-                  <div className={`p-1 rounded-xl ${stat.bg}`}>
-                    <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
-                  </div>
                   <span
                     className={`text-sm font-bold tabular-nums leading-none ${isActive ? "text-primary" : "text-foreground"}`}
                   >
                     {stat.value.toLocaleString("vi-VN")}
                   </span>
                   <span
-                    className={`text-[11px] leading-none ${isActive ? "text-primary/70" : "text-muted-foreground"}`}
+                    className={`text-[11px] leading-tight ${isActive ? "text-primary" : "text-muted-foreground"}`}
                   >
                     {stat.label}
                   </span>
@@ -190,7 +186,7 @@ const UsersPageMobile = () => {
         </div>
       )}
       {summaryLoading && !isAdvPartner && (
-        <div className="grid grid-cols-2 gap-2 px-4 pb-3">
+        <div className="grid grid-cols-4 gap-1.5 px-4 pb-3">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
@@ -227,9 +223,10 @@ const UsersPageMobile = () => {
       {activeFilterCount > 0 && (
         <div className="px-4 pb-3 flex gap-2 flex-wrap">
           {filterState.role && (
-            <Badge
-              variant="secondary"
-              className="gap-1 cursor-pointer"
+            <button
+              type="button"
+              aria-label="Xóa lọc vai trò"
+              className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-secondary px-3 text-xs font-semibold text-secondary-foreground"
               onClick={() => filterState.setRole(undefined)}
             >
               {
@@ -237,10 +234,11 @@ const UsersPageMobile = () => {
                   admin: "Quản trị viên",
                   partner: "Quản lý",
                   employee: "Nhân viên",
+                  accountant: "Kế toán",
                 }[filterState.role]
               }
               <X className="h-3 w-3" />
-            </Badge>
+            </button>
           )}
           <button
             onClick={filterState.clearFilters}
@@ -253,7 +251,18 @@ const UsersPageMobile = () => {
 
       {/* List with infinite scroll */}
       <div className="flex-1 px-4">
-        <UserMobileList
+        {userData.error && (
+          <div role="alert">
+            <ErrorState
+              message={userData.isFetchNextPageError
+                ? "Không thể tải thêm người dùng. Danh sách đã tải vẫn được giữ lại."
+                : "Không thể tải danh sách người dùng. Vui lòng thử lại."}
+              onRetry={() => void (userData.isFetchNextPageError ? userData.fetchNextPage() : userData.refetch())}
+              className="px-4"
+            />
+          </div>
+        )}
+        {(!userData.error || userData.users.length > 0) && <UserMobileList
           users={userData.users.filter((u) => u.role !== 'adv_partner')}
           onRowClick={(user) => openUserDetails(user.id.toString())}
           emptyState={
@@ -265,8 +274,8 @@ const UsersPageMobile = () => {
               size="sm"
             />
           }
-        />
-        {userData.hasMore && (
+        />}
+        {!userData.error && userData.hasMore && (
           <div className="flex justify-center py-4">
             <Button
               variant="outline"
@@ -291,7 +300,7 @@ const UsersPageMobile = () => {
             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-        {!userData.hasMore &&
+        {!userData.error && !userData.hasMore &&
           !userData.isFetchingNextPage &&
           userData.users.filter((u) => u.role !== 'adv_partner').length > 0 && (
             <p className="text-center py-3 text-xs text-muted-foreground">
@@ -304,7 +313,7 @@ const UsersPageMobile = () => {
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
         <SheetContent
           side="bottom"
-          className="max-h-[85dvh] overflow-y-auto rounded-t-2xl pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+          className="max-h-[85dvh] overflow-y-auto rounded-t-2xl px-4 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
         >
           <SheetHeader className="pb-4">
             <SheetTitle>Bộ lọc</SheetTitle>
@@ -318,11 +327,11 @@ const UsersPageMobile = () => {
                   filterState.setRole(
                     v === "all"
                       ? undefined
-                      : (v as "admin" | "partner" | "employee"),
+                      : (v as "admin" | "partner" | "employee" | "accountant"),
                   )
                 }
               >
-                <SelectTrigger className="h-11">
+                <SelectTrigger aria-label="Lọc vai trò người dùng" className="h-11">
                   <SelectValue placeholder="Tất cả vai trò" />
                 </SelectTrigger>
                 <SelectContent>
@@ -330,6 +339,7 @@ const UsersPageMobile = () => {
                   <SelectItem value="admin">Quản trị viên</SelectItem>
                   <SelectItem value="partner">Quản lý</SelectItem>
                   <SelectItem value="employee">Nhân viên</SelectItem>
+                  <SelectItem value="accountant">Kế toán</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -342,7 +352,7 @@ const UsersPageMobile = () => {
                     filterState.onSortChange(value, filterState.sortOrder)
                   }
                 >
-                  <SelectTrigger className="h-11 min-w-0">
+                  <SelectTrigger aria-label="Sắp xếp người dùng" className="h-11 min-w-0">
                     <SelectValue placeholder="Sắp xếp theo" />
                   </SelectTrigger>
                   <SelectContent>

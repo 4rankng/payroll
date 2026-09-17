@@ -12,14 +12,14 @@ func runTimesheetExtendedTests(client *APIClient, data *TestData, reporter *Repo
 
 	admin := client.WithToken(data.AdminToken)
 
-	// Cleanup leftover timesheets from prior runs to free up dates
-	cleanupEmployeeTimesheets(admin, data.WeeklyProject.ID, data.WeeklyEmployee.ID)
-
 	// Use an existing project and employee for timesheet operations
 	if data.WeeklyProject == nil || data.WeeklyEmployee == nil {
 		reporter.Skip(flowTimesheetExt, "All tests", "no weekly project/employee available")
 		return
 	}
+
+	// Cleanup only after discovery has established both prerequisites.
+	cleanupEmployeeTimesheets(admin, data.WeeklyProject.ID, data.WeeklyEmployee.ID)
 
 	projectID := data.WeeklyProject.ID
 	employeeID := data.WeeklyEmployee.ID
@@ -92,7 +92,7 @@ func runTimesheetExtendedTests(client *APIClient, data *TestData, reporter *Repo
 	reporter.RunTest(flowTimesheetExt, "Edge: create timesheet with invalid project", func() error {
 		body := []BulkCreateTimesheetEntry{
 			{
-				ProjectID:   999999,
+				ProjectID:   nonexistentID,
 				EmployeeID:  employeeID,
 				Date:        today(),
 				HoursWorked: 8,
@@ -107,7 +107,7 @@ func runTimesheetExtendedTests(client *APIClient, data *TestData, reporter *Repo
 	})
 
 	reporter.RunTest(flowTimesheetExt, "Edge: delete non-existent timesheet", func() error {
-		_, statusCode, _ := admin.Delete("/api/v1/timesheets/999999")
+		_, statusCode, _ := admin.Delete(fmt.Sprintf("/api/v1/timesheets/%d", nonexistentID))
 		if statusCode < 400 {
 			return fmt.Errorf("expected error deleting non-existent timesheet, got HTTP %d", statusCode)
 		}

@@ -1,3 +1,4 @@
+import { parseTimesheetStatusFilter } from "@/utils/timesheetFilterHelpers";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -81,7 +82,7 @@ const TimesheetPageMobile = () => {
   const urlProjectId = searchParams.get("projectId");
   const entryEmployeeId = searchParams.get("employeeId");
   const urlEmployeeId = searchParams.get("employee");
-  const urlStatus = searchParams.get("status");
+  const urlStatus = parseTimesheetStatusFilter(searchParams.get("status"));
 
   const handleEntryClose = useCallback(() => {
     const params = new URLSearchParams(searchParams);
@@ -119,7 +120,7 @@ const TimesheetPageMobile = () => {
     }
     if (urlStatus && urlStatus !== timesheetManagement.statusFilter) {
       timesheetManagement.setStatusFilter(
-        urlStatus as Timesheet["status"] | Timesheet["payment_status"],
+        urlStatus,
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -171,7 +172,6 @@ const TimesheetPageMobile = () => {
   const timesheetStats = useTimesheetStatsConfig(statsFilters);
 
   // Pending edit-request count feeds the "Có vấn đề" KPI in the control center.
-  const editCount = Number(timesheetStats.statsConfig.find((s) => s.title === "Yêu cầu sửa")?.value ?? 0);
 
   const exportBulkTransferMutation = useExportBulkTransfer();
   const exportOnePayMutation = useExportOnePayBulk();
@@ -415,7 +415,6 @@ const TimesheetPageMobile = () => {
         }}
         stats={{
           summary: timesheetStats.summary,
-          editCount,
           isLoading: timesheetStats.isLoading,
         }}
         activeFilter={timesheetManagement.statusFilter}

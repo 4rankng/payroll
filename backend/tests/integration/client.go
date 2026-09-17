@@ -19,6 +19,7 @@ type APIClient struct {
 	BaseURL    string
 	HTTPClient *http.Client
 	Token      string
+	Headers    map[string]string
 }
 
 func NewAPIClient(baseURL string) *APIClient {
@@ -40,6 +41,7 @@ func (c *APIClient) WithToken(token string) *APIClient {
 		BaseURL:    c.BaseURL,
 		HTTPClient: c.HTTPClient,
 		Token:      token,
+		Headers:    c.Headers,
 	}
 }
 
@@ -87,12 +89,12 @@ func (c *APIClient) Post(path string, body any) (*APIResponse, int, error) {
 
 // GetInto performs GET and unmarshals data into dest.
 func (c *APIClient) GetInto(path string, dest any) (*APIResponse, error) {
-	apiResp, _, err := c.Get(path)
+	apiResp, statusCode, err := c.Get(path)
 	if err != nil {
 		return nil, err
 	}
-	if apiResp.Status == "error" {
-		return apiResp, fmt.Errorf("API error: %s", apiResp.Message)
+	if statusCode >= 400 || apiResp.Status == "error" {
+		return apiResp, fmt.Errorf("API error (HTTP %d): %s", statusCode, apiResp.Message)
 	}
 	if apiResp.Data != nil {
 		resetDecodeTarget(dest)
@@ -204,6 +206,9 @@ func (c *APIClient) doRequest(method, path string, body any) (*http.Response, er
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	for name, value := range c.Headers {
+		req.Header.Set(name, value)
+	}
 	// Tag test traffic so the backend excludes it from api_metrics;
 	// System Health dashboards then reflect real usage only.
 	req.Header.Set(middleware.ClientSourceHeader, middleware.ClientSourceIntegrationTest)

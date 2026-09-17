@@ -84,10 +84,10 @@ func (s *Seeder) seedPayrates(ctx context.Context, db *gorm.DB) error {
 			}
 
 			payrate := &domain.Payrate{
-				ProjectID:   project.ID,
-				PayrateJSON: string(payrateJSON),
-				FromDate:    fromDate,
-				CreatedBy:   adminUser.ID,
+				ProjectID: project.ID,
+				Payrate:   domain.PayrateConfiguration(payrateJSON),
+				FromDate:  fromDate,
+				CreatedBy: adminUser.ID,
 			}
 
 			if err := payrateRepo.Create(ctx, payrate); err != nil {
@@ -107,10 +107,10 @@ func (s *Seeder) seedPayrates(ctx context.Context, db *gorm.DB) error {
 			}
 
 			payrate := &domain.Payrate{
-				ProjectID:   project.ID,
-				PayrateJSON: string(payrateJSON),
-				FromDate:    fromDate,
-				CreatedBy:   adminUser.ID,
+				ProjectID: project.ID,
+				Payrate:   domain.PayrateConfiguration(payrateJSON),
+				FromDate:  fromDate,
+				CreatedBy: adminUser.ID,
 			}
 
 			if err := payrateRepo.Create(ctx, payrate); err != nil {

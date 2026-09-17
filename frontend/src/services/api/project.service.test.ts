@@ -10,7 +10,7 @@ describe("projectService.getProjects", () => {
   it("uses the backend sort parameter contract for desktop and mobile lists", async () => {
     const get = vi
       .spyOn(apiClient, "get")
-      .mockResolvedValue({ data: [], message: "ok" });
+      .mockResolvedValue({ status: "success", data: [], message: "ok" });
 
     await projectService.getProjects({
       page: 1,

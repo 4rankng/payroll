@@ -1,4 +1,4 @@
-.PHONY: deploy dev backup restore sandbox mirror-bases
+.PHONY: deploy dev db api-test backup restore sandbox mirror-bases
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GHCR base-image mirroring
@@ -43,6 +43,12 @@ deploy:
 dev:
 	@echo "🚀 Starting development environment..."
 	$(MAKE) -C backend dev
+
+db:
+	$(MAKE) -C backend db
+
+api-test:
+	$(MAKE) -C backend api-test
 
 # Start the local mock OnePay/9Pay sandbox (port 9001) for advance-payout testing
 sandbox:

@@ -9,6 +9,9 @@ const DAY_LABELS: Record<DayType, string> = {
   'ngày thường': 'Ngày thường',
   'ngày nghỉ': 'Ngày nghỉ',
   'ngày lễ': 'Ngày lễ',
+  weekday: 'Ngày thường',
+  weekend: 'Ngày nghỉ',
+  holiday: 'Ngày lễ',
 };
 
 interface PayratePositionListProps {

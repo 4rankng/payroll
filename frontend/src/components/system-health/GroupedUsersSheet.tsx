@@ -40,7 +40,7 @@ function UserCard({ user, index }: { user: BrowserPlatformUser; index: number })
   return (
     <div className="rounded-lg border bg-card p-3 space-y-2">
       <div className="flex flex-wrap items-start gap-2">
-        <span className="text-[11px] font-mono text-muted-foreground/60 shrink-0">
+        <span className="text-[11px] font-mono text-muted-foreground shrink-0">
           #{index + 1}
         </span>
         <span className="min-w-0 flex-1 break-words text-sm font-semibold text-foreground">

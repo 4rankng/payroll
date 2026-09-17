@@ -22,6 +22,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+import { MonthPicker } from '@/components/ui/month-picker';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DashboardLoadingSkeleton } from '@/components/ui/loading-states';
 import { SalaryDistributionChartMobile } from '@/components/admin-dashboard/SalaryDistributionChartMobile';
 import { GroupedStatCard } from '@/components/shared/GroupedStatCard';
@@ -76,9 +78,9 @@ function DashboardDisclosureSection({
       value={value}
       className="admin-dashboard-mobile-disclosure overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white shadow-none"
     >
-      <AccordionTrigger className="min-h-11 px-4 py-4 no-underline hover:no-underline">
-        <div className="flex min-w-0 items-start gap-3 pr-2 text-left">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-primary/5">
+      <AccordionTrigger className="min-h-11 px-3 py-3 no-underline hover:no-underline">
+        <div className="flex min-w-0 items-start gap-2 pr-1 text-left">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/5">
             <Icon className="h-4 w-4 text-primary/70" />
           </span>
           <span className="min-w-0">
@@ -86,16 +88,16 @@ function DashboardDisclosureSection({
               {eyebrow}
             </span>
             <span className="mt-1 block text-sm font-semibold text-foreground">{title}</span>
-            <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">{summary}</span>
+            <span className="sr-only">{summary}</span>
             {meta && (
-              <span className="mt-2 inline-flex min-h-7 items-center rounded-full border border-border/70 bg-muted/50 px-2.5 text-[11px] font-semibold text-foreground tabular-nums">
+              <span className="mt-1 inline-flex items-center text-[11px] font-semibold text-foreground tabular-nums">
                 {meta}
               </span>
             )}
           </span>
         </div>
       </AccordionTrigger>
-      <AccordionContent className="ct-card-body gap-4 px-4 pb-4 pt-0">
+      <AccordionContent className="ct-card-body gap-3 px-3 pb-3 pt-0">
         {children}
       </AccordionContent>
     </AccordionItem>
@@ -104,6 +106,7 @@ function DashboardDisclosureSection({
 
 const AdminDashboardMobile = () => {
   const navigate = useNavigate();
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>(format(startOfMonth(new Date()), 'yyyy-MM'));
   const [bankProjectId, setBankProjectId] = useState<number | null>(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
@@ -304,18 +307,18 @@ const AdminDashboardMobile = () => {
   const dashboardSummary = data.dashboardSummary;
 
   return (
-    <MobilePageShell className="admin-dashboard-page-mobile space-y-4 overflow-x-hidden">
+    <MobilePageShell className="admin-dashboard-page-mobile space-y-2 overflow-x-hidden">
       <MobilePageHeader
         title="Tổng quan"
         subtitle={format(new Date(), 'EEEE, dd/MM', { locale: vi })}
         icon={BarChart3}
         sticky={false}
         bordered={false}
-        className="[&_.shadow-sm]:shadow-none"
+        className="px-0 pt-0 [&_.shadow-sm]:shadow-none"
       />
 
       <div className="admin-dashboard-mobile-monthbar overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white">
-        <div className="grid grid-cols-[auto_44px_minmax(0,1fr)_44px_44px] items-center gap-1.5 px-2 py-2">
+        <div className="grid grid-cols-[auto_44px_minmax(0,1fr)_44px_44px] items-center gap-1 px-1 py-1">
           <button
             onClick={() => setSelectedMonth('all')}
             className={cn(
@@ -334,15 +337,17 @@ const AdminDashboardMobile = () => {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <div
-            className={cn(
-              'flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full bg-muted/60 px-2 text-xs font-semibold text-foreground',
-              selectedMonth === 'all' && 'opacity-50',
-            )}
-          >
-            <CalendarIcon className="h-3 w-3 text-muted-foreground" />
-            {selectedMonth === 'all' ? 'Tất cả' : format(selectedDate, 'MM/yyyy', { locale: vi })}
-          </div>
+          <Popover open={monthPickerOpen} onOpenChange={setMonthPickerOpen}>
+            <PopoverTrigger asChild>
+              <button type="button" aria-label="Chọn tháng" className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full bg-muted/60 px-2 text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <CalendarIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
+                {selectedMonth === 'all' ? 'Chọn tháng' : format(selectedDate, 'MM/yyyy', { locale: vi })}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <MonthPicker value={selectedMonth} onChange={(month) => { setSelectedMonth(month); setMonthPickerOpen(false); }} />
+            </PopoverContent>
+          </Popover>
           <button
             onClick={() => setSelectedMonth(format(addMonths(selectedDate, 1), 'yyyy-MM'))}
             className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square h-11 w-11 min-h-11 rounded-full border-0 shadow-none"
@@ -371,7 +376,6 @@ const AdminDashboardMobile = () => {
         <MobileOperationsPanel
           eyebrow={`Kỳ ${monthLabel}`}
           title="Điều hành lương"
-          subtitle="Theo dõi bảng công, ví trả lương và dữ liệu nhân sự trước khi khóa sổ."
           primaryLabel="Chờ trả"
           primaryValue={formatVND(dashboardSummary.pending_salary_this_month)}
           primaryHint={`Đã trả ${formatVND(dashboardSummary.paid_salary_this_month)}`}
@@ -382,7 +386,6 @@ const AdminDashboardMobile = () => {
 
       <MobileTaskList
         title="Cần xử lý"
-        subtitle="Các việc ảnh hưởng trực tiếp đến kỳ lương"
         items={priorityRows}
       />
 
@@ -394,7 +397,7 @@ const AdminDashboardMobile = () => {
           value="salary-workforce"
           eyebrow="Sổ vận hành"
           title="Lương và nhân sự"
-          summary="Giữ phần lõi ở một khối gọn: bảng công, quân số và người mới."
+          summary="Theo dõi bảng công, nhân viên đang làm và hồ sơ mới."
           meta={`${dashboardSummary?.total_working_employees.toLocaleString('vi-VN') ?? '--'} đang làm`}
           icon={Users}
         >
@@ -434,7 +437,7 @@ const AdminDashboardMobile = () => {
           value="payout-analytics"
           eyebrow="Phân tích"
           title="Chi trả và biến động"
-          summary="Mở khi cần soi sâu phân bổ lương, lãi lỗ và người nhận lương cao."
+          summary="Đối chiếu phân bổ lương, lợi nhuận và người nhận lương cao nhất."
           meta={`${formatVND(dashboardSummary?.total_profit_this_month ?? 0)} lợi nhuận`}
           icon={TrendingUp}
         >
@@ -462,7 +465,7 @@ const AdminDashboardMobile = () => {
           value="projects-health"
           eyebrow="Kiểm soát"
           title="Dự án, ngân hàng và sức khỏe hệ thống"
-          summary="Theo dõi phần phụ trợ và kiểm tra vận hành khi cần xác minh sâu hơn."
+          summary="Rà soát tài khoản nhận lương, chấm công và hạn mức ứng."
           meta={`${bankData?.projects.length.toLocaleString('vi-VN') ?? '--'} dự án`}
           icon={Building2}
         >

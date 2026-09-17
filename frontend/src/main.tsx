@@ -5,6 +5,15 @@ import './index.css'
 import { installConsoleFilters } from './lib/console-filter';
 import { isChunkLoadError, reloadForFreshChunk } from './lib/chunk-reload';
 
+// Remote font CSS must not hold up the initial interface. Apply it once loaded,
+// including cached sheets that finished before this module ran. Keep handlers
+// in this module because production CSP disallows inline event handlers.
+document.querySelectorAll<HTMLLinkElement>('link[data-font-stylesheet]').forEach((link) => {
+  const applyFontStyles = () => { link.media = 'all'; };
+  if (link.sheet) applyFontStyles();
+  else link.addEventListener('load', applyFontStyles, { once: true });
+});
+
 // Dev-only: filter noisy extension console errors without masking real issues
 if (import.meta.env.DEV) {
   installConsoleFilters();

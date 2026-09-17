@@ -38,6 +38,7 @@ import {
   paymentStatusToVietnamese,
   type WalletBulkPaymentRow,
   type WalletPaymentStatus,
+  type BulkTransferBatchStatus,
 } from '@/types/wallet-bulk-transfer';
 import { cn } from '@/lib/utils';
 import { generateWalletBulkTransferPdf } from '@/utils/pdf/wallet-bulk-transfer';
@@ -52,7 +53,7 @@ interface BulkTransferProgressProps {
  * failed=red, processing states=yellow. Uses outline variant + tailwind
  * bg classes so the palette matches WalletTransactionsList.
  */
-function statusBadgeClass(status: WalletPaymentStatus): string {
+function statusBadgeClass(status: WalletPaymentStatus | BulkTransferBatchStatus): string {
   switch (status) {
     case 'completed':
       return 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100';

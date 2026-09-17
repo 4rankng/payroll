@@ -380,16 +380,22 @@ func (s *Server) requestFundsTransfer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var reqBody struct {
-		FundsTransferInfo string `json:"funds_transfer_info"`
-		Remark            string `json:"remark"`
-		AccountNumber     string `json:"account_number"`
-		HolderName        string `json:"holder_name"`
-		Amount            int64  `json:"amount"`
-		Currency          string `json:"currency"`
-		SwiftCode         string `json:"swift_code"`
+		FundsTransferInfo string      `json:"funds_transfer_info"`
+		Remark            string      `json:"remark"`
+		AccountNumber     string      `json:"account_number"`
+		HolderName        string      `json:"holder_name"`
+		Amount            json.Number `json:"amount"`
+		Currency          string      `json:"currency"`
+		SwiftCode         string      `json:"swift_code"`
 	}
-	if len(bodyBytes) > 0 {
-		_ = json.Unmarshal(bodyBytes, &reqBody)
+	if err := json.Unmarshal(bodyBytes, &reqBody); err != nil {
+		writeJSON(w, http.StatusInternalServerError, errInvalidParams)
+		return
+	}
+	amount, err := reqBody.Amount.Int64()
+	if err != nil || amount <= 0 {
+		writeJSON(w, http.StatusInternalServerError, errInvalidParams)
+		return
 	}
 
 	if hasHyphen(reqBody.Remark) {
@@ -400,7 +406,7 @@ func (s *Server) requestFundsTransfer(w http.ResponseWriter, r *http.Request) {
 
 	scenarioText := reqBody.Remark + " " + reqBody.FundsTransferInfo
 	sc := detectScenario(scenarioText)
-	log.Printf("[onepay] requestFundsTransfer: ft_id=%s amount=%d scenario=%s", fundsTransferID, reqBody.Amount, sc)
+	log.Printf("[onepay] requestFundsTransfer: ft_id=%s amount=%d scenario=%s", fundsTransferID, amount, sc)
 
 	now := time.Now()
 	txID := fmt.Sprintf("TX%d%06d", now.UnixMilli(), s.txCounter.Add(1)%1000000)
@@ -428,7 +434,7 @@ func (s *Server) requestFundsTransfer(w http.ResponseWriter, r *http.Request) {
 		Remark:          reqBody.Remark,
 		AccountNumber:   reqBody.AccountNumber,
 		HolderName:      reqBody.HolderName,
-		Amount:          reqBody.Amount,
+		Amount:          amount,
 		Currency:        reqBody.Currency,
 		State:           syncState,
 		ResponseCode:    "00",
@@ -443,7 +449,7 @@ func (s *Server) requestFundsTransfer(w http.ResponseWriter, r *http.Request) {
 		"response_code": "00", "message": "SUCCESSFUL", "transaction_id": txID,
 		"funds_transfer_id": fundsTransferID, "account_id": accountID,
 		"remark": reqBody.Remark, "account_number": reqBody.AccountNumber,
-		"holder_name": reqBody.HolderName, "amount": reqBody.Amount,
+		"holder_name": reqBody.HolderName, "amount": amount,
 		"currency": reqBody.Currency, "state": syncState,
 		"swift_code": reqBody.SwiftCode, "create_time": rec.CreateTime,
 		"update_time": rec.UpdateTime,
@@ -458,7 +464,7 @@ func (s *Server) requestFundsTransfer(w http.ResponseWriter, r *http.Request) {
 	case ScenarioNoIPN:
 		log.Printf("[onepay] requestFundsTransfer: scenario=no_ipn — skipping IPN")
 	case ScenarioCompleted:
-		s.deductBalance(reqBody.Amount)
+		s.deductBalance(amount)
 		now := time.Now()
 		body := IPNBody{
 			TransactionID: rec.TransactionID, FundsTransferID: rec.FundsTransferID,
@@ -597,7 +603,7 @@ func (s *Server) getBalanceHandler(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"response_code": "00", "message": "SUCCESSFUL",
-		"account_id": accountID, "amount": s.getBalance(), "currency": "VND",
+		"account_id": accountID, "balance": s.getBalance(), "currency": "VND",
 	})
 }
 

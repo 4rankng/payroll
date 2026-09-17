@@ -3,9 +3,9 @@ import type { LucideIcon } from "lucide-react";
 import type { PillStatus } from "./utils";
 
 const iconBg: Record<PillStatus, string> = {
-  ok:     "bg-emerald-50 text-emerald-600",
-  warn:   "bg-amber-50 text-amber-600",
-  danger: "bg-red-50 text-red-600",
+  ok:     "bg-emerald-50 text-emerald-700",
+  warn:   "bg-amber-50 text-amber-700",
+  danger: "bg-red-50 text-red-700",
 };
 
 const valueCls: Record<PillStatus, string> = {

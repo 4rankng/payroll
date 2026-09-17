@@ -120,7 +120,7 @@ function CopyButton({ value }: { value: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="ml-1 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+      className="ml-1 inline-flex h-11 w-11 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
       title="Sao chép"
     >
       {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
@@ -189,7 +189,7 @@ function DetailRow({
 }) {
   return (
     <div className={`flex flex-col gap-0.5 py-2.5 ${className ?? ""}`}>
-      <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">{label}</span>
+      <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{label}</span>
       <div className={`flex items-center gap-1 text-sm text-slate-800 ${mono ? "font-mono text-xs" : ""}`}>
         {typeof value === "string" && mono ? (
           <span className="break-all">{value}</span>
@@ -249,7 +249,7 @@ function TransactionDetailSheet({
                 : <ArrowUpRight className="h-5 w-5 text-slate-600" />
               }
             </div>
-            <SheetClose className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-white/70 transition-colors">
+            <SheetClose aria-label="Đóng chi tiết giao dịch" className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 hover:text-slate-700 hover:bg-white/70 transition-colors">
               <X className="h-4 w-4" />
             </SheetClose>
           </div>
@@ -283,7 +283,7 @@ function TransactionDetailSheet({
             <TopupDetail topup={topup} tx={tx} />
           ) : (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
             </div>
           )}
         </div>
@@ -466,7 +466,7 @@ export default function WalletTransactionsList(
 
       {/* Filters — single compact row for both desktop and mobile */}
       <div className="flex items-center gap-2 flex-wrap">
-        <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+        <SlidersHorizontal className="h-3.5 w-3.5 text-slate-500 shrink-0" />
         {!isMobile && (
           <DateRangePicker
             variant="default"
@@ -510,7 +510,7 @@ export default function WalletTransactionsList(
             type="button"
             onClick={onResetFilters}
             className={cn(
-              "text-xs text-slate-400 hover:text-slate-700 transition-colors ml-auto",
+              "text-xs text-slate-500 hover:text-slate-700 transition-colors ml-auto",
               isMobile && "min-h-11 px-2",
             )}
           >
@@ -635,11 +635,11 @@ function DesktopTable({
                     return (
                       <div>
                         <div className="text-slate-800 font-medium truncate max-w-[180px]">{name}</div>
-                        {detail && <div className="text-slate-400 text-xs truncate max-w-[180px]">{detail}</div>}
+                        {detail && <div className="text-slate-500 text-xs truncate max-w-[180px]">{detail}</div>}
                       </div>
                     );
                   })() : (
-                    <span className="text-slate-400 text-sm">
+                    <span className="text-slate-500 text-sm">
                       {tx.type === "topup" ? "Nạp ví nội bộ" : "—"}
                     </span>
                   )}
@@ -689,10 +689,10 @@ function MobileTransactionList({
             key={`${tx.type}-${tx.id}-${tx.reference}`}
             type="button"
             onClick={() => onSelect(tx)}
-            className="flex items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 active:bg-slate-100 transition-colors w-full"
+            className="flex items-center gap-2 px-3 py-2.5 text-left hover:bg-slate-50 active:bg-slate-100 transition-colors w-full"
           >
             {/* Icon */}
-            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isInflow ? "bg-emerald-50 ring-1 ring-emerald-100" : "bg-slate-100 ring-1 ring-slate-200"}`}>
+            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${isInflow ? "bg-emerald-50 ring-1 ring-emerald-100" : "bg-slate-100 ring-1 ring-slate-200"}`}>
               {isInflow
                 ? <ArrowDownLeft className="h-4 w-4 text-emerald-600" />
                 : <ArrowUpRight className="h-4 w-4 text-slate-500" />
@@ -702,11 +702,11 @@ function MobileTransactionList({
             {/* Content */}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                <span className="text-[13.5px] text-slate-800 font-semibold tracking-tight truncate">{cpName}</span>
+                <span className="text-[13.5px] text-slate-800 font-semibold tracking-tight line-clamp-2 break-words">{cpName}</span>
                 <StatusBadge status={tx.status} />
               </div>
               {cpDetail && <div className="text-xs text-slate-500 truncate leading-snug">{cpDetail}</div>}
-              <div className="text-[11px] text-slate-400 mt-1 tabular-nums tracking-wide">{formatDateTime(tx.occurred_at)}</div>
+              <div className="text-[11px] text-slate-500 mt-1 tabular-nums tracking-wide">{formatDateTime(tx.occurred_at)}</div>
             </div>
 
             {/* Amount + chevron */}

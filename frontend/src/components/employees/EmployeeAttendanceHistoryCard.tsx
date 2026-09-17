@@ -22,6 +22,7 @@ import {
 import { formatDate } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmployeeDataError } from "./EmployeeDataError";
 
 const ATTENDANCE_PREVIEW_LIMIT = 3;
 
@@ -107,7 +108,7 @@ function AttendanceHistoryRow({ attendance, advancePercentage }: { attendance: A
 
   return (
     <article className="px-4 py-4 sm:px-5">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="employee-type-card-title text-[#101828]">Ngày {formatDate(attendance.date)}</p>
           <p className="employee-type-body-sm mt-1 flex items-center gap-1.5 text-[#667085] tabular-nums">
@@ -194,7 +195,7 @@ export function EmployeeAttendanceHistoryCard({
     () => ({ limit: 100, from_date: fromDate, to_date: toDate }),
     [fromDate, toDate]
   );
-  const { data: historyResponse, isLoading } = useAttendanceHistory(historyParams);
+  const { data: historyResponse, isLoading, isError, isFetching, refetch } = useAttendanceHistory(historyParams);
   const history = useMemo(() => {
     const records = historyResponse?.data ?? [];
     return [...records].sort((left, right) => {
@@ -212,7 +213,7 @@ export function EmployeeAttendanceHistoryCard({
 
   return (
     <section className={className ?? "employee-surface-card overflow-hidden"} style={style} aria-labelledby="employee-attendance-title">
-      <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
             <History className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden="true" />
@@ -222,16 +223,23 @@ export function EmployeeAttendanceHistoryCard({
             <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">Bảng công tháng {monthLabel}</p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1.5" aria-label="Tóm tắt chấm công">
+        {!isError && <div className="flex flex-wrap items-center gap-1.5" aria-label="Tóm tắt chấm công">
           <span className="employee-type-pill whitespace-nowrap rounded-md border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-2 py-1 text-[var(--employee-accent)]">{isLoading ? "Đang tải" : `${workdayCount} ngày công`}</span>
           {warningCount > 0 && <span className="employee-type-pill whitespace-nowrap rounded-md bg-[var(--employee-warning-soft)] px-2 py-1 text-[var(--employee-warning)]">{warningCount} cần kiểm tra</span>}
-        </div>
+        </div>}
       </div>
 
       {isLoading ? (
         <div className="space-y-3 px-4 pb-4">
           {Array.from({ length: ATTENDANCE_PREVIEW_LIMIT }).map((_, index) => <Skeleton key={index} className="h-20 w-full rounded-xl" />)}
         </div>
+      ) : isError ? (
+        <EmployeeDataError
+          title="Chưa tải được lịch chấm công"
+          onRetry={() => { void refetch(); }}
+          isRetrying={isFetching}
+          className="mx-4 mb-4"
+        />
       ) : history.length === 0 ? (
         <div className="mx-4 mb-4 rounded-xl border border-dashed border-[#D0D5DD] px-4 py-7 text-center text-[#475467]">
           <Calendar className="mx-auto mb-2 h-8 w-8 text-[#98A2B3]" aria-hidden="true" />
@@ -244,7 +252,7 @@ export function EmployeeAttendanceHistoryCard({
         </div>
       )}
 
-      {hasMoreHistory && (
+      {!isError && hasMoreHistory && (
         <div className="px-4 py-3 sm:px-5">
           <button type="button" aria-expanded={isFullHistoryOpen} aria-controls={panelId} onClick={() => setIsFullHistoryOpen((current) => !current)} className="employee-type-action flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-[#067647] transition-colors hover:bg-[#F0FDF4] focus-visible:ring-2 focus-visible:ring-[#07883F]">
             <span>{isFullHistoryOpen ? "Thu gọn lịch chấm công" : "Xem toàn bộ lịch chấm công"}</span>

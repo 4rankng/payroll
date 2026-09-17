@@ -23,7 +23,7 @@ export const AccentStripCard = memo(function AccentStripCard({
     <div
       className={cn(
         'overflow-hidden rounded-2xl border border-border bg-card shadow-none',
-        onClick && 'cursor-pointer active:bg-muted/40 transition-colors touch-manipulation',
+        onClick && 'cursor-pointer active:bg-muted/40 transition-colors touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         className,
       )}
       onClick={onClick}
@@ -32,7 +32,7 @@ export const AccentStripCard = memo(function AccentStripCard({
       onKeyDown={
         onClick
           ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
+              if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
                 e.preventDefault();
                 onClick();
               }

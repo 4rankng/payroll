@@ -6,8 +6,6 @@ import {
   UserCheck,
   UserX,
   Banknote,
-  ChevronLeft,
-  ChevronRight,
   FolderKanban,
   ClipboardList,
   History,
@@ -26,67 +24,12 @@ import {
 } from '@/components/shared/MobileOperationsPanel';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
-import { generateMonthOptions } from '@/utils/dateHelpers';
+import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSelector';
 import { cn } from '@/lib/utils';
 import type { TopPaidEmployeeItem, PartnerEmployeeListType } from '@/types/api/dashboard.types';
 import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 const ALL_VALUE = 'all';
-
-/* ───────────────────────────────────────────────
-   MonthNavigator — clean ← Month Year → control
-   ─────────────────────────────────────────────── */
-
-function MonthNavigator({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  // If value is "all", default back to current month for navigation
-  const effectiveValue = value === ALL_VALUE ? format(startOfMonth(new Date()), 'yyyy-MM') : value;
-  const monthOnlyOptions = generateMonthOptions(12).map((o) => ({
-    value: o.value,
-    label: `T${o.value.split('-')[1]}/${o.value.split('-')[0]}`,
-  }));
-  const currentIdx = monthOnlyOptions.findIndex((o) => o.value === effectiveValue);
-
-  const goPrev = useCallback(() => {
-    const idx = Math.max(0, currentIdx - 1);
-    onChange(monthOnlyOptions[idx].value);
-  }, [currentIdx, monthOnlyOptions, onChange]);
-
-  const goNext = useCallback(() => {
-    const idx = Math.min(monthOnlyOptions.length - 1, currentIdx + 1);
-    onChange(monthOnlyOptions[idx].value);
-  }, [currentIdx, monthOnlyOptions, onChange]);
-
-  const displayLabel = useMemo(() => {
-    const opt = monthOnlyOptions.find((o) => o.value === effectiveValue);
-    return opt?.label ?? effectiveValue;
-  }, [effectiveValue, monthOnlyOptions]);
-
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <button
-        onClick={goPrev}
-        disabled={currentIdx <= 0}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-[transform,background-color,color] duration-150 hover:bg-muted/80 hover:text-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none"
-        aria-label="Tháng trước"
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </button>
-
-      <span className="text-sm font-semibold text-foreground tabular-nums">
-        {displayLabel}
-      </span>
-
-      <button
-        onClick={goNext}
-        disabled={currentIdx >= monthOnlyOptions.length - 1}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-[transform,background-color,color] duration-150 hover:bg-muted/80 hover:text-foreground active:scale-95 disabled:pointer-events-none disabled:opacity-40 motion-reduce:transition-none"
-        aria-label="Tháng sau"
-      >
-        <ChevronRight className="h-4 w-4" />
-      </button>
-    </div>
-  );
-}
 
 /* ───────────────────────────────────────────────
    TopEmployeeRow — clean leaderboard row
@@ -119,14 +62,14 @@ function TopEmployeeRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid:
 
       {/* Name + progress */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium text-foreground truncate">{item.employee_name}</span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-sm font-medium text-foreground break-words">{item.employee_name}</span>
           {item.is_active ? (
-            <Badge variant="outline" className="h-4 shrink-0 border-success/30 bg-success/10 px-1 py-0 text-[9px] text-success">
+            <Badge variant="outline" className="min-h-5 shrink-0 border-emerald-200 bg-emerald-50 px-1 py-0 text-[10px] text-emerald-800">
               <UserCheck className="w-2.5 h-2.5 mr-0.5" />Đang làm
             </Badge>
           ) : (
-            <Badge variant="outline" className="h-4 shrink-0 border-destructive/30 bg-destructive/10 px-1 py-0 text-[9px] text-destructive">
+            <Badge variant="outline" className="min-h-5 shrink-0 border-red-200 bg-red-50 px-1 py-0 text-[10px] text-red-800">
               <UserX className="w-2.5 h-2.5 mr-0.5" />Nghỉ
             </Badge>
           )}
@@ -274,26 +217,9 @@ const PartnerDashboardMobile = () => {
   ], [data?.dropped_employees, navigate, openSheet, periodLabel]);
 
   return (
-    <MobilePageShell className="space-y-4">
-      {/* Slim gradient banner — mirrors desktop's BannerHeader (scaled down for mobile) */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/15 bg-linear-to-br from-primary/15 via-primary/5 to-transparent">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(90deg,hsl(var(--foreground))_1px,transparent_1px),linear-gradient(0deg,hsl(var(--foreground))_1px,transparent_1px)] [background-size:20px_20px]"
-        />
-        <div className="relative p-4">
-          <h1 className="font-display text-xl font-extrabold tracking-tight text-foreground">
-            Tổng quan
-          </h1>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
-            Theo dõi nhân viên và thanh toán · <span className="font-medium text-foreground/80">{periodLabel}</span>
-          </p>
-        </div>
-      </div>
-
-      <MobileSurface className="p-3">
-        <MonthNavigator value={selectedMonth} onChange={handleMonthChange} />
-      </MobileSurface>
+    <MobilePageShell className="space-y-2">
+      <h1 className="py-1 font-display text-lg font-extrabold tracking-tight text-foreground">Tổng quan</h1>
+      <TimesheetMonthSelector value={selectedMonth} onChange={handleMonthChange} />
 
       {isLoading ? (
         <MobileSurface className="p-4">
@@ -311,7 +237,6 @@ const PartnerDashboardMobile = () => {
         <MobileOperationsPanel
           eyebrow={periodLabel}
           title="Theo dõi chi trả"
-          subtitle="Tình hình nhân sự và lương theo kỳ đang xem"
           primaryLabel="Tổng chi trả"
           primaryValue={formatVND(data?.total_paid_vnd ?? 0)}
           primaryHint={momAmountSublabel}
@@ -322,7 +247,6 @@ const PartnerDashboardMobile = () => {
 
       <MobileTaskList
         title="Việc cần theo dõi"
-        subtitle="Những mục ảnh hưởng đến bảng công và thanh toán"
         items={taskRows}
       />
 

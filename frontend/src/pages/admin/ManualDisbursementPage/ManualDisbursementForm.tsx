@@ -101,6 +101,7 @@ function BankCombobox({ banks, loading, value, isManualEntry, onDropdownSelect, 
           type="button"
           variant="outline"
           role="combobox"
+          aria-label="Ngân hàng nhận tiền"
           aria-expanded={open}
           disabled={disabled}
           className={cn(
@@ -126,7 +127,7 @@ function BankCombobox({ banks, loading, value, isManualEntry, onDropdownSelect, 
             return vietnameseIncludes(value, search) ? 1 : 0;
           }}
         >
-          <CommandInput placeholder="Tìm ngân hàng..." />
+          <CommandInput aria-label="Tìm ngân hàng nhận tiền" placeholder="Tìm ngân hàng..." />
           <CommandList className="max-h-[min(18rem,60dvh)]">
             <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
               Không tìm thấy ngân hàng.

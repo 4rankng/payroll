@@ -70,7 +70,7 @@ export const createEmployeeColumns = (
                   </TooltipProvider>
                 )}
               </div>
-              <div className="flex items-center gap-3 text-muted-foreground/60">
+              <div className="flex items-center gap-3 text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <CreditCard className="h-3 w-3 shrink-0" />
                   <span className="typography-label-medium font-mono">{employee.cccd}</span>
@@ -100,7 +100,7 @@ export const createEmployeeColumns = (
 
         if (projectCount === 0) {
           return (
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/50 px-2 py-1 rounded-md bg-muted/30">
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground px-2 py-1 rounded-md bg-muted/30">
               Chưa phân công
             </span>
           );
@@ -125,7 +125,7 @@ export const createEmployeeColumns = (
               )}
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="typography-label-medium text-muted-foreground/50 font-mono truncate">
+              <span className="typography-label-medium text-muted-foreground font-mono truncate">
                 {first.code}
               </span>
               {more > 0 && (
@@ -180,7 +180,7 @@ export const createEmployeeColumns = (
         return (
           <div className="flex items-center gap-1.5 min-w-0" title={cleaned}>
             <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/40" />
-            <span className="typography-body-medium text-foreground/60 truncate">
+            <span className="typography-body-medium text-muted-foreground truncate">
               {cleaned}
             </span>
           </div>

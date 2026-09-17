@@ -239,13 +239,13 @@ export const EntryRow = memo(({
           <TableCell colSpan={3} className="py-2 px-3 bg-red-50">
             <div className="flex flex-col gap-0.5">
               {entryValidation && !entryValidation.valid && entryValidation.errors.map((err, i) => (
-                <p key={`ev-${i}`} className="text-xs font-medium text-red-600 flex items-center gap-1.5">
+                <p key={`ev-${i}`} className="text-xs font-medium text-red-700 flex items-center gap-1.5">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                   {typeof err === 'string' ? err : 'Có lỗi xảy ra'}
                 </p>
               ))}
               {rowErrors && rowErrors.map((err, i) => (
-                <p key={`re-${i}`} className="text-xs font-medium text-red-600 flex items-center gap-1.5">
+                <p key={`re-${i}`} className="text-xs font-medium text-red-700 flex items-center gap-1.5">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                   {err}
                 </p>
@@ -261,15 +261,15 @@ export const EntryRow = memo(({
           <div className="flex items-center gap-1.5 pt-0.5">
             <span className={cn(
               'text-xs font-medium tabular-nums',
-              isMarkedForDeletion ? 'text-muted-foreground/50 line-through' : isWeekend ? 'text-orange-600' : 'text-foreground'
+              isMarkedForDeletion ? 'text-muted-foreground/50 line-through' : isWeekend ? 'text-orange-700' : 'text-foreground'
             )}>
               {formattedDate}
             </span>
             {weekdayInfo && (
               <span className={cn(
                 'text-[11px] font-medium px-1.5 py-0.5 rounded-full leading-none',
-                weekdayInfo.isSunday ? 'bg-red-100 text-red-600' :
-                weekdayInfo.isSaturday ? 'bg-orange-100 text-orange-600' :
+                weekdayInfo.isSunday ? 'bg-red-100 text-red-700' :
+                weekdayInfo.isSaturday ? 'bg-orange-100 text-orange-700' :
                 'bg-muted text-muted-foreground'
               )}>
                 {weekdayInfo.label}
@@ -284,7 +284,7 @@ export const EntryRow = memo(({
             <span className="text-xs text-muted-foreground">—</span>
           ) : (
             <Select value={entry.dayType || ''} onValueChange={handleDayTypeChange} disabled={isLoading}>
-              <SelectTrigger className="h-6 text-xs border border-transparent bg-transparent px-2 shadow-none focus:ring-0 hover:border-input hover:bg-background rounded transition-colors w-auto max-w-[105px]">
+              <SelectTrigger aria-label={`Loại ngày cho ${entry.employee?.fullname || "nhân viên"}, ${entry.date}`} className="h-6 text-xs border border-transparent bg-transparent px-2 shadow-none focus:ring-0 hover:border-input hover:bg-background rounded transition-colors w-auto max-w-[105px]">
                 <SelectValue placeholder="Loại ngày" />
               </SelectTrigger>
               <SelectContent>
@@ -331,7 +331,7 @@ export const EntryRow = memo(({
                         : thisFieldNew
                           ? 'border-emerald-300 bg-emerald-50/70 text-emerald-700 font-semibold'
                           : hourValue > 16
-                            ? 'border-red-300 bg-red-50/60 text-red-600 font-bold'
+                            ? 'border-red-300 bg-red-50/60 text-red-700 font-bold'
                             : hourValue > 12
                               ? 'border-amber-300 bg-amber-50/60 text-amber-600 font-semibold'
                               : hourValue > 0
@@ -380,7 +380,7 @@ export const EntryRow = memo(({
                         )}
                       </div>
                       {slotEarnings > 0 && (
-                        <span className="text-[11px] text-emerald-600 tabular-nums leading-none pl-0.5">
+                        <span className="text-[11px] text-emerald-700 tabular-nums leading-none pl-0.5">
                           {formatVND(slotEarnings)}
                         </span>
                       )}
@@ -390,7 +390,7 @@ export const EntryRow = memo(({
                 {hourStatus !== 'normal' && (
                   <span className={cn(
                     'inline-flex items-center gap-0.5 text-[11px] font-bold px-1 py-0.5 rounded-full self-start',
-                    hourStatus === 'excessive' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'
+                    hourStatus === 'excessive' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-600'
                   )}>
                     <AlertTriangle className="h-2 w-2" />
                     {totalHours}h

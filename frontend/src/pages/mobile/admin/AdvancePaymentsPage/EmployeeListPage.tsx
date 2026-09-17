@@ -40,7 +40,7 @@ const EmployeeListPage = () => {
         sticky={false}
         bordered={false}
         actions={
-          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Quay lại" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
         }
@@ -59,7 +59,7 @@ const EmployeeListPage = () => {
           <Button
             variant="outline"
             size="sm"
-            className="h-11 px-3 shrink-0"
+            className="h-11 min-w-11 px-3 shrink-0"
             onClick={page.handleExportFlexPayEmployees}
             disabled={page.exportFlexPayMutation.isPending}
             aria-label="Xuất danh sách"
@@ -73,7 +73,7 @@ const EmployeeListPage = () => {
           value={page.selectedViewMonth ?? ""}
           onValueChange={(v) => page.setSelectedViewMonth(v || undefined)}
         >
-          <SelectTrigger className="h-11">
+          <SelectTrigger aria-label="Tháng ứng lương" className="h-11">
             <Calendar className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
             <SelectValue placeholder="Chọn tháng" />
           </SelectTrigger>
@@ -97,7 +97,7 @@ const EmployeeListPage = () => {
             value={page.flexPayFilters.sortBy ?? "max_advance_amount"}
             onValueChange={page.handleFlexPaySort}
           >
-            <SelectTrigger className="h-11 min-w-0">
+            <SelectTrigger aria-label="Sắp xếp nhân viên" className="h-11 min-w-0">
               <SelectValue placeholder="Sắp xếp theo" />
             </SelectTrigger>
             <SelectContent>

@@ -113,7 +113,7 @@ export const FeeScheduleConfirmDialog = ({
                 ? "So sánh phí trên một số khoản mẫu (Hiện tại → Mới):"
                 : "Phí dự kiến trên một số khoản mẫu:"}
             </p>
-            <div className="rounded-lg border overflow-x-auto">
+            <div tabIndex={0} role="region" aria-label="So sánh cấu hình phí ứng lương" className="rounded-lg border overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <table className="w-full text-xs">
                 <thead className="bg-muted/40">
                   <tr>

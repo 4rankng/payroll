@@ -214,12 +214,14 @@ export const FileHistorySheet = ({ open, onOpenChange }: FileHistorySheetProps) 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm theo tên file hoặc người tải lên…"
-            className="min-h-11 pl-9 pr-11 text-sm"
+            aria-label="Tìm theo tên file hoặc người tải lên"
+            className="min-h-11 pl-9 pr-11 text-sm sm:pl-9 sm:pr-11"
           />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
               aria-label="Xóa tìm kiếm"
             >
               <X className="w-3.5 h-3.5" />

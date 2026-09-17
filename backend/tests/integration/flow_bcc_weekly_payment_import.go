@@ -3,13 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
+	"strings"
 )
 
 const flowWeeklyPayment = "WeeklyPaymentImport"
 
 // runWeeklyPaymentImportTests tests the Thai Binh Duong weekly payment format.
-// Uses tests/fixtures/bcc/thai_binh_duong.xlsx which has numeric salary tier sheets (520, 700, 750, 800, 900).
+// Builds a synthetic workbook with complete employee, bank, and salary tier data.
 func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 	reporter.PrintSection("FLOW: Weekly Payment Import (Thai Binh Duong format)")
 
@@ -28,15 +30,21 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 	projectIDStr := strconv.Itoa(int(projectID))
 	endpoint := "/api/v1/timesheets/partner-import"
 
-	// WeeklyPayment fixture (relative to backend/ working directory).
-	weeklyPaymentFile := "tests/fixtures/bcc/thai_binh_duong.xlsx"
+	// Build a complete synthetic fixture. The historical workbook contains
+	// payroll rows without CCCDs and cannot drive a successful import.
+	weeklyPaymentFile, err := buildWeeklyPaymentFixture()
+	if err != nil {
+		reporter.RunTest(flowWeeklyPayment, "Build synthetic weekly payment fixture", func() error { return err })
+		return
+	}
+	defer os.Remove(weeklyPaymentFile)
 	// Use 2026-07 for the Thai Binh Duong fixture (matches the file title)
 	forMonth := "2026-07"
 
 	// ── 1. Upload Thai Binh Duong.xlsx (WeeklyPayment format) ────────────────────
 	var importID uint
 	var uploadForbidden bool
-	reporter.RunTest(flowWeeklyPayment, "Upload WeeklyPayment file (thai_binh_duong.xlsx)", func() error {
+	reporter.RunTest(flowWeeklyPayment, "Upload synthetic WeeklyPayment file", func() error {
 		apiResp, status, err := partnerClient.UploadFile(endpoint, "file", weeklyPaymentFile,
 			map[string]string{"project_id": projectIDStr, "for_month": forMonth})
 		if err != nil {
@@ -112,7 +120,7 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 		// Look for a weekday entry (should have HourType=HC, DayType="ngày thường")
 		found := false
 		for _, ts := range timesheets {
-			if ts.HourType == "HC" && ts.DayType == "ngày thường" && ts.HoursWorked == 8 {
+			if strings.EqualFold(ts.HourType, "HC") && ts.Date == forMonth+"-29" && strings.HasPrefix(ts.PayType, "520.") && ts.DayType == "ngày thường" && ts.HoursWorked == 8 && ts.Amount > 0 {
 				found = true
 				fmt.Printf("    Found weekday entry: employee=%s date=%s hour_type=%s day_type=%s hours=%.0f\n",
 					ts.EmployeeName, ts.Date, ts.HourType, ts.DayType, ts.HoursWorked)
@@ -142,7 +150,7 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 		// row-10 shift code, not a signal to change the day-type branch.
 		found := false
 		for _, ts := range timesheets {
-			if ts.HourType == "NN" && ts.DayType == "ngày thường" && ts.HoursWorked == 8 {
+			if strings.EqualFold(ts.HourType, "NN") && ts.Date == forMonth+"-30" && strings.HasPrefix(ts.PayType, "520.") && ts.DayType == "ngày thường" && ts.HoursWorked == 8 && ts.Amount > 0 {
 				found = true
 				fmt.Printf("    Found NN entry: employee=%s date=%s hour_type=%s day_type=%s hours=%.0f\n",
 					ts.EmployeeName, ts.Date, ts.HourType, ts.DayType, ts.HoursWorked)
@@ -171,7 +179,7 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 		// Look for employees with bank info (from STK sheet)
 		foundWithBank := 0
 		for _, emp := range employees {
-			if emp.BankAccountNumber != "" && emp.BankAccountName != "" {
+			if emp.CCCD == "099260900501" && emp.BankAccountNumber == "100000900501" && emp.BankAccountName != "" {
 				foundWithBank++
 			}
 		}
@@ -237,9 +245,12 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 
 		fmt.Printf("    Re-upload import_id=%d status=%s\n", result.ID, result.Status)
 
-		_, err = waitForBCCImport(partnerClient, endpoint, result.ID)
+		terminal, err := waitForBCCImport(partnerClient, endpoint, result.ID)
 		if err != nil {
 			return err
+		}
+		if terminal.Status != "completed" || terminal.CreatedCount != 2 {
+			return fmt.Errorf("re-upload status=%s created=%d; expected both synthetic rows", terminal.Status, terminal.CreatedCount)
 		}
 
 		// Verify no duplicate timesheets exist
@@ -285,9 +296,7 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 
 		terminal, err := waitForBCCImport(partnerClient, endpoint, result.ID)
 		if err != nil {
-			// Expected: import should fail due to weekday/month mismatch
-			fmt.Printf("    Import failed as expected (wrong month): %v\n", err)
-			return nil
+			return fmt.Errorf("wrong-month import did not reach a terminal result: %w", err)
 		}
 
 		result = *terminal

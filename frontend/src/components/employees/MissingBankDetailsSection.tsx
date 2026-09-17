@@ -69,12 +69,14 @@ export const MissingBankDetailsSection = ({
   return (
     <div className="overflow-hidden rounded-xl border border-amber-200/80 bg-amber-50/50">
       {/* Header row */}
-      <div className="flex flex-col items-stretch gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-4 sm:py-3">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+          <div className="flex w-full items-start gap-2">
           <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" aria-hidden="true" />
           <span className="min-w-0 text-pretty text-sm font-semibold text-amber-900">
             Thông tin ngân hàng không hợp lệ
           </span>
+          </div>
           {invalidCount > 0 && (
             <Badge className="border-rose-300 bg-rose-100 text-xs font-semibold text-rose-800 hover:bg-rose-100 shrink-0">
               Sai thông tin: {invalidCount}
@@ -92,12 +94,12 @@ export const MissingBankDetailsSection = ({
           onClick={toggle}
           aria-expanded={isExpanded}
           aria-controls="missing-bank-details-table"
-          className="h-11 shrink-0 gap-1.5 text-xs text-amber-700 hover:bg-amber-100 hover:text-amber-900 sm:h-9"
+          className="h-11 w-11 shrink-0 gap-1.5 px-0 text-xs text-amber-700 hover:bg-amber-100 hover:text-amber-900 sm:h-9 sm:w-auto sm:px-3"
         >
           {isExpanded ? (
-            <><ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />Ẩn</>
+            <><ChevronUp className="h-3.5 w-3.5" aria-hidden="true" /><span className="sr-only sm:not-sr-only">Ẩn</span></>
           ) : (
-            <><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />Xem danh sách</>
+            <><ChevronDown className="h-3.5 w-3.5" aria-hidden="true" /><span className="sr-only sm:not-sr-only">Xem danh sách</span></>
           )}
         </Button>
       </div>
@@ -105,7 +107,7 @@ export const MissingBankDetailsSection = ({
       {/* Expandable table */}
       {isExpanded && rows.length > 0 && (
         <div id="missing-bank-details-table" className="border-t border-amber-200">
-          <div className="max-h-80 overflow-auto overscroll-contain">
+          <div className="max-h-80 overflow-auto overscroll-contain focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" role="region" aria-label="Danh sách cảnh báo thông tin ngân hàng" tabIndex={0}>
             <table className="w-full min-w-[760px] text-sm">
               <caption className="sr-only">
                 Danh sách nhân viên có thông tin ngân hàng không hợp lệ

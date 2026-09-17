@@ -5,6 +5,7 @@ import { useIsMobile } from '@/hooks/useBreakpoint';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   AlertCircle,
@@ -162,7 +163,7 @@ export function HealthDrilldownSheet({ target, month, periodStart, periodEnd, on
               {title}
             </SheetTitle>
             <SheetClose asChild>
-              <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 rounded-full text-muted-foreground">
+              <Button variant="ghost" size="icon" aria-label="Đóng" className="h-11 w-11 shrink-0 rounded-full text-muted-foreground">
                 <X className="h-4 w-4" />
               </Button>
             </SheetClose>
@@ -255,7 +256,7 @@ function FailedAttemptsTable({
   const [page, setPage] = useState(1);
   const [mapRow, setMapRow] = useState<AdminFailedAttempt | null>(null);
 
-  const { data, isLoading, isFetching } = useFailedAttempts({
+  const { data, isLoading, isFetching, isError, refetch } = useFailedAttempts({
     type: attemptType,
     category,
     from: periodStart,
@@ -270,6 +271,10 @@ function FailedAttemptsTable({
 
   if (isLoading) {
     return <TableSkeleton cols={4} rows={5} />;
+  }
+
+  if (isError) {
+    return <div role="alert"><ErrorState onRetry={() => void refetch()} /></div>;
   }
 
   if (!rows.length) {
@@ -344,10 +349,14 @@ function FailedAttemptMapDialog({ row, onClose }: { row: AdminFailedAttempt | nu
 // ─── Quota anomaly table ──────────────────────────────────────────────────
 
 function QuotaAnomalyTable({ anomalyType, month }: { anomalyType: string; month?: string }) {
-  const { data: rows, isLoading, isFetching } = useQuotaAnomalies(anomalyType, month);
+  const { data: rows, isLoading, isFetching, isError, refetch } = useQuotaAnomalies(anomalyType, month);
 
   if (isLoading) {
     return <TableSkeleton cols={5} rows={4} />;
+  }
+
+  if (isError) {
+    return <div role="alert"><ErrorState onRetry={() => void refetch()} /></div>;
   }
 
   if (!rows || rows.length === 0) {
@@ -435,7 +444,7 @@ function AttendanceRowsTable({
   const queryStart = periodStart ?? fallbackToday();
   const queryEnd = inclusivePeriodEnd(periodEnd) ?? queryStart;
 
-  const { data, isLoading, isFetching } = useAdminAttendances({
+  const { data, isLoading, isFetching, isError, refetch } = useAdminAttendances({
     status,
     successful_checkout: successfulCheckout,
     zero_earning: zeroEarning,
@@ -452,6 +461,10 @@ function AttendanceRowsTable({
 
   if (isLoading) {
     return <TableSkeleton cols={7} rows={5} />;
+  }
+
+  if (isError) {
+    return <div role="alert"><ErrorState onRetry={() => void refetch()} /></div>;
   }
 
   if (!rows.length) {

@@ -43,7 +43,7 @@ interface UserModalMetadata {
   schema?: keyof typeof userModalSchemas;
   permissions: {
     action: 'read' | 'create' | 'update' | 'delete';
-    subject: 'User' | 'all';
+    subject: 'User' | 'SelfAccount' | 'all';
   };
 }
 
@@ -103,7 +103,7 @@ export const userModals: Record<UserModalId, UserModalMetadata> = {
     hasParams: false,
     permissions: {
       action: 'read',
-      subject: 'User',
+      subject: 'SelfAccount',
     },
   },
   [USER_MODAL_IDS.CHANGE_PASSWORD]: {
@@ -112,12 +112,12 @@ export const userModals: Record<UserModalId, UserModalMetadata> = {
     description: 'Đổi mật khẩu tài khoản',
     category: 'user',
     requiresAuth: true,
-    roles: ['admin', 'partner'],
+    roles: ['admin', 'partner', 'adv_partner', 'accountant', 'employee'],
     componentPath: 'ChangePasswordModal',
     hasParams: false,
     permissions: {
       action: 'update',
-      subject: 'User',
+      subject: 'SelfAccount',
     },
   },
 } as const;

@@ -152,7 +152,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
   if (isLoadingCompleteUser && !completeUser) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="w-full sm:max-w-md flex flex-col h-full p-0 gap-0">
+        <SheetContent title="Thông tin cá nhân" className="w-full sm:max-w-md flex flex-col h-full p-0 gap-0">
           <div className="flex-1 flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
@@ -161,9 +161,10 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
     );
   }
 
-  const getRoleText = (role: 'admin' | 'partner' | 'employee' | 'adv_partner'): string => {
+  const getRoleText = (role: NonNullable<typeof displayUser>["role"]): string => {
     if (role === 'admin') return 'Quản trị viên';
     if (role === 'partner' || role === 'adv_partner') return 'Quản lý';
+    if (role === 'accountant') return 'Kế toán';
     return 'Nhân viên';
   };
 

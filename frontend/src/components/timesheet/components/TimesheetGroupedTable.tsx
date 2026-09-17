@@ -33,11 +33,6 @@ import {
   TableRow,
   TableCell,
 } from "@/components/ui/table";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -97,7 +92,7 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
           </colgroup>
           <TableHeader>
             <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border/40">
-              <TableHead className="p-0" />
+              <TableHead className="p-0"><span className="sr-only">Trạng thái</span></TableHead>
               <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 {userRole === "partner" ? "Nhân viên · Ngày" : "Nhân viên"}
               </TableHead>
@@ -116,7 +111,7 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
               <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
                 Thành tiền
               </TableHead>
-              <TableHead className="px-2 py-2" />
+              <TableHead className="px-2 py-2"><span className="sr-only">Chi tiết</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -164,10 +159,9 @@ const GroupRow = memo(function GroupRow({
   );
 
   return (
-    <Collapsible asChild open={isExpanded} onOpenChange={onToggle}>
-      <>
-        <CollapsibleTrigger asChild>
+    <>
           <TableRow
+            onClick={onToggle}
             className={cn(
               "group cursor-pointer transition-colors hover:bg-muted/30",
               idx !== 0 && "border-t border-border/40",
@@ -180,7 +174,13 @@ const GroupRow = memo(function GroupRow({
             </TableCell>
             {/* [1] employee */}
             <TableCell className="px-3 py-2.5">
-              <div className="flex items-center gap-2.5 min-w-0">
+              <button
+                type="button"
+                className="flex min-h-11 w-full min-w-0 items-center gap-2.5 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-expanded={isExpanded}
+                aria-label={`${isExpanded ? "Thu gọn" : "Xem"} bảng công của ${group.employeeName || group.employeeCode || "nhân viên"}`}
+                onClick={(event) => { event.stopPropagation(); onToggle(); }}
+              >
                 <UserAvatar email={group.employeeCode} name={group.employeeName} size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-foreground leading-tight truncate">
@@ -190,7 +190,7 @@ const GroupRow = memo(function GroupRow({
                     {group.employeeCode || "-"}
                   </p>
                 </div>
-              </div>
+              </button>
             </TableCell>
             {/* [2] role-specific column */}
             <TableCell className="px-3 py-2.5">
@@ -234,11 +234,8 @@ const GroupRow = memo(function GroupRow({
               </div>
             </TableCell>
           </TableRow>
-        </CollapsibleTrigger>
 
-        <CollapsibleContent asChild>
-          <>
-            {projectSections.map((project, projectIndex) => (
+            {isExpanded && projectSections.map((project, projectIndex) => (
               <ProjectSection
                 key={project.projectId}
                 project={project}
@@ -248,10 +245,7 @@ const GroupRow = memo(function GroupRow({
                 onRowClick={onRowClick}
               />
             ))}
-          </>
-        </CollapsibleContent>
-      </>
-    </Collapsible>
+    </>
   );
 });
 

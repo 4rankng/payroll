@@ -90,10 +90,11 @@ function BankList({ value, onSelect, canCreateBank, searchValue, scrollHeight = 
             const isSelected = value?.id === bank.id;
             return (
               <button
+                type="button"
                 key={bank.id}
                 onClick={() => onSelect(bank)}
                 className={cn(
-                  "flex items-start gap-1.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
+                  "flex min-h-11 items-start gap-1.5 rounded-md px-2.5 py-2 text-left text-sm transition-colors",
                   "active:scale-[0.98]",
                   isSelected
                     ? "bg-primary/10 text-primary font-medium ring-1 ring-primary/20"
@@ -112,10 +113,11 @@ function BankList({ value, onSelect, canCreateBank, searchValue, scrollHeight = 
       {canCreateBank && searchValue.trim() && !isLoading && (
         <div className="mt-2 border-t pt-2">
           <button
+            type="button"
             onClick={handleCreateCustomBank}
             disabled={isCreatingCustomBank || createBankMutation.isPending}
             className={cn(
-              "flex w-full items-center gap-2 rounded-md border-2 border-dashed border-blue-300 px-3 py-2 text-sm text-blue-700",
+              "flex min-h-11 w-full items-center gap-2 rounded-md border-2 border-dashed border-blue-300 px-3 py-2 text-sm text-blue-700",
               "hover:border-blue-400 hover:bg-blue-50 active:scale-[0.98] transition-all",
               "disabled:opacity-50 disabled:cursor-not-allowed"
             )}
@@ -145,20 +147,23 @@ interface SearchBarProps {
 
 function SearchBar({ value, onChange, inputRef }: SearchBarProps) {
   return (
-    <div className="relative flex items-center flex-1">
+    <div className="relative flex min-w-0 items-center flex-1">
       <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
       <input
         ref={inputRef}
-        className="h-9 w-full rounded-md border bg-muted/50 pl-8 pr-8 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+        className="h-11 w-full min-w-0 rounded-md border bg-muted/50 pl-8 pr-12 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground sm:h-9"
         placeholder="Tìm kiếm ngân hàng..."
+        aria-label="Tìm kiếm ngân hàng"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoComplete="off"
       />
       {value ? (
         <button
+          type="button"
           onClick={() => onChange('')}
-          className="absolute right-2.5 text-muted-foreground hover:text-foreground"
+          aria-label="Xóa tìm kiếm ngân hàng"
+          className="absolute right-0 flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9 sm:w-9"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -179,30 +184,26 @@ interface TriggerProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement
 
 const SelectorTrigger = forwardRef<HTMLButtonElement, TriggerProps>(
   ({ value, placeholder, disabled, className, onClear, ...props }, ref) => (
+    <div className="flex min-w-0 w-full items-center gap-1">
     <Button
       ref={ref}
       variant="outline"
       role="combobox"
-      className={cn("w-full justify-between", className)}
+      aria-label={value ? `Ngân hàng: ${value.branch_name}` : placeholder}
+      type="button"
+      className={cn("min-w-0 flex-1 justify-between", className)}
       disabled={disabled}
       {...props}
     >
       <span className="truncate">{value ? value.branch_name : placeholder}</span>
-      <div className="ml-2 flex items-center gap-1 shrink-0">
-        {value && (
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={onClear}
-            onKeyDown={(e) => { if (e.key === 'Enter') onClear(e as unknown as React.MouseEvent); }}
-            className="rounded-full p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X className="h-3 w-3" />
-          </span>
-        )}
-        <ChevronsUpDown className="h-4 w-4 opacity-50" />
-      </div>
+      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
     </Button>
+    {value && (
+      <Button type="button" variant="ghost" size="icon" disabled={disabled} onClick={onClear} aria-label="Xóa ngân hàng đã chọn" className="shrink-0">
+        <X className="h-4 w-4" />
+      </Button>
+    )}
+    </div>
   )
 );
 
@@ -283,6 +284,8 @@ export function BankSelector({
         disabled={disabled}
         className={className}
         onClear={handleClear}
+        aria-expanded={open}
+        aria-haspopup="dialog"
         onClick={() => setOpen(true)}
       />
       <Dialog open={open} onOpenChange={handleOpenChange}>

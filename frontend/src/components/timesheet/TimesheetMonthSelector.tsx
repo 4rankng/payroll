@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { MonthPicker } from '@/components/ui/month-picker';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, parse } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -33,11 +33,9 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
     onChange(format(addMonths(current, 1), 'yyyy-MM'));
   }, [value, selectedDate, onChange]);
 
-  const handleMonthSelect = useCallback((date: Date | undefined) => {
-    if (date) {
-      onChange(format(startOfMonth(date), 'yyyy-MM'));
-      setIsCalendarOpen(false);
-    }
+  const handleMonthSelect = useCallback((month: string) => {
+    onChange(month);
+    setIsCalendarOpen(false);
   }, [onChange]);
 
   const handleShowAll = useCallback(() => {
@@ -86,24 +84,24 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
             aria-label="Chọn tháng"
           >
             <CalendarDays className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <span className="hidden items-baseline gap-1 whitespace-nowrap text-sm sm:flex">
-              <span className="capitalize font-medium text-muted-foreground">{monthLabel}</span>
-              <span className="text-muted-foreground/40">·</span>
-              <span className="font-semibold text-foreground">{yearLabel}</span>
-            </span>
-            <span className="whitespace-nowrap text-sm font-semibold text-foreground sm:hidden">
-              {monthShort}
-            </span>
+            {value === 'all' ? (
+              <span className="whitespace-nowrap text-sm font-semibold">Chọn tháng</span>
+            ) : (
+              <>
+                <span className="hidden items-baseline gap-1 whitespace-nowrap text-sm sm:flex">
+                  <span className="capitalize font-medium text-muted-foreground">{monthLabel}</span>
+                  <span className="text-muted-foreground/40">·</span>
+                  <span className="font-semibold text-foreground">{yearLabel}</span>
+                </span>
+                <span className="whitespace-nowrap text-sm font-semibold text-foreground sm:hidden">
+                  {monthShort}
+                </span>
+              </>
+            )}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="end">
-          <Calendar
-            mode="single"
-            selected={value !== 'all' ? selectedDate : undefined}
-            onSelect={handleMonthSelect}
-            defaultMonth={selectedDate}
-            locale={vi}
-          />
+          <MonthPicker value={value} onChange={handleMonthSelect} />
         </PopoverContent>
       </Popover>
 

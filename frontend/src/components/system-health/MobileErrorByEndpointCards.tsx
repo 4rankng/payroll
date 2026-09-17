@@ -68,13 +68,13 @@ export function MobileErrorByEndpointCards({ days = 1 }: MobileErrorByEndpointCa
           </div>
           {/* Stats row */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-red-600 tabular-nums text-sm">
+            <span className="font-bold text-red-700 tabular-nums text-sm">
               {row.errorTotal.toLocaleString()} lỗi
             </span>
             <span className={cn(
               "text-xs font-semibold tabular-nums",
-              row.errorRate > 20 ? "text-red-600"
-                : row.errorRate > 5 ? "text-amber-600"
+              row.errorRate > 20 ? "text-red-700"
+                : row.errorRate > 5 ? "text-amber-700"
                 : "text-muted-foreground"
             )}>
               {row.errorRate.toFixed(1)}%

@@ -1,17 +1,15 @@
 import { useState, useMemo } from "react";
 import {
   Search,
-  ChevronLeft,
-  ChevronRight,
   ChevronRightIcon,
   Building2,
   CreditCard,
   User,
-  Phone,
   Mail,
   BadgeCheck,
 } from "lucide-react";
 import { useFlexPayEmployeesInfinite } from "@/hooks/api/useAdvancePayments";
+import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState as SharedEmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
@@ -129,6 +127,7 @@ function EmployeeCard({
     <button
       type="button"
       onClick={onEdit}
+      aria-label={`Chỉnh sửa nhân viên ${emp.fullname}`}
       className="w-full text-left bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden active:scale-[0.99] transition-transform cursor-pointer"
     >
       <div className="flex items-center gap-3 px-4 py-3.5">
@@ -143,21 +142,21 @@ function EmployeeCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-[14px] text-foreground leading-tight truncate">
+          <div className="break-words font-semibold text-[14px] text-foreground leading-snug line-clamp-2">
             {emp.fullname}
           </div>
           {emp.username ? (
-            <div className="font-mono text-[11px] text-muted-foreground/80 mt-0.5">
+            <div className="break-all font-mono text-[11px] text-muted-foreground mt-0.5">
               @{emp.username}
             </div>
           ) : (
-            <div className="text-[11px] text-muted-foreground/40 italic mt-0.5">
+            <div className="text-[11px] text-muted-foreground italic mt-0.5">
               chưa có tài khoản
             </div>
           )}
         </div>
 
-        <ChevronRightIcon className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+        <ChevronRightIcon className="w-4 h-4 text-muted-foreground shrink-0" />
       </div>
 
       {/* Info strip — project · bank · account */}
@@ -180,7 +179,7 @@ function EmployeeCard({
         ) : (
           <>
             <span className="text-border mr-2.5" aria-hidden>·</span>
-            <span className="text-[11px] text-muted-foreground/50 italic">
+            <span className="text-[11px] text-muted-foreground italic">
               Chưa có ngân hàng
             </span>
           </>
@@ -190,7 +189,7 @@ function EmployeeCard({
         {emp.bank?.accountNumber && (
           <>
             <span className="text-border mr-2.5" aria-hidden>·</span>
-            <span className="font-mono text-[11px] text-muted-foreground/70 tabular-nums">
+            <span className="break-all font-mono text-[11px] text-muted-foreground tabular-nums">
               {emp.bank.accountNumber}
             </span>
           </>
@@ -205,7 +204,7 @@ const AdvPartnerUsersPage = () => {
   const [search, setSearch] = useState("");
   const [editEmployee, setEditEmployee] = useState<FlexPayEmployeeListItem | null>(null);
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, isLoading, isError, isFetchNextPageError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFlexPayEmployeesInfinite({
       pageSize: 50,
       search: search || undefined,
@@ -228,7 +227,7 @@ const AdvPartnerUsersPage = () => {
       <div className="p-4 lg:p-6 space-y-5 max-w-[1400px] mx-auto">
         <div className="space-y-2">
           <Skeleton className="h-8 w-52" />
-          <Skeleton className="h-4 w-80" />
+          <Skeleton className="h-4 w-full max-w-80" />
         </div>
 
         <div className="flex flex-col gap-3 sm:hidden">
@@ -262,45 +261,9 @@ const AdvPartnerUsersPage = () => {
     );
   }
 
-  // ── Pagination footer (shared) ────────────────────────────────────────────
-  const PaginationFooter = () => (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border/30 bg-muted/10 text-[13px] text-muted-foreground">
-      <span>
-        Hiển thị{" "}
-        <strong className="font-mono text-foreground">{employees.length}</strong>{" "}
-        nhân viên
-      </span>
-      <div className="flex items-center gap-1">
-        <button
-          disabled
-          className="w-8 h-8 rounded-lg grid place-items-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <button className="w-8 h-8 rounded-lg grid place-items-center font-mono font-semibold bg-foreground text-white text-[12px]">
-          1
-        </button>
-        {hasNextPage && (
-          <button
-            onClick={() => fetchNextPage()}
-            className="w-8 h-8 rounded-lg grid place-items-center font-mono text-muted-foreground hover:bg-muted transition-colors text-[12px]"
-          >
-            2
-          </button>
-        )}
-        <button
-          disabled={!hasNextPage}
-          onClick={() => fetchNextPage()}
-          className="w-8 h-8 rounded-lg grid place-items-center hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
 
   return (
-    <div className="min-h-full">
+    <div className="min-h-full pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-0">
       <div className="p-4 lg:p-6 space-y-4 max-w-[1400px] mx-auto">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
@@ -322,19 +285,31 @@ const AdvPartnerUsersPage = () => {
 
         {/* ── Search bar ──────────────────────────────────────────────────── */}
         <div className="relative w-full sm:max-w-[380px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <input
-            type="text"
+            type="search"
+            aria-label="Tìm nhân viên theo tên hoặc CCCD"
             placeholder="Tìm theo tên, CCCD..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 h-10 rounded-xl border border-border/70 bg-card text-[13px] text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 transition-all shadow-sm"
+            className="w-full pl-9 pr-3 h-11 rounded-xl border border-border/70 bg-card text-[13px] text-foreground placeholder:text-muted-foreground outline-none focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 transition-all shadow-sm"
           />
         </div>
 
+        {isError && (
+          <div role="alert">
+            <ErrorState
+              message={isFetchNextPageError
+                ? "Không thể tải thêm nhân viên. Danh sách đã tải vẫn được giữ lại."
+                : "Không thể tải danh sách nhân viên. Vui lòng thử lại."}
+              onRetry={() => void (isFetchNextPageError ? fetchNextPage() : refetch())}
+            />
+          </div>
+        )}
+
         {/* ── Mobile card list ────────────────────────────────────────────── */}
         <div className="flex flex-col gap-3 sm:hidden">
-          {employees.length === 0 && !isLoading ? (
+          {employees.length === 0 && !isLoading && !isError ? (
             <EmptyState hasSearch={!!search} />
           ) : (
             <>
@@ -346,11 +321,11 @@ const AdvPartnerUsersPage = () => {
                 />
               ))}
 
-              {hasNextPage && (
+              {!isError && hasNextPage && (
                 <button
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="w-full py-3 rounded-xl border border-border/50 bg-card text-[13px] font-medium text-muted-foreground hover:bg-muted/40 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                  className="min-h-11 w-full py-3 rounded-xl border border-border/50 bg-card text-[13px] font-medium text-muted-foreground hover:bg-muted/40 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                 >
                   {isFetchingNextPage ? (
                     <>
@@ -363,8 +338,8 @@ const AdvPartnerUsersPage = () => {
                 </button>
               )}
 
-              {employees.length > 0 && !hasNextPage && (
-                <p className="text-center text-[11px] text-muted-foreground/60 pb-1">
+              {!isError && employees.length > 0 && !hasNextPage && (
+                <p className="text-center text-[11px] text-muted-foreground pb-1">
                   {employees.length} nhân viên
                 </p>
               )}
@@ -375,10 +350,10 @@ const AdvPartnerUsersPage = () => {
         {/* ── Desktop table ───────────────────────────────────────────────── */}
         <div className="hidden sm:block bg-card rounded-2xl border border-border/40 shadow-sm overflow-hidden">
           <div className="px-4 pt-3 pb-1">
-            <p className="text-[11px] text-muted-foreground/50">Nhấn vào hàng để xem chi tiết</p>
+            <p className="text-[11px] text-muted-foreground">Nhấn vào hàng để xem chi tiết</p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[13px]">
+          <div role="region" aria-label="Danh sách nhân viên" tabIndex={0} className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <table className="w-full min-w-[1040px] border-collapse text-[13px]">
               <thead>
                 <tr>
                   <th className="w-10 px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/30">
@@ -402,7 +377,7 @@ const AdvPartnerUsersPage = () => {
                     <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
                       {String(i + 1).padStart(2, "0")}
                     </td>
-                    <td className="px-4 py-3.5 min-w-[160px]">
+                    <td className="px-4 py-3.5 min-w-[220px]">
                       <div className="flex items-center gap-2.5">
                         <div
                           className={cn(
@@ -414,15 +389,20 @@ const AdvPartnerUsersPage = () => {
                           {getInitials(emp.fullname)}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-semibold text-[13px] text-foreground truncate leading-tight">
+                          <button
+                            type="button"
+                            className="min-h-11 text-left font-semibold text-[13px] text-foreground leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
+                            onClick={(event) => { event.stopPropagation(); setEditEmployee(emp); }}
+                            aria-label={`Chỉnh sửa nhân viên ${emp.fullname}`}
+                          >
                             {emp.fullname}
-                          </div>
+                          </button>
                           {emp.username ? (
                             <div className="font-mono text-[11px] text-muted-foreground">
                               @{emp.username}
                             </div>
                           ) : (
-                            <div className="text-[11px] text-muted-foreground/50 italic">
+                            <div className="text-[11px] text-muted-foreground italic">
                               chưa có tài khoản
                             </div>
                           )}
@@ -434,7 +414,7 @@ const AdvPartnerUsersPage = () => {
                         {emp.email || "—"}
                       </div>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 min-w-[180px]">
                       <span className="inline-flex items-center gap-1.5 text-[12px] text-foreground/80 font-medium">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
                         {emp.project?.name || "—"}
@@ -446,7 +426,7 @@ const AdvPartnerUsersPage = () => {
                           "text-[12px]",
                           emp.bank
                             ? "text-foreground/80"
-                            : "text-muted-foreground/60 italic"
+                            : "text-muted-foreground italic"
                         )}
                       >
                         {emp.bank?.bankName || "—"}
@@ -458,7 +438,7 @@ const AdvPartnerUsersPage = () => {
                           "font-mono text-[12px]",
                           emp.bank?.accountNumber
                             ? "text-foreground/80"
-                            : "text-muted-foreground/60 italic"
+                            : "text-muted-foreground italic"
                         )}
                       >
                         {emp.bank?.accountNumber || "—"}
@@ -475,11 +455,25 @@ const AdvPartnerUsersPage = () => {
             </table>
           </div>
 
-          {employees.length === 0 && !isLoading && (
+          {employees.length === 0 && !isLoading && !isError && (
             <EmptyState hasSearch={!!search} />
           )}
 
-          {employees.length > 0 && <PaginationFooter />}
+          {employees.length > 0 && !isError && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/30 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">
+              <span>Đã tải <strong className="font-mono text-foreground">{employees.length}</strong> nhân viên</span>
+              {hasNextPage && (
+                <button
+                  type="button"
+                  onClick={() => void fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="min-h-11 rounded-lg border border-border bg-card px-4 font-medium hover:bg-muted disabled:opacity-50"
+                >
+                  {isFetchingNextPage ? "Đang tải..." : "Tải thêm nhân viên"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {isFetchingNextPage && (

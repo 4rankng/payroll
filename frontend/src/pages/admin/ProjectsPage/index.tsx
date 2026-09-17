@@ -9,7 +9,6 @@ import {
 } from "@/components/shared/AdminPageFrame";
 import { ProjectPageHeader } from "@/components/projects/ProjectPageHeader";
 import { ProjectFilters } from "@/components/projects/ProjectFilters";
-import { AddProjectSheet } from "@/components/sheets/AddProjectSheet";
 import { useProjects } from "@/hooks/api/useProjects";
 import { useProjectFilters } from "@/hooks/projects/useProjectFilters";
 import { useProjectModals } from "@/hooks/useModalNavigation";
@@ -17,7 +16,7 @@ import { createProjectColumns } from "@/config/project-table-columns";
 import { createProjectMobileConfig } from "@/config/project-table-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
-import type { CreateProjectData } from "@/types/api/project.types";
+import { ErrorState } from "@/components/ui/error-state";
 import { useTableSorting } from "@/utils/sorting";
 
 const ProjectsPage = () => {
@@ -39,14 +38,15 @@ const ProjectsPage = () => {
     }
   }, [searchParams, setSearchParams]);
 
+  const { setStatusFilter } = filterControls;
   useEffect(() => {
     const status = searchParams.get('status');
     if (status === 'active') {
-      filterControls.setStatusFilter(['active']);
+      setStatusFilter(['active']);
     }
-  }, [searchParams, filterControls]);
+  }, [searchParams, setStatusFilter]);
 
-  const { data: response, isLoading } = useProjects(filterControls.apiFilters);
+  const { data: response, isLoading, isError, refetch } = useProjects(filterControls.apiFilters);
   const projects = response?.data || [];
 
   const handleSortChange = useCallback((newSortBy: string, newSortOrder: 'asc' | 'desc') => {
@@ -119,6 +119,11 @@ const ProjectsPage = () => {
           </div>
         </AdminFilterRow>
 
+        {isError ? (
+          <div role="alert">
+            <ErrorState message="Không thể tải danh sách dự án. Vui lòng thử lại." onRetry={() => void refetch()} className="px-4" />
+          </div>
+        ) : (
         <ResponsiveTable
           data={projects}
           columns={columns}
@@ -135,14 +140,19 @@ const ProjectsPage = () => {
           emptyState={
             <EmptyState
               title="Không tìm thấy dự án nào"
-              description="Hãy tạo dự án đầu tiên để bắt đầu quản lý nhân viên và bảng lương."
-              action={{ label: "Tạo dự án", onClick: () => openCreateProject() }}
+              description={filterControls.hasFilters
+                ? "Không có dự án phù hợp. Thử thay đổi từ khóa hoặc xóa bộ lọc."
+                : "Hãy tạo dự án đầu tiên để bắt đầu quản lý nhân viên và bảng lương."}
+              action={filterControls.hasFilters
+                ? { label: "Xóa bộ lọc", onClick: filterControls.clearFilters }
+                : { label: "Tạo dự án", onClick: () => openCreateProject() }}
               className="py-8"
             />
           }
           accordionType="single"
           embedded
         />
+        )}
       </AdminSectionCard>
     </AdminPageCanvas>
   );

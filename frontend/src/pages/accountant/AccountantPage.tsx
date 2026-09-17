@@ -47,7 +47,7 @@ export default function AccountantPage() {
           <div className="min-w-0">
             <p className="text-sm font-semibold leading-5 text-foreground">Kế toán</p>
             <p className="truncate text-xs text-muted-foreground">
-              {user?.fullname || user?.username || ''}
+              {user?.name || user?.username || ''}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -60,19 +60,19 @@ export default function AccountantPage() {
       <main className="mx-auto w-full max-w-6xl px-4 py-6">
         <Tabs defaultValue="duyet-cong" className="w-full">
           <TabsList className="mb-4 grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
-            <TabsTrigger value="duyet-cong" className="gap-1.5">
+            <TabsTrigger value="duyet-cong" className="gap-1.5 whitespace-normal text-center leading-snug">
               <CalendarCheck className="h-4 w-4" aria-hidden="true" />
               Duyệt công
             </TabsTrigger>
-            <TabsTrigger value="xuat-chuyen-lo" className="gap-1.5">
+            <TabsTrigger value="xuat-chuyen-lo" className="gap-1.5 whitespace-normal text-center leading-snug">
               <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
               Xuất file chuyển lô
             </TabsTrigger>
-            <TabsTrigger value="nhap-kq" className="gap-1.5">
+            <TabsTrigger value="nhap-kq" className="gap-1.5 whitespace-normal text-center leading-snug">
               <Upload className="h-4 w-4" aria-hidden="true" />
               Nhập KQ chuyển lô
             </TabsTrigger>
-            <TabsTrigger value="xuat-sao-ke" className="gap-1.5">
+            <TabsTrigger value="xuat-sao-ke" className="gap-1.5 whitespace-normal text-center leading-snug">
               <FileDown className="h-4 w-4" aria-hidden="true" />
               Xuất sao kê
             </TabsTrigger>
@@ -161,7 +161,7 @@ function ApproveTimesheetsTab() {
             <Input
               id="acc-from"
               type="date"
-              className="h-9 w-[150px]"
+              className="h-11 w-[150px] sm:h-9"
               value={formatDateForAPI(fromDate)}
               onChange={(e) => {
                 if (e.target.value) setFromDate(new Date(e.target.value));
@@ -175,7 +175,7 @@ function ApproveTimesheetsTab() {
             <Input
               id="acc-to"
               type="date"
-              className="h-9 w-[150px]"
+              className="h-11 w-[150px] sm:h-9"
               value={formatDateForAPI(toDate)}
               onChange={(e) => {
                 if (e.target.value) setToDate(new Date(e.target.value));
@@ -185,15 +185,18 @@ function ApproveTimesheetsTab() {
         </div>
       </CardHeader>
       <CardContent className="p-0">
+        <div className="overflow-x-auto" role="region" aria-label="Chấm công chờ duyệt" tabIndex={0}>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10">
+              <TableHead className="w-14">
+                <label className="inline-flex h-11 w-11 cursor-pointer items-center justify-center sm:h-4 sm:w-4">
                 <Checkbox
                   aria-label="Chọn tất cả"
                   checked={rows.length > 0 && selected.size === rows.length}
                   onCheckedChange={(v) => toggleAll(v === true)}
                 />
+                </label>
               </TableHead>
               <TableHead>Nhân viên</TableHead>
               <TableHead>Dự án</TableHead>
@@ -225,11 +228,13 @@ function ApproveTimesheetsTab() {
               rows.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell>
+                    <label className="inline-flex h-11 w-11 cursor-pointer items-center justify-center sm:h-4 sm:w-4">
                     <Checkbox
                       aria-label={`Chọn ${r.employeeName}`}
                       checked={selected.has(r.id)}
                       onCheckedChange={(v) => toggleOne(r.id, v === true)}
                     />
+                    </label>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm font-medium">{r.employeeName}</div>
@@ -244,6 +249,7 @@ function ApproveTimesheetsTab() {
             )}
           </TableBody>
         </Table>
+        </div>
       </CardContent>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 sm:px-6">
         <div className="min-w-0">

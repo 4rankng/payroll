@@ -10,7 +10,7 @@ export interface CronStatusBadgeProps {
 }
 
 const NULL_STYLE = {
-  color: "text-gray-400",
+  color: "text-gray-600",
   label: "Chưa chạy",
 } as const;
 
@@ -35,7 +35,7 @@ export function CronStatusBadge({
       return (
         <div
           className={cn(
-            "shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap bg-gray-50 text-gray-400",
+            "shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap bg-gray-50 text-gray-600",
             className
           )}
         >

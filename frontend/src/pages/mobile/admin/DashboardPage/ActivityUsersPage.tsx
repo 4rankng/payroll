@@ -82,7 +82,7 @@ const ActivityUsersPage = () => {
         sticky={false}
         bordered={false}
         actions={
-          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => navigate(-1)} aria-label="Quay lại tổng quan">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         }

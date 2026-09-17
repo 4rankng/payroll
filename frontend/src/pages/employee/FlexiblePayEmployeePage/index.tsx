@@ -18,7 +18,7 @@ import {
   useCancelAdvancePaymentRequest,
 } from "@/hooks/api/useAdvancePayments";
 import { useUnreadNotifications } from "@/hooks/api/useNotifications";
-import { ADVANCE_PAYMENT_CONSTANTS } from "@/types/api/advance-payment.types";
+import { useAdvanceFeePreview } from "@/hooks/advance-payment/useAdvanceFeePreview";
 import { EmployeeBankInfoCard } from "@/components/employees/EmployeeBankInfoCard";
 import { EmployeeMobileShell } from "@/components/employees/EmployeeMobileShell";
 import { EmployeeCanopy } from "@/components/employees/EmployeeCanopy";
@@ -69,7 +69,6 @@ const FlexiblePayEmployeePage = () => {
   const [formKey, setFormKey] = useState(0);
   const [requestConfirmation, setRequestConfirmation] = useState<AdvanceRequestConfirmation | null>(null);
   const [confirmationDataReady, setConfirmationDataReady] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialMonthResolvedRef = useRef(false);
 
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
@@ -166,40 +165,16 @@ const FlexiblePayEmployeePage = () => {
     setMonth,
   ]);
 
-  // Debounced server-side fee calculation
-  const [serverFeeDetails, setServerFeeDetails] = useState<{
-    fee: number;
-    netAmount: number;
-  } | null>(null);
+  const { feeDetails, feeError, calculate: calculateFee, retry: retryFee } =
+    useAdvanceFeePreview(calculateFeeMutation.mutateAsync);
 
   const handleAmountChange = useCallback(
     (amount: number) => {
       setLatestAmount(amount);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (amount < ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT) {
-        setServerFeeDetails(null);
-        return;
-      }
-      debounceRef.current = setTimeout(() => {
-        calculateFeeMutation.mutate(
-          { amount },
-          {
-            onSuccess: (r) => setServerFeeDetails(r),
-            onError: () => setServerFeeDetails(null),
-          }
-        );
-      }, 300);
+      calculateFee(amount);
     },
-    [calculateFeeMutation]
+    [calculateFee]
   );
-
-  useEffect(() => {
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, []);
-
-  const feeDetails = serverFeeDetails;
 
   const handleRequestSubmit = useCallback((data: { amount: number; forMonth: string }) => {
     setLatestAmount(data.amount);
@@ -228,12 +203,12 @@ const FlexiblePayEmployeePage = () => {
       setFormKey((k) => k + 1);
       setLatestAmount(0);
       setLatestMonth("");
-      setServerFeeDetails(null);
+      calculateFee(0);
       void Promise.all([refetchInfo(), refetchOwnedInfo(), refetchHistory()]).finally(() => setConfirmationDataReady(true));
     } catch {
       /* handled */
     }
-  }, [latestAmount, latestMonth, requestMutation, refetchHistory, refetchInfo, refetchOwnedInfo]);
+  }, [calculateFee, latestAmount, latestMonth, requestMutation, refetchHistory, refetchInfo, refetchOwnedInfo]);
 
   useEffect(() => {
     if (!requestConfirmation) return;
@@ -355,6 +330,8 @@ const FlexiblePayEmployeePage = () => {
               isSelfCheckInFlow={isCheckIn}
               history={history}
               feeDetails={feeDetails}
+              feeError={feeError}
+              onRetryFee={retryFee}
               hasBankDestination={hasEmployeeBankInfo(profile)}
               onSubmit={handleRequestSubmit}
               onAmountChange={handleAmountChange}

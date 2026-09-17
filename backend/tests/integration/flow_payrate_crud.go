@@ -133,7 +133,7 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 			Rates:         []byte(`{}`),
 			EffectiveFrom: today(),
 		}
-		_, statusCode, _ := admin.Put("/api/v1/payrates/999999", body)
+		_, statusCode, _ := admin.Put(fmt.Sprintf("/api/v1/payrates/%d", nonexistentID), body)
 		if statusCode < 400 {
 			return fmt.Errorf("expected error updating non-existent payrate")
 		}

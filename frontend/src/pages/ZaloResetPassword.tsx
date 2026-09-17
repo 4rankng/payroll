@@ -3,7 +3,6 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Lock, Eye, EyeOff, AlertCircle, Loader2, CheckCircle2, ArrowLeft, MessageCircle } from "lucide-react";
 import { useConfirmZaloReset } from "@/hooks/api/useZaloReset";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
-import type { ApiError } from "@/services/api/client";
 
 /**
  * ZaloResetPassword — step 2 of the Zalo-OTP password-reset flow.
@@ -119,7 +118,7 @@ const ZaloResetPassword = () => {
     [sessionId, code, newPassword, confirmPassword, mutation, navigate],
   );
 
-  const apiError = mutation.error as ApiError | null;
+  const apiError = mutation.error;
 
   // --- success state ---
   if (success) {

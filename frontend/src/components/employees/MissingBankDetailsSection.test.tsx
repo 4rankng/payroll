@@ -56,6 +56,8 @@ describe('MissingBankDetailsSection', () => {
       employees,
       totalCount: employees.length,
       isLoading: false,
+      error: null,
+      refetch: vi.fn(),
     });
   });
 

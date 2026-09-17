@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToggleAdvanceRequestEnabled } from "@/hooks/api/useAdvancePayments";
@@ -8,6 +8,7 @@ interface AdvanceRequestToggleProps {
   employeeId: number;
   /** false = "Đang tạm ngừng" — new advance requests blocked for this employee */
   enabled: boolean;
+  employeeName?: string;
 }
 
 /**
@@ -20,7 +21,9 @@ export function AdvanceRequestToggle({
   projectId,
   employeeId,
   enabled,
+  employeeName,
 }: AdvanceRequestToggleProps) {
+  const toggleId = useId();
   const toggleMutation = useToggleAdvanceRequestEnabled();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -36,16 +39,22 @@ export function AdvanceRequestToggle({
       setConfirmOpen(true);
       return;
     }
-    fire(true);
+    // The mutation reports the error; keep a rejected immediate enable from
+    // becoming an unhandled promise rejection in the page.
+    void fire(true)?.catch(() => undefined);
   };
 
   return (
-    <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+    <div className="flex items-center" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+      <label htmlFor={toggleId} className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center">
       <Switch
+        id={toggleId}
+        aria-label={`Cho phép ứng lương${employeeName ? ` cho ${employeeName}` : ''}`}
         checked={enabled}
         onCheckedChange={handleToggle}
         disabled={toggleMutation.isPending}
       />
+      </label>
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}

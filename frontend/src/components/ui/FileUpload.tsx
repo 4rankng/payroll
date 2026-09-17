@@ -184,6 +184,7 @@ export function FileUpload({
         <input
           ref={inputRef}
           type="file"
+          aria-label="Chọn tệp để tải lên"
           accept={accept}
           multiple={multiple}
           onChange={handleInputChange}
@@ -250,7 +251,7 @@ export function FileUpload({
                   chọn file
                 </span>
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-600">
                 PNG, JPG, PDF, DOC, XLS (tối đa {formatFileSize(maxSize || 10 * 1024 * 1024)})
               </p>
             </div>
@@ -298,7 +299,7 @@ export function FileUpload({
                   {file.uploading && (
                     <div className="mt-1">
                       <Progress value={file.progress || 0} className="h-1" />
-                      <p className="typography-body-small text-gray-400 mt-1">
+                      <p className="typography-body-small text-gray-600 mt-1">
                         Đang tải lên... {file.progress || 0}%
                       </p>
                     </div>

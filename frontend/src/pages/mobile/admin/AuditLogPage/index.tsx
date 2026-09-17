@@ -1,3 +1,4 @@
+import { ErrorState } from "@/components/ui/error-state";
 import { useState, useMemo } from 'react';
 import { ClipboardList, Filter, X, Check } from 'lucide-react';
 import { useInfiniteAuditLogs } from '@/hooks/api/useAuditLogs';
@@ -79,7 +80,7 @@ export default function AuditLogPageMobile() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Strip pagination before passing — the hook manages page internally.
-  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } =
+  const { data, isLoading, isError, isFetchNextPageError, refetch, isFetchingNextPage, fetchNextPage, hasNextPage } =
     useInfiniteAuditLogs({
       fromDate: filters.fromDate,
       toDate: filters.toDate,
@@ -94,7 +95,7 @@ export default function AuditLogPageMobile() {
   const totalRecords = data?.pages[0]?.pagination?.totalRecords ?? 0;
 
   const { observerRef } = useInfiniteScroll({
-    hasMore: hasNextPage ?? false,
+    hasMore: !isError && (hasNextPage ?? false),
     isLoading: isFetchingNextPage,
     onLoadMore: () => {
       fetchNextPage();
@@ -190,6 +191,18 @@ export default function AuditLogPageMobile() {
         </div>
       )}
 
+      {isError && (
+        <div role="alert">
+          <ErrorState
+            message={isFetchNextPageError
+              ? "Không thể tải thêm nhật ký. Các bản ghi đã tải vẫn được giữ lại."
+              : "Không thể tải nhật ký hoạt động. Vui lòng thử lại."}
+            onRetry={() => void (isFetchNextPageError ? fetchNextPage() : refetch())}
+            className="px-4"
+          />
+        </div>
+      )}
+
       <div className="flex flex-col gap-3 p-4">
         {isLoading ? (
           <>
@@ -197,7 +210,7 @@ export default function AuditLogPageMobile() {
               <AuditLogCardSkeleton key={i} />
             ))}
           </>
-        ) : logs.length === 0 ? (
+        ) : logs.length === 0 && isError ? null : logs.length === 0 ? (
           <EmptyState
             icon={ClipboardList}
             title="Không có bản ghi nào"
@@ -219,7 +232,7 @@ export default function AuditLogPageMobile() {
                 ))}
               </>
             )}
-            <div ref={observerRef} className="h-1" />
+            {!isError && <div ref={observerRef} className="h-1" />}
           </>
         )}
       </div>
@@ -250,11 +263,12 @@ export default function AuditLogPageMobile() {
               <MobileSectionHeader icon={ClipboardList} title="Khoảng thời gian" />
               <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
                 <div className="min-w-0">
-                  <label className="mb-1 block text-xs font-medium text-slate-500">
+                  <label htmlFor="audit-from-date" className="mb-1 block text-xs font-medium text-slate-500">
                     Từ ngày
                   </label>
                   <Input
                     type="date"
+                    id="audit-from-date"
                     value={filters.fromDate ?? ''}
                     onChange={(e) =>
                       setFilters((prev) => ({
@@ -267,11 +281,12 @@ export default function AuditLogPageMobile() {
                   />
                 </div>
                 <div className="min-w-0">
-                  <label className="mb-1 block text-xs font-medium text-slate-500">
+                  <label htmlFor="audit-to-date" className="mb-1 block text-xs font-medium text-slate-500">
                     Đến ngày
                   </label>
                   <Input
                     type="date"
+                    id="audit-to-date"
                     value={filters.toDate ?? ''}
                     onChange={(e) =>
                       setFilters((prev) => ({

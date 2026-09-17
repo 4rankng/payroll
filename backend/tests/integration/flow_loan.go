@@ -238,7 +238,7 @@ func runLoanTests(client *APIClient, data *TestData, reporter *Reporter, cfg *Te
 			return nil
 		}
 		body := CreateLoanRequest{
-			LenderID:        999999,
+			LenderID:        nonexistentID,
 			PrincipalAmount: 0,
 			StartDate:       today(),
 		}

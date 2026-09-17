@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts';
 import { useNavigate } from 'react-router-dom';
 import { useExportPayrollReport } from '@/hooks/api/usePayrolls';
 import { cn } from '@/lib/utils';
+import type { AppRole } from '@/lib/auth';
 
 // Custom icon component for PNG images
 interface IconImageProps {
@@ -41,7 +42,7 @@ interface FixedAction {
   icon: typeof Briefcase | React.ComponentType<{ className?: string }>;
   href?: string;
   onClick?: () => void;
-  permissions: ('admin' | 'partner' | 'employee' | 'adv_partner')[];
+  permissions: AppRole[];
 }
 
 interface QuickActionsProps {

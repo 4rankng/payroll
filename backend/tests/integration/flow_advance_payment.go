@@ -9,7 +9,7 @@ import (
 const flowAdvance = "AdvancePayment"
 
 func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporter) {
-	reporter.PrintSection("FLOW 2: Advance Salary Payment via 9Pay")
+	reporter.PrintSection("FLOW 2: Advance Salary Payment via provider")
 
 	if data.EmployeeForAdvance == nil || data.EmployeeTokenForAdv == "" {
 		reporter.Skip(flowAdvance, "All advance payment tests", "no employee user account found")
@@ -20,6 +20,10 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 	adminClient := client.WithToken(data.AdminToken)
 
 	var info AdvancePaymentInfoResponse
+	reporter.RunTest(flowAdvance, "Get employee advance payment eligibility", func() error {
+		_, err := empClient.GetInto("/api/v1/me/advance-payment", &info)
+		return err
+	})
 
 	// 2.1 Calculate fee preview
 	reporter.RunTest(flowAdvance, "Calculate fee preview (100,000 VND)", func() error {
@@ -56,7 +60,9 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 		}
 		fmt.Printf("    Total: %d requests, Pending: %d, Paid: %d, Amount: %d\n",
 			resp.TotalRequests, resp.TotalPending, resp.TotalPaid, resp.TotalAmount)
-		return AssertGreaterThan("totalRequests", int64(0), resp.TotalRequests)
+		// An eligible employee need not have requested an advance yet.
+		// Verify aggregate consistency without depending on pre-existing money movement.
+		return AssertGreaterOrEqual("totalRequests", resp.TotalPending+resp.TotalPaid, resp.TotalRequests)
 	})
 
 	// 2.5 Admin available months
@@ -82,9 +88,11 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 	// --- Request creation + cancel flow (only if CanRequest) ---
 
 	var requestID uint
-	if info.CanRequest && info.RemainingAmount >= 100000 {
+	// Leave room for the fee above the provider's minimum net transfer amount.
+	const requestAmount = 200000
+	if info.CanRequest && info.RemainingAmount >= requestAmount {
 		reporter.RunTest(flowAdvance, "Create advance payment request", func() error {
-			req := CreateAdvancePaymentRequest{Amount: 100000}
+			req := CreateAdvancePaymentRequest{Amount: requestAmount}
 			var created AdvancePaymentHistoryItem
 			if _, err := empClient.PostInto("/api/v1/me/advance-payment/request", req, &created); err != nil {
 				return fmt.Errorf("create request: %w", err)
@@ -144,14 +152,14 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 		reporter.Skip(flowAdvance, "Edge: cancel already cancelled request", "no request created")
 	}
 
-	// --- Full 9Pay auto-disbursement lifecycle ---
+	// --- Full automatic disbursement lifecycle ---
 	// Flow: Employee requests → PENDING → (poller claims) → APPROVED → (execute worker) → COMPLETED
 	// Verifies: status transitions, wallet payment creation, employee info update
 
 	var disbursementRequestID uint
 	var completedAmountBefore uint64
 
-	if info.CanRequest && info.RemainingAmount >= 100000 {
+	if info.CanRequest && info.RemainingAmount >= requestAmount {
 		// Snapshot employee info before disbursement
 		var infoBefore AdvancePaymentInfoResponse
 		reporter.RunTest(flowAdvance, "Snapshot employee info before disbursement", func() error {
@@ -164,8 +172,8 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 			return nil
 		})
 
-		reporter.RunTest(flowAdvance, "Create request for 9Pay auto-disbursement", func() error {
-			req := CreateAdvancePaymentRequest{Amount: 100000}
+		reporter.RunTest(flowAdvance, "Create request for automatic disbursement", func() error {
+			req := CreateAdvancePaymentRequest{Amount: requestAmount}
 			var created AdvancePaymentHistoryItem
 			if _, err := empClient.PostInto("/api/v1/me/advance-payment/request", req, &created); err != nil {
 				return fmt.Errorf("create disbursement request: %w", err)
@@ -221,15 +229,14 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 				return false
 			})
 			if err != nil {
-				fmt.Printf("    WARNING: poll timeout waiting for PENDING→APPROVED: %v\n", err)
-				return nil
+				return fmt.Errorf("poller did not claim eligible request: %w", err)
 			}
 			fmt.Printf("    Request %d claimed by poller (no longer PENDING)\n", disbursementRequestID)
 			return nil
 		})
 
 		// Poll until terminal state (COMPLETED or FAILED)
-		reporter.RunTest(flowAdvance, "Poll: wait for 9Pay disbursement to complete (APPROVED → COMPLETED)", func() error {
+		reporter.RunTest(flowAdvance, "Poll: wait for provider disbursement to complete (APPROVED → COMPLETED)", func() error {
 			if disbursementRequestID == 0 {
 				return fmt.Errorf("no request ID")
 			}
@@ -251,8 +258,7 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 				return false
 			})
 			if err != nil {
-				fmt.Printf("    WARNING: poll timeout - disbursement may still be processing: %v\n", err)
-				return nil
+				return fmt.Errorf("disbursement did not reach a terminal state: %w", err)
 			}
 			fmt.Printf("    Request %d reached terminal state\n", disbursementRequestID)
 			return nil
@@ -279,6 +285,9 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 			}
 			fmt.Printf("    Final status: %s, paidAt: %v, paymentRef: %s\n",
 				found.Status, found.PaidAt, found.PaymentRef)
+			if found.Status != "COMPLETED" {
+				return fmt.Errorf("expected successful disbursement, got %s", found.Status)
+			}
 
 			if found.Status == "COMPLETED" {
 				if found.PaidAt == nil {
@@ -287,25 +296,23 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 				if found.PaymentRef == "" {
 					return fmt.Errorf("COMPLETED request should have paymentReference set")
 				}
-				fmt.Printf("    Payment reference from 9Pay: %s\n", found.PaymentRef)
+				fmt.Printf("    Payment reference from provider: %s\n", found.PaymentRef)
 			}
 			return nil
 		})
 
-		// Verify wallet payment record exists (9Pay disbursement trace)
-		reporter.RunTest(flowAdvance, "Verify wallet payment record from 9Pay", func() error {
+		// Verify wallet payment record exists (provider disbursement trace)
+		reporter.RunTest(flowAdvance, "Verify wallet payment record from provider", func() error {
 			if disbursementRequestID == 0 {
 				return fmt.Errorf("no request ID")
 			}
 			path := fmt.Sprintf("/api/v1/wallet/payments?entity_id=%d&page_size=5", disbursementRequestID)
 			var payments []WalletPaymentDetail
 			if _, err := adminClient.GetInto(path, &payments); err != nil {
-				fmt.Printf("    WARNING: could not fetch wallet payments: %v\n", err)
-				return nil
+				return fmt.Errorf("fetch wallet payment evidence: %w", err)
 			}
 			if len(payments) == 0 {
-				fmt.Printf("    WARNING: no wallet payment records found for request %d\n", disbursementRequestID)
-				return nil
+				return fmt.Errorf("no wallet payment records found for request %d", disbursementRequestID)
 			}
 			wp := payments[0]
 			fmt.Printf("    Wallet payment: id=%d, status=%s, txnId=%s, amount=%d\n",
@@ -330,7 +337,7 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 				fmt.Printf("    completedAmount increased by %d (disbursement reflected)\n",
 					infoAfter.CompletedAmount-completedAmountBefore)
 			} else {
-				fmt.Printf("    NOTE: completedAmount unchanged — request may have FAILED or still processing\n")
+				return fmt.Errorf("completedAmount did not increase after disbursement")
 			}
 			return nil
 		})
@@ -347,19 +354,19 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 			for _, item := range items {
 				if item.ID == disbursementRequestID {
 					fmt.Printf("    History: status=%s, paidAt=%v\n", item.Status, item.PaidAt)
-					return nil
+					return AssertEqual("history status", "COMPLETED", item.Status)
 				}
 			}
 			return fmt.Errorf("request %d not found in employee history", disbursementRequestID)
 		})
 	} else {
 		reporter.Skip(flowAdvance, "Snapshot employee info before disbursement", "cannot request advance")
-		reporter.Skip(flowAdvance, "Create request for 9Pay auto-disbursement", "cannot request advance")
+		reporter.Skip(flowAdvance, "Create request for automatic disbursement", "cannot request advance")
 		reporter.Skip(flowAdvance, "Verify request is PENDING in admin view", "no request created")
 		reporter.Skip(flowAdvance, "Poll: wait for poller to claim request (PENDING → APPROVED)", "no request created")
-		reporter.Skip(flowAdvance, "Poll: wait for 9Pay disbursement to complete (APPROVED → COMPLETED)", "no request created")
+		reporter.Skip(flowAdvance, "Poll: wait for provider disbursement to complete (APPROVED → COMPLETED)", "no request created")
 		reporter.Skip(flowAdvance, "Verify final request status and details", "no request created")
-		reporter.Skip(flowAdvance, "Verify wallet payment record from 9Pay", "no request created")
+		reporter.Skip(flowAdvance, "Verify wallet payment record from provider", "no request created")
 		reporter.Skip(flowAdvance, "Verify employee advance info updated after disbursement", "no request created")
 		reporter.Skip(flowAdvance, "Verify disbursement request in employee history", "no request created")
 	}

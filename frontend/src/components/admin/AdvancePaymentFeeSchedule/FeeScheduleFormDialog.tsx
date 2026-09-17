@@ -198,7 +198,7 @@ export const FeeScheduleFormDialog = ({
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="h-7 text-xs font-normal"
+                            className="h-11 text-xs font-normal sm:h-7"
                             onClick={() => handlePreset(p.key)}
                           >
                             {p.label}
@@ -252,13 +252,13 @@ export const FeeScheduleFormDialog = ({
                 >
                   <div className="flex items-center gap-2">
                     <RadioGroupItem value="flat" id="structure-flat" />
-                    <Label htmlFor="structure-flat" className="font-normal">
+                    <Label htmlFor="structure-flat" className="flex min-h-11 items-center font-normal">
                       Phí cố định
                     </Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <RadioGroupItem value="tiered" id="structure-tiered" />
-                    <Label htmlFor="structure-tiered" className="font-normal">
+                    <Label htmlFor="structure-tiered" className="flex min-h-11 items-center font-normal">
                       Phí phân tầng
                     </Label>
                   </div>
@@ -301,6 +301,7 @@ export const FeeScheduleFormDialog = ({
                             {idx === 0 ? "Từ (cố định: 0)" : "Từ số tiền (₫)"}
                           </Label>
                           <Input
+                            aria-label={`Từ số tiền bậc ${idx + 1}`}
                             type="number"
                             min={0}
                             value={tier.minAmount}
@@ -328,6 +329,7 @@ export const FeeScheduleFormDialog = ({
                             Phần trăm (%)
                           </Label>
                           <Input
+                            aria-label={`Phần trăm bậc ${idx + 1}`}
                             type="number"
                             min={0}
                             max={100}
@@ -365,7 +367,7 @@ export const FeeScheduleFormDialog = ({
                           disabled={
                             idx === 0 || formState.structure !== "tiered"
                           }
-                          aria-label="Xóa bậc"
+                          aria-label={`Xóa bậc ${idx + 1}`}
                           onClick={() => handleRemoveTier(idx)}
                         >
                           <Trash2 className="size-4" />

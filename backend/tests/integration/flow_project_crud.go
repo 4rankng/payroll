@@ -670,7 +670,7 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 	})
 
 	reporter.RunTest(flowProject, "Edge: get non-existent project", func() error {
-		_, statusCode, _ := admin.Get("/api/v1/projects/999999")
+		_, statusCode, _ := admin.Get(fmt.Sprintf("/api/v1/projects/%d", nonexistentID))
 		if statusCode < 400 {
 			return fmt.Errorf("expected error for non-existent project, got HTTP %d", statusCode)
 		}
@@ -680,7 +680,7 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 	reporter.RunTest(flowProject, "Edge: update non-existent project", func() error {
 		newName := "Ghost"
 		body := UpdateProjectRequest{Name: &newName}
-		_, statusCode, _ := admin.Put("/api/v1/projects/999999", body)
+		_, statusCode, _ := admin.Put(fmt.Sprintf("/api/v1/projects/%d", nonexistentID), body)
 		if statusCode < 400 {
 			return fmt.Errorf("expected error updating non-existent project, got HTTP %d", statusCode)
 		}
@@ -688,7 +688,7 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 	})
 
 	reporter.RunTest(flowProject, "Edge: delete non-existent project", func() error {
-		_, statusCode, _ := admin.Delete("/api/v1/projects/999999")
+		_, statusCode, _ := admin.Delete(fmt.Sprintf("/api/v1/projects/%d", nonexistentID))
 		if statusCode < 400 {
 			return fmt.Errorf("expected error deleting non-existent project, got HTTP %d", statusCode)
 		}

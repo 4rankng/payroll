@@ -234,14 +234,14 @@ export function AddProjectSheet({
               variant="outline"
               onClick={onClose}
               disabled={isSaving}
-              className="flex-1 h-10"
+              className="flex-1 h-11"
             >
               Đóng
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={isSaving}
-              className="flex-1 h-10"
+              className="flex-1 h-11"
             >
               {isSaving ? "Đang tạo..." : "Tạo dự án"}
             </Button>

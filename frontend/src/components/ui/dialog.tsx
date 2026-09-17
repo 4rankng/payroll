@@ -4,6 +4,7 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useIsMobile } from '@/hooks/useBreakpoint'
+import { useDialogFocusReturn } from '@/hooks/useDialogFocusReturn'
 
 const Dialog = DialogPrimitive.Root
 
@@ -39,8 +40,9 @@ type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, title, description, hideCloseButton, contentPadding = 'default', ...props }, ref) => {
+>(({ className, children, title, description, hideCloseButton, contentPadding = 'default', onOpenAutoFocus, onCloseAutoFocus, style, ...props }, ref) => {
   const isMobile = useIsMobile();
+  const focusReturn = useDialogFocusReturn(onOpenAutoFocus, onCloseAutoFocus);
 
   return (
     <DialogPortal>
@@ -58,6 +60,10 @@ const DialogContent = React.forwardRef<
           className
         )}
         {...props}
+        // Desktop width constraints supplied by callers must not narrow a
+        // bottom sheet while it remains anchored to both mobile screen edges.
+        style={isMobile ? { ...style, width: '100%', maxWidth: 'none', left: 0, right: 0, marginLeft: 0, marginRight: 0 } : style}
+        {...focusReturn}
       >
         {/* Visually-hidden fallbacks so DialogContent stays accessible when a
           caller supplies neither a visible DialogTitle/DialogDescription nor
@@ -69,9 +75,9 @@ const DialogContent = React.forwardRef<
         {description ? <DialogPrimitive.Description className="sr-only">{description}</DialogPrimitive.Description> : null}
         {children}
         {!hideCloseButton && (
-          <DialogPrimitive.Close className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20 outline-none focus:ring-2 focus:ring-white/30 sm:right-5 sm:top-5">
+          <DialogPrimitive.Close className="absolute right-3 top-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20 outline-none focus:ring-2 focus:ring-white/30 sm:right-4">
             <X className="w-4 h-4 text-white" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">Đóng</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>
@@ -97,15 +103,15 @@ const DialogNavyHeader = React.forwardRef<HTMLDivElement, DialogNavyHeaderProps>
     >
       <div className="flex justify-between items-start gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-base font-semibold tracking-tight text-white leading-tight">{title}</p>
+          <DialogPrimitive.Title className="break-words text-base font-semibold tracking-tight text-white leading-tight">{title}</DialogPrimitive.Title>
           {description && (
-            <p className="text-emerald-200/75 text-xs mt-1">{description}</p>
+            <DialogPrimitive.Description className="text-emerald-200/75 text-xs mt-1">{description}</DialogPrimitive.Description>
           )}
         </div>
         {action && <div className="flex items-center flex-shrink-0 pt-0.5">{action}</div>}
         <DialogPrimitive.Close className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-emerald-800 outline-none focus:ring-2 focus:ring-emerald-200/50">
           <X className="w-4 h-4 text-white" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">Đóng</span>
         </DialogPrimitive.Close>
       </div>
       {children}
@@ -121,7 +127,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "-mx-4 -mt-4 flex flex-col space-y-1.5 rounded-t-2xl bg-emerald-950 px-4 pb-4 pr-16 pt-5 text-center text-white sm:-mx-6 sm:-mt-6 sm:px-6 sm:pr-20 sm:text-left",
+      "-mx-4 -mt-4 flex min-h-14 flex-col space-y-1.5 rounded-t-2xl bg-emerald-950 px-4 pb-4 pr-16 pt-5 text-center text-white sm:-mx-6 sm:-mt-6 sm:px-6 sm:pr-20 sm:text-left",
       className
     )}
     style={{

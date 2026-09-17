@@ -41,6 +41,7 @@ const defineAbilityFor = (role: string): AppAbility => {
 
     // Allow password updates for own account
     can('update', 'User'); // Allow partners to update user data (for change password)
+    can(['read', 'update'], 'SelfAccount');
 
     // Cannot manage users or settings (except password updates)
     cannot(['create', 'delete'], 'User'); // Partners can't create/delete users
@@ -49,6 +50,11 @@ const defineAbilityFor = (role: string): AppAbility => {
 
     // Cannot approve timesheets (Admin-only function)
     cannot('approve', 'Timesheet');
+  }
+
+  // Self-account password changes never grant access to user administration.
+  else if (['adv_partner', 'accountant', 'employee'].includes(role)) {
+    can(['read', 'update'], 'SelfAccount');
   }
 
   // Default - no permissions for unknown roles
@@ -196,6 +202,12 @@ export const MODAL_PERMISSIONS: Record<string, ModalPermission> = {
     subject: 'Project',
     roles: ['admin', 'partner']
   },
+  add_employee_to_project: {
+    modalId: 'add_employee_to_project',
+    action: 'update',
+    subject: 'Project',
+    roles: ['admin', 'partner']
+  },
   remove_employee: {
     modalId: 'remove_employee',
     action: 'update',
@@ -305,14 +317,14 @@ export const MODAL_PERMISSIONS: Record<string, ModalPermission> = {
   user_profile: {
     modalId: 'user_profile',
     action: 'read',
-    subject: 'User',
+    subject: 'SelfAccount',
     roles: ['admin', 'partner']
   },
   change_password: {
     modalId: 'change_password',
     action: 'update',
-    subject: 'User',
-    roles: ['admin', 'partner']
+    subject: 'SelfAccount',
+    roles: ['admin', 'partner', 'adv_partner', 'accountant', 'employee']
   }
 };
 

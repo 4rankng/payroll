@@ -219,7 +219,7 @@ const EmployeesPageMobile = () => {
             <Skeleton className="h-9 w-16" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-4 gap-1.5">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
@@ -246,6 +246,7 @@ const EmployeesPageMobile = () => {
               size="sm"
               className="h-11 px-3"
               onClick={() => setExportModalOpen(true)}
+              aria-label="Xuất danh sách nhân viên"
               disabled={isExporting}
             >
               <Download className="h-3.5 w-3.5" />
@@ -265,10 +266,9 @@ const EmployeesPageMobile = () => {
       {/* Stats strip */}
       {!summaryLoading && stats.length > 0 && (
         <div className="px-4 pb-3">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             {stats.map((stat) => {
-              const Icon = stat.icon;
-              const isActive =
+                            const isActive =
                 stat.filter !== null && statusFilter === stat.filter;
               return (
                 <button
@@ -279,18 +279,15 @@ const EmployeesPageMobile = () => {
                       status: isActive ? undefined : stat.filter,
                     });
                   }}
-                  className={`flex min-h-16 min-w-0 flex-col items-center gap-1 rounded-xl border px-3 py-2.5 transition-all ${isActive ? "border-primary/40 bg-primary/5" : "border-border bg-card"} ${stat.filter !== null ? "active:scale-95" : "cursor-default"}`}
+                  className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-2 transition-all ${isActive ? "border-primary/40 bg-primary/5" : "border-border bg-card"} ${stat.filter !== null ? "active:scale-95" : "cursor-default"}`}
                 >
-                  <div className={`p-1 rounded-xl ${stat.bg}`}>
-                    <Icon className={`h-3.5 w-3.5 ${stat.color}`} />
-                  </div>
                   <span
                     className={`text-sm font-bold tabular-nums leading-none ${isActive ? "text-primary" : "text-foreground"}`}
                   >
                     {stat.value.toLocaleString("vi-VN")}
                   </span>
                   <span
-                    className={`text-[11px] leading-none ${isActive ? "text-primary/70" : "text-muted-foreground"}`}
+                    className={`text-[11px] leading-tight ${isActive ? "text-primary" : "text-muted-foreground"}`}
                   >
                     {stat.label}
                   </span>
@@ -301,7 +298,7 @@ const EmployeesPageMobile = () => {
         </div>
       )}
       {summaryLoading && (
-        <div className="grid grid-cols-2 gap-2 px-4 pb-3">
+        <div className="grid grid-cols-4 gap-1.5 px-4 pb-3">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
@@ -337,7 +334,7 @@ const EmployeesPageMobile = () => {
           value={sortBy ?? "created_at"}
           onValueChange={(v) => updateFilters({ sortBy: v })}
         >
-          <SelectTrigger className="min-h-11 flex-1 text-xs">
+          <SelectTrigger aria-label="Sắp xếp nhân viên" className="min-h-11 flex-1 text-xs">
             <SelectValue placeholder="Sắp xếp" />
           </SelectTrigger>
           <SelectContent>
@@ -466,7 +463,7 @@ const EmployeesPageMobile = () => {
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
         <SheetContent
           side="bottom"
-          className="max-h-[85dvh] overflow-y-auto rounded-t-2xl pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+          className="max-h-[85dvh] overflow-y-auto rounded-t-2xl px-4 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
         >
           <SheetHeader className="pb-4">
             <SheetTitle>Bộ lọc</SheetTitle>
@@ -483,7 +480,7 @@ const EmployeesPageMobile = () => {
                   })
                 }
               >
-                <SelectTrigger className="h-11">
+                <SelectTrigger aria-label="Lọc trạng thái nhân viên" className="h-11">
                   <SelectValue placeholder="Tất cả trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
@@ -501,7 +498,7 @@ const EmployeesPageMobile = () => {
                   updateFilters({ month: v === "all" ? undefined : v })
                 }
               >
-                <SelectTrigger className="h-11">
+                <SelectTrigger aria-label="Lọc tháng nhân viên" className="h-11">
                   <SelectValue placeholder="Tất cả tháng" />
                 </SelectTrigger>
                 <SelectContent>

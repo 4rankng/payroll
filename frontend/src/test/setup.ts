@@ -28,6 +28,7 @@ class ResizeObserverStub {
   disconnect(): void {}
 }
 Object.defineProperty(window, 'ResizeObserver', {
+  configurable: true,
   writable: true,
   value: ResizeObserverStub,
 });

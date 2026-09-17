@@ -110,7 +110,7 @@ const ActiveCard = ({
   return (
     <div className="rounded-xl border-2 border-primary/30 bg-primary/[0.04] p-4 sm:p-5 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-primary/60" />
-      <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15">
             <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -161,7 +161,7 @@ const UpcomingCard = ({
   return (
     <div className="rounded-xl border-2 border-amber-400/40 bg-amber-50/50 dark:bg-amber-500/[0.06] p-4 sm:p-5 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-amber-400/70" />
-      <div className="flex items-start justify-between gap-2 mb-2">
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
             <CalendarClock className="h-4 w-4 text-amber-600" />
@@ -175,7 +175,7 @@ const UpcomingCard = ({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-11 w-11"
             aria-label="Sửa cấu hình sắp có hiệu lực"
             disabled={!editable}
             onClick={() => onEdit(entry)}
@@ -186,7 +186,7 @@ const UpcomingCard = ({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-11 w-11"
             aria-label="Xóa cấu hình sắp có hiệu lực"
             disabled={!editable}
             onClick={() => onDelete(entry)}
@@ -211,7 +211,8 @@ const UpcomingCard = ({
           <button
             type="button"
             onClick={onToggleAdditional}
-            className="text-xs text-amber-700 dark:text-amber-400 hover:underline"
+            aria-expanded={showAdditional}
+            className="min-h-11 text-left text-xs text-amber-700 dark:text-amber-400 hover:underline"
           >
             {showAdditional
               ? "Ẩn các cấu hình khác"
@@ -260,13 +261,13 @@ const HelpPopover = () => (
         type="button"
         variant="ghost"
         size="icon"
-        className="h-7 w-7"
+        className="h-11 w-11"
         aria-label="Hướng dẫn cấu hình phí"
       >
         <CircleHelp className="h-4 w-4 text-muted-foreground" />
       </Button>
     </PopoverTrigger>
-    <PopoverContent className="w-80" align="end">
+    <PopoverContent className="w-80 max-w-[calc(100vw-2rem)]" align="end">
       <div className="space-y-2 text-xs leading-relaxed">
         <p className="font-semibold text-sm">Cấu hình phí ứng lương</p>
         <p>

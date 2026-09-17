@@ -42,7 +42,7 @@ export const PushNotificationToggle = ({ className }: PushNotificationToggleProp
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-red-700">Thông báo đã bị chặn</p>
-          <p className="text-xs text-red-500/70">Vui lòng bật lại trong cài đặt trình duyệt</p>
+          <p className="text-xs text-red-700">Vui lòng bật lại trong cài đặt trình duyệt</p>
         </div>
       </div>
     );

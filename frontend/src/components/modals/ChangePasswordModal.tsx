@@ -117,17 +117,18 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
                         autoCorrect="off"
                         spellCheck={false}
                         placeholder="Nhập mật khẩu hiện tại"
-                        className="pr-10"
+                        className="min-h-11 pr-12 sm:pr-12"
                         disabled={isPending}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full min-h-11 w-11 p-0 hover:bg-transparent"
                         onClick={() => setShowCurrentPassword((visible) => !visible)}
                         disabled={isPending}
                         aria-label={showCurrentPassword ? 'Ẩn mật khẩu hiện tại' : 'Hiện mật khẩu hiện tại'}
+                        aria-pressed={showCurrentPassword}
                       >
                         {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
@@ -154,17 +155,18 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
                         autoCorrect="off"
                         spellCheck={false}
                         placeholder="Tối thiểu 8 ký tự"
-                        className="pr-10"
+                        className="min-h-11 pr-12 sm:pr-12"
                         disabled={isPending}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        className="absolute right-0 top-0 h-full min-h-11 w-11 p-0 hover:bg-transparent"
                         onClick={() => setShowNewPassword((visible) => !visible)}
                         disabled={isPending}
                         aria-label={showNewPassword ? 'Ẩn mật khẩu mới' : 'Hiện mật khẩu mới'}
+                        aria-pressed={showNewPassword}
                       >
                         {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
@@ -183,10 +185,10 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
         </Form>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={handleClose} disabled={isPending}>
+          <Button type="button" variant="outline" className="min-h-11" onClick={handleClose} disabled={isPending}>
             Đóng
           </Button>
-          <Button type="submit" form="change-password-form" disabled={isPending}>
+          <Button type="submit" form="change-password-form" className="min-h-11" disabled={isPending}>
             {isPending ? 'Đang xử lý...' : 'Đổi mật khẩu'}
           </Button>
         </DialogFooter>

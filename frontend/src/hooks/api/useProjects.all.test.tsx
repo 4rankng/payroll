@@ -1,14 +1,9 @@
-import { renderHook } from '@testing-library/react';
-import { useQuery } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, vi } from 'vitest';
 import { projectService } from '@/services/api/project.service';
 import { useAllProjects } from './useProjects';
-
-vi.mock('@tanstack/react-query', () => ({
-  useMutation: vi.fn(),
-  useQuery: vi.fn(),
-  useQueryClient: vi.fn(),
-}));
+import type { Project } from '@/types/api/project.types';
 
 vi.mock('@/lib/auth', () => ({
   authManager: { getUserRole: vi.fn(() => 'admin') },
@@ -24,16 +19,23 @@ describe('useAllProjects', () => {
   });
 
   it('loads every backend page when the project catalogue exceeds 100 rows', async () => {
-    const firstPage = Array.from({ length: 100 }, (_, index) => ({
-      id: index + 1,
-      name: `Dự án ${index + 1}`,
-      code: `DA${index + 1}`,
-    }));
-    const secondPage = Array.from({ length: 5 }, (_, index) => ({
-      id: index + 101,
-      name: `Dự án ${index + 101}`,
-      code: `DA${index + 101}`,
-    }));
+    const project = (id: number): Project => ({
+      id,
+      name: `Dự án ${id}`,
+      code: `DA${id}`,
+      client_name: 'Công ty kiểm thử',
+      start_date: '2026-01-01',
+      end_date: null,
+      employee_count: 0,
+      weekly_salary_employee_count: 0,
+      monthly_salary_employee_count: 0,
+      status: 'active',
+      created_by: 1,
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
+    });
+    const firstPage = Array.from({ length: 100 }, (_, index) => project(index + 1));
+    const secondPage = Array.from({ length: 5 }, (_, index) => project(index + 101));
     vi.mocked(projectService.getProjects)
       .mockResolvedValueOnce({
         status: 'success',
@@ -46,11 +48,12 @@ describe('useAllProjects', () => {
         pagination: { page: 2, pageSize: 100, totalPages: 2, totalRecords: 105 },
       });
 
-    renderHook(() => useAllProjects());
-    const options = vi.mocked(useQuery).mock.calls[0][0] as {
-      queryFn: () => Promise<Array<{ id: number }>>;
-    };
-    const projects = await options.queryFn();
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const { result } = renderHook(() => useAllProjects(), {
+      wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>,
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    const projects = result.current.data;
 
     expect(projects).toHaveLength(105);
     expect(projects.at(-1)?.id).toBe(105);

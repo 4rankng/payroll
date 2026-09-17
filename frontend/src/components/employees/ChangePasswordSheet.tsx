@@ -1,20 +1,23 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, Circle, Eye, EyeOff } from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useIsMobile } from '@/hooks/useBreakpoint';
+import { getErrorMessage } from "@/utils/error-handler";
 
 interface ChangePasswordSheetProps {
   open: boolean;
@@ -66,10 +69,10 @@ const PASSWORD_RULES: ReadonlyArray<{
 // Same field/button styling as ForceChangePasswordDialog so the employee
 // portal's two password surfaces stay visually identical.
 const passwordFieldClass =
-  "h-12 w-full rounded-xl border border-[var(--employee-border-strong)] bg-white px-3.5 pr-12 text-[0.9375rem] leading-normal text-[var(--employee-text)] transition-colors placeholder:text-[var(--employee-text-muted)] focus-visible:border-[var(--employee-accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--employee-accent-ring)] disabled:cursor-not-allowed disabled:opacity-60";
+  "employee-type-body min-h-12 h-12 w-full rounded-xl border border-[var(--employee-border-strong)] bg-white px-3.5 pr-14 text-[var(--employee-text)] transition-colors placeholder:text-[var(--employee-text-muted)] focus-visible:border-[var(--employee-accent)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--employee-accent-ring)] disabled:cursor-not-allowed disabled:opacity-60 sm:h-12 sm:pl-3.5 sm:pr-14";
 
 const revealButtonClass =
-  "absolute inset-y-1 right-1 inline-flex w-10 items-center justify-center rounded-lg text-[var(--employee-text-secondary)] transition-colors hover:bg-[var(--employee-surface-muted)] hover:text-[var(--employee-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:opacity-60";
+  "absolute inset-y-0.5 right-0.5 inline-flex w-11 items-center justify-center rounded-lg text-[var(--employee-text-secondary)] transition-colors hover:bg-[var(--employee-surface-muted)] hover:text-[var(--employee-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:opacity-60";
 
 export function ChangePasswordSheet({
   open,
@@ -88,6 +91,20 @@ export function ChangePasswordSheet({
   // attempt (same pre-submit neutrality as ForceChangePasswordDialog), so the
   // checklist never reads as failure while the user is still composing.
   const [attemptedSubmit, setAttemptedSubmit] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const submittingRef = useRef(false);
+
+  useEffect(() => {
+    if (open) return;
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setShowCurrent(false);
+    setShowNew(false);
+    setShowConfirm(false);
+    setAttemptedSubmit(false);
+    setSubmitError(null);
+  }, [open]);
 
   // Client-side guard so mismatched or incomplete input fails fast with
   // Vietnamese messages instead of a round-trip to the server validator.
@@ -125,7 +142,9 @@ export function ChangePasswordSheet({
   ];
 
   const handleSubmit = async () => {
+    if (isPending || submittingRef.current) return;
     setAttemptedSubmit(true);
+    setSubmitError(null);
     if (
       newPasswordFailedRule ||
       confirmPassword !== newPassword ||
@@ -133,11 +152,18 @@ export function ChangePasswordSheet({
     ) {
       return;
     }
-    await onSubmit({ currentPassword, newPassword });
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setAttemptedSubmit(false);
+    submittingRef.current = true;
+    try {
+      await onSubmit({ currentPassword, newPassword });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setAttemptedSubmit(false);
+    } catch (error) {
+      setSubmitError(getErrorMessage(error));
+    } finally {
+      submittingRef.current = false;
+    }
   };
 
   const formContent = (
@@ -161,7 +187,23 @@ export function ChangePasswordSheet({
               id={field.id}
               type={field.show ? "text" : "password"}
               value={field.value}
-              onChange={(e) => field.onChange(e.target.value)}
+              onChange={(e) => {
+                field.onChange(e.target.value);
+                setSubmitError(null);
+              }}
+              aria-required="true"
+              aria-invalid={field.id === "cp"
+                ? attemptedSubmit && currentPassword.length === 0
+                : field.id === "np"
+                  ? attemptedSubmit && !!newPasswordFailedRule
+                  : confirmMismatch}
+              aria-describedby={field.id === "np"
+                ? "password-requirements"
+                : field.id === "cp" && attemptedSubmit && !currentPassword
+                  ? "current-password-error"
+                  : field.id === "cfp" && confirmMismatch
+                    ? "confirm-password-error"
+                    : undefined}
               autoComplete={
                 field.id === "cp" ? "current-password" : "new-password"
               }
@@ -178,6 +220,7 @@ export function ChangePasswordSheet({
               onClick={field.toggle}
               disabled={isPending}
               aria-label={`${field.show ? "Ẩn" : "Hiện"} ${field.label.toLowerCase()}`}
+              aria-pressed={field.show}
             >
               {field.show ? (
                 <EyeOff className="h-[1.125rem] w-[1.125rem]" />
@@ -187,7 +230,7 @@ export function ChangePasswordSheet({
             </button>
           </div>
           {field.id === "np" && (
-            <ul className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1.5">
+            <ul id="password-requirements" className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1.5">
               {PASSWORD_RULES.map((rule) => {
                 const met = rule.test(newPassword);
                 return (
@@ -212,19 +255,27 @@ export function ChangePasswordSheet({
                         aria-hidden="true"
                       />
                     )}
-                    <span className="min-w-0 truncate">{rule.label}</span>
+                    <span className="min-w-0">{rule.label}</span>
                   </li>
                 );
               })}
             </ul>
           )}
+          {field.id === "cp" && attemptedSubmit && !currentPassword && (
+            <p id="current-password-error" role="alert" className="employee-type-body-sm mt-1.5 text-[var(--employee-error)]">
+              Nhập mật khẩu hiện tại.
+            </p>
+          )}
           {field.id === "cfp" && confirmMismatch && (
-            <p className="employee-type-body-sm mt-1.5 text-[var(--employee-error)]">
+            <p id="confirm-password-error" role="alert" className="employee-type-body-sm mt-1.5 text-[var(--employee-error)]">
               Xác nhận mật khẩu chưa khớp.
             </p>
           )}
         </div>
       ))}
+      {submitError && (
+        <p role="alert" className="employee-type-body-sm rounded-xl bg-[var(--employee-error-soft)] p-3 text-[var(--employee-error)]">{submitError}</p>
+      )}
       <button
         type="submit"
         disabled={isPending}
@@ -241,16 +292,18 @@ export function ChangePasswordSheet({
         <SheetContent
           side="bottom"
           className="h-auto max-h-[85vh] rounded-t-3xl px-5"
+          data-employee-ui=""
+          data-theme="employee"
         >
           <SheetHeader className="border-b border-[var(--employee-border)] pb-4">
             <SheetTitle className="employee-type-card-title text-[var(--employee-text)]">
               Đổi mật khẩu
             </SheetTitle>
-            <p className="employee-type-body-sm text-[var(--employee-text-secondary)]">
+            <SheetDescription className="employee-type-body-sm text-[var(--employee-text-secondary)]">
               Cập nhật mật khẩu để giữ tài khoản an toàn.
-            </p>
+            </SheetDescription>
           </SheetHeader>
-          <div className="mt-4 overflow-y-auto" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}>
+          <div className="mt-4 min-h-0 overflow-y-auto" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}>
             {formContent}
           </div>
         </SheetContent>
@@ -260,13 +313,14 @@ export function ChangePasswordSheet({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm rounded-2xl">
+      <DialogContent className="max-w-sm rounded-2xl" data-employee-ui="" data-theme="employee">
         <DialogHeader>
           <DialogTitle className="employee-type-card-title text-white">
             Đổi mật khẩu
           </DialogTitle>
+          <DialogDescription className="employee-type-body-sm text-white/80">Cập nhật mật khẩu để giữ tài khoản an toàn.</DialogDescription>
         </DialogHeader>
-        {formContent}
+        <div className="min-h-0 overflow-y-auto">{formContent}</div>
       </DialogContent>
     </Dialog>
   );

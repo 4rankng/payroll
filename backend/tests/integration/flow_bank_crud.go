@@ -101,7 +101,7 @@ func runBankCRUDTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 	reporter.RunTest(flowBank, "Edge: update non-existent bank", func() error {
 		newName := "Ghost"
 		body := UpdateBankRequest{BranchName: &newName}
-		_, statusCode, _ := admin.Put("/api/v1/banks/999999", body)
+		_, statusCode, _ := admin.Put(fmt.Sprintf("/api/v1/banks/%d", nonexistentID), body)
 		if statusCode < 400 {
 			return fmt.Errorf("expected error updating non-existent bank, got HTTP %d", statusCode)
 		}
@@ -109,7 +109,7 @@ func runBankCRUDTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 	})
 
 	reporter.RunTest(flowBank, "Edge: delete non-existent bank", func() error {
-		_, statusCode, _ := admin.Delete("/api/v1/banks/999999")
+		_, statusCode, _ := admin.Delete(fmt.Sprintf("/api/v1/banks/%d", nonexistentID))
 		if statusCode < 400 {
 			return fmt.Errorf("expected error deleting non-existent bank, got HTTP %d", statusCode)
 		}

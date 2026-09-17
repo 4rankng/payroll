@@ -88,7 +88,7 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
           'flex min-w-0 items-center justify-between gap-1.5 min-[380px]:shrink-0 min-[380px]:justify-end',
           compact && 'shrink-0 justify-end',
         )}>
-          <span className={cn('min-w-0 text-xs text-muted-foreground min-[380px]:whitespace-nowrap', compact && 'text-[11px] font-medium text-slate-400')}>
+          <span className={cn('min-w-0 text-xs text-muted-foreground min-[380px]:whitespace-nowrap', compact && 'text-[11px] font-medium text-slate-600')}>
             {compact ? compactTime : `${dateStr} ${timeStr}`}
           </span>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground" />
@@ -104,7 +104,7 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
             : <p className="text-sm text-muted-foreground">#{log.user_id}</p>
           }
           {username && (
-            <p className={cn('break-all text-xs leading-tight text-muted-foreground', compact && 'mt-0.5 text-slate-400')}>@{username}</p>
+            <p className={cn('break-all text-xs leading-tight text-muted-foreground', compact && 'mt-0.5 text-slate-600')}>@{username}</p>
           )}
         </div>
 
@@ -124,7 +124,7 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
         {metaChips.length > 0 && (
           <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5', compact && 'border-t border-slate-100 pt-2.5')}>
             {metaChips.map((chip, i) => (
-              <span key={i} className={cn('inline-flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground/70', compact && 'text-slate-400')}>
+              <span key={i} className={cn('inline-flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground', compact && 'text-slate-600')}>
                 {chip.icon}
                 <span className="min-w-0 break-all">{chip.label}</span>
               </span>

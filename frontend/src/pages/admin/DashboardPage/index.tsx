@@ -357,7 +357,7 @@ const AdminDashboard = () => {
             <DashboardSectionHeader
               eyebrow="Sức khỏe vận hành"
               title="Tự chấm công và hạn mức ứng lương"
-              subtitle="Đặt kiểm soát vận hành ở cuối sổ để rà soát trước khi chốt kỳ."
+              subtitle="Rà soát lỗi chấm công và hạn mức ứng lương trước khi chốt kỳ."
               icon={ShieldCheck}
             />
             <CheckInHealthStrip month={monthParam} />

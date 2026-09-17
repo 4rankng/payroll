@@ -1,11 +1,12 @@
 // Authentication related types
+import type { AppRole } from '@/lib/auth';
 
 export interface User {
   id: number;
   email: string;
   username: string;
   fullname: string;
-  role: "admin" | "partner" | "employee" | "adv_partner";
+  role: AppRole;
   cccd?: string;
   mobile?: string;
   last_login?: string;
@@ -20,7 +21,7 @@ export interface User {
 export interface BasicUserProfile {
   id: number;
   username: string;
-  role: "admin" | "partner" | "employee" | "adv_partner";
+  role: AppRole;
 }
 
 export interface LoginCredentials {

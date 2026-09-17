@@ -1,4 +1,5 @@
 import type { CheckInTarget, GeofenceGate } from "@/types/api/auth.types";
+import type { StyleSpecification } from "maplibre-gl";
 import {
   distanceMetersBetween,
   type CheckInGeofenceGuidance,
@@ -67,7 +68,7 @@ export const EMPLOYEE_MAP_STYLE = {
       },
     },
   ],
-} as const;
+} satisfies StyleSpecification;
 
 export const EMPLOYEE_MAP_ALLOWED_HOSTS = [
   "basemaps.cartocdn.com",

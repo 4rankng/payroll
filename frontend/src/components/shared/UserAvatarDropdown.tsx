@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
 import { MODAL_IDS } from '@/constants/modalRegistry';
 import { cn } from '@/lib/utils';
+import type { AppRole } from '@/lib/auth';
 
 interface UserAvatarDropdownProps {
   className?: string;
@@ -27,9 +28,10 @@ export const UserAvatarDropdown = ({ className }: UserAvatarDropdownProps) => {
 
   if (!user) return null;
 
-  const getRoleText = (role: 'admin' | 'partner' | 'employee' | 'adv_partner'): string => {
+  const getRoleText = (role: AppRole): string => {
     if (role === 'admin') return 'Quản trị viên';
     if (role === 'partner' || role === 'adv_partner') return 'Quản lý';
+    if (role === 'accountant') return 'Kế toán';
     return 'Nhân viên';
   };
 

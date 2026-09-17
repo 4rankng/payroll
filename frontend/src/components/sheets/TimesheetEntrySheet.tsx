@@ -441,6 +441,7 @@ function TimesheetEntrySheetComponent({
                 variant="ghost"
                 role="combobox"
                 aria-expanded={isProjectDropdownOpen}
+                aria-label={selectedProject ? `Dự án: ${selectedProject.name}` : "Chọn dự án"}
                 className="min-h-11 max-w-full justify-between gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 text-xs font-normal hover:bg-card hover:border-primary/25"
               >
                 <Building2 className="h-3.5 w-3.5 shrink-0 text-primary/70" />
@@ -489,6 +490,7 @@ function TimesheetEntrySheetComponent({
                 variant="ghost"
                 role="combobox"
                 aria-expanded={isEmployeeDropdownOpen}
+                aria-label={selectedEmployee ? `Nhân viên: ${selectedEmployee.fullname}` : "Lọc nhân viên"}
                 className="min-h-11 max-w-full justify-between gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 text-xs font-normal hover:bg-card hover:border-primary/25"
                 disabled={availableEmployees.length === 0 || !isPayRateReady}
               >
@@ -619,13 +621,13 @@ function TimesheetEntrySheetComponent({
                 <span>
                   <span className="font-semibold text-foreground">{footerSummary.totalHours}h</span> tổng giờ
                 </span>
-                <span className="font-semibold text-emerald-600">{formatCurrency(footerSummary.totalPayout)}</span>
+                <span className="font-semibold text-emerald-700">{formatCurrency(footerSummary.totalPayout)}</span>
                 {(footerSummary.newFieldCount > 0 || footerSummary.editedFieldCount > 0 || footerSummary.deletedFieldCount > 0) && (
                   <span className="flex items-center gap-2">
                     {footerSummary.newFieldCount > 0 && (
                       <span className="flex items-center gap-0.5">
                         <span className="inline-block w-2 h-2 rounded-sm border border-emerald-300 bg-emerald-100" />
-                        <span className="text-emerald-600 font-medium">{footerSummary.newFieldCount} mới</span>
+                        <span className="text-emerald-700 font-medium">{footerSummary.newFieldCount} mới</span>
                       </span>
                     )}
                     {footerSummary.editedFieldCount > 0 && (

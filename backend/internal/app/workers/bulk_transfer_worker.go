@@ -112,7 +112,28 @@ func (w *BulkTransferPaymentWorker) UpdateForTransfer(ctx context.Context, reque
 
 	var updates []domain.PaymentStatusUpdate
 	if completed {
-		paidAmounts, calcErr := w.calculatePaidAmounts(ctx, pendingTimesheets)
+		// New OnePay exports explicitly snapshot the transferred amount.
+		// Legacy Amount is ambiguous (regular bank exports stored gross wages),
+		// so unversioned codes retain the established calculation.
+		var paidAmounts map[uint]int64
+		var calcErr error
+		if snapshot := tcData.GetTransferAmountSnapshot(); snapshot != nil {
+			if len(timesheets) != len(timesheetIDs) {
+				calcErr = fmt.Errorf("transfer references %d timesheets but found %d", len(timesheetIDs), len(timesheets))
+			} else {
+				paidAmounts, calcErr = allocatePaidTransferAmount(timesheets, *snapshot)
+				if calcErr == nil {
+					for _, timesheet := range timesheets {
+						if timesheet.PaymentStatus == domain.PaymentStatusPaid && timesheet.PaidAmount != paidAmounts[timesheet.ID] {
+							calcErr = fmt.Errorf("paid timesheet %d records %d but transfer allocates %d; reconciliation required", timesheet.ID, timesheet.PaidAmount, paidAmounts[timesheet.ID])
+							break
+						}
+					}
+				}
+			}
+		} else {
+			paidAmounts, calcErr = w.calculatePaidAmounts(ctx, pendingTimesheets)
+		}
 		if calcErr != nil {
 			_ = w.idempotencyService.ReleaseLock(ctx, idempotencyKey)
 			return fmt.Errorf("calculate paid amounts: %w", calcErr)

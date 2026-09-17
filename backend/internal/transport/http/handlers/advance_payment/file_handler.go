@@ -404,7 +404,7 @@ func (h *AdvancePaymentHandler) ExportReconciliation(c *gin.Context) {
 
 	// Create notification record for sao ke history dialog
 	if saoKeAsset != nil {
-		h.createSaoKeExportNotification(c.Request.Context(), saoKeAsset.ID, summary.TotalAmount, req.ForMonth)
+		h.createSaoKeExportNotification(c.Request.Context(), saoKeAsset.UploadedBy, saoKeAsset.ID, summary.TotalAmount, req.ForMonth)
 	}
 
 	// Emit audit event for file export (non-blocking)
@@ -732,7 +732,7 @@ func (h *AdvancePaymentHandler) saveSaoKeExportAssetWithResult(c *gin.Context, d
 	return createdAsset
 }
 
-func (h *AdvancePaymentHandler) createSaoKeExportNotification(ctx context.Context, assetID uint, totalAmount int64, forMonth string) {
+func (h *AdvancePaymentHandler) createSaoKeExportNotification(ctx context.Context, senderID, assetID uint, totalAmount int64, forMonth string) {
 	logger := observability.GetLogger()
 
 	metadata := domain.PayrollEmailMetadata{
@@ -750,6 +750,7 @@ func (h *AdvancePaymentHandler) createSaoKeExportNotification(ctx context.Contex
 
 	title := fmt.Sprintf("Sao kê ứng lương - %s", forMonth)
 	notification := &domain.Notification{
+		SenderID:    senderID,
 		Type:        domain.NotificationTypeAdvancePaymentReport,
 		Channel:     domain.NotificationChannelEmail,
 		Title:       title,

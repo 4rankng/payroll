@@ -62,7 +62,7 @@ export function EmployeeEditForm({
       <FieldGroup>
         <SectionTitle icon={User} label="Thông tin cá nhân" />
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
           <Field
             id="fullname"
             label="Họ và tên"
@@ -70,7 +70,7 @@ export function EmployeeEditForm({
           >
             <Input
               id="fullname"
-              className={`h-9 text-sm ${nameWarning ? "border-amber-400 focus-visible:ring-amber-400" : ""}`}
+              className={`h-11 text-sm sm:h-9 ${nameWarning ? "border-amber-400 focus-visible:ring-amber-400" : ""}`}
               value={formData.fullname || ''}
               onChange={(e) => {
                 onInputChange("fullname", e.target.value);
@@ -88,18 +88,18 @@ export function EmployeeEditForm({
           <Field id="cccd" label="CCCD">
             <Input
               id="cccd"
-              className="h-9 text-sm font-mono tracking-wide"
+              className="h-11 text-sm sm:h-9 font-mono tracking-wide"
               value={formData.cccd || ''}
               onChange={(e) => onInputChange("cccd", e.target.value)}
             />
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
           <Field id="mobile" label="Số điện thoại">
             <Input
               id="mobile"
-              className="h-9 text-sm"
+              className="h-11 text-sm sm:h-9"
               value={formData.mobile || ''}
               onChange={(e) => onInputChange("mobile", e.target.value)}
             />
@@ -108,7 +108,7 @@ export function EmployeeEditForm({
             <Input
               id="date_of_birth"
               type="date"
-              className="h-9 text-sm"
+              className="h-11 text-sm sm:h-9"
               value={formData.date_of_birth || ''}
               onChange={(e) => onInputChange("date_of_birth", e.target.value)}
             />
@@ -119,7 +119,7 @@ export function EmployeeEditForm({
           <Input
             id="email"
             type="email"
-            className="h-9 text-sm"
+            className="h-11 text-sm sm:h-9"
             placeholder="example@email.com"
             value={formData.email || ''}
             onChange={(e) => onInputChange("email", e.target.value)}
@@ -129,7 +129,7 @@ export function EmployeeEditForm({
         <Field id="address" label="Địa chỉ">
           <Input
             id="address"
-            className="h-9 text-sm"
+            className="h-11 text-sm sm:h-9"
             value={formData.address || ''}
             onChange={(e) => onInputChange("address", e.target.value)}
           />
@@ -152,7 +152,7 @@ export function EmployeeEditForm({
           <Field id="bank_account_number" label="Số tài khoản">
             <Input
               id="bank_account_number"
-              className="h-9 text-sm font-mono"
+              className="h-11 text-sm sm:h-9 font-mono"
               value={formData.bank_account_number || ''}
               onChange={(e) => onInputChange("bank_account_number", e.target.value)}
             />
@@ -164,7 +164,7 @@ export function EmployeeEditForm({
           >
             <Input
               id="bank_account_name"
-              className={`h-9 text-sm ${bankAccountNameWarning ? "border-amber-400 focus-visible:ring-amber-400" : ""}`}
+              className={`h-11 text-sm sm:h-9 ${bankAccountNameWarning ? "border-amber-400 focus-visible:ring-amber-400" : ""}`}
               value={formData.bank_account_name || ''}
               onChange={(e) => {
                 onInputChange("bank_account_name", e.target.value);

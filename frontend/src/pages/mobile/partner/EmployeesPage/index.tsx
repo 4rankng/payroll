@@ -164,7 +164,7 @@ const EmployeesPageMobile = () => {
           <Skeleton className="h-9 w-16" />
         </div>
         {/* Stats skeleton */}
-        <div className="grid grid-cols-2 gap-2 px-4 pb-3">
+        <div className="grid grid-cols-4 gap-1.5 px-4 pb-3">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-xl" />
           ))}
@@ -188,6 +188,7 @@ const EmployeesPageMobile = () => {
       {/* ── Header ── */}
       <MobilePageHeader
         title="Nhân viên"
+        className="px-0"
         icon={Users}
         sticky={false}
         bordered={false}
@@ -196,16 +197,17 @@ const EmployeesPageMobile = () => {
             <Button
               variant="outline"
               size="sm"
-              className="h-11 px-3 shrink-0 rounded-xl border-border bg-card"
+              className="h-11 w-11 p-0 shrink-0 rounded-xl border-border bg-card"
+              aria-label="Xuất danh sách nhân viên"
               onClick={() => setExportModalOpen(true)}
               disabled={isExporting}
             >
-              <Download className="h-4 w-4 mr-1" />
-              {isExporting ? "..." : "Xuất"}
+              <Download className="h-4 w-4" />
+              <span className="sr-only">{isExporting ? "Đang xuất" : "Xuất"}</span>
             </Button>
             <Button
               size="sm"
-              className="h-11 px-4 btn-partner-primary shrink-0 rounded-xl"
+              className="h-11 px-3 btn-partner-primary shrink-0 rounded-xl"
               onClick={() => openAddEmployee()}
             >
               <Plus className="h-4 w-4 mr-1" />
@@ -217,11 +219,10 @@ const EmployeesPageMobile = () => {
 
       {/* ── Stats strip ── */}
       {!summaryLoading && stats.length > 0 && (
-        <MobileSurface className="p-3">
-          <div className="grid grid-cols-2 gap-2">
+        <MobileSurface className="p-2">
+          <div className="grid grid-cols-4 gap-1.5">
             {stats.map((stat) => {
-              const Icon = stat.icon;
-              const isActive =
+                            const isActive =
                 stat.filter !== null && statusFilter === stat.filter;
               return (
                 <button
@@ -234,22 +235,19 @@ const EmployeesPageMobile = () => {
                       updateStatusFilter(stat.filter);
                     }
                   }}
-                  className={`flex min-h-16 min-w-0 flex-col items-center gap-1 rounded-2xl border px-2.5 py-2 transition-all duration-200 ${
+                  className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl border px-1.5 py-2 transition-all duration-200 ${
                     isActive
                       ? "border-primary bg-primary/10"
                       : "border-border bg-card"
                   } ${stat.filter !== null ? "active:scale-95" : "cursor-default"}`}
                 >
-                  <div className={`p-1.5 rounded-xl ${stat.bg}`}>
-                    <Icon className={`h-3 w-3 ${stat.color}`} />
-                  </div>
                   <span
                     className={`text-xs font-bold tabular-nums leading-none ${isActive ? "text-primary" : "text-foreground"}`}
                   >
                     {stat.value.toLocaleString("vi-VN")}
                   </span>
                   <span
-                    className={`text-[9px] leading-none ${isActive ? "text-primary/70" : "text-muted-foreground"}`}
+                    className={`text-[11px] leading-tight ${isActive ? "text-primary" : "text-muted-foreground"}`}
                   >
                     {stat.label}
                   </span>
@@ -260,7 +258,7 @@ const EmployeesPageMobile = () => {
         </MobileSurface>
       )}
       {summaryLoading && (
-        <div className="grid grid-cols-2 gap-2 px-4 pb-3">
+        <div className="grid grid-cols-4 gap-1.5 px-4 pb-3">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-16 rounded-xl" />
           ))}

@@ -26,7 +26,7 @@ export const createProjectColumns = (
           {row.getValue("name")}
         </div>
         {row.original.code && (
-          <span className="typography-label-medium text-muted-foreground/60 font-mono">
+          <span className="typography-label-medium text-muted-foreground font-mono">
             {row.original.code}
           </span>
         )}
@@ -77,7 +77,7 @@ export const createProjectColumns = (
       if (total === 0) {
         return (
           <div className="flex justify-center">
-            <span className="typography-body-medium text-muted-foreground/50">—</span>
+            <span className="typography-body-medium text-muted-foreground">—</span>
           </div>
         );
       }
