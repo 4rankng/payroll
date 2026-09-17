@@ -77,7 +77,9 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
             'whitespace-nowrap font-financial font-bold leading-none tabular-nums tracking-tight',
             primary
               ? 'text-[clamp(1.125rem,2.2vw,1.75rem)]'
-              : 'text-[1.25rem] sm:text-[1.5rem]',
+              // 16px on phones so full VND totals fit a half-width cell; the
+              // desktop grid has room for the larger figure.
+              : 'text-base sm:text-[1.5rem]',
             selected ? 'text-primary' : 'text-foreground',
           )}
         >

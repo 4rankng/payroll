@@ -357,19 +357,19 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
           )}
         </div>
 
-        <DialogFooter className="flex flex-col gap-2.5 pt-3 sm:flex-row sm:gap-3">
+        <DialogFooter className="flex flex-row gap-2.5 pt-3 sm:gap-3">
           <Button
             variant="outline"
             onClick={handleClose}
             disabled={isLoading}
-            className="w-full h-10 min-h-[44px] text-sm order-2 sm:order-1"
+            className="h-11 flex-1 basis-0 text-sm sm:flex-none"
           >
             Đóng
           </Button>
           <Button
             onClick={handleExport}
             disabled={!canExport || isLoading}
-            className="w-full h-10 min-h-[44px] text-sm order-1 sm:order-2"
+            className="h-11 flex-1 basis-0 text-sm sm:flex-none"
           >
             {isLoading ? (
               <>

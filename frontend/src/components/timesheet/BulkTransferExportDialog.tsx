@@ -240,19 +240,19 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
           />
         </fieldset>
 
-        <DialogFooter className="flex-col gap-2.5 pt-2 sm:flex-row sm:gap-3">
+        <DialogFooter className="flex-row gap-2.5 pt-2 sm:gap-3">
           <Button
             variant="outline"
             onClick={form.handleClose}
             disabled={isLoading}
-            className="min-h-11 w-full sm:flex-1"
+            className="min-h-11 flex-1 basis-0"
           >
             Đóng
           </Button>
           <Button
             onClick={handleExport}
             disabled={!form.canExport || isLoading}
-            className="min-h-11 w-full sm:flex-1"
+            className="min-h-11 flex-1 basis-0"
           >
             {isLoading ? (
               <>

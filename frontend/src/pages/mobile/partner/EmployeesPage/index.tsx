@@ -318,7 +318,7 @@ const EmployeesPageMobile = () => {
       )}
 
       {/* ── Employee list ── */}
-      <div className="flex-1">
+      <div className="flex-1 space-y-3">
         <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />
         {employees.length === 0 ? (
           <EmployeeEmptyStates

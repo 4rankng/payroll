@@ -20,7 +20,8 @@ interface MobilePageHeaderProps {
   /** Whether the header sticks to top on scroll (default: false — the header
    *  scrolls away with the page so the full viewport belongs to content). */
   sticky?: boolean;
-  /** Whether to show the bottom border (default: true) */
+  /** Whether to show the bottom border (default: false — the header sits on
+   *  the page surface as a large title, not as a separate app bar). */
   bordered?: boolean;
   /** Optional class override */
   className?: string;
@@ -43,7 +44,7 @@ export const MobilePageHeader = ({
   actions,
   actionsLayout = 'inline',
   sticky = false,
-  bordered = true,
+  bordered = false,
   className,
 }: MobilePageHeaderProps) => {
   return (

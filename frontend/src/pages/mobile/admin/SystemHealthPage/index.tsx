@@ -63,7 +63,7 @@ export default function SystemHealthPage() {
         icon={Activity}
         sticky={false}
         actionsLayout="stacked"
-        className="[--mobile-nonsticky-header-top-padding:0px] border-0 bg-transparent px-0 pb-1 pt-0 shadow-none"
+        className="border-0 bg-transparent px-0 pb-1 shadow-none"
         actions={
           <div className="flex w-full items-center justify-between gap-2">
             <TimeRangeToggle value={errorDays} onChange={setErrorDays} />

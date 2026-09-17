@@ -192,13 +192,13 @@ export function AddUserModal({ isOpen, onClose, onAddUser, existingUsers }: AddU
         <DialogFooter>
           <button
             onClick={handleClose}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors"
+            className="inline-flex items-center gap-1.5 h-11 px-3 sm:h-8 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors"
           >
             Đóng
           </button>
           <button
             onClick={handleSubmit}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-1.5 h-11 px-3 sm:h-8 rounded bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors"
           >
             Tạo tài khoản
           </button>

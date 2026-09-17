@@ -81,13 +81,12 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
       label: 'Đã duyệt',
       value: fmtInt(summary?.approvedEntries),
       filter: 'approved',
-      className: 'col-span-2 min-[480px]:col-span-1',
     },
     {
       key: 'paid',
       label: 'Đã thanh toán',
       value: formatCurrency(summary?.paidAmount ?? 0),
-      className: 'col-span-2 min-[480px]:col-span-1 lg:col-span-3',
+      className: 'lg:col-span-3',
       filter: 'paid',
     },
   ];

@@ -160,14 +160,14 @@ export function ResetPasswordModal({
           <button
             onClick={handleClose}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            className="inline-flex items-center gap-1.5 h-11 px-3 sm:h-8 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             Đóng
           </button>
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded bg-amber-500 text-white text-sm font-medium whitespace-nowrap hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            className="inline-flex items-center gap-1.5 h-11 px-3 sm:h-8 rounded bg-amber-500 text-white text-sm font-medium whitespace-nowrap hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             {loading ? "Đang reset..." : "Đổi mật khẩu"}
           </button>

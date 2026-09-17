@@ -2,7 +2,8 @@ import { memo, useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { useMonthlyFinancials } from '@/hooks/admin-dashboard/useMonthlyFinancials';
 import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
@@ -56,7 +57,51 @@ export const MonthlyFinancialTable = memo(() => {
                 {formatVND(data.total.fee_earned)}
               </span>
             </div>
-            <table className="w-full min-w-[640px] text-xs">
+            {/* Phones: one stacked block per month — three money columns cannot
+                be read side by side at 390px, they only produce sideways scroll. */}
+            <ul className="divide-y divide-border/20 lg:hidden">
+              {visibleMonths.map((row) => (
+                <li key={row.month} className="py-2">
+                  <p className="text-xs font-semibold capitalize text-foreground">
+                    {formatMonthLabel(row.month)}
+                  </p>
+                  <dl className="mt-1 space-y-0.5">
+                    {[
+                      { label: "Chi phí", value: row.paid_out },
+                      { label: "Doanh thu", value: row.billed },
+                      { label: "Lợi nhuận", value: row.fee_earned },
+                    ].map((cell, index, all) => (
+                      <div
+                        key={cell.label}
+                        className="flex items-baseline justify-between gap-3"
+                      >
+                        <dt className="text-xs text-muted-foreground">
+                          {cell.label}
+                        </dt>
+                        <dd
+                          className={cn(
+                            "text-xs tabular-nums text-foreground",
+                            index === all.length - 1 && "font-semibold",
+                          )}
+                        >
+                          {formatVND(cell.value)}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </li>
+              ))}
+            </ul>
+            {hasMore && (
+              <button
+                onClick={() => setShowAll(prev => !prev)}
+                className="w-full py-2 text-xs font-semibold text-foreground active:opacity-70 lg:hidden"
+              >
+                {showAll ? 'Thu gọn' : `Xem tất cả (${sortedMonths.length})`}
+              </button>
+            )}
+
+            <table className="hidden w-full min-w-[640px] text-xs lg:table">
               <thead>
                 <tr className="border-b border-border/40">
                   <th className="text-left px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-foreground">Tháng</th>

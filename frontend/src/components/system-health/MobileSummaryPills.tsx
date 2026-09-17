@@ -47,6 +47,7 @@ export function MobileSummaryPills({ days = 1 }: MobileSummaryPillsProps) {
         icon={AlertCircle}
         label={days === 1 ? "Lỗi 24h" : "Lỗi 7 ngày"}
         value={String(rc)}
+        sub="lượt lỗi"
         status={rc > 20 ? "danger" : rc > 0 ? "warn" : "ok"}
       />
     </div>

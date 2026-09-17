@@ -32,7 +32,7 @@ interface Props {
 export function StatusPill({ label, value, sub, status, icon: Icon, className }: Props) {
   return (
     <div className={cn(
-      "flex min-w-0 items-start gap-2 rounded-xl border bg-card px-3 py-3 shadow-sm sm:gap-3 sm:px-4 sm:py-3.5",
+      "flex h-full min-w-0 items-start gap-2 rounded-xl border bg-card px-3 py-3 shadow-sm sm:gap-3 sm:px-4 sm:py-3.5",
       borderCls[status],
       className,
     )}>

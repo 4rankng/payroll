@@ -230,8 +230,51 @@ export const ProjectProfitabilityMobile = memo(() => {
         ) : !rankedProjects.length ? (
           <p className="py-6 text-center text-muted-foreground text-xs">Chưa có dữ liệu</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px]">
+          <>
+            {/* Phones: stacked cards. 760px of money columns cannot be read at
+                390px — it only produced sideways scrolling. */}
+            <ul className="divide-y divide-border/40 lg:hidden">
+              {visibleProjects.map((item, idx) => (
+                <li key={item.project_id} className="py-2.5">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 truncate text-xs font-semibold text-foreground">
+                      {idx + 1}. {item.project_name}
+                    </span>
+                    <span
+                      className="shrink-0 text-xs font-semibold tabular-nums"
+                      style={{
+                        color:
+                          item.net_profit_vnd > 0
+                            ? "hsl(var(--financial-positive, 142 71% 45%))"
+                            : item.net_profit_vnd < 0
+                              ? "hsl(var(--financial-negative, 0 84% 60%))"
+                              : "hsl(var(--muted-foreground))",
+                      }}
+                    >
+                      {fmtVND(item.net_profit_vnd)}
+                    </span>
+                  </div>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {item.client_name}
+                  </p>
+                  <div className="mt-1 flex items-baseline justify-between gap-3 text-xs text-muted-foreground">
+                    <span>Đã trả NV {fmtVND(item.total_payout_vnd)}</span>
+                    <span>Doanh thu {fmtVND(item.total_received_vnd)}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {rankedProjects.length > 5 && (
+              <button
+                onClick={() => setShowAll((prev) => !prev)}
+                className="w-full py-2 text-xs font-semibold text-primary active:opacity-70 lg:hidden"
+              >
+                {showAll ? "Thu gọn" : `Xem tất cả (${rankedProjects.length})`}
+              </button>
+            )}
+
+            <div className="hidden overflow-x-auto lg:block">
+              <table className="w-full min-w-[760px]">
               <thead>
                 <tr className="border-b border-border/40">
                   <th className="py-1.5 pl-4 pr-2 text-left text-muted-foreground font-medium" style={{ fontSize: 11 }}>#</th>
@@ -261,7 +304,8 @@ export const ProjectProfitabilityMobile = memo(() => {
                 </tfoot>
               )}
             </table>
-          </div>
+            </div>
+          </>
         )}
       </div>
 

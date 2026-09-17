@@ -185,14 +185,14 @@ export function RemoveEmployeeSheet({
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 h-11 px-3 sm:h-8 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             Đóng
           </button>
           <button
             onClick={handleConfirm}
             disabled={isLoading || (removalType === "scheduled" && !lastDate)}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded bg-destructive text-destructive-foreground text-sm font-medium whitespace-nowrap hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 h-11 px-3 sm:h-8 rounded bg-destructive text-destructive-foreground text-sm font-medium whitespace-nowrap hover:bg-destructive/90 transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             {isLoading ? "Đang xử lý..." : "Xác nhận xóa"}
           </button>

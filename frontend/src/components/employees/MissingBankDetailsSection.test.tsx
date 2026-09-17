@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useMissingBankDetails } from '@/hooks/employees/useMissingBankDetails';
@@ -77,15 +77,26 @@ describe('MissingBankDetailsSection', () => {
   it('shows split counts for invalid vs missing kinds in the header', () => {
     render(<MissingBankDetailsSection />);
 
-    expect(screen.getByText('Sai thông tin: 1')).toBeInTheDocument();
-    expect(screen.getByText('Thiếu thông tin: 3')).toBeInTheDocument();
+    // Header chips render the label and its count as separate nodes, so match
+    // on the chip element rather than one concatenated string.
+    const headerChips = screen.getAllByText(
+      (_, el) => el?.tagName === 'SPAN' && /^(Sai thông tin|Thiếu thông tin)\s*\d+$/.test(el.textContent ?? ''),
+    );
+    expect(headerChips.map(c => c.textContent)).toEqual(
+      expect.arrayContaining(['Sai thông tin1', 'Thiếu thông tin3']),
+    );
   });
 
   it('orders invalid rows first and labels each row with its kind', () => {
     render(<MissingBankDetailsSection />);
     fireEvent.click(screen.getByRole('button', { name: 'Xem danh sách' }));
 
-    const kindBadges = screen.getAllByText(/^(Sai thông tin|Thiếu thông tin)$/);
+    // Scope to the expanded list: the header summary chips carry the same
+    // label text, so a bare screen query would also match those.
+    const list = screen.getByRole('region', {
+      name: 'Danh sách cảnh báo thông tin ngân hàng',
+    });
+    const kindBadges = within(list).getAllByText(/^(Sai thông tin|Thiếu thông tin)$/);
     // Rows are re-ordered invalid-first: the sole invalid employee (id 4)
     // renders before the three missing-info employees.
     expect(kindBadges).toHaveLength(4);

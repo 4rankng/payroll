@@ -133,7 +133,7 @@ export default function AuditLogPageMobile() {
         icon={ClipboardList}
         sticky={false}
         actionsLayout="inline"
-        className="[--mobile-nonsticky-header-top-padding:0px] border-0 px-0 pb-3 pt-0 shadow-none"
+        className="border-0 px-0 pb-3 shadow-none"
         subtitle={
           !isLoading && totalRecords > 0
             ? `${totalRecords.toLocaleString('vi-VN')} bản ghi`

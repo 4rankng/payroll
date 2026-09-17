@@ -14,46 +14,50 @@ export function EndpointLatencyCard({ endpoint }: Props) {
 
   return (
     <Card className="px-3 py-2.5">
-      {/* Badge inline, path wraps to next line naturally */}
-      <div className="mb-1.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-        {parsed ? (
-          <>
-            <span className={cn(
-              "shrink-0 text-xs font-bold px-1.5 py-0.5 rounded leading-none",
+      {/* Method chip and path on one line; the path wraps to at most two lines
+          so a long route stays readable without the row growing unbounded. */}
+      <div className="flex items-start gap-1.5">
+        {parsed && (
+          <span
+            className={cn(
+              "mt-px shrink-0 rounded px-1.5 py-0.5 text-xs font-bold leading-none",
               METHOD_COLORS[parsed.method] ?? "bg-muted text-muted-foreground",
-            )}>
-              {parsed.method}
-            </span>
-            <span className="font-mono text-xs text-foreground break-all leading-snug">
-              {parsed.path}
-            </span>
-          </>
-        ) : (
-          <span className="font-mono text-xs text-foreground break-all leading-snug">
-            {endpoint.endpoint}
+            )}
+          >
+            {parsed.method}
           </span>
         )}
+        <span
+          className="min-w-0 font-mono text-xs leading-snug text-foreground line-clamp-2 break-all"
+          title={endpoint.endpoint}
+        >
+          {parsed ? parsed.path : endpoint.endpoint}
+        </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-3 h-0.5 rounded shrink-0 bg-destructive" />
-          <span>P95: </span>
-          <span className={cn(
-            "font-bold",
-            p95Status === "danger" ? "text-red-700"
-              : p95Status === "warn" ? "text-amber-700"
-              : "text-foreground"
-          )}>
-            {endpoint.p95_ms.toLocaleString()}ms
-          </span>
+      {/* One left-aligned metric sentence — no stray element pushed to the far
+          right, which previously left a ragged gap on every row. */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+        <span
+          className={cn(
+            "font-bold tabular-nums",
+            p95Status === "danger"
+              ? "text-red-700"
+              : p95Status === "warn"
+                ? "text-amber-700"
+                : "text-foreground",
+          )}
+        >
+          P95 {endpoint.p95_ms.toLocaleString()}ms
         </span>
-        <span className="flex items-center gap-1 text-muted-foreground">
-          <span className="inline-block w-3 h-0.5 rounded shrink-0 bg-primary" />
-          <span>Avg: </span>
-          <span className="font-medium text-foreground">{endpoint.avg_ms.toLocaleString()}ms</span>
+        <span aria-hidden="true" className="h-3 w-px shrink-0 bg-border" />
+        <span className="font-medium tabular-nums text-foreground">
+          TB {endpoint.avg_ms.toLocaleString()}ms
         </span>
-        <span className="text-muted-foreground">{endpoint.count.toLocaleString()} calls</span>
+        <span aria-hidden="true" className="h-3 w-px shrink-0 bg-border" />
+        <span className="tabular-nums text-muted-foreground">
+          {endpoint.count.toLocaleString()} lượt gọi
+        </span>
       </div>
     </Card>
   );

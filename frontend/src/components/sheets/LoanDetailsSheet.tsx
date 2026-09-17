@@ -276,29 +276,26 @@ export function LoanDetailsSheet({
         avatar={{ custom: header }}
         className="w-full sm:w-[620px] md:w-[780px] lg:w-[960px] xl:w-[1100px]"
         footer={
-          <div className="grid w-full grid-cols-1 gap-2 min-[420px]:grid-cols-[auto_minmax(0,1fr)] min-[420px]:items-center">
-            <div className="flex flex-wrap items-center gap-2">
-              {loan && !loan.disbursement_date && (
-                <Button type="button" variant="destructive" size="sm" onClick={handleDelete} className="h-11 w-full gap-1.5 px-3 min-[420px]:w-auto">
-                  <Trash2 className="w-3.5 h-3.5" />Xóa
-                </Button>
-              )}
-            </div>
-            <div className="grid grid-cols-1 gap-2 min-[420px]:flex min-[420px]:flex-wrap min-[420px]:items-center min-[420px]:justify-end">
-              {loan && !loan.disbursement_date && (
-                <Button type="button" size="sm" onClick={handleDisburse} className="h-11 w-full gap-1.5 px-4 min-[420px]:w-auto">
-                  <CheckCircle className="w-3.5 h-3.5" />Giải ngân
-                </Button>
-              )}
-              {loan && loan.disbursement_date && isCustomSchedule && hasPendingSchedules && (
-                <Button type="button" size="sm" onClick={handleRepaySchedule} className="h-11 w-full gap-1.5 px-4 min-[420px]:w-auto">
-                  <CreditCard className="w-3.5 h-3.5" />Thanh toán theo lịch
-                </Button>
-              )}
-              <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-11 w-full px-4 min-[420px]:w-auto">
-                Đóng
+          // One adaptive row of equal-width actions (see TransactionDetailsSheet).
+          <div className="flex w-full flex-wrap items-center gap-2">
+            {loan && !loan.disbursement_date && (
+              <Button type="button" variant="destructive" size="sm" onClick={handleDelete} className="min-h-11 flex-1 basis-0 gap-1.5 px-3">
+                <Trash2 className="w-3.5 h-3.5" />Xóa
               </Button>
-            </div>
+            )}
+            {loan && !loan.disbursement_date && (
+              <Button type="button" size="sm" onClick={handleDisburse} className="min-h-11 flex-1 basis-0 gap-1.5 px-3">
+                <CheckCircle className="w-3.5 h-3.5" />Giải ngân
+              </Button>
+            )}
+            {loan && loan.disbursement_date && isCustomSchedule && hasPendingSchedules && (
+              <Button type="button" size="sm" onClick={handleRepaySchedule} className="min-h-11 flex-1 basis-0 gap-1.5 px-3">
+                <CreditCard className="w-3.5 h-3.5" />Thanh toán theo lịch
+              </Button>
+            )}
+            <Button type="button" variant="outline" size="sm" onClick={onClose} className="min-h-11 flex-1 basis-0 px-3">
+              Đóng
+            </Button>
           </div>
         }
       >

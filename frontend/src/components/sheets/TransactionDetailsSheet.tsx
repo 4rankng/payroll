@@ -390,37 +390,36 @@ function TransactionDetailsSheetComponent({
         )
       }}
       footer={
-        <div className="flex w-full flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            {transaction.status === 'settled' && !transaction.reversed_transaction_id && (
-              <Button type="button" variant="destructive" size="sm" onClick={handleReverseClick} className="min-h-11 flex-1 px-3 min-[420px]:flex-none">
-                Đảo ngược
-              </Button>
-            )}
-            {transaction.status === 'pending' && !transaction.reversed_transaction_id && (
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={() => setIsDeleteDialogOpen(true)}
-                disabled={deleteTransaction.isPending}
-                className="min-h-11 flex-1 px-3 min-[420px]:flex-none"
-              >
-                <Trash2 className="h-4 w-4" />
-                Hủy giao dịch
-              </Button>
-            )}
-          </div>
-          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2 min-[420px]:flex min-[420px]:items-center">
-            {transaction.status === 'pending' && (
-              <Button type="button" variant="success" size="sm" onClick={handleSettleClick} className="min-h-11 px-4">
-                Thanh toán
-              </Button>
-            )}
-            <Button type="button" variant="outline" size="sm" onClick={onClose} className="min-h-11 px-4">
-              Đóng
+        // One adaptive row: every action is an equal-width cell and the row
+        // wraps only when the count genuinely needs it, so no action ends up
+        // alone on a full-width line below the others.
+        <div className="flex w-full flex-wrap items-center gap-2">
+          {transaction.status === 'settled' && !transaction.reversed_transaction_id && (
+            <Button type="button" variant="destructive" size="sm" onClick={handleReverseClick} className="min-h-11 flex-1 basis-0 px-3">
+              Đảo ngược
             </Button>
-          </div>
+          )}
+          {transaction.status === 'pending' && !transaction.reversed_transaction_id && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={() => setIsDeleteDialogOpen(true)}
+              disabled={deleteTransaction.isPending}
+              className="min-h-11 flex-1 basis-0 px-3"
+            >
+              <Trash2 className="h-4 w-4" />
+              Hủy giao dịch
+            </Button>
+          )}
+          {transaction.status === 'pending' && (
+            <Button type="button" variant="success" size="sm" onClick={handleSettleClick} className="min-h-11 flex-1 basis-0 px-3">
+              Thanh toán
+            </Button>
+          )}
+          <Button type="button" variant="outline" size="sm" onClick={onClose} className="min-h-11 flex-1 basis-0 px-3">
+            Đóng
+          </Button>
         </div>
       }
     >
