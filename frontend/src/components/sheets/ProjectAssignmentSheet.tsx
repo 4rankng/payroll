@@ -37,16 +37,13 @@ function ProjectAssignmentSheet({
 }: ProjectAssignmentSheetProps) {
   const queryClient = useQueryClient();
 
-  // Get today's date in YYYY-MM-DD format
-  const getTodayDate = () => {
-    return new Date().toISOString().split('T')[0];
-  };
-
   const [formData, setFormData] = useState<AssignEmployeeData>({
     employee_id: employee?.id || 0,
     employee_code: "",
     position: "",
-    start_date: getTodayDate(),
+    // Empty by default: the backend continues coverage from the employee's
+    // last recorded timesheet (else 1st of current month) instead of today.
+    start_date: "",
     end_date: "",
     payment_schedule: "weekly",
   });
@@ -154,7 +151,8 @@ function ProjectAssignmentSheet({
       employee_code: formData.employee_code?.trim() || undefined,
       // Position must be selected from available positions
       position: formData.position,
-      // If start_date is empty, let API use today's date as default
+      // If start_date is empty, the backend continues coverage from the
+      // employee's last recorded timesheet (else 1st of current month)
       start_date: formData.start_date || undefined,
       end_date: formData.end_date || undefined,
       payment_schedule: formData.payment_schedule,
@@ -168,7 +166,7 @@ function ProjectAssignmentSheet({
       employee_id: 0,
       employee_code: "",
       position: "",
-      start_date: getTodayDate(),
+      start_date: "",
       end_date: "",
       payment_schedule: "weekly",
     });
@@ -372,7 +370,7 @@ function ProjectAssignmentSheet({
                   onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
                   className="h-11 w-full"
                 />
-                <p className="typography-body-small text-muted-foreground">Mặc định là ngày hôm nay</p>
+                <p className="typography-body-small text-muted-foreground">Để trống để hệ thống tự chọn (ngày sau lần chấm công gần nhất, hoặc đầu tháng này)</p>
               </div>
 
               <div className="space-y-2">

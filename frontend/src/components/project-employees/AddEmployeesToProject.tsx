@@ -44,10 +44,10 @@ export function AddEmployeesToProject({
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<string>(DEFAULT_POSITION);
-  const [startDate, setStartDate] = useState<string>(() => {
-    // Default to today's date
-    return new Date().toISOString().split('T')[0];
-  });
+  // Empty by default: the backend continues coverage from the employee's last
+  // recorded timesheet (else 1st of current month). A "today" default rejected
+  // same-month BCC uploads covering earlier days.
+  const [startDate, setStartDate] = useState<string>('');
   const [paymentSchedule, setPaymentSchedule] = useState<'weekly' | 'monthly'>('weekly');
   const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<number>>(new Set());
   const [employeePositions, setEmployeePositions] = useState<Map<number, string>>(new Map());
@@ -163,14 +163,11 @@ export function AddEmployeesToProject({
     try {
       setAssigningId(employee.id);
 
-      const today = new Date();
-      const startDate = today.toISOString().split('T')[0];
-
       await assignSingle({
         projectId: project.id,
         data: {
           employee_id: employee.id,
-          start_date: startDate,
+          start_date: startDate || undefined,
           position: position,
         }
       });
@@ -204,7 +201,7 @@ export function AddEmployeesToProject({
         projectId: project.id,
         data: {
           employee_id: selectedEmployee.id,
-          start_date: startDate,
+          start_date: startDate || undefined,
           position: selectedPosition,
           payment_schedule: paymentSchedule,
         }
@@ -450,7 +447,7 @@ export function AddEmployeesToProject({
                 className="h-11 w-full"
               />
               <p className="text-xs text-muted-foreground">
-                Để trống để có hiệu lực ngay lập tức
+                Để trống để hệ thống tự chọn (ngày sau lần chấm công gần nhất, hoặc đầu tháng này)
               </p>
             </div>
 
