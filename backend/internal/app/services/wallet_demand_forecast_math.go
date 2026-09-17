@@ -628,9 +628,27 @@ func forecastDemandDistributionFromRemaining(
 	// is uniform, so the distribution SHAPE (skew, tail ratio) is preserved;
 	// only the LEVEL shifts. empiricalMaxCash is scaled too, keeping the
 	// divergent comparison self-consistent.
+	//
+	// Two guards keep the re-centering honest:
+	//   - consistency: max/min ≥ cutoff fires on ONE outlier cycle as easily as
+	//     on a trend. When a single rate dominates the EWMA window
+	//     (max > dispersion cutoff × median), the "trend" is variance and the
+	//     EWMA extrapolates the outlier on top of a gamma tail that already
+	//     contains it — skip the adjustment entirely.
+	//   - cap: even a consistent ramp may not upscale the distribution beyond
+	//     defaultPaceScaleCap, for the same reason pace conditioning caps it —
+	//     compounding the observed tail with a large growth ratio stacks two
+	//     safety margins into one recommendation.
 	growthFactor := 1.0
 	if trendRatio >= trendRatioCutoff {
-		growthFactor = growthEWMA(chronologicalGrandTotals(historical), growthEWMAlphaDefault)
+		totals := chronologicalGrandTotals(historical)
+		growthFactor = growthEWMA(totals, growthEWMAlphaDefault)
+		if !growthRatesConsistent(growthWindowRates(totals)) {
+			growthFactor = 1.0
+		}
+		if growthFactor > defaultPaceScaleCap {
+			growthFactor = defaultPaceScaleCap
+		}
 		if growthFactor > 0 && growthFactor != 1.0 {
 			for i := range samples {
 				samples[i] *= growthFactor
@@ -680,26 +698,50 @@ func growthEWMA(grandTotals []int64, alpha float64) float64 {
 	if alpha <= 0 {
 		alpha = growthEWMAlphaDefault
 	}
-	if len(grandTotals) < 2 {
+	window := growthWindowRates(grandTotals)
+	if len(window) == 0 {
 		return 1.0
 	}
+	ewma := window[0]
+	for _, r := range window[1:] {
+		ewma = alpha*r + (1-alpha)*ewma
+	}
+	return ewma
+}
+
+// growthWindowRates returns the last min(3, n) month-over-month growth rates
+// from grandTotals (which MUST be chronological). Periods preceded by a zero
+// total contribute no rate.
+func growthWindowRates(grandTotals []int64) []float64 {
 	var rates []float64
 	for i := 1; i < len(grandTotals); i++ {
 		if grandTotals[i-1] > 0 {
 			rates = append(rates, float64(grandTotals[i])/float64(grandTotals[i-1]))
 		}
 	}
-	if len(rates) == 0 {
-		return 1.0
-	}
-	// Take the last 3 growth rates (or fewer when the basis is thin).
 	start := len(rates) - min(3, len(rates))
-	window := rates[start:]
-	ewma := window[0]
-	for _, r := range window[1:] {
-		ewma = alpha*r + (1-alpha)*ewma
+	return rates[start:]
+}
+
+// growthRateDispersionCutoff bounds how far the largest growth rate may sit
+// above the window median before the window is considered a single-spike basis
+// rather than shared directional growth.
+const growthRateDispersionCutoff = 2.0
+
+// growthRatesConsistent reports whether the growth-rate window shows shared
+// direction rather than one dominant spike: its max rate must not exceed
+// growthRateDispersionCutoff × its median rate. An empty window is consistent.
+func growthRatesConsistent(window []float64) bool {
+	if len(window) == 0 {
+		return true
 	}
-	return ewma
+	s := append([]float64(nil), window...)
+	sort.Float64s(s)
+	median := s[len(s)/2]
+	if median <= 0 {
+		return true
+	}
+	return s[len(s)-1] <= growthRateDispersionCutoff*median
 }
 
 // chronologicalGrandTotals extracts the grandTotal from each cohortSeries,

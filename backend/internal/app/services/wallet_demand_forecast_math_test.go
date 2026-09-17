@@ -351,6 +351,69 @@ func cumSteps(total int64, maxDay int) map[int]int64 {
 	return c
 }
 
+// TestGrowthAdjustmentIgnoresSingleOutlierSpike reproduces the 2026-09-17
+// production basis (locked gap, cycle day 0): the Aug-2026 cycle was a one-off
+// 881.8M outlier after three ~121-181M cycles, so month-over-month rates were
+// [0.90, 1.49, 4.86]. A single 4.9x spike is variance, not directional growth —
+// multiplying the already outlier-inflated gamma tail by EWMA(3.03) produced a
+// multi-billion "Cần nạp thêm". The growth adjustment must not fire here.
+func TestGrowthAdjustmentIgnoresSingleOutlierSpike(t *testing.T) {
+	historical := []cohortSeries{
+		{forMonth: "2026-05", maxCycleDay: 19, grandTotal: 134_967_030, cumulative: cumSteps(134_967_030, 19)},
+		{forMonth: "2026-06", maxCycleDay: 19, grandTotal: 121_420_920, cumulative: cumSteps(121_420_920, 19)},
+		{forMonth: "2026-07", maxCycleDay: 19, grandTotal: 181_292_965, cumulative: cumSteps(181_292_965, 19)},
+		{forMonth: "2026-08", maxCycleDay: 19, grandTotal: 881_756_800, cumulative: cumSteps(881_756_800, 19)},
+	}
+	// Locked-gap shape: from cycle day 0 the remaining window spans each full period.
+	dist := forecastDemandDistributionBetween(historical, 0, 19, 5000, 42, 1)
+
+	if dist.growthFactor != 1.0 {
+		t.Errorf("growthFactor = %.4f, want 1.0 (single-spike basis must not extrapolate growth)", dist.growthFactor)
+	}
+	if dist.method == "growth-adjusted" {
+		t.Errorf("method = %q, want NOT growth-adjusted for a single-outlier basis", dist.method)
+	}
+	// Without growth, p95 must stay near the observed worst cycle (≤ 1.25x
+	// empiricalMax), not 3x it.
+	if bound := dist.empiricalMax * 1.25; dist.p95 > bound {
+		t.Errorf("p95 = %.0f exceeds 1.25x empiricalMax %.0f — outlier double-counted in the tail", dist.p95, bound)
+	}
+}
+
+// TestGrowthAdjustmentKeepsConsistentRamp_CapsFactor verifies the other side:
+// a genuinely consistent ramp (Ky-2 shape, rates within ~1.0-1.9) still gets the
+// growth re-centering, and even a consistent explosive ramp cannot multiply the
+// tail by more than the pace-scale cap (2.0) — the same bound pace conditioning
+// uses, so outlier-driven ratios can never compound two safety margins.
+func TestGrowthAdjustmentKeepsConsistentRamp_CapsFactor(t *testing.T) {
+	consistent := []cohortSeries{
+		{forMonth: "2026-01", maxCycleDay: 10, grandTotal: 80_350_500, cumulative: cumSteps(80_350_500, 10)},
+		{forMonth: "2026-02", maxCycleDay: 10, grandTotal: 130_036_050, cumulative: cumSteps(130_036_050, 10)},
+		{forMonth: "2026-03", maxCycleDay: 10, grandTotal: 132_502_900, cumulative: cumSteps(132_502_900, 10)},
+		{forMonth: "2026-04", maxCycleDay: 10, grandTotal: 158_614_931, cumulative: cumSteps(158_614_931, 10)},
+		{forMonth: "2026-05", maxCycleDay: 10, grandTotal: 240_188_932, cumulative: cumSteps(240_188_932, 10)},
+		{forMonth: "2026-06", maxCycleDay: 10, grandTotal: 457_082_437, cumulative: cumSteps(457_082_437, 10)},
+	}
+	dist := forecastDemandDistributionBetween(consistent, 4, 10, 5000, 42, 1)
+	if dist.growthFactor <= 1.0 {
+		t.Errorf("growthFactor = %.4f, want > 1.0 for a consistent sustained ramp (EWMA ~1.31)", dist.growthFactor)
+	}
+	if dist.growthFactor > defaultPaceScaleCap {
+		t.Errorf("growthFactor = %.4f, want ≤ %.1f cap", dist.growthFactor, defaultPaceScaleCap)
+	}
+
+	// Consistent but explosive: rates [3.0, 3.0] → EWMA 3.0, clamped to the cap.
+	explosive := []cohortSeries{
+		{forMonth: "2026-01", maxCycleDay: 10, grandTotal: 100_000_000, cumulative: cumSteps(100_000_000, 10)},
+		{forMonth: "2026-02", maxCycleDay: 10, grandTotal: 300_000_000, cumulative: cumSteps(300_000_000, 10)},
+		{forMonth: "2026-03", maxCycleDay: 10, grandTotal: 900_000_000, cumulative: cumSteps(900_000_000, 10)},
+	}
+	dist = forecastDemandDistributionBetween(explosive, 0, 10, 5000, 42, 1)
+	if !almostEq(dist.growthFactor, defaultPaceScaleCap, 1e-9) {
+		t.Errorf("growthFactor = %.4f, want exactly the %.1f cap for EWMA 3.0", dist.growthFactor, defaultPaceScaleCap)
+	}
+}
+
 func TestNewsvendorRecommendation(t *testing.T) {
 	// samples [0..99]: p95 ≈ 94.05, p99 ≈ 98.01.
 	samples := make([]float64, 100)

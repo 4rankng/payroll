@@ -538,6 +538,56 @@ func TestWalletDemandForecastConditionsActiveCycleOnObservedPaceAndUploadedCapac
 	}
 }
 
+// TestWalletDemandForecastLockedGapOutlierDoesNotExplode reproduces the
+// 2026-09 production incident: in the locked gap (day 17) with a one-off
+// 881.8M outlier cycle in the basis, the card showed "Cần nạp thêm
+// 2,417,404,960 ₫" — the growth-EWMA (3.03x) stacked on the outlier-inflated
+// gamma tail. The shortfall must stay in the ballpark of the worst observed
+// cycle, not multiples of it.
+func TestWalletDemandForecastLockedGapOutlierDoesNotExplode(t *testing.T) {
+	now := time.Date(2026, 9, 17, 20, 0, 0, 0, clock.DefaultLocation)
+	repo := &walletDemandForecastRequestRepoStub{
+		rows: []domain.CohortRow{
+			{ForMonth: "2026-08", CycleDay: 7, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 439_531_960},
+			{ForMonth: "2026-08", CycleDay: 18, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 205_502_990},
+			{ForMonth: "2026-08", CycleDay: 19, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 236_721_850},
+			{ForMonth: "2026-07", CycleDay: 7, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 88_926_005},
+			{ForMonth: "2026-07", CycleDay: 18, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 92_366_960},
+			{ForMonth: "2026-06", CycleDay: 7, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 78_195_360},
+			{ForMonth: "2026-06", CycleDay: 18, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 43_225_560},
+			{ForMonth: "2026-05", CycleDay: 7, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 84_157_170},
+			{ForMonth: "2026-05", CycleDay: 18, Status: string(domain.AdvancePaymentStatusCompleted), TotalAmount: 50_809_860},
+		},
+	}
+	walletSvc := &walletDemandForecastWalletStub{
+		balance: &walletdomain.WalletBalance{Available: 48_767_269},
+	}
+	svc := NewWalletDemandForecastService(repo, walletSvc, clock.NewFake(now), config.WalletForecastConfig{
+		ServiceLevel:  0.95,
+		NSim:          5000,
+		HistoryMonths: 5,
+		LeadDays:      2,
+	})
+
+	got, err := svc.GetDemandForecast(context.Background())
+	if err != nil {
+		t.Fatalf("GetDemandForecast returned error: %v", err)
+	}
+	// Worst observed cycle ≈ 881.8M; p95 near it minus the 48.8M balance ≈ 900M.
+	if got.Prediction.Shortfall > 1_200_000_000 {
+		t.Fatalf(
+			"Shortfall = %d, want ≤ 1.2B (near the worst observed cycle, not the outlier x growth-EWMA)",
+			got.Prediction.Shortfall,
+		)
+	}
+	if got.Prediction.Shortfall < 400_000_000 {
+		t.Fatalf(
+			"Shortfall = %d, want ≥ 400M (p95 tail must still cover the 881.8M outlier cycle)",
+			got.Prediction.Shortfall,
+		)
+	}
+}
+
 func TestWalletDemandForecastDoesNotTreatNoRequestsAsZeroFutureDemand(t *testing.T) {
 	now := time.Date(2026, 7, 25, 12, 0, 0, 0, clock.DefaultLocation)
 	repo := &walletDemandForecastRequestRepoStub{
