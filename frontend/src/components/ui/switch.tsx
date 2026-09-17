@@ -26,7 +26,11 @@ const Switch = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     className={cn(
-      "peer inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent px-1 transition-all duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input",
+      "peer relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent px-1 transition-all duration-150 ease-out outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input",
+      // The pill is 28px tall for visual balance, but touch targets need 44px.
+      // A transparent pseudo-element grows the hit area to 28 + 8 + 8 = 44px
+      // without changing how the switch looks or shifting surrounding content.
+      "before:absolute before:-inset-y-2 before:inset-x-0 before:content-['']",
       className
     )}
     {...props}

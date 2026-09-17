@@ -23,6 +23,10 @@ interface SettingCardProps {
   // Step size for displayMode='currency-slider'. Defaults to 10.000.000 ₫ —
   // coarse round stops are the intended interaction for the Chuyển lô cap.
   sliderStep?: number;
+  // Optional quick-stop values for displayMode='currency-slider'. Dragging a
+  // slider to an exact figure is imprecise on touch, so these are rendered as
+  // tappable chips. Values are raw digit strings, same shape as `value`.
+  sliderPresets?: readonly string[];
   errorMessage?: string | null;
   unavailableMessage?: string | null;
   onRetry?: () => void;
@@ -115,6 +119,7 @@ export const SettingCard = ({
   max = 100,
   step = 0.01,
   sliderStep = 10_000_000,
+  sliderPresets,
   wholeNumber = false,
 }: SettingCardProps) => {
   const generatedId = useId().replace(/:/g, '');
@@ -194,7 +199,7 @@ export const SettingCard = ({
           {description && (
             <p
               id={descriptionId}
-              className="break-words text-sm leading-5 text-muted-foreground"
+              className="break-words text-sm leading-relaxed text-muted-foreground text-balance"
             >
               {description}
             </p>
@@ -203,11 +208,15 @@ export const SettingCard = ({
 
         <div className="min-w-0 space-y-2">
           {isSliderMode ? (
-            <div className="space-y-3">
-              <div className="text-right text-base font-semibold tabular-nums">
-                {formatVndDigits(value)}{' '}
-                <span className="text-xs font-medium text-muted-foreground">₫</span>
+            <div className="space-y-4">
+              {/* Large currency readout */}
+              <div className="text-right">
+                <span className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                  {formatVndDigits(value)}
+                </span>
+                <span className="ml-1 text-sm font-medium text-muted-foreground">₫</span>
               </div>
+              {/* Thick-track slider with large thumb for 44px touch target */}
               <Slider
                 aria-label={title}
                 min={Number(min)}
@@ -219,11 +228,40 @@ export const SettingCard = ({
                   onChange(String(next));
                 }}
                 disabled={isSaving || isUnavailable}
+                className="py-3 [&_[role=slider]]:h-11 [&_[role=slider]]:w-11 [&_[role=slider]]:border-[3px] [&_[role=slider]]:shadow-md [&>div]:h-3"
               />
-              <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-                <span>{formatVndDigits(String(min))}</span>
-                <span>{formatVndDigits(String(max))}</span>
+              <div className="flex items-center justify-between text-xs tabular-nums text-muted-foreground">
+                <span>{formatVndDigits(String(min))} ₫</span>
+                <span>{formatVndDigits(String(max))} ₫</span>
               </div>
+              {/* Quick stops — precise values are hard to hit by dragging */}
+              {sliderPresets && sliderPresets.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {sliderPresets.map((preset) => {
+                    const isSelected = value === preset;
+                    return (
+                      <Button
+                        key={preset}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        aria-pressed={isSelected}
+                        disabled={isSaving || isUnavailable}
+                        onClick={() => {
+                          setCurrencyInputError(null);
+                          onChange(preset);
+                        }}
+                        className={cn(
+                          'h-11 rounded-full px-3 text-xs font-semibold tabular-nums',
+                          isSelected && 'border-primary bg-primary/5 text-primary',
+                        )}
+                      >
+                        {formatVndDigits(preset)}
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : (
           <div className="flex items-center gap-2">
@@ -246,14 +284,14 @@ export const SettingCard = ({
                 onChange={(event) => handleValueChange(event.target.value)}
                 disabled={isSaving || isUnavailable}
                 className={cn(
-                  'h-11 min-w-0 text-base font-medium',
+                  'h-12 min-w-0 bg-white text-base font-semibold tabular-nums',
                   visibleSuffix && 'pr-8',
-                  displayMode === 'currency-vnd' && 'text-right tabular-nums',
-                  displayMode === 'account-number' && 'tabular-nums',
+                  displayMode === 'currency-vnd' && 'text-right',
+                  displayMode === 'account-number',
                   hasVisibleError && 'border-destructive focus-visible:ring-destructive/20',
                   isDirty &&
                     !hasVisibleError &&
-                    'border-warning focus-visible:ring-warning/20',
+                    'border-amber-400 focus-visible:ring-amber-200/40',
                   inputClassName,
                 )}
                 min={type === 'number' && displayMode === 'default' ? String(min) : undefined}
@@ -267,7 +305,7 @@ export const SettingCard = ({
                 }
               />
               {visibleSuffix && (
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
                   {visibleSuffix}
                 </span>
               )}
@@ -300,7 +338,7 @@ export const SettingCard = ({
               Thử lại
             </Button>
           ) : isDirty ? (
-            <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 size="sm"
@@ -310,10 +348,10 @@ export const SettingCard = ({
                   onReset();
                 }}
                 disabled={isSaving}
-                className="h-11 w-full gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                className="h-11 flex-1 gap-1.5 text-sm text-muted-foreground hover:text-foreground"
               >
-                <X aria-hidden="true" className="h-3 w-3" />
-                Hủy
+                <X aria-hidden="true" className="h-3.5 w-3.5" />
+                Hoàn tác
               </Button>
               <Button
                 type="button"
@@ -321,10 +359,10 @@ export const SettingCard = ({
                 variant="default"
                 onClick={onSave}
                 disabled={isSaving || isInvalid}
-                className="h-11 w-full gap-1.5 text-xs"
+                className="h-11 flex-1 gap-1.5 text-sm"
               >
-                <Check aria-hidden="true" className="h-3 w-3" />
-                <span aria-live="polite">{isSaving ? 'Đang lưu…' : 'Lưu'}</span>
+                <Check aria-hidden="true" className="h-3.5 w-3.5" />
+                <span aria-live="polite">{isSaving ? 'Đang lưu…' : 'Lưu thay đổi'}</span>
               </Button>
             </div>
           ) : null}

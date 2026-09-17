@@ -98,7 +98,13 @@ describe.each([
     expect(limitSlider).toHaveAttribute('aria-valuenow', '400000000');
     expect(limitSlider).toHaveAttribute('aria-valuemin', '100000000');
     expect(limitSlider).toHaveAttribute('aria-valuemax', '500000000');
-    expect(screen.getByText('400.000.000')).toBeInTheDocument();
+    // The formatted value appears in the readout and again on the matching
+    // quick-stop chip; both must render the full VND figure.
+    expect(screen.getAllByText('400.000.000').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: '400.000.000' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     expect(screen.getByText(
       'Hệ thống tự tách file để tổng tiền mỗi file luôn nhỏ hơn giới hạn này.',
     )).toBeInTheDocument();

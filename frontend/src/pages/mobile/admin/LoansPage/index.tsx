@@ -1,6 +1,7 @@
 import { ErrorState } from "@/components/ui/error-state";
 import { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { MobilePagination } from '@/components/shared/MobilePagination';
 import { Button } from '@/components/ui/button';
@@ -45,7 +46,7 @@ const LoanMobileCard = ({ loan, onClick }: { loan: Loan; onClick: (loan: Loan) =
       <div className="flex flex-wrap items-start justify-between gap-2">
         <span className="min-w-0 break-all font-mono text-sm font-semibold text-primary">{loan.loan_code}</span>
         {loan.status && (
-          <Badge variant="outline" className={cn("min-h-6 shrink-0 border px-1.5 text-[11px]", statusConfig.className)}>
+          <Badge variant="outline" className={cn("min-h-6 shrink-0 border px-1.5 text-xs", statusConfig.className)}>
             {statusConfig.label}
           </Badge>
         )}
@@ -58,7 +59,7 @@ const LoanMobileCard = ({ loan, onClick }: { loan: Loan; onClick: (loan: Loan) =
         {loan.next_payment_date && (
           <>
             <span className="text-gray-300 shrink-0">·</span>
-            <span className={cn("break-words text-xs font-medium", urgencyColor)}>{loan.next_payment_date}</span>
+            <span className={cn("break-words text-xs font-medium", urgencyColor)}>{format(new Date(loan.next_payment_date), 'dd/MM/yyyy')}</span>
           </>
         )}
       </div>
@@ -175,7 +176,7 @@ const LoansPageMobile = () => {
                 <span>{amount}</span>
                 {unit && <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">{unit}</span>}
               </span>
-              <span className="text-[11px] leading-none text-muted-foreground">{stat.label}</span>
+              <span className="text-xs leading-none text-muted-foreground">{stat.label}</span>
             </div>
             );
           })}

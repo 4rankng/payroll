@@ -27,25 +27,29 @@ export function AdvancePaymentPageHeaderMobile({
   const close = () => setOpen(false);
 
   return (
-    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/[0.07] text-primary/75 shadow-sm">
-        <FileSpreadsheet className="h-[18px] w-[18px]" strokeWidth={2} />
+    // Icon + title keep a 10rem floor: on very narrow phones the action row
+    // wraps onto its own line instead of crushing the title mid-word.
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="flex min-w-[10rem] flex-1 items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/[0.07] text-primary/75 shadow-sm">
+          <FileSpreadsheet className="h-[18px] w-[18px]" strokeWidth={2} />
+        </div>
+
+        <div className="min-w-0">
+          <h1 className="font-display text-[clamp(1.125rem,5.2vw,1.3125rem)] font-extrabold leading-tight tracking-normal text-slate-950">
+            Ứng lương
+          </h1>
+          <p className="mt-0.5 text-xs font-medium leading-normal text-slate-600">
+            Quản lý yêu cầu ứng lương
+          </p>
+        </div>
       </div>
 
-      <div className="min-w-0">
-        <h1 className="font-display text-[22px] font-extrabold leading-none tracking-normal text-slate-950">
-          Ứng lương
-        </h1>
-        <p className="mt-1 text-[13px] font-medium leading-snug text-slate-500">
-          Quản lý yêu cầu ứng lương
-        </p>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-1.5">
+      <div className="ml-auto flex shrink-0 items-center gap-1.5">
         <Button
           onClick={onImportPayroll}
           size="sm"
-          className="h-11 min-h-11 rounded-xl px-3 text-[13px] font-semibold shadow-sm touch-manipulation"
+          className="h-11 min-h-11 rounded-xl px-3 text-sm font-semibold shadow-sm touch-manipulation"
         >
           <FileSpreadsheet className="mr-1.5 h-3.5 w-3.5" />
           Nhập

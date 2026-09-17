@@ -45,7 +45,7 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
   if (isError || !data) {
     return (
       <div className="treasury-panel flex h-full flex-col justify-center" role="status">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
           <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50" aria-hidden="true" />
           Dự báo tiền trả
         </span>
@@ -63,7 +63,7 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
       {/* Measurement mesh — faint dot grid under the panel label. */}
       <div className="treasury-mesh" aria-hidden />
 
-      <span className="relative z-[1] inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <span className="relative z-[1] inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
         <span
           className={`treasury-signal ${SIGNAL_TONE[display.reliabilityState]}`}
           aria-hidden="true"
@@ -73,14 +73,14 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
       </span>
 
       <div className="relative z-[1] mt-2 min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
           Nên chuẩn bị
         </p>
         <p className="treasury-value mt-1 break-words font-financial text-[clamp(1.375rem,3.5vw,1.75rem)] font-bold leading-none tabular-nums tracking-tight text-primary">
           {formatCurrency(display.recommendedReserve)}
         </p>
         {display.showExpectedPayout && (
-          <p className="mt-2 text-[11px] text-muted-foreground">
+          <p className="mt-2 text-xs text-muted-foreground">
             Dự kiến chi trả{' '}
             <span className="font-financial font-semibold tabular-nums text-foreground">
               {formatCurrency(display.expectedPayout)}
@@ -89,30 +89,30 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
         )}
       </div>
 
-      <p className="mt-2 text-[11px] text-muted-foreground">
+      <p className="mt-2 text-xs text-muted-foreground">
         Kỳ {data.ky} · Thanh toán ngày {fmtDate(data.next_pay_date)}
       </p>
 
       {display.dataWarning && (
-        <p className="mt-2 rounded-md border border-amber-500/25 bg-amber-500/5 px-2 py-1.5 text-[11px] leading-snug text-muted-foreground">
+        <p className="mt-2 rounded-md border border-amber-500/25 bg-amber-500/5 px-2 py-1.5 text-xs leading-snug text-muted-foreground">
           {display.dataWarning}
         </p>
       )}
 
       <div className="treasury-rail relative z-[1] mt-2.5 pt-2.5 lg:mt-auto">
-        <p className="text-[11px] font-medium text-muted-foreground">Khoảng dự báo trung tâm</p>
+        <p className="text-xs font-medium text-muted-foreground">Khoảng dự báo trung tâm</p>
         <dl
           className="mt-1.5 grid grid-cols-2 gap-2"
           aria-label={`Từ ${formatCurrency(display.intervalLower)} đến ${formatCurrency(display.intervalUpper)}`}
         >
           <div className="min-w-0 rounded-md bg-muted/45 px-2.5 py-1.5">
-            <dt className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Từ</dt>
+            <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Từ</dt>
             <dd className="mt-0.5 whitespace-nowrap font-financial text-[clamp(0.7rem,2vw,0.8rem)] font-semibold tabular-nums text-foreground">
               {formatCurrency(display.intervalLower)}
             </dd>
           </div>
           <div className="min-w-0 rounded-md bg-primary/5 px-2.5 py-1.5 text-right">
-            <dt className="text-[9px] font-semibold uppercase tracking-[0.12em] text-primary">Đến</dt>
+            <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">Đến</dt>
             <dd className="mt-0.5 whitespace-nowrap font-financial text-[clamp(0.7rem,2vw,0.8rem)] font-semibold tabular-nums text-primary">
               {formatCurrency(display.intervalUpper)}
             </dd>
@@ -126,12 +126,12 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
               aria-hidden="true"
             />
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-foreground">{display.reliabilityLabel}</p>
-              <p className="text-[10px] leading-snug text-muted-foreground">{display.reliabilityDescription}</p>
+              <p className="text-xs font-semibold text-foreground">{display.reliabilityLabel}</p>
+              <p className="text-xs leading-snug text-muted-foreground">{display.reliabilityDescription}</p>
               {display.accuracyMetrics.length > 0 && (
                 <dl className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
                   {display.accuracyMetrics.map((metric) => (
-                    <div key={metric.label} className="inline-flex gap-1 text-[10px]">
+                    <div key={metric.label} className="inline-flex gap-1 text-xs">
                       <dt className="text-muted-foreground">{metric.label}</dt>
                       <dd className="font-semibold tabular-nums text-foreground">{metric.value}</dd>
                     </div>

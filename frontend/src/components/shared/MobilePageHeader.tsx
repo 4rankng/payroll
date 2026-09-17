@@ -64,10 +64,18 @@ export const MobilePageHeader = ({
       <div
         className={cn(
           'ct-navbar min-h-0 p-0 flex items-center justify-between gap-3',
-          actionsLayout === 'inline' ? 'flex-nowrap' : 'flex-wrap sm:flex-nowrap',
+          // Inline actions stay beside the title while both fit; on very
+          // narrow phones (the title block cannot shrink past 10rem without
+          // breaking words mid-token) they wrap onto their own row instead.
+          actionsLayout === 'inline' ? 'flex-wrap' : 'flex-wrap sm:flex-nowrap',
         )}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <div
+          className={cn(
+            'flex flex-1 items-center gap-2.5',
+            actionsLayout === 'inline' ? 'min-w-[10rem]' : 'min-w-0',
+          )}
+        >
           {back && (
             <Button
               variant="ghost"
@@ -85,12 +93,7 @@ export const MobilePageHeader = ({
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h1
-              className={cn(
-                'font-display text-[clamp(1.125rem,5.2vw,1.3125rem)] font-extrabold leading-tight tracking-normal text-slate-950',
-                actionsLayout === 'inline' ? 'truncate' : 'break-words',
-              )}
-            >
+            <h1 className="break-words font-display text-[clamp(1.125rem,5.2vw,1.3125rem)] font-extrabold leading-tight tracking-normal text-slate-950">
               {title}
             </h1>
             {subtitle && (
@@ -105,7 +108,7 @@ export const MobilePageHeader = ({
             className={cn(
               'flex shrink-0 flex-wrap items-center justify-end gap-2 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl',
               actionsLayout === 'inline'
-                ? 'basis-auto max-w-[52%]'
+                ? 'ml-auto basis-auto max-w-[52%]'
                 : 'basis-full max-w-full sm:basis-auto sm:max-w-[56%]',
             )}
           >

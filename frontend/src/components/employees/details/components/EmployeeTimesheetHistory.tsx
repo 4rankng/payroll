@@ -81,26 +81,26 @@ function TimesheetCard({ entry, index }: { entry: EmployeeTimesheetEntry; index:
       {expanded && (
         <div className="border-t bg-muted/20 px-3 py-2.5 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <div>
-            <p className="text-[11px] text-muted-foreground font-medium mb-0.5">Loại công</p>
+            <p className="text-xs text-muted-foreground font-medium mb-0.5">Loại công</p>
             <p className="text-xs">{formatPaytype(entry.paytype)}</p>
           </div>
           <div>
-            <p className="text-[11px] text-muted-foreground font-medium mb-0.5">Ca làm việc</p>
+            <p className="text-xs text-muted-foreground font-medium mb-0.5">Ca làm việc</p>
             <p className="text-xs">{entry.hours_worked} giờ</p>
           </div>
           <div>
-            <p className="text-[11px] text-muted-foreground font-medium mb-0.5">Đơn giá</p>
+            <p className="text-xs text-muted-foreground font-medium mb-0.5">Đơn giá</p>
             <p className="text-xs">{formatCurrency(entry.payrate)}</p>
           </div>
           <div>
-            <p className="text-[11px] text-muted-foreground font-medium mb-0.5">Đã thanh toán</p>
+            <p className="text-xs text-muted-foreground font-medium mb-0.5">Đã thanh toán</p>
             <p className="text-xs font-semibold text-green-700">
               {entry.paid_amount ? formatCurrency(entry.paid_amount) : '0₫'}
             </p>
           </div>
           {entry.paid_at && (
             <div className="col-span-2">
-              <p className="text-[11px] text-muted-foreground font-medium mb-0.5">Ngày thanh toán</p>
+              <p className="text-xs text-muted-foreground font-medium mb-0.5">Ngày thanh toán</p>
               <p className="text-xs">{format(new Date(entry.paid_at), 'dd/MM/yyyy')}</p>
             </div>
           )}

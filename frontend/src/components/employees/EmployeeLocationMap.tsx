@@ -260,7 +260,7 @@ function EmployeeMapCanvas({
 
         const label = document.createElement("span");
         label.className =
-          "employee-type-pill pointer-events-none absolute bottom-7 left-1/2 z-10 w-max max-w-44 -translate-x-1/2 whitespace-normal break-words rounded-md border border-emerald-200 bg-white/95 px-2 py-1 text-center text-[11px] font-semibold leading-4 text-emerald-900 shadow-sm backdrop-blur";
+          "employee-type-pill pointer-events-none absolute bottom-7 left-1/2 z-10 w-max max-w-44 -translate-x-1/2 whitespace-normal break-words rounded-md border border-emerald-200 bg-white/95 px-2 py-1 text-center font-semibold leading-4 text-emerald-900 shadow-sm backdrop-blur";
         label.dataset.checkpointLabel = "true";
         label.textContent = gateName;
         element.appendChild(label);

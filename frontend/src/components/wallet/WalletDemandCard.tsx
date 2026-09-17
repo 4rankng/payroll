@@ -48,7 +48,7 @@ export function WalletDemandCard({ data, compact = false, className }: WalletDem
           />
           <span
             className={cn(
-              'text-[11px] font-bold uppercase tracking-[0.12em]',
+              'text-xs font-bold uppercase tracking-[0.12em]',
               !pred ? 'text-muted-foreground' : needsTopUp ? 'text-rose-700' : 'text-emerald-700',
             )}
           >
@@ -84,7 +84,7 @@ export function WalletDemandCard({ data, compact = false, className }: WalletDem
       <div className="relative">
         <div className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_0_3px_rgba(8,120,62,0.16)]" />
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">
+          <span className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
             Mức cần giữ trong ví
           </span>
         </div>
@@ -96,7 +96,7 @@ export function WalletDemandCard({ data, compact = false, className }: WalletDem
             <p className="mt-2 break-words font-financial text-[clamp(1.375rem,6vw,1.625rem)] font-bold leading-tight tracking-normal tabular-nums text-foreground">
               {formatCurrency(pred.recommended_balance)}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               {noHistory
                 ? 'Chưa đủ dữ liệu các kỳ trước. Hiển thị nhu cầu hiện tại chờ chi trả.'
                 : 'Phần còn lại của kỳ'}
@@ -110,7 +110,7 @@ export function WalletDemandCard({ data, compact = false, className }: WalletDem
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p
-                    className={`text-[11px] font-semibold uppercase tracking-wider ${
+                    className={`text-xs font-semibold uppercase tracking-wider ${
                       needsTopUp ? 'text-rose-700' : 'text-emerald-700'
                     }`}
                   >
@@ -125,7 +125,7 @@ export function WalletDemandCard({ data, compact = false, className }: WalletDem
                   </p>
                 </div>
                 <span
-                  className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold ${
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold ${
                     needsTopUp ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
                   }`}
                 >
@@ -138,7 +138,7 @@ export function WalletDemandCard({ data, compact = false, className }: WalletDem
                 </span>
               </div>
               {noHistory && (
-                <p className="mt-2 text-[11px] text-emerald-700">Đủ chi trả theo nhu cầu hiện tại.</p>
+                <p className="mt-2 text-xs text-emerald-700">Đủ chi trả theo nhu cầu hiện tại.</p>
               )}
             </div>
 

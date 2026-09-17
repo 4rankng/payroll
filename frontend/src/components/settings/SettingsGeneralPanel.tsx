@@ -53,7 +53,7 @@ const SettingToggleCard = ({
           >
             {title}
           </Label>
-          <p id={descriptionId} className="break-words text-sm leading-5 text-muted-foreground">
+          <p id={descriptionId} className="break-words text-sm leading-relaxed text-balance text-muted-foreground">
             {description}
           </p>
         </div>
@@ -88,23 +88,25 @@ const SettingsSection = ({ icon: Icon, title, description, children }: SettingsS
   return (
     <section
       aria-labelledby={headingId}
-      className="grid gap-4 border-b py-6 first:pt-0 last:border-b-0 last:pb-0 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:gap-8"
+      className="grid gap-5 border-b py-7 first:pt-0 last:border-b-0 last:pb-0 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:gap-8"
     >
       <div className="flex min-w-0 items-start gap-3 lg:pt-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/5 text-primary">
-          <Icon aria-hidden="true" className="h-4 w-4" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm">
+          <Icon aria-hidden="true" className="h-[18px] w-[18px]" />
         </div>
         <div className="min-w-0 pt-0.5">
-          <h2 id={headingId} className="text-base font-semibold leading-6 text-foreground">
+          <h2 id={headingId} className="text-sm font-bold leading-6 text-foreground">
             {title}
           </h2>
-          <p className="mt-0.5 text-sm leading-5 text-muted-foreground">{description}</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-balance">
+            {description}
+          </p>
         </div>
       </div>
 
       <div
         data-slot="settings-group"
-        className="min-w-0 divide-y overflow-hidden rounded-xl border bg-card"
+        className="min-w-0 divide-y overflow-hidden rounded-2xl border bg-card shadow-sm"
       >
         {children}
       </div>
@@ -140,6 +142,13 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
         displayMode="currency-slider"
         min="100000000"
         max="500000000"
+        sliderPresets={[
+          '100000000',
+          '200000000',
+          '300000000',
+          '400000000',
+          '500000000',
+        ]}
         errorMessage={form.bulkTransferWorkbookLimitSaveError}
         unavailableMessage={form.bulkTransferWorkbookLimitUnavailableMessage}
         onRetry={form.retryLoading}

@@ -171,7 +171,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <span className="led-pulse h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.18)]" />
-                    <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-emerald-200">
+                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-200">
                       Ví tiền
                     </span>
                   </div>
@@ -218,7 +218,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 {showFeeRail ? (
                   <div className="grid grid-cols-2 gap-2">
                     <div className="min-w-0">
-                      <div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                      <div className="text-xs font-semibold uppercase tracking-[0.1em] text-white/45">
                         Tổng phí trả
                       </div>
                       <div className="mt-1 break-words font-financial text-[13px] font-medium leading-snug text-white tabular-nums">
@@ -226,7 +226,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                       </div>
                     </div>
                     <div className="min-w-0">
-                      <div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                      <div className="text-xs font-semibold uppercase tracking-[0.1em] text-white/45">
                         Phí tháng này
                       </div>
                       <div className="mt-1 break-words font-financial text-[13px] font-medium leading-snug text-white tabular-nums">
@@ -236,7 +236,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                   </div>
                 ) : (
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                    <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/45">
                       Đang chi trả
                     </span>
                     <span className="break-words font-financial text-[13px] font-medium leading-snug tabular-nums text-white">
@@ -256,7 +256,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="led-pulse h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.18)]" />
-                    <span className="text-[10.5px] font-bold uppercase tracking-[0.12em] text-emerald-200">
+                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-200">
                       Ví tiền
                     </span>
                   </div>
@@ -289,12 +289,12 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 <div className="flex items-center justify-between gap-3 sm:justify-end sm:gap-5">
                   <div className="min-w-0 leading-tight">
                     {walletBalance?.as_of && (
-                      <p className="text-[11px] tabular-nums tracking-wide text-white/55">
+                      <p className="text-xs tabular-nums tracking-wide text-white/55">
                         Cập nhật {formatVietnameseDateTime(walletBalance.as_of)}
                       </p>
                     )}
                     <p className={cn("flex items-baseline gap-2", walletBalance?.as_of && "mt-1")}>
-                      <span className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/45">
+                      <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/45">
                         Đang chi trả
                       </span>
                       <span className="font-financial text-[15px] font-medium leading-snug tabular-nums text-white">
@@ -336,13 +336,13 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
               <div className="space-y-3">
                 <div className="grid grid-cols-3 gap-2">
                   <div className="rounded-lg border border-border/60 bg-muted p-2.5">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Nhà cung cấp</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Nhà cung cấp</p>
                     <p className="mt-0.5 font-financial text-sm font-bold tabular-nums text-foreground">
                       {formatCurrency(mismatch?.provider ?? 0)}
                     </p>
                   </div>
                   <div className="rounded-lg border border-border/60 bg-muted p-2.5">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Hệ thống</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Hệ thống</p>
                     <p className="mt-0.5 font-financial text-sm font-bold tabular-nums text-foreground">
                       {formatCurrency(mismatch?.local ?? 0)}
                     </p>
@@ -353,7 +353,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                       diff > 0 ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50",
                     )}
                   >
-                    <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">Chênh lệch</p>
+                    <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Chênh lệch</p>
                     <p
                       className={cn(
                         "mt-0.5 font-financial text-sm font-bold tabular-nums",

@@ -3,6 +3,7 @@ import { Calculator } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatVndDigits } from "@/components/settings/SettingCard";
 import { resolveFeeLocal } from "@/hooks/admin/useFeeSchedulePreview";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import type { FeeScheduleEntry } from "@/types/api/advance-payment-fee-schedule.types";
@@ -89,11 +90,15 @@ export const FeeScheduleCalculator = ({ entries }: Props) => {
           </Label>
           <Input
             id="calc-amount"
-            type="number"
-            min={0}
-            step={100_000}
-            value={amount}
-            onChange={(e) => setAmount(Number(e.target.value) || 0)}
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            value={formatVndDigits(String(amount))}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, '');
+              setAmount(digits ? Number(digits) : 0);
+            }}
+            className="h-12 text-base font-semibold tabular-nums"
           />
         </div>
         <div className="space-y-1.5">

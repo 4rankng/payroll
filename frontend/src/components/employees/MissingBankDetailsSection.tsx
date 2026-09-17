@@ -27,12 +27,12 @@ function ProjectCell({ projects }: { projects: CurrentProject[] }) {
           <span className="font-mono text-xs font-medium text-foreground">{p.code}</span>
           <span className="text-xs text-muted-foreground">{p.name}</span>
           {p.payment_schedule && (
-            <Badge variant="secondary" className="text-[11px] px-1.5 py-0 h-4 font-normal">
+            <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 font-normal">
               {SCHEDULE_LABEL[p.payment_schedule] ?? p.payment_schedule}
             </Badge>
           )}
           {p.position && (
-            <span className="text-[11px] text-muted-foreground">• {p.position}</span>
+            <span className="text-xs text-muted-foreground">• {p.position}</span>
           )}
         </div>
       ))}
@@ -158,7 +158,7 @@ export const MissingBankDetailsSection = ({
                           {hasPending && (
                             <span
                               title={`${employee.timesheet_summary!.pending_timesheets} bảng công chờ duyệt`}
-                              className="inline-flex items-center gap-1 text-[11px] font-medium text-orange-700 bg-orange-100 border border-orange-200 rounded px-1.5 py-0.5"
+                              className="inline-flex items-center gap-1 text-xs font-medium text-orange-700 bg-orange-100 border border-orange-200 rounded px-1.5 py-0.5"
                             >
                               <Clock className="h-2.5 w-2.5" aria-hidden="true" />
                               {employee.timesheet_summary!.pending_timesheets} chờ duyệt
@@ -170,7 +170,7 @@ export const MissingBankDetailsSection = ({
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap items-start gap-1">
                           <span
-                            className={`inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[11px] font-medium leading-4 ${
+                            className={`inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-xs font-medium leading-4 ${
                               isInvalid
                                 ? 'border-rose-300 bg-rose-100 text-rose-800'
                                 : 'border-amber-300 bg-amber-100 text-amber-900'
@@ -179,7 +179,7 @@ export const MissingBankDetailsSection = ({
                             <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
                             {isInvalid ? 'Sai thông tin' : 'Thiếu thông tin'}
                           </span>
-                          <span className={`inline-flex max-w-[240px] items-start gap-1 rounded border px-1.5 py-0.5 text-[11px] font-medium leading-4 ${
+                          <span className={`inline-flex max-w-[240px] items-start gap-1 rounded border px-1.5 py-0.5 text-xs font-medium leading-4 ${
                             isInvalid
                               ? 'border-rose-300 bg-rose-100 text-rose-800'
                               : 'border-amber-300 bg-amber-100 text-amber-900'

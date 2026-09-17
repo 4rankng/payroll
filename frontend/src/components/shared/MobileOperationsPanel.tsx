@@ -79,7 +79,7 @@ export function MobileOperationsPanel({
         <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
           <div className="min-w-0">
             {eyebrow && (
-              <div className="mb-1 inline-flex items-center text-[11px] font-semibold text-muted-foreground">
+              <div className="mb-1 inline-flex items-center text-xs font-semibold text-muted-foreground">
                 {eyebrow}
               </div>
             )}
@@ -93,7 +93,7 @@ export function MobileOperationsPanel({
             )}
           </div>
           <div className="min-w-0 text-right">
-            <p className="text-[11px] font-semibold uppercase tracking-normal text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">
               {primaryLabel}
             </p>
             <p className="mt-1 break-words font-display text-xl font-extrabold leading-tight tracking-normal text-primary tabular-nums min-[420px]:text-2xl min-[420px]:leading-none">
@@ -133,11 +133,11 @@ export function MobileOperationsPanel({
                   className="relative flex min-h-[48px] min-w-0 touch-manipulation flex-col items-center justify-center gap-1 rounded-lg px-1.5 text-center transition-colors active:bg-muted disabled:pointer-events-none disabled:opacity-45"
                 >
                   <Icon className="h-5 w-5 text-primary" />
-                  <span className="max-w-full text-[11px] font-semibold leading-tight text-foreground">
+                  <span className="max-w-full text-xs font-semibold leading-tight text-foreground">
                     {action.label}
                   </span>
                   {action.badge && (
-                    <span className="absolute right-1.5 top-1.5 rounded-full bg-warning px-1.5 text-[11px] font-bold leading-4 text-warning-foreground">
+                    <span className="absolute right-1.5 top-1.5 rounded-full bg-warning px-1.5 text-xs font-bold leading-4 text-warning-foreground">
                       {action.badge}
                     </span>
                   )}
@@ -175,7 +175,7 @@ function OperationMetricCell({
           {metric.value}
         </span>
         {metric.helper && (
-          <span className="col-span-2 block text-[11px] leading-snug text-muted-foreground">
+          <span className="col-span-2 block text-xs leading-snug text-muted-foreground">
             {metric.helper}
           </span>
         )}

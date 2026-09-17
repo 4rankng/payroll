@@ -17,7 +17,7 @@ export default function CronHealthPageMobile() {
 
   if (isLoading) {
     return (
-      <div className="min-h-full flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[hsl(var(--surface-page))] flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -25,8 +25,12 @@ export default function CronHealthPageMobile() {
 
   if (isError) {
     return (
-      <div>
-        <div role="alert" className="p-4">
+      <div className="min-h-[100dvh] bg-[hsl(var(--surface-page))]">
+        <MobilePageHeader
+          title="Tác vụ định kỳ"
+          icon={Clock}
+        />
+        <div role="alert" className="px-4 pt-4">
           <ErrorState message="Không thể tải danh sách tác vụ. Vui lòng thử lại." onRetry={() => void refetch()} />
         </div>
       </div>
@@ -34,7 +38,7 @@ export default function CronHealthPageMobile() {
   }
 
   return (
-    <div className="min-h-full pb-[calc(5rem+env(safe-area-inset-bottom))]">
+    <div className="min-h-[100dvh] max-w-full overflow-x-clip bg-[hsl(var(--surface-page))]">
       <MobilePageHeader
         title="Tác vụ định kỳ"
         icon={Clock}
@@ -55,7 +59,7 @@ export default function CronHealthPageMobile() {
         }
       />
 
-      <div className="p-4 flex flex-col gap-3">
+      <div className="px-4 pt-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] flex flex-col gap-3">
         {jobs?.map((job) => (
           <CronJobCard
             key={job.name}

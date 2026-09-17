@@ -272,13 +272,15 @@ export const AdBannerSection = () => {
                       aria-hidden="true"
                       className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS_DOT[status.key])}
                     />
-                    <h3 className="truncate text-sm font-medium text-foreground">{banner.title}</h3>
+                    <h3 className="min-w-0 flex-1 break-words text-sm font-medium text-foreground sm:truncate">
+                      {banner.title}
+                    </h3>
                     <span className={cn('shrink-0 text-xs font-medium', STATUS_TEXT[status.key])}>
                       {status.label}
                     </span>
                   </div>
 
-                  <p className="mt-1.5 truncate pl-3.5 text-xs text-muted-foreground">
+                  <p className="mt-1.5 break-words pl-3.5 text-xs text-muted-foreground sm:truncate">
                     <span className="tabular-nums">
                       {format(new Date(banner.startsAt), DATE_DISPLAY)} –{' '}
                       {format(new Date(banner.endsAt), DATE_DISPLAY)}
@@ -305,21 +307,21 @@ export const AdBannerSection = () => {
                   )}
                 </div>
 
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex w-full basis-full shrink-0 flex-wrap items-center justify-end gap-1 sm:w-auto sm:basis-auto sm:flex-nowrap">
                   {expired ? (
-                    <Button type="button" variant="outline" size="sm" onClick={() => setEditing({ banner, clone: true })}>
+                    <Button type="button" variant="outline" size="sm" className="min-h-11 sm:min-h-0" onClick={() => setEditing({ banner, clone: true })}>
                       Gia hạn
                     </Button>
                   ) : (
                     <>
-                      <Button type="button" variant="outline" size="sm" onClick={() => setEditing({ banner, clone: false })}>
+                      <Button type="button" variant="outline" size="sm" className="min-h-11 sm:min-h-0" onClick={() => setEditing({ banner, clone: false })}>
                         Sửa
                       </Button>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="gap-1.5 text-muted-foreground hover:text-foreground"
+                        className="min-h-11 gap-1.5 text-muted-foreground hover:text-foreground sm:min-h-0"
                         onClick={() => toggleActive(banner)}
                         disabled={updateMutation.isPending}
                       >
@@ -333,7 +335,7 @@ export const AdBannerSection = () => {
                     variant="ghost"
                     size="icon"
                     aria-label={`Xóa chiến dịch ${banner.title}`}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="min-h-11 min-w-11 text-muted-foreground hover:text-destructive sm:min-h-0 sm:min-w-0"
                     onClick={() => remove(banner)}
                     disabled={deleteMutation.isPending}
                   >

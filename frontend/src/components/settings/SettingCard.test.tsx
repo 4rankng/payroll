@@ -67,7 +67,7 @@ describe('SettingCard currency-vnd mode', () => {
     renderCurrencyCard({ initialValue: value });
 
     expect(screen.getByRole('alert')).toHaveTextContent(expectedError);
-    expect(screen.getByRole('button', { name: 'Lưu' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled();
   });
 
   it('rejects decimal and negative edits instead of silently changing their meaning', () => {
@@ -83,7 +83,7 @@ describe('SettingCard currency-vnd mode', () => {
 
     fireEvent.change(input, { target: { value: '-5' } });
     expect(screen.getByRole('alert')).toHaveTextContent('Chỉ nhập số nguyên dương');
-    expect(screen.queryByRole('button', { name: 'Lưu' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lưu thay đổi' })).not.toBeInTheDocument();
   });
 
   it('accepts 200000000 typed through the formatted display without error', () => {
@@ -109,7 +109,7 @@ describe('SettingCard currency-vnd mode', () => {
     }
 
     expect(input).toHaveValue('200.000.000');
-    expect(screen.getByRole('button', { name: 'Lưu' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeEnabled();
   });
 
   it('accepts backspacing through the formatted display', () => {
@@ -132,8 +132,8 @@ describe('SettingCard currency-vnd mode', () => {
     fireEvent.change(input, { target: { value: '500000000' } });
 
     expect(input).toHaveValue('500.000.000');
-    expect(screen.getByRole('button', { name: 'Hủy' })).toHaveClass('h-11');
-    const saveButton = screen.getByRole('button', { name: 'Lưu' });
+    expect(screen.getByRole('button', { name: 'Hoàn tác' })).toHaveClass('h-11');
+    const saveButton = screen.getByRole('button', { name: 'Lưu thay đổi' });
     expect(saveButton).toHaveClass('h-11');
     fireEvent.click(saveButton);
     expect(onSave).toHaveBeenCalledTimes(1);
@@ -207,8 +207,8 @@ describe('SettingCard currency-slider mode', () => {
     expect(slider).toHaveAttribute('aria-valuemin', '100000000');
     expect(slider).toHaveAttribute('aria-valuemax', '500000000');
     expect(screen.getByText('400.000.000')).toBeInTheDocument();
-    expect(screen.getByText('100.000.000')).toBeInTheDocument();
-    expect(screen.getByText('500.000.000')).toBeInTheDocument();
+    expect(screen.getByText('100.000.000 ₫')).toBeInTheDocument();
+    expect(screen.getByText('500.000.000 ₫')).toBeInTheDocument();
   });
 
   it('moves in 10M steps and saves', () => {
@@ -220,7 +220,7 @@ describe('SettingCard currency-slider mode', () => {
     expect(slider).toHaveAttribute('aria-valuenow', '410000000');
     expect(screen.getByText('410.000.000')).toBeInTheDocument();
 
-    const saveButton = screen.getByRole('button', { name: 'Lưu' });
+    const saveButton = screen.getByRole('button', { name: 'Lưu thay đổi' });
     expect(saveButton).toBeEnabled();
     fireEvent.click(saveButton);
     expect(onSave).toHaveBeenCalledTimes(1);

@@ -50,7 +50,7 @@ function TopEmployeeRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid:
       {/* Rank badge */}
       <div
         className={cn(
-          'flex items-center justify-center w-7 h-7 rounded-full text-[11px] font-bold shrink-0 border',
+          'flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0 border',
           rank?.badge ?? 'bg-muted/40 text-muted-foreground border-border/40',
         )}
       >
@@ -65,11 +65,11 @@ function TopEmployeeRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid:
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-sm font-medium text-foreground break-words">{item.employee_name}</span>
           {item.is_active ? (
-            <Badge variant="outline" className="min-h-5 shrink-0 border-emerald-200 bg-emerald-50 px-1 py-0 text-[10px] text-emerald-800">
+            <Badge variant="outline" className="min-h-5 shrink-0 border-emerald-200 bg-emerald-50 px-1 py-0 text-xs text-emerald-800">
               <UserCheck className="w-2.5 h-2.5 mr-0.5" />Đang làm
             </Badge>
           ) : (
-            <Badge variant="outline" className="min-h-5 shrink-0 border-red-200 bg-red-50 px-1 py-0 text-[10px] text-red-800">
+            <Badge variant="outline" className="min-h-5 shrink-0 border-red-200 bg-red-50 px-1 py-0 text-xs text-red-800">
               <UserX className="w-2.5 h-2.5 mr-0.5" />Nghỉ
             </Badge>
           )}

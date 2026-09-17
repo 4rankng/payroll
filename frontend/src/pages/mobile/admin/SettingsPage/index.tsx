@@ -44,13 +44,20 @@ const SettingsPageMobile = () => {
 
   if (form.isLoading) {
     return (
-      <div className="p-4 space-y-4">
-        <Skeleton className="h-11 w-48" />
-        <Skeleton className="h-11 w-64" />
-        <div className="grid grid-cols-1 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-40" />
-          ))}
+      <div className="min-h-[100dvh] bg-[hsl(var(--surface-page))]">
+        <MobilePageHeader
+          title="Cài đặt"
+          icon={Settings}
+          subtitle="Quản lý cấu hình hệ thống"
+        />
+        <div className="px-4 pt-4 space-y-4">
+          <Skeleton className="h-11 w-48" />
+          <Skeleton className="h-11 w-64" />
+          <div className="grid grid-cols-1 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-40" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -58,26 +65,26 @@ const SettingsPageMobile = () => {
 
   if (form.loadError) {
     return (
-      <div className="max-w-full overflow-hidden pb-[calc(5rem+env(safe-area-inset-bottom))]">
+      <div className="min-h-[100dvh] bg-[hsl(var(--surface-page))]">
         <MobilePageHeader
           title="Cài đặt"
           icon={Settings}
           subtitle="Quản lý cấu hình hệ thống"
         />
-        <div className="p-4">
+        <div className="px-4 pt-4">
           <div
             role="alert"
-            className="space-y-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4"
+            className="space-y-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-5"
           >
             <div className="flex min-w-0 items-start gap-3">
               <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-              <p className="min-w-0 break-words text-sm text-destructive">{form.loadError}</p>
+              <p className="min-w-0 break-words text-sm leading-relaxed text-destructive">{form.loadError}</p>
             </div>
             <Button
               type="button"
               variant="outline"
               onClick={form.retryLoading}
-              className="h-11 w-full gap-2"
+              className="h-12 w-full gap-2"
             >
               <RefreshCw aria-hidden="true" className="h-4 w-4" />
               Thử lại
@@ -89,22 +96,25 @@ const SettingsPageMobile = () => {
   }
 
   return (
-    <div className="max-w-full overflow-hidden pb-[calc(5rem+env(safe-area-inset-bottom))]">
+    <div className="min-h-[100dvh] max-w-full overflow-x-clip bg-[hsl(var(--surface-page))]">
       <MobilePageHeader
         title="Cài đặt"
         icon={Settings}
         subtitle="Quản lý cấu hình hệ thống"
       />
 
-      <div className="p-4 space-y-3">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
+      {/* Content area with consistent padding, safe-area, and nav bar clearance */}
+      <div
+        className="px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-4"
+      >
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <SettingsTabList />
 
           <TabsContent value={SETTINGS_TABS.general} className="mt-0">
             <SettingsGeneralPanel form={form} />
           </TabsContent>
 
-          <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-3">
+          <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-4">
             <FeeScheduleSection />
             <Separator />
             <DisbursementFeeScheduleSection />

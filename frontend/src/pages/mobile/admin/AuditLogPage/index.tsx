@@ -148,7 +148,7 @@ export default function AuditLogPageMobile() {
             <Filter className="h-3.5 w-3.5" />
             Lọc
             {activeCount > 0 && (
-              <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-[11px] text-primary-foreground">
+              <Badge className="h-5 min-w-5 border-0 bg-primary px-1 text-xs text-primary-foreground">
                 {activeCount}
               </Badge>
             )}
@@ -160,30 +160,30 @@ export default function AuditLogPageMobile() {
       {activeCount > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 px-4 pb-2 pt-3">
           {filters.fromDate && (
-            <Badge variant="secondary" className="gap-1 text-[11px]">
+            <Badge variant="secondary" className="gap-1 text-xs">
               Từ {filters.fromDate}
             </Badge>
           )}
           {filters.toDate && (
-            <Badge variant="secondary" className="gap-1 text-[11px]">
+            <Badge variant="secondary" className="gap-1 text-xs">
               Đến {filters.toDate}
             </Badge>
           )}
           {(filters.action ?? []).map((a) => (
-            <Badge key={a} variant="secondary" className="text-[11px]">
+            <Badge key={a} variant="secondary" className="text-xs">
               {(VIETNAMESE_AUDIT_LABELS.actions as Record<string, string>)[a] ??
                 a}
             </Badge>
           ))}
           {(filters.entityType ?? []).map((et) => (
-            <Badge key={et} variant="secondary" className="text-[11px]">
+            <Badge key={et} variant="secondary" className="text-xs">
               {(VIETNAMESE_AUDIT_LABELS.entities as Record<string, string>)[et] ??
                 et}
             </Badge>
           ))}
           <button
             onClick={reset}
-            className="inline-flex min-h-11 items-center gap-1 px-1 text-[11px] font-semibold text-destructive active:opacity-70"
+            className="inline-flex min-h-11 items-center gap-1 px-1 text-xs font-semibold text-destructive active:opacity-70"
           >
             <X className="h-3 w-3" />
             Xóa lọc

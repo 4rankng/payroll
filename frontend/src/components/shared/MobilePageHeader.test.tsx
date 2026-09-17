@@ -13,11 +13,16 @@ describe('MobilePageHeader', () => {
 
     const action = screen.getByRole('button', { name: 'Nhập' });
     const actionsContainer = action.parentElement;
-    const headerRow = screen.getByRole('heading', { name: 'Bảng công' }).parentElement?.parentElement?.parentElement;
+    const titleBlock = screen.getByRole('heading', { name: 'Bảng công' }).parentElement;
+    const leftBlock = titleBlock?.parentElement;
+    const headerRow = leftBlock?.parentElement;
 
+    // Inline actions keep their beside-the-title sizing, and the title block
+    // reserves a 10rem floor so the row only wraps when a narrow viewport
+    // genuinely cannot fit both.
     expect(actionsContainer).toHaveClass('basis-auto', 'max-w-[52%]');
-    expect(headerRow).toHaveClass('flex-nowrap');
-    expect(headerRow).not.toHaveClass('flex-wrap');
+    expect(leftBlock).toHaveClass('min-w-[10rem]');
+    expect(headerRow).toHaveClass('flex-wrap');
   });
 
   it('uses the page canvas when rendered as an embedded borderless header', () => {
@@ -36,7 +41,7 @@ describe('MobilePageHeader', () => {
     expect(header).not.toHaveClass('bg-white');
   });
 
-  it('moves actions below the title only when a page explicitly requests it', () => {
+  it('stacks actions onto their own row when a page requests stacked layout', () => {
     render(
       <MobilePageHeader
         title="Dự án"

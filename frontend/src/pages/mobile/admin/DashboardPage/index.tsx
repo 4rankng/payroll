@@ -84,13 +84,13 @@ function DashboardDisclosureSection({
             <Icon className="h-4 w-4 text-primary/70" />
           </span>
           <span className="min-w-0">
-            <span className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               {eyebrow}
             </span>
             <span className="mt-1 block text-sm font-semibold text-foreground">{title}</span>
             <span className="sr-only">{summary}</span>
             {meta && (
-              <span className="mt-1 inline-flex items-center text-[11px] font-semibold text-foreground tabular-nums">
+              <span className="mt-1 inline-flex items-center text-xs font-semibold text-foreground tabular-nums">
                 {meta}
               </span>
             )}
