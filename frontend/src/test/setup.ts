@@ -18,3 +18,16 @@ Object.defineProperty(window, 'matchMedia', {
     dispatchEvent: () => false,
   }),
 });
+
+// jsdom does not implement `ResizeObserver`. Radix UI primitives (e.g. the
+// Slider in SettingCard) measure elements through it at mount time, so any
+// test rendering them crashes without a no-op stub.
+class ResizeObserverStub {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: ResizeObserverStub,
+});

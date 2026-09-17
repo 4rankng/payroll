@@ -3,6 +3,7 @@ import { Check, X, AlertCircle, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 
 interface SettingCardProps {
@@ -18,7 +19,10 @@ interface SettingCardProps {
   type?: 'text' | 'number';
   suffix?: string;
   inputClassName?: string;
-  displayMode?: 'default' | 'currency-vnd' | 'account-number';
+  displayMode?: 'default' | 'currency-vnd' | 'currency-slider' | 'account-number';
+  // Step size for displayMode='currency-slider'. Defaults to 10.000.000 ₫ —
+  // coarse round stops are the intended interaction for the Chuyển lô cap.
+  sliderStep?: number;
   errorMessage?: string | null;
   unavailableMessage?: string | null;
   onRetry?: () => void;
@@ -49,7 +53,7 @@ const validateValue = (
   type: 'text' | 'number',
   min: number | string,
   max: number | string,
-  displayMode: 'default' | 'currency-vnd' | 'account-number',
+  displayMode: 'default' | 'currency-vnd' | 'currency-slider' | 'account-number',
   wholeNumber: boolean,
 ): { isValid: boolean; errorMessage?: string } => {
   if (!value || value.trim() === '') {
@@ -61,7 +65,7 @@ const validateValue = (
     }
     return { isValid: true };
   }
-  if (displayMode === 'currency-vnd') {
+  if (displayMode === 'currency-vnd' || displayMode === 'currency-slider') {
     if (!/^\d+$/.test(value)) {
       return { isValid: false, errorMessage: 'Chỉ nhập số nguyên dương, không nhập số lẻ' };
     }
@@ -110,6 +114,7 @@ export const SettingCard = ({
   min = 0,
   max = 100,
   step = 0.01,
+  sliderStep = 10_000_000,
   wholeNumber = false,
 }: SettingCardProps) => {
   const generatedId = useId().replace(/:/g, '');
@@ -123,6 +128,7 @@ export const SettingCard = ({
   const isUnavailable = Boolean(unavailableMessage);
   const isInvalid = isUnavailable || Boolean(currencyInputError) || !validation.isValid;
   const hasVisibleError = Boolean(visibleError);
+  const isSliderMode = displayMode === 'currency-slider';
   const displayValue = displayMode === 'currency-vnd' ? formatVndDigits(value) : value;
   const visibleSuffix = displayMode === 'currency-vnd' ? '₫' : suffix;
 
@@ -139,15 +145,30 @@ export const SettingCard = ({
       return;
     }
 
-    if (/^\d+$/.test(trimmedValue)) {
+    // displayValue still holds the previously rendered value here (the
+    // component is controlled and React has not re-rendered yet), so an edit
+    // that only drops trailing characters is a backspace/delete through the
+    // formatted string. Its dots are formatter separators, not decimal
+    // points — strip them and keep the remaining digits.
+    const isTrailingDeletion =
+      trimmedValue.length < displayValue.length && displayValue.startsWith(trimmedValue);
+    const groups = trimmedValue.split('.');
+    const digits = groups.join('');
+    if (isTrailingDeletion && /^\d+$/.test(digits)) {
       setCurrencyInputError(null);
-      onChange(normalizeIntegerDigits(trimmedValue));
+      onChange(normalizeIntegerDigits(digits));
       return;
     }
 
-    if (/^\d{1,3}(?:\.\d{3})+$/.test(trimmedValue)) {
+    // Dots are thousand separators in the vi-VN formatted display. Appending
+    // a digit to "2.000" yields "2.0000", which is a legitimate mid-typing
+    // state even though no group boundary lines up yet — accept any all-digit
+    // value whose separator groups carry at least three digits, and reject
+    // shorter tails ("2.5") as decimal intent.
+    const isSeparatorForm = /^\d+$/.test(digits) && groups.slice(1).every((g) => g.length >= 3);
+    if (isSeparatorForm) {
       setCurrencyInputError(null);
-      onChange(normalizeIntegerDigits(trimmedValue.replace(/\./g, '')));
+      onChange(normalizeIntegerDigits(digits));
       return;
     }
 
@@ -181,6 +202,30 @@ export const SettingCard = ({
         </div>
 
         <div className="min-w-0 space-y-2">
+          {isSliderMode ? (
+            <div className="space-y-3">
+              <div className="text-right text-base font-semibold tabular-nums">
+                {formatVndDigits(value)}{' '}
+                <span className="text-xs font-medium text-muted-foreground">₫</span>
+              </div>
+              <Slider
+                aria-label={title}
+                min={Number(min)}
+                max={Number(max)}
+                step={sliderStep}
+                value={[Number(value) || Number(min)]}
+                onValueChange={([next]) => {
+                  setCurrencyInputError(null);
+                  onChange(String(next));
+                }}
+                disabled={isSaving || isUnavailable}
+              />
+              <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
+                <span>{formatVndDigits(String(min))}</span>
+                <span>{formatVndDigits(String(max))}</span>
+              </div>
+            </div>
+          ) : (
           <div className="flex items-center gap-2">
             <div className="relative min-w-0 flex-1">
               <Input
@@ -228,6 +273,7 @@ export const SettingCard = ({
               )}
             </div>
           </div>
+          )}
 
           {visibleError && (
             <div

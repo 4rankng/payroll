@@ -106,11 +106,17 @@ func TestSettingsConfigServiceGetBulkTransferWorkbookLimitFallsBackToDefault(t *
 }
 
 func TestParseBulkTransferWorkbookLimitBoundaries(t *testing.T) {
-	for _, value := range []int64{MinBulkTransferWorkbookLimit, DefaultBulkTransferWorkbookLimit, math.MaxInt64} {
+	for _, value := range []int64{MinBulkTransferWorkbookLimit, DefaultBulkTransferWorkbookLimit, MaxBulkTransferWorkbookLimit} {
 		raw := strconv.FormatInt(value, 10)
 		parsed, err := parseBulkTransferWorkbookLimit(numberSetting(&raw))
 		require.NoError(t, err)
 		assert.Equal(t, value, parsed)
+	}
+
+	for _, value := range []int64{1, MinBulkTransferWorkbookLimit - 1, MaxBulkTransferWorkbookLimit + 1, math.MaxInt64} {
+		raw := strconv.FormatInt(value, 10)
+		_, err := parseBulkTransferWorkbookLimit(numberSetting(&raw))
+		require.Error(t, err)
 	}
 }
 

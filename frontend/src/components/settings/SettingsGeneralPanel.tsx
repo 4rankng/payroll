@@ -137,9 +137,9 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
           form.bulkTransferWorkbookLimitVnd !== form.originalBulkTransferWorkbookLimitVnd
         }
         isSaving={form.isSaving}
-        displayMode="currency-vnd"
-        min="2"
-        max="9223372036854775807"
+        displayMode="currency-slider"
+        min="100000000"
+        max="500000000"
         errorMessage={form.bulkTransferWorkbookLimitSaveError}
         unavailableMessage={form.bulkTransferWorkbookLimitUnavailableMessage}
         onRetry={form.retryLoading}

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"api-server/internal/app/dto"
+	"api-server/internal/app/services/config"
 	"api-server/internal/app/services/excel"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
@@ -343,8 +344,8 @@ func (s *Service) buildTransferRowsWithPaymentPercentage(data *BulkTransferData,
 	if math.IsNaN(paymentPercentage) || math.IsInf(paymentPercentage, 0) || paymentPercentage <= 0 || paymentPercentage > 1 {
 		return nil, fmt.Errorf("payment percentage must be finite and between zero and one")
 	}
-	if workbookLimit < 2 {
-		return nil, fmt.Errorf("bulk transfer workbook limit must be at least 2 VND")
+	if workbookLimit < config.MinBulkTransferWorkbookLimit {
+		return nil, fmt.Errorf("bulk transfer workbook limit must be at least %d VND", config.MinBulkTransferWorkbookLimit)
 	}
 
 	rows := make([]transferRow, 0, len(data.EmployeeProjectAmounts))
@@ -400,8 +401,8 @@ func (s *Service) buildTransferRowsWithPaymentPercentage(data *BulkTransferData,
 }
 
 func partitionTransferRows(rows []transferRow, workbookLimit int64) ([][]transferRow, error) {
-	if workbookLimit < 2 {
-		return nil, fmt.Errorf("bulk transfer workbook limit must be at least 2 VND")
+	if workbookLimit < config.MinBulkTransferWorkbookLimit {
+		return nil, fmt.Errorf("bulk transfer workbook limit must be at least %d VND", config.MinBulkTransferWorkbookLimit)
 	}
 	if len(rows) == 0 {
 		return [][]transferRow{{}}, nil
