@@ -22,13 +22,13 @@ func main() {
 	}
 	password := os.Args[1]
 
-	cfg, err := config.Load()
+	cfg, err := config.LoadSecurityConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "load config: %v\n", err)
 		os.Exit(1)
 	}
 
-	hash, err := user.HashPassword(password, cfg.Security.HashSecret, cfg.Security.HashSalt, user.DefaultHashConfig())
+	hash, err := user.HashPassword(password, cfg.HashSecret, cfg.HashSalt, user.DefaultHashConfig())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "hash password: %v\n", err)
 		os.Exit(1)

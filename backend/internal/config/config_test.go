@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -341,4 +342,40 @@ func TestLoad(t *testing.T) {
 	if cfg.Auth.JWTSecret != "test-secret" {
 		t.Errorf("Load() Auth.JWTSecret = %v, want test-secret", cfg.Auth.JWTSecret)
 	}
+}
+
+func TestLoadSecurityConfig(t *testing.T) {
+	// Isolate from any real .env or exported shell values.
+	_ = os.Unsetenv("HASH_SECRET")
+	_ = os.Unsetenv("HASH_SALT")
+
+	// Both missing -> error naming both.
+	if _, err := LoadSecurityConfig(); err == nil {
+		t.Fatal("LoadSecurityConfig() with both values unset: want error, got nil")
+	} else if !strings.Contains(err.Error(), "HASH_SECRET") || !strings.Contains(err.Error(), "HASH_SALT") {
+		t.Errorf("error = %q, want it to name HASH_SECRET and HASH_SALT", err)
+	}
+
+	// Partially set -> error naming only the missing one.
+	_ = os.Setenv("HASH_SECRET", "dev-secret")
+	_, err := LoadSecurityConfig()
+	if err == nil {
+		t.Fatal("LoadSecurityConfig() with HASH_SALT unset: want error, got nil")
+	}
+	if strings.Contains(err.Error(), "HASH_SECRET") || !strings.Contains(err.Error(), "HASH_SALT") {
+		t.Errorf("error = %q, want it to name only HASH_SALT", err)
+	}
+
+	// Both set -> ok, values flow through.
+	_ = os.Setenv("HASH_SALT", "dev-salt")
+	cfg, err := LoadSecurityConfig()
+	if err != nil {
+		t.Fatalf("LoadSecurityConfig() with both set: error = %v", err)
+	}
+	if cfg.HashSecret != "dev-secret" || cfg.HashSalt != "dev-salt" {
+		t.Errorf("cfg = %+v, want HashSecret=dev-secret HashSalt=dev-salt", cfg)
+	}
+
+	_ = os.Unsetenv("HASH_SECRET")
+	_ = os.Unsetenv("HASH_SALT")
 }

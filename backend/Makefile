@@ -2,7 +2,9 @@
 
 # Load environment variables from .env file (optional — local dev only;
 # push/deploy must run without it: GHCR_OWNER has a ?= fallback below and the
-# GHCR token is resolved at runtime via ../scripts/ghcr-token.sh)
+# GHCR token is resolved at runtime via ../scripts/ghcr-token.sh;
+# backup/restore/reset-passwords read MySQL credentials from the container's
+# own MYSQL_ROOT_PASSWORD env at runtime)
 -include .env
 export
 
@@ -140,7 +142,7 @@ backup:
 	mkdir -p "$$BACKUP_DIR" && \
 	echo "🔗 Connecting to production server ($(PROD_SERVER))..." && \
 	echo "📊 Creating MySQL dump of payroll_db database..." && \
-	ssh root@$(PROD_SERVER) "docker exec \$$(docker ps --filter 'name=mysql' --format '{{.Names}}' | head -1) mysqldump -u root -p'$(MYSQL_ROOT_PASSWORD_PROD)' --single-transaction --routines --triggers --complete-insert payroll_db > /tmp/$$BACKUP_FILE" && \
+	ssh root@$(PROD_SERVER) "docker exec \$$(docker ps --filter 'name=mysql' --format '{{.Names}}' | head -1) sh -c 'mysqldump -u root -p\"\$$MYSQL_ROOT_PASSWORD\" --single-transaction --routines --triggers --complete-insert payroll_db' > /tmp/$$BACKUP_FILE" && \
 	echo "🗜️  Compressing backup file..." && \
 	ssh root@$(PROD_SERVER) "gzip /tmp/$$BACKUP_FILE" && \
 	echo "✅ Verifying backup file exists and is not empty..." && \
@@ -166,26 +168,26 @@ restore:
 	echo "📂 Found latest backup: $$(basename $$LATEST_BACKUP)" && \
 	echo "📊 Backup size: $$(du -h "$$LATEST_BACKUP" | cut -f1)" && \
 	echo "🗑️  Dropping existing database..." && \
-	docker exec payroll-mysql mysql -u root -p'$(ROOT_PASSWORD)' -e "DROP DATABASE IF EXISTS payroll_db;" && \
+	docker exec payroll-mysql sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS payroll_db;"' && \
 	echo "🆕 Creating fresh database..." && \
-	docker exec payroll-mysql mysql -u root -p'$(ROOT_PASSWORD)' -e "CREATE DATABASE payroll_db;" && \
+	docker exec payroll-mysql sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE payroll_db;"' && \
 	echo "⏳ Decompressing and restoring to payroll_db..." && \
-	gunzip -c "$$LATEST_BACKUP" | docker exec -i payroll-mysql mysql -u root -p'$(ROOT_PASSWORD)' payroll_db && \
+	gunzip -c "$$LATEST_BACKUP" | docker exec -i payroll-mysql sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" payroll_db' && \
 	echo "✅ Database restored successfully from backup!" && \
 	echo "🔐 Generating Argon2id hash for 'Admin123' (using app peppers)..." && \
-	HASH=$$(go run ./cmd/hashpw Admin123) && \
+	HASH=$$(if [ -f .env ]; then set -a; . ./.env; set +a; fi; HASH_SECRET=$${HASH_SECRET:-dev-not-for-prod-hash-secret} HASH_SALT=$${HASH_SALT:-dev-not-for-prod-hash-salt} go run ./cmd/hashpw Admin123) && \
 	echo "🔐 Updating ALL user passwords to 'Admin123'..." && \
-	docker exec payroll-mysql mysql -u root -p'$(ROOT_PASSWORD)' payroll_db \
-		-e "UPDATE users SET password='$$HASH';" && \
+	docker exec -e UPD="UPDATE users SET password='$$HASH';" payroll-mysql \
+		sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" payroll_db -e "$$UPD"' && \
 	echo "✅ All users now have password: Admin123"
 
 # Reset every user's password to "Admin123" without dropping the DB.
 # Useful when you want a fresh login state but want to keep current dev data.
 reset-passwords:
 	@echo "🔐 Generating Argon2id hash for 'Admin123' (using app peppers)..."
-	@HASH=$$(go run ./cmd/hashpw Admin123) && \
-	docker exec payroll-mysql mysql -u root -p'$(ROOT_PASSWORD)' payroll_db \
-		-e "UPDATE users SET password='$$HASH';" && \
+	@HASH=$$(if [ -f .env ]; then set -a; . ./.env; set +a; fi; HASH_SECRET=$${HASH_SECRET:-dev-not-for-prod-hash-secret} HASH_SALT=$${HASH_SALT:-dev-not-for-prod-hash-salt} go run ./cmd/hashpw Admin123) && \
+	docker exec -e UPD="UPDATE users SET password='$$HASH';" payroll-mysql \
+		sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" payroll_db -e "$$UPD"' && \
 	echo "✅ All users now have password: Admin123"
 
 # Lint command for code quality

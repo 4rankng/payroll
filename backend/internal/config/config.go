@@ -619,6 +619,34 @@ func newOnepayConfig(env string) OnepayConfig {
 	}
 }
 
+// LoadSecurityConfig loads and validates only the password-hashing subset of
+// the config (HASH_SECRET + HASH_SALT) for offline tools like cmd/hashpw.
+// Unlike Load(), it does not require the full app config (JWT, OAuth, email
+// gates) because none of it affects hash generation, and the hashes it
+// produces must verify against the SAME values the local server runs with.
+func LoadSecurityConfig() (SecurityConfig, error) {
+	// Load .env if present (same behavior as Load(); godotenv does not
+	// override variables already set in the environment).
+	_ = godotenv.Load()
+
+	c := SecurityConfig{
+		HashSecret: getEnv("HASH_SECRET", ""),
+		HashSalt:   getEnv("HASH_SALT", ""),
+	}
+
+	var missing []string
+	if c.HashSecret == "" {
+		missing = append(missing, "HASH_SECRET")
+	}
+	if c.HashSalt == "" {
+		missing = append(missing, "HASH_SALT")
+	}
+	if len(missing) > 0 {
+		return c, fmt.Errorf("%s must be set", strings.Join(missing, ", "))
+	}
+	return c, nil
+}
+
 func (c *Config) validate() error {
 	if c.Auth.JWTSecret == "" {
 		return fmt.Errorf("JWT_SECRET must be set")
