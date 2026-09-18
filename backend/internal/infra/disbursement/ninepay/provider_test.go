@@ -362,6 +362,42 @@ func TestProvider_CheckAccount_HappyPath(t *testing.T) {
 	}
 }
 
+// TestProvider_CheckAccount_AccountNumberEchoedInHolderName mirrors the OnePay
+// regression: the confirmed account_name can come back with the account number
+// appended, which is provider metadata rather than part of the holder name.
+func TestProvider_CheckAccount_AccountNumberEchoedInHolderName(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(checkAccountResponse{
+			Status: 5, ErrorCode: "", Message: "OK",
+			BankCode: "9PAY", AccountNo: "02001010642905",
+			AccountName: "VU THI THU HA-02001010642905", AccountType: "0",
+		})
+	}))
+	defer srv.Close()
+
+	c, _ := NewClient(Config{
+		MerchantKey: "MK", SecretKey: "SK", SecretKeyChecksum: "ck",
+		Endpoint: srv.URL, HTTPTimeout: 5 * time.Second,
+	}, nil)
+	p := NewProvider(c, nil)
+
+	req := validAccountCheckRequest()
+	req.AccountNo = "02001010642905"
+	req.AccountName = "VŨ THỊ THU HÀ"
+
+	res, err := p.CheckAccount(context.Background(), req)
+	if err != nil {
+		t.Fatalf("CheckAccount: %v", err)
+	}
+	if !res.Valid {
+		t.Errorf("Valid = false, want true (RawErrorCode=%q RawMessage=%q)", res.RawErrorCode, res.RawMessage)
+	}
+	if res.AccountName != "VU THI THU HA" {
+		t.Errorf("AccountName = %q, want the holder name without the account-number echo", res.AccountName)
+	}
+}
+
 func TestProvider_CheckAccount_RejectedAccountIsNotError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

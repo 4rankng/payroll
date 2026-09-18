@@ -685,7 +685,11 @@ func TestNormalizeNameForComparison(t *testing.T) {
 		{"  TRAN   THI  B  ", "TRAN THI B"},
 		{"Trần Thị Hồng", "TRAN THI HONG"},
 		{"Đoàn Minh Đức", "DOAN MINH DUC"},
+		{"VU THI THU HA-02001010642905", "VU THI THU HA"},
+		{"Nguyễn Văn A (1023020330000)", "NGUYEN VAN A"},
+		{"NGUYEN VAN 2", "NGUYEN VAN"},
 		{"", ""},
+		{"02001010642905", ""},
 	}
 	for _, tc := range tests {
 		t.Run(tc.input, func(t *testing.T) {
@@ -697,9 +701,110 @@ func TestNormalizeNameForComparison(t *testing.T) {
 	}
 }
 
+func TestSanitizeHolderName(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		{"VU THI THU HA-02001010642905", "VU THI THU HA"},
+		{"NGUYEN VAN A", "NGUYEN VAN A"},
+		{"Trần Thị Hà", "Trần Thị Hà"}, // display form keeps diacritics
+		{"  TRAN   THI  B  ", "TRAN THI B"},
+		{"TRAN THI B (1023020330000)", "TRAN THI B"},
+		{"", ""},
+		{"02001010642905", ""}, // nothing but the echoed account number
+	}
+	for _, tc := range tests {
+		t.Run(tc.input, func(t *testing.T) {
+			if got := infrastructure.SanitizeHolderName(tc.input); got != tc.want {
+				t.Errorf("SanitizeHolderName(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
 // ---------------------------------------------------------------------------
 // CheckAccount: name matching
 // ---------------------------------------------------------------------------
+
+// TestProvider_CheckAccount_AccountNumberEchoedInHolderName reproduces the
+// production false positive where a bank returns the holder name with the
+// account number appended ("VU THI THU HA-02001010642905"). The name itself
+// matches, so the lookup must stay valid and the reported AccountName must be
+// the clean holder name — callers send it back as holder_name on the transfer.
+func TestProvider_CheckAccount_AccountNumberEchoedInHolderName(t *testing.T) {
+	fixedTime := mustParseDate(t, "20260108T112907Z")
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(AccountInfoResponse{
+			State:        "approved",
+			HolderName:   "VU THI THU HA-02001010642905",
+			ResponseCode: "00",
+			Message:      "Success",
+		})
+	}))
+	defer srv.Close()
+
+	c := testClient(t, srv.URL, fixedTime)
+	p := NewProvider(c, nil)
+
+	req := validAccountCheckRequest()
+	req.AccountNo = "02001010642905"
+	req.AccountName = "VŨ THỊ THU HÀ"
+
+	res, err := p.CheckAccount(context.Background(), req)
+	if err != nil {
+		t.Fatalf("CheckAccount: %v", err)
+	}
+	if !res.Valid {
+		t.Errorf("Valid = false, want true — the echoed account number is not part of the name (RawMessage=%q)", res.RawMessage)
+	}
+	if res.RawErrorCode == "name_mismatch" {
+		t.Error("RawErrorCode = name_mismatch, want the provider code")
+	}
+	if res.AccountName != "VU THI THU HA" {
+		t.Errorf("AccountName = %q, want the holder name without the account-number echo", res.AccountName)
+	}
+}
+
+// TestProvider_CheckAccount_AccountNumberEchoDoesNotMaskRealMismatch guards the
+// other direction: stripping the echo must not accept a different holder.
+func TestProvider_CheckAccount_AccountNumberEchoDoesNotMaskRealMismatch(t *testing.T) {
+	fixedTime := mustParseDate(t, "20260108T112907Z")
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(AccountInfoResponse{
+			State:        "approved",
+			HolderName:   "VU THI THU HA-02001010642905",
+			ResponseCode: "00",
+			Message:      "Success",
+		})
+	}))
+	defer srv.Close()
+
+	c := testClient(t, srv.URL, fixedTime)
+	p := NewProvider(c, nil)
+
+	req := validAccountCheckRequest()
+	req.AccountNo = "02001010642905"
+	req.AccountName = "NGUYEN VAN A"
+
+	res, err := p.CheckAccount(context.Background(), req)
+	if err != nil {
+		t.Fatalf("CheckAccount: %v", err)
+	}
+	if res.Valid {
+		t.Error("Valid = true, want false — different holder must still be blocked")
+	}
+	if res.RawErrorCode != "name_mismatch" {
+		t.Errorf("RawErrorCode = %q, want name_mismatch", res.RawErrorCode)
+	}
+	if strings.Contains(res.RawMessage, "02001010642905") {
+		t.Errorf("RawMessage should compare names, not echo the account number: %q", res.RawMessage)
+	}
+}
 
 func TestProvider_CheckAccount_NameMismatch(t *testing.T) {
 	fixedTime := mustParseDate(t, "20260108T112907Z")

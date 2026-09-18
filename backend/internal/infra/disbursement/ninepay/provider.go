@@ -150,7 +150,7 @@ func (p *Provider) CheckAccount(ctx context.Context, req infrastructure.AccountC
 		Valid:        isSuccessCode(resp.ErrorCode) && resp.Status == 5,
 		BankCode:     resp.BankCode,
 		AccountNo:    resp.AccountNo,
-		AccountName:  resp.AccountName,
+		AccountName:  infrastructure.SanitizeHolderName(resp.AccountName),
 		AccountType:  resp.AccountType,
 		RawErrorCode: resp.ErrorCode,
 		RawMessage:   resp.Message,
@@ -158,8 +158,11 @@ func (p *Provider) CheckAccount(ctx context.Context, req infrastructure.AccountC
 
 	// Name matching: compare stored name against bank-confirmed name.
 	// Blocks wrong-recipient transfers, avoiding provider fee on revert.
-	if result.Valid && resp.AccountName != "" && req.AccountName != "" {
-		if mismatchMsg, ok := infrastructure.MatchAccountName(req.AccountName, resp.AccountName); !ok {
+	// Both sides are sanitized of the account-number echo some banks append
+	// to the confirmed name; result.AccountName is already the sanitized
+	// form because callers echo it back as holder_name on the transfer.
+	if result.Valid && result.AccountName != "" && req.AccountName != "" {
+		if mismatchMsg, ok := infrastructure.MatchAccountName(req.AccountName, result.AccountName); !ok {
 			p.logger.Info("ninepay: name mismatch",
 				"request_id", req.RequestID,
 				"raw_expected", req.AccountName, "raw_actual", resp.AccountName)

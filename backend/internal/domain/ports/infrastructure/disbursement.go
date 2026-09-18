@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 
 	"api-server/internal/pkg/utils"
 )
@@ -252,19 +253,60 @@ type TransferLimiter interface {
 // Shared account-check helpers (used by all providers)
 // ---------------------------------------------------------------------------
 
-// NormalizeNameForComparison prepares a Vietnamese name for equality comparison:
-// strip diacritics → uppercase → collapse whitespace.
+// holderNameTokens splits a holder name on every non-letter, non-digit
+// boundary and drops the pure-digit tokens. Vietnamese personal names never
+// carry a number, so a digit-only token is always provider/bank metadata, not
+// part of the name — banks routinely echo the account number back inside the
+// confirmed holder name (e.g. "VU THI THU HA-02001010642905" for account
+// 02001010642905), which would otherwise read as a different name.
+func holderNameTokens(name string) []string {
+	fields := strings.FieldsFunc(name, func(r rune) bool {
+		return !unicode.IsLetter(r) && !unicode.IsDigit(r)
+	})
+	tokens := make([]string, 0, len(fields))
+	for _, f := range fields {
+		if digitsOnly(f) {
+			continue
+		}
+		tokens = append(tokens, f)
+	}
+	return tokens
+}
+
+func digitsOnly(s string) bool {
+	for _, r := range s {
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// SanitizeHolderName returns the holder name with provider-appended
+// account-number noise removed, preserving the original casing and
+// diacritics. Use it on any bank-confirmed name BEFORE storing it, showing it
+// to users, or echoing it back to the provider as holder_name on a transfer:
+// "NAME-<account_number>" is not a valid holder name for the disbursement
+// request, and it is not what the account holder is called.
+func SanitizeHolderName(name string) string {
+	return strings.Join(holderNameTokens(name), " ")
+}
+
+// NormalizeNameForComparison prepares a Vietnamese name for equality
+// comparison: strip diacritics → uppercase → drop account-number noise →
+// collapse whitespace.
 // Both OnePay and 9Pay return holder names without Vietnamese diacritics
 // (e.g. "NGUYEN VAN A"), so we normalize both sides the same way.
 func NormalizeNameForComparison(name string) string {
 	s := utils.NormalizeVietnamese(name) // strips diacritics, lowercases
-	s = strings.ToUpper(s)
-	return strings.Join(strings.Fields(s), " ")
+	return strings.ToUpper(strings.Join(holderNameTokens(s), " "))
 }
 
 // MatchAccountName compares a stored name against a bank-confirmed name,
-// both normalized to uppercase no-diacritics. Returns ("", nil) on match,
-// or a descriptive mismatch message on failure.
+// both sanitized of account-number noise and normalized to uppercase
+// no-diacritics. Returns ("", true) on match, or a descriptive mismatch
+// message on failure. Both sides are quoted as display names (account-number
+// noise stripped) so the message reads as a name comparison.
 func MatchAccountName(storedName, bankConfirmedName string) (mismatchMsg string, ok bool) {
 	if bankConfirmedName == "" || storedName == "" {
 		return "", true // skip when either side is empty (best-effort)
@@ -274,5 +316,6 @@ func MatchAccountName(storedName, bankConfirmedName string) (mismatchMsg string,
 	if expected == actual {
 		return "", true
 	}
-	return fmt.Sprintf("Tên chủ TK không khớp: hệ thống ghi \"%s\", ngân hàng xác nhận \"%s\"", storedName, bankConfirmedName), false
+	return fmt.Sprintf("Tên chủ TK không khớp: hệ thống ghi \"%s\", ngân hàng xác nhận \"%s\"",
+		SanitizeHolderName(storedName), SanitizeHolderName(bankConfirmedName)), false
 }

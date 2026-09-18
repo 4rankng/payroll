@@ -180,17 +180,21 @@ func (p *Provider) CheckAccount(ctx context.Context, req infrastructure.AccountC
 	}
 
 	// --- Name matching (post-API, pre-transfer) ---
-	// OnePay returns holder_name without Vietnamese diacritics.
-	// Compare normalized forms to catch wrong-recipient accounts.
-	if resp.HolderName != "" && req.AccountName != "" {
-		if mismatchMsg, ok := infrastructure.MatchAccountName(req.AccountName, resp.HolderName); !ok {
+	// OnePay returns holder_name without Vietnamese diacritics, and some
+	// banks echo the account number inside it ("VU THI THU HA-02001010642905").
+	// Sanitize before comparing so the echo cannot fake a mismatch — and
+	// report the sanitized name, because callers echo AccountName back as
+	// holder_name on the funds transfer and persist it as recipient_name.
+	confirmedName := infrastructure.SanitizeHolderName(resp.HolderName)
+	if confirmedName != "" && req.AccountName != "" {
+		if mismatchMsg, ok := infrastructure.MatchAccountName(req.AccountName, confirmedName); !ok {
 			p.logger.Info("onepay: name mismatch",
 				"request_id", req.RequestID,
 				"outcome", "name_mismatch",
 			)
 			return &infrastructure.AccountCheckResult{
 				Valid:        false,
-				AccountName:  resp.HolderName,
+				AccountName:  confirmedName,
 				AccountNo:    req.AccountNo,
 				RawErrorCode: "name_mismatch",
 				RawMessage:   mismatchMsg,
@@ -200,7 +204,7 @@ func (p *Provider) CheckAccount(ctx context.Context, req infrastructure.AccountC
 
 	return &infrastructure.AccountCheckResult{
 		Valid:        resp.State == "approved",
-		AccountName:  resp.HolderName,
+		AccountName:  confirmedName,
 		RawErrorCode: resp.ResponseCode,
 		RawMessage:   resp.Message,
 	}, nil
