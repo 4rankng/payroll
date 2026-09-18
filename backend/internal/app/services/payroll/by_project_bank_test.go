@@ -52,7 +52,7 @@ func TestByProjectExcelShowsConfiguredBank(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	for cell, want := range map[string]string{
 		"E8":  "TING TING TEST",
 		"E9":  "99001122",

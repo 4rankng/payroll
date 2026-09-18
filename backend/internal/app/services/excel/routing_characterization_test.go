@@ -71,7 +71,7 @@ func TestRouting_HiddenSheetSkipped(t *testing.T) {
 // B8/B9: unknown template must hard-fail, never silently import.
 func TestRouting_UnknownTemplateFails(t *testing.T) {
 	for name, mutate := range map[string]func(*excelize.File){
-		"empty workbook":   func(f *excelize.File) {},
+		"empty workbook": func(f *excelize.File) {},
 		"unrecognized sheet": func(f *excelize.File) {
 			_ = f.SetCellValue("Sheet1", "A1", "Foo")
 		},

@@ -389,7 +389,7 @@ func (e *FlexPayReconciliationExporter) updateSummarySheet(
 			}
 		}
 	}
-	whiteRowStyleID, err := e.buildSummaryRowStyle(f,  false)
+	whiteRowStyleID, err := e.buildSummaryRowStyle(f, false)
 	if err != nil {
 		return err
 	}

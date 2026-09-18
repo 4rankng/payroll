@@ -23,9 +23,9 @@ type DuplicateCheckParams struct {
 type DuplicateMatch struct {
 	ID                  uint
 	Fullname            string
-	CCCDMasked          string  // set only when matched via CCCD
-	MobileMasked        string  // set only when matched via mobile
-	EmailMasked         string  // set only when matched via email
+	CCCDMasked          string // set only when matched via CCCD
+	MobileMasked        string // set only when matched via mobile
+	EmailMasked         string // set only when matched via email
 	CurrentProjectNames []string
 	CreatedByName       string
 	CreatedAt           time.Time

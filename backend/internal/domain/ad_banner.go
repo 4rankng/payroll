@@ -46,10 +46,10 @@ type AdBannerCTA struct {
 // portal. Content is typed fields (title/body/bullets/CTAs) — admins never
 // author markup on a surface every worker sees.
 type AdBanner struct {
-	ID               uint           `json:"id" gorm:"primarykey;type:bigint unsigned"`
-	Title            string         `json:"title" gorm:"type:varchar(255);not null"`
-	Body             string         `json:"body" gorm:"type:text"`
-	Bullets          []string       `json:"bullets" gorm:"type:json;serializer:json"`
+	ID      uint     `json:"id" gorm:"primarykey;type:bigint unsigned"`
+	Title   string   `json:"title" gorm:"type:varchar(255);not null"`
+	Body    string   `json:"body" gorm:"type:text"`
+	Bullets []string `json:"bullets" gorm:"type:json;serializer:json"`
 	// column is pinned: GORM's naming strategy would otherwise mangle the
 	// acronym into "ct_as" and every INSERT/UPDATE would fail.
 	CTAs             []AdBannerCTA  `json:"ctas" gorm:"type:json;serializer:json;column:ctas"`

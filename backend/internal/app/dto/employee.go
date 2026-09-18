@@ -90,8 +90,8 @@ type EmployeeProjectInfo struct {
 	IsFlexible             bool    `json:"is_flexible"`
 	CheckInEnabled         bool    `json:"check_in_enabled"`
 	// Deferred check-in activation: enable is pending until day 1 of next month.
-	PendingCheckInEnabled  *bool   `json:"pending_check_in_enabled,omitempty"`
-	CheckInEffectiveFrom   *string `json:"check_in_effective_from,omitempty"`
+	PendingCheckInEnabled *bool   `json:"pending_check_in_enabled,omitempty"`
+	CheckInEffectiveFrom  *string `json:"check_in_effective_from,omitempty"`
 }
 
 // ListEmployeesResponse represents the response for listing employees
@@ -166,8 +166,8 @@ type EmployeeCurrentProject struct {
 	IsFlexible             bool    `json:"is_flexible"`
 	CheckInEnabled         bool    `json:"check_in_enabled"`
 	// Deferred check-in activation: enable is pending until day 1 of next month.
-	PendingCheckInEnabled  *bool   `json:"pending_check_in_enabled,omitempty"`
-	CheckInEffectiveFrom   *string `json:"check_in_effective_from,omitempty"`
+	PendingCheckInEnabled *bool   `json:"pending_check_in_enabled,omitempty"`
+	CheckInEffectiveFrom  *string `json:"check_in_effective_from,omitempty"`
 }
 
 // EmployeeCurrentProjectTimesheet represents a timesheet entry for current projects endpoint

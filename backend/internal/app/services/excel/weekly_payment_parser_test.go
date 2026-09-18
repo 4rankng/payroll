@@ -86,7 +86,6 @@ func TestParseForMonth(t *testing.T) {
 	}
 }
 
-
 // TestDetectFormat_WeeklyPayment tests the format detection for weekly payment files.
 func TestDetectFormat_WeeklyPayment(t *testing.T) {
 	// Create a minimal weekly payment file

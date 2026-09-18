@@ -37,7 +37,7 @@ func runWeeklyPaymentImportTests(client *APIClient, data *TestData, reporter *Re
 		reporter.RunTest(flowWeeklyPayment, "Build synthetic weekly payment fixture", func() error { return err })
 		return
 	}
-	defer os.Remove(weeklyPaymentFile)
+	defer func() { _ = os.Remove(weeklyPaymentFile) }()
 	// Use 2026-07 for the Thai Binh Duong fixture (matches the file title)
 	forMonth := "2026-07"
 

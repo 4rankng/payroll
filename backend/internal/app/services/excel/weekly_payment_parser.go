@@ -428,7 +428,6 @@ func parseForMonth(forMonth string) (year int, month time.Month, err error) {
 	return 0, 0, fmt.Errorf("định dạng tháng không hợp lệ: %s (expected YYYY-MM or MM/YYYY)", forMonth)
 }
 
-
 // weeklyPaymentRowHasPositiveHours reports whether any entry carries positive
 // hours, so a placeholder row (blank code, no positive hours) stays filtered
 // while an all-zero row for a real employee survives as a deletion request.

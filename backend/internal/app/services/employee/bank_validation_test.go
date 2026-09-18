@@ -245,7 +245,7 @@ func TestValidate_NameMismatch_InvalidWithVietnameseReason(t *testing.T) {
 	}
 	assert.Contains(t, *r.Reason, "không khớp")
 	assert.Contains(t, *r.Reason, `hệ thống ghi: "Nguyen Van A"`) // stored holder name surfaced
-	assert.Contains(t, *r.Reason, "Tran Thi B")                  // bank-confirmed name surfaced
+	assert.Contains(t, *r.Reason, "Tran Thi B")                   // bank-confirmed name surfaced
 }
 
 func TestValidate_AccountNotFound_InvalidGenericReason(t *testing.T) {

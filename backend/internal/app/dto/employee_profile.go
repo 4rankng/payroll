@@ -4,18 +4,18 @@ import "time"
 
 // EmployeeProfileResponse represents employee's own profile data
 type EmployeeProfileResponse struct {
-	ID                          uint               `json:"id"`
-	Fullname                    string             `json:"fullname"`
-	Email                       *string            `json:"email"`
-	Username                    string             `json:"username"`
-	Mobile                      string             `json:"mobile"`
-	Address                     string             `json:"address"`
-	DateOfBirth                 *time.Time         `json:"date_of_birth"`
-	BankAccountNumber           string             `json:"bank_account_number"`
-	BankAccountName             string             `json:"bank_account_name"`
-	Bank                        *BankInfo          `json:"bank,omitempty"`
-	PaymentSchedule             string             `json:"payment_schedule"`
-	CheckInEnabled              bool               `json:"check_in_enabled"`
+	ID                uint       `json:"id"`
+	Fullname          string     `json:"fullname"`
+	Email             *string    `json:"email"`
+	Username          string     `json:"username"`
+	Mobile            string     `json:"mobile"`
+	Address           string     `json:"address"`
+	DateOfBirth       *time.Time `json:"date_of_birth"`
+	BankAccountNumber string     `json:"bank_account_number"`
+	BankAccountName   string     `json:"bank_account_name"`
+	Bank              *BankInfo  `json:"bank,omitempty"`
+	PaymentSchedule   string     `json:"payment_schedule"`
+	CheckInEnabled    bool       `json:"check_in_enabled"`
 	// Deferred check-in activation: enable is pending until day 1 of next month.
 	PendingCheckInEnabled       bool               `json:"pending_check_in_enabled,omitempty"`
 	CheckInEffectiveFrom        *time.Time         `json:"check_in_effective_from,omitempty"`

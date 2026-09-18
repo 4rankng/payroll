@@ -1,9 +1,9 @@
 package flex_pay
 
 import (
-	"context"
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/xml"
 	"fmt"
 	"io"

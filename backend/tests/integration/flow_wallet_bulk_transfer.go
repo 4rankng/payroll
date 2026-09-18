@@ -123,7 +123,7 @@ func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Rep
 			if err != nil {
 				return err
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 			if resp.StatusCode != http.StatusAccepted {
 				body, _ := io.ReadAll(resp.Body)
 				return fmt.Errorf("upload: HTTP %d: %s", resp.StatusCode, body)
@@ -187,7 +187,7 @@ func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Rep
 			if err != nil {
 				return err
 			}
-			defer kq.Body.Close()
+			defer func() { _ = kq.Body.Close() }()
 			if kq.StatusCode != http.StatusOK {
 				return fmt.Errorf("KQ download: HTTP %d", kq.StatusCode)
 			}
@@ -195,7 +195,7 @@ func runWalletBulkTransferTests(client *APIClient, data *TestData, reporter *Rep
 			if err != nil {
 				return fmt.Errorf("KQ workbook: %w", err)
 			}
-			defer file.Close()
+			defer func() { _ = file.Close() }()
 			if len(file.GetSheetList()) == 0 {
 				return fmt.Errorf("KQ workbook has no sheets")
 			}

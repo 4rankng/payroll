@@ -36,8 +36,8 @@ const (
 )
 
 type EmployeeScheduleInfo struct {
-	PaymentSchedule             string
-	CheckInEnabled              bool
+	PaymentSchedule string
+	CheckInEnabled  bool
 	// Deferred check-in activation: enable is pending until day 1 of next month.
 	PendingCheckInEnabled       bool
 	CheckInEffectiveFrom        *time.Time

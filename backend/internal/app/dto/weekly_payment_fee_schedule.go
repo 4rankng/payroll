@@ -28,7 +28,7 @@ type WeeklyPaymentFeeScheduleListResponse struct {
 // past dates would rewrite the fee on already-completed disbursements and are
 // rejected at the service layer.
 type CreateWeeklyPaymentFeeScheduleRequest struct {
-	EffectiveDate string  `json:"effectiveDate" binding:"required"` // YYYY-MM-DD
+	EffectiveDate string `json:"effectiveDate" binding:"required"` // YYYY-MM-DD
 	// Percentage has no binding guard: 0 is a valid value (a fully free
 	// schedule) and float64 rules out type violations. Range validation
 	// (0–100) happens in the domain Validate().

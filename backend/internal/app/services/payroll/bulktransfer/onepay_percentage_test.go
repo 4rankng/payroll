@@ -46,7 +46,7 @@ func TestOnePayExportUsesPlannedPercentageForWorkbookAndTransferCode(t *testing.
 			require.Equal(t, result.TransferAmount, *code.GetTransferAmountSnapshot())
 			workbook, err := excelize.OpenReader(bytes.NewReader(result.ExcelBytes))
 			require.NoError(t, err)
-			defer workbook.Close()
+			defer func() { _ = workbook.Close() }()
 			amount, err := workbook.GetCellValue(onePaySheetName, "F3")
 			require.NoError(t, err)
 			require.Equal(t, "5600000", amount)

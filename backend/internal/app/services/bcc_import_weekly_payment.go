@@ -190,7 +190,6 @@ func (s *BCCImportService) autoCreateWeeklyPaymentSTK(
 	slog.Info("BCCImport(WPayment): found STK sheet, processing employee auto-creation",
 		"count", len(stkRows))
 
-
 	stkErr = s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		bankCache := make(map[string]*uint)
 
@@ -395,7 +394,6 @@ func (s *BCCImportService) autoCreateMissingWeeklyPaymentEmployees(
 
 	slog.Info("BCCImport(WPayment): auto-creating missing employees from BCC sheets",
 		"count", len(missingCCCDs))
-
 
 	autoErr := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		for _, m := range missingCCCDs {

@@ -77,7 +77,7 @@ func Validate(c *gin.Context, allowXLS bool) (*multipart.FileHeader, bool) {
 		return nil, false
 	}
 	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
-	if ext != ".xlsx" && !(allowXLS && ext == ".xls") {
+	if ext != ".xlsx" && (!allowXLS || ext != ".xls") {
 		if allowXLS {
 			response.BadRequest(c, "File phải có định dạng .xlsx hoặc .xls")
 		} else {

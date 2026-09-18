@@ -70,7 +70,7 @@ func weeklyCrossCheckSTKName(cccd, fullName string, stkNameByCCCD map[string]str
 	if bccNorm != stkNorm && bccNormNameLoose(fullName) != bccNormNameLoose(stkName) {
 		return &domain.ImportError{
 			Employee: fullName,
-			Reason: "tên BCC (" + fullName + ") và tên STK (" + stkName + ") khác nhau cho cùng CCCD " + cccd + suffix,
+			Reason:   "tên BCC (" + fullName + ") và tên STK (" + stkName + ") khác nhau cho cùng CCCD " + cccd + suffix,
 		}
 	}
 	return nil

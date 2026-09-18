@@ -21,7 +21,6 @@ type countingMetricsRepo struct {
 	createCalls   atomic.Int64
 }
 
-
 func (r *countingMetricsRepo) FindOrCreateEndpoint(ctx context.Context, method, path string) (uint, error) {
 	r.endpointCalls.Add(1)
 	return 1, nil

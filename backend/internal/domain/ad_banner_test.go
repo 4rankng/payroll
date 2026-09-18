@@ -15,8 +15,8 @@ func adBannerTestWindow() (time.Time, time.Time) {
 func validAdBanner() *AdBanner {
 	starts, ends := adBannerTestWindow()
 	return &AdBanner{
-		Title:   "TING TING SOFTWARE SOLUTIONS xin thông báo",
-		Body:    "Công nhân dự án LG Display có thể CHẤM CÔNG TỰ ĐỘNG và ỨNG LƯƠNG NGAY trên điện thoại.",
+		Title: "TING TING SOFTWARE SOLUTIONS xin thông báo",
+		Body:  "Công nhân dự án LG Display có thể CHẤM CÔNG TỰ ĐỘNG và ỨNG LƯƠNG NGAY trên điện thoại.",
 		Bullets: []string{
 			"Chấm công tự động, chính xác từng ca làm",
 			"Ứng lương theo công đã làm, tối đa 70%, phí chỉ từ 1.3%",

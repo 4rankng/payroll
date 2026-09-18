@@ -2,10 +2,10 @@ package payroll
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"runtime"
-	"context"
 	"testing"
 	"time"
 
@@ -155,7 +155,7 @@ func TestGenerateExcelWritesConfiguredBankInfo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open generated excel: %v", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	sheet := f.GetSheetList()[0]
 	for cell, want := range map[string]string{

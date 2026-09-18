@@ -65,14 +65,14 @@ func TestExtractBankResultRowsMBankStatement(t *testing.T) {
 
 func TestNormalizeStatementStatusFailClosed(t *testing.T) {
 	cases := map[string]string{
-		"Thất bại":     "THẤT BẠI",
-		"FAILED":       "THẤT BẠI",
-		"Đang xử lý":   "THẤT BẠI", // unrecognized wording must never complete a payment
-		"Chờ xử lý":    "THẤT BẠI",
-		" từ chối ":    "THẤT BẠI",
-		"":             "THẤT BẠI", // blank status cell
-		"Thành công":   "Thành công",
-		" Success ":    "Success",
+		"Thất bại":   "THẤT BẠI",
+		"FAILED":     "THẤT BẠI",
+		"Đang xử lý": "THẤT BẠI", // unrecognized wording must never complete a payment
+		"Chờ xử lý":  "THẤT BẠI",
+		" từ chối ":  "THẤT BẠI",
+		"":           "THẤT BẠI", // blank status cell
+		"Thành công": "Thành công",
+		" Success ":  "Success",
 	}
 	for in, want := range cases {
 		if got := normalizeStatementStatus(in); got != want {

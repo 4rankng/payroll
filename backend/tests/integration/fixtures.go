@@ -10,7 +10,7 @@ import (
 // weekday headers and two different shift types for the full import pipeline.
 func buildWeeklyPaymentFixture() (string, error) {
 	f := excelize.NewFile()
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	if err := f.SetSheetName("Sheet1", "520"); err != nil {
 		return "", err
 	}
@@ -41,11 +41,11 @@ func buildWeeklyPaymentFixture() (string, error) {
 	}
 	name := temp.Name()
 	if err := temp.Close(); err != nil {
-		os.Remove(name)
+		_ = os.Remove(name)
 		return "", err
 	}
 	if err := f.SaveAs(name); err != nil {
-		os.Remove(name)
+		_ = os.Remove(name)
 		return "", err
 	}
 	return name, nil

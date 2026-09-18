@@ -44,20 +44,20 @@ type TransferBankInfo struct {
 
 // Default values
 const (
-	DefaultWeeklyPaymentPercentage   = 0.70
-	DefaultMonthlyPaymentPercentage  = 0.70
-	DefaultAdvanceCashFeePercentage  = 0.02
+	DefaultWeeklyPaymentPercentage    = 0.70
+	DefaultMonthlyPaymentPercentage   = 0.70
+	DefaultAdvanceCashFeePercentage   = 0.02
 	DefaultWeeklyPaymentFeePercentage = 0.02
-	DefaultPartnerCompany            = "VFIC Manpower"
-	DefaultAdvancePaymentPercentage  = 0.60  // 60% max advance
-	DefaultAdvancePaymentFeeMin      = 10000 // 10,000 VND minimum fee
-	DefaultBulkTransferWorkbookLimit = int64(400_000_000)
-	DefaultSelfCheckInAdvancePercent = domain.DefaultSelfCheckInAdvancePercentage
-	DefaultSelfCheckInAdvanceHold    = domain.QuotaCreditHoldDuration
-	MinBulkTransferWorkbookLimit     = int64(100_000_000)
-	MaxBulkTransferWorkbookLimit     = int64(500_000_000)
-	MaxSelfCheckInAdvanceHoldHours   = uint64(720)
-	CacheTTL                         = constants.SettingsCacheTTL // Use centralized cache TTL
+	DefaultPartnerCompany             = "VFIC Manpower"
+	DefaultAdvancePaymentPercentage   = 0.60  // 60% max advance
+	DefaultAdvancePaymentFeeMin       = 10000 // 10,000 VND minimum fee
+	DefaultBulkTransferWorkbookLimit  = int64(400_000_000)
+	DefaultSelfCheckInAdvancePercent  = domain.DefaultSelfCheckInAdvancePercentage
+	DefaultSelfCheckInAdvanceHold     = domain.QuotaCreditHoldDuration
+	MinBulkTransferWorkbookLimit      = int64(100_000_000)
+	MaxBulkTransferWorkbookLimit      = int64(500_000_000)
+	MaxSelfCheckInAdvanceHoldHours    = uint64(720)
+	CacheTTL                          = constants.SettingsCacheTTL // Use centralized cache TTL
 
 	// Defaults for the beneficiary bank printed on payroll statements.
 	DefaultTransferBankHolder = "CONG TY TNHH MTV GPPM TING TING"
