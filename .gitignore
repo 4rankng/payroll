@@ -104,3 +104,5 @@ openwiki/.last-update.json
 .openwiki/
 .mcp.json
 .agentsroom/
+# Added by code-review-graph
+.code-review-graph/

@@ -3,8 +3,23 @@
   "mcp": {
     "openwiki": {
       "type": "local",
-      "command": ["openwiki", "mcp", "--host", "opencode"],
+      "command": [
+        "openwiki",
+        "mcp",
+        "--host",
+        "opencode"
+      ],
       "enabled": true
+    },
+    "code-review-graph": {
+      "type": "local",
+      "command": [
+        "uvx",
+        "code-review-graph",
+        "serve",
+        "--repo",
+        "/Volumes/LexarSSD/projects/payroll"
+      ]
     }
   }
 }
