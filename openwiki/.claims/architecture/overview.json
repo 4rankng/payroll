@@ -1,64 +1,112 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:d956edcc25f77cdbaf453f2c9f8815716acaefae9ebe8e2703dd23e0e8af2c08",
+  "pageVersion": "sha256:8695e78c109f3a99504c63ef859efe81fcee78252935edba356579b8d8421862",
   "claims": [
     {
-      "id": "claim_b121d75e72a74e79bff60aed9ea384c7",
-      "statement": "The backend follows strict DDD layering with dependencies pointing inward (transport → app → domain ← infra); the domain package has zero framework imports — no Gin, no GORM, only the Go standard library and internal packages.",
+      "id": "claim_ac3c011dcd1d4ebd9d06f1a7338931d6",
+      "statement": "The backend dependency direction is strict: transport → app → domain ← infra. Domain has zero framework imports (no Gin, no GORM, no Redis, no asynq); only Go stdlib and internal/pkg/clock.",
       "evidence": [
         {
-          "resource": "repo://docs/decisions/ADR-001-ddd-clean-architecture.md#L14-L34",
-          "version": "repo-lines-v1:sha256:627156757d56fea3bd259d344bdc7419f227c8760db5de9be09b2adb222f96e5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1YjUxZDIxZDI5OTllZjcxYmMyZjkwYWEyNzMwZDRiYWQ2MjlkYTEzNTllYmY1NDZmYzU2NzJhZTA4ZjI1MDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MjQ0MjUxZjFjNjZiNWNjMTBjOWRkMjJkYWI1OWNmNTM3MmJhNThmODM1OGMxZGQyMjMxOGM3ZDE1NjkxYjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiMTU3YTZkMjc2N2ZmN2Y0MTMzZWUyNzY1MTM2N2M2ZmRmZjdhYjRmZDliYTNjYjQyNjJlMmFhNDQ5MGNjYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlNDY2ZTIxZTUzOTU0NmU0NGUyZmQxMDliMTZlZTVjZTNjNjU2OGJhNmMxNDFkOWI3OWIyYjI5NTYyZjY0M2IifQ"
+          "resource": "repo://docs/decisions/ADR-001-ddd-clean-architecture.md",
+          "version": "repo-file-v1:sha256:1434d4456b8d671801e13f009775c1307d424286b2605697cf7542444f87f777"
         }
       ]
     },
     {
-      "id": "claim_0293d4679e514f348438ac52bffcad25",
-      "statement": "A single HTTP request traverses a fixed middleware chain in order: security headers, request timeout, rate limit, JWT auth, Casbin RBAC authorization, audit context, and partner scoping — before reaching the handler.",
+      "id": "claim_937af194e2164c69bbe30566837bc464",
+      "statement": "The frontend splits by role (admin, partner, adv-partner, employee, accountant) and by viewport (desktop pages + a parallel pages/mobile/* tree), with ResponsivePage.tsx and MobileBottomNav.tsx as the dual-layout primitives.",
       "evidence": [
         {
-          "resource": "repo://docs/system-architecture.md#L72-L80",
-          "version": "repo-lines-v1:sha256:98667ec8e1c85e0f8cea2f938f516be467e7ebba820036877b209dedba1bb266:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzExNTFlMzkyOTdhZmFlOTU1OGQ5NzEyYTQ2MzA3OWViYWZmMzg4MTFlM2QyMzA4YTQ0MjU5M2YxZDIxYjIwZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTRhOWQzNzUyNmY2NWMwMGJhNTNjYTEzOGY1YThkZTFmNmFhOTU3M2RiMjBhZjdjZTc2MDMxNTlkODFjOThmYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODIwZDYwMDY5ZDljNTA4YjYxMzE1Y2FjZDVkZmY0ZDQ0YjE0YjU2ZTVjY2RmZjYxMGIxYzEyYWIyMWM1ODczYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjFjMTkyOWNkMDNiZjNkYmExZmM4MmVmZjU4NDhmOTg2NDBmM2M5ZTdlMDg4NDA0YzExN2E0YjQyMTM5NTYxNiJ9"
-        }
-      ]
-    },
-    {
-      "id": "claim_5543bf109bd94729b3c41eeefdb3948d",
-      "statement": "Application services in backend/internal/app/ are the only layer that may depend on both domain ports and infrastructure clients; they never touch GORM models directly, and handlers consume domain types only.",
-      "evidence": [
-        {
-          "resource": "repo://docs/decisions/ADR-001-ddd-clean-architecture.md#L20-L34",
-          "version": "repo-lines-v1:sha256:09eaaa5e59d3e977319047532d0b18162c211d4a7a851aa8e4aef9639e8ae3fb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0YTA2Yzg0NGUxNTVhMmI4ODUzNzM1NWE3YzQ2MzBiZmM3MTZmY2QxOTk0MmY3NTgzNWViZThjZmU5ZmYzOTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MjQ0MjUxZjFjNjZiNWNjMTBjOWRkMjJkYWI1OWNmNTM3MmJhNThmODM1OGMxZGQyMjMxOGM3ZDE1NjkxYjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkM2FkMzAzNzJkMTZlYzVhYjViYzFhMTU4ZWM5YjFhOWM3MzU5ODg2ZDhiNTlkZjM3MGVmODdiZDkzMWI1OGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlNDY2ZTIxZTUzOTU0NmU0NGUyZmQxMDliMTZlZTVjZTNjNjU2OGJhNmMxNDFkOWI3OWIyYjI5NTYyZjY0M2IifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_328035f9b25847c09094082379d19ba7",
-      "statement": "Infrastructure repositories map GORM models to domain types via ToDomain() and live under backend/internal/infra/persistence/; they implement ports defined in domain/ports/ or scoped within domain aggregates (such as the wallet aggregate).",
-      "evidence": [
-        {
-          "resource": "repo://backend/internal/domain/wallet/repository.go#L1-L46",
-          "version": "repo-lines-v1:sha256:98be8fef801200579ec944ac0dbc3013c37fbc71c7e4cb32486819330318afaa:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0ZDdkMGQ5MTg4NDZiNWQ5MWM1YWY0NDUzMGJhYjU4N2RjN2Y1MGM4ODhhYWU1NzY4Mzg4YWRjNmJlM2Q3OTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://frontend/src/App.tsx",
+          "version": "repo-file-v1:sha256:2944b2afe6c13f70333a7297e753f77dba99a905adf3a18c304a45ffd5cb1b9e"
         },
         {
-          "resource": "repo://docs/decisions/ADR-001-ddd-clean-architecture.md#L26-L27",
-          "version": "repo-lines-v1:sha256:fd04fa46cf0216d7d1ce04b3959057775448e52ad33430261949c74eb4e78886:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmYxMDMxOTMxYWU5NTkzZTRiOTU1YjI0NmJkZGY0ODdiYzRiMTZlZGI2NWUxMjI0ODNjNTg3NWE4YjE5YzNmZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTIyOTAxNmJmNzdkMmRkOTI0Nzc0OGI4OWViMTI2NWVkZDkzNTJjMmU1OGU3Njc1N2U4OGNlOTUyZjIyNDQzZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDE2MWUzOGE4MDI3ZmY5ZDFiYTcyNDJmZTU0ZTVkNTk5OTkzMTFjYjcxYzg0ZmYyODA2M2U2NWRlZDJlNzMyNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTU2MWRmMDNlNDhmZTg5NGQxMTI3YWVhYzgwZmY4Yzk0YWJmZTA1NTRkZDIwOGU0ZjExNTc5Nzg1YmU3ZTE5NSJ9"
+          "resource": "repo://frontend/src/components/ResponsivePage.tsx",
+          "version": "repo-file-v1:sha256:29bf01f2fad3bcf29bff4262a7fa28348298569b7aee55029b58ddb461796ac8"
         }
       ]
     },
     {
-      "id": "claim_f0c343eb0d33466d88de182f84587ede",
-      "statement": "The dependency injection root lives at backend/internal/app/bootstrap/container.go, with infrastructure wired in bootstrap/infrastructure/, repositories in bootstrap/repositories/, and application services in bootstrap/services/.",
+      "id": "claim_81a9c9312da6468ba63d41c388b5816b",
+      "statement": "Every frontend change must cover desktop and mobile for every affected role; mobile breakpoints to verify are 390px and 320px, and touch targets must be at least 44px.",
       "evidence": [
         {
-          "resource": "repo://backend/internal/app/bootstrap/container.go",
-          "version": "repo-file-v1:sha256:9b900aab3512ece5ed5d78f928b7060786f97df1fd4f8d98257c23798f439f09"
+          "resource": "repo://AGENTS.md",
+          "version": "repo-file-v1:sha256:9d637bc48601d671a798e12d18fde19fd1bbf07a36fc506bdb2c87bacb341a94"
+        }
+      ]
+    },
+    {
+      "id": "claim_104d8921420740eb91a1f4ef85fef3ad",
+      "statement": "All UI text is Vietnamese; there is no i18n layer — strings are inline in components or in DTO tables.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_f3f0061cd6be42f298525a86ea1fac20",
+      "statement": "The system has three distinct async surfaces: domain events (Redis Streams, ADR-004), asynq background jobs (Redis queues, ADR-005), and payment-provider IPN webhooks (HTTP). They share infrastructure but not semantics.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-004-redis-streams-event-bus.md",
+          "version": "repo-file-v1:sha256:97dd2b6bc04fdf27332f2490fb07eef408d8f68918cfb44ef571add8cb988784"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-005-asynq-background-jobs.md",
+          "version": "repo-file-v1:sha256:126641a65908437f078c0a6f3cd1446e2462cadc01ab32eee832f70a885ad56b"
+        }
+      ]
+    },
+    {
+      "id": "claim_fbb759c2a0e849878e97df2b51780080",
+      "statement": "Wallet payments reach a terminal state only via the IPN-driven state machine (ipn_completed, ipn_failed, ipn_reversed); the financial critical path is transactional and does not depend on event delivery for correctness.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/transactions/state_machine.go",
+          "version": "repo-file-v1:sha256:7f07c86a81689a831153e90929feaa6892a1bac872af638f5b1e65ea066a475c"
+        }
+      ]
+    },
+    {
+      "id": "claim_0e74fcd7dd59476cb2e64d6454e2b009",
+      "statement": "Cache invalidation and event publishing are deferred via domain.RegisterAfterCommit callbacks that fire only after RunInTransaction commits successfully.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-007-transaction-manager-unit-of-work.md",
+          "version": "repo-file-v1:sha256:7d2f5c4278c52649698a21f24ab6e4b0e3051aa6307acdb20297f2609de66aa3"
+        }
+      ]
+    },
+    {
+      "id": "claim_70c5df43ef7b4ce4bae9315770f723b4",
+      "statement": "Production uses OnePay (never 9Pay); the system is provider-agnostic via ADR-003; the production server is x86_64/amd64.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md",
+          "version": "repo-file-v1:sha256:9d637bc48601d671a798e12d18fde19fd1bbf07a36fc506bdb2c87bacb341a94"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-003-payment-provider-abstraction.md",
+          "version": "repo-file-v1:sha256:e44f12e23649f54c176fb20f8648819e12145508d7b50cdced3b130224184211"
+        }
+      ]
+    },
+    {
+      "id": "claim_3064e30a834f475784a3488bfcbce592",
+      "statement": "Adding a new feature follows a fixed order: entity and rule in domain/, port in domain/ports/, implementation in infra/, service in app/services/, handler in transport/http/handlers/, route in app/bootstrap/routes.go.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/AGENTS.md",
+          "version": "repo-file-v1:sha256:a7967221365cbe15e869ba792b7b23c32eea5eab50bf85fc02c2c6350b0d2fb4"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-09-08T09:18:16.270Z"
+    "at": "2026-09-19T03:19:10.016Z"
   }
 }

@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:3b6233d8d7cbf7c6937eea719897d30e0a649cca8d4027a494d5679c122a5b63",
+  "claims": [
+    {
+      "id": "claim_e8eadfbc44634bcda1d9fd12dafdade7",
+      "statement": "asynq runs in-process in the api-server and uses the same Redis instance as caching and the event bus; task type strings are stable contracts between the enqueue site and the handler.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-005-asynq-background-jobs.md",
+          "version": "repo-file-v1:sha256:126641a65908437f078c0a6f3cd1446e2462cadc01ab32eee832f70a885ad56b"
+        },
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_54dfbb337b9c46e7a16367b1b0512dfc",
+      "statement": "Worker taxonomy covers disbursement (execute, poller, status inquiry, wallet settlement, IPN), bulk transfer (orchestration, 9Pay-specific, row worker, revenue transaction), recovery sweepers (verified_transfer_recovery, transfer_paid_amounts), attendance (auto-reject checkout, sweep, credit quota), BCC import, notifications (flexpay_salary_notification_worker, payroll_report_email_worker), and audit/import jobs (audit_log_write_worker, employee_import_worker, import_job_worker).",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/workers/auto_reject_sweep_worker.go",
+          "version": "repo-file-v1:sha256:d05b99d85b6fac00c3f0432138057afb7ba36ebbb63a62c92d29ad71631df9f2"
+        },
+        {
+          "resource": "repo://backend/internal/app/workers/bcc_import_worker.go",
+          "version": "repo-file-v1:sha256:e59db99d5af8993cb2a85198f94e0be4eaa1f1bd6212c215e851aaac9d85eb3c"
+        },
+        {
+          "resource": "repo://backend/internal/app/workers/disbursement_execute_worker.go",
+          "version": "repo-file-v1:sha256:eef452ebe805cb72a2711ab8aaaec5a54b0477bcd9bb6fc37fb7f1f5b4a2ca2f"
+        }
+      ]
+    },
+    {
+      "id": "claim_37e98db4a16c4262acdc3b809d99c104",
+      "statement": "Workers are idempotent and rely on per-task idempotency keys (bulk_transfer_batches.enqueue_state, wallet_payments.txn_id, attendances.quota_credited_at, flexpay_salary_notifications.attempt plus lease model) so retries are not distinguishable from first attempts.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/bulk_transfer_batch.go",
+          "version": "repo-file-v1:sha256:e7ba7f345645651928d093b7183a22575e949d45a02b916c9c99ed9dfb9e6812"
+        },
+        {
+          "resource": "repo://backend/internal/domain/flexpay_salary_notification.go",
+          "version": "repo-file-v1:sha256:7971e0ab7ab56f9e3ad4140017ebb1b930721424305fd4d10caba10bc5693a58"
+        }
+      ]
+    },
+    {
+      "id": "claim_34e9176321344cd3b849e7b1747d9573",
+      "statement": "Multi-aggregate writes are wrapped in domain.TransactionManager.RunInTransaction; cache invalidation runs as an after-commit callback per ADR-007, and event publishing via Redis Streams is post-commit so a crash between commit and publish is recoverable from the outbox.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-007-transaction-manager-unit-of-work.md",
+          "version": "repo-file-v1:sha256:7d2f5c4278c52649698a21f24ab6e4b0e3051aa6307acdb20297f2609de66aa3"
+        }
+      ]
+    },
+    {
+      "id": "claim_d132389bbcec4503b03f3c93539ad3e4",
+      "statement": "The scheduler (internal/app/services/scheduler/) runs in-process and enqueues scheduled tasks at the configured cadence; restarting the api-server reschedules based on the persisted schedule.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/scheduler/scheduler.go",
+          "version": "repo-file-v1:sha256:172cb49c0ad5a104537b7b66323f7a584ef2da07f9817ba3a9cdf47f585328de"
+        }
+      ]
+    },
+    {
+      "id": "claim_232944c849f2401cb1ce95bcfc95e518",
+      "statement": "Workers log at critical junctions via slog (never fmt.Printf) per backend/AGENTS.md, emit Prometheus metrics through internal/infra/observability/, and the system-health and cron-health UI surfaces consume these signals.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

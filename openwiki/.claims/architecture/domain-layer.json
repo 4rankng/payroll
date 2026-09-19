@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b1299c17d93a3d6afb73d3240b62be297eaaaa526d12f4c0477686d24d010da6",
+  "claims": [
+    {
+      "id": "claim_3780cf2c63224df5a67bb79128e5183d",
+      "statement": "The domain layer has zero framework imports — no Gin, no GORM, no Redis, no asynq — only Go standard library and internal/pkg/clock.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/AGENTS.md",
+          "version": "repo-file-v1:sha256:38ee0daeaa0a3ed5592ba3837135fc4f6aa4e661876987cbb3c18a9b220df943"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-001-ddd-clean-architecture.md",
+          "version": "repo-file-v1:sha256:1434d4456b8d671801e13f009775c1307d424286b2605697cf7542444f87f777"
+        }
+      ]
+    },
+    {
+      "id": "claim_2ab1832334c742c3a1fb9890ec3e98bd",
+      "statement": "Domain errors are constructed via helpers in errors.go (NewNotFoundError, NewValidationError, NewConflictError, etc.) and standardized by codes in error_codes.go, with the transport layer's response/ package being the only place that translates them to HTTP.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/AGENTS.md",
+          "version": "repo-file-v1:sha256:38ee0daeaa0a3ed5592ba3837135fc4f6aa4e661876987cbb3c18a9b220df943"
+        }
+      ]
+    },
+    {
+      "id": "claim_c40559df4b114e72b2103f051e4495e7",
+      "statement": "The wallet aggregate is a self-contained bounded context: its repository interfaces (WalletTopupRepository, WalletPaymentRepository, WalletIPNRepository) live in internal/domain/wallet/repository.go, not in the global ports directory.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/wallet/repository.go",
+          "version": "repo-file-v1:sha256:98be8fef801200579ec944ac0dbc3013c37fbc71c7e4cb32486819330318afaa"
+        }
+      ]
+    },
+    {
+      "id": "claim_33577f117d724581b38c75164cabad63",
+      "statement": "Wallet payment state machine uses qmuntal/stateless with states pending, verified, authorised, completed, failed, reversed and triggers verify, reject, authorise, ipn_completed, ipn_failed, ipn_reversed; completed/failed/reversed are terminal.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/transactions/state_machine.go",
+          "version": "repo-file-v1:sha256:7f07c86a81689a831153e90929feaa6892a1bac872af638f5b1e65ea066a475c"
+        }
+      ]
+    },
+    {
+      "id": "claim_c43cb5f27c274b8eb4fc8bc38dd496a4",
+      "statement": "Double-entry accounting rules in AccountingRules.ValidateTransactionGroup and ValidateBalancedTransaction enforce that the sum of debits equals the sum of credits for every ledger group, and are verified by property-based tests using gopter.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/AGENTS.md",
+          "version": "repo-file-v1:sha256:38ee0daeaa0a3ed5592ba3837135fc4f6aa4e661876987cbb3c18a9b220df943"
+        },
+        {
+          "resource": "repo://backend/internal/domain/accounting_rules.go",
+          "version": "repo-file-v1:sha256:951a892fe800c84e57d28e660cbfaf9570f82c91dc0ffa7bcd7b8385f34423b4"
+        }
+      ]
+    },
+    {
+      "id": "claim_1e02a4c1956b414b8bfdc0ce255ed7af",
+      "statement": "All business time goes through internal/pkg/clock (Now, NowUTC, TodayStart, TodayEnd, UnixNow) per ADR-006; admin clock endpoints are mounted only in non-prod builds, and the narrow time.Now() exceptions are limited to infrastructure measurements (event-bus duration, health-check response time).",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-006-clock-injection-pattern.md",
+          "version": "repo-file-v1:sha256:e1fa6aee8fa5fabc8c170c8c93c8e61f64764590e9943936862bda368aecf62f"
+        }
+      ]
+    },
+    {
+      "id": "claim_8065932fa5b641a9a186e1e3e9aea12f",
+      "statement": "Domain ports split into ports/infrastructure (audit, cache, disbursement, notification — implemented by infra adapters) and ports/services (ledger, loan, payroll, settlement, timesheet, transaction — application services compose these with ports).",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/ports/infrastructure/audit.go",
+          "version": "repo-file-v1:sha256:cc24febffad00ec68d4721edee71d2779a760e67237d470a66c91ae0d1b3dbc9"
+        },
+        {
+          "resource": "repo://backend/internal/domain/ports/services/ledger.go",
+          "version": "repo-file-v1:sha256:fa91dbc86360c48b3efddb41444bc6b5acb099e78df463e03eee9cf4819c24e7"
+        }
+      ]
+    },
+    {
+      "id": "claim_fce96d12be4d4932bb37c571737c38fc",
+      "statement": "Domain events are declared in events.go (50+ types) and produced by per-aggregate factories (event_factory_*.go); they are persisted in the same DB transaction as the state change and pushed to Redis Streams post-commit via the outbox pattern.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/AGENTS.md",
+          "version": "repo-file-v1:sha256:38ee0daeaa0a3ed5592ba3837135fc4f6aa4e661876987cbb3c18a9b220df943"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

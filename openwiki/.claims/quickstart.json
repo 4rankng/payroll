@@ -1,48 +1,68 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:16e8a155efa03bcee5d5f53a8825fd9f2974466c09faa4589f3889a9c598d307",
+  "pageVersion": "sha256:d0e0bc5398c386b780a6641070c47ba1460f2fad4a6ae58da42b04e45d2dbeb7",
   "claims": [
     {
-      "id": "claim_cdd8ebfd97134eb49d82ce5cf4e635b6",
-      "statement": "The backend follows strict DDD layering under backend/internal/ (domain with zero framework imports, app for use-case orchestration, transport/http for the HTTP edge, infra for GORM/Redis/asynq/disbursement adapters); the wallet transactional state machine lives at backend/internal/domain/transactions/state_machine.go.",
+      "id": "claim_735adf76b9434fa18f9b7a46655c920a",
+      "statement": "The repository is a monorepo: backend/ (Go API server, DDD/Clean Architecture), frontend/ (React 18 + Vite + TanStack Query + shadcn/ui, PWA), docs/ (evergreen reference material), openwiki/ (this generated wiki), plus plans/, scripts/, testplan/, qa/, Makefile, the dual docker-compose layouts, and the root AGENTS.md/CLAUDE.md.",
       "evidence": [
         {
-          "resource": "repo://backend/internal/AGENTS.md",
-          "version": "repo-file-v1:sha256:a7967221365cbe15e869ba792b7b23c32eea5eab50bf85fc02c2c6350b0d2fb4"
-        },
-        {
-          "resource": "repo://backend/internal/domain/transactions/state_machine.go",
-          "version": "repo-file-v1:sha256:7f07c86a81689a831153e90929feaa6892a1bac872af638f5b1e65ea066a475c"
+          "resource": "repo://AGENTS.md",
+          "version": "repo-file-v1:sha256:9d637bc48601d671a798e12d18fde19fd1bbf07a36fc506bdb2c87bacb341a94"
         }
       ]
     },
     {
-      "id": "claim_76e3253f3cc4432bbd7f7f936bdb4591",
-      "statement": "The frontend SPA under frontend/src/ separates pages by role (admin, partner, adv-partner, accountant, employee) and by viewport (mobile/ for each role), with the file responsibility rule that .tsx is UI-only and .ts holds logic/API calls.",
+      "id": "claim_6165bf7559ca4c0da63a04c27db3013d",
+      "statement": "Per-directory AGENTS.md files are the authoritative entry points for each area (AGENTS.md at root, docs/AGENTS.md, backend/AGENTS.md and backend/internal/*/AGENTS.md, frontend/AGENTS.md and frontend/src/*/AGENTS.md, backend/migrations/AGENTS.md).",
       "evidence": [
         {
-          "resource": "repo://frontend/src/AGENTS.md",
-          "version": "repo-file-v1:sha256:01e2491d9d21550a68a11d748d63d87479d5652c2a80739bd8bf357d02f17ff7"
-        },
-        {
-          "resource": "repo://frontend/src/App.tsx",
-          "version": "repo-file-v1:sha256:2fc4c6071c920fcbe04c9cdc1e52eb784c9c9700faa497c8fe4a6f69614c5df4"
+          "resource": "repo://AGENTS.md",
+          "version": "repo-file-v1:sha256:9d637bc48601d671a798e12d18fde19fd1bbf07a36fc506bdb2c87bacb341a94"
         }
       ]
     },
     {
-      "id": "claim_df4b12cfd5b34b1cb8be7d5454dd821a",
-      "statement": "All business time goes through clock.Now() with the Asia/Ho_Chi_Minh timezone via the centralized backend/internal/pkg/clock package; production runs x86_64/amd64 images only and uses OnePay (not 9Pay) as the disbursement provider.",
+      "id": "claim_12c99d04de974f60940a3d8e75414c90",
+      "statement": "The dev compose (docker-compose.dev.yml) runs MySQL + Redis + Adminer + 9Pay mock at :9001 + OnePay mock at :9002 with the backend outside Docker via air and the frontend via vite; the prod compose is the artifact that make deploy ships and is production-like with frontend (nginx) + backend + MySQL + Redis + nginx reverse proxy + on-demand adminer.",
       "evidence": [
         {
-          "resource": "repo://backend/AGENTS.md",
-          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_502912bb448e4a43b3b2ca1be7d1ebe9",
+      "statement": "Makefile targets include make dev (backend + frontend in parallel), make api-test (integration suite), make api-lint, make api-build, make deploy, make restore, and make backup; backend/Makefile and frontend/Makefile carry the sub-area targets.",
+      "evidence": [
+        {
+          "resource": "repo://Makefile",
+          "version": "repo-file-v1:sha256:3f672ead8f367f38747c524e2c4fb7dbd560aad19ab8e21625382bf94d494226"
+        },
+        {
+          "resource": "repo://backend/Makefile",
+          "version": "repo-file-v1:sha256:0a5a3a9fb34421a6b92ff8966f1b06c13a8e520ebd5f271b8a4333434cd3ca0c"
+        },
+        {
+          "resource": "repo://frontend/Makefile",
+          "version": "repo-file-v1:sha256:9eaa65b1efbd00e73debab0263b0b6095febd4dcbcedc1b1c3fcd1ef4d819cf6"
+        }
+      ]
+    },
+    {
+      "id": "claim_5d74d590984b47c9abcbf89bbf8c0c75",
+      "statement": "Production invariants are non-negotiable: x86_64/amd64 only, OnePay in production, clock.Now() (Asia/Ho_Chi_Minh) for business time (ADR-006), zero framework imports in the domain layer (ADR-001), cache invalidation after commit (ADR-007), work on main directly (no worktrees), and commit format <type>(<scope>): <subject>.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md",
+          "version": "repo-file-v1:sha256:9d637bc48601d671a798e12d18fde19fd1bbf07a36fc506bdb2c87bacb341a94"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-09-08T09:18:16.270Z"
+    "at": "2026-09-19T03:19:10.016Z"
   }
 }

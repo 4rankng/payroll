@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:72725c354c7daaf79c059224f1aea6e77b0a9abd8cbb217d820c0f2e7ea37a4a",
+  "claims": [
+    {
+      "id": "claim_44183a8d1ad5459a9d98c75f06d71418",
+      "statement": "BulkTransferBatch status is pending → processing → completing → completed (or failed); the `completing` state is set inside a SELECT … FOR UPDATE by UpdateWithLock and triggers the book_batch_ledger task. If the process dies between lock commit and ledger write, the completing-recovery cron re-attempts booking.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/bulk_transfer_batch.go",
+          "version": "repo-file-v1:sha256:e7ba7f345645651928d093b7183a22575e949d45a02b916c9c99ed9dfb9e6812"
+        }
+      ]
+    },
+    {
+      "id": "claim_26bbac2fb74044ffb18ecc9f1e46b51e",
+      "statement": "The batch-level outbox (EnqueueState) is pending (batch row committed, per-row asynq tasks NOT yet enqueued — the crash window) or enqueued (all per-row tasks enqueued); ListByEnqueueState(pending, olderThan) is the outbox sweeper query.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/bulk_transfer_batch.go",
+          "version": "repo-file-v1:sha256:e7ba7f345645651928d093b7183a22575e949d45a02b916c9c99ed9dfb9e6812"
+        }
+      ]
+    },
+    {
+      "id": "claim_c105251a67ae4f848320d9c97d06ab95",
+      "statement": "UpdateWithLock returns (shouldBook bool, err error) rather than a sentinel error so GORM can roll back on real failures without conflating the no-booking-needed signal with a failure.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/bulk_transfer_batch.go",
+          "version": "repo-file-v1:sha256:e7ba7f345645651928d093b7183a22575e949d45a02b916c9c99ed9dfb9e6812"
+        }
+      ]
+    },
+    {
+      "id": "claim_22b2d9c9c44f4cc3a431682aa392ade2",
+      "statement": "UpdateColumns writes only the targeted columns (total_fee, ledger_txn_id, status) so concurrent bumps to success_count and failed_count are not clobbered during ProcessBookBatchLedger.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/bulk_transfer_batch.go",
+          "version": "repo-file-v1:sha256:e7ba7f345645651928d093b7183a22575e949d45a02b916c9c99ed9dfb9e6812"
+        }
+      ]
+    },
+    {
+      "id": "claim_e70ca78511ea4861b9558a6ff43e14e1",
+      "statement": "DecrementTotalCount atomically subtracts n from total_count when a row fails before a wallet_payment is created (ErrDuplicatePaymentInProgress, ErrFeeResolution, pre-flight balance rejection), guarded against pushing total_count below success_count+failed_count.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/bulk_transfer_batch.go",
+          "version": "repo-file-v1:sha256:e7ba7f345645651928d093b7183a22575e949d45a02b916c9c99ed9dfb9e6812"
+        }
+      ]
+    },
+    {
+      "id": "claim_48c56aa3b7d240feaaa4c5252488484d",
+      "statement": "The wallet payment state machine (pending → verified → authorised → completed | failed | reversed) only reaches terminal via IPN-driven transitions in production; status_inquiry_worker and disbursement_poller_worker are the safety net for missed webhooks.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/transactions/state_machine.go",
+          "version": "repo-file-v1:sha256:7f07c86a81689a831153e90929feaa6892a1bac872af638f5b1e65ea066a475c"
+        }
+      ]
+    },
+    {
+      "id": "claim_c5e339ad969e48479c6d79667be1fd85",
+      "statement": "The system is provider-agnostic per ADR-003: internal/infra/disbursement/onepay/ is the production adapter and internal/infra/disbursement/ninepay/ is the sandbox adapter; the registry_selector picks the active provider at runtime based on config.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/disbursement/registry.go",
+          "version": "repo-file-v1:sha256:92fdea85faf44abcebd0451d4c88a9442ead682b2adaae2209b9442b68e0f0af"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-003-payment-provider-abstraction.md",
+          "version": "repo-file-v1:sha256:e44f12e23649f54c176fb20f8648819e12145508d7b50cdced3b130224184211"
+        }
+      ]
+    },
+    {
+      "id": "claim_7664b5f89ac048da8f0561388768e93c",
+      "statement": "Recovery sweepers verified_transfer_recovery.go and transfer_paid_amounts.go handle batches stuck in `completing` and reconcile provider-side paid totals with local wallet payments, both registered in bootstrap/routes.go.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/workers/transfer_paid_amounts.go",
+          "version": "repo-file-v1:sha256:1ac781f47efabb9bae7b97da1c96d8e3f71e393a9043d20a5a895339a0b7759f"
+        },
+        {
+          "resource": "repo://backend/internal/app/workers/verified_transfer_recovery.go",
+          "version": "repo-file-v1:sha256:02234bf0ccf81b135c7b7bf879dfd8d21c7988324837d79e730429f05c759c9a"
+        }
+      ]
+    },
+    {
+      "id": "claim_9d461b48594145089b78d4b2025c3dc2",
+      "statement": "wallet_settlement_worker reconciles advance payments against the disbursed salary: for each wallet payment it walks the employee's open advance_payment_requests, marks each as settled against the salary batch, and writes the matching ledger entries.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/workers/wallet_settlement_worker.go",
+          "version": "repo-file-v1:sha256:98b1d20925c54cc38693662fdfc0ddaa8e0d255aa691cbff761759f71ccc9406"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

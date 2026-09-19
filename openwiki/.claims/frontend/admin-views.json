@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:110f568ad7468e75b8eb6e315e0c8741d2769db13ce847390cb7b7cdfde7415b",
+  "claims": [
+    {
+      "id": "claim_39c89fe6a1444adb8bc94574b6e090bf",
+      "statement": "Every admin change must cover both desktop (frontend/src/pages/admin/) and mobile (frontend/src/pages/mobile/admin/) viewports; the missing-twin case is a code-review red flag and is enforced by the list-error parity test plus Playwright coverage at 1280px, 390px, and 320px viewports.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md",
+          "version": "repo-file-v1:sha256:9d637bc48601d671a798e12d18fde19fd1bbf07a36fc506bdb2c87bacb341a94"
+        },
+        {
+          "resource": "repo://frontend/src/pages/admin/list-error-parity.test.tsx",
+          "version": "repo-file-v1:sha256:8c91ef4fa181228605ed17b04dd0b0e3ec487077d06a3522481c86f8d314b5ea"
+        }
+      ]
+    },
+    {
+      "id": "claim_0397273783b84cba8c1f3d1428a57e26",
+      "statement": "Admin layout primitives are AdminSidebar.tsx (desktop sidebar), MobileBottomNav.tsx (mobile bottom nav shared with partner), and ResponsivePage.tsx (dual-layout wrapper with 44px minimum touch targets on mobile).",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/components/AdminSidebar.tsx",
+          "version": "repo-file-v1:sha256:4b0a03ec47558a6d114026822607114634638f207220628425a0f5a29eb08f98"
+        },
+        {
+          "resource": "repo://frontend/src/components/MobileBottomNav.tsx",
+          "version": "repo-file-v1:sha256:096e34b12e1555195004db31f8f213b88b7455326f085de4ce518ee5abbaa33d"
+        },
+        {
+          "resource": "repo://frontend/src/components/ResponsivePage.tsx",
+          "version": "repo-file-v1:sha256:29bf01f2fad3bcf29bff4262a7fa28348298569b7aee55029b58ddb461796ac8"
+        }
+      ]
+    },
+    {
+      "id": "claim_fa5b61a68f7e42d6a64d63755f772edc",
+      "statement": "All UI text is Vietnamese; there is no i18n layer — strings are inline in components or in DTO tables for server-supplied labels.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_8077d033680c4843a990210293ef96b4",
+      "statement": "The mobile admin subtree carries its own LedgerEntriesPage because the dense desktop ledger table does not fit on mobile; the dual tree mirrors capability, not pixel parity.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/pages/mobile/admin/LedgerEntriesPage/index.tsx",
+          "version": "repo-file-v1:sha256:818cbfdec327f07187fdf141deded8bc8025d4ac842804b78a0c777726526a2f"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

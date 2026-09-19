@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ce9d9b81871bf0818f01680635bb111eaa1e3d133abdb20b53d9cea54382275a",
+  "claims": [
+    {
+      "id": "claim_7f92adbaa103464f9384ef0e98e8f888",
+      "statement": "The three required viewports are 1280px desktop, 390px mobile, and 320px narrow; the 320px run is required when content density, long Vietnamese text, full VND amounts, tables, dialogs, or sheets could overflow.",
+      "evidence": [
+        {
+          "resource": "repo://docs/testing.md",
+          "version": "repo-file-v1:sha256:3245aa38da4e332f479912db625f698db4b3bc249864794de05e48d24fb59c5a"
+        },
+        {
+          "resource": "repo://frontend/AGENTS.md",
+          "version": "repo-file-v1:sha256:e3a55280ce34d7843f22fb3813e7ba0b661eb087430f6c1009d2992ede1acb73"
+        }
+      ]
+    },
+    {
+      "id": "claim_5f8485be769d4f3887397c833ca0be3f",
+      "statement": "The desktop+mobile parity contract requires mutation calls, query keys, authorization, filter/sort/error states, and action reachability to be identical across both views, with mobile actions reachable via sheet, menu, or footer within 44px touch targets.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/AGENTS.md",
+          "version": "repo-file-v1:sha256:e3a55280ce34d7843f22fb3813e7ba0b661eb087430f6c1009d2992ede1acb73"
+        }
+      ]
+    },
+    {
+      "id": "claim_67749f75208c4db48059b0ae85853c37",
+      "statement": "Admin and Partner must be tested independently at both desktop and mobile; the employee role is mobile-first and many flows have no desktop surface so the 1280px run is not required there.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/AGENTS.md",
+          "version": "repo-file-v1:sha256:e3a55280ce34d7843f22fb3813e7ba0b661eb087430f6c1009d2992ede1acb73"
+        }
+      ]
+    },
+    {
+      "id": "claim_d98a62e16b584d73bffce9681c30130b",
+      "statement": "frontend/src/pages/admin/list-error-parity.test.tsx is the desktop/mobile list-error parity contract test for the admin role.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/pages/admin/list-error-parity.test.tsx",
+          "version": "repo-file-v1:sha256:8c91ef4fa181228605ed17b04dd0b0e3ec487077d06a3522481c86f8d314b5ea"
+        }
+      ]
+    },
+    {
+      "id": "claim_b70153557de84456b05856b1320b7c30",
+      "statement": "Per-role login fixtures seed a known user per role against the dev DB (docker-compose.dev.yml); clock control is exercised via /api/v1/admin/clock/advance (non-prod only) and the full 3-viewport × 3-role × ~20-scenario matrix runs in CI on every PR.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-006-clock-injection-pattern.md",
+          "version": "repo-file-v1:sha256:e1fa6aee8fa5fabc8c170c8c93c8e61f64764590e9943936862bda368aecf62f"
+        },
+        {
+          "resource": "repo://frontend/playwright.config.ts",
+          "version": "repo-file-v1:sha256:698cf6b1d6e4ec28ea353bbc879e7dec15ab7eb42b211ec72583f9202575d213"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

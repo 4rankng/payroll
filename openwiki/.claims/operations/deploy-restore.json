@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:41cb4784b0fddde207c6caf70b3cfbdd02f679a116bbab440f78957be4eaca72",
+  "claims": [
+    {
+      "id": "claim_bc74760e2aff47b6858ced4ad43bbc18",
+      "statement": "Production server is x86_64/amd64 only; building arm64 images breaks Redis container compatibility and provider SDK signing paths, and any PR that introduces arm64 conditions is rejected at code review.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md",
+          "version": "repo-file-v1:sha256:9d637bc48601d671a798e12d18fde19fd1bbf07a36fc506bdb2c87bacb341a94"
+        },
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_34164d132743444d81afb97d51140318",
+      "statement": "make deploy SSHes to the production host, pulls the latest image tags, runs pending migrations, recreates the backend and frontend containers, and runs a smoke check against /api/v1/health.",
+      "evidence": [
+        {
+          "resource": "repo://Makefile",
+          "version": "repo-file-v1:sha256:3f672ead8f367f38747c524e2c4fb7dbd560aad19ab8e21625382bf94d494226"
+        },
+        {
+          "resource": "repo://docs/deployment-guide.md",
+          "version": "repo-file-v1:sha256:ff27d256d2e5e8e8d942de028f89182b224b1b1aef047549660a050e5eb76d2b"
+        }
+      ]
+    },
+    {
+      "id": "claim_ac1957116be74a18bb28904ff1138342",
+      "statement": "Migration discipline is forward-only with idempotent recovery scripts; the api-server is restarted only after the schema is current, and downgrades are not assumed safe without testing.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/AGENTS.md",
+          "version": "repo-file-v1:sha256:23e46b1aace3a06b0acfc5ef4bc214f1e76b66d4808200e86c46333f80d66c1f"
+        }
+      ]
+    },
+    {
+      "id": "claim_2974e28a269a4b439bffa14da9df32be",
+      "statement": "Redis is rebuildable from the source of truth (MySQL): it holds cache + queues + streams + rate-limit counters and the system recovers on first use after a Redis loss.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_c69c0ec8f76343f7821b77678433923e",
+      "statement": "Wallet state (wallet_payments, wallet_topups, wallet_ipn, ledger) is part of the backup contract; restoring from a stale backup can produce a replay loop with the provider and the IPN handler must deduplicate via wallet_ipn.invoice_no.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/wallet/repository.go",
+          "version": "repo-file-v1:sha256:98be8fef801200579ec944ac0dbc3013c37fbc71c7e4cb32486819330318afaa"
+        }
+      ]
+    },
+    {
+      "id": "claim_fc2522b9c91341d483342e35531eed8d",
+      "statement": "Runtime feature gates (PASSWORD_RESET_ENABLE, DISBURSEMENT_FEE_FAIL_OPEN, ENABLE_NINEPAY) flip behavior without redeploy; .env carries ONPAY_*, NINEPAY_*, ZALO_* (seed only), JWT signing keys, and DB credentials and is gitignored.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b70a462dc5a380dcc2ad4588ec69a7b3b8221da523aef3e97a50ffd8a9c68106",
+  "claims": [
+    {
+      "id": "claim_c3aff794a9be4d958aa6d4acee4439de",
+      "statement": "Migrations 054 and 055 (wallet_payments, wallet_topups, wallet_ipn) plus 057 (wallet_provider) turned the wallet into a self-contained aggregate with durable IPN records and provider abstraction.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/wallet/wallet_payment.go",
+          "version": "repo-file-v1:sha256:4f19711f9e50bfef28d880817c58b341fb1357a36771a9ab24f56b0f5ad08944"
+        },
+        {
+          "resource": "repo://backend/migrations/AGENTS.md",
+          "version": "repo-file-v1:sha256:23e46b1aace3a06b0acfc5ef4bc214f1e76b66d4808200e86c46333f80d66c1f"
+        }
+      ]
+    },
+    {
+      "id": "claim_f54f46ce0f52489ebc6270f25c4c9438",
+      "statement": "Migration 101 seeded settings.self_check_in_advance_hold_hours=24 idempotently; 102 added attendances.quota_credit_eligible_at with idx_attendances_quota_credit_eligible so admin changes to the live hold cannot accelerate already-waiting earnings.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/101_seed_self_check_in_advance_hold_hours.up.sql",
+          "version": "repo-file-v1:sha256:0f09c5a17be21daee8d208f067c08b6e1199a53e39b8a95d41f24495c0f462cd"
+        },
+        {
+          "resource": "repo://backend/migrations/102_add_attendance_quota_credit_eligible_at.up.sql",
+          "version": "repo-file-v1:sha256:b70658e55615524b290ca4191ad87f34cca08e72f5918b9e039934298672bd73"
+        }
+      ]
+    },
+    {
+      "id": "claim_48c2c7bdd9fe4026a232d08e166bb0f5",
+      "statement": "Migration 104 added project_employees.pending_check_in_enabled + check_in_effective_from (enable defers to day 1 of next month); 105 added advance_request_enabled (default 1) as the per-employee kill switch that blocks only new requests.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/104_project_employees_pending_check_in.up.sql",
+          "version": "repo-file-v1:sha256:f1ad5ac523d38ad5c5fb4b2aea7f77bf3e7611c674bf1759bbd3f2ad2d8dc731"
+        },
+        {
+          "resource": "repo://backend/migrations/105_project_employees_advance_request_enabled.up.sql",
+          "version": "repo-file-v1:sha256:2b8a329db3d4faaaf268e7184b76a4cf5473839f09c555c41c571711f2bc6de3"
+        }
+      ]
+    },
+    {
+      "id": "claim_90fb7e5c21854ee096c6fd5bd661b65e",
+      "statement": "Migration 100 introduced flexpay_salary_notifications with UNIQUE (asset_id, project_id, employee_id, template_id) for safe import retry and INDEX (status, lease_expires_at) for the recovery sweeper; status values include sent/failed/suppressed as terminal.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/flexpay_salary_notification.go",
+          "version": "repo-file-v1:sha256:7971e0ab7ab56f9e3ad4140017ebb1b930721424305fd4d10caba10bc5693a58"
+        },
+        {
+          "resource": "repo://backend/migrations/100_add_flexpay_salary_notifications.up.sql",
+          "version": "repo-file-v1:sha256:3d3ff56c77f54f13554d00e4a61921bc33ea3ec2f714fa6784efb094618c3097"
+        }
+      ]
+    },
+    {
+      "id": "claim_b4403774c70b4be4abb24bcbec528fc3",
+      "statement": "Migration 098 added timesheet_import_jobs.include_flexible_employees (BOOLEAN, default FALSE) so admins can opt flexi-employees into a BCC import.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/098_add_flexible_bcc_import_option.up.sql",
+          "version": "repo-file-v1:sha256:4d9cc949c680563e088004f631fd650d74d642f0154f01b1f2a328287881d85b"
+        }
+      ]
+    },
+    {
+      "id": "claim_8b58f94b1347472f9d2c88bb6d16a6f0",
+      "statement": "Migration 062 dropped the database-backed outbox tables; events now flow Redis Streams per ADR-004 and the drop is irreversible — never reintroduce a database outbox.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/AGENTS.md",
+          "version": "repo-file-v1:sha256:23e46b1aace3a06b0acfc5ef4bc214f1e76b66d4808200e86c46333f80d66c1f"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-004-redis-streams-event-bus.md",
+          "version": "repo-file-v1:sha256:97dd2b6bc04fdf27332f2490fb07eef408d8f68918cfb44ef571add8cb988784"
+        }
+      ]
+    },
+    {
+      "id": "claim_71aa99e4b53c441297414e72c19222ec",
+      "statement": "Migration 109 dropped the legacy ledger_asset_unique index so the bulk-transfer pipeline can correct itself via ProcessBookBatchLedger without colliding with the prior uniqueness constraint.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/bulk_transfer_batch.go",
+          "version": "repo-file-v1:sha256:e7ba7f345645651928d093b7183a22575e949d45a02b916c9c99ed9dfb9e6812"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

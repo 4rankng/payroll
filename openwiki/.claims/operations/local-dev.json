@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ae15aa1d023b5cedae5b6af6da7b42122a250be07a199d1dcfde814dc3ebe03f",
+  "claims": [
+    {
+      "id": "claim_4a5b67a4a6204b94956795a679362a80",
+      "statement": "Local ports are 8080 (backend via air), 5173 (frontend via vite), 3306 (MySQL), 6379 (Redis), 8081 (Adminer), 9001 (9Pay mock), 9002 (OnePay mock), all from docker-compose.dev.yml.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_4ac42de2bd914536aad657ec1e873026",
+      "statement": "The backend runs outside Docker via air hot-reload (backend/.air.toml); the dev convention is to never run the backend directly — only via air.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    },
+    {
+      "id": "claim_c18d38e42be94a28a3c526e334c86b50",
+      "statement": "Admin endpoints /api/v1/admin/clock/{set,advance,reset,time} are mounted in dev so integration tests can advance time; they are NOT mounted in production.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-006-clock-injection-pattern.md",
+          "version": "repo-file-v1:sha256:e1fa6aee8fa5fabc8c170c8c93c8e61f64764590e9943936862bda368aecf62f"
+        }
+      ]
+    },
+    {
+      "id": "claim_2329e66377bd4a3da7d9844196633aa0",
+      "statement": "Branch is main with no worktrees; commit format is <type>(<scope>): <subject>; make api-test runs after any feature change and pnpm lint && pnpm type-check runs after any frontend change.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md",
+          "version": "repo-file-v1:sha256:9d637bc48601d671a798e12d18fde19fd1bbf07a36fc506bdb2c87bacb341a94"
+        },
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

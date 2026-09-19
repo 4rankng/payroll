@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:628aa4593fb2266ecbb50cbe4cc4fc4548a1a71bf50074f7fa8eac0b2c6107cf",
+  "claims": [
+    {
+      "id": "claim_a22b205dc7024c65ac86d8d50e6ab0b8",
+      "statement": "Push subscriptions are stored in push_subscriptions keyed by (user_id, endpoint) with a uniqueIndex; device_type is web (default), android, or ios, and the repository contract is Create/GetByUserID/DeleteByEndpoint/DeleteByUserID.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/push_subscription.go",
+          "version": "repo-file-v1:sha256:a20aac81f3ba8dd40bfa6747d99e361839341a1678963a249fe41e49f043cdaa"
+        }
+      ]
+    },
+    {
+      "id": "claim_e17335b10f914833a14555add23d5311",
+      "statement": "PushService wraps the repository and VAPID config (config.NotificationConfig), using github.com/SherClockHolmes/webpush-go, and exposes Subscribe, Unsubscribe, and SendToUser (fan-out to every subscription for the user).",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/push/push_service.go",
+          "version": "repo-file-v1:sha256:645d2c7608e4c9d557be1110d1dce7b8679e8e9ffc9d4be12a09b1a3b69449ba"
+        }
+      ]
+    },
+    {
+      "id": "claim_99eb4f423a2545dd986f5b214531d54b",
+      "statement": "Notification fan-out runs after the originating transaction commits: domain events are emitted, the handler claims the work, and the notification service assembles the message and pushes via the push service, email publisher, and in-app store.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/notification/employee_notification_service.go",
+          "version": "repo-file-v1:sha256:c32354eaa5afc6279b05ee543ed520067e9263f5c742a58ce892edbbff2066a4"
+        }
+      ]
+    },
+    {
+      "id": "claim_7b726739ef824190a0f566f1d1b5987b",
+      "statement": "The PWA service worker (frontend/src/sw.ts) handles browser push events; failed deliveries returning 404/410 from the push service are removed via DeleteByEndpoint so the subscription table stays healthy.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/push_subscription.go",
+          "version": "repo-file-v1:sha256:a20aac81f3ba8dd40bfa6747d99e361839341a1678963a249fe41e49f043cdaa"
+        },
+        {
+          "resource": "repo://frontend/src/sw.ts",
+          "version": "repo-file-v1:sha256:02869d67689f82ac758849c5945aa8595a2ced0dea5ef9bb111bbb7fbf9a8516"
+        }
+      ]
+    },
+    {
+      "id": "claim_26b8dca634064881bdd9498e9af5fe48",
+      "statement": "Push is best-effort: payroll confirmations and FlexPay settlement always also write an in-app notification so the user sees the message next time they open the app.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/notification/employee_notification_service.go",
+          "version": "repo-file-v1:sha256:c32354eaa5afc6279b05ee543ed520067e9263f5c742a58ce892edbbff2066a4"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

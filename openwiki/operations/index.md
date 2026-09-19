@@ -1,5 +1,5 @@
 # Files
 
-- [Auth, RBAC, and Casbin](auth-rbac-and-casbin.md) - JWT issuance and validation, Casbin policy model, deny-override rules, and the auth middleware chain.
-- [Caching and Cache Invalidation](caching-and-cache-invalidation.md) - Redis cache usage, key strategy, the commit-after-invalidate invariant, and the audit-context interaction with the event-driven invalidation handler.
-- [Deploy, Backup, and Restore](deploy-backup-restore.md) - Make targets, Docker Compose topology for dev and production, MySQL backup and restore flow, and the production x86_64 invariant.
+- [Deploy, Backup & Restore](deploy-restore.md) - Production deploy via make deploy, x86_64/amd64 architecture constraint, the docker-compose layout (api-server + MySQL + Redis + nginx), migration discipline, and the backup/restore flow.
+- [Local Development](local-dev.md) - Bring-up the dev stack — docker-compose.dev.yml (MySQL + Redis + adminer + 9Pay mock + OnePay mock), air hot-reload for the backend, vite for the frontend, ports, and admin tooling.
+- [Observability](observability.md) - Structured logging (slog), Prometheus metrics, error code conventions, request id correlation, and the system-health and cron-health UI surfaces used by admins.

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a89b220078e6fd310b4a28a93eb8afb9772847999d482c6a66a78cc86eadf467",
+  "claims": [
+    {
+      "id": "claim_3f5d4430b857497490ec0938eacff740",
+      "statement": "Multi-aggregate writes in application services are wrapped in `domain.TransactionManager.RunInTransaction`; repositories detect the active transaction via context and either join it or use the default connection.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/transaction_manager.go",
+          "version": "repo-file-v1:sha256:f9ba40b5a4f5fb36a3d47eb6b1995145ed01b4ef912e46281f2a255904899515"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-007-transaction-manager-unit-of-work.md",
+          "version": "repo-file-v1:sha256:7d2f5c4278c52649698a21f24ab6e4b0e3051aa6307acdb20297f2609de66aa3"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

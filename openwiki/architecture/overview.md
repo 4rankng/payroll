@@ -1,99 +1,125 @@
 ---
 type: architecture
 title: Architecture Overview
-description: DDD layered architecture for the Go backend, request lifecycle, and the boundary between domain, application, transport, and infrastructure.
-tags: [architecture, ddd, clean-architecture, layering, golang]
+description: The dependency-direction diagram (transport → app → domain ← infra), the frontend role separation, the three async surfaces (domain events via Redis Streams, asynq background jobs, payment-provider IPN webhooks), and the desktop+mobile parity rule.
+tags: [architecture, ddd, redis-streams, asynq, ipn, frontend, mobile, parity]
 verified:
   - by: openwiki/0.5.0
-    at: 2026-09-08T09:18:16.270Z
+    at: 2026-09-19T03:19:10.016Z
 sources:
-  - id: openwiki-source-0618ef15c5b118d2ad707e7d
-    resource: repo://backend/internal/app/bootstrap/container.go
-  - id: openwiki-source-0f104d87e52630bb474cdbe0
-    resource: repo://backend/internal/domain/wallet/repository.go
+  - id: openwiki-source-8037e2358a2c4f9b2c722a11
+    resource: repo://AGENTS.md
+  - id: openwiki-source-0c60b8722ffc081c51df87e3
+    resource: repo://backend/internal/AGENTS.md
+  - id: openwiki-source-50c7d39e20d2fbd3fc8c2e0c
+    resource: repo://backend/internal/domain/transactions/state_machine.go
   - id: openwiki-source-f10a0a57b8b00bec9b396088
     resource: repo://docs/decisions/ADR-001-ddd-clean-architecture.md
+  - id: openwiki-source-49857e2784126dfe96ada34e
+    resource: repo://docs/decisions/ADR-003-payment-provider-abstraction.md
+  - id: openwiki-source-675cdb8aa785fd3b58b5747f
+    resource: repo://docs/decisions/ADR-004-redis-streams-event-bus.md
+  - id: openwiki-source-28d4ebbc4a3f54433e091cbe
+    resource: repo://docs/decisions/ADR-005-asynq-background-jobs.md
+  - id: openwiki-source-291b71381ac4ab544f08ee9c
+    resource: repo://docs/decisions/ADR-007-transaction-manager-unit-of-work.md
   - id: openwiki-source-62317b515c31ac5b3e190eb4
     resource: repo://docs/system-architecture.md
-generated: { by: "opencode", at: "2026-09-08T09:18:16.270Z" }
+  - id: openwiki-source-454c9bcdde0b77b35e0fc994
+    resource: repo://frontend/src/App.tsx
+  - id: openwiki-source-58e80110e3c82917d0ff4e0c
+    resource: repo://frontend/src/components/ResponsivePage.tsx
+generated: { by: "opencode", at: "2026-09-19T03:19:10.016Z" }
 ---
 
 # Architecture Overview
 
-The backend follows Domain-Driven Design with Clean Architecture (ADR-001). Dependencies point strictly inward — `transport → app → domain ← infra` — so the domain layer never imports Gin, GORM, or any other infrastructure framework. The frontend is a separate Vite + React SPA that talks to the backend over HTTP/JSON.
+<!-- openwiki: broken internal link [../docs/system-architecture.md] file "../docs/system-architecture.md" does not exist. Fix the href or restore the target, then delete this comment. -->
+This page is the map. The component diagram and request/event/job flows are documented in detail in [`docs/system-architecture.md`](../docs/system-architecture.md); this page focuses on the rules and relationships that connect the pieces.
 
-The full component diagram and the broader topology live in `docs/system-architecture.md`. This page focuses on what the four layers do, how a single request traverses them, and where the seams live.
+## Dependency direction (backend)
 
-## The four layers
+```
+transport → app → domain ← infra
+```
 
-### Domain — `backend/internal/domain/`
+The domain layer has zero framework imports. `transport` (HTTP handlers, middleware, validation) depends on `app` services and `domain` types. `app` (services, DTOs, workers, bootstrap) orchestrates use cases against `domain` ports and `infra` adapters. `infra` (persistence, event bus, cache, disbursement, asynq, Zalo, email, storage) implements the `domain` ports. `domain` is the innermost ring — see ADR-001 and `architecture/domain-layer.md`.
 
-The innermost layer. Owns the business model: entities (Employee, Project, Timesheet, Wallet, LedgerEntry, Settlement), value objects, domain services, specification objects, the transaction manager abstraction, and the wallet aggregate. The package has zero framework imports — only the standard library and `internal/pkg/clock` / `internal/constants`. New aggregates go in subdirectories with their own repository interfaces (see the wallet aggregate as the reference example).
+Anything new touches this layout in order: define the entity and rule in `domain/`; declare a port in `domain/ports/`; implement the port in `infra/`; expose a service in `app/services/`; wire a handler in `transport/http/handlers/`; mount it in `app/bootstrap/routes.go`. Each step is reviewable on its own.
 
-The `domain/ports/` directory holds repository and service interfaces; `domain/services/` holds pure business logic; `domain/specs/` holds reusable rules (e.g. `WorkingDaysSpec`); `domain/transactions/` owns the unit-of-work abstraction; `domain/wallet/` is the self-contained wallet aggregate.
+## Frontend role separation
 
-### Application — `backend/internal/app/`
+```
+frontend/src/
+├── App.tsx                 Router + auth provider
+├── pages/
+│   ├── admin/              Admin role (desktop + mobile/admin)
+│   ├── partner/            Partner role (project-scoped)
+│   ├── adv-partner/        Advanced-partner role
+│   ├── employee/           Employee role (mobile-first)
+│   ├── accountant/         Accountant role
+│   ├── mobile/             Mobile wrappers (admin/, partner/)
+│   ├── Login.tsx / OTPLogin.tsx / ForgotPassword.tsx / ResetPassword.tsx / ZaloResetPassword.tsx
+│   └── NotFound.tsx
+├── components/             Role-grouped + shared UI
+│   ├── ui/                 shadcn/ui primitives
+│   ├── shared/             Cross-role components
+│   ├── admin/ partner/ employee/  Role-grouped UI
+│   ├── ResponsivePage.tsx  Desktop/mobile dual layout wrapper
+│   ├── AdminSidebar.tsx / PartnerSidebar.tsx / MobileBottomNav.tsx
+│   └── …feature components (attendance, advance-payment, payroll, …)
+├── hooks/                  TanStack Query hooks
+├── services/               API clients
+├── schemas/                Zod request/response schemas
+├── contexts/               Auth, theme, preferences
+├── sw.ts                   PWA service worker
+└── …
+```
 
-Orchestrates use cases. App services are the only layer allowed to depend on both domain ports and infrastructure clients, and they translate user intent into domain operations. They never touch GORM models directly — handlers consume domain types. The application layer also owns bootstrap (`app/bootstrap/container.go`), DTOs (`app/dto/`), and asynq background workers (`app/workers/`).
+The **desktop + mobile parity rule** applies to every frontend change for every role: a feature must work in both desktop and mobile viewports of every affected role unless explicitly narrowed. The two layouts are not a fallback — `ResponsivePage.tsx` plus role-specific pages (`pages/mobile/admin/`, `pages/mobile/partner/`) ship side by side, and `MobileBottomNav.tsx` is the mobile navigation surface. Mobile breakpoints to verify: 390px (typical phone) and 320px (narrow phone / content density edge cases). Touch targets must be ≥44px.
 
-### Transport — `backend/internal/transport/`
+All UI text is Vietnamese; there is no i18n layer. Strings live inline in components or in DTO tables for server-supplied labels. See `frontend/CLAUDE.md` for the full frontend conventions and `frontend/admin-views.md`, `frontend/partner-views.md`, `frontend/employee-mobile.md`, and `frontend/shared-platform.md` for role-specific detail.
 
-The HTTP edge. `transport/http/handlers/` exposes the API grouped by domain area; `transport/http/middleware/` owns the auth → authorization → audit-context chain plus rate-limit, request-timeout, and security-header middleware; `transport/http/validation/` parses and validates incoming requests; `transport/http/response/` formats errors. Handlers depend only on app services and domain types — never on GORM models.
+## Three async surfaces
 
-### Infrastructure — `backend/internal/infra/`
+The system has three distinct asynchronous paths. They share Redis as the runtime substrate but serve different purposes.
 
-The outermost layer. Implements the ports defined in domain: `infra/persistence/` for GORM repositories (50+ implementations mapping GORM models → domain types via `ToDomain()`), `infra/events/` for the event bus, `infra/cache/` for Redis, `infra/asynq/` for background job processing, `infra/disbursement/` for OnePay and 9Pay adapters, `infra/email/` for Resend, `infra/storage/` for file uploads, `infra/observability/` for slog and Prometheus, and `infra/transaction/` for the GORM-backed unit of work.
+1. **Domain events (Redis Streams)** — Used for cross-aggregate side effects. A change in one aggregate publishes an event; multiple handlers react (audit log, cache invalidation, settlement, notification). Events are produced by per-aggregate factories and published non-blockingly. The financial critical path does not depend on event delivery for correctness; events are post-commit. See ADR-004 and `integrations/event-bus.md`.
 
-## Request lifecycle
+2. **asynq background jobs (Redis queues)** — Used for work that is too long, expensive, or risky to do inline: bulk transfers to a payment provider, BCC weekly import processing, attendance auto-reject sweeps, payroll report emails, recovery sweepers for stuck payments. Tasks are enqueued via the asynq client and run by handlers registered in `bootstrap/routes.go`. See ADR-005 and `integrations/background-jobs.md`.
 
-A single HTTP request flows through the layers as follows:
+3. **Payment provider IPN webhooks (HTTP)** — Used for asynchronous confirmation that a payment has settled, failed, or been reversed at the bank. The provider POSTs to a webhook endpoint; an `ipn:process` worker verifies the signature, looks up the wallet payment, and feeds the matching `Trigger` into the wallet state machine (`ipn_completed`, `ipn_failed`, `ipn_reversed`). IPN processing is the only path that drives wallet payments to a terminal state in production.
 
-1. **Gin router** dispatches to the matching route group.
-2. **Middleware chain** runs in order: security headers → request timeout → rate limit → JWT auth → Casbin RBAC authorization → audit context → partner scoping.
-3. **Handler** parses the request, calls into an application service, and translates the result into a response. Handlers may also publish domain events and emit non-blocking audit logs.
-4. **Application service** orchestrates the use case: loads aggregates through domain ports, invokes domain services for rules, persists via repositories, and emits events.
-5. **Domain layer** enforces business invariants, runs the wallet state machine, validates accounting balance, applies the transaction manager for atomicity.
-6. **Infrastructure repositories** write to MySQL via GORM; the event bus publishes to Redis Streams; asynq enqueues background jobs.
-7. **Cache invalidation** runs after the transaction commits (see ADR-007) so reads after the write see the new state.
+These three surfaces are intentionally separate so that a backlog in one (e.g., a slow 9Pay API) does not block the others. They share infrastructure (Redis, MySQL, asynq client) but not semantics.
 
-The component diagram in `docs/system-architecture.md` is the authoritative visual; this prose is the layer-level reading guide.
+## Transaction discipline
 
-## What goes where
+Multi-aggregate writes go through `domain.TransactionManager.RunInTransaction`; cache invalidation and event publish are deferred to `domain.RegisterAfterCommit` callbacks that fire only after the transaction commits. See ADR-007 and `architecture/application-services.md` for the contract and the after-commit hook APIs.
 
-| Concern | Layer | Example |
-|---|---|---|
-| Business rule | `domain/` | `domain/services/timesheet_validation_service.go` |
-| Persistence interface | `domain/ports/` | `WalletTopupRepository` in `domain/wallet/repository.go` |
-| GORM implementation | `infra/persistence/` | `wallet_topup_repository.go` |
-| Use case | `app/services/` | `bcc_import_pipeline.go` orchestrates bulk import |
-| HTTP handler | `transport/http/handlers/` | `handlers/wallet.go` |
-| Middleware | `transport/http/middleware/` | `auth.go`, `authorization.go`, `audit_context.go` |
-| Configuration | `internal/config/` | reads env vars |
-| External API client | `infra/disbursement/`, `infra/email/` | OnePay, 9Pay, Resend adapters |
+## Cross-cutting invariants
 
-## Anti-corruption layer
+These are project-wide rules that the wiki should reflect wherever it touches the relevant subsystem:
 
-`internal/adapters/` provides ports for external system contracts — events, cache, notification, services — so the rest of the codebase can refer to stable interfaces rather than third-party API shapes. Adapters wrap SDK calls and translate between wire format and domain types.
+- **Clock**: every business time value goes through `internal/pkg/clock` (Asia/Ho_Chi_Minh). Admin clock endpoints exist only in non-prod builds. See ADR-006 and `architecture/domain-layer.md`.
+- **Architecture**: server is x86_64/amd64; Docker images are amd64-only. Production uses OnePay, never 9Pay. The system is provider-agnostic via ADR-003.
+- **Domain purity**: no Gin, no GORM, no Redis, no asynq in `internal/domain/`. See ADR-001.
+- **Cache invalidation**: after commit, never inside a transaction. See ADR-007.
+- **Frontend parity**: every change covers desktop and mobile for every affected role.
+- **Commit format**: `<type>(<scope>): <subject>` — no AI references; work happens on `main`.
 
-## Container wiring
+## Where to read next
 
-`backend/internal/app/bootstrap/container.go` is the dependency injection root. It builds infrastructure (`bootstrap/infrastructure/`), repositories (`bootstrap/repositories/`), and application services (`bootstrap/services/`), then constructs the HTTP handlers and registers routes (`bootstrap/routes_*.go`). New features typically add wiring in three places: a new `routes_<area>.go` file for the route registration, a new entry in `container.go` to construct the handler, and a `bootstrap/services/` initializer that takes its dependencies from the repository and infrastructure registries.
-
-## Why the layering matters
-
-Without strict layer boundaries, business logic tends to leak into handlers (HTTP concerns) or repositories (database concerns), making it hard to test in isolation and fragile to framework upgrades. The DDD layering is what makes property-based testing of accounting rules (`accounting_rules_test.go`) possible without a database, and what makes the wallet state machine unit-testable without Redis. ADR-001 records the rationale and the rejected alternatives (MVC, pure hexagonal, flat structure).
-
-## Cross-cutting conventions
-
-- **Clock** — all business time uses `clock.Now()` (Asia/Ho_Chi_Minh) via `pkg/clock`. Never `time.Now()` for domain logic.
-- **Logging** — `slog` via `infra/observability/`. Never `fmt.Printf`. Log at critical junctions.
-- **Errors** — domain errors via `domain.NewNotFoundError`, `NewValidationError`, `NewConflictError`, etc. Transport layer translates them to HTTP status codes.
-- **Events** — emit via `EventBus.Publish()`. Service code wraps emission in `go func() { ... }()` for non-blocking dispatch.
-- **Audit** — `AuditService.LogFileImport()` / `LogFileExport()` are non-blocking and always include `data_type`, `record_count`, `file_name`.
-
-## Related pages
-
-- [Quickstart](../quickstart.md) — repo map and entry points.
-- [Transaction Manager and Outbox](./transaction-manager-and-outbox.md) — how domain operations achieve atomicity.
-- [Double-Entry Ledger and Chart of Accounts](./double-entry-ledger.md) — the wallet + ledger surfaces.
-- [Auth, RBAC, and Casbin](../operations/auth-rbac-and-casbin.md) — middleware chain details.
+| Topic | Page |
+|-------|------|
+| Domain entities, ports, wallet aggregate | `architecture/domain-layer.md` |
+| Application services, transaction manager, workers | `architecture/application-services.md` |
+| HTTP handlers, middleware, contracts | `architecture/transport-http.md` |
+| GORM repos, Redis Streams, OnePay/9Pay adapters | `architecture/infrastructure.md` |
+<!-- openwiki: broken internal link [../docs/system-architecture.md] file "../docs/system-architecture.md" does not exist. Fix the href or restore the target, then delete this comment. -->
+| Detailed component diagram and request flow | [`docs/system-architecture.md`](../docs/system-architecture.md) |
+<!-- openwiki: broken internal link [../docs/api.md] file "../docs/api.md" does not exist. Fix the href or restore the target, then delete this comment. -->
+| API route map | [`docs/api.md`](../docs/api.md) |
+<!-- openwiki: broken internal link [../docs/database.md] file "../docs/database.md" does not exist. Fix the href or restore the target, then delete this comment. -->
+| Database schema overview | [`docs/database.md`](../docs/database.md) |
+| Decisions (ADRs) | [`docs/decisions/`](../docs/decisions/) |
+| Frontend role-specific layouts | `frontend/admin-views.md`, `frontend/partner-views.md`, `frontend/employee-mobile.md`, `frontend/shared-platform.md` |

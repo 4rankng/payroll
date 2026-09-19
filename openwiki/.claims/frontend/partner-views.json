@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:028043255f6f6b2d1c0ff01a58485e788b4c49a76f58ab529147c2464e519f1b",
+  "claims": [
+    {
+      "id": "claim_9d961c35a5f748d081f4a695ae6e69e0",
+      "statement": "Partner scoping is enforced server-side in two layers — Casbin policy for endpoint-level access and handler-level checks via isScopedPartnerRole plus CanUserAccessProject / CanUserAccessEmployee — so the frontend never re-implements the filter.",
+      "evidence": [
+        {
+          "resource": "repo://docs/api.md",
+          "version": "repo-file-v1:sha256:2f176ea69a86d2ac5a8f5d693645c766f6f8f12702f80967572f0177bc309699"
+        },
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_97862f56009a49ce8e1ef1efe68e11b7",
+      "statement": "The advanced-partner role (adv-partner) extends partner with additional write rights; its page tree currently includes UsersPage for managing employee user accounts within the partner's projects.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/pages/adv-partner/UsersPage/index.tsx",
+          "version": "repo-file-v1:sha256:6ca403005dc40b5b9190f3579ede359df38ab797621ed7c15251858ea135c2a7"
+        }
+      ]
+    },
+    {
+      "id": "claim_70b7f9fac8c347b6a84168e106fb28a1",
+      "statement": "The bank-transfer history endpoint /api/v1/payrolls/bank-transfer-histories returns the same response shape to partner and admin but the server filters to accessible projects and returns only those rows; cycle windows are fixed at Days 1-7 / 8-14 / 15-21 / 22-28.",
+      "evidence": [
+        {
+          "resource": "repo://docs/api.md",
+          "version": "repo-file-v1:sha256:2f176ea69a86d2ac5a8f5d693645c766f6f8f12702f80967572f0177bc309699"
+        }
+      ]
+    },
+    {
+      "id": "claim_16054ab5e7bb4299beccdfa335535dbf",
+      "statement": "The mobile partner tree is intentionally narrower than the desktop tree (Dashboard, Projects, Employees, Timesheets) because the partner does not run payroll or read the full payment history from a phone.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/pages/mobile/partner/DashboardPage/index.tsx",
+          "version": "repo-file-v1:sha256:c5d01865ea1b90d9c77b9f3c5f93dae3fdfe6dd8c55b383648f0efb25e3ffc14"
+        }
+      ]
+    },
+    {
+      "id": "claim_2105eca27ff94f7eb2a7778c550a6f2e",
+      "statement": "All partner UI copy is Vietnamese inline; labels like Duyệt chấm công, Yêu cầu tạm ứng, Lịch sử thanh toán live in the component files.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

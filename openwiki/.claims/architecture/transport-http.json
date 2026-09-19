@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:77951774708263277608ba9e100719e6cb69b59440cff7019e4a3d60eccf9494",
+  "claims": [
+    {
+      "id": "claim_9910a433856d4da589296fb125beb20d",
+      "statement": "The HTTP transport layer is the boundary between HTTP and use cases: handlers depend only on application services and domain types, never on internal/infra/persistence or GORM models.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/AGENTS.md",
+          "version": "repo-file-v1:sha256:a7967221365cbe15e869ba792b7b23c32eea5eab50bf85fc02c2c6350b0d2fb4"
+        }
+      ]
+    },
+    {
+      "id": "claim_4922e17c41d64a42b448865996107388",
+      "statement": "The middleware chain runs security headers, request timeout, rate limit, JWT auth, Casbin RBAC authorization, audit context, partner scoping, tenant semaphore, IP whitelist (for IPN webhooks), and API metrics, with recovery mounted globally.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/transport/http/middleware/security_headers.go",
+          "version": "repo-file-v1:sha256:edb73659948da3220588e590cbc20d1ce7a1b296050c7338e8eeeb566f67148c"
+        },
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_21acb50f1137404d94ff5f0651b4ba8c",
+      "statement": "Self-service password reset is mounted only when PASSWORD_RESET_ENABLE=true; the request endpoint always returns 200 (anti-enumeration) and is rate-limited 3/hr per normalized email; the confirm flow atomically consumes the Redis-stored token via GETDEL and invalidates all existing sessions in a single DB transaction.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_0903bdc653a14e839b5f3d002752ba32",
+      "statement": "Partner scoping is enforced at two layers: Casbin policy (endpoint-level allow/deny by role) and handler-level checks via isScopedPartnerRole + CanUserAccessProject / CanUserAccessEmployee; both are required for partner-aware endpoints.",
+      "evidence": [
+        {
+          "resource": "repo://docs/api.md",
+          "version": "repo-file-v1:sha256:2f176ea69a86d2ac5a8f5d693645c766f6f8f12702f80967572f0177bc309699"
+        },
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_02e4920cb9f8427ab51c09aa15d6102e",
+      "statement": "internal/transport/http/response/error_translator.go is the only place that maps domain.*Error types to HTTP status codes and Vietnamese user-facing messages; handlers must use the helper rather than translate ad-hoc.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/transport/http/response/error_translator.go",
+          "version": "repo-file-v1:sha256:1aa9d8452b502792f153f9e73c2e690e4521c918f60782b8ed3d3b726f8c3c41"
+        }
+      ]
+    },
+    {
+      "id": "claim_2ef57d28772e4663a3f40dee1ee5d42b",
+      "statement": "OnePay and 9Pay IPN endpoints are mounted with IP whitelist middleware so only the provider IPs can post; the handler verifies the signature and enqueues an ipn:process asynq task, returning 200 quickly.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_2cfa54290d6d4bf6baca2df90d02bc49",
+      "statement": "Admin clock endpoints (set/advance/reset/time) are mounted only in non-prod builds and let integration tests freeze or advance server time without monkey-patching; they are excluded from production via build-time wiring.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-006-clock-injection-pattern.md",
+          "version": "repo-file-v1:sha256:e1fa6aee8fa5fabc8c170c8c93c8e61f64764590e9943936862bda368aecf62f"
+        }
+      ]
+    },
+    {
+      "id": "claim_eeef228c8d6343199e9d0ff98ff32b2c",
+      "statement": "DTOs in internal/app/dto/ are organized one file per capability and carry the Vietnamese labels; handlers consume them via validation tags processed by internal/transport/http/validation/request_validator.go.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/dto/AGENTS.md",
+          "version": "repo-file-v1:sha256:a5ca19fc30cf98166e9c163a36c44d4adf9229239cebc833734c4449149c6bf9"
+        },
+        {
+          "resource": "repo://backend/internal/transport/http/validation/request_validator.go",
+          "version": "repo-file-v1:sha256:190cc9943c63afac5efbc7872655404287728f85565c736c458a3ca748940166"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

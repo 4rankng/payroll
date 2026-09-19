@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:550fe3763e3c539c97e5ec5d0c2e3a4bdc4ff0bd374e11c08c6cb61578bd3d98",
+  "claims": [
+    {
+      "id": "claim_cb436d1cd6ce46de99225cc0838788c6",
+      "statement": "Zalo OA credentials are stored in the settings table (zalo.enabled, zalo.credentials) and pulled at runtime via a CredentialSource interface; ZALO_* env vars are bootstrap-time seed only and the admin UI at /admin/settings?tab=zalo is authoritative thereafter.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-011-zalo-otp-password-reset.md",
+          "version": "repo-file-v1:sha256:23b07b1360f4fa3a39938a64db0b90c16d24c33378112b36e65adc99e0caba35"
+        }
+      ]
+    },
+    {
+      "id": "claim_41c628cffc5041acae9a3cbb47d64540",
+      "statement": "The zaloreset service is role-gated to employee and uses anti-enumeration via dummy sessions; the OTP login uses a Redis pending store (internal/infra/cache/otp_pending_store.go) with short TTL and atomic consume on verify.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    },
+    {
+      "id": "claim_75dd9f4280764ccab2823554c8dcc2aa",
+      "statement": "OAuth v4 token refresh retries on -124 with exponential backoff; tokens refresh lazily on the next send rather than via a background sweeper so a fully idle OA stays connected without a heartbeat job.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    },
+    {
+      "id": "claim_03141d629d1a421eb4c01256397fec15",
+      "statement": "Disabling Zalo (zalo.enabled=false) does not disable the OTP login or password reset endpoints — it only blocks the actual ZNS send, and the UI surfaces a clear error pointing users to the email path.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    },
+    {
+      "id": "claim_c99103b236be40b680405f2d0788925a",
+      "statement": "The Zalo client in internal/infra/zalo is stateless and DB-agnostic: it handles phone normalization, param clamping for ZNS templates, OAuth v4, and the -124 retry path; all state lives in calling services and the settings table.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

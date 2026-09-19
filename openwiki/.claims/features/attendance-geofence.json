@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ad0c9a4f12c4624b40a351fa1d2ca0a4edc677b07b6c0bfa2d54dbb759c3e985",
+  "claims": [
+    {
+      "id": "claim_5f2736bf5f99495aa60e7767f9822a94",
+      "statement": "Attendance status values are checked_in, completed, orphaned, and rejected; rejected is defined as CheckOutTime==nil && SalaryRejectReason!=nil (auto-rejected by the scheduled task when the [K-1h, K+4h] window closes without a checkout).",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/attendance.go",
+          "version": "repo-file-v1:sha256:bb042f7cc27f4575f5d1639be7d763affe305dc6b72b72342bed348e3525e7ac"
+        }
+      ]
+    },
+    {
+      "id": "claim_67b6930e97c6427184daca64ebb10637",
+      "statement": "Each self-checkout row stores an immutable quota_credit_eligible_at = check_out_time + hold_hours (migration 102) so admin changes to the live setting cannot accelerate already-waiting earnings or release them early.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/102_add_attendance_quota_credit_eligible_at.up.sql",
+          "version": "repo-file-v1:sha256:b70658e55615524b290ca4191ad87f34cca08e72f5918b9e039934298672bd73"
+        }
+      ]
+    },
+    {
+      "id": "claim_797f22d8997941b4b03016b296a4691d",
+      "statement": "The admin-configurable advance-hold setting is seeded at 24 hours in migration 101 as settings.key='self_check_in_advance_hold_hours' with an idempotent INSERT ... ON DUPLICATE KEY UPDATE that preserves any admin-configured value on rerun.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/101_seed_self_check_in_advance_hold_hours.up.sql",
+          "version": "repo-file-v1:sha256:0f09c5a17be21daee8d208f067c08b6e1199a53e39b8a95d41f24495c0f462cd"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef5d76b24bee4e89b381ba3ef03bcce9",
+      "statement": "The credit_quota_worker (asynq) credits attendance earnings into the advance quota pool (advance_payments.salary / max_adv_amount) using quota_credited_at as the idempotency key, retrying safely because eligibility is per-row and immutable.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/workers/credit_quota_worker.go",
+          "version": "repo-file-v1:sha256:545fc2e0856ecdc4ce02b78761b484c8947eee5408687257c4ea33fab9054ec8"
+        }
+      ]
+    },
+    {
+      "id": "claim_050d8a72804048c0bef730ea56b15efd",
+      "statement": "Migration 104 added pending_check_in_enabled and check_in_effective_from to project_employees so enabling check-in defers to day 1 of the next month (mirrors pending_payment_schedule / schedule_effective_from); disable is instant and DELETE cancels a pending enable.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/104_project_employees_pending_check_in.up.sql",
+          "version": "repo-file-v1:sha256:f1ad5ac523d38ad5c5fb4b2aea7f77bf3e7611c674bf1759bbd3f2ad2d8dc731"
+        }
+      ]
+    },
+    {
+      "id": "claim_f8d0bcfeaab6402db4599e25e15ac358",
+      "statement": "Migration 105 added advance_request_enabled (default 1) to project_employees as a per-employee kill switch for new advance requests (both regular and self-check-in flows); setting it to 0 blocks new requests only, leaving existing pending/approved requests untouched.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/105_project_employees_advance_request_enabled.up.sql",
+          "version": "repo-file-v1:sha256:2b8a329db3d4faaaf268e7184b76a4cf5473839f09c555c41c571711f2bc6de3"
+        }
+      ]
+    },
+    {
+      "id": "claim_15f3ec07ad9f4c5ebd170cdb523108b5",
+      "statement": "Two auto-reject workers protect earning integrity: auto_reject_checkout_worker handles per-gate windows and auto_reject_sweep_worker closes stale checked_in rows project-wide on a schedule.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/workers/auto_reject_checkout_worker.go",
+          "version": "repo-file-v1:sha256:1406181896a1f0a2ce56797190daa8a205bf7f9ae62e2ebfc1a387422d554058"
+        },
+        {
+          "resource": "repo://backend/internal/app/workers/auto_reject_sweep_worker.go",
+          "version": "repo-file-v1:sha256:d05b99d85b6fac00c3f0432138057afb7ba36ebbb63a62c92d29ad71631df9f2"
+        }
+      ]
+    },
+    {
+      "id": "claim_c10b05ed968d419e8448c65dd567d82e",
+      "statement": "Admin dispute resolution writes review_action (approved | rejected) and stamps audit fields; nil review_action means never reviewed and the system-derived GetStatus remains authoritative until overridden.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/attendance.go",
+          "version": "repo-file-v1:sha256:bb042f7cc27f4575f5d1639be7d763affe305dc6b72b72342bed348e3525e7ac"
+        }
+      ]
+    },
+    {
+      "id": "claim_e77611e95bbe4d888b56a45aaff7490f",
+      "statement": "Check-in is idempotent on (employee, project, date) so retries after a slow network connection cannot create duplicate rows; attempt_classifier.go distinguishes legitimate retries from genuine duplicates.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/attendance/attempt_classifier.go",
+          "version": "repo-file-v1:sha256:a9786c605c89864cf57b6862f91b48a5a09e4672b380b57ed2cc3c73925c6cef"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:2d487692e00c2eaf486c9b0694fa08fe217571489b04098bd08b5603f9fd147f",
+  "claims": [
+    {
+      "id": "claim_470b0b8bcb014bf38a6d074fb8f41610",
+      "statement": "Per-aggregate event factories (event_factory_*.go) are the only place that constructs events; producers never hand-roll event literals. The factories are organized by concern (employee, timesheet, financial, project, system, user, advance-payment-fee, disbursement-fee, payment-cycle).",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/AGENTS.md",
+          "version": "repo-file-v1:sha256:38ee0daeaa0a3ed5592ba3837135fc4f6aa4e661876987cbb3c18a9b220df943"
+        },
+        {
+          "resource": "repo://backend/internal/domain/events.go",
+          "version": "repo-file-v1:sha256:9b58cfce192a01f4c71c7c29d4010b0b421c8f14ef49d122cdc194fb5d2f82ce"
+        }
+      ]
+    },
+    {
+      "id": "claim_f20c26637f6a4b7ba3921959614cfe9b",
+      "statement": "Events are persisted in the same DB transaction as the state change and published to Redis Streams post-commit via domain.RegisterAfterCommit callbacks; if the process dies between commit and publish the outbox row is still there and a sweeper republishes.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/transaction_manager.go",
+          "version": "repo-file-v1:sha256:f9ba40b5a4f5fb36a3d47eb6b1995145ed01b4ef912e46281f2a255904899515"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-004-redis-streams-event-bus.md",
+          "version": "repo-file-v1:sha256:97dd2b6bc04fdf27332f2490fb07eef408d8f68918cfb44ef571add8cb988784"
+        }
+      ]
+    },
+    {
+      "id": "claim_17d966f9fb244582a265671610f65958",
+      "statement": "The original database outbox tables were dropped in migration 062; events now flow Redis-only and the outbox reliability guarantee is relaxed because financial correctness does not depend on event delivery.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/062_drop_outbox_tables.up.sql",
+          "version": "repo-file-v1:sha256:b3c929577e190643cd59991bd8a91616ea74c5c7dfeb8aa1b1abd96c14f327c0"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-004-redis-streams-event-bus.md",
+          "version": "repo-file-v1:sha256:97dd2b6bc04fdf27332f2490fb07eef408d8f68918cfb44ef571add8cb988784"
+        }
+      ]
+    },
+    {
+      "id": "claim_ff4a29207401429cb615134953750c9e",
+      "statement": "The consumer pool uses Redis Streams consumer groups for automatic retry and dead-letter handling; sequential_handler.go orders financial events so settlement cannot overtake a payment.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-004-redis-streams-event-bus.md",
+          "version": "repo-file-v1:sha256:97dd2b6bc04fdf27332f2490fb07eef408d8f68918cfb44ef571add8cb988784"
+        }
+      ]
+    },
+    {
+      "id": "claim_9ac75fc7c3f640e480ed3886af9a9ce4",
+      "statement": "The handler set (audit_event_handler, settlement_event_handler, cache_invalidation_handler, employee_user_created_handler, cash_forecast_accuracy_handler) is wired in the consumer pool; handlers are stateless and consume-then-ack with Redis retry semantics.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/infra/events/audit_event_handler.go",
+          "version": "repo-file-v1:sha256:a0a03c97d6b6b10fed674dbe6653389b37f7e1f8ed638142250f80fef98a52ae"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-004-redis-streams-event-bus.md",
+          "version": "repo-file-v1:sha256:97dd2b6bc04fdf27332f2490fb07eef408d8f68918cfb44ef571add8cb988784"
+        }
+      ]
+    },
+    {
+      "id": "claim_d2787ceecdd54e8b87e37cff99d2115f",
+      "statement": "Two subscription shapes: Subscribe(eventType, handler) for typed routing and SubscribeAll(handler) for global handlers like the audit handler and the cache invalidator; wiring lives in bootstrap/.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-004-redis-streams-event-bus.md",
+          "version": "repo-file-v1:sha256:97dd2b6bc04fdf27332f2490fb07eef408d8f68918cfb44ef571add8cb988784"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

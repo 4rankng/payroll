@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:f6d88c00b1a499e28162b52a434a2e0866a175895c1ac7797f8aa9f0bf4d6e6f",
+  "claims": [
+    {
+      "id": "claim_96185bfd963d4b5db80baed91c921940",
+      "statement": "Casbin uses a deny-override policy model with keyMatch2 URL matching and * HTTP method wildcard; a new endpoint without a policy row is denied by default (safe by construction).",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-008-casbin-rbac-authorization.md",
+          "version": "repo-file-v1:sha256:d91f874f58464f97d9f929833131e81eccfdb38959549110ce799e772b063ec1"
+        }
+      ]
+    },
+    {
+      "id": "claim_718d391d1c4e4421ae409b3225f35d83",
+      "statement": "Roles are admin (full wildcard), partner (project-scoped with explicit deny on bulk-approve, bulk-reject, reset), adv_partner (import, view/export, no financial actions), and employee (self-service /api/v1/me/* plus employee-mobile flows); notifications and push subscription endpoints are open to any authenticated role.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-008-casbin-rbac-authorization.md",
+          "version": "repo-file-v1:sha256:d91f874f58464f97d9f929833131e81eccfdb38959549110ce799e772b063ec1"
+        }
+      ]
+    },
+    {
+      "id": "claim_e9c363a0d5bf459dbe35d7a3fd4c373c",
+      "statement": "Partner scoping requires both Casbin (endpoint-level allow/deny) and handler-level checks via isScopedPartnerRole + CanUserAccessProject / CanUserAccessEmployee; the second layer is required because Casbin cannot decide which rows within an endpoint the partner can see.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_02b37ab25ad34719bd43603cd1a8a428",
+      "statement": "The password-reset request endpoint always returns 200 (anti-enumeration) and is rate-limited 3/hr per normalized email; the confirm flow atomically consumes the Redis token via GETDEL, updates the password, and invalidates every existing session (tokens_invalid_before) in a single DB transaction. Mounted only when PASSWORD_RESET_ENABLE=true.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_607adf2fe0a34074b457ecb60756a960",
+      "statement": "Adding a new role or changing permissions is a CSV edit (backend/configs/casbin_policy.csv); no Go code change required.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-008-casbin-rbac-authorization.md",
+          "version": "repo-file-v1:sha256:d91f874f58464f97d9f929833131e81eccfdb38959549110ce799e772b063ec1"
+        }
+      ]
+    },
+    {
+      "id": "claim_2c9e747c5ccb4dd88901ef05f6dfbd59",
+      "statement": "The audit middleware sets actor_id, request_id, and ip on the per-request audit context; the non-blocking emit pattern is go func() { _ = auditService.LogXxx(ctx, ...) }() and always includes data_type, record_count, file_name for imports/exports.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:85c1a550ce27bd504d4e26dca70d3ed29c6e6c3602c9dcaf058662b48ccf2441",
+  "claims": [
+    {
+      "id": "claim_35a49fdb8c18468a84ab5dbd6af247ad",
+      "statement": "make api-test spins up a clean test DB (separate from dev), applies migrations, runs go test ./tests/integration/... -race -cover against real GORM + real Redis + the 9Pay/OnePay mocks at localhost:9001/9002, and reports coverage.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        },
+        {
+          "resource": "repo://docs/testing.md",
+          "version": "repo-file-v1:sha256:3245aa38da4e332f479912db625f698db4b3bc249864794de05e48d24fb59c5a"
+        }
+      ]
+    },
+    {
+      "id": "claim_48dcbfb8fa5c4509b99035367fbc8a64",
+      "statement": "Clock helpers SetServerTime/AdvanceServerTime/ResetServerTime/GetServerTime are the only way to advance time in tests because clock.Now() is the business clock and direct mocking of clock.Now() is forbidden.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    },
+    {
+      "id": "claim_7ef2f916f9314ad5b6b529e0d8750d0c",
+      "statement": "Integration scenarios are organized per capability (flow_auth_user, flow_timesheet, flow_wallet, flow_disbursement, flow_flexpay, flow_attendance, flow_bcc_import) and exercise the full stack — handler, service, repository, event bus, asynq worker — so a regression in any layer surfaces here.",
+      "evidence": [
+        {
+          "resource": "repo://backend/tests/AGENTS.md",
+          "version": "repo-file-v1:sha256:386aaf34f1c41061fdf832ad4abc56f8f8f049b3d8aa4a7943eece75e10e5ad6"
+        },
+        {
+          "resource": "repo://docs/testing.md",
+          "version": "repo-file-v1:sha256:3245aa38da4e332f479912db625f698db4b3bc249864794de05e48d24fb59c5a"
+        }
+      ]
+    },
+    {
+      "id": "claim_9ba04f254b9d40a4a407869977ba9a3a",
+      "statement": "Test conventions: pageSize=200 for timesheet queries, findAvailableDateWithMin for date selection in fixtures, pre-test DB cleanup via docker exec payroll-mysql ... when needed.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

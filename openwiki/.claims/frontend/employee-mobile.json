@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:891be856f612d0809f973b1ed77dc548756df10844d374c0fa89245d3a93a64d",
+  "claims": [
+    {
+      "id": "claim_0098868b9b4641d7b6f68d0c98c6e93c",
+      "statement": "The employee role is mobile-first: every page ships for 390px and 320px breakpoints with 44px minimum touch targets; the PWA shell lets users install to home screen, work offline, and receive web-push notifications.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md",
+          "version": "repo-file-v1:sha256:9d637bc48601d671a798e12d18fde19fd1bbf07a36fc506bdb2c87bacb341a94"
+        },
+        {
+          "resource": "repo://frontend/src/components/MobileBottomNav.tsx",
+          "version": "repo-file-v1:sha256:096e34b12e1555195004db31f8f213b88b7455326f085de4ce518ee5abbaa33d"
+        }
+      ]
+    },
+    {
+      "id": "claim_f2d716ea582b49399fa1c2680d40efa5",
+      "statement": "The check-in flow reads GPS via navigator.geolocation and posts to /api/v1/attendance/check-in; backend idempotency on (employee, project, date) handles the two-tap-race retry case so the employee never sees a duplicate row.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/AGENTS.md",
+          "version": "repo-file-v1:sha256:38ee0daeaa0a3ed5592ba3837135fc4f6aa4e661876987cbb3c18a9b220df943"
+        },
+        {
+          "resource": "repo://frontend/src/components/attendance/AttendanceMapDialog.tsx",
+          "version": "repo-file-v1:sha256:705144b7fd074e6e28f953ae44511bbb8296eea27afcf36da6a82fb63f11077c"
+        }
+      ]
+    },
+    {
+      "id": "claim_93e41abc905d44559aa7f0e782f91f39",
+      "statement": "The advance request sheet renders a fee preview that always matches what the disbursement-time fee calculator produces, because both read the same JSON fee schedule via the same ActiveFeeScheduleAt/ResolveFee helpers.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/advance_payment_fee_schedule.go",
+          "version": "repo-file-v1:sha256:1b65bd90ee77af32e8336474df2c1fc76dc16ee46bb14f9d9899b9fdba0b10bb"
+        },
+        {
+          "resource": "repo://frontend/src/components/advance-payment/AdvancePaymentConfirmSheet.tsx",
+          "version": "repo-file-v1:sha256:35399d9caa40436a20495ba412cc7bcb589c4c133cbaa05002b4a5dc06a26125"
+        }
+      ]
+    },
+    {
+      "id": "claim_4646e05bf6d84cf48c4478ac28cbdc64",
+      "statement": "The service worker (frontend/src/sw.ts) caches the app shell and the last-read timesheet summary so the home screen renders even with no network; submissions surface a queued state in offline mode.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/sw.ts",
+          "version": "repo-file-v1:sha256:02869d67689f82ac758849c5945aa8595a2ced0dea5ef9bb111bbb7fbf9a8516"
+        }
+      ]
+    },
+    {
+      "id": "claim_4dc6678260c640548be648b2cbacbc10",
+      "statement": "All employee UI copy is Vietnamese inline (no i18n layer) with examples like Chấm công, Tạm ứng, Phiếu lương, Hồ sơ, and tạm ngừng ứng lương for the per-employee kill switch.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

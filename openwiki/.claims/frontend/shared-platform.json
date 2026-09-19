@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:aba9077e9403e42f3f352e19ccba79fe27a01454e17578e024a6ae7547ea7f6a",
+  "claims": [
+    {
+      "id": "claim_0093aa76c3534c869fc08d5618d01d60",
+      "statement": "All API data fetching goes through TanStack Query hooks under src/hooks/api/; mutations are optimistic where safe and use stable resource-prefixed query keys, and the Axios client handles JWT injection, refresh, and X-Request-Id correlation with backend logs.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/AGENTS.md",
+          "version": "repo-file-v1:sha256:e3a55280ce34d7843f22fb3813e7ba0b661eb087430f6c1009d2992ede1acb73"
+        },
+        {
+          "resource": "repo://frontend/src/services/api/client.ts",
+          "version": "repo-file-v1:sha256:354b33be78221f4ad0171ff667c53e581f026a3623a869c55acee4add882ac45"
+        }
+      ]
+    },
+    {
+      "id": "claim_ba2adf3518c04f1088b08f1ad005ab5a",
+      "statement": "The shadcn/ui config (components.json) uses style=default, baseColor=slate, cssVariables=true with the @/ path aliases for components/hooks/lib/utils; the design system is Navy & Gold on Tailwind CSS.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/components.json",
+          "version": "repo-file-v1:sha256:29514fc95e437dc002c5ef6edc41352ced461cc43b051da3976c71c13d0ad2e4"
+        }
+      ]
+    },
+    {
+      "id": "claim_70ab761760244e2280a71bce7df1680e",
+      "statement": "The service worker (frontend/src/sw.ts) is Workbox-driven via vite-plugin-pwa: it caches the app shell, the last-read timesheet summary, and the static icons, and handles web-push events from the browser Push API.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/sw.ts",
+          "version": "repo-file-v1:sha256:02869d67689f82ac758849c5945aa8595a2ced0dea5ef9bb111bbb7fbf9a8516"
+        },
+        {
+          "resource": "repo://frontend/vite.config.ts",
+          "version": "repo-file-v1:sha256:43bdb7ce38f453ef2461369e90e318ea3a4cd1666e7d659ce355aa3aed85d26c"
+        }
+      ]
+    },
+    {
+      "id": "claim_dd2107d0c6874f6987cb6be59692d481",
+      "statement": "Contexts (AuthContext, UserPreferencesContext, AppStateContext, MetadataContext, BankAccountWarningContext, BottomNavContext, CommandPaletteContext, ShortcutContext) are intentionally narrow; cross-cutting heavy state moves into TanStack Query cache or a Zustand store.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/AGENTS.md",
+          "version": "repo-file-v1:sha256:e3a55280ce34d7843f22fb3813e7ba0b661eb087430f6c1009d2992ede1acb73"
+        },
+        {
+          "resource": "repo://frontend/src/contexts/AuthContext.tsx",
+          "version": "repo-file-v1:sha256:051b2c2cde5806d0f47fce93303da31f3886d13a8c71ab7d14e47dda02aac47e"
+        }
+      ]
+    },
+    {
+      "id": "claim_821ba90633e147e1adb776f1d61acc20",
+      "statement": "Forms use react-hook-form + @hookform/resolvers/zod with Zod schemas mirroring the backend DTOs; this gives end-to-end typed validation from request to API.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/src/schemas/modalSchemas.ts",
+          "version": "repo-file-v1:sha256:422945d407de941d0dcf824f7ac7529ddacfd3a787205725b989e6129d2ab2b2"
+        }
+      ]
+    },
+    {
+      "id": "claim_f4a1e7ab7a0c4bcaa9e11e9d0cebfc57",
+      "statement": "The desktop+mobile parity rule is non-negotiable: every change covers 1280px desktop and 390px mobile for Admin and Partner independently; 320px is also verified for dense content, long Vietnamese text, full currency values, tables, dialogs, and sheets.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/AGENTS.md",
+          "version": "repo-file-v1:sha256:e3a55280ce34d7843f22fb3813e7ba0b661eb087430f6c1009d2992ede1acb73"
+        }
+      ]
+    },
+    {
+      "id": "claim_930e911964684ea79180290db10b7dcd",
+      "statement": "All UI text is Vietnamese with no i18n abstraction; strings are inline in components or in DTO tables for server-supplied labels, and the convention is enforced by code review.",
+      "evidence": [
+        {
+          "resource": "repo://frontend/AGENTS.md",
+          "version": "repo-file-v1:sha256:e3a55280ce34d7843f22fb3813e7ba0b661eb087430f6c1009d2992ede1acb73"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

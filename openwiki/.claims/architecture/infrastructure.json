@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:f2e03aed4db382cc9399044276b2e0984bcaf044ec18cfbad60c938b6b820887",
+  "claims": [
+    {
+      "id": "claim_c69265229be74ee1b4e35c872fa3dd5f",
+      "statement": "Repositories under internal/infra/persistence/ accept a context.Context, detect an active transaction via domain.GetTransactionFromContext, and either join the open *gorm.DB or use the default connection.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/transaction_manager.go",
+          "version": "repo-file-v1:sha256:f9ba40b5a4f5fb36a3d47eb6b1995145ed01b4ef912e46281f2a255904899515"
+        },
+        {
+          "resource": "repo://backend/internal/infra/persistence/base_repository.go",
+          "version": "repo-file-v1:sha256:2df7797f0b982dace7c59c707a8dbdaf63de024827be3eefd2562ba40f3ee15a"
+        }
+      ]
+    },
+    {
+      "id": "claim_920eb66183e8435a81d62d6dbebc369c",
+      "statement": "GORM models and ToDomain mappers stay inside the persistence layer; handlers and application services see only domain types.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/AGENTS.md",
+          "version": "repo-file-v1:sha256:a7967221365cbe15e869ba792b7b23c32eea5eab50bf85fc02c2c6350b0d2fb4"
+        }
+      ]
+    },
+    {
+      "id": "claim_b4cd9533e19641e7892c2876fa966cae",
+      "statement": "Cache invalidation happens strictly after txManager.RunInTransaction returns successfully; the cache_invalidation_handler.go Redis-stream consumer implements the post-commit path, and the rule is enforced by code review and integration tests.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/infra/events/cache_invalidation_handler.go",
+          "version": "repo-file-v1:sha256:c39b70b032ed9ec79b656bbd28f8f26d4977d15a3270f1ca3f35a64f0a8e517a"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-007-transaction-manager-unit-of-work.md",
+          "version": "repo-file-v1:sha256:7d2f5c4278c52649698a21f24ab6e4b0e3051aa6307acdb20297f2609de66aa3"
+        }
+      ]
+    },
+    {
+      "id": "claim_28c9e828d7654803b9997d07627cae00",
+      "statement": "The event bus is Redis Streams-backed per ADR-004; the original database outbox tables were dropped in migration 062, and the financial critical path remains transactional (it does not rely on event delivery for correctness).",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-004-redis-streams-event-bus.md",
+          "version": "repo-file-v1:sha256:97dd2b6bc04fdf27332f2490fb07eef408d8f68918cfb44ef571add8cb988784"
+        }
+      ]
+    },
+    {
+      "id": "claim_02684e319c76461ea1c9820d812e83af",
+      "statement": "Domain events are produced by per-aggregate factories and published non-blockingly via EventBus.Publish(ctx, event), typically registered as an after-commit callback.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-004-redis-streams-event-bus.md",
+          "version": "repo-file-v1:sha256:97dd2b6bc04fdf27332f2490fb07eef408d8f68918cfb44ef571add8cb988784"
+        }
+      ]
+    },
+    {
+      "id": "claim_9ccc69013589454d8807159817fe461f",
+      "statement": "OnePay is the production disbursement provider and 9Pay is the sandbox/dev provider per ADR-003; each adapter (internal/infra/disbursement/onepay/, internal/infra/disbursement/ninepay/) implements domain.PaymentProvider with its own signing, types, queue, and webhook signature verification.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/infra/disbursement/onepay/provider.go",
+          "version": "repo-file-v1:sha256:9cf0271a4ae8fed24ca02524dc0abbb89d4f88117959df4e037914c4cba043fd"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-003-payment-provider-abstraction.md",
+          "version": "repo-file-v1:sha256:e44f12e23649f54c176fb20f8648819e12145508d7b50cdced3b130224184211"
+        }
+      ]
+    },
+    {
+      "id": "claim_d2f9cbe5f84444b3a277b8952aa0afdd",
+      "statement": "asynq workers are registered in internal/app/bootstrap/routes.go and run against the same Redis instance used for caching and streams.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/AGENTS.md",
+          "version": "repo-file-v1:sha256:6a6b90e3678349b6496ff474d70d37623bb766ed0fed266f1cfa9628284ca5da"
+        }
+      ]
+    },
+    {
+      "id": "claim_d311b63d7d5547bab1276a9f6cc085e5",
+      "statement": "Zalo is DB-agnostic via a CredentialSource interface; credentials are managed by the zaloconnect service reading from the settings table (zalo.enabled, zalo.credentials), with ZALO_* env vars used only as bootstrap-time seed values.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    },
+    {
+      "id": "claim_36ee361c33bf4196b3401f50760bdf4c",
+      "statement": "internal/adapters/ is a separate anti-corruption layer that translates external contracts (payment-provider SDKs, OTP gateways, SMTP) into the internal vocabulary without leaking transport concerns upward.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/AGENTS.md",
+          "version": "repo-file-v1:sha256:a7967221365cbe15e869ba792b7b23c32eea5eab50bf85fc02c2c6350b0d2fb4"
+        }
+      ]
+    },
+    {
+      "id": "claim_cfa6829975fd4c7c8a1fb30967b44d6e",
+      "statement": "Logging uses slog (never fmt.Printf) at critical junctions; system-health and cron-health UIs consume observability signals from internal/infra/observability.",
+      "evidence": [
+        {
+          "resource": "repo://backend/AGENTS.md",
+          "version": "repo-file-v1:sha256:487cd0272225a06b00c0ae3cc12212fa11a25739ef0749a35422543077dbff4e"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

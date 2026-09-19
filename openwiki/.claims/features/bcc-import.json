@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:df321c386636a350520d6a44a45144c3b8d4518138c51a1b4b6a89cd7ee3a1bb",
+  "claims": [
+    {
+      "id": "claim_92f2102bc60048acac15839abb174d3d",
+      "statement": "The BCC import runs as a single asynq task (import:job) handled by bcc_import_worker.go; the pipeline is upload → parse → dedup → label-rate → dispatch → finalize.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/bcc_import_pipeline.go",
+          "version": "repo-file-v1:sha256:86d3dd3ca1d26d485c67fa3291212c29d47b3b0041728f79cfc8a79772d49187"
+        },
+        {
+          "resource": "repo://backend/internal/app/workers/bcc_import_worker.go",
+          "version": "repo-file-v1:sha256:e59db99d5af8993cb2a85198f94e0be4eaa1f1bd6212c215e851aaac9d85eb3c"
+        }
+      ]
+    },
+    {
+      "id": "claim_9a9efd6e773e45d284f58907e8e522d9",
+      "statement": "Per-format processors (bcc_import_service.go legacy, bcc_import_weekly_bcc.go, bcc_import_weekly_payment.go, bcc_import_multi_position.go, bcc_import_weekly_rates.go) share helpers in bcc_import_pipeline.go that reproduce the original fail/empty/finalize tails and rate-map builders exactly.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/bcc_import_pipeline.go",
+          "version": "repo-file-v1:sha256:86d3dd3ca1d26d485c67fa3291212c29d47b3b0041728f79cfc8a79772d49187"
+        }
+      ]
+    },
+    {
+      "id": "claim_3e30205ed6694fa4801f91da76722679",
+      "statement": "buildRateToTarget maps a VND rate to (dayType, hourType); rate is king — on collision the lowest day-type priority wins (prefer \"ngày thường\") — and posPrefix scopes to position-keyed formats.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/bcc_import_pipeline.go",
+          "version": "repo-file-v1:sha256:86d3dd3ca1d26d485c67fa3291212c29d47b3b0041728f79cfc8a79772d49187"
+        }
+      ]
+    },
+    {
+      "id": "claim_ba8894eec4d0442f99b908ed354a58e4",
+      "statement": "BCC imports backdate an existing project_employees assignment's start_date to the file's earliest entry when the upload proves earlier worked days, so same-month uploads are not rejected by assignment validation.",
+      "evidence": [
+        {
+          "resource": "repo://docs/api.md",
+          "version": "repo-file-v1:sha256:2f176ea69a86d2ac5a8f5d693645c766f6f8f12702f80967572f0177bc309699"
+        }
+      ]
+    },
+    {
+      "id": "claim_c15b41d6dd144218aea4c69d973cfd4f",
+      "statement": "Migration 098 added timesheet_import_jobs.include_flexible_employees (BOOLEAN, default FALSE) so admins can opt flexi-employees into a BCC import.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/098_add_flexible_bcc_import_option.up.sql",
+          "version": "repo-file-v1:sha256:4d9cc949c680563e088004f631fd650d74d642f0154f01b1f2a328287881d85b"
+        }
+      ]
+    },
+    {
+      "id": "claim_c5f042a1799447a68a98994f433dca33",
+      "statement": "bcc_import_lock.go serializes BCC imports against concurrent bulk operations on the same project so a half-applied import cannot collide with an in-flight bulk approve.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/bcc_import_lock.go",
+          "version": "repo-file-v1:sha256:dc6c2d9ca7e7a7e934fab01b5b4ce39c8d72a0c4ecc9944908650edabad1fdfe"
+        }
+      ]
+    },
+    {
+      "id": "claim_a44c963b817f41c88cad4d200a8dd3aa",
+      "statement": "Successful dispatch writes parsed rows into the timesheet table inside a transaction; on commit, after-commit callbacks fire cache invalidation and event emission per ADR-007.",
+      "evidence": [
+        {
+          "resource": "repo://docs/decisions/ADR-007-transaction-manager-unit-of-work.md",
+          "version": "repo-file-v1:sha256:7d2f5c4278c52649698a21f24ab6e4b0e3051aa6307acdb20297f2609de66aa3"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

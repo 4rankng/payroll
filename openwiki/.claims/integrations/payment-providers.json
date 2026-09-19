@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:f4d4a94acccd637803dc8add57550f5b538af1752ec5b1ddfee33f372152e197",
+  "claims": [
+    {
+      "id": "claim_e07f37f0c697449d9509b7421d372892",
+      "statement": "OnePay runs in production and 9Pay runs in sandbox/dev; provider registration is gated on each provider's master env flag and credentials, and Registry.Active(ctx) returns ErrNoActiveProvider when nothing is registered.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/disbursement/registry.go",
+          "version": "repo-file-v1:sha256:92fdea85faf44abcebd0451d4c88a9442ead682b2adaae2209b9442b68e0f0af"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-003-payment-provider-abstraction.md",
+          "version": "repo-file-v1:sha256:e44f12e23649f54c176fb20f8648819e12145508d7b50cdced3b130224184211"
+        }
+      ]
+    },
+    {
+      "id": "claim_fd2081f0d51a4ece89dab0252aebda4d",
+      "statement": "The OnePay provider implements six port capabilities via compile-time assertions: DisbursementProvider, AccountVerifier, BalanceReporter, ErrorTranslator, StatusPoller, TransferLimiter.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/infra/disbursement/onepay/provider.go",
+          "version": "repo-file-v1:sha256:9cf0271a4ae8fed24ca02524dc0abbb89d4f88117959df4e037914c4cba043fd"
+        }
+      ]
+    },
+    {
+      "id": "claim_4ec565057d484cc598652559312a8071",
+      "statement": "OnePay wire states map to abstract TransferStatus and then to FSM triggers: created/pending → (no trigger), approved → ipn_completed, failed → ipn_failed, reverted → ipn_failed + flag.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/infra/disbursement/onepay/provider.go",
+          "version": "repo-file-v1:sha256:9cf0271a4ae8fed24ca02524dc0abbb89d4f88117959df4e037914c4cba043fd"
+        }
+      ]
+    },
+    {
+      "id": "claim_a91c523527a04731982805513ef61159",
+      "statement": "IPN webhooks arrive at /api/v1/webhooks/disbursement/{provider} roughly 3 seconds after batch settlement; the endpoint is mounted with IP whitelist middleware, verifies the signature, enqueues ipn:process, and returns 200 quickly.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/infra/disbursement/AGENTS.md",
+          "version": "repo-file-v1:sha256:e49e970de99aba3c0bd23065c5304c01657329ba14d45225ffab40ed7276bda0"
+        }
+      ]
+    },
+    {
+      "id": "claim_6c67df1807524419a325b273dba05706",
+      "statement": "The ipn:process worker verifies the IPN amount matches wallet_payment.RequestedAmount (ErrIPNAmountMismatch is terminal and must not retry, signaling a forgery); sentinel errors include ErrDuplicatePaymentInProgress, ErrFeeResolution (fail-closed), and ErrNoActiveProvider.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/disbursement/registry.go",
+          "version": "repo-file-v1:sha256:92fdea85faf44abcebd0451d4c88a9442ead682b2adaae2209b9442b68e0f0af"
+        }
+      ]
+    },
+    {
+      "id": "claim_c4e6c67408424f73b1e83a1fa05098b5",
+      "statement": "Local development mocks: 9Pay mock at localhost:9001 and OnePay mock at localhost:9002 in dev compose; tests poll for payment_status='paid' rather than checking immediately because IPN arrives asynchronously.",
+      "evidence": [
+        {
+          "resource": "repo://docs/system-architecture.md",
+          "version": "repo-file-v1:sha256:ab2b48b8815455ef3f9753952767f652752ec4e1da0f49063473fb199d049afd"
+        }
+      ]
+    },
+    {
+      "id": "claim_6026f0e4a1e14b6da2af669735958154",
+      "statement": "TransferLimiter.Limits() is consulted by the bulk-transfer pipeline to enforce per-transfer amount bounds before enqueueing.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/disbursement/registry.go",
+          "version": "repo-file-v1:sha256:92fdea85faf44abcebd0451d4c88a9442ead682b2adaae2209b9442b68e0f0af"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

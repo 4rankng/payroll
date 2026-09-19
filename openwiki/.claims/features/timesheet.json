@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:cf86ab8cbf51e03045a2886ef03659146d0fa18bd8283f5d683b48575370b245",
+  "claims": [
+    {
+      "id": "claim_e2889a15f3984044b5aaf53efbb92dd0",
+      "statement": "Timesheet status enum: pending_approval, approved, rejected; payment status enum: pending, paid, failed, cancelled; a force_payroll flag overrides the typical approval gate for rows the admin wants to push through despite a missing step.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/timesheet.go",
+          "version": "repo-file-v1:sha256:cbebe4c9815513b0fd1fc94002594d01372d2ead7ce7e0f93fd774985708223c"
+        }
+      ]
+    },
+    {
+      "id": "claim_eedcacd6948e473ea60fb5ed44b54877",
+      "statement": "Timesheet validation covers daily hours, daytype, status, zero-rate, and assignment (the employee must have a project_employees assignment covering the timesheet date), and is split per concern across timesheet_validation_*.go and timesheet_domain_service_*.go.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/services/timesheet_domain_service.go",
+          "version": "repo-file-v1:sha256:b8a49f6138496a0028e8a39661f19709aa374a1a72d2ad8539549cebdd110d7f"
+        }
+      ]
+    },
+    {
+      "id": "claim_9566e2ea11494609a65bef13aef90978",
+      "statement": "Migration 004 added timesheets.transaction_id with index idx_timesheets_transaction_id so each timesheet can reference its revenue transaction.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/004_add_timesheet_transaction_id.up.sql",
+          "version": "repo-file-v1:sha256:7513ccfee256239ce2c3d7e31d9670c437eadbcf3594226cb279986be5c31a29"
+        }
+      ]
+    },
+    {
+      "id": "claim_ee30c196d87740a68a1fdb574bf3474f",
+      "statement": "Edit requests use AllowedEdit (whether the row is editable at all) and RequestEditID (the pending request id) with mutual exclusion between the pending edit and the row being edited.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/timesheet.go",
+          "version": "repo-file-v1:sha256:cbebe4c9815513b0fd1fc94002594d01372d2ead7ce7e0f93fd774985708223c"
+        },
+        {
+          "resource": "repo://backend/internal/domain/timesheet_edit_request.go",
+          "version": "repo-file-v1:sha256:e1c213f2a5b5a8a7ee28f341dc324594ee17a34a114a9c6228dc53c9040a529d"
+        }
+      ]
+    },
+    {
+      "id": "claim_238f3ac2741c4111995bb2e0ac7f5f91",
+      "statement": "Bulk operations acquire a per-project lock so a BCC import cannot collide with an in-flight bulk approve; partial success is supported with per-row import errors and Vietnamese messages.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/timesheet/bulk_operations.go",
+          "version": "repo-file-v1:sha256:2fdbee355d237ea1828a291e682f89673f95705e4175921879bc9e2d7d536551"
+        }
+      ]
+    },
+    {
+      "id": "claim_49a4a889de7f4470a6a5895176879b18",
+      "statement": "The timesheet transaction_orchestrator is the canonical user of domain.TransactionManager.RunInTransaction for multi-aggregate writes (timesheet + ledger + event); cache invalidation runs as an after-commit callback per ADR-007.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/timesheet/transaction_orchestrator.go",
+          "version": "repo-file-v1:sha256:8c274c1547f7347c6bfee82a43557f2dd3b03e8f51faaba01a35fde26ef61e51"
+        },
+        {
+          "resource": "repo://docs/decisions/ADR-007-transaction-manager-unit-of-work.md",
+          "version": "repo-file-v1:sha256:7d2f5c4278c52649698a21f24ab6e4b0e3051aa6307acdb20297f2609de66aa3"
+        }
+      ]
+    },
+    {
+      "id": "claim_aefb47f3aca34498a289ba6735091353",
+      "statement": "GET /api/v1/timesheets/cash-readiness is advisory-only and cannot initiate a top-up or payment; reliability fields are measured only from unfiltered company forecasts resolved against distinct timesheets in generated weekly transfer files.",
+      "evidence": [
+        {
+          "resource": "repo://docs/api.md",
+          "version": "repo-file-v1:sha256:2f176ea69a86d2ac5a8f5d693645c766f6f8f12702f80967572f0177bc309699"
+        }
+      ]
+    },
+    {
+      "id": "claim_ea1c55eea8fc4cc7b3e36f6bba5b9eec",
+      "statement": "GET /api/v1/timesheets/summary reports pendingPaymentAmount and pendingEmployees (pending-approval or approved timesheets with payment_status pending/failed) for dashboard display, while the status=pending_payment list filter and bulk-transfer planner use the stricter payroll-ready cohort (approved with payment_status pending/failed) so pending-approval rows never enter payment exports.",
+      "evidence": [
+        {
+          "resource": "repo://docs/api.md",
+          "version": "repo-file-v1:sha256:2f176ea69a86d2ac5a8f5d693645c766f6f8f12702f80967572f0177bc309699"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

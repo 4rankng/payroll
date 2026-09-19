@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:6647ec12e0a6ba022be9d91a399669ea9c9b51cc488f0cfb6ee430a4c9aa6fb8",
+  "claims": [
+    {
+      "id": "claim_bd4960d306194ed18c4a0e407c39f5a8",
+      "statement": "The wallet aggregate (internal/domain/wallet/) is self-contained: types (WalletPayment, WalletTopup, WalletBalance, WalletIPN), WalletService interface, repository interfaces scoped inside the aggregate (not in ports/), and forecast types all live together.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/wallet/repository.go",
+          "version": "repo-file-v1:sha256:98be8fef801200579ec944ac0dbc3013c37fbc71c7e4cb32486819330318afaa"
+        },
+        {
+          "resource": "repo://backend/internal/domain/wallet/service.go",
+          "version": "repo-file-v1:sha256:cad2c4fce015b4da823c5a0932b6dfb9abb8917261b89fd106588381dfd1f5a2"
+        }
+      ]
+    },
+    {
+      "id": "claim_902b6dec264848fe95fcf43e9df972b7",
+      "statement": "WalletTopup has no status field because top-ups are confirmed on insert (the actual top-up is done via bank app); the row is the immutable audit record.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/wallet/wallet_topup.go",
+          "version": "repo-file-v1:sha256:47258085cf397ab71bbcccea36e4799a10b1107700bd4e05b404a0d3ad1854f0"
+        }
+      ]
+    },
+    {
+      "id": "claim_f491f0d5f925443f9e9bb5fb4cf56499",
+      "statement": "The wallet payment state machine uses github.com/qmuntal/stateless with states pending → verified → authorised → completed | failed | reversed and triggers verify, reject, authorise, ipn_completed, ipn_failed, ipn_reversed; completed/failed/reversed are terminal.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/transactions/state_machine.go",
+          "version": "repo-file-v1:sha256:7f07c86a81689a831153e90929feaa6892a1bac872af638f5b1e65ea066a475c"
+        }
+      ]
+    },
+    {
+      "id": "claim_8c537d34f9f44e8ea458e210859cbf03",
+      "statement": "Only IPN-driven transitions reach terminal state in production; status_inquiry_worker and disbursement_poller_worker are the safety net for missed webhooks.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/workers/disbursement_poller_worker.go",
+          "version": "repo-file-v1:sha256:ceb95409f5569d344a7c2f77b4884ee1c7e5d64782036f6661d43a4086019a73"
+        },
+        {
+          "resource": "repo://backend/internal/app/workers/status_inquiry_worker.go",
+          "version": "repo-file-v1:sha256:5fb93f828d09a9e5a0c8fa6f44fee6fa0362289b0ddf8cfab0b5d11b29df58a4"
+        }
+      ]
+    },
+    {
+      "id": "claim_0b39dbf77a75491eb9b8fc821bc7ad9e",
+      "statement": "Settlement carries a SettlementUUID unique-indexed as an idempotency key for async processing; Validate enforces transaction_id required, amount > 0, settlement_date not in the future (date-only comparison), and created_by required.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/settlement.go",
+          "version": "repo-file-v1:sha256:4c3997f44f69d4bd17cf0ee7733c6463d3fbdd73412cd4468fd415cdc2d8d2ae"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ddf8d799d2f464ca25c7bc37286fca3",
+      "statement": "AccountingRules.ValidateTransactionGroup and ValidateBalancedTransaction enforce that the sum of debits equals the sum of credits across ledger groups; the rules are verified by property-based tests using gopter (accounting_rules_test.go).",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/accounting_rules.go",
+          "version": "repo-file-v1:sha256:951a892fe800c84e57d28e660cbfaf9570f82c91dc0ffa7bcd7b8385f34423b4"
+        }
+      ]
+    },
+    {
+      "id": "claim_1adeb955d29b4140b3743855e64a77e5",
+      "statement": "The cash-readiness and demand forecast are statistical (ADR-010) and advisory only: the response is DISPLAY ONLY and must not feed SyncBalance or any auto top-up.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/AGENTS.md",
+          "version": "repo-file-v1:sha256:38ee0daeaa0a3ed5592ba3837135fc4f6aa4e661876987cbb3c18a9b220df943"
+        },
+        {
+          "resource": "repo://backend/internal/domain/wallet/forecast.go",
+          "version": "repo-file-v1:sha256:7ca27b4ca600e573e45830cbd0fbffcebf2236077d41f9e74cbd97d67de4a9d4"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ca38ebc6a974953aa9b14c1be4e9aa2",
+      "statement": "Reliability fields (reliability_state, calibration_samples, WAPE, bias, interval coverage, reserve shortfall rate) are measured only from unfiltered company forecasts resolved against distinct timesheets in generated weekly transfer files; filtered forecasts are never mixed into company accuracy.",
+      "evidence": [
+        {
+          "resource": "repo://docs/api.md",
+          "version": "repo-file-v1:sha256:2f176ea69a86d2ac5a8f5d693645c766f6f8f12702f80967572f0177bc309699"
+        }
+      ]
+    },
+    {
+      "id": "claim_4953f87cb00b432e98f24f5cb34a8e57",
+      "statement": "9Pay reconciliation is matched against wallet_payments only (not against manual settlements) and the monthly reconciliation report covers the cycle window from the 16th of the previous month through the 15th of the current month.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/wallet/service.go",
+          "version": "repo-file-v1:sha256:cad2c4fce015b4da823c5a0932b6dfb9abb8917261b89fd106588381dfd1f5a2"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}

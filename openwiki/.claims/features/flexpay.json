@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:bc8dcd454355f6562e0234528b2d17ca3cf3951f7d7a9b751821fa7582c784c0",
+  "claims": [
+    {
+      "id": "claim_e84ac0c1241c4f95996b22d3739bed04",
+      "statement": "The advance-payment fee schedule is stored as a JSON array under settings.key='advance_payment_fee_schedules'; per-entry CRUD parses the JSON, mutates the slice, and writes the row back inside SELECT … FOR UPDATE so concurrent edits cannot lose a tier.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/advance_payment_fee_schedule.go",
+          "version": "repo-file-v1:sha256:1b65bd90ee77af32e8336474df2c1fc76dc16ee46bb14f9d9899b9fdba0b10bb"
+        }
+      ]
+    },
+    {
+      "id": "claim_32e662dc1b4d4fca8c866537382be71a",
+      "statement": "FeeScheduleEntry.Validate enforces at least one tier, first tier MinAmount=0, strictly increasing tiers, percentages in [0,100], MinFeeVND >= 0 (0 disables the floor for a fully free advance), and YYYY-MM-DD effective_date.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/advance_payment_fee_schedule.go",
+          "version": "repo-file-v1:sha256:1b65bd90ee77af32e8336474df2c1fc76dc16ee46bb14f9d9899b9fdba0b10bb"
+        }
+      ]
+    },
+    {
+      "id": "claim_01817ba2e70a458588c94b4ffd5ac578",
+      "statement": "ResolveFee picks the highest-MinAmount tier whose MinAmount <= amount and returns max(amount * percentage / 100, MinFeeVND); ActiveFeeScheduleAt returns the entry with the latest EffectiveDate <= at so ad-hoc preview and disbursement-time fee calculation always agree.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/advance_payment_fee_schedule.go",
+          "version": "repo-file-v1:sha256:1b65bd90ee77af32e8336474df2c1fc76dc16ee46bb14f9d9899b9fdba0b10bb"
+        }
+      ]
+    },
+    {
+      "id": "claim_23f6dd7071744dbb88f80dd666bcaa09",
+      "statement": "project_employees.advance_request_enabled (migration 105, TINYINT(1) NOT NULL DEFAULT 1) is a per-employee kill switch for new advance requests (regular and self-check-in flows); 0 blocks new requests only and leaves existing pending/approved requests untouched.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/105_project_employees_advance_request_enabled.up.sql",
+          "version": "repo-file-v1:sha256:2b8a329db3d4faaaf268e7184b76a4cf5473839f09c555c41c571711f2bc6de3"
+        }
+      ]
+    },
+    {
+      "id": "claim_4b1219633ca444188758b127cbe9fbf9",
+      "statement": "flexpay_salary_notifications (migration 100) is the durable delivery record for salary notifications, with a UNIQUE (asset_id, project_id, employee_id, template_id) key for safe import retry and a (status, lease_expires_at) index for the recovery sweeper.",
+      "evidence": [
+        {
+          "resource": "repo://backend/migrations/100_add_flexpay_salary_notifications.up.sql",
+          "version": "repo-file-v1:sha256:3d3ff56c77f54f13554d00e4a61921bc33ea3ec2f714fa6784efb094618c3097"
+        }
+      ]
+    },
+    {
+      "id": "claim_c898edfad1ae47e6a7f0359d58f5510e",
+      "statement": "FlexPay salary notifications use a lease-based claim model (Claim, ReleaseForRetry, MarkSent/Failed/Suppressed, ListRecoverable); the asynq worker flexpay_salary_notification_worker.go consumes the queue and a recovery sweeper re-claims stale leases.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/workers/flexpay_salary_notification_worker.go",
+          "version": "repo-file-v1:sha256:7027ea8070d104c2fb7fc3aa6bf77aed231f52a3a579120e8ea82a09871829c2"
+        },
+        {
+          "resource": "repo://backend/internal/domain/flexpay_salary_notification.go",
+          "version": "repo-file-v1:sha256:7971e0ab7ab56f9e3ad4140017ebb1b930721424305fd4d10caba10bc5693a58"
+        }
+      ]
+    },
+    {
+      "id": "claim_dc9d374542454df8b40dcfb7590775f6",
+      "statement": "FlexPay advances are paid out of the wallet: the disbursement service books a wallet_payment, the disbursement_execute_worker calls the active provider (OnePay prod, 9Pay sandbox), and the IPN handler drives the wallet state machine through ipn_completed / ipn_failed / ipn_reversed triggers.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/domain/transactions/state_machine.go",
+          "version": "repo-file-v1:sha256:7f07c86a81689a831153e90929feaa6892a1bac872af638f5b1e65ea066a475c"
+        }
+      ]
+    },
+    {
+      "id": "claim_ea27f07336dc44bda1dc56428ef9e2fa",
+      "statement": "flex_pay_settlement_service.go runs inside a transaction so advance_payment_request settlement, ledger entries, and the salary batch row commit atomically.",
+      "evidence": [
+        {
+          "resource": "repo://backend/internal/app/services/flex_pay/flex_pay_settlement_service.go",
+          "version": "repo-file-v1:sha256:bf19ab701ec1b392b9bbeb1164c4e3a741a6c2d39772d98474545cc83fc501fb"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-19T03:19:10.016Z"
+  }
+}
