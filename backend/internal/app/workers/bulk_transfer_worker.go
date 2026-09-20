@@ -13,6 +13,7 @@ import (
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/payroll/bulktransfer"
+	"api-server/internal/app/services/project"
 	"api-server/internal/domain"
 	cacheport "api-server/internal/domain/ports/infrastructure"
 
@@ -25,6 +26,7 @@ type BulkTransferPaymentWorker struct {
 	logger              *slog.Logger
 	db                  *gorm.DB
 	timesheetRepo       domain.TimesheetRepository
+	projectAggregates   *project.AggregateRecomputeService
 	projectEmployeeRepo domain.ProjectEmployeeRepository
 	tcRepo              domain.TransactionCodeRepository
 	settingsConfig      *config.SettingsConfigService
@@ -38,6 +40,7 @@ type BulkTransferPaymentWorker struct {
 func NewBulkTransferPaymentWorker(
 	db *gorm.DB,
 	timesheetRepo domain.TimesheetRepository,
+	projectRepo domain.ProjectRepository,
 	projectEmployeeRepo domain.ProjectEmployeeRepository,
 	tcRepo domain.TransactionCodeRepository,
 	settingsConfig *config.SettingsConfigService,
@@ -46,10 +49,20 @@ func NewBulkTransferPaymentWorker(
 	employeeNotifier notification.EmployeeNotifier,
 	cache cacheport.CachePort,
 ) *BulkTransferPaymentWorker {
+	logger := slog.Default().With("component", "BulkTransferPaymentWorker")
+
+	// The worker owns the projection of settled timesheets onto the denormalised
+	// projects.*_vnd totals; projectRepo is only kept to build that projection.
+	var projectAggregates *project.AggregateRecomputeService
+	if projectRepo != nil {
+		projectAggregates = project.NewAggregateRecomputeService(projectRepo, clock.New(), logger)
+	}
+
 	return &BulkTransferPaymentWorker{
-		logger:              slog.Default().With("component", "BulkTransferPaymentWorker"),
+		logger:              logger,
 		db:                  db,
 		timesheetRepo:       timesheetRepo,
+		projectAggregates:   projectAggregates,
 		projectEmployeeRepo: projectEmployeeRepo,
 		tcRepo:              tcRepo,
 		settingsConfig:      settingsConfig,
@@ -163,6 +176,25 @@ func (w *BulkTransferPaymentWorker) UpdateForTransfer(ctx context.Context, reque
 	if err := w.timesheetRepo.BulkUpdatePaymentStatus(ctx, updates); err != nil {
 		_ = w.idempotencyService.ReleaseLock(ctx, idempotencyKey)
 		return fmt.Errorf("update payment statuses: %w", err)
+	}
+
+	// Recompute the denormalised project financial totals for affected projects
+	if w.projectAggregates != nil {
+		updatedIDs := make(map[uint]bool, len(updates))
+		for _, u := range updates {
+			updatedIDs[u.TimesheetID] = true
+		}
+		affectedProjects := make(map[uint]bool)
+		for _, ts := range pendingTimesheets {
+			if updatedIDs[ts.ID] {
+				affectedProjects[ts.ProjectID] = true
+			}
+		}
+		for projectID := range affectedProjects {
+			if _, err := w.projectAggregates.RecomputeProject(ctx, projectID); err != nil {
+				w.logger.Error("failed to recompute project financials", "project_id", projectID, "error", err)
+			}
+		}
 	}
 
 	// Invalidate timesheet caches so list/summary queries reflect the new payment status,

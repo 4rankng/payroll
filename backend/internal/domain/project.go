@@ -39,16 +39,37 @@ const (
 
 // Project represents a client project in the domain
 type Project struct {
-	ID                   uint           `json:"id" gorm:"primarykey;type:bigint unsigned"`
-	ClientName           string         `json:"client_name" gorm:"type:varchar(255);comment:'e.g. Nha may san xuat hoa my pham VERICO'"`
-	Name                 string         `json:"name" gorm:"type:varchar(255);not null;comment:'e.g. San xuat xa phong'"`
-	Code                 string         `json:"code" gorm:"type:varchar(255);uniqueIndex;comment:'Initials of client_name and YYMM of created_at date or manually input by users'"`
-	Description          string         `json:"description" gorm:"type:text;comment:'Rich text format supported'"`
-	StartDate            *time.Time     `json:"start_date" gorm:"type:date"`
-	EndDate              *time.Time     `json:"end_date" gorm:"type:date"`
-	SalaryPeriodFrom     int            `json:"salary_period_from,omitempty" gorm:"column:salary_period_from;type:int;comment:'Day of previous month payroll period starts (0 or NULL = 1st)'"`                               // 0-28
-	SalaryPeriodTo       int            `json:"salary_period_to,omitempty" gorm:"column:salary_period_to;type:int;comment:'Day of current month payroll period ends (0 or NULL = last day)'"`                                 // 0-28
-	OffDays              int            `json:"off_days" gorm:"column:off_days;type:tinyint unsigned;not null;default:0;comment:'Bitmask of weekly off days: bit0=Sun,bit1=Mon,...,bit6=Sat. Default 0 = no fixed off days'"` // bitmask
+	ID               uint       `json:"id" gorm:"primarykey;type:bigint unsigned"`
+	ClientName       string     `json:"client_name" gorm:"type:varchar(255);comment:'e.g. Nha may san xuat hoa my pham VERICO'"`
+	Name             string     `json:"name" gorm:"type:varchar(255);not null;comment:'e.g. San xuat xa phong'"`
+	Code             string     `json:"code" gorm:"type:varchar(255);uniqueIndex;comment:'Initials of client_name and YYMM of created_at date or manually input by users'"`
+	Description      string     `json:"description" gorm:"type:text;comment:'Rich text format supported'"`
+	StartDate        *time.Time `json:"start_date" gorm:"type:date"`
+	EndDate          *time.Time `json:"end_date" gorm:"type:date"`
+	SalaryPeriodFrom int        `json:"salary_period_from,omitempty" gorm:"column:salary_period_from;type:int;comment:'Day of previous month payroll period starts (0 or NULL = 1st)'"`                               // 0-28
+	SalaryPeriodTo   int        `json:"salary_period_to,omitempty" gorm:"column:salary_period_to;type:int;comment:'Day of current month payroll period ends (0 or NULL = last day)'"`                                 // 0-28
+	OffDays          int        `json:"off_days" gorm:"column:off_days;type:tinyint unsigned;not null;default:0;comment:'Bitmask of weekly off days: bit0=Sun,bit1=Mon,...,bit6=Sat. Default 0 = no fixed off days'"` // bitmask
+
+	// Denormalised financial totals, scoped to this project's non-deleted timesheets.
+	// They are derived data: no create/update request field writes them and they are
+	// recomputed — never mutated in place — by
+	// services/project.AggregateRecomputeService.
+	//
+	// Definitions (authoritative source: timesheets, the only per-project money record;
+	// `transactions` carries no project dimension, so partner receipts are tracked on
+	// timesheets.revenue_paid instead):
+	//   - TotalPayoutVND       = SUM(paid_amount) of timesheets with payment_status = 'paid'
+	//                            — money already disbursed to employees.
+	//   - PendingPayableVND    = SUM(amount) of approved timesheets whose payment_status is
+	//                            still 'pending' or 'failed' — money still owed to employees.
+	//   - TotalReceivedVND     = SUM(revenue_receivable) of timesheets with revenue_paid = 1
+	//                            — revenue already collected from the partner (a settlement
+	//                            marks the covered timesheets as revenue-paid).
+	//   - PendingReceivableVND = SUM(revenue_receivable) of timesheets with revenue_paid = 0
+	//                            — revenue billed to the partner but not yet collected.
+	//
+	// Consumers add them pairwise: GetTotalExpenses() = TotalPayoutVND + PendingPayableVND
+	// and GetProfitMargin() uses TotalReceivedVND + PendingReceivableVND as total revenue.
 	TotalPayoutVND       float64        `json:"total_payout_vnd" gorm:"type:decimal(15,2);not null;default:0;comment:'Total paid to employees to date'"`
 	PendingPayableVND    float64        `json:"pending_payable_vnd" gorm:"type:decimal(15,2);not null;default:0;comment:'Pending payment to employees to date'"`
 	PendingReceivableVND float64        `json:"pending_receivable_vnd" gorm:"type:decimal(15,2);not null;default:0;comment:'Pending payment from the partner (staffing company) to date'"`
@@ -105,6 +126,8 @@ type ProjectRepository interface {
 	GetPendingActivatedProjects(ctx context.Context, date time.Time) ([]*Project, error)
 	GetPendingCompletedProjects(ctx context.Context, date time.Time) ([]*Project, error)
 	CodeExistsIncludingDeleted(ctx context.Context, code string) bool
+	GetProjectFinancialAggregate(ctx context.Context, projectID uint) (*ProjectFinancialAggregate, error)
+	UpdateProjectFinancialAggregate(ctx context.Context, projectID uint, aggregate ProjectFinancialAggregate, updatedAt time.Time) error
 }
 
 // ProjectFilters represents filtering options for project queries
@@ -182,6 +205,16 @@ type ProjectSummary struct {
 	TotalPayoutVND            float64 `json:"total_payout_vnd"`
 	TotalPendingPayableVND    float64 `json:"total_pending_payable_vnd"`
 	TotalPendingReceivableVND float64 `json:"total_pending_receivable_vnd"`
+}
+
+// ProjectFinancialAggregate carries the four denormalised Project financial totals
+// recomputed from a project's timesheets. See the field documentation on Project for
+// what each total means; services/project.AggregateRecomputeService is the writer.
+type ProjectFinancialAggregate struct {
+	TotalPayoutVND       float64 `json:"total_payout_vnd"`
+	PendingPayableVND    float64 `json:"pending_payable_vnd"`
+	TotalReceivedVND     float64 `json:"total_received_vnd"`
+	PendingReceivableVND float64 `json:"pending_receivable_vnd"`
 }
 
 // PartnerProjectSummary represents project statistics for partner users

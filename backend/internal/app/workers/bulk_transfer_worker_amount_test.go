@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"testing"
+	"time"
 
 	"api-server/internal/app/services/config"
 	"api-server/internal/app/services/infrastructure"
@@ -52,6 +53,20 @@ func (paidAmountAssignments) GetActiveAssignmentsByProjectsAndEmployees(context.
 
 type changedPercentageSettings struct{ config.SettingReader }
 
+type paidAmountProjectRepo struct {
+	domain.ProjectRepository
+	recomputed []uint
+}
+
+func (r *paidAmountProjectRepo) GetProjectFinancialAggregate(_ context.Context, _ uint) (*domain.ProjectFinancialAggregate, error) {
+	return &domain.ProjectFinancialAggregate{}, nil
+}
+
+func (r *paidAmountProjectRepo) UpdateProjectFinancialAggregate(_ context.Context, projectID uint, _ domain.ProjectFinancialAggregate, _ time.Time) error {
+	r.recomputed = append(r.recomputed, projectID)
+	return nil
+}
+
 func (changedPercentageSettings) GetSettingByKey(_ context.Context, key string) (*domain.Settings, error) {
 	value := "0.5"
 	return &domain.Settings{Key: key, Value: &value, ValueType: domain.ValueTypeNumber}, nil
@@ -88,14 +103,17 @@ func TestUpdateForTransferKeepsSavedAmountAcrossConfigurationChanges(t *testing.
 			repo := &paidAmountTimesheetRepo{rows: rows}
 			data, err := json.Marshal(domain.TransactionCodeData{MonthlyPay: &domain.CyclePayData{TimesheetIDs: []uint{1, 2}, Amount: test.stored, TransferAmountSnapshot: test.snapshot}})
 			require.NoError(t, err)
-			worker := NewBulkTransferPaymentWorker(nil, repo, paidAmountAssignments{}, paidAmountCodeRepo{code: &domain.TransactionCode{Data: data}}, config.NewSettingsConfigService(changedPercentageSettings{}), infrastructure.NewIdempotencyService(cache, logger), nil, nil, nil)
+			projectRepo := &paidAmountProjectRepo{}
+			worker := NewBulkTransferPaymentWorker(nil, repo, projectRepo, paidAmountAssignments{}, paidAmountCodeRepo{code: &domain.TransactionCode{Data: data}}, config.NewSettingsConfigService(changedPercentageSettings{}), infrastructure.NewIdempotencyService(cache, logger), nil, nil, nil)
 			if test.paidMismatch {
 				err := worker.UpdateForTransfer(context.Background(), "VFICtest", true, "bank-reference")
 				require.ErrorContains(t, err, "reconciliation required")
 				require.Empty(t, repo.updates, "do not write a partial allocation")
+				require.Empty(t, projectRepo.recomputed, "no recalculation on the reconciliation-error path")
 				return
 			}
 			require.NoError(t, worker.UpdateForTransfer(context.Background(), "VFICtest", true, "bank-reference"))
+			require.Equal(t, []uint{1}, projectRepo.recomputed, "recalc runs once for the affected project on success")
 			wantCount := 2
 			if test.alreadyPaid {
 				wantCount = 1

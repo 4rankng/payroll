@@ -502,6 +502,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	bulkTransferPaymentWorker := workers.NewBulkTransferPaymentWorker(
 		db.DB,
 		repos.Timesheet,
+		repos.Project,
 		repos.ProjectEmployee,
 		repos.TransactionCode,
 		settingsConfigService,

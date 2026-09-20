@@ -1,13 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 
 	"api-server/internal/app/bootstrap"
+	bootstrapInfra "api-server/internal/app/bootstrap/infrastructure"
+	bootstrapRepos "api-server/internal/app/bootstrap/repositories"
+	"api-server/internal/app/services/project"
 	"api-server/internal/config"
+	"api-server/internal/infra/events"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/clock"
 )
 
 const API_SERVER_VERSION = "v1.10.0"
@@ -27,10 +33,19 @@ const API_SERVER_VERSION = "v1.10.0"
 // @host localhost:8080
 // @BasePath /api/v1
 func main() {
-	// Handle healthcheck command
-	if len(os.Args) > 1 && os.Args[1] == "healthcheck" {
-		healthcheck()
-		return
+	// One-off maintenance commands run before the HTTP server boots.
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "healthcheck":
+			healthcheck()
+			return
+		case "recompute-project-aggregates":
+			recomputeProjectAggregates()
+			return
+		default:
+			fmt.Printf("unknown command %q (available: healthcheck, recompute-project-aggregates)\n", os.Args[1])
+			os.Exit(2)
+		}
 	}
 
 	// Load configuration
@@ -84,4 +99,48 @@ func healthcheck() {
 	}
 
 	fmt.Println("Health check passed")
+}
+
+// recomputeProjectAggregates is the one-off backfill for the denormalised
+// projects.*_vnd totals (Tổng đã chi / Chờ chi / Tổng đã nhận / Chờ thu).
+//
+// The runtime projection only runs for a project when its bulk-transfer payment
+// worker settles timesheets, so projects that predate that wiring keep zeroed
+// totals forever. This command recomputes every project from the authoritative
+// timesheet columns and writes the four totals; it is idempotent, so running it
+// twice is safe. Usage (inside the backend container):
+//
+//	/api-server recompute-project-aggregates
+func recomputeProjectAggregates() {
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Printf("Failed to load configuration: %v\n", err)
+		os.Exit(1)
+	}
+
+	infra, err := bootstrapInfra.Initialize(cfg)
+	if err != nil {
+		fmt.Printf("Failed to initialize infrastructure: %v\n", err)
+		os.Exit(1)
+	}
+
+	// A local event bus is required by the repository factory only; this command
+	// publishes no events, so a minimal pool is enough and nothing is started.
+	eventBus := events.NewWorkerPoolEventBus(1, 8)
+	defer func() { _ = eventBus.Shutdown(context.Background()) }()
+
+	repos := bootstrapRepos.Initialize(infra.DB, eventBus)
+	svc := project.NewAggregateRecomputeService(repos.Project, clock.New(), infra.Logger)
+
+	result, err := svc.RecomputeAllProjects(context.Background())
+	if err != nil {
+		fmt.Printf("Recompute failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	infra.Logger.Info("project financial aggregates recomputed",
+		"recomputed", result.Recomputed, "failed", result.Failed)
+	if result.Failed > 0 {
+		os.Exit(1)
+	}
 }
