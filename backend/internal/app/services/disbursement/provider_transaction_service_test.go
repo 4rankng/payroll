@@ -164,6 +164,11 @@ func (r *fakeProviderTxRepo) HasNonTerminalByEntityID(_ context.Context, entityI
 	return false, nil
 }
 
+func (r *fakeProviderTxRepo) CountFailedByEntityID(_ context.Context, entityID uint64) (int64, error) {
+	_ = entityID
+	return 0, nil
+}
+
 // Bulk-transfer worker helpers — no-op stubs. The disbursement service
 // tests don't exercise the bulk pathway; these exist only to satisfy the
 // WalletPaymentRepository interface after Phase 3 added the methods.

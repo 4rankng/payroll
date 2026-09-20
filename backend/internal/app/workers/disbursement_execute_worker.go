@@ -229,9 +229,11 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 				// Permanent account-data errors (e.g. the recipient name does
 				// not match the bank-registered holder) will never succeed on
 				// retry. Fail the request so orphan recovery stops re-enqueueing
-				// it every cycle, and tell the employee what to fix.
-				if isPermanentAccountCheckFailure(checkResult.RawErrorCode) {
-					w.failAdvanceRequest(ctx, p, checkResult.RawErrorCode, checkResult.RawMessage)
+				// it every cycle, and tell the employee what to fix. Transient
+				// codes (86/99) keep the request APPROVED — the poller's retry
+				// budget bounds how often we pay the provider to find that out.
+				if classifyProviderFailure(checkResult.RawErrorCode) == providerFailurePermanent {
+					w.applyPermanentProviderFailure(ctx, p, checkResult.RawErrorCode, checkResult.RawMessage)
 				}
 				return nil // terminal — don't retry
 			}
@@ -274,14 +276,19 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 				return fmt.Errorf("record pre-flight rejection: %w", recordErr)
 			}
 			logger.Info("disbursement execute: rejected at pre-flight (fee waived)", "error", err)
+			// The payload is malformed (bad SWIFT, amount out of bounds, blank
+			// holder name) — a retry re-sends the same bytes. Fail the request
+			// instead of letting orphan recovery re-enqueue it forever.
+			w.applyPermanentProviderFailure(ctx, p, "preflight_validation", err.Error())
 			return nil // terminal — don't retry a malformed request
 		}
 		return fmt.Errorf("initiate transfer: %w", err)
 	}
 
 	// Step 5: Record sync response (transfer endpoint was called → fee applies)
+	accepted := result.Status == infrastructure.TransferStatusPending || result.Status == infrastructure.TransferStatusSuccess
 	_, err = w.walletPaymentService.RecordSyncResponse(ctx, p.RequestID, disbursement.SyncResult{
-		Accepted:     result.Status == infrastructure.TransferStatusPending || result.Status == infrastructure.TransferStatusSuccess,
+		Accepted:     accepted,
 		InvoiceNo:    result.ProviderRef,
 		RawErrorCode: result.RawErrorCode,
 		RawMessage:   result.RawMessage,
@@ -290,26 +297,143 @@ func (w *DisbursementExecuteWorker) ProcessJob(ctx context.Context, t *asynqlib.
 		return fmt.Errorf("record sync response: %w", err)
 	}
 
-	logger.Info("disbursement execute: transfer initiated",
-		"provider_ref", result.ProviderRef, "status", string(result.Status))
+	if accepted {
+		logger.Info("disbursement execute: transfer initiated",
+			"provider_ref", result.ProviderRef, "status", string(result.Status))
+		return nil
+	}
+
+	// The provider answered the transfer call synchronously with a rejection.
+	// The fee is already charged (the endpoint was called), so this is where an
+	// unclassified retry loop gets expensive: error 86 billed 13 × 3,850 VND
+	// before the request was given up on. Data errors end the request here;
+	// transient ones stay retryable, bounded by the poller's retry budget.
+	logger.Info("disbursement execute: transfer rejected synchronously",
+		"error_code", result.RawErrorCode, "status", string(result.Status))
+	if classifyProviderFailure(result.RawErrorCode) == providerFailurePermanent {
+		w.applyPermanentProviderFailure(ctx, p, result.RawErrorCode, result.RawMessage)
+	}
 
 	return nil
 }
 
-// isPermanentAccountCheckFailure reports whether an account-check error code
-// describes a data error that no retry can fix. name_mismatch means the bank
-// confirmed the account belongs to a different holder than the one we stored —
-// without this terminal classification the poller's orphan recovery re-enqueues
-// the request every ~20s forever. Transport errors and provider outages surface
-// as CheckAccount err != nil (asynq retry) or other codes (kept retryable).
-func isPermanentAccountCheckFailure(errorCode string) bool {
-	return errorCode == "name_mismatch"
+// providerFailureClass is the retry policy for one provider error code.
+type providerFailureClass int
+
+const (
+	// providerFailureTransient means a later attempt may still succeed: the
+	// provider was unavailable, throttling, or answered with a code we have
+	// not classified. The request stays APPROVED so the poller's orphan
+	// recovery re-enqueues it — bounded by maxFailedDisbursementAttempts, so a
+	// permanently broken provider cannot bill us forever.
+	providerFailureTransient providerFailureClass = iota
+	// providerFailurePermanent means the request itself is wrong (bad account
+	// data, malformed transfer). Re-sending the identical payload can never
+	// succeed — it only burns provider fees (3,850 VND per transfer call) — so
+	// the request is failed out of the retry loop immediately.
+	providerFailurePermanent
+)
+
+// classifyProviderFailure is the single retry-policy classifier for BOTH stages
+// of the advance disbursement pipeline — the account check (CheckAccount) and
+// the funds transfer (InitiateTransfer) — because OnePay answers with the same
+// response_code vocabulary at both, and our own stages add two synthetic codes.
+//
+// Wire codes (OnePay Payout API spec III.1 + our own):
+//
+//	code                  | meaning                                  | class
+//	----------------------+------------------------------------------+-----------
+//	name_mismatch         | bank holder ≠ stored holder (our synth)  | permanent
+//	preflight_validation  | rejected locally, endpoint never called  | permanent
+//	amount_below_min      | below the provider's per-transfer floor  | permanent
+//	12                    | Mã ngân hàng không hợp lệ                | permanent
+//	14                    | Thông tin thẻ không hợp lệ               | permanent
+//	15                    | Thông tin tài khoản không hợp lệ         | permanent
+//	21                    | Thông số không hợp lệ                    | permanent
+//	86                    | Chức năng tạm thời đóng                  | transient
+//	99                    | Hệ thống ngân hàng gián đoạn             | transient
+//	"" / anything else    | unclassified — assume it may pass later  | transient
+//
+// Unknown codes are deliberately transient: the retry budget, not this table,
+// is what stops a code nobody has classified yet from looping forever.
+func classifyProviderFailure(errorCode string) providerFailureClass {
+	switch errorCode {
+	case "name_mismatch", // bank-confirmed holder differs from the stored name
+		"preflight_validation", // our synthetic code for ErrPreflightValidation
+		"amount_below_min",     // pre-flight amount floor
+		"12",                   // invalid bank code
+		"14",                   // invalid card info
+		"15",                   // invalid account info
+		"21":                   // invalid parameter
+		return providerFailurePermanent
+	default:
+		return providerFailureTransient
+	}
+}
+
+// isRecipientAccountFailure reports whether the code blames the recipient's
+// stored bank account data, which is what makes the employee's
+// bank_account_status flip to invalid. Only the account-data codes qualify:
+// 12/14/15 are the provider's "this bank/card/account does not exist as given"
+// answers and name_mismatch is the bank-confirmed holder-name divergence.
+// preflight_validation and 21 describe our own payload, and 86/99 the provider's
+// availability, so neither implicates the stored account.
+func isRecipientAccountFailure(errorCode string) bool {
+	switch errorCode {
+	case "name_mismatch", "12", "14", "15":
+		return true
+	default:
+		return false
+	}
+}
+
+// employeeFacingDetail maps a permanent-failure detail to what the employee
+// sees in the push notification. Provider messages (OnePay codes 12/14/15 and
+// the name_mismatch synthesis) already arrive in Vietnamese; the synthetic
+// preflight_validation code carries the local validator's English Go error
+// text, which must not reach the employee — all user-facing text is
+// Vietnamese. The raw English stays where it belongs: the wallet_payment
+// audit row (RawMessage) and the logs.
+func employeeFacingDetail(code, detail string) string {
+	if code == "preflight_validation" {
+		return "Thông tin yêu cầu chuyển tiền không hợp lệ. Vui lòng liên hệ quản trị viên để được hỗ trợ."
+	}
+	return detail
+}
+
+// applyPermanentProviderFailure is the terminal-failure policy for a permanent
+// code, applied identically whatever the stage that produced it: the advance
+// request is marked FAILED with the code as its reason, the employee is
+// notified once (so they can fix their bank info), and — when the code blames
+// the recipient account — the employee's bank account is flagged invalid for
+// the missing-bank-details views.
+func (w *DisbursementExecuteWorker) applyPermanentProviderFailure(ctx context.Context, p DisbursementExecutePayload, code, detail string) {
+	w.failAdvanceRequest(ctx, p, code, detail)
+
+	if !isRecipientAccountFailure(code) || w.walletPaymentService == nil {
+		return
+	}
+	reason := detail
+	if reason == "" {
+		reason = code
+	}
+	if err := w.walletPaymentService.MarkRecipientBankAccountInvalid(ctx, p.AdvanceRequestID, reason); err != nil {
+		w.logger.Warn("disbursement execute: failed to flag employee bank account invalid",
+			"advance_request_id", p.AdvanceRequestID, "code", code, "error", err)
+	}
 }
 
 // failAdvanceRequest marks an advance request FAILED (with the error code as
 // the payment_reference reason, matching the poller's convention for
 // budget_exceeded / missing bank details) and notifies the employee with the
 // provider's message so they can fix their bank info and re-request.
+//
+// Notify-once: the employee notification is sent only by the caller that wins
+// the APPROVED/PENDING → FAILED transition. A repeat attempt (concurrent task,
+// orphan recovery racing a terminal failure, asynq retry) finds the request
+// already resolved and returns before touching the notifier, so the employee
+// never receives the same "advance failed" push twice.
+//
 // Best-effort: failures are logged, never propagated — the wallet_payment row
 // is already recorded as failed, which is the audit trail that matters.
 func (w *DisbursementExecuteWorker) failAdvanceRequest(ctx context.Context, p DisbursementExecutePayload, reason, detail string) {
@@ -331,7 +455,8 @@ func (w *DisbursementExecuteWorker) failAdvanceRequest(ctx context.Context, p Di
 		logger.Error("disbursement execute: failed to mark request FAILED", "error", err)
 		return
 	}
-	logger.Info("disbursement execute: request marked FAILED after permanent account-check failure")
+	logger.Info("disbursement execute: request marked FAILED after permanent provider failure",
+		"employee_id", req.EmployeeID, "amount", req.RequestAmount)
 
 	if w.employeeNotifier != nil {
 		w.employeeNotifier.NotifyAdvancePaymentFailed(ctx, req.EmployeeID, req.RequestAmount, detail)

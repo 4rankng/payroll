@@ -70,6 +70,13 @@ type WalletPaymentRepository interface {
 	// rows with a NULL entity_id are ignored.
 	HasNonTerminalByEntityID(ctx context.Context, entityID uint64) (bool, error)
 
+	// CountFailedByEntityID returns how many wallet_payment attempts linked to
+	// the given advance_payment_requests.id (column entity_id) ended in the
+	// failed state. Every attempt (each with its own request_id) is a separate
+	// provider call, so this is the count of paid retries the disbursement
+	// poller must bound. Rows with a NULL entity_id are ignored.
+	CountFailedByEntityID(ctx context.Context, entityID uint64) (int64, error)
+
 	// Bulk-transfer worker helpers (Phase 3 of the wallet bulk transfer pipeline).
 	// All operate on wallet_payments rows linked to a bulk_transfer_batch via
 	// bulk_transfer_batch_id (migration 093).

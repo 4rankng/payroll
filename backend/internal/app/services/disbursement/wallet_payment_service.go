@@ -282,6 +282,15 @@ func (s *WalletPaymentService) ListRecent(ctx context.Context, limit int) ([]*do
 	return s.repo.ListRecent(ctx, limit)
 }
 
+// CountFailedAttempts returns how many provider attempts for one advance
+// payment request already ended in the failed state. Callers use it as the
+// retry budget: every attempt is a separate provider call with its own
+// request_id, and the provider charges its per-transfer fee per call, so an
+// unbounded re-enqueue loop on a persistent error is real money.
+func (s *WalletPaymentService) CountFailedAttempts(ctx context.Context, advanceRequestID uint64) (int64, error) {
+	return s.repo.CountFailedByEntityID(ctx, advanceRequestID)
+}
+
 // isDuplicateRequestIDError reports whether err is a unique-index
 // violation from inserting a duplicate request_id. Matches MySQL,
 // SQLite and Postgres error text so the same path works in production
@@ -912,4 +921,48 @@ func (s *WalletPaymentService) updateAdvanceRequest(ctx context.Context, row *do
 		s.logger.Warn("wallet_payments: failed to update advance request",
 			"entity_id", *row.EntityID, "status", status, "error", err)
 	}
+}
+
+// MarkRecipientBankAccountInvalid records that the provider permanently
+// rejected the recipient's bank account data (name_mismatch / 12 / 14 / 15) on
+// the employee behind the given advance payment request. The verdict is stored
+// on the employee — not the request — because it stays true for every future
+// transfer to the same account, and the missing-bank-details views read it to
+// tell the employee what to fix.
+//
+// reason is the user-facing (Vietnamese) explanation, usually the provider's
+// raw message. The write is idempotent: re-marking an account that is already
+// invalid only refreshes the reason and the validation timestamp.
+//
+// Best-effort by design — the caller has already recorded the failure on the
+// wallet_payment row (the audit trail), so a missing employee link or a DB
+// error must not turn a terminal disbursement outcome into a retried task.
+// Errors are logged and returned for the caller to decide; they are never
+// fatal to the payment flow.
+func (s *WalletPaymentService) MarkRecipientBankAccountInvalid(ctx context.Context, advanceRequestID uint64, reason string) error {
+	if s.advancePaymentReqs == nil || s.employees == nil {
+		return nil // not wired (tests / dormant deployments)
+	}
+
+	req, err := s.advancePaymentReqs.GetByID(ctx, advanceRequestID)
+	if err != nil {
+		s.logger.Warn("wallet_payments: cannot mark bank account invalid — advance request not found",
+			"advance_request_id", advanceRequestID, "error", err)
+		return fmt.Errorf("mark bank account invalid: load request %d: %w", advanceRequestID, err)
+	}
+
+	columns := map[string]any{
+		"bank_account_status":         domain.BankAccountStatusInvalid,
+		"bank_account_invalid_reason": reason,
+		"bank_account_validated_at":   clock.Now(),
+	}
+	if err := s.employees.UpdateColumns(ctx, uint(req.EmployeeID), columns); err != nil {
+		s.logger.Warn("wallet_payments: failed to mark employee bank account invalid",
+			"advance_request_id", advanceRequestID, "employee_id", req.EmployeeID, "error", err)
+		return fmt.Errorf("mark bank account invalid: employee %d: %w", req.EmployeeID, err)
+	}
+
+	s.logger.Info("wallet_payments: employee bank account marked invalid after permanent provider rejection",
+		"advance_request_id", advanceRequestID, "employee_id", req.EmployeeID, "reason", reason)
+	return nil
 }

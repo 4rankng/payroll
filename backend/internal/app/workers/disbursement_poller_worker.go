@@ -27,6 +27,21 @@ const (
 
 	pollerBatchSize = 50
 
+	// maxFailedDisbursementAttempts is the transient-retry budget for one
+	// advance payment request. The poller's orphan recovery re-enqueues an
+	// APPROVED request whenever its only wallet_payment rows are failed, with a
+	// fresh request_id — and every attempt is a provider call that costs the
+	// per-transfer fee (3,850 VND on OnePay). Error 86 ("Chức năng tạm thời
+	// đóng") once burned 13 attempts before succeeding, so the budget caps the
+	// damage at 5 paid retries; past that the request is failed out with reason
+	// retry_limit_exceeded instead of being re-enqueued again.
+	maxFailedDisbursementAttempts = 5
+
+	// retryLimitExceededReason is written to advance_payment_requests
+	// .payment_reference (the same slot as budget_exceeded / missing bank
+	// details) so operators can tell a budget give-up apart from a data error.
+	retryLimitExceededReason = "retry_limit_exceeded"
+
 	// insufficientBalanceCooldown is the minimum interval between consecutive
 	// "insufficient wallet balance" notifications. Prevents notification spam
 	// when the poller reclaims the same pending requests every ~20s cycle.
@@ -149,12 +164,13 @@ func (w *DisbursementPollerWorker) ProcessJob(ctx context.Context) error {
 			continue
 		}
 
-		if err := w.enqueueRequest(ctx, req); err != nil {
+		enqueuedNow, err := w.enqueueRequest(ctx, req)
+		if err != nil {
 			w.logger.Error("disbursement poller: failed to enqueue request",
 				"advance_request_id", req.ID, "error", err)
 			skippedIDs = append(skippedIDs, uint64(req.ID))
 			totalSkipped += int64(req.NetAmount)
-		} else {
+		} else if enqueuedNow {
 			enqueued++
 			if remainingBalance >= 0 {
 				remainingBalance -= int64(req.NetAmount)
@@ -186,10 +202,11 @@ func (w *DisbursementPollerWorker) ProcessJob(ctx context.Context) error {
 		w.logger.Warn("disbursement poller: found orphaned requests",
 			"count", len(orphans))
 		for _, req := range orphans {
-			if err := w.enqueueRequest(ctx, req); err != nil {
+			enqueuedNow, err := w.enqueueRequest(ctx, req)
+			if err != nil {
 				w.logger.Error("disbursement poller: failed to enqueue orphan",
 					"advance_request_id", req.ID, "error", err)
-			} else {
+			} else if enqueuedNow {
 				enqueued++
 			}
 		}
@@ -203,13 +220,37 @@ func (w *DisbursementPollerWorker) ProcessJob(ctx context.Context) error {
 	return nil
 }
 
-// enqueueRequest validates bank details and enqueues a disbursement:execute task.
-// If bank details are missing, the request is marked FAILED immediately.
-func (w *DisbursementPollerWorker) enqueueRequest(ctx context.Context, req *domain.AdvancePaymentRequest) error {
+// enqueueRequest validates the retry budget and bank details, then enqueues a
+// disbursement:execute task.
+//
+// It reports whether a task was actually enqueued. Both terminal give-ups —
+// missing bank details and an exhausted retry budget — mark the request FAILED
+// here and return (false, nil); they are handled outcomes, not enqueue
+// failures, so callers must not count them as skipped (that would try to reset
+// the request to PENDING) or spend them against the wallet balance.
+func (w *DisbursementPollerWorker) enqueueRequest(ctx context.Context, req *domain.AdvancePaymentRequest) (bool, error) {
+	// Retry budget first: a request that has already burned its transient
+	// retries must stop costing provider fees even when its bank details are
+	// fine. This is the bound on the orphan-recovery loop, which re-enqueues
+	// any APPROVED request whose attempts all failed.
+	spent, err := w.retryBudgetSpent(ctx, req)
+	if err != nil {
+		return false, fmt.Errorf("retry budget check: %w", err)
+	}
+	if spent {
+		w.logger.Warn("disbursement poller: retry budget exhausted — marking request FAILED",
+			"advance_request_id", req.ID, "employee_id", req.EmployeeID,
+			"max_attempts", maxFailedDisbursementAttempts)
+		if err := w.advancePaymentReqRepo.UpdateStatus(ctx, uint64(req.ID), domain.AdvancePaymentStatusFailed, retryLimitExceededReason, nil); err != nil {
+			return false, fmt.Errorf("mark retry-limit-exceeded request %d FAILED: %w", req.ID, err)
+		}
+		return false, nil
+	}
+
 	// Load employee with bank details
 	employee, err := w.employeeRepo.GetByID(ctx, req.EmployeeID)
 	if err != nil {
-		return fmt.Errorf("load employee %d: %w", req.EmployeeID, err)
+		return false, fmt.Errorf("load employee %d: %w", req.EmployeeID, err)
 	}
 
 	// Validate bank details — fail fast if missing
@@ -217,7 +258,10 @@ func (w *DisbursementPollerWorker) enqueueRequest(ctx context.Context, req *doma
 		w.logger.Warn("disbursement poller: marking request as FAILED — missing bank details",
 			"advance_request_id", req.ID, "employee_id", req.EmployeeID)
 		reason := "missing bank details"
-		return w.advancePaymentReqRepo.UpdateStatus(ctx, uint64(req.ID), domain.AdvancePaymentStatusFailed, reason, nil)
+		if err := w.advancePaymentReqRepo.UpdateStatus(ctx, uint64(req.ID), domain.AdvancePaymentStatusFailed, reason, nil); err != nil {
+			return false, err
+		}
+		return false, nil
 	}
 
 	// Generate idempotent request ID using tt prefix
@@ -234,18 +278,41 @@ func (w *DisbursementPollerWorker) enqueueRequest(ctx context.Context, req *doma
 
 	data, err := json.Marshal(payload)
 	if err != nil {
-		return fmt.Errorf("marshal payload: %w", err)
+		return false, fmt.Errorf("marshal payload: %w", err)
 	}
 
 	task := asynqlib.NewTask(TaskDisbursementExecute, data)
 	if _, err := w.asynqClient.Enqueue(task, asynqlib.MaxRetry(5)); err != nil {
-		return fmt.Errorf("enqueue disbursement:execute: %w", err)
+		return false, fmt.Errorf("enqueue disbursement:execute: %w", err)
 	}
 
 	w.logger.Info("disbursement poller: enqueued execute task",
 		"advance_request_id", req.ID, "request_id", requestID, "employee_id", req.EmployeeID)
 
-	return nil
+	return true, nil
+}
+
+// retryBudgetSpent reports whether one advance request has already spent its
+// transient retry budget — maxFailedDisbursementAttempts wallet_payments rows
+// recorded as failed for it. A query error is propagated rather than swallowed:
+// without a verdict the caller cannot know whether enqueuing is safe, and
+// "unknown" must not read as "budget available" — that is exactly the unbounded
+// loop this budget exists to stop.
+func (w *DisbursementPollerWorker) retryBudgetSpent(ctx context.Context, req *domain.AdvancePaymentRequest) (bool, error) {
+	if w.walletPaymentService == nil || req == nil {
+		return false, nil // not wired (dormant deployments / focused tests)
+	}
+	failed, err := w.walletPaymentService.CountFailedAttempts(ctx, uint64(req.ID))
+	if err != nil {
+		return false, fmt.Errorf("count failed attempts for request %d: %w", req.ID, err)
+	}
+	return !withinRetryBudget(failed), nil
+}
+
+// withinRetryBudget reports whether a request that already has failedAttempts
+// terminal failures may be enqueued again.
+func withinRetryBudget(failedAttempts int64) bool {
+	return failedAttempts < maxFailedDisbursementAttempts
 }
 
 // validateBudget checks that the employee's total active requests (including

@@ -490,6 +490,22 @@ func (r *TxWalletPaymentRepository) HasNonTerminalByEntityID(ctx context.Context
 	return count > 0, nil
 }
 
+// CountFailedByEntityID counts failed attempts for one advance request. Used by
+// the disbursement poller's retry budget: each re-enqueue mints a fresh
+// request_id, so a request stuck on a transient provider error (e.g. 86) would
+// otherwise be retried forever at the provider's per-transfer fee. entity_id is
+// indexed; NULL rows never match the equality predicate.
+func (r *TxWalletPaymentRepository) CountFailedByEntityID(ctx context.Context, entityID uint64) (int64, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).Model(&domaintx.WalletPayment{}).
+		Where("entity_id = ? AND status = ?", entityID, domaintx.StateFailed).
+		Count(&count).Error
+	if err != nil {
+		return 0, fmt.Errorf("wallet_payments: count failed by entity_id: %w", err)
+	}
+	return count, nil
+}
+
 // UpdateBulkBatchLink stamps the (bulk_transfer_batch_id, bulk_transfer_order,
 // vfic_code) linkage columns onto an existing row. Idempotent — safe to call
 // on asynq retry. Used by the bulk-transfer row worker after Initiate returns

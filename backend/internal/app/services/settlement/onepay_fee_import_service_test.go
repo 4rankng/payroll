@@ -478,6 +478,10 @@ func (r *fakeOnePayFeeWalletPayments) HasNonTerminalByEntityID(context.Context, 
 	return false, nil
 }
 
+func (r *fakeOnePayFeeWalletPayments) CountFailedByEntityID(context.Context, uint64) (int64, error) {
+	return 0, nil
+}
+
 // Bulk-transfer worker helpers (Phase 3 of wallet bulk transfer pipeline).
 // No-op stubs — the OnePay fee import flow doesn't touch bulk batches.
 func (r *fakeOnePayFeeWalletPayments) UpdateBulkBatchLink(context.Context, uint64, uint64, uint, string) error {

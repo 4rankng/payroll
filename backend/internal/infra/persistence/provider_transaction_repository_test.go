@@ -415,6 +415,56 @@ func TestRepository_HasNonTerminalByEntityID(t *testing.T) {
 	}
 }
 
+// TestRepository_CountFailedByEntityID pins the input of the disbursement
+// poller's retry budget: only rows that ended in the failed state count, only
+// for the given advance request. Counting a completed row would give up on a
+// request that already succeeded, and counting another entity's failures (or
+// NULL-entity rows) would give up on one that never failed.
+func TestRepository_CountFailedByEntityID(t *testing.T) {
+	t.Parallel()
+	repo, _ := newTestRepo(t)
+	ctx := context.Background()
+
+	const entityID = uint64(42)
+	const otherEntity = uint64(99)
+
+	got, err := repo.CountFailedByEntityID(ctx, entityID)
+	require.NoError(t, err)
+	require.Zero(t, got, "empty table has no failed attempts")
+
+	// Two failed attempts for this request.
+	for range 2 {
+		row := newRow(t)
+		row.Status = domaintx.StateFailed
+		e := entityID
+		row.EntityID = &e
+		require.NoError(t, repo.Create(ctx, row))
+	}
+
+	// Rows that must not count: other terminal/non-terminal states for this
+	// request, a failed row for another request, and a failed row with no link.
+	for _, st := range []domaintx.State{domaintx.StatePending, domaintx.StateVerified, domaintx.StateAuthorised, domaintx.StateCompleted, domaintx.StateReversed} {
+		row := newRow(t)
+		row.Status = st
+		e := entityID
+		row.EntityID = &e
+		require.NoError(t, repo.Create(ctx, row))
+	}
+	otherRow := newRow(t)
+	otherRow.Status = domaintx.StateFailed
+	other := otherEntity
+	otherRow.EntityID = &other
+	require.NoError(t, repo.Create(ctx, otherRow))
+
+	unlinked := newRow(t)
+	unlinked.Status = domaintx.StateFailed
+	require.NoError(t, repo.Create(ctx, unlinked))
+
+	got, err = repo.CountFailedByEntityID(ctx, entityID)
+	require.NoError(t, err)
+	require.Equal(t, int64(2), got)
+}
+
 func TestRepository_ListStaleAuthorisedIncludesVerifiedInquiryCandidates(t *testing.T) {
 	t.Parallel()
 	repo, _ := newTestRepo(t)
