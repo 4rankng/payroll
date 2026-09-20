@@ -25,14 +25,7 @@ func NewHandler(settingsService *config.SettingsService) *Handler {
 
 // Helper function to convert setting to response DTO
 func (h *Handler) buildSettingResponse(setting *domain.Settings) dto.SettingResponse {
-	return dto.SettingResponse{
-		ID:        setting.ID,
-		Key:       setting.Key,
-		Value:     setting.Value,
-		ValueType: string(setting.ValueType),
-
-		UpdatedAt: setting.UpdatedAt,
-	}
+	return dto.NewSettingResponse(setting)
 }
 
 // CreateSetting creates a new setting (Admin only)

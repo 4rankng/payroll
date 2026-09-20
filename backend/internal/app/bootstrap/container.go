@@ -133,6 +133,17 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 	eventBus := events.NewWorkerPoolEventBus(100, 10000)
 	repos := bootstrapRepos.Initialize(infra.DB, eventBus)
 
+	// Seal integration secrets that were stored before a cipher key existed.
+	// Without this backfill, configuring SETTINGS_SECRET_KEY later would only
+	// protect future writes: the admin API returns protected values as null
+	// (treated as "unchanged" on save), so an existing credential row can never
+	// be rewritten through the API. Best-effort — a failure must not block boot.
+	if sealed, err := repos.Settings.EncryptProtectedValues(context.Background()); err != nil {
+		infra.Logger.Warn("settings secret backfill failed", "error", err)
+	} else if len(sealed) > 0 {
+		infra.Logger.Info("settings secret backfill sealed plaintext values", "keys", sealed)
+	}
+
 	// Shared clock instance — must be created before services so attendance
 	// service (and others) receive the correct FakeClock in non-prod.
 	var clk clock.Clock

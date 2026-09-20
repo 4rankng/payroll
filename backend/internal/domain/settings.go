@@ -38,6 +38,13 @@ type SettingsRepository interface {
 	GetByKeyForUpdate(ctx context.Context, key string) (*Settings, error)
 	Update(ctx context.Context, settings *Settings) error
 	CompareAndSwapValue(ctx context.Context, key, currentValue, nextValue string, valueType SettingsValueType) (bool, error)
+	// EncryptProtectedValues seals every protected setting still stored in
+	// plaintext and returns the keys it converted. It is the startup backfill for
+	// the secrets-at-rest cipher: without it, a key configured after the fact
+	// would only seal future writes, because the API returns protected values as
+	// null (treated as "unchanged") so a re-save can never rewrite them.
+	// Idempotent and a no-op when no cipher key is configured.
+	EncryptProtectedValues(ctx context.Context) ([]string, error)
 	Delete(ctx context.Context, id uint) error
 	List(ctx context.Context, filters SettingsFilters) ([]*Settings, error)
 	Count(ctx context.Context, filters SettingsFilters) (int64, error)

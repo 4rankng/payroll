@@ -10,6 +10,7 @@ import (
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/secret"
 )
 
 // Cache TTL constants for settings
@@ -17,6 +18,13 @@ const (
 	SettingsListCacheTTL   = 1 * time.Hour // Settings list cache
 	SettingsDetailCacheTTL = 2 * time.Hour // Individual settings details
 )
+
+// settingsCacheVersion namespaces cached settings payloads. It was bumped to v2
+// when "zalo.credentials" started being sealed at rest: v1 payloads may hold the
+// decrypted credential, and a versioned key makes them unreachable immediately
+// instead of leaving them in Redis until the TTL expires. Cache invalidation
+// deletes "settings:<operation>:*", so the version stays purgeable.
+const settingsCacheVersion = "v2"
 
 type SettingsService struct {
 	logger                  *slog.Logger
@@ -88,12 +96,14 @@ func (s *SettingsService) GetSetting(ctx context.Context, id uint) (*domain.Sett
 }
 
 func (s *SettingsService) GetSettingByKey(ctx context.Context, key string) (*domain.Settings, error) {
-	if s.CacheService == nil {
+	// Protected values are never cached: the cache payload would hold the
+	// decrypted credential, which is the very thing the repository seals at rest.
+	if s.CacheService == nil || secret.IsProtectedKey(key) {
 		return s.SettingsRepo.GetByKey(ctx, key)
 	}
 
 	// Generate cache key for setting detail
-	cacheKey := s.CacheService.GenerateSettingsCacheKey("detail", fmt.Sprintf("key:%s", strings.ToLower(key)))
+	cacheKey := s.CacheService.GenerateSettingsCacheKey("detail", settingsCacheVersion, fmt.Sprintf("key:%s", strings.ToLower(key)))
 
 	// Try to get from cache first
 	var cachedSetting *domain.Settings
@@ -140,10 +150,18 @@ func (s *SettingsService) UpdateSetting(ctx context.Context, settingID uint, upd
 		if key, ok := updateData["key"].(string); ok {
 			existingSetting.Key = key
 		}
-		if value, ok := updateData["value"].(string); ok {
+		switch value := updateData["value"].(type) {
+		case string:
 			existingSetting.Value = &value
-		} else if updateData["value"] == nil {
-			existingSetting.Value = nil
+		case nil:
+			// Null means "clear" for an ordinary setting. For a protected key it
+			// arrives on every round-trip — the API never returns the stored
+			// secret — so a client PUTting back what it just read would wipe the
+			// credential. Null therefore means "unchanged" there: a secret is
+			// replaced by supplying a new value, and removed by deleting the row.
+			if !secret.IsProtectedKey(existingSetting.Key) {
+				existingSetting.Value = nil
+			}
 		}
 		if valueTypeStr, ok := updateData["value_type"].(string); ok {
 			valueType := domain.SettingsValueType(valueTypeStr)
@@ -261,6 +279,7 @@ func (s *SettingsService) ListSettings(ctx context.Context, filters domain.Setti
 
 	// Generate cache key based on filters
 	cacheKey := s.CacheService.GenerateSettingsCacheKey("list",
+		settingsCacheVersion,
 		fmt.Sprintf("limit:%d", filters.Limit),
 		fmt.Sprintf("offset:%d", filters.Offset),
 		fmt.Sprintf("search:%s", filters.Search),
@@ -289,13 +308,27 @@ func (s *SettingsService) ListSettings(ctx context.Context, filters domain.Setti
 		return nil, 0, fmt.Errorf("failed to count settings: %w", err)
 	}
 
-	// Store in cache
-	result := cachedResult{Settings: settings, Count: count}
-	if cacheErr := s.CacheService.Set(ctx, cacheKey, result, SettingsListCacheTTL); cacheErr != nil {
-		s.logger.Warn("Failed to cache settings list", "error", cacheErr)
+	// Store in cache. A page containing a protected key is never cached — the
+	// payload would carry the decrypted credential — which also filters out
+	// searches such as "zalo" that intentionally ask for that row.
+	if !containsProtectedKey(settings) {
+		result := cachedResult{Settings: settings, Count: count}
+		if cacheErr := s.CacheService.Set(ctx, cacheKey, result, SettingsListCacheTTL); cacheErr != nil {
+			s.logger.Warn("Failed to cache settings list", "error", cacheErr)
+		}
 	}
 
 	return settings, count, nil
+}
+
+// containsProtectedKey reports whether any row holds a sealed value.
+func containsProtectedKey(settings []*domain.Settings) bool {
+	for _, setting := range settings {
+		if setting != nil && secret.IsProtectedKey(setting.Key) {
+			return true
+		}
+	}
+	return false
 }
 
 // invalidateSettingsCache clears all settings-related cache entries

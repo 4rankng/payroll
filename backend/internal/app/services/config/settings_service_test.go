@@ -3,10 +3,16 @@ package config
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
+	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence"
+	"api-server/internal/pkg/secret"
+
+	"github.com/alicebob/miniredis/v2"
 )
 
 type fakeSettingsEventBus struct{}
@@ -90,6 +96,13 @@ func (r *fakeSettingsRepoForUpdate) CompareAndSwapValue(_ context.Context, key, 
 		return true, nil
 	}
 	return false, nil
+}
+
+// EncryptProtectedValues is a no-op here: the fake stores values in memory and
+// these tests exercise the update flow, not the startup secret backfill (that
+// lives in the persistence layer, covered by settings_repository_secrets_test).
+func (r *fakeSettingsRepoForUpdate) EncryptProtectedValues(context.Context) ([]string, error) {
+	return nil, nil
 }
 
 func (r *fakeSettingsRepoForUpdate) Delete(context.Context, uint) error {
@@ -415,5 +428,79 @@ func TestSettingsServiceUpdateHoldRollsBackWhenDeadlineRecalculationFails(t *tes
 	}
 	if setting.Value == nil || *setting.Value != "2" {
 		t.Fatalf("setting value = %v, want rollback to 2", setting.Value)
+	}
+}
+
+// A protected row is returned to clients without its value, so a client that
+// PUTs the response back sends a null value. That null must mean "unchanged" for
+// the secret and "clear" for an ordinary setting.
+func TestSettingsServiceUpdateSettingNullValueSemantics(t *testing.T) {
+	const credential = `{"app_id":"123","secret_key":"s3cr3t-key"}`
+
+	settingsRepo := newFakeSettingsRepoForUpdate(
+		&domain.Settings{ID: 1, Key: secret.ZaloCredentialsKey, Value: stringPointer(credential), ValueType: domain.ValueTypeJSON},
+		&domain.Settings{ID: 2, Key: "transfer_bank_visible", Value: stringPointer("true"), ValueType: domain.ValueTypeString},
+	)
+	service := NewSettingsService(
+		settingsRepo,
+		&fakeQuotaRepoForUpdate{},
+		nil,
+		fakeSettingsTxManager{settings: settingsRepo, quota: &fakeQuotaRepoForUpdate{}},
+		nil,
+		fakeSettingsEventBus{},
+		nil,
+	)
+
+	protected, err := service.UpdateSetting(context.Background(), 1, map[string]any{"value": nil}, 7)
+	if err != nil {
+		t.Fatalf("UpdateSetting(protected, null): %v", err)
+	}
+	if protected.Value == nil || *protected.Value != credential {
+		t.Fatalf("protected value = %v, want the stored credential to survive a null update", protected.Value)
+	}
+
+	ordinary, err := service.UpdateSetting(context.Background(), 2, map[string]any{"value": nil}, 7)
+	if err != nil {
+		t.Fatalf("UpdateSetting(ordinary, null): %v", err)
+	}
+	if ordinary.Value != nil {
+		t.Fatalf("ordinary value = %v, want the null update to clear it", *ordinary.Value)
+	}
+}
+
+// The settings cache is Redis; caching a decrypted credential would recreate the
+// plaintext exposure the repository now seals in MySQL.
+func TestSettingsServiceDoesNotCacheProtectedSetting(t *testing.T) {
+	mr := miniredis.RunT(t)
+	rdb, err := persistence.NewRedisClient(persistence.RedisConfig{Addr: mr.Addr()})
+	if err != nil {
+		t.Fatalf("connect miniredis: %v", err)
+	}
+	t.Cleanup(func() { _ = rdb.Close() })
+
+	settingsRepo := newFakeSettingsRepoForUpdate(
+		&domain.Settings{ID: 1, Key: secret.ZaloCredentialsKey, Value: stringPointer(`{"app_id":"123"}`), ValueType: domain.ValueTypeJSON},
+		&domain.Settings{ID: 2, Key: "transfer_bank_visible", Value: stringPointer("true"), ValueType: domain.ValueTypeString},
+	)
+	service := NewSettingsService(
+		settingsRepo,
+		nil,
+		nil,
+		nil,
+		infrastructure.NewCacheService(rdb),
+		fakeSettingsEventBus{},
+		nil,
+	)
+
+	if _, err := service.GetSettingByKey(context.Background(), "transfer_bank_visible"); err != nil {
+		t.Fatalf("GetSettingByKey(ordinary): %v", err)
+	}
+	if _, err := service.GetSettingByKey(context.Background(), secret.ZaloCredentialsKey); err != nil {
+		t.Fatalf("GetSettingByKey(protected): %v", err)
+	}
+
+	keys := mr.Keys()
+	if len(keys) != 1 || !strings.Contains(keys[0], "transfer_bank_visible") {
+		t.Fatalf("cached keys = %v, want only the ordinary setting", keys)
 	}
 }
