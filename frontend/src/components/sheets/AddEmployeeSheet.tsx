@@ -14,7 +14,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { SlideSheetTemplate } from './templates/SlideSheetTemplate';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
 import { authManager } from '@/lib/auth';
-import { validateFullname, formatVietnameseName } from '@/lib/validation';
+import { validateFullname, formatVietnameseName, validateMobileNotCCCD } from '@/lib/validation';
 import { cn } from '@/lib/utils';
 import type { Bank } from '@/types/api/bank.types';
 import type { ModalConfig } from '@/types/modal-config.types';
@@ -248,6 +248,11 @@ function AddEmployeeSheetComponent({
 
     if (formData.mobile && !/^\d+$/.test(formData.mobile.replace(/\s/g, ''))) {
       newErrors.mobile = 'Số điện thoại chỉ được chứa số';
+    } else if (formData.mobile) {
+      const cccdGuard = validateMobileNotCCCD(formData.mobile);
+      if (!cccdGuard.valid) {
+        newErrors.mobile = cccdGuard.error!;
+      }
     }
 
     if (formData.date_of_birth && !/^\d{4}-\d{2}-\d{2}$/.test(formData.date_of_birth)) {

@@ -72,6 +72,25 @@ func TestEmployee_ValidateMobile(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestEmployee_ValidateMobile_RejectsCCCD(t *testing.T) {
+	e := &Employee{CCCD: "001179010398", Mobile: "001179010398"}
+
+	err := e.ValidateMobile()
+	assert.Error(t, err, "a 12-digit CCCD in the mobile field must be rejected")
+
+	// A 12-digit value is a CCCD even when it belongs to someone else.
+	e.Mobile = "031204007929"
+	assert.Error(t, e.ValidateMobile(), "any 12-digit value must be rejected as a mobile")
+
+	// Ten- and eleven-digit numbers stay valid: they are real phone shapes and
+	// the rule must not turn into general mobile-format validation.
+	e.Mobile = "0357210887"
+	assert.NoError(t, e.ValidateMobile())
+
+	e.Mobile = "84357210887"
+	assert.NoError(t, e.ValidateMobile())
+}
+
 func TestEmployee_ValidateDates(t *testing.T) {
 	e := &Employee{}
 

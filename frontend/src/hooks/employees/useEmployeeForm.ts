@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useChangePaymentSchedule, useUpdateEmployeeProjectAssignment } from "@/hooks/api/useProjectEmployees";
-import { validateFullname } from "@/lib/validation";
+import { validateFullname, validateMobileNotCCCD } from "@/lib/validation";
 import { toast } from "@/components/ui/sonner";
 import type { Employee } from "@/types/api/employee.types";
 import type { Bank } from "@/types/api/bank.types";
@@ -205,6 +205,20 @@ export const useEmployeeForm = ({ employee, onUpdate }: UseEmployeeFormProps) =>
             toast({
               title: "Lỗi xác thực",
               description: fullnameValidation.error || "Họ tên không hợp lệ",
+              variant: "destructive"
+            });
+            return;
+          }
+        }
+
+        // A CCCD typed into the phone field is rejected by the backend too; check
+        // here so the operator gets the message before the request round-trip.
+        if (formData.mobile) {
+          const mobileGuard = validateMobileNotCCCD(formData.mobile);
+          if (!mobileGuard.valid) {
+            toast({
+              title: "Lỗi xác thực",
+              description: mobileGuard.error || "Số điện thoại không hợp lệ",
               variant: "destructive"
             });
             return;

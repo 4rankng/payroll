@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/xuri/excelize/v2"
+
+	"api-server/internal/pkg/phone"
 )
 
 // STKRow represents parsed bank account information for an employee from the STK sheet
@@ -233,6 +235,11 @@ func detectSTKHeaderColumns(row []string) *stkColumnMap {
 // sanitizeMobile strips non-digit characters (spaces, +, -, parens) so the
 // value satisfies Employee.ValidateMobile (digits-only) regardless of how the
 // partner formatted the phone in column G.
+//
+// A 12-digit value is a CCCD, never a mobile number: the partner sheet has the
+// CCCD column next to the phone column and the two get swapped. Such a value is
+// dropped (logged) instead of persisted, because a CCCD in employees.mobile is
+// unusable for Zalo ZNS and for phone-based login.
 func sanitizeMobile(s string) string {
 	digitsOnly := strings.Map(func(r rune) rune {
 		if r >= '0' && r <= '9' {
@@ -240,8 +247,13 @@ func sanitizeMobile(s string) string {
 		}
 		return -1
 	}, strings.TrimSpace(s))
-	if len(digitsOnly) > 50 {
-		slog.Warn("sanitizeMobile: phone exceeds employees.mobile varchar(50), dropping",
+	if phone.IsCCCDCard(digitsOnly) {
+		slog.Warn("sanitizeMobile: value looks like a CCCD, dropping", "value", digitsOnly)
+		return ""
+	}
+	// employees.mobile is varchar(15); anything longer cannot be stored.
+	if len(digitsOnly) > 15 {
+		slog.Warn("sanitizeMobile: phone exceeds employees.mobile varchar(15), dropping",
 			"length", len(digitsOnly), "original", s)
 		return ""
 	}

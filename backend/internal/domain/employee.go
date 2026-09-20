@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/phone"
 	"api-server/internal/pkg/utils"
 
 	"gorm.io/gorm"
@@ -170,7 +171,14 @@ type EmployeeRepository interface {
 	GetByIDForUpdate(ctx context.Context, id uint) (*Employee, error)
 	GetByUserID(ctx context.Context, userID uint) (*Employee, error)
 	GetByCCCD(ctx context.Context, cccd string) (*Employee, error)
+	// GetByMobile resolves a single employee by mobile number. Duplicate numbers
+	// are permitted by the schema, so it fails closed (conflict error) when more
+	// than one employee shares the number instead of returning an arbitrary row.
 	GetByMobile(ctx context.Context, mobile string) (*Employee, error)
+	// ListByMobile returns every active employee sharing the mobile number,
+	// ordered by id. Used by callers that must react to duplicates instead of
+	// resolving one employee.
+	ListByMobile(ctx context.Context, mobile string) ([]*Employee, error)
 	GetByEmail(ctx context.Context, email string) (*Employee, error)
 	ExistsByCCCD(ctx context.Context, cccd string) (bool, error)
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
@@ -201,6 +209,15 @@ type EmployeeRepository interface {
 	ListAccessibleIDs(ctx context.Context, userID uint) ([]uint, error)
 	GetEmployeesWithMissingBankDetails(ctx context.Context, filters EmployeeFilters) ([]*EmployeeWithProjects, error)
 	CountEmployeesWithMissingBankDetails(ctx context.Context, filters EmployeeFilters) (int64, error)
+	// ListEmployeeReachability returns the employees whose contact data makes
+	// them unreachable, with their payroll exposure, ordered by employee id.
+	// State classification happens after the query, so Limit/Offset are applied
+	// by the repository rather than pushed into SQL.
+	ListEmployeeReachability(ctx context.Context, filters EmployeeReachabilityFilters) ([]*EmployeeReachability, error)
+	// CountEmployeeReachability counts employees per state over the
+	// project-scoped cohort. The State filter is ignored by design so a caller
+	// can size the whole worklist next to a filtered page.
+	CountEmployeeReachability(ctx context.Context, filters EmployeeReachabilityFilters) (*EmployeeReachabilitySummary, error)
 	// UpdateColumns performs a targeted update of specific columns for an employee.
 	// Used by import flows to update bank info or user_id without a full Save.
 	UpdateColumns(ctx context.Context, id uint, columns map[string]any) error
@@ -314,6 +331,12 @@ func (e *Employee) ValidateMobile() error {
 		matched, _ := regexp.MatchString(`^\d+$`, e.Mobile)
 		if !matched {
 			return NewValidationError("mobile number must contain only digits")
+		}
+		// A 12-digit CCCD is never a mobile number: it means the CCCD was typed
+		// into the phone field (mis-mapped import column or manual slip). Reject
+		// it instead of persisting an unusable contact number.
+		if phone.IsCCCDCard(e.Mobile) {
+			return NewValidationError("mobile number must not be a CCCD")
 		}
 	}
 	return nil

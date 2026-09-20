@@ -14,6 +14,7 @@ import (
 	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/phone"
 )
 
 // ImportService handles employee import operations
@@ -146,6 +147,14 @@ func (s *ImportService) parseRow(row []string, rowNumber int) (dto.EmployeeImpor
 	}
 	if len(row) > 4 {
 		mobile := strings.TrimSpace(row[4])
+		// A CCCD in the phone column (swapped columns in the partner workbook)
+		// must not reach employees.mobile. Drop it and keep the rest of the row:
+		// the employee record is still valid, only the phone is missing.
+		if phone.IsCCCDCard(mobile) {
+			s.logger.Warn("employee import: mobile column holds a CCCD, dropping",
+				"row", rowNumber, "value", mobile)
+			mobile = ""
+		}
 		if len(mobile) > 15 {
 			mobile = mobile[:15]
 		}

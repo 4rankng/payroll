@@ -53,7 +53,21 @@ export const validatePhoneNumber = (phone: string): { valid: boolean; error?: st
   return { valid: true };
 };
 
-// Email validation
+/**
+ * A 12-digit value in a phone field is a CCCD (citizen ID), never a mobile
+ * number: 12 digits is longer than any Vietnamese mobile, even in 84 form.
+ * The phone column is often swapped with the CCCD column in partner sheets.
+ */
+export const isCCCDValue = (value: string): boolean =>
+  /^\d{12}$/.test(value.replace(/[\s.-]/g, ''));
+
+/** Guards the phone field against a CCCD typed/imported into it. */
+export const validateMobileNotCCCD = (mobile: string): { valid: boolean; error?: string } => {
+  if (mobile && isCCCDValue(mobile)) {
+    return { valid: false, error: 'Số điện thoại không được là số CCCD (12 chữ số)' };
+  }
+  return { valid: true };
+};
 export const validateEmail = (email: string): { valid: boolean; error?: string } => {
   if (!email) {
     return { valid: false, error: 'Email là bắt buộc' };

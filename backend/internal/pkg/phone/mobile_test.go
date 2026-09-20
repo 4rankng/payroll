@@ -34,6 +34,30 @@ func TestNormalizeVietnameseMobile(t *testing.T) {
 	}
 }
 
+func TestIsCCCDCard(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  bool
+	}{
+		{name: "12-digit CCCD", input: "001179010398", want: true},
+		{name: "12-digit with spaces", input: " 031204007929 ", want: true},
+		{name: "10-digit domestic mobile", input: "0357210887", want: false},
+		{name: "11-digit country-code mobile", input: "84357210887", want: false},
+		{name: "9-digit legacy CMND is ambiguous", input: "012345678", want: false},
+		{name: "letters", input: "frankng", want: false},
+		{name: "empty", input: "", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := IsCCCDCard(tt.input); got != tt.want {
+				t.Fatalf("IsCCCDCard(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestIsCCCDFormat(t *testing.T) {
 	tests := []struct {
 		name  string

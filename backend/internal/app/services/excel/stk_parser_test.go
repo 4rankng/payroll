@@ -166,8 +166,12 @@ func TestSanitizeMobile(t *testing.T) {
 		{"spaces stripped", "0981 234 567", "0981234567"},
 		{"plus and dashes", "+84-981-234-567", "84981234567"},
 		{"parens and spaces", "(0981) 234 567", "0981234567"},
-		{"over 50 chars", strings.Repeat("1", 51), ""},
-		{"exactly 50", strings.Repeat("1", 50), strings.Repeat("1", 50)},
+		// employees.mobile is varchar(15), so anything longer cannot be stored.
+		{"over column width", strings.Repeat("1", 16), ""},
+		{"at column width", strings.Repeat("1", 15), strings.Repeat("1", 15)},
+		// A 12-digit value is a CCCD swapped into the phone column.
+		{"cccd in phone column", "001179010398", ""},
+		{"cccd with separators", "0011 790 10398", ""},
 		{"leading zeros preserved", "0912345678", "0912345678"},
 	}
 	for _, tc := range tests {
