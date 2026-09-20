@@ -240,6 +240,11 @@ func (h *AdvancePaymentHandler) ImportFlexPayFile(c *gin.Context) {
 			if err := h.asynqClient.EnqueueImportJob(existingAsset.ID, forMonth); err != nil {
 				logger := observability.GetLogger()
 				logger.Error("failed to enqueue import job", "error", err, "asset_id", existingAsset.ID)
+				// The message below must not claim reprocessing started when the
+				// task never left the API process; the caller retries instead of
+				// waiting for a job that will never run.
+				response.InternalServerError(c, "Không thể đưa file vào xử lý lại, vui lòng thử lại")
+				return
 			}
 			response.SuccessCreated(c, dto.ImportJobResponse{
 				ID:        existingAsset.ID,

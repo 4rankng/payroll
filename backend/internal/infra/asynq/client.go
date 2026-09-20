@@ -86,21 +86,27 @@ func (c *Client) EnqueueBCCImport(assetID uint) error {
 	return nil
 }
 
-// EnqueueImportJob enqueues an import job task (advance payment)
+// EnqueueImportJob enqueues an import job task (advance payment).
+//
+// The task ID is keyed on the job so a double submit cannot run the same import
+// twice while it is still queued. asynq keeps the ID of a *finished* task for
+// its retention window and answers those with ErrTaskIDConflict: that case is a
+// re-upload asking to reprocess an already-imported file, which must actually
+// run again instead of being dropped (the importer is idempotent — it skips rows
+// that already exist), so the retry goes out under a unique ID.
 func (c *Client) EnqueueImportJob(jobID uint, forMonth string) error {
 	payload, _ := json.Marshal(importJobPayload{JobID: jobID, ForMonth: forMonth})
 
-	task := asynqlib.NewTask(TaskImportJob, payload,
-		asynqlib.Queue(QueueDefault),
-		asynqlib.MaxRetry(c.cfg.RetryMax),
-		asynqlib.TaskID(fmt.Sprintf("import-job:%d:%s", jobID, forMonth)),
-	)
-
-	info, err := c.client.Enqueue(task)
+	info, err := c.enqueueImportJob(payload, fmt.Sprintf("import-job:%d:%s", jobID, forMonth))
+	if errors.Is(err, asynqlib.ErrDuplicateTask) {
+		// Already queued: it will run. Nothing to do.
+		return nil
+	}
+	if errors.Is(err, asynqlib.ErrTaskIDConflict) {
+		info, err = c.enqueueImportJob(payload,
+			fmt.Sprintf("import-job:%d:%s:%d", jobID, forMonth, time.Now().UnixNano()))
+	}
 	if err != nil {
-		if errors.Is(err, asynqlib.ErrDuplicateTask) {
-			return nil
-		}
 		return fmt.Errorf("failed to enqueue import job task: %w", err)
 	}
 
@@ -111,6 +117,15 @@ func (c *Client) EnqueueImportJob(jobID uint, forMonth string) error {
 		"queue", info.Queue,
 	)
 	return nil
+}
+
+func (c *Client) enqueueImportJob(payload []byte, taskID string) (*asynqlib.TaskInfo, error) {
+	task := asynqlib.NewTask(TaskImportJob, payload,
+		asynqlib.Queue(QueueDefault),
+		asynqlib.MaxRetry(c.cfg.RetryMax),
+		asynqlib.TaskID(taskID),
+	)
+	return c.client.Enqueue(task)
 }
 
 // EnqueueFlexPaySalaryNotification queues one persisted delivery record. The
