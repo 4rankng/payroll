@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"time"
 
+	"api-server/internal/app/services/identity"
 	"api-server/internal/app/services/otp"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
@@ -50,10 +51,12 @@ type userRepo interface {
 
 // employeeRepo is the narrow subset of domain.EmployeeRepository the service
 // needs. Employees' mobile numbers live in the employees table (not users), so
-// the reset lookup must also check here. The linked user account (if any) is
-// reached via Employee.UserID.
+// the reset lookup must also check here; the linked user account (if any) is
+// reached via Employee.UserID. ListByMobile (not GetByMobile) so a number
+// carried by several employees is visible as an ambiguity instead of being
+// silently resolved to one of them.
 type employeeRepo interface {
-	GetByMobile(ctx context.Context, mobile string) (*domain.Employee, error)
+	ListByMobile(ctx context.Context, mobile string) ([]*domain.Employee, error)
 }
 
 // passwordService is the narrow subset of *user.UserService the service needs.
@@ -119,14 +122,15 @@ func NewService(
 	}
 }
 
-// RequestReset resolves admin/partner numbers from users.mobile and employee
-// numbers from employees.mobile, then dispatches a ZNS code. It ALWAYS
+// RequestReset resolves admin/partner/adv_partner numbers from users.mobile and
+// employee numbers from employees.mobile (shared lookup order, see
+// resolveUserByMobile), then dispatches a ZNS code. It ALWAYS
 // returns (sessionID, nil) and dispatches a structurally identical session id
 // for known and unknown mobiles (anti-enumeration).
 //
-// The returned sessionID is what the client submits to /confirm. For not-found
-// or disabled-toggle paths it is a dummy id whose Consume always fails — the
-// client cannot tell the difference.
+// The returned sessionID is what the client submits to /confirm. For not-found,
+// ambiguous-number or disabled-toggle paths it is a dummy id whose Consume
+// always fails — the client cannot tell the difference.
 func (s *Service) RequestReset(ctx context.Context, mobile string) (string, error) {
 	// Hot-check the admin toggle. If off, behave exactly like a not-found:
 	// dummy session, no ZNS dispatch. Anti-enumeration preserved.
@@ -136,14 +140,17 @@ func (s *Service) RequestReset(ctx context.Context, mobile string) (string, erro
 		}
 	}
 
-	normalizedMobile, err := phone.NormalizeVietnameseMobile(mobile)
+	// An unparseable value can never be a stored account number, and the ZNS
+	// dispatch needs the canonical form back.
+	recipient, err := phone.NormalizeVietnameseMobile(mobile)
 	if err != nil {
 		return s.dummy(ctx)
 	}
 
-	u, err := s.resolveUserByMobile(ctx, normalizedMobile, mobile)
+	u, err := s.resolveUserByMobile(ctx, mobile)
 	if err != nil {
-		// Not found in either table — dummy path (anti-enumeration).
+		// Not found — or carried by several employees (conflict) — dummy path:
+		// no account, no OTP, no signal to the caller (anti-enumeration).
 		return s.dummy(ctx)
 	}
 
@@ -163,7 +170,7 @@ func (s *Service) RequestReset(ctx context.Context, mobile string) (string, erro
 	}
 
 	// Async dispatch — never blocks the response, never crashes the process.
-	recipMobile := normalizedMobile
+	recipMobile := recipient
 	tpl := s.templateID
 	uid := u.ID
 	go func() {
@@ -196,32 +203,14 @@ func (s *Service) RequestReset(ctx context.Context, mobile string) (string, erro
 	return sessionID, nil
 }
 
-func (s *Service) resolveUserByMobile(ctx context.Context, normalizedMobile, originalMobile string) (*domain.User, error) {
-	candidates := []string{normalizedMobile}
-	if originalMobile != normalizedMobile {
-		candidates = append(candidates, originalMobile)
-	}
-	for _, candidate := range candidates {
-		if accountUser, err := s.userRepo.GetByMobile(ctx, candidate); err == nil &&
-			(accountUser.Role == domain.RoleAdmin || accountUser.Role == domain.RolePartner) {
-			return accountUser, nil
-		}
-	}
-
-	if s.employeeRepo == nil {
-		return nil, domain.NewNotFoundError("user not found")
-	}
-	for _, candidate := range candidates {
-		employee, err := s.employeeRepo.GetByMobile(ctx, candidate)
-		if err != nil || employee.UserID == nil {
-			continue
-		}
-		accountUser, err := s.userRepo.GetByID(ctx, *employee.UserID)
-		if err == nil && accountUser.Role == domain.RoleEmployee {
-			return accountUser, nil
-		}
-	}
-	return nil, domain.NewNotFoundError("user not found")
+// resolveUserByMobile maps a typed number to exactly one account, using the
+// shared identity resolver so the lookup order here is the same as login's:
+// users.mobile for admin/partner/adv_partner, then employees.mobile through
+// employees.user_id. Duplicate employee numbers come back as a conflict error,
+// which RequestReset turns into the dummy path — no OTP is dispatched for a
+// number that cannot be tied to a single account.
+func (s *Service) resolveUserByMobile(ctx context.Context, raw string) (*domain.User, error) {
+	return identity.New(s.userRepo, s.employeeRepo).ResolveUserByMobile(ctx, raw)
 }
 
 // dummy creates a placeholder session for the not-found / disabled path and

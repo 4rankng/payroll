@@ -65,6 +65,21 @@ func (mr *MockEmployeeRepositoryMockRecorder) Count(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Count", reflect.TypeOf((*MockEmployeeRepository)(nil).Count), arg0, arg1)
 }
 
+// CountEmployeeReachability mocks base method.
+func (m *MockEmployeeRepository) CountEmployeeReachability(arg0 context.Context, arg1 domain.EmployeeReachabilityFilters) (*domain.EmployeeReachabilitySummary, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountEmployeeReachability", arg0, arg1)
+	ret0, _ := ret[0].(*domain.EmployeeReachabilitySummary)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountEmployeeReachability indicates an expected call of CountEmployeeReachability.
+func (mr *MockEmployeeRepositoryMockRecorder) CountEmployeeReachability(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountEmployeeReachability", reflect.TypeOf((*MockEmployeeRepository)(nil).CountEmployeeReachability), arg0, arg1)
+}
+
 // CountEmployeesWithMissingBankDetails mocks base method.
 func (m *MockEmployeeRepository) CountEmployeesWithMissingBankDetails(arg0 context.Context, arg1 domain.EmployeeFilters) (int64, error) {
 	m.ctrl.T.Helper()
@@ -480,6 +495,36 @@ func (m *MockEmployeeRepository) ListAccessibleIDs(arg0 context.Context, arg1 ui
 func (mr *MockEmployeeRepositoryMockRecorder) ListAccessibleIDs(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAccessibleIDs", reflect.TypeOf((*MockEmployeeRepository)(nil).ListAccessibleIDs), arg0, arg1)
+}
+
+// ListByMobile mocks base method.
+func (m *MockEmployeeRepository) ListByMobile(arg0 context.Context, arg1 string) ([]*domain.Employee, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByMobile", arg0, arg1)
+	ret0, _ := ret[0].([]*domain.Employee)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByMobile indicates an expected call of ListByMobile.
+func (mr *MockEmployeeRepositoryMockRecorder) ListByMobile(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByMobile", reflect.TypeOf((*MockEmployeeRepository)(nil).ListByMobile), arg0, arg1)
+}
+
+// ListEmployeeReachability mocks base method.
+func (m *MockEmployeeRepository) ListEmployeeReachability(arg0 context.Context, arg1 domain.EmployeeReachabilityFilters) ([]*domain.EmployeeReachability, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEmployeeReachability", arg0, arg1)
+	ret0, _ := ret[0].([]*domain.EmployeeReachability)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListEmployeeReachability indicates an expected call of ListEmployeeReachability.
+func (mr *MockEmployeeRepositoryMockRecorder) ListEmployeeReachability(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEmployeeReachability", reflect.TypeOf((*MockEmployeeRepository)(nil).ListEmployeeReachability), arg0, arg1)
 }
 
 // ListWithAllProjects mocks base method.

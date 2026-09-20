@@ -232,6 +232,11 @@ func (m *MockEmployeeRepository) GetByMobile(ctx context.Context, mobile string)
 	return args.Get(0).(*domain.Employee), args.Error(1)
 }
 
+func (m *MockEmployeeRepository) ListByMobile(ctx context.Context, mobile string) ([]*domain.Employee, error) {
+	args := m.Called(ctx, mobile)
+	return args.Get(0).([]*domain.Employee), args.Error(1)
+}
+
 func (m *MockEmployeeRepository) GetByEmail(ctx context.Context, email string) (*domain.Employee, error) {
 	args := m.Called(ctx, email)
 	return args.Get(0).(*domain.Employee), args.Error(1)
@@ -365,6 +370,16 @@ func (m *MockEmployeeRepository) GetEmployeesWithMissingBankDetails(ctx context.
 func (m *MockEmployeeRepository) CountEmployeesWithMissingBankDetails(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
 	args := m.Called(ctx, filters)
 	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *MockEmployeeRepository) ListEmployeeReachability(ctx context.Context, filters domain.EmployeeReachabilityFilters) ([]*domain.EmployeeReachability, error) {
+	args := m.Called(ctx, filters)
+	return args.Get(0).([]*domain.EmployeeReachability), args.Error(1)
+}
+
+func (m *MockEmployeeRepository) CountEmployeeReachability(ctx context.Context, filters domain.EmployeeReachabilityFilters) (*domain.EmployeeReachabilitySummary, error) {
+	args := m.Called(ctx, filters)
+	return args.Get(0).(*domain.EmployeeReachabilitySummary), args.Error(1)
 }
 
 func (m *MockEmployeeRepository) UpdateColumns(ctx context.Context, id uint, columns map[string]any) error {

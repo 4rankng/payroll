@@ -23,15 +23,14 @@ type fakeUserRepo struct {
 }
 
 type fakeEmployeeRepo struct {
-	byMobile map[string]*domain.Employee
+	byMobile map[string][]*domain.Employee
 }
 
-func (r *fakeEmployeeRepo) GetByMobile(_ context.Context, mobile string) (*domain.Employee, error) {
-	employee, ok := r.byMobile[mobile]
-	if !ok {
-		return nil, domain.NewNotFoundError("employee not found")
-	}
-	return employee, nil
+// ListByMobile mirrors the real repository: it returns every employee sharing
+// the number (duplicates are allowed by the schema), and no error when none
+// matches.
+func (r *fakeEmployeeRepo) ListByMobile(_ context.Context, mobile string) ([]*domain.Employee, error) {
+	return r.byMobile[mobile], nil
 }
 
 type pwdUpdate struct {
@@ -214,7 +213,7 @@ func newTestService(t *testing.T, enabled bool) (*Service, *fakeUserRepo, *fakeS
 	svc := &Service{
 		store:        store,
 		userRepo:     repo,
-		employeeRepo: &fakeEmployeeRepo{byMobile: map[string]*domain.Employee{}},
+		employeeRepo: &fakeEmployeeRepo{byMobile: map[string][]*domain.Employee{}},
 		userService:  fakePasswordSvc{hashed: "hashed-pwd"},
 		zalo:         sender,
 		templateID:   "619684",
@@ -227,10 +226,14 @@ func newTestService(t *testing.T, enabled bool) (*Service, *fakeUserRepo, *fakeS
 	return svc, repo, store, sender, bus
 }
 
+// addEmployee registers an employee holding `mobile` and the account it links
+// to. Calling it twice with the same number reproduces the duplicate numbers
+// the schema allows.
 func addEmployee(svc *Service, repo *fakeUserRepo, id uint, mobile, fullname string) {
 	u := &domain.User{ID: id, Username: "u" + mobile, Fullname: fullname, Role: domain.RoleEmployee}
 	repo.byID[id] = u
-	svc.employeeRepo.(*fakeEmployeeRepo).byMobile[mobile] = &domain.Employee{UserID: &u.ID, Mobile: mobile}
+	employees := svc.employeeRepo.(*fakeEmployeeRepo)
+	employees.byMobile[mobile] = append(employees.byMobile[mobile], &domain.Employee{UserID: &u.ID, Mobile: mobile})
 }
 
 // --- RequestReset tests -----------------------------------------------------
@@ -281,6 +284,49 @@ func TestRequestReset_UnknownMobile_DummyAndNoSend(t *testing.T) {
 	_, _, sends := sender.snapshot()
 	if sends != 0 {
 		t.Errorf("sends = %d, want 0 (no ZNS for unknown mobile)", sends)
+	}
+}
+
+func TestRequestReset_DuplicateEmployeeMobile_DummyAndNoSend(t *testing.T) {
+	// One number on two employee records cannot be tied to a single account, so
+	// the reset must fail closed: dummy session, no ZNS dispatch at all.
+	svc, repo, store, sender, _ := newTestService(t, true)
+	addEmployee(svc, repo, 41, "0374990377", "Nguyễn Văn A")
+	addEmployee(svc, repo, 42, "0374990377", "Nguyễn Văn B")
+
+	sid, err := svc.RequestReset(context.Background(), "0374990377")
+	if err != nil {
+		t.Fatalf("RequestReset err: %v", err)
+	}
+	if !strings.HasPrefix(sid, "dummy-") {
+		t.Errorf("ambiguous number should take the dummy path, got %q", sid)
+	}
+	if store.creates != 0 {
+		t.Errorf("store creates = %d, want 0 (no real session for an ambiguous number)", store.creates)
+	}
+	_, _, sends := sender.snapshot()
+	if sends != 0 {
+		t.Errorf("sends = %d, want 0 (no OTP for an ambiguous number)", sends)
+	}
+}
+
+func TestRequestReset_CountryCodeInput_ResolvesEmployee(t *testing.T) {
+	// The number is typed with the country code; the employee record stores the
+	// domestic form, and the dispatched ZNS must use that canonical form.
+	svc, repo, _, sender, _ := newTestService(t, true)
+	addEmployee(svc, repo, 5, "0987654321", "Nguyễn Văn A")
+
+	sid, err := svc.RequestReset(context.Background(), "+84 987 654 321")
+	if err != nil {
+		t.Fatalf("RequestReset err: %v", err)
+	}
+	if strings.HasPrefix(sid, "dummy-") {
+		t.Errorf("country-code input for a known employee took the dummy path, got %q", sid)
+	}
+	waitFor(t, func() bool { _, _, n := sender.snapshot(); return n == 1 })
+	_, recipient, _ := sender.snapshot()
+	if recipient != "0987654321" {
+		t.Errorf("ZNS recipient = %q, want the canonical form 0987654321", recipient)
 	}
 }
 

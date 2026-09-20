@@ -559,6 +559,9 @@ const (
 	MsgFailedToRetrieveTimesheetsVN      = "Không thể lấy danh sách bảng chấm công"
 	MsgInvalidEmployeeStatusFilterVN     = "Trạng thái không hợp lệ. Phải là 'working' hoặc 'unassigned'"
 	MsgInvalidUserIDFormatVN             = "Định dạng ID người dùng không hợp lệ"
+	// Reachability report: the valid values are the domain states, rendered by
+	// the caller so this list cannot drift from domain.EmployeeReachabilityStates.
+	MsgInvalidEmployeeReachabilityStateFilterVN = "Trạng thái liên hệ không hợp lệ. Phải là một trong: %s"
 
 	MsgLenderCreatedVN        = "Tạo người cho vay thành công"
 	MsgLenderListFetchedVN    = "Lấy danh sách người cho vay thành công"
@@ -731,6 +734,11 @@ const (
 	MsgPhoneUsedByAnotherAccountVN = "Số điện thoại này đã được sử dụng bởi tài khoản khác"
 	MsgInvalidMobileFormatVN       = "Số điện thoại không hợp lệ"
 	MsgUserMobileRoleRestrictedVN  = "Số điện thoại tài khoản chỉ áp dụng cho quản trị viên hoặc quản lý"
+	// MsgMobileSharedByEmployeesVN is returned when one phone number is carried
+	// by several employee records: the number cannot be tied to a single
+	// account, so login and password reset must refuse it (fail closed) instead
+	// of guessing which employee the caller is.
+	MsgMobileSharedByEmployeesVN = "Số điện thoại này gắn với nhiều nhân viên nên không thể xác định tài khoản. Vui lòng liên hệ quản trị viên"
 
 	// Employee Business Errors - Vietnamese
 	MsgEmployeeNoUserAccountVN = "Nhân viên chưa có tài khoản người dùng"

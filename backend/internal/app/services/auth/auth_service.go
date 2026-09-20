@@ -10,6 +10,7 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/audit"
+	"api-server/internal/app/services/identity"
 	"api-server/internal/app/services/otp"
 	"api-server/internal/app/services/user"
 	"api-server/internal/config"
@@ -102,25 +103,14 @@ func (s *AuthService) CaptchaRequiredForUsername(ctx context.Context, username s
 	return s.captchaService.RequiredForFailures(user.OTPFailedAttempts)
 }
 
+// findUserByMobileIdentifier resolves a login identifier that is a phone
+// number. The lookup order (users.mobile for admin/partner/adv_partner, then
+// employees.mobile through employees.user_id) and the fail-closed rules live in
+// the shared identity resolver, so login cannot drift from the Zalo reset and
+// the duplicate check. A number carried by several employees comes back as a
+// conflict error; Login then reports invalid credentials and mints no token.
 func (s *AuthService) findUserByMobileIdentifier(ctx context.Context, identifier string) (*domain.User, error) {
-	candidates := []string{identifier}
-	if normalized, err := phone.NormalizeVietnameseMobile(identifier); err == nil && normalized != identifier {
-		candidates = []string{normalized, identifier}
-	}
-
-	for _, candidate := range candidates {
-		if user, err := s.userService.UserRepo.GetByMobile(ctx, candidate); err == nil &&
-			(user.Role == domain.RoleAdmin || user.Role == domain.RolePartner) {
-			return user, nil
-		}
-	}
-	for _, candidate := range candidates {
-		employee, err := s.employeeRepo.GetByMobile(ctx, candidate)
-		if err == nil && employee.UserID != nil {
-			return s.userService.UserRepo.GetByID(ctx, *employee.UserID)
-		}
-	}
-	return nil, domain.NewNotFoundError("user not found")
+	return identity.New(s.userService.UserRepo, s.employeeRepo).ResolveUserByMobile(ctx, identifier)
 }
 
 // GenerateCaptcha creates a new image CAPTCHA challenge.
@@ -280,8 +270,11 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 			user, err = userRepo.GetByCCCD(ctx, req.Username)
 		}
 		if err != nil {
-			// Admin/Partner mobile belongs to users; Employee mobile belongs to
-			// employees. Both accept common Vietnamese phone formatting.
+			// Admin/Partner/AdvPartner numbers live in users.mobile, employee
+			// numbers in employees.mobile. Both accept common Vietnamese phone
+			// formatting, and the shared identity resolver refuses (conflict) a
+			// number carried by more than one employee — no token is minted
+			// for an ambiguous number.
 			user, err = s.findUserByMobileIdentifier(ctx, req.Username)
 			if err != nil {
 				// Try Employee CCCD (for employee)

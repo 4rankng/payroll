@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"fmt"
 
 	"api-server/internal/domain"
 	"api-server/internal/infra/persistence/query_builders"
@@ -106,18 +107,43 @@ func (r *EmployeeRepository) GetByCCCD(ctx context.Context, cccd string) (*domai
 	return &employee, nil
 }
 
-func (r *EmployeeRepository) GetByMobile(ctx context.Context, mobile string) (*domain.Employee, error) {
-	var employee domain.Employee
-	err := r.queryBuilder.BuildGetByFieldWithoutUserQuery("mobile", mobile).First(&employee).Error
+// maxMobileMatchesPerLookup bounds the rows read by a mobile lookup. The bound
+// only needs to exceed 1 for GetByMobile to detect an ambiguous number.
+const maxMobileMatchesPerLookup = 10
 
+// ListByMobile returns every active employee sharing the given mobile number,
+// ordered by id. The schema allows duplicate numbers, so callers that need one
+// specific employee must handle the multi-match case explicitly.
+func (r *EmployeeRepository) ListByMobile(ctx context.Context, mobile string) ([]*domain.Employee, error) {
+	var employees []*domain.Employee
+	err := r.queryBuilder.BuildGetByFieldWithoutUserQuery("mobile", mobile).
+		Order("id").
+		Limit(maxMobileMatchesPerLookup).
+		Find(&employees).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, domain.NewNotFoundError("employee not found")
-		}
+		return nil, err
+	}
+	return employees, nil
+}
+
+// GetByMobile resolves exactly one employee by mobile number. When several
+// employees share the number it returns a conflict instead of the first row:
+// the mobile number is a credential for password reset (Zalo OTP) and login, so
+// picking an arbitrary match could hand access to the wrong person.
+func (r *EmployeeRepository) GetByMobile(ctx context.Context, mobile string) (*domain.Employee, error) {
+	matches, err := r.ListByMobile(ctx, mobile)
+	if err != nil {
 		return nil, err
 	}
 
-	return &employee, nil
+	switch len(matches) {
+	case 0:
+		return nil, domain.NewNotFoundError("employee not found")
+	case 1:
+		return matches[0], nil
+	default:
+		return nil, domain.NewConflictError(fmt.Sprintf("mobile %s is shared by %d employees", mobile, len(matches)))
+	}
 }
 
 // ExistsByCCCD checks if any non-deleted employee exists with the given CCCD.

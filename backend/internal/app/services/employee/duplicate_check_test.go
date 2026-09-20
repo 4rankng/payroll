@@ -62,9 +62,9 @@ func TestCheckDuplicatesByMobileNormalizesPlus84(t *testing.T) {
 
 	employee := &domain.Employee{ID: 32, Fullname: "Trần Thị B", Mobile: "0909123456"}
 
-	// Raw +84 form misses; normalized domestic form hits.
-	employeeRepo.EXPECT().GetByMobile(gomock.Any(), "+84909123456").Return(nil, domain.NewNotFoundError("not found"))
-	employeeRepo.EXPECT().GetByMobile(gomock.Any(), "0909123456").Return(employee, nil)
+	// Shared lookup order: the canonical domestic form is asked first, so the
+	// typed +84 value must reach the domestic row.
+	employeeRepo.EXPECT().ListByMobile(gomock.Any(), "0909123456").Return([]*domain.Employee{employee}, nil)
 	projectEmployeeRepo.EXPECT().GetByEmployee(gomock.Any(), uint(32)).Return(nil, nil)
 
 	matches, err := service.CheckDuplicates(context.Background(), DuplicateCheckParams{Mobile: "+84909123456"})
@@ -73,6 +73,51 @@ func TestCheckDuplicatesByMobileNormalizesPlus84(t *testing.T) {
 	require.Equal(t, "******3456", matches[0].MobileMasked)
 	require.Empty(t, matches[0].CCCDMasked, "CCCD must not be revealed when matched via mobile only")
 	require.Equal(t, []string{"mobile"}, matches[0].MatchedOn)
+}
+
+func TestCheckDuplicatesByMobileFallsBackToTheStoredRawForm(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	employeeRepo := mocks.NewMockEmployeeRepository(ctrl)
+	projectEmployeeRepo := mocks.NewMockProjectEmployeeRepository(ctrl)
+	service := &EmployeeService{EmployeeRepo: employeeRepo, ProjectEmployeeRepo: projectEmployeeRepo}
+
+	employee := &domain.Employee{ID: 35, Fullname: "Vũ Thị E", Mobile: "84909123456"}
+
+	// The row was stored before normalization (84 prefix kept), so the canonical
+	// form misses and the raw typed value has to find it.
+	employeeRepo.EXPECT().ListByMobile(gomock.Any(), "0909123456").Return([]*domain.Employee{}, nil)
+	employeeRepo.EXPECT().ListByMobile(gomock.Any(), "84909123456").Return([]*domain.Employee{employee}, nil)
+	projectEmployeeRepo.EXPECT().GetByEmployee(gomock.Any(), uint(35)).Return(nil, nil)
+
+	matches, err := service.CheckDuplicates(context.Background(), DuplicateCheckParams{Mobile: "84909123456"})
+	require.NoError(t, err)
+	require.Len(t, matches, 1)
+	require.Equal(t, uint(35), matches[0].ID)
+	require.Equal(t, []string{"mobile"}, matches[0].MatchedOn)
+}
+
+func TestCheckDuplicatesReportsEveryEmployeeOnASharedMobile(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	employeeRepo := mocks.NewMockEmployeeRepository(ctrl)
+	projectEmployeeRepo := mocks.NewMockProjectEmployeeRepository(ctrl)
+	service := &EmployeeService{EmployeeRepo: employeeRepo, ProjectEmployeeRepo: projectEmployeeRepo}
+
+	first := &domain.Employee{ID: 41, Fullname: "Lò Thị Ánh Tuyết", Mobile: "0374990377"}
+	second := &domain.Employee{ID: 42, Fullname: "Lò Thị Luân", Mobile: "0374990377"}
+
+	employeeRepo.EXPECT().ListByMobile(gomock.Any(), "0374990377").Return([]*domain.Employee{first, second}, nil)
+	projectEmployeeRepo.EXPECT().GetByEmployee(gomock.Any(), uint(41)).Return(nil, nil)
+	projectEmployeeRepo.EXPECT().GetByEmployee(gomock.Any(), uint(42)).Return(nil, nil)
+
+	matches, err := service.CheckDuplicates(context.Background(), DuplicateCheckParams{Mobile: "0374990377"})
+	require.NoError(t, err)
+	require.Len(t, matches, 2, "both employees sharing the number must be reported")
+	require.Equal(t, uint(41), matches[0].ID)
+	require.Equal(t, uint(42), matches[1].ID)
 }
 
 func TestCheckDuplicatesByEmailLowercased(t *testing.T) {
@@ -107,7 +152,7 @@ func TestCheckDuplicatesMergesSameEmployee(t *testing.T) {
 	employee := &domain.Employee{ID: 34, Fullname: "Phạm D", CCCD: "031086019744", Mobile: "0909123457"}
 
 	employeeRepo.EXPECT().GetByCCCD(gomock.Any(), "031086019744").Return(employee, nil)
-	employeeRepo.EXPECT().GetByMobile(gomock.Any(), "0909123457").Return(employee, nil)
+	employeeRepo.EXPECT().ListByMobile(gomock.Any(), "0909123457").Return([]*domain.Employee{employee}, nil)
 	projectEmployeeRepo.EXPECT().GetByEmployee(gomock.Any(), uint(34)).Return(nil, nil)
 
 	matches, err := service.CheckDuplicates(context.Background(), DuplicateCheckParams{CCCD: "031086019744", Mobile: "0909123457"})
