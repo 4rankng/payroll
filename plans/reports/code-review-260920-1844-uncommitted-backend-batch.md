@@ -83,14 +83,19 @@ note records the cost of the alternative: plain `slog` reroutes the degraded-mod
 out of `logs/app.log` to stderr. A pkg-layer logging port is a repo-wide refactor, not a
 follow-up to this batch.
 
-**Finding 4 — reachability query shape: FIXED (`8e40c480`).** One repository call now reads
-the cohort once, classifies it once, and returns the page plus the cohort counters together
-(`domain.EmployeeReachabilityPage`); `CountEmployeeReachability` is gone from the port and
-the service no longer clones filters to drop `State`. Note for the record: this report had
-**no HTTP route and no frontend caller** when it was reviewed, so the duplicated read never
-reached production — the change removes a whole duplicate cohort read for when the endpoint
-is wired, and the unbounded-read half of the finding stays as documented (the classifier is
-domain code, so it cannot be pushed into SQL).
+**Finding 4 — reachability query shape: FIXED (`8e40c480`), then the whole feature was
+REMOVED (`c1ee22ee`).** The fix made one repository call read the cohort once, classify it
+once, and return the page plus the cohort counters together. Reviewing it then showed the
+report had **no HTTP route, no handler and no frontend caller**: its only consumer was its
+own tests. Wiring it as designed would also have exposed name, CCCD, mobile, projects and
+salary for every active employee to every partner, because the casbin policy grants
+`partner` and `adv_partner` all of `/api/v1/employees/*` while neither the service nor the
+repository scopes rows by the caller's accessible employees. The report was therefore
+deleted rather than wired: domain states/signals/classifier/report types, the repository and
+its query, the service, both test files, the port method, its mock and the one message
+constant. `idx_employees_mobile` and `FlexPaySalaryNotificationSuppressed` stay — both have
+independent consumers. Recoverable with `git revert c1ee22ee` if it is wanted later as an
+admin-only ops screen with explicit row scoping.
 
 **Finding 5 — recompute scheduling: FIXED (`0aa17446`).** `RecomputeAllProjects` is now
 registered as the daily `recompute_project_aggregates` job (03:00 `Asia/Ho_Chi_Minh`) in
@@ -100,8 +105,12 @@ the manual `recompute-project-aggregates` subcommand. Deployed and verified on p
 scheduler logs `Job registered | recompute_project_aggregates 0 3 * * *` and
 `cron_job_status` row 7572 is seeded and enabled.
 
-## Open item surfaced while closing the above
+## Open item surfaced while closing the above — RESOLVED by removal
 
-- The Zalo reachability report (`42c161f9`) is service- and repository-only: no HTTP
-  handler, no route, no frontend caller. Ops cannot see it yet. Wiring the endpoint and the
-  Admin + Partner desktop/mobile views is the remaining work for that feature.
+- The Zalo reachability report (`42c161f9`) was service- and repository-only: no HTTP
+  handler, no route, no frontend caller, so ops could not see it. Decision (2026-09-20): do
+  not carry an unreferenced second write path for contact data — the feature is deleted in
+  `c1ee22ee`.
+- The data gap it described is NOT fixed by the deletion and has no detector now: 588 of
+  1440 active employees have no mobile value and 23 had their most recent ZNS send rejected
+  with -118, so payouts and notifications for those employees have no delivery channel.
