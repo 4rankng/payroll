@@ -559,9 +559,6 @@ const (
 	MsgFailedToRetrieveTimesheetsVN      = "Không thể lấy danh sách bảng chấm công"
 	MsgInvalidEmployeeStatusFilterVN     = "Trạng thái không hợp lệ. Phải là 'working' hoặc 'unassigned'"
 	MsgInvalidUserIDFormatVN             = "Định dạng ID người dùng không hợp lệ"
-	// Reachability report: the valid values are the domain states, rendered by
-	// the caller so this list cannot drift from domain.EmployeeReachabilityStates.
-	MsgInvalidEmployeeReachabilityStateFilterVN = "Trạng thái liên hệ không hợp lệ. Phải là một trong: %s"
 
 	MsgLenderCreatedVN        = "Tạo người cho vay thành công"
 	MsgLenderListFetchedVN    = "Lấy danh sách người cho vay thành công"

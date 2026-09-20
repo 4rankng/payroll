@@ -209,14 +209,6 @@ type EmployeeRepository interface {
 	ListAccessibleIDs(ctx context.Context, userID uint) ([]uint, error)
 	GetEmployeesWithMissingBankDetails(ctx context.Context, filters EmployeeFilters) ([]*EmployeeWithProjects, error)
 	CountEmployeesWithMissingBankDetails(ctx context.Context, filters EmployeeFilters) (int64, error)
-	// ListEmployeeReachability returns one page of the employees whose contact
-	// data makes them unreachable, with their payroll exposure, ordered by
-	// employee id, together with the counters for the whole project-scoped
-	// cohort. The page honours filters.State; the counters never do, so a
-	// filtered page is never mistaken for the size of the worklist. State
-	// classification happens after the query, so Limit/Offset are applied by the
-	// repository rather than pushed into SQL.
-	ListEmployeeReachability(ctx context.Context, filters EmployeeReachabilityFilters) (*EmployeeReachabilityPage, error)
 	// UpdateColumns performs a targeted update of specific columns for an employee.
 	// Used by import flows to update bank info or user_id without a full Save.
 	UpdateColumns(ctx context.Context, id uint, columns map[string]any) error
