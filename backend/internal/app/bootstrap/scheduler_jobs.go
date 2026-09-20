@@ -36,6 +36,7 @@ func registerSchedulerJobs(
 	flexPayReconciliationService *domainServices.FlexPayReconciliationService,
 	loanRepaymentReminderService *notification.LoanRepaymentReminderService,
 	zaloConnectService *zaloconnect.Service,
+	aggregateRecomputeService *project.AggregateRecomputeService,
 	logger *slog.Logger,
 ) {
 	// Helper for template rendering
@@ -392,4 +393,38 @@ func registerSchedulerJobs(
 		},
 	})
 
+	// 13. Reconcile the denormalised project financial totals - daily.
+	//
+	// The four projects.*_vnd totals have no HTTP writer: the bulk transfer
+	// worker projects settled timesheets onto them, but it runs outside the
+	// payment transaction and only logs its per-project failures, so a lost
+	// write leaves a total stale with nothing to correct it. This job re-derives
+	// every project's totals from its timesheets, which is a pure function of
+	// those rows and therefore idempotent: a daily run turns silent drift into a
+	// bounded, self-healing lag instead of a manual backfill.
+	s.AddJob(scheduler.Job{
+		Name:    "recompute_project_aggregates",
+		Cron:    "0 3 * * *",
+		Enabled: true,
+		Handler: func() {
+			ctx := context.Background()
+			logger.Info("Starting project financial aggregate reconciliation")
+			result, err := aggregateRecomputeService.RecomputeAllProjects(ctx)
+			if err != nil {
+				// A failed run either listed no projects (result is nil) or
+				// recomputed some and accumulated the rest; log both shapes.
+				if result == nil {
+					logger.Error("Failed to reconcile project financial aggregates", "error", err)
+					return
+				}
+				logger.Error("Project financial aggregate reconciliation reported failures",
+					"error", err,
+					"recomputed", result.Recomputed,
+					"failed", result.Failed)
+				return
+			}
+			logger.Info("Project financial aggregates reconciled",
+				"recomputed", result.Recomputed)
+		},
+	})
 }
