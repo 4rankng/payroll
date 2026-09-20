@@ -50,6 +50,17 @@ func (r *LedgerEntryRepository) createEntriesInTx(_ context.Context, tx *gorm.DB
 		return nil
 	}
 
+	// Validate double-entry integrity: total debits must equal total credits
+	var totalDebits, totalCredits int64
+	for _, e := range entries {
+		totalDebits += e.Debit
+		totalCredits += e.Credit
+	}
+	if totalDebits != totalCredits {
+		return fmt.Errorf("ledger integrity violation: total debits (%d) != total credits (%d) for %d entries",
+			totalDebits, totalCredits, len(entries))
+	}
+
 	r.queryBuilder.SortEntriesByID(entries)
 
 	startingBalance, err := r.calculateRunningBalanceAtID(tx, entries[0].ID)
