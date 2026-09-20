@@ -57,8 +57,13 @@ func (r *LedgerEntryRepository) createEntriesInTx(_ context.Context, tx *gorm.DB
 		totalCredits += e.Credit
 	}
 	if totalDebits != totalCredits {
-		return fmt.Errorf("ledger integrity violation: total debits (%d) != total credits (%d) for %d entries",
-			totalDebits, totalCredits, len(entries))
+		// Caller input, not a server fault: a typed validation error so the HTTP
+		// layer answers 400 (and clients can tell "fix your payload" from
+		// "retry"), instead of a 500 that pages on-call. The ledger stays
+		// untouched either way.
+		return domain.NewValidationError(fmt.Sprintf(
+			"bút toán không cân bằng: tổng nợ %d khác tổng có %d (lệch %d) trong %d bản ghi",
+			totalDebits, totalCredits, totalDebits-totalCredits, len(entries)))
 	}
 
 	r.queryBuilder.SortEntriesByID(entries)
