@@ -865,6 +865,11 @@ type LedgerEntryResponse struct {
 	CreatedBy uint      `json:"created_by"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	// Reversal state: set on a mirror (the entry it offsets) and on an entry that
+	// already has a mirror.
+	ReversalOfEntryID *uint  `json:"reversal_of_entry_id"`
+	ReversalReason    string `json:"reversal_reason"`
+	IsReversed        bool   `json:"is_reversed"`
 }
 
 type CashFlowSummaryResponse struct {
@@ -887,6 +892,13 @@ type LedgerSummaryResponse struct {
 		ClosingBalance int64 `json:"closing_balance"`
 		NetCashflow    int64 `json:"net_cashflow"`
 	} `json:"totals"`
+	// Per-account debit/credit totals: their sums are the ledger's double-entry
+	// invariant, so a test can assert the books still balance after a reversal.
+	ByAccount map[string]struct {
+		Debit     int64 `json:"debit"`
+		Credit    int64 `json:"credit"`
+		NetAmount int64 `json:"net_amount"`
+	} `json:"by_account"`
 }
 
 type AccountMetadataResponse struct {

@@ -174,19 +174,21 @@ func mapLedgerEntryToResponse(entry *domain.LedgerEntry) dto.LedgerEntryResponse
 		}
 	}
 	return dto.LedgerEntryResponse{
-		ID:        entry.ID,
-		Account:   string(entry.Account),
-		Party:     entry.Party,
-		Debit:     entry.Debit,
-		Credit:    entry.Credit,
-		Balance:   entry.Balance,
-		NetAmount: domain.GetUserBalanceFromEntry(entry),
-		Date:      entry.Date.Format(timeutil.DateFormat),
-		AssetID:   entry.AssetID,
-		Asset:     assetResponse,
-		CreatedBy: entry.CreatedBy,
-		CreatedAt: entry.CreatedAt,
-		UpdatedAt: entry.UpdatedAt,
+		ID:                entry.ID,
+		Account:           string(entry.Account),
+		Party:             entry.Party,
+		Debit:             entry.Debit,
+		Credit:            entry.Credit,
+		Balance:           entry.Balance,
+		NetAmount:         domain.GetUserBalanceFromEntry(entry),
+		Date:              entry.Date.Format(timeutil.DateFormat),
+		AssetID:           entry.AssetID,
+		Asset:             assetResponse,
+		CreatedBy:         entry.CreatedBy,
+		ReversalOfEntryID: entry.ReversalOfEntryID,
+		ReversalReason:    entry.ReversalReason,
+		CreatedAt:         entry.CreatedAt,
+		UpdatedAt:         entry.UpdatedAt,
 	}
 }
 
@@ -202,7 +204,16 @@ func (h *LedgerHandler) GetEntry(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, mapLedgerEntryToResponse(entry), "Lấy bản ghi sổ cái thành công")
+	resp := mapLedgerEntryToResponse(entry)
+	// Tell the client whether this entry already has a mirror: the reversal
+	// endpoint refuses a second reversal, so offering the action would only
+	// produce an error the operator cannot act on.
+	if entry.ReversalOfEntryID == nil {
+		if reversed, hasErr := h.ledgerService.HasReversal(c.Request.Context(), entry.ID); hasErr == nil {
+			resp.IsReversed = reversed
+		}
+	}
+	response.Success(c, resp, "Lấy bản ghi sổ cái thành công")
 }
 
 func (h *LedgerHandler) ListEntries(c *gin.Context) {
@@ -472,13 +483,17 @@ func (h *LedgerHandler) ReverseEntry(c *gin.Context) {
 	}
 
 	reason := strings.TrimSpace(req.Reason)
-	reversalEntry, err := h.ledgerService.ReverseEntry(c.Request.Context(), id, reason, userID)
+	result, err := h.ledgerService.ReverseEntry(c.Request.Context(), id, reason, userID)
 	if err != nil {
 		response.HandleDomainError(c, err)
 		return
 	}
 
-	response.SuccessCreated(c, mapLedgerEntryToResponse(reversalEntry), "Hoàn tác bản ghi sổ cái thành công")
+	// The response carries the mirror of the requested entry and says how many
+	// rows the reversal covered: a block is reversed as a whole, so the operator
+	// has to know the action touched more than the row they opened.
+	response.SuccessCreated(c, mapLedgerEntryToResponse(result.Reversed),
+		fmt.Sprintf(constants.MsgLedgerReversedBlockVN, result.Entries))
 }
 
 func (h *LedgerHandler) GetLedgerSummary(c *gin.Context) {

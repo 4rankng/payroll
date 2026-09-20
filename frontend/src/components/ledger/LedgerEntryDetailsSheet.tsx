@@ -67,6 +67,13 @@ function LedgerEntryDetailsSheetComponent({
   const [showReverseDialog, setShowReverseDialog] = useState(false);
   const [reverseReason, setReverseReason] = useState('');
   const reverseEntry = useReverseLedgerEntry();
+
+  // A reversal mirrors a whole balanced block, so the action belongs to entries
+  // that are neither a mirror themselves nor already reversed — the API refuses
+  // both cases, and offering a button that fails is worse than explaining why.
+  const isReversalMirror = !!entry?.reversal_of_entry_id;
+  const alreadyReversed = !!entry?.is_reversed;
+  const canReverse = !!entry && !isReversalMirror && !alreadyReversed;
   const { data: accountMetadata } = useLedgerMetadata();
 
   // Batch user lookup for created_by
@@ -145,7 +152,7 @@ function LedgerEntryDetailsSheetComponent({
       await reverseEntry.mutateAsync({ id: entry.id, reason: reverseReason.trim() });
       toast({
         title: 'Thành công',
-        description: 'Bút toán đã được đảo ngược',
+        description: 'Đã đảo ngược nhóm bút toán của giao dịch',
       });
       setShowReverseDialog(false);
       setReverseReason('');
@@ -208,15 +215,31 @@ function LedgerEntryDetailsSheetComponent({
               <Button variant="outline" onClick={onClose} className="h-11 w-full">
                 Đóng
               </Button>
-              <Button
-                variant="destructive"
-                onClick={() => setShowReverseDialog(true)}
-                disabled={reverseEntry.isPending}
-                className="h-11 w-full"
-              >
-                <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
-                Đảo ngược
-              </Button>
+              {canReverse ? (
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowReverseDialog(true)}
+                  disabled={reverseEntry.isPending}
+                  className="h-11 w-full"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Đảo ngược
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  disabled
+                  className="h-11 w-full"
+                  title={
+                    isReversalMirror
+                      ? 'Đây là bút toán đảo; hãy tạo bút toán điều chỉnh mới nếu cần sửa'
+                      : 'Bút toán này đã được đảo ngược'
+                  }
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" aria-hidden="true" />
+                  {isReversalMirror ? 'Bút toán đảo' : 'Đã đảo ngược'}
+                </Button>
+              )}
             </div>
           )
         }
@@ -300,6 +323,33 @@ function LedgerEntryDetailsSheetComponent({
                       </p>
                     </div>
                   </div>
+                  {isReversalMirror && (
+                    <div className="grid grid-cols-[1.5rem_minmax(0,1fr)] items-start gap-3 px-4 py-3">
+                      <RotateCcw className="mt-0.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Bút toán đảo của</p>
+                        <p className="mt-0.5 break-words text-sm font-semibold text-foreground">
+                          #{entry.reversal_of_entry_id}
+                        </p>
+                        {entry.reversal_reason && (
+                          <p className="mt-1 break-words text-sm text-muted-foreground">
+                            Lý do: {entry.reversal_reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {alreadyReversed && (
+                    <div className="grid grid-cols-[1.5rem_minmax(0,1fr)] items-start gap-3 px-4 py-3">
+                      <RotateCcw className="mt-0.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">Trạng thái</p>
+                        <p className="mt-0.5 break-words text-sm font-semibold text-foreground">
+                          Đã được đảo ngược
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -393,7 +443,10 @@ function LedgerEntryDetailsSheetComponent({
         title="Đảo ngược bút toán"
         description={
           <div className="space-y-3">
-            <p>Việc đảo ngược sẽ tạo một bút toán mới với các giá trị nợ/có ngược lại để hủy bỏ bút toán này.</p>
+            <p>
+              Việc đảo ngược sẽ tạo các bút toán mới có giá trị nợ/có ngược lại cho{' '}
+              <strong>toàn bộ nhóm bút toán</strong> của giao dịch này, để sổ vẫn cân đối sau khi đảo.
+            </p>
             <div className="space-y-2">
               <label className="text-sm font-medium">Lý do đảo ngược *</label>
               <Textarea

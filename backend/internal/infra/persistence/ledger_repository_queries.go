@@ -43,6 +43,50 @@ func (r *LedgerEntryRepository) GetBySettlementID(ctx context.Context, settlemen
 	return r.getEntriesByField(ctx, "settlement_id", settlementID)
 }
 
+// ListReversalGroup returns the balanced block the entry belongs to.
+//
+// Why the fallback: entries written by the manual /ledger/entries endpoint get no
+// transaction id, and they are inserted in one statement, so every leg of that
+// block shares created_at to the millisecond and the same author. Grouping on
+// those two columns recovers the block without inventing an identifier for rows
+// that already exist. A single-entry block that is one-sided simply comes back as
+// one row, and the reversal path refuses it because it does not balance.
+func (r *LedgerEntryRepository) ListReversalGroup(ctx context.Context, entry *domain.LedgerEntry) ([]*domain.LedgerEntry, error) {
+	if entry == nil {
+		return nil, domain.NewValidationError("Bản ghi sổ cái không hợp lệ")
+	}
+	if entry.TransactionID != nil {
+		return r.GetByTransactionID(ctx, *entry.TransactionID)
+	}
+
+	var entries []*domain.LedgerEntry
+	err := r.DB.WithContext(ctx).
+		Where("deleted_at IS NULL").
+		Where("transaction_id IS NULL").
+		Where("created_at = ?", entry.CreatedAt).
+		Where("created_by = ?", entry.CreatedBy).
+		Order("id ASC").
+		Find(&entries).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to load reversal group: %w", err)
+	}
+	return entries, nil
+}
+
+// HasReversal reports whether the entry already has a live mirror.
+func (r *LedgerEntryRepository) HasReversal(ctx context.Context, entryID uint) (bool, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&domain.LedgerEntry{}).
+		Where("deleted_at IS NULL").
+		Where("reversal_of_entry_id = ?", entryID).
+		Count(&count).Error
+	if err != nil {
+		return false, fmt.Errorf("failed to check existing reversal: %w", err)
+	}
+	return count > 0, nil
+}
+
 // getEntriesByField fetches ledger entries filtered by a single field value,
 // with standard preloads and ascending created_at ordering.
 func (r *LedgerEntryRepository) getEntriesByField(ctx context.Context, field string, value interface{}) ([]*domain.LedgerEntry, error) {

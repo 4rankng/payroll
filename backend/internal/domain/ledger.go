@@ -15,20 +15,25 @@ type LedgerAccount = string
 
 // LedgerEntry represents a ledger entry for double-entry bookkeeping
 type LedgerEntry struct {
-	ID            uint           `json:"id" gorm:"primarykey;type:bigint unsigned"`
-	Date          time.Time      `json:"date" gorm:"type:date;not null"`
-	Account       LedgerAccount  `json:"account" gorm:"type:varchar(255);not null"`
-	Party         string         `json:"party" gorm:"type:varchar(255);not null;comment:'Who you paid or received from'"`
-	Debit         int64          `json:"debit" gorm:"type:bigint;not null;default:0;comment:'Money out (VND)'"`
-	Credit        int64          `json:"credit" gorm:"type:bigint;not null;default:0;comment:'Money in (VND)'"`
-	Balance       int64          `json:"balance" gorm:"type:bigint;not null;default:0;comment:'Running balance (VND)'"`
-	AssetID       *uint          `json:"asset_id" gorm:"type:bigint unsigned;comment:'Reference to asset table for evidence files'"`
-	TransactionID *uint          `json:"transaction_id" gorm:"type:bigint unsigned;comment:'Reference to transaction table for user-facing transactions'"`
-	SettlementID  *uint          `json:"settlement_id" gorm:"type:bigint unsigned;index;comment:'Reference to settlement table for payment clearing entries'"`
-	DeletedAt     gorm.DeletedAt `json:"-" gorm:"index"`
-	CreatedBy     uint           `json:"created_by" gorm:"not null"`
-	CreatedAt     time.Time      `json:"created_at"`
-	UpdatedAt     time.Time      `json:"updated_at"`
+	ID            uint          `json:"id" gorm:"primarykey;type:bigint unsigned"`
+	Date          time.Time     `json:"date" gorm:"type:date;not null"`
+	Account       LedgerAccount `json:"account" gorm:"type:varchar(255);not null"`
+	Party         string        `json:"party" gorm:"type:varchar(255);not null;comment:'Who you paid or received from'"`
+	Debit         int64         `json:"debit" gorm:"type:bigint;not null;default:0;comment:'Money out (VND)'"`
+	Credit        int64         `json:"credit" gorm:"type:bigint;not null;default:0;comment:'Money in (VND)'"`
+	Balance       int64         `json:"balance" gorm:"type:bigint;not null;default:0;comment:'Running balance (VND)'"`
+	AssetID       *uint         `json:"asset_id" gorm:"type:bigint unsigned;comment:'Reference to asset table for evidence files'"`
+	TransactionID *uint         `json:"transaction_id" gorm:"type:bigint unsigned;comment:'Reference to transaction table for user-facing transactions'"`
+	// ReversalOfEntryID links a reversal (mirror) to the entry it offsets. It is
+	// nil for originals, which is how "has this entry been reversed" is answered
+	// without guessing from signs and timestamps.
+	ReversalOfEntryID *uint          `json:"reversal_of_entry_id" gorm:"type:bigint unsigned;index;comment:'Entry this row reverses, NULL for originals'"`
+	ReversalReason    string         `json:"reversal_reason,omitempty" gorm:"type:varchar(255);comment:'Operator-supplied reason for the reversal'"`
+	SettlementID      *uint          `json:"settlement_id" gorm:"type:bigint unsigned;index;comment:'Reference to settlement table for payment clearing entries'"`
+	DeletedAt         gorm.DeletedAt `json:"-" gorm:"index"`
+	CreatedBy         uint           `json:"created_by" gorm:"not null"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
 
 	// Relationships
 	Asset      *Asset      `json:"asset,omitempty" gorm:"foreignKey:AssetID;references:ID"`
@@ -42,6 +47,15 @@ type LedgerEntryRepository interface {
 	GetByID(ctx context.Context, id uint) (*LedgerEntry, error)
 	GetByAssetID(ctx context.Context, assetID uint) ([]*LedgerEntry, error)
 	GetByTransactionID(ctx context.Context, txnID uint) ([]*LedgerEntry, error)
+	// ListReversalGroup returns the balanced block an entry belongs to, which is
+	// what a reversal has to mirror to keep the ledger's debits and credits equal.
+	// Entries carrying a transaction id group by it; manual blocks (written by the
+	// /ledger/entries endpoint in one insert) carry none and group by the write
+	// timestamp and author instead.
+	ListReversalGroup(ctx context.Context, entry *LedgerEntry) ([]*LedgerEntry, error)
+	// HasReversal reports whether the entry already has a live mirror. Reversing
+	// twice would double the offset, so callers refuse instead.
+	HasReversal(ctx context.Context, entryID uint) (bool, error)
 	GetBySettlementID(ctx context.Context, settlementID uint) ([]*LedgerEntry, error)
 	List(ctx context.Context, filters LedgerFilters) ([]*LedgerEntry, error)
 	Count(ctx context.Context, filters LedgerFilters) (int64, error)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"strings"
 	"time"
 
 	"api-server/internal/app/accounting"
@@ -224,33 +225,114 @@ func (s *LedgerService) RecalculateAllBalances(ctx context.Context, adminUserID 
 	return nil
 }
 
-func (s *LedgerService) ReverseEntry(ctx context.Context, entryID uint, reason string, createdBy uint) (*domain.LedgerEntry, error) {
-	// Get the original entry
+// ReverseEntry writes the offsetting block for the entry's balanced group.
+//
+// Why a block and not a single mirror: the ledger invariant is that every write
+// balances (createEntriesInTx enforces it), and a mirror of one leg of a
+// balanced block is one-sided by construction — it left SUM(debit) and
+// SUM(credit) permanently apart by the reversed amount. Mirroring every leg keeps
+// the books equal, and reversal_of_entry_id records which entry each mirror
+// offsets so reversing the same entry twice is refused instead of double-counted.
+//
+// The entry returned is the mirror of the entry the caller asked about; the other
+// legs of the group are written in the same transaction.
+func (s *LedgerService) ReverseEntry(ctx context.Context, entryID uint, reason string, createdBy uint) (*LedgerReversalResult, error) {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		// The reason is persisted on every mirror: a reversal without one is an
+		// unexplained movement in the books later readers have to guess at.
+		return nil, domain.NewValidationError(constants.MsgReversalReasonRequiredVN)
+	}
+
 	originalEntry, err := s.LedgerRepo.GetByID(ctx, entryID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find original entry: %w", err)
 	}
 
-	reversalEntry := &domain.LedgerEntry{
-		Date:      originalEntry.Date,
-		Account:   originalEntry.Account,
-		Party:     originalEntry.Party,
-		Debit:     originalEntry.Credit, // Swap amounts
-		Credit:    originalEntry.Debit,  // Swap amounts
-		CreatedBy: createdBy,
+	if originalEntry.ReversalOfEntryID != nil {
+		// Compounding reversals has no agreed meaning in the books; a new
+		// adjusting entry is the explicit way to undo a reversal.
+		return nil, domain.NewValidationError(constants.MsgCannotReverseAReversalVN)
 	}
 
-	// Validate the reversal entry
-	if err := reversalEntry.IsValid(); err != nil {
-		return nil, fmt.Errorf("invalid reversal entry: %w", err)
+	alreadyReversed, err := s.LedgerRepo.HasReversal(ctx, entryID)
+	if err != nil {
+		return nil, err
+	}
+	if alreadyReversed {
+		return nil, domain.NewConflictError(constants.MsgEntryAlreadyReversedVN)
 	}
 
-	// Create the reversal entry
-	if err := s.LedgerRepo.Create(ctx, reversalEntry); err != nil {
-		return nil, fmt.Errorf("failed to create reversal entry: %w", err)
+	group, err := s.LedgerRepo.ListReversalGroup(ctx, originalEntry)
+	if err != nil {
+		return nil, err
+	}
+	if len(group) == 0 {
+		group = []*domain.LedgerEntry{originalEntry}
 	}
 
-	return reversalEntry, nil
+	reversals := make([]*domain.LedgerEntry, 0, len(group))
+	var totalDebit, totalCredit int64
+	var mirrored *domain.LedgerEntry
+
+	for _, entry := range group {
+		totalDebit += entry.Debit
+		totalCredit += entry.Credit
+
+		originalID := entry.ID
+		mirror := &domain.LedgerEntry{
+			Date:              entry.Date,
+			Account:           entry.Account,
+			Party:             entry.Party,
+			Debit:             entry.Credit, // Swap amounts
+			Credit:            entry.Debit,  // Swap amounts
+			AssetID:           entry.AssetID,
+			TransactionID:     entry.TransactionID,
+			ReversalOfEntryID: &originalID,
+			ReversalReason:    reason,
+			CreatedBy:         createdBy,
+		}
+		if err := mirror.IsValid(); err != nil {
+			return nil, fmt.Errorf("invalid reversal entry: %w", err)
+		}
+		reversals = append(reversals, mirror)
+		if entry.ID == entryID {
+			mirrored = mirror
+		}
+	}
+
+	if totalDebit != totalCredit {
+		return nil, domain.NewValidationError(fmt.Sprintf(
+			constants.MsgCannotReverseUnbalancedBlockVN, totalDebit, totalCredit))
+	}
+
+	if err := s.LedgerRepo.CreateTransaction(ctx, reversals); err != nil {
+		return nil, fmt.Errorf("failed to create reversal entries: %w", err)
+	}
+
+	s.publishEntriesAfterCommit(ctx, reversals)
+
+	if mirrored == nil {
+		mirrored = reversals[0]
+	}
+	return &LedgerReversalResult{Reversed: mirrored, Entries: len(reversals)}, nil
+}
+
+// HasReversal reports whether an entry already has a mirror. Read paths use it
+// to show the state so the reversal action can be hidden rather than offered and
+// then refused.
+func (s *LedgerService) HasReversal(ctx context.Context, entryID uint) (bool, error) {
+	return s.LedgerRepo.HasReversal(ctx, entryID)
+}
+
+// LedgerReversalResult reports what a reversal wrote.
+type LedgerReversalResult struct {
+	// Reversed is the mirror of the entry the caller asked about; the remaining
+	// mirrors of the same balanced group are written with it.
+	Reversed *domain.LedgerEntry
+	// Entries counts every mirror written, so callers can tell the operator how
+	// many rows the reversal covered.
+	Entries int
 }
 
 // CreateBalancedTransaction creates a double-entry transaction with automatic balancing

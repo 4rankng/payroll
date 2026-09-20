@@ -34,6 +34,14 @@ type LedgerEntryResponse struct {
 	CreatedBy uint           `json:"created_by"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
+	// ReversalOfEntryID is set when this row is a mirror written by a reversal:
+	// it names the entry it offsets. ReversalReason carries the operator's reason
+	// for that reversal.
+	ReversalOfEntryID *uint  `json:"reversal_of_entry_id,omitempty"`
+	ReversalReason    string `json:"reversal_reason,omitempty"`
+	// IsReversed tells the client that this entry already has a mirror, so the
+	// reversal action can be hidden instead of offered and then refused.
+	IsReversed bool `json:"is_reversed"`
 }
 
 // ListLedgerEntriesResponse represents the response for listing ledger entries

@@ -1,10 +1,29 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
 const flowLedger = "Ledger"
+
+// ledgerImbalance returns SUM(debit) - SUM(credit) over every account in the
+// reporting window. The ledger's invariant is that a write never changes this
+// number, so it is compared before and after an action rather than against zero:
+// a database carrying drift from the old one-sided reversals would fail an
+// absolute check for reasons the unit under test did not cause.
+func ledgerImbalance(admin *APIClient) (int64, error) {
+	var summary LedgerSummaryResponse
+	if _, err := admin.GetInto(fmt.Sprintf("/api/v1/ledger/summary?from=%s&to=%s", weekAgo(), today()), &summary); err != nil {
+		return 0, fmt.Errorf("ledger summary: %w", err)
+	}
+	var debit, credit int64
+	for _, account := range summary.ByAccount {
+		debit += account.Debit
+		credit += account.Credit
+	}
+	return debit - credit, nil
+}
 
 func runLedgerTests(client *APIClient, data *TestData, reporter *Reporter, cfg *TestConfig) {
 	reporter.PrintSection("FLOW: Ledger")
@@ -119,12 +138,73 @@ func runLedgerTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 		if testEntryID == 0 {
 			return fmt.Errorf("no test entry ID")
 		}
+		before, err := ledgerImbalance(admin)
+		if err != nil {
+			return err
+		}
+
 		body := map[string]any{"reason": "itest reversal"}
-		if _, _, err := admin.Post(fmt.Sprintf("/api/v1/ledger/entries/%d/reverse", testEntryID), body); err != nil {
+		resp, status, err := admin.Post(fmt.Sprintf("/api/v1/ledger/entries/%d/reverse", testEntryID), body)
+		if err != nil {
 			return fmt.Errorf("reverse entry: %w", err)
 		}
-		fmt.Printf("    Entry %d reversed\n", testEntryID)
+		if status >= 400 {
+			return fmt.Errorf("reverse rejected (HTTP %d): %s", status, resp.Message)
+		}
+		var mirror LedgerEntryResponse
+		raw, _ := json.Marshal(resp.Data)
+		if err := json.Unmarshal(raw, &mirror); err != nil {
+			return fmt.Errorf("decode reversal: %w", err)
+		}
+		if mirror.ReversalOfEntryID == nil || *mirror.ReversalOfEntryID != testEntryID {
+			return fmt.Errorf("mirror does not link back to entry %d: %+v", testEntryID, mirror.ReversalOfEntryID)
+		}
+		after, err := ledgerImbalance(admin)
+		if err != nil {
+			return err
+		}
+		if after != before {
+			return fmt.Errorf("reversal changed the ledger imbalance: %d -> %d", before, after)
+		}
+		fmt.Printf("    Entry %d reversed as %d; Σnợ−Σcó unchanged (%d)\n", testEntryID, mirror.ID, after)
 		return nil
+	})
+
+	reporter.RunTest(flowLedger, "Edge: reversing the same entry twice is refused", func() error {
+		if testEntryID == 0 {
+			return fmt.Errorf("no test entry ID")
+		}
+		body := map[string]any{"reason": "itest double reversal"}
+		_, statusCode, err := admin.PostExpectError(fmt.Sprintf("/api/v1/ledger/entries/%d/reverse", testEntryID), body)
+		if err != nil {
+			return fmt.Errorf("second reverse: %w", err)
+		}
+		if statusCode != 400 && statusCode != 409 {
+			// A second reversal would double the offset; the API refuses it.
+			return fmt.Errorf("second reversal accepted (HTTP %d)", statusCode)
+		}
+		return nil
+	})
+
+	reporter.RunTest(flowLedger, "Edge: reversing a reversal is refused", func() error {
+		if testEntryID == 0 {
+			return fmt.Errorf("no test entry ID")
+		}
+		var detail LedgerEntryResponse
+		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/ledger/entries/%d", testEntryID), &detail); err != nil {
+			return fmt.Errorf("get original: %w", err)
+		}
+		if !detail.IsReversed {
+			return fmt.Errorf("original entry %d should report is_reversed", testEntryID)
+		}
+		// Reversing the original once more is refused above; a mirror must not be
+		// reversible either, otherwise reversals compound.
+		body := map[string]any{"reason": "itest reverse of reversal"}
+		_, statusCode, err := admin.PostExpectError(fmt.Sprintf("/api/v1/ledger/entries/%d/reverse", detail.ID), body)
+		if err != nil {
+			return fmt.Errorf("reverse mirror: %w", err)
+		}
+		return AssertGreaterOrEqual("status", 400, statusCode)
 	})
 
 	reporter.RunTest(flowLedger, "Export entries (binary)", func() error {

@@ -42,6 +42,12 @@ export interface LedgerEntry {
   created_by: number;
   created_at: string;
   updated_at: string;
+  // Reversal state from the API: a mirror names the entry it offsets, and an
+  // entry that already has a mirror reports is_reversed so the UI can stop
+  // offering an action the API refuses.
+  reversal_of_entry_id?: number;
+  reversal_reason?: string;
+  is_reversed?: boolean;
   // Additional fields for display
   createdByName?: string;
 }

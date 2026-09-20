@@ -777,17 +777,26 @@ const (
 	MsgStatementEmailAlreadyReconciledVN    = "email sao kê này đã được đối soát"
 
 	// Payroll Business Errors - Vietnamese
-	MsgNoPayrollDataForPeriodVN    = "không có dữ liệu payroll cho kỳ được chọn"
-	MsgInvalidAssignmentDataVN     = "Dữ liệu phân công không hợp lệ"
-	MsgForMonthRequiredVN          = "for_month là bắt buộc khi xuất lương tháng"
-	MsgForMonthInvalidFormatVN     = "Định dạng for_month không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM"
-	MsgFromDateRequiredForWeeklyVN = "from_date và to_date là bắt buộc khi xuất lương tuần"
-	MsgFromDateInvalidFormatVN2    = "Định dạng from_date không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
-	MsgToDateInvalidFormatVN2      = "Định dạng to_date không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
-	MsgFromDateAfterToDateVN2      = "from_date không được lớn hơn to_date"
-	MsgFromDateAfterToDateVN3      = "fromDate không được lớn hơn toDate"
-	MsgFromDateInvalidVN           = "Định dạng fromDate không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
-	MsgToDateInvalidVN             = "Định dạng toDate không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
+	MsgNoPayrollDataForPeriodVN = "không có dữ liệu payroll cho kỳ được chọn"
+
+	// Ledger reversal (POST /ledger/entries/:id/reverse). A reversal mirrors a
+	// whole balanced block, so the messages name the group and the state that
+	// makes a second reversal impossible.
+	MsgReversalReasonRequiredVN       = "Lý do đảo bút toán là bắt buộc"
+	MsgCannotReverseAReversalVN       = "Bút toán này là bút toán đảo; hãy tạo bút toán điều chỉnh mới thay vì đảo lại"
+	MsgEntryAlreadyReversedVN         = "Bút toán này đã được đảo trước đó"
+	MsgCannotReverseUnbalancedBlockVN = "Không thể đảo: nhóm bút toán không cân bằng (tổng nợ %d, tổng có %d)"
+	MsgLedgerReversedBlockVN          = "Hoàn tác nhóm bút toán sổ cái thành công (%d bút toán)"
+	MsgInvalidAssignmentDataVN        = "Dữ liệu phân công không hợp lệ"
+	MsgForMonthRequiredVN             = "for_month là bắt buộc khi xuất lương tháng"
+	MsgForMonthInvalidFormatVN        = "Định dạng for_month không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM"
+	MsgFromDateRequiredForWeeklyVN    = "from_date và to_date là bắt buộc khi xuất lương tuần"
+	MsgFromDateInvalidFormatVN2       = "Định dạng from_date không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
+	MsgToDateInvalidFormatVN2         = "Định dạng to_date không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
+	MsgFromDateAfterToDateVN2         = "from_date không được lớn hơn to_date"
+	MsgFromDateAfterToDateVN3         = "fromDate không được lớn hơn toDate"
+	MsgFromDateInvalidVN              = "Định dạng fromDate không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
+	MsgToDateInvalidVN                = "Định dạng toDate không hợp lệ. Vui lòng sử dụng định dạng YYYY-MM-DD"
 
 	// Timesheet Edit Request - Vietnamese
 	MsgEditRequestAlreadyPendingVN   = "đã có yêu cầu chỉnh sửa đang chờ phê duyệt cho bảng chấm công này"
