@@ -146,10 +146,21 @@ the statement-email waits allow the worker the time it needs on a full dataset.
 Result: 332 tests, 303 passed, 0 failed, 29 skipped with a reason (before: 22
 failures mixing real defects with environment gaps).
 
-**Still open, unchanged by this pass:** `LedgerService.ReverseEntry` writes the
-mirror of a single entry through the unchecked `Create` path, so a reversal is
-one-sided by construction. It nets out across the ledger (the original and its
-mirror offset), which is why totals stay balanced, but it is the one remaining
-write path that does not face the block-level double-entry guard. Deciding
-whether reversals should be blocked, paired, or explicitly exempt is a financial
-semantics call, not a cleanup.
+**Ledger reversal — FIXED (`a491335a` + migration 112).** The open item above was
+measured before deciding: `POST /ledger/entries/:id/reverse` returned 201 and did
+write the mirror, but reversing one leg of a balanced block leaves a one-sided
+entry, so `SUM(debit) − SUM(credit)` moved by the reversed amount and stayed
+there. Two calls on the same entry produced two mirrors (double reversal), the
+mirror carried no link to its original (`transaction_id` NULL on both), and the
+reason the dialog collected was dropped. Production had never called it — zero
+`%reverse%` rows in `api_metrics` — which is the only reason prod's books were
+still balanced; the local database, exercised by the integration suite, had
+drifted by exactly one amount per reversal.
+
+The reversal now mirrors the entry's whole balanced block through the guarded
+`CreateTransaction` path, links every mirror with `reversal_of_entry_id`, stores
+the operator's reason, refuses a second reversal (409), refuses reversing a mirror
+(400) and refuses a group that is not balanced (400). The frontend sheet shows the
+state and hides the action when the API would refuse it. Verified locally:
+imbalance unchanged across a reversal, both mirrors linked with the reason, second
+attempt refused, UI correct at 1280px and 390px.
