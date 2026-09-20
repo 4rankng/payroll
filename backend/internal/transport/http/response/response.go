@@ -218,9 +218,17 @@ func HandleDomainError(c *gin.Context, err error) {
 
 	translator := GetErrorTranslator()
 
-	if domainErr, ok := err.(*domain.DomainError); ok {
+	// Domain errors reach here wrapped (`fmt.Errorf("...: %w", err)`) as a matter
+	// of repo convention — services add context to what the domain or a
+	// repository returned. A bare type assertion therefore missed every wrapped
+	// validation/not-found/conflict error and reported it as a 500, which both
+	// misleads callers and pages on-call for caller input. Match through the
+	// chain and translate the domain error itself so the message carries no
+	// internal context prefix.
+	var domainErr *domain.DomainError
+	if errors.As(err, &domainErr) {
 		// Use translator to get user-friendly message
-		translatedMessage := translator.TranslateError(err)
+		translatedMessage := translator.TranslateError(domainErr)
 
 		response := ErrorResponse{
 			Status:  "error",
