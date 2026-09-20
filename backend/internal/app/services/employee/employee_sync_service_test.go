@@ -372,14 +372,9 @@ func (m *MockEmployeeRepository) CountEmployeesWithMissingBankDetails(ctx contex
 	return args.Get(0).(int64), args.Error(1)
 }
 
-func (m *MockEmployeeRepository) ListEmployeeReachability(ctx context.Context, filters domain.EmployeeReachabilityFilters) ([]*domain.EmployeeReachability, error) {
+func (m *MockEmployeeRepository) ListEmployeeReachability(ctx context.Context, filters domain.EmployeeReachabilityFilters) (*domain.EmployeeReachabilityPage, error) {
 	args := m.Called(ctx, filters)
-	return args.Get(0).([]*domain.EmployeeReachability), args.Error(1)
-}
-
-func (m *MockEmployeeRepository) CountEmployeeReachability(ctx context.Context, filters domain.EmployeeReachabilityFilters) (*domain.EmployeeReachabilitySummary, error) {
-	args := m.Called(ctx, filters)
-	return args.Get(0).(*domain.EmployeeReachabilitySummary), args.Error(1)
+	return args.Get(0).(*domain.EmployeeReachabilityPage), args.Error(1)
 }
 
 func (m *MockEmployeeRepository) UpdateColumns(ctx context.Context, id uint, columns map[string]any) error {

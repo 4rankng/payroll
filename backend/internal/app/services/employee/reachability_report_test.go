@@ -16,22 +16,16 @@ import (
 // (deliberately overlapping) per-state counters.
 type reachabilityStubRepo struct {
 	domain.EmployeeRepository
-	listCalls    int
-	listFilters  domain.EmployeeReachabilityFilters
-	countFilters domain.EmployeeReachabilityFilters
-	rows         []*domain.EmployeeReachability
-	summary      *domain.EmployeeReachabilitySummary
+	listCalls   int
+	listFilters domain.EmployeeReachabilityFilters
+	rows        []*domain.EmployeeReachability
+	summary     *domain.EmployeeReachabilitySummary
 }
 
-func (r *reachabilityStubRepo) ListEmployeeReachability(_ context.Context, filters domain.EmployeeReachabilityFilters) ([]*domain.EmployeeReachability, error) {
+func (r *reachabilityStubRepo) ListEmployeeReachability(_ context.Context, filters domain.EmployeeReachabilityFilters) (*domain.EmployeeReachabilityPage, error) {
 	r.listCalls++
 	r.listFilters = filters
-	return r.rows, nil
-}
-
-func (r *reachabilityStubRepo) CountEmployeeReachability(_ context.Context, filters domain.EmployeeReachabilityFilters) (*domain.EmployeeReachabilitySummary, error) {
-	r.countFilters = filters
-	return r.summary, nil
+	return &domain.EmployeeReachabilityPage{Employees: r.rows, Summary: *r.summary}, nil
 }
 
 func TestGetUnreachableEmployeesReport(t *testing.T) {
@@ -89,14 +83,16 @@ func TestGetUnreachableEmployeesReport(t *testing.T) {
 		require.Equal(t, int64(672), report.Total)
 		require.Equal(t, summary, &report.Summary)
 		require.Len(t, report.Employees, 1)
+		require.Equal(t, 1, repo.listCalls, "the page and the counters must come from one repository read")
 
 		report, err = service.GetUnreachableEmployeesReport(context.Background(), domain.EmployeeReachabilityFilters{
 			State: domain.EmployeeReachabilityStateNotLinked,
 		})
 		require.NoError(t, err)
 		require.Equal(t, int64(23), report.Total, "total is the size of the filtered cohort, not the page")
-		require.Equal(t, domain.EmployeeReachabilityStateNotLinked, repo.listFilters.State)
-		require.Empty(t, repo.countFilters.State, "counters are not narrowed by the state filter")
+		require.Equal(t, domain.EmployeeReachabilityStateNotLinked, repo.listFilters.State,
+			"the state filter reaches the repository, which narrows the page and not the counters")
+		require.Equal(t, 2, repo.listCalls, "still one repository read per response")
 		require.Equal(t, summary, &report.Summary, "counters keep covering every state")
 	})
 }

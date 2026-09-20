@@ -39,26 +39,22 @@ func (s *EmployeeService) GetUnreachableEmployeesReport(ctx context.Context, fil
 
 	filters.Limit, filters.Offset = normalizeReachabilityPagination(filters.Limit, filters.Offset)
 
-	employees, err := s.EmployeeRepo.ListEmployeeReachability(ctx, filters)
-	if err != nil {
-		return nil, err
-	}
-	// Counters size the whole project-scoped worklist, so the state filter is
-	// dropped for the counting call rather than left to the repository to ignore.
-	cohortFilters := filters
-	cohortFilters.State = ""
-	summary, err := s.EmployeeRepo.CountEmployeeReachability(ctx, cohortFilters)
+	// One repository call returns the page and the cohort counters together: the
+	// repository classifies the cohort once, applies the state filter to the page
+	// only, and counts before pagination. Calling it twice would read and
+	// classify the employee table twice for one response.
+	page, err := s.EmployeeRepo.ListEmployeeReachability(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
 
 	return &domain.UnreachableEmployeesReport{
-		Employees: employees,
-		Summary:   *summary,
+		Employees: page.Employees,
+		Summary:   page.Summary,
 		// CountForState returns the distinct cohort size for an empty filter,
 		// otherwise the counter of the requested state. Per-state counters
 		// overlap, so they must never be summed to size a filtered page.
-		Total:  summary.CountForState(filters.State),
+		Total:  page.Summary.CountForState(filters.State),
 		Limit:  filters.Limit,
 		Offset: filters.Offset,
 	}, nil

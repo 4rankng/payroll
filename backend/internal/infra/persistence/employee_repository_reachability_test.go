@@ -94,9 +94,17 @@ func TestEmployeeRepository_ReachabilityReport(t *testing.T) {
 		return nil
 	}
 
-	t.Run("classifies every state and skips reachable employees", func(t *testing.T) {
-		rows, err := repo.ListEmployeeReachability(ctx, domain.EmployeeReachabilityFilters{})
+	// listPage returns the classified page for the filters. The page carries the
+	// cohort counters alongside its rows, so one read serves both.
+	listPage := func(t *testing.T, filters domain.EmployeeReachabilityFilters) *domain.EmployeeReachabilityPage {
+		t.Helper()
+		page, err := repo.ListEmployeeReachability(ctx, filters)
 		require.NoError(t, err)
+		return page
+	}
+
+	t.Run("classifies every state and skips reachable employees", func(t *testing.T) {
+		rows := listPage(t, domain.EmployeeReachabilityFilters{}).Employees
 		require.Equal(t, []uint{1, 3, 6, 7, 8, 10, 11}, ids(rows),
 			"ordered by employee id, excluding reachable/soft-deleted employees")
 
@@ -116,10 +124,9 @@ func TestEmployeeRepository_ReachabilityReport(t *testing.T) {
 	// reporting them would send ops after a number that already works. Employee 4
 	// was suppressed because the feature was off, which says nothing about Zalo.
 	t.Run("only the latest notification decides not_linked", func(t *testing.T) {
-		rows, err := repo.ListEmployeeReachability(ctx, domain.EmployeeReachabilityFilters{
+		rows := listPage(t, domain.EmployeeReachabilityFilters{
 			State: domain.EmployeeReachabilityStateNotLinked,
-		})
-		require.NoError(t, err)
+		}).Employees
 		require.Equal(t, []uint{3, 10}, ids(rows))
 	})
 
@@ -130,23 +137,20 @@ func TestEmployeeRepository_ReachabilityReport(t *testing.T) {
 			domain.EmployeeReachabilityStateInvalidMobile:   {8, 10},
 		}
 		for state, want := range cases {
-			rows, err := repo.ListEmployeeReachability(ctx, domain.EmployeeReachabilityFilters{State: state})
-			require.NoError(t, err)
+			rows := listPage(t, domain.EmployeeReachabilityFilters{State: state}).Employees
 			require.Equal(t, want, ids(rows), "state %s", state)
 		}
 	})
 
 	t.Run("project filter uses current assignments only", func(t *testing.T) {
 		projectID := uint(100)
-		rows, err := repo.ListEmployeeReachability(ctx, domain.EmployeeReachabilityFilters{ProjectID: &projectID})
-		require.NoError(t, err)
+		rows := listPage(t, domain.EmployeeReachabilityFilters{ProjectID: &projectID}).Employees
 		require.Equal(t, []uint{1, 6}, ids(rows),
 			"the future-dated assignment (11) and the deleted project (300) must not count")
 	})
 
 	t.Run("projects and money exposure", func(t *testing.T) {
-		rows, err := repo.ListEmployeeReachability(ctx, domain.EmployeeReachabilityFilters{})
-		require.NoError(t, err)
+		rows := listPage(t, domain.EmployeeReachabilityFilters{}).Employees
 
 		noPhone := rowByID(rows, 1)
 		require.Equal(t, []string{"Dự án Một"}, noPhone.Projects)
@@ -165,34 +169,32 @@ func TestEmployeeRepository_ReachabilityReport(t *testing.T) {
 		require.Empty(t, rowByID(rows, 8).Projects, "employees with no current assignment keep an empty list")
 	})
 
-	t.Run("counts cover the cohort and ignore the state filter", func(t *testing.T) {
-		summary, err := repo.CountEmployeeReachability(ctx, domain.EmployeeReachabilityFilters{})
-		require.NoError(t, err)
-		require.Equal(t, &domain.EmployeeReachabilitySummary{
+	t.Run("counters cover the cohort and ignore the state filter", func(t *testing.T) {
+		summary := listPage(t, domain.EmployeeReachabilityFilters{}).Summary
+		require.Equal(t, domain.EmployeeReachabilitySummary{
 			NoPhone: 2, NotLinked: 2, InvalidMobile: 2, DuplicateMobile: 2, Employees: 7,
 		}, summary)
 
-		filtered, err := repo.CountEmployeeReachability(ctx, domain.EmployeeReachabilityFilters{
+		// The page is narrowed by the state filter while the counters are not,
+		// because both are derived from the same classified cohort.
+		filtered := listPage(t, domain.EmployeeReachabilityFilters{
 			State: domain.EmployeeReachabilityStateNoPhone,
 		})
-		require.NoError(t, err)
-		require.Equal(t, summary, filtered, "counters size the whole worklist, not the filtered page")
+		require.Equal(t, summary, filtered.Summary, "counters size the whole worklist, not the filtered page")
+		require.Equal(t, []uint{1, 11}, ids(filtered.Employees), "the page is the filtered cohort")
 
 		projectID := uint(100)
-		scoped, err := repo.CountEmployeeReachability(ctx, domain.EmployeeReachabilityFilters{ProjectID: &projectID})
-		require.NoError(t, err)
-		require.Equal(t, &domain.EmployeeReachabilitySummary{
+		scoped := listPage(t, domain.EmployeeReachabilityFilters{ProjectID: &projectID}).Summary
+		require.Equal(t, domain.EmployeeReachabilitySummary{
 			NoPhone: 1, NotLinked: 0, InvalidMobile: 0, DuplicateMobile: 1, Employees: 2,
 		}, scoped, "the project filter does scope the counters")
 	})
 
 	t.Run("pagination applies to classified rows", func(t *testing.T) {
-		rows, err := repo.ListEmployeeReachability(ctx, domain.EmployeeReachabilityFilters{Limit: 2, Offset: 1})
-		require.NoError(t, err)
+		rows := listPage(t, domain.EmployeeReachabilityFilters{Limit: 2, Offset: 1}).Employees
 		require.Equal(t, []uint{3, 6}, ids(rows))
 
-		past, err := repo.ListEmployeeReachability(ctx, domain.EmployeeReachabilityFilters{Offset: 99})
-		require.NoError(t, err)
-		require.Empty(t, past)
+		past := listPage(t, domain.EmployeeReachabilityFilters{Offset: 99})
+		require.Empty(t, past.Employees)
 	})
 }

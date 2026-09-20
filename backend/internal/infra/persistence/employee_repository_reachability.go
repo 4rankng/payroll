@@ -64,19 +64,22 @@ type reachabilityAssignmentRow struct {
 	ProjectName string `gorm:"column:project_name"`
 }
 
-// ListEmployeeReachability returns the employees matching the filters, ordered
-// by employee id, with their money exposure and current project names.
+// ListEmployeeReachability returns one page of the reachability worklist with
+// the counters for the whole project-scoped cohort it was drawn from.
 //
-// The state filter and pagination are applied after classification, which is why
-// this method does the offset/limit handling itself rather than in SQL. Counts
-// describing the whole cohort come from CountEmployeeReachability.
-func (r *EmployeeRepository) ListEmployeeReachability(ctx context.Context, filters domain.EmployeeReachabilityFilters) ([]*domain.EmployeeReachability, error) {
+// The cohort is read once and classified once, then split three ways: the
+// counters always describe every classified employee, the state filter selects
+// the page, and limit/offset paginate it. Doing the counting over the same slice
+// is what keeps a page and its counters from describing two different reads of
+// the table.
+func (r *EmployeeRepository) ListEmployeeReachability(ctx context.Context, filters domain.EmployeeReachabilityFilters) (*domain.EmployeeReachabilityPage, error) {
 	candidates, err := r.reachabilityCandidates(ctx, filters)
 	if err != nil {
 		return nil, err
 	}
 
-	rows := classifiedReachabilityRows(candidates, filters.State)
+	classified, summary := classifyReachabilityRows(candidates)
+	rows := filterReachabilityRows(classified, filters.State)
 	rows = paginateReachabilityRows(rows, filters.Limit, filters.Offset)
 
 	if err := r.attachReachabilityProjects(ctx, rows); err != nil {
@@ -85,39 +88,7 @@ func (r *EmployeeRepository) ListEmployeeReachability(ctx context.Context, filte
 	if err := r.attachReachabilityAmounts(ctx, rows); err != nil {
 		return nil, err
 	}
-	return rows, nil
-}
-
-// CountEmployeeReachability counts employees per state over the project-scoped
-// cohort. The State filter is deliberately ignored: the counters exist so the
-// caller can show the full worklist next to a filtered page.
-func (r *EmployeeRepository) CountEmployeeReachability(ctx context.Context, filters domain.EmployeeReachabilityFilters) (*domain.EmployeeReachabilitySummary, error) {
-	candidates, err := r.reachabilityCandidates(ctx, filters)
-	if err != nil {
-		return nil, err
-	}
-
-	summary := &domain.EmployeeReachabilitySummary{}
-	for _, candidate := range candidates {
-		states := classifyCandidate(candidate)
-		if len(states) == 0 {
-			continue
-		}
-		summary.Employees++
-		for _, state := range states {
-			switch state {
-			case domain.EmployeeReachabilityStateNoPhone:
-				summary.NoPhone++
-			case domain.EmployeeReachabilityStateNotLinked:
-				summary.NotLinked++
-			case domain.EmployeeReachabilityStateDuplicateMobile:
-				summary.DuplicateMobile++
-			case domain.EmployeeReachabilityStateInvalidMobile:
-				summary.InvalidMobile++
-			}
-		}
-	}
-	return summary, nil
+	return &domain.EmployeeReachabilityPage{Employees: rows, Summary: *summary}, nil
 }
 
 // reachabilityCandidates loads every active employee with the raw signals the
@@ -174,17 +145,31 @@ func classifyCandidate(candidate reachabilityCandidate) []string {
 	})
 }
 
-// classifiedReachabilityRows classifies candidates and keeps the ones in state
-// (every state when state is empty), preserving the candidate order.
-func classifiedReachabilityRows(candidates []reachabilityCandidate, state string) []*domain.EmployeeReachability {
+// classifyReachabilityRows classifies every candidate once and returns the rows
+// in at least one state together with the counters over that same set. The
+// counters overlap per state by design, so they are accumulated here rather than
+// derived from the returned slice by a caller that would have to know which
+// states it is looking at.
+func classifyReachabilityRows(candidates []reachabilityCandidate) ([]*domain.EmployeeReachability, *domain.EmployeeReachabilitySummary) {
 	rows := make([]*domain.EmployeeReachability, 0, len(candidates))
+	summary := &domain.EmployeeReachabilitySummary{}
 	for _, candidate := range candidates {
 		states := classifyCandidate(candidate)
 		if len(states) == 0 {
 			continue
 		}
-		if state != "" && !hasReachabilityState(states, state) {
-			continue
+		summary.Employees++
+		for _, state := range states {
+			switch state {
+			case domain.EmployeeReachabilityStateNoPhone:
+				summary.NoPhone++
+			case domain.EmployeeReachabilityStateNotLinked:
+				summary.NotLinked++
+			case domain.EmployeeReachabilityStateDuplicateMobile:
+				summary.DuplicateMobile++
+			case domain.EmployeeReachabilityStateInvalidMobile:
+				summary.InvalidMobile++
+			}
 		}
 		rows = append(rows, &domain.EmployeeReachability{
 			EmployeeID: candidate.EmployeeID,
@@ -195,7 +180,22 @@ func classifiedReachabilityRows(candidates []reachabilityCandidate, state string
 			States:     states,
 		})
 	}
-	return rows
+	return rows, summary
+}
+
+// filterReachabilityRows keeps the rows in state (every row when state is
+// empty), preserving order.
+func filterReachabilityRows(rows []*domain.EmployeeReachability, state string) []*domain.EmployeeReachability {
+	if state == "" {
+		return rows
+	}
+	filtered := make([]*domain.EmployeeReachability, 0, len(rows))
+	for _, row := range rows {
+		if hasReachabilityState(row.States, state) {
+			filtered = append(filtered, row)
+		}
+	}
+	return filtered
 }
 
 func hasReachabilityState(states []string, state string) bool {

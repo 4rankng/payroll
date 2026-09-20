@@ -189,6 +189,15 @@ func (s EmployeeReachabilitySummary) CountForState(state string) int64 {
 	}
 }
 
+// EmployeeReachabilityPage is one page of the classified reachability worklist
+// together with the counters for the whole project-scoped cohort it was drawn
+// from. Both are derived in a single classification pass, so a page and its
+// counters can never describe different reads of the employee table.
+type EmployeeReachabilityPage struct {
+	Employees []*EmployeeReachability
+	Summary   EmployeeReachabilitySummary
+}
+
 // UnreachableEmployeesReport is the paginated reachability report.
 type UnreachableEmployeesReport struct {
 	Employees []*EmployeeReachability     `json:"employees"`
