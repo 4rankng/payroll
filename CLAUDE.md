@@ -162,3 +162,17 @@ gives you structural context (callers, dependents, test coverage) that file sear
 3. Use `get_affected_flows_tool` to understand impact.
 4. Use `query_graph_tool` pattern="tests_for" to check coverage.
 <!-- /code-review-graph MCP tools -->
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as GitHub issues in `4rankng/payroll`, managed via the `gh` CLI. See [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md).
+
+### Triage labels
+
+Five canonical triage roles use the default label strings (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See [`docs/agents/triage-labels.md`](docs/agents/triage-labels.md).
+
+### Domain docs
+
+Single-context layout: root `CONTEXT.md` (created lazily by `/domain-modeling`) with ADRs in `docs/decisions/`. See [`docs/agents/domain.md`](docs/agents/domain.md).
