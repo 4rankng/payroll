@@ -203,6 +203,50 @@ func TestApplyPermanentProviderFailure_NonAccountCodeKeepsBankStatus(t *testing.
 	}
 }
 
+// TestApplyPermanentProviderFailure_VietnameseEmployeeDetail guards the
+// Vietnamese-text rule: the synthetic preflight_validation code carries the
+// validator's English Go error text, which must be translated before it
+// reaches the employee push; provider messages already arrive in Vietnamese
+// and pass through untouched.
+func TestApplyPermanentProviderFailure_VietnameseEmployeeDetail(t *testing.T) {
+	notifier := &recordingEmployeeNotifier{}
+	reqRepo := &stubAdvanceRequestRepo{
+		req: &domain.AdvancePaymentRequest{
+			ID:            301,
+			EmployeeID:    42,
+			RequestAmount: 50_000,
+			Status:        domain.AdvancePaymentStatusApproved,
+		},
+	}
+	empRepo := &stubEmployeeRepo{}
+	svc := disbursement.NewWalletPaymentService(
+		&stubWalletPaymentRepo{}, reqRepo, empRepo, nil, nil, nil, nil, nil, testLogger(),
+	)
+
+	w := &DisbursementExecuteWorker{
+		walletPaymentService: svc,
+		advanceReqRepo:       reqRepo,
+		employeeNotifier:     notifier,
+		logger:               testLogger(),
+	}
+
+	w.applyPermanentProviderFailure(context.Background(),
+		DisbursementExecutePayload{AdvanceRequestID: 301},
+		"preflight_validation", "onepay: Amount must be at least 100000 VND")
+
+	if len(notifier.failed) != 1 {
+		t.Fatalf("notifier calls = %d, want 1", len(notifier.failed))
+	}
+	want := "Thông tin yêu cầu chuyển tiền không hợp lệ. Vui lòng liên hệ quản trị viên để được hỗ trợ."
+	if got := notifier.failed[0].detail; got != want {
+		t.Errorf("employee detail = %q, want the Vietnamese preflight message %q", got, want)
+	}
+	// Provider messages are already Vietnamese — pass through untouched.
+	if got := employeeFacingDetail("14", "Thông tin thẻ không hợp lệ"); got != "Thông tin thẻ không hợp lệ" {
+		t.Errorf("provider detail = %q, want it passed through unchanged", got)
+	}
+}
+
 // TestProcessJob_AppliesStageAwareRetryPolicy drives a whole
 // disbursement:execute task through both provider stages for the codes that made
 // retrying expensive: a permanent one must fail the request (and flag the

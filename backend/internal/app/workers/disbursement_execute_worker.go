@@ -459,6 +459,6 @@ func (w *DisbursementExecuteWorker) failAdvanceRequest(ctx context.Context, p Di
 		"employee_id", req.EmployeeID, "amount", req.RequestAmount)
 
 	if w.employeeNotifier != nil {
-		w.employeeNotifier.NotifyAdvancePaymentFailed(ctx, req.EmployeeID, req.RequestAmount, detail)
+		w.employeeNotifier.NotifyAdvancePaymentFailed(ctx, req.EmployeeID, req.RequestAmount, employeeFacingDetail(reason, detail))
 	}
 }
