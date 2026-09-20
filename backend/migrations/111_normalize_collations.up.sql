@@ -1,5 +1,11 @@
 -- Normalize every table onto one collation: `utf8mb4_0900_ai_ci`.
 --
+-- Operational note
+-- ----------------
+-- Each CONVERT TO is a full table rebuild that blocks DML on that table for
+-- its duration (largest: ~152k rows / 26 MB). Run against production inside a
+-- maintenance window, one table at a time.
+--
 -- The problem
 -- -----------
 -- `payroll_db` is split across two collations — 27 tables on `utf8mb4_0900_ai_ci`
