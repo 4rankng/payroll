@@ -109,6 +109,32 @@ func (s *EmailService) AvailableSenders() ([]dto.EmailSenderOption, error) {
 	return options, nil
 }
 
+// PayrollReportUnavailableError reports why a payroll statement cannot be
+// produced for the payload's period, using the same checks the send itself
+// performs (and the same validation error the worker ends up raising).
+//
+// The send path is asynchronous and answers 202 as soon as the task is queued,
+// so a period with no eligible timesheets used to look like a successful request
+// while the worker failed invisibly: the admin got no email and no history row.
+// Callers check this before enqueueing so the failure reaches the caller.
+func (s *EmailService) PayrollReportUnavailableError(ctx context.Context, payload *dto.SendPayrollReportEmailRequest) error {
+	if payload == nil {
+		return domain.NewValidationError(constants.MsgRequestPayloadRequiredVN)
+	}
+	reportAtDate, err := payload.ParseReportAtDate()
+	if err != nil {
+		return domain.NewValidationError(err.Error())
+	}
+	reportData, err := s.payrollReportSvc.GetProjectsForPayrollReport(ctx, reportAtDate)
+	if err != nil {
+		return domain.NewInternalError(constants.MsgFailedToFetchPayrollReportDataVN, err)
+	}
+	if len(reportData) == 0 {
+		return domain.NewValidationError(constants.MsgNoPayrollDataForPeriodVN)
+	}
+	return nil
+}
+
 // SendPayrollReportEmail generates the payroll report for the specified date range and emails it.
 func (s *EmailService) SendPayrollReportEmail(ctx context.Context, payload *dto.SendPayrollReportEmailRequest) (string, error) {
 	if payload == nil {

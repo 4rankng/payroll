@@ -191,6 +191,15 @@ func (h *EmailHandler) SendPayrollReportEmail(c *gin.Context) {
 		return
 	}
 
+	// Reject a period with no eligible payroll rows before queueing: once the
+	// task is queued this endpoint has already answered 202, so the worker's
+	// failure would be invisible (no email, no history row) and the admin would
+	// believe the statement was sent.
+	if err := h.emailService.PayrollReportUnavailableError(c.Request.Context(), &req); err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
 	taskID, duplicate, err := h.asynqClient.EnqueuePayrollReportEmail(req, userID, c.GetHeader("Idempotency-Key"))
 	if err != nil {
 		response.HandleDomainError(c, err)
