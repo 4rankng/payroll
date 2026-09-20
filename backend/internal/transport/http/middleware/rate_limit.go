@@ -202,9 +202,9 @@ func CreatePasswordResetRateLimit(redisURL string, perHour int) gin.HandlerFunc 
 
 // passwordResetEmailKeyGetter extracts the email from the request body and
 // returns a per-email limiter key. Red Team H1: the email is Unicode case-folded
-// + NFKC-normalized + zero-width-stripped so it matches the DB's
-// utf8mb4_unicode_ci comparison (Alice@ / Álice@ / alice@\u200b collapse to one
-// bucket). Red Team M1: the body is restored after reading or the downstream
+// + NFKC-normalized + zero-width-stripped so it folds at least as much as the
+// DB's utf8mb4_0900_ai_ci comparison (Alice@ / Álice@ / alice@\u200b collapse to
+// one bucket). Red Team M1: the body is restored after reading or the downstream
 // handler's BindJSON sees EOF and 400s every reset request.
 func passwordResetEmailKeyGetter(c *gin.Context) string {
 	const maxBody = 4 << 10
@@ -230,9 +230,11 @@ func passwordResetEmailKeyGetter(c *gin.Context) string {
 }
 
 // normalizeEmailForRateLimit applies NFKC normalization + Unicode case-folding +
-// zero-width stripping so the limiter key matches MySQL's utf8mb4_unicode_ci
-// comparison semantics. strings.ToLower alone is ASCII-only and would let
-// "Alice@x" / "Álice@x" / "alice@\u200bx" bypass the per-email cap.
+// zero-width stripping so the limiter key matches MySQL's utf8mb4_0900_ai_ci
+// comparison semantics — the canonical collation since migration 111; the folding
+// here stays deliberately broader, never narrower. strings.ToLower alone is
+// ASCII-only and would let "Alice@x" / "Álice@x" / "alice@\u200bx" bypass the
+// per-email cap.
 func normalizeEmailForRateLimit(email string) string {
 	// NFKC first so compatibility chars fold (e.g. fullwidth ＠ → @).
 	n := norm.NFKC.String(email)
