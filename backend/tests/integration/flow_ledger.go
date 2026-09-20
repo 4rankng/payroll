@@ -31,8 +31,11 @@ func runLedgerTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 	})
 
 	reporter.RunTest(flowLedger, "Create single ledger entry", func() error {
+		// A ledger block must balance on its own: a cash debit needs its counter
+		// entry, which is the invariant the API enforces (and answers 400 for).
 		body := []CreateLedgerEntryRequest{
 			{Account: "cash", Party: prefix + "_party", Debit: 1000000, Credit: 0, Date: today()},
+			{Account: "payable", Party: prefix + "_party", Debit: 0, Credit: 1000000, Date: today()},
 		}
 		var resp BulkLedgerEntriesResponse
 		if _, err := admin.PostInto("/api/v1/ledger/entries", body, &resp); err != nil {
@@ -44,6 +47,19 @@ func runLedgerTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 		testEntryID = resp.Entries[0].ID
 		fmt.Printf("    Created ledger entry ID %d\n", testEntryID)
 		return AssertGreaterThan("id", uint(0), testEntryID)
+	})
+
+	reporter.RunTest(flowLedger, "Edge: unbalanced ledger block is rejected", func() error {
+		body := []CreateLedgerEntryRequest{
+			{Account: "cash", Party: prefix + "_unbalanced", Debit: 1000000, Credit: 0, Date: today()},
+		}
+		_, statusCode, err := admin.PostExpectError("/api/v1/ledger/entries", body)
+		if err != nil {
+			return fmt.Errorf("post: %w", err)
+		}
+		// 400, not 500: the block fails the double-entry rule, which is caller
+		// input — the gap that made this path show up as a server error.
+		return AssertEqual("status", 400, statusCode)
 	})
 
 	reporter.RunTest(flowLedger, "Get entry by ID", func() error {

@@ -47,13 +47,19 @@ func runWalletTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 		return nil
 	})
 
-	reporter.RunTest(flowWallet, "Sync balance", func() error {
-		var resp interface{}
-		if _, err := admin.PostInto("/api/v1/wallet/balance/sync", nil, &resp); err != nil {
-			return fmt.Errorf("sync wallet balance: %w", err)
-		}
-		return nil
-	})
+	// Sync pulls the balance from the active provider, so it can only succeed
+	// where one is registered; elsewhere the API answers 400 by design.
+	if hasRegisteredDisbursementProvider(admin) {
+		reporter.RunTest(flowWallet, "Sync balance", func() error {
+			var resp interface{}
+			if _, err := admin.PostInto("/api/v1/wallet/balance/sync", nil, &resp); err != nil {
+				return fmt.Errorf("sync wallet balance: %w", err)
+			}
+			return nil
+		})
+	} else {
+		reporter.Skip(flowWallet, "Sync balance", "no disbursement provider registered in this deployment")
+	}
 
 	reporter.RunTest(flowWallet, "List wallet payments", func() error {
 		var resp interface{}

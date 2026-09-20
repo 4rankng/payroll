@@ -31,13 +31,22 @@ func runBulkTransferTests(client *APIClient, data *TestData, reporter *Reporter)
 		})
 	}
 
-	if !autoBulkConfig.Enabled {
+	// The settings flag can be on while this process has no provider registered,
+	// in which case every estimate/initiate call is refused by design. Require
+	// both signals so the flow skips instead of failing.
+	providerAvailable := hasRegisteredDisbursementProvider(client)
+
+	if !autoBulkConfig.Enabled || !providerAvailable {
+		skipReason := "auto bulk transfer not enabled (no disbursement provider configured)"
+		if !providerAvailable {
+			skipReason = "no disbursement provider registered in this deployment"
+		}
 		skipAll := func(names []string) {
 			for _, name := range names {
-				reporter.Skip(flowBulk, name, "auto bulk transfer not enabled (no disbursement provider configured)")
+				reporter.Skip(flowBulk, name, skipReason)
 			}
 		}
-		reporter.Skip(flowBulk, "Check auto bulk transfer config enabled", "no disbursement provider configured — skipping auto bulk transfer flow")
+		reporter.Skip(flowBulk, "Check auto bulk transfer config enabled", skipReason+" — skipping auto bulk transfer flow")
 		skipAll([]string{
 			"Estimate fee (weekly, before approval)",
 			"Estimate fee (monthly)",

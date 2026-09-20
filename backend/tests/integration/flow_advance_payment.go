@@ -159,7 +159,12 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 	var disbursementRequestID uint
 	var completedAmountBefore uint64
 
-	if info.CanRequest && info.RemainingAmount >= requestAmount {
+	// The lifecycle below needs a provider registered in this process: without
+	// one no poller worker runs, so a request would sit at PENDING until the
+	// poll times out. Report that as a skip rather than a timeout failure.
+	disbursementAvailable := hasRegisteredDisbursementProvider(client)
+
+	if info.CanRequest && info.RemainingAmount >= requestAmount && disbursementAvailable {
 		// Snapshot employee info before disbursement
 		var infoBefore AdvancePaymentInfoResponse
 		reporter.RunTest(flowAdvance, "Snapshot employee info before disbursement", func() error {
@@ -360,15 +365,19 @@ func runAdvancePaymentTests(client *APIClient, data *TestData, reporter *Reporte
 			return fmt.Errorf("request %d not found in employee history", disbursementRequestID)
 		})
 	} else {
-		reporter.Skip(flowAdvance, "Snapshot employee info before disbursement", "cannot request advance")
-		reporter.Skip(flowAdvance, "Create request for automatic disbursement", "cannot request advance")
-		reporter.Skip(flowAdvance, "Verify request is PENDING in admin view", "no request created")
-		reporter.Skip(flowAdvance, "Poll: wait for poller to claim request (PENDING → APPROVED)", "no request created")
-		reporter.Skip(flowAdvance, "Poll: wait for provider disbursement to complete (APPROVED → COMPLETED)", "no request created")
-		reporter.Skip(flowAdvance, "Verify final request status and details", "no request created")
-		reporter.Skip(flowAdvance, "Verify wallet payment record from provider", "no request created")
-		reporter.Skip(flowAdvance, "Verify employee advance info updated after disbursement", "no request created")
-		reporter.Skip(flowAdvance, "Verify disbursement request in employee history", "no request created")
+		reason := "cannot request advance"
+		if !disbursementAvailable {
+			reason = "no disbursement provider registered in this deployment"
+		}
+		reporter.Skip(flowAdvance, "Snapshot employee info before disbursement", reason)
+		reporter.Skip(flowAdvance, "Create request for automatic disbursement", reason)
+		reporter.Skip(flowAdvance, "Verify request is PENDING in admin view", reason)
+		reporter.Skip(flowAdvance, "Poll: wait for poller to claim request (PENDING → APPROVED)", reason)
+		reporter.Skip(flowAdvance, "Poll: wait for provider disbursement to complete (APPROVED → COMPLETED)", reason)
+		reporter.Skip(flowAdvance, "Verify final request status and details", reason)
+		reporter.Skip(flowAdvance, "Verify wallet payment record from provider", reason)
+		reporter.Skip(flowAdvance, "Verify employee advance info updated after disbursement", reason)
+		reporter.Skip(flowAdvance, "Verify disbursement request in employee history", reason)
 	}
 
 	// --- Edge cases (always run) ---

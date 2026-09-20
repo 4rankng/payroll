@@ -61,7 +61,18 @@ func runBCCImportTests(client *APIClient, data *TestData, reporter *Reporter) {
 
 	partnerClient := client.WithToken(data.Partners[0].Token)
 	adminClient := client.WithToken(data.AdminToken)
-	projectID := data.WeeklyProject.ID
+
+	// The partner must own (or be granted) the target project: partner imports
+	// are refused outside their scope, and flexible-salary projects are
+	// admin-only. Discovery pairs projects and partners independently, so pick a
+	// weekly project this partner can actually write to, or skip.
+	weeklyProject, ok := partnerWeeklyProject(partnerClient, data.WeeklyProject)
+	if !ok {
+		reporter.Skip(flowBCC, "All BCC import tests", fmt.Sprintf(
+			"partner %s has no weekly project in scope", data.Partners[0].Username))
+		return
+	}
+	projectID := weeklyProject.ID
 	projectIDStr := strconv.Itoa(int(projectID))
 	endpoint := "/api/v1/timesheets/partner-import"
 
