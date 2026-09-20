@@ -114,3 +114,42 @@ scheduler logs `Job registered | recompute_project_aggregates 0 3 * * *` and
 - The data gap it described is NOT fixed by the deletion and has no detector now: 588 of
   1440 active employees have no mobile value and 23 had their most recent ZNS send rejected
   with -118, so payouts and notifications for those employees have no delivery channel.
+
+
+## Tech-debt pass (2026-09-20, after `make api-test` on the local stack)
+
+Running the integration suite against a local backend surfaced a set of real
+defects that the earlier review had no reason to look at. All were reproduced
+locally before the fix and re-verified after, and the suite's baseline is now a
+clean signal.
+
+| # | Defect | Evidence it was real | Fix |
+|---|--------|----------------------|-----|
+| 1 | Wrapped domain errors all answered 500 | `HandleDomainError` asserted the top-level type; services wrap with `%w`, so every wrapped validation/not-found fell to the 500 branch and polluted the 5xx counters the error-rate job watches | `errors.As` + translate the domain error (commit `61f58213`) |
+| 2 | Unbalanced ledger block answered 500 | `POST /ledger/entries` with one debit leg returned `HTTP 500 ledger integrity violation` — caller input reported as a server fault | typed Vietnamese validation error → 400 (`ad911dcf`) |
+| 3 | Unknown cron job answered 500 | Repository already returned a typed not-found; the handler discarded it | route through `HandleDomainError` → 404 (`f0f3368e`) |
+| 4 | Nil bulk-transfer service panicked into an empty 500 | `GET /wallet/bulk-transfer/batches` returned 500 with an empty body (gin recovery) on any deployment without a disbursement provider; `estimate-fee` panicked the same way — a typed nil in an interface defeats `== nil` guards | leave the capability genuinely absent (`074c54ab`) |
+| 5 | Re-uploaded FlexPay file was never reprocessed | `ErrTaskIDConflict` (finished task ID reused) was not tolerated, and the handler still answered "đang xử lý lại" | retry under a unique ID, and answer 500 when the enqueue really fails (`5d128d4a`) |
+| 6 | Statement email answered 202 for a period it cannot report | Worker logged `không có dữ liệu payroll cho kỳ được chọn` while the API said the request was accepted: no email, no history row | validate the period before queueing → 400 (`8c330272`) |
+
+**Behaviour change worth knowing:** sending a payroll statement for a period with
+no eligible rows now answers 400 with the reason instead of 202. That is the point
+of fix 6 (the admin could not previously tell that nothing was sent), but it is a
+status-code change for that endpoint.
+
+**Test suite:** provider-dependent flows now decide from
+`GET /admin/settings/disbursement` (`registered_providers`) instead of the payout
+settings flag, which can be on in a deployment that registered no provider; the
+BCC import picks a weekly project the partner can actually write to; the ledger
+flow creates a balanced block and asserts the unbalanced one is refused with 400;
+the statement-email waits allow the worker the time it needs on a full dataset.
+Result: 332 tests, 303 passed, 0 failed, 29 skipped with a reason (before: 22
+failures mixing real defects with environment gaps).
+
+**Still open, unchanged by this pass:** `LedgerService.ReverseEntry` writes the
+mirror of a single entry through the unchecked `Create` path, so a reversal is
+one-sided by construction. It nets out across the ledger (the original and its
+mirror offset), which is why totals stay balanced, but it is the one remaining
+write path that does not face the block-level double-entry guard. Deciding
+whether reversals should be blocked, paired, or explicitly exempt is a financial
+semantics call, not a cleanup.
