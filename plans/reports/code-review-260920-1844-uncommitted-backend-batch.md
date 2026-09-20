@@ -69,8 +69,39 @@ package-level `clock.Now()` usage matches the 378-site repo precedent.
 - Full backend suite: `go test ./... -count=1` — exit 0, zero failures
 - Frontend `pnpm type-check` + `pnpm lint` — exit 0 (no frontend changes made)
 
-## Unresolved
+## Follow-up outcomes (2026-09-20, after this review)
 
-- Which of findings 3/4/5 (secret logging layering, reachability query, recompute
-  scheduling) should become follow-up tasks — publish as GitHub issues? (tracker now
-  configured via docs/agents/issue-tracker.md)
+Findings 3/4/5 were re-examined and closed as follows.
+
+**Finding 3 — `internal/pkg/secret` importing `internal/infra/observability`: WONT FIX
+by design.** The import is the repo-wide convention for the `internal/pkg` layer, not a
+defect local to this package: `internal/pkg/retry/retry.go`,
+`internal/pkg/tenantqueue/queue.go`, `internal/pkg/db/{helper,batch_helper,temporal_helper}.go`
+and `internal/pkg/services/payrate_temporal_service.go` all call `observability.GetLogger()`.
+Rewriting only `secret` would leave two logging seams in one layer, and the reviewer's own
+note records the cost of the alternative: plain `slog` reroutes the degraded-mode warning
+out of `logs/app.log` to stderr. A pkg-layer logging port is a repo-wide refactor, not a
+follow-up to this batch.
+
+**Finding 4 — reachability query shape: FIXED (`8e40c480`).** One repository call now reads
+the cohort once, classifies it once, and returns the page plus the cohort counters together
+(`domain.EmployeeReachabilityPage`); `CountEmployeeReachability` is gone from the port and
+the service no longer clones filters to drop `State`. Note for the record: this report had
+**no HTTP route and no frontend caller** when it was reviewed, so the duplicated read never
+reached production — the change removes a whole duplicate cohort read for when the endpoint
+is wired, and the unbounded-read half of the finding stays as documented (the classifier is
+domain code, so it cannot be pushed into SQL).
+
+**Finding 5 — recompute scheduling: FIXED (`0aa17446`).** `RecomputeAllProjects` is now
+registered as the daily `recompute_project_aggregates` job (03:00 `Asia/Ho_Chi_Minh`) in
+`registerSchedulerJobs`, with the service built once in the container. The swallowed
+per-project error in the bulk transfer worker now has an automatic recovery path on top of
+the manual `recompute-project-aggregates` subcommand. Deployed and verified on production:
+scheduler logs `Job registered | recompute_project_aggregates 0 3 * * *` and
+`cron_job_status` row 7572 is seeded and enabled.
+
+## Open item surfaced while closing the above
+
+- The Zalo reachability report (`42c161f9`) is service- and repository-only: no HTTP
+  handler, no route, no frontend caller. Ops cannot see it yet. Wiring the endpoint and the
+  Admin + Partner desktop/mobile views is the remaining work for that feature.
