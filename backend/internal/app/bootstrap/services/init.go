@@ -774,7 +774,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		WalletDemandForecast:              walletDemandForecastService,
 		CashReadiness:                     cashReadinessService,
 		NinePayBulkTransfer:               autoBulkTransferSvc,
-		AutoBulkTransfer:                  autoBulkTransferSvc,
+		AutoBulkTransfer:                  asAutoBulkTransfer(autoBulkTransferSvc),
 		NinePayBatchCompletion:            ninePayBatchCompletion,
 		OnePayExporter:                    onePayExporter,
 		BulkTransferPayment:               bulkTransferPaymentWorker,
@@ -797,4 +797,16 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	}
 
 	return servicesStruct
+}
+
+// asAutoBulkTransfer keeps the interface field truly empty when no disbursement
+// provider is registered. A nil *NinePayBulkTransferService stored in the
+// interface is NOT equal to nil, so it silently passed the handlers' nil guards
+// and the call panicked on the nil receiver — a 500 for what is really "feature
+// unavailable in this deployment".
+func asAutoBulkTransfer(svc *bulktransfer.NinePayBulkTransferService) bulktransfer.AutoBulkTransferService {
+	if svc == nil {
+		return nil
+	}
+	return svc
 }

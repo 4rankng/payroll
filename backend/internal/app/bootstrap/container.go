@@ -486,7 +486,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		AdminZalo:            adminHandlers.NewZaloHandler(services.ZaloConnect),
 		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
 		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, services.WalletDemandForecast, clk),
-		WalletBulkTransfer:   handlers.NewWalletBulkTransferHandler(walletBulkSvc, logger),
+		WalletBulkTransfer:   newWalletBulkTransferHandler(walletBulkSvc, logger),
 		AdvPartnerUser:       advPartnerHandlers.NewUserHandler(services.Employee, services.ProjectEmployee, services.User),
 		BCCImport:            timesheetHandlers.NewBCCImportHandler(services.BCCImport, repos.Asset, fileStorage, services.ProjectPermission, services.Audit),
 		Attendance:           attendanceHandlers.NewHandler(services.Attendance, repos.Employee, repos.AttendanceFailedAttempt, clk, logger),
@@ -546,4 +546,17 @@ func initScheduler(notificationService *notification.NotificationService, emailS
 	)
 
 	return s
+}
+
+// newWalletBulkTransferHandler keeps the handler absent when the wallet bulk
+// transfer service is not wired (no employee-disbursement provider). That is
+// what routes_wallet.go checks before mounting /wallet/bulk-transfer/*, and what
+// the integration probe treats as "not enabled in this deployment". Building the
+// handler around a nil service instead left the routes registered and every call
+// panicked into an empty 500 — indistinguishable from a real outage.
+func newWalletBulkTransferHandler(svc *wallet_bulk.WalletBulkTransferService, logger *slog.Logger) *handlers.WalletBulkTransferHandler {
+	if svc == nil {
+		return nil
+	}
+	return handlers.NewWalletBulkTransferHandler(svc, logger)
 }
