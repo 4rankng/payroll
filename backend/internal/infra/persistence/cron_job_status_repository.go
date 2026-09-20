@@ -55,7 +55,7 @@ func (r *CronJobStatusRepository) UpdateEnabled(ctx context.Context, jobName str
 		return fmt.Errorf("failed to update cron job enabled status: %w", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return domain.NewNotFoundError(fmt.Sprintf("cron job %s not found", jobName))
+		return domain.NewNotFoundError(fmt.Sprintf("Không tìm thấy cron job %s", jobName))
 	}
 	return nil
 }

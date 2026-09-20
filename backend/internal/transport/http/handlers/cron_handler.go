@@ -73,8 +73,11 @@ func (h *CronHandler) ToggleCronJob(c *gin.Context) {
 		return
 	}
 
+	// An unknown job is caller input: ToggleJob surfaces the repository's typed
+	// not-found error, which HandleDomainError answers as 404 rather than the
+	// blanket 500 that hid the distinction from clients and alerting.
 	if err := h.scheduler.ToggleJob(c.Request.Context(), jobName, req.Enabled); err != nil {
-		response.InternalServerError(c, "Failed to toggle cron job")
+		response.HandleDomainError(c, err)
 		return
 	}
 
@@ -98,7 +101,8 @@ func (h *CronHandler) RunCronJob(c *gin.Context) {
 		}
 	}
 	if !found {
-		response.BadRequest(c, "Job not found: "+jobName)
+		// Same status as the toggle path: the named job is not a resource here.
+		response.NotFound(c, "Job not found: "+jobName)
 		return
 	}
 	go func() {
