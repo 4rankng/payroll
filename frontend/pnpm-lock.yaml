@@ -258,8 +258,8 @@ importers:
         specifier: ^9.32.0
         version: 9.39.4
       '@playwright/mcp':
-        specifier: ^0.0.40
-        version: 0.0.40
+        specifier: ^0.0.81
+        version: 0.0.81
       '@playwright/test':
         specifier: ^1.55.0
         version: 1.61.1
@@ -1617,8 +1617,8 @@ packages:
   '@paulirish/trace_engine@0.0.65':
     resolution: {integrity: sha512-Qsm6F5C8xf6ZzQXbQc2+wcpe6sggfs/gvc/ytqSurdvYg3kyW0ECHCqE0CWBKZpqgjVfPNX9c7SCS3r2nEIRGg==}
 
-  '@playwright/mcp@0.0.40':
-    resolution: {integrity: sha512-gkaE0enMiRLKU3UdVZP2vUn9/rkLT01susE4XY7K10Wpl9vgOXeDCoTNwA2z82D8S2MX31lHx+uveEU4nHF3yw==}
+  '@playwright/mcp@0.0.81':
+    resolution: {integrity: sha512-c4eVex1nS53IzLHlwAm0J9ZISDTvA7RndFX8oVcQOrmvIrKSkByazpq79lZHWJuWTB7Gpk0sLBQoRepyIgmneA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -3355,6 +3355,7 @@ packages:
 
   crypto-js@4.2.0:
     resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
+    deprecated: Active development of CryptoJS has been discontinued. This library is no longer maintained.
 
   crypto-random-string@2.0.0:
     resolution: {integrity: sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==}
@@ -3670,6 +3671,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -4572,24 +4574,24 @@ packages:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
 
-  playwright-core@1.56.0-alpha-1758750661000:
-    resolution: {integrity: sha512-ivP4xjc6EHkUqF80pMFfDRijKLEvO64qC6DTgyYrbsyCo8gugkqwKm6lFWn4W47g4S8juoUwQhlRVjM2BJ+ruA==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   playwright-core@1.61.1:
     resolution: {integrity: sha512-h7Qlt6m4REp25qvIdvbDtVmD4LqVXfpRxhORv9L0jzETM05p4fuPJ3dKyuSXQxDSbXnmS79HAgi9589lGSpLkg==}
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.56.0-alpha-1758750661000:
-    resolution: {integrity: sha512-15C/m7NPpAmBX2MFMrepCMj18ksBYvhbT90cvFjG2iBs2YPqO2U4f9OjcX207ITSmDAAJ8pWBlJutcZUYUERXg==}
-    engines: {node: '>=18'}
+  playwright-core@1.64.0-alpha-2026-09-14:
+    resolution: {integrity: sha512-VCqlQ8lEKS8NAfEU/sWx3KP7gL2oCWd/DAGzPDZncGV7dUNNHpaVxHd2LWe2pc5y53h0Hqu3SWzRiPqKqkrYQA==}
+    engines: {node: '>=20'}
     hasBin: true
 
   playwright@1.61.1:
     resolution: {integrity: sha512-DWnY5o3YbLWK4GovuAVwpqL+1VwGNdUGrRr++8j8PtQQzvAVZUIMjKQ90fY689sEJZJBbZVw1rXaOKSTitkzPQ==}
     engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.64.0-alpha-2026-09-14:
+    resolution: {integrity: sha512-CdpbZ03/Iq4HMth9RP2NHBv/gv9exDLkR3eJEDvS2fKdAjZSNYvL2PrJum3wHe8qOSFR8KzWuyKUx3AZ5vZc4w==}
+    engines: {node: '>=20'}
     hasBin: true
 
   png-js@1.1.0:
@@ -6935,10 +6937,10 @@ snapshots:
       legacy-javascript: 0.0.1
       third-party-web: 0.30.0
 
-  '@playwright/mcp@0.0.40':
+  '@playwright/mcp@0.0.81':
     dependencies:
-      playwright: 1.56.0-alpha-1758750661000
-      playwright-core: 1.56.0-alpha-1758750661000
+      playwright: 1.64.0-alpha-2026-09-14
+      playwright-core: 1.64.0-alpha-2026-09-14
 
   '@playwright/test@1.61.1':
     dependencies:
@@ -9962,21 +9964,19 @@ snapshots:
 
   pirates@4.0.7: {}
 
-  playwright-core@1.56.0-alpha-1758750661000: {}
-
   playwright-core@1.61.1: {}
 
-  playwright@1.56.0-alpha-1758750661000:
-    dependencies:
-      playwright-core: 1.56.0-alpha-1758750661000
-    optionalDependencies:
-      fsevents: 2.3.2
+  playwright-core@1.64.0-alpha-2026-09-14: {}
 
   playwright@1.61.1:
     dependencies:
       playwright-core: 1.61.1
     optionalDependencies:
       fsevents: 2.3.2
+
+  playwright@1.64.0-alpha-2026-09-14:
+    dependencies:
+      playwright-core: 1.64.0-alpha-2026-09-14
 
   png-js@1.1.0:
     dependencies:
