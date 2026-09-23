@@ -66,7 +66,10 @@ export const useCreateSetting = () => {
 };
 
 // Get multiple settings by keys. Missing keys (never-configured rows) resolve
-// to undefined instead of failing the whole query.
+// to undefined instead of failing the whole query. A total failure is different:
+// it means the API or the session is unavailable, and silently rendering empty
+// fields would hide that, so the first error is rethrown for the caller's
+// page-level error state.
 export const useMultipleSettings = (keys: string[]) => {
   return useQuery({
     queryKey: [...QueryKeys.settings.all, 'multiple', keys],
@@ -74,6 +77,12 @@ export const useMultipleSettings = (keys: string[]) => {
       const results = await Promise.allSettled(
         keys.map((key) => settingsService.getSettingByKey(key)),
       );
+      const failures = results.filter(
+        (result): result is PromiseRejectedResult => result.status === 'rejected',
+      );
+      if (failures.length > 0 && failures.length === results.length) {
+        throw failures[0].reason;
+      }
       return results.map((result) => (result.status === 'fulfilled' ? result.value : undefined));
     },
     enabled: keys.length > 0,

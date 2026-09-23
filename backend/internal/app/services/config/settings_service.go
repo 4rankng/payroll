@@ -26,6 +26,14 @@ const (
 // deletes "settings:<operation>:*", so the version stays purgeable.
 const settingsCacheVersion = "v2"
 
+// settingsConfigCacheInvalidator clears the in-process read cache held by
+// SettingsConfigService. Declared as an interface so SettingsService can
+// invalidate it without depending on the concrete type (and so tests can
+// substitute a fake).
+type settingsConfigCacheInvalidator interface {
+	InvalidateCache()
+}
+
 type SettingsService struct {
 	logger                  *slog.Logger
 	SettingsRepo            domain.SettingsRepository
@@ -36,6 +44,28 @@ type SettingsService struct {
 	EventBus                domain.EventBus
 	quotaCreditTaskEnqueuer interface {
 		EnqueueCreditQuota(attendanceID uint, at time.Time) error
+	}
+	// configCacheInvalidator is bound at bootstrap to the SettingsConfigService
+	// that reads business settings (payment percentages, beneficiary bank
+	// details, ...). It is cleared after every committed mutation so a
+	// completed Admin update is authoritative for the next read instead of
+	// waiting out SettingsConfigService's short TTL — the same guarantee
+	// money-moving values already get by bypassing that cache entirely.
+	configCacheInvalidator settingsConfigCacheInvalidator
+}
+
+// SetConfigCacheInvalidator binds the SettingsConfigService read cache so
+// settings mutations invalidate it. Optional: an unbound service simply skips
+// the in-process invalidation and relies on the cache TTL.
+func (s *SettingsService) SetConfigCacheInvalidator(invalidator settingsConfigCacheInvalidator) {
+	s.configCacheInvalidator = invalidator
+}
+
+// invalidateConfigCache clears the in-process read cache after a committed
+// mutation.
+func (s *SettingsService) invalidateConfigCache() {
+	if s.configCacheInvalidator != nil {
+		s.configCacheInvalidator.InvalidateCache()
 	}
 }
 
@@ -87,6 +117,7 @@ func (s *SettingsService) CreateSetting(ctx context.Context, settings *domain.Se
 
 	// Invalidate settings cache
 	s.invalidateSettingsCache(ctx)
+	s.invalidateConfigCache()
 
 	return settings, nil
 }
@@ -220,6 +251,7 @@ func (s *SettingsService) UpdateSetting(ctx context.Context, settingID uint, upd
 		s.logger.Warn("Failed to publish settings updated event", "settingsID", updatedSetting.ID, "key", updatedSetting.Key, "error", err)
 	}
 	s.invalidateSettingsCache(ctx)
+	s.invalidateConfigCache()
 	return updatedSetting, nil
 }
 
@@ -260,6 +292,7 @@ func (s *SettingsService) DeleteSetting(ctx context.Context, id uint, deletedBy 
 
 	// Invalidate settings cache
 	s.invalidateSettingsCache(ctx)
+	s.invalidateConfigCache()
 
 	return nil
 }

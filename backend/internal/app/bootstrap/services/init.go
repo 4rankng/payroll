@@ -155,6 +155,10 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	transactionManager := infraServices.NewTransactionManager(db.DB)
 	settingsService := config.NewSettingsService(repos.Settings, repos.AdvancePayment, repos.Attendance, transactionManager, cacheService, eventBus, asynqClient)
 	settingsConfigService := config.NewSettingsConfigService(settingsService)
+	// A committed settings change must reach the in-process business-settings
+	// cache immediately: statement emails and Excel exports read the beneficiary
+	// bank details from it, and a stale value would print the previous account.
+	settingsService.SetConfigCacheInvalidator(settingsConfigService)
 	excelConverterService := reporting.NewExcelConverterService()
 	pdfService := reporting.NewPDFService("fonts/Roboto-Regular.ttf")
 	fileStorage := storage.NewLocalFileStorage(cfg.Asset.StoragePath, cfg.Asset.BaseURL)

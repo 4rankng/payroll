@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 const flowSettings = "Settings"
@@ -181,6 +183,95 @@ func runSettingsTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 			return fmt.Errorf("updated self check-in advance wait must have a value")
 		}
 		return AssertEqual("self check-in advance wait", updatedValue, *updated.Value)
+	})
+
+	reporter.RunTest(flowSettings, "Configure beneficiary bank accounts (weekly and FlexPay)", func() error {
+		// These rows are optional: an environment that never saved the sao kê
+		// bank panel has no row for them, so each key is created on demand and
+		// every touched row is restored (or removed) when the test ends.
+		var restores []func()
+		defer func() {
+			for i := len(restores) - 1; i >= 0; i-- {
+				restores[i]()
+			}
+		}()
+
+		// rowIDFor returns the row id for key, creating it (and registering its
+		// removal) when the key was never seeded.
+		rowIDFor := func(key string) (uint, error) {
+			resp, status, err := admin.Get("/api/v1/settings/key/" + key)
+			if err != nil {
+				return 0, fmt.Errorf("get %s: %w", key, err)
+			}
+			switch status {
+			case http.StatusOK:
+				var existing SettingResponse
+				if err := json.Unmarshal(resp.Data, &existing); err != nil {
+					return 0, fmt.Errorf("decode %s: %w", key, err)
+				}
+				original := ""
+				if existing.Value != nil {
+					original = *existing.Value
+				}
+				restores = append(restores, func() {
+					restore := original
+					_, _, _ = admin.Put(fmt.Sprintf("/api/v1/settings/%d", existing.ID), UpdateSettingRequest{Value: &restore})
+				})
+				return existing.ID, nil
+			case http.StatusNotFound:
+				seed := "true"
+				var created SettingResponse
+				if _, err := admin.PostInto("/api/v1/settings", CreateSettingRequest{Key: key, Value: &seed, ValueType: "string"}, &created); err != nil {
+					return 0, fmt.Errorf("create %s: %w", key, err)
+				}
+				restores = append(restores, func() {
+					_, _, _ = admin.Delete(fmt.Sprintf("/api/v1/settings/%d", created.ID))
+				})
+				return created.ID, nil
+			default:
+				return 0, fmt.Errorf("get %s returned HTTP %d: %s", key, status, resp.Message)
+			}
+		}
+
+		// The two beneficiary accounts are configured independently: the weekly
+		// payroll statement and the FlexPay (OnePay) reconciliation statement
+		// each print their own holder, account number, bank and visibility.
+		values := map[string]string{
+			"transfer_bank_account_holder":         "CONG TY ITEST LUONG TUAN",
+			"transfer_bank_account_number":         "111222333",
+			"transfer_bank_name":                   "Ngân hàng Tuần ITest",
+			"transfer_bank_visible":                "true",
+			"flexpay_transfer_bank_account_holder": "CONG TY ITEST FLEXPAY",
+			"flexpay_transfer_bank_account_number": "444555666",
+			"flexpay_transfer_bank_name":           "Ngân hàng FlexPay ITest",
+			"flexpay_transfer_bank_visible":        "false",
+		}
+
+		for key, value := range values {
+			id, err := rowIDFor(key)
+			if err != nil {
+				return err
+			}
+			if _, status, err := admin.Put(fmt.Sprintf("/api/v1/settings/%d", id), UpdateSettingRequest{Value: &value}); err != nil || status >= 400 {
+				return fmt.Errorf("update %s: HTTP %d: %v", key, status, err)
+			}
+		}
+
+		for key, want := range values {
+			var row SettingResponse
+			if _, err := admin.GetInto("/api/v1/settings/key/"+key, &row); err != nil {
+				return fmt.Errorf("read back %s: %w", key, err)
+			}
+			if row.Value == nil {
+				return fmt.Errorf("%s has no value after save", key)
+			}
+			if err := AssertEqual(key, want, *row.Value); err != nil {
+				return err
+			}
+		}
+
+		fmt.Printf("    Weekly and FlexPay beneficiary accounts persist independently\n")
+		return nil
 	})
 
 	reporter.RunTest(flowSettings, "Delete test setting", func() error {

@@ -504,3 +504,39 @@ func TestSettingsServiceDoesNotCacheProtectedSetting(t *testing.T) {
 		t.Fatalf("cached keys = %v, want only the ordinary setting", keys)
 	}
 }
+
+type fakeConfigCacheInvalidator struct{ calls int }
+
+func (f *fakeConfigCacheInvalidator) InvalidateCache() { f.calls++ }
+
+// A committed update must clear the in-process SettingsConfigService cache too:
+// statement exports read the beneficiary bank details from it, and the row-level
+// Redis invalidation above does not reach that cache.
+func TestSettingsServiceUpdateSettingInvalidatesConfigCache(t *testing.T) {
+	settingsRepo := newFakeSettingsRepoForUpdate(&domain.Settings{
+		ID:        1,
+		Key:       SettingKeyTransferBankHolder,
+		Value:     stringPointer("CONG TY CU"),
+		ValueType: domain.ValueTypeString,
+	})
+	quotaRepo := &fakeQuotaRepoForUpdate{}
+	service := NewSettingsService(
+		settingsRepo,
+		quotaRepo,
+		nil,
+		fakeSettingsTxManager{settings: settingsRepo, quota: quotaRepo},
+		nil,
+		fakeSettingsEventBus{},
+		nil,
+	)
+
+	invalidator := &fakeConfigCacheInvalidator{}
+	service.SetConfigCacheInvalidator(invalidator)
+
+	if _, err := service.UpdateSetting(context.Background(), 1, map[string]any{"value": "CONG TY MOI"}, 7); err != nil {
+		t.Fatalf("UpdateSetting returned error: %v", err)
+	}
+	if invalidator.calls != 1 {
+		t.Fatalf("bound config cache invalidator calls = %d, want 1", invalidator.calls)
+	}
+}

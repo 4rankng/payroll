@@ -35,6 +35,8 @@ func (s *Seeder) seedSettings(ctx context.Context, db *gorm.DB) error {
 		// environments where the admin has never saved the sao kê bank panel
 		// (the settings form creates the row on first save).
 		{"transfer_bank_visible", "true", "string"},
+		// Same rationale for the FlexPay (OnePay) beneficiary block.
+		{"flexpay_transfer_bank_visible", "true", "string"},
 	}
 
 	for _, setting := range settings {

@@ -395,3 +395,23 @@ func TestGetFlexPayTransferBankInfoFallsBackToDefaults(t *testing.T) {
 	assert.Equal(t, DefaultTransferBankName, info.Name)
 	assert.False(t, info.Hidden)
 }
+
+func TestSettingsConfigServiceInvalidateCacheReReadsTransferBank(t *testing.T) {
+	reader := &keyedStubSettingReader{values: map[string]string{
+		SettingKeyTransferBankHolder: "CONG TY CU",
+		SettingKeyTransferBankNumber: "111222333",
+		SettingKeyTransferBankName:   "Ngân hàng Cũ",
+	}}
+	service := NewSettingsConfigService(reader)
+
+	require.Equal(t, "CONG TY CU", service.GetTransferBankInfo(context.Background()).Holder)
+
+	// A persisted change stays invisible while the in-process cache is warm...
+	reader.values[SettingKeyTransferBankHolder] = "CONG TY MOI"
+	assert.Equal(t, "CONG TY CU", service.GetTransferBankInfo(context.Background()).Holder)
+
+	// ...so a committed settings mutation must clear it, otherwise the next
+	// statement export would print the account the admin just replaced.
+	service.InvalidateCache()
+	assert.Equal(t, "CONG TY MOI", service.GetTransferBankInfo(context.Background()).Holder)
+}
