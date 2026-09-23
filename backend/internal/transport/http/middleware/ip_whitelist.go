@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net"
+	"sort"
 
 	"api-server/internal/infra/observability"
 	"api-server/internal/transport/http/response"
@@ -44,6 +45,27 @@ func IPWhitelist(allowedIPs []string, opts ...Option) gin.HandlerFunc {
 		opt(&cfg)
 	}
 	exactIPs, networks := parseAllowedIPRanges(allowedIPs)
+
+	// Startup visibility: log the effective whitelist once, at construction,
+	// so operators can verify the enforced IP set from service logs without
+	// inspecting the container environment. Exact IPs are sorted so restarts
+	// produce identical output for the same configuration.
+	exactList := make([]string, 0, len(exactIPs))
+	for ip := range exactIPs {
+		exactList = append(exactList, ip)
+	}
+	sort.Strings(exactList)
+	networkStrings := make([]string, 0, len(networks))
+	for _, n := range networks {
+		networkStrings = append(networkStrings, n.String())
+	}
+	observability.GetLogger().Info("IP whitelist configured",
+		"entry_count", len(allowedIPs),
+		"exact_ips", exactList,
+		"cidr_networks", networkStrings,
+		"use_remote_addr", cfg.useRemoteAddr,
+	)
+
 	return func(c *gin.Context) {
 		if len(allowedIPs) == 0 {
 			c.Next()
