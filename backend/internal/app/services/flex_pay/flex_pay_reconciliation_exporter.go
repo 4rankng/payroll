@@ -22,33 +22,33 @@ const (
 	internalTypeAdvance = "type:advance_payment"
 )
 
-// TransferBankInfoProvider supplies beneficiary bank details for FlexPay
+// FlexPayTransferBankInfoProvider supplies beneficiary bank details for FlexPay
 // reconciliation exports. Implemented by *config.SettingsConfigService.
-type TransferBankInfoProvider interface {
-	GetTransferBankInfo(ctx context.Context) appconfig.TransferBankInfo
+type FlexPayTransferBankInfoProvider interface {
+	GetFlexPayTransferBankInfo(ctx context.Context) appconfig.TransferBankInfo
 }
 
 // FlexPayReconciliationExporter handles Excel generation for FlexPay reconciliation report
 type FlexPayReconciliationExporter struct {
 	logger       *slog.Logger
-	bankSettings TransferBankInfoProvider
+	bankSettings FlexPayTransferBankInfoProvider
 }
 
 // NewFlexPayReconciliationExporter creates a new exporter
-func NewFlexPayReconciliationExporter(bankSettings TransferBankInfoProvider) *FlexPayReconciliationExporter {
+func NewFlexPayReconciliationExporter(bankSettings FlexPayTransferBankInfoProvider) *FlexPayReconciliationExporter {
 	return &FlexPayReconciliationExporter{
 		logger:       observability.GetLogger(),
 		bankSettings: bankSettings,
 	}
 }
 
-// resolveBankInfo returns the configured beneficiary bank details, falling
-// back to defaults when no settings provider is bound.
+// resolveBankInfo returns the configured FlexPay beneficiary bank details,
+// falling back to defaults when no settings provider is bound.
 func (e *FlexPayReconciliationExporter) resolveBankInfo(ctx context.Context) appconfig.TransferBankInfo {
 	if e.bankSettings == nil {
 		return appconfig.DefaultTransferBankInfo()
 	}
-	return e.bankSettings.GetTransferBankInfo(ctx)
+	return e.bankSettings.GetFlexPayTransferBankInfo(ctx)
 }
 
 // BankInfoForStatement exposes the configured beneficiary bank details

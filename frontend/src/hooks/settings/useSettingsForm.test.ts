@@ -44,6 +44,24 @@ const mocks = vi.hoisted(() => ({
       value: '24',
       value_type: 'number',
     },
+    {
+      id: 7,
+      key: 'transfer_bank_account_holder',
+      value: 'CONG TY LUONG TUAN',
+      value_type: 'string',
+    },
+    {
+      id: 8,
+      key: 'transfer_bank_account_number',
+      value: '271866699',
+      value_type: 'string',
+    },
+    {
+      id: 9,
+      key: 'transfer_bank_name',
+      value: 'Ngân hàng Quân đội (MB)',
+      value_type: 'string',
+    },
   ],
 }));
 
@@ -169,5 +187,53 @@ describe('useSettingsForm', () => {
     ];
     act(() => options.onSuccess());
     expect(result.current.originalSelfCheckInAdvanceHoldHours).toBe('6');
+  });
+
+  it('mirrors the weekly account into unset FlexPay fields', async () => {
+    const { result } = renderHook(() => useSettingsForm());
+
+    await waitFor(() => {
+      expect(result.current.flexPayTransferBankNumber).toBe('271866699');
+    });
+    expect(result.current.flexPayTransferBankHolder).toBe('CONG TY LUONG TUAN');
+    expect(result.current.flexPayTransferBankName).toBe('Ngân hàng Quân đội (MB)');
+    // No FlexPay visibility row exists yet, so it mirrors the weekly toggle.
+    expect(result.current.flexPayTransferBankVisible).toBe(true);
+  });
+
+  it('creates FlexPay bank rows on first save', async () => {
+    const { result } = renderHook(() => useSettingsForm());
+
+    await waitFor(() => {
+      expect(result.current.flexPayTransferBankHolder).toBe('CONG TY LUONG TUAN');
+    });
+
+    act(() => {
+      result.current.setFlexPayTransferBankHolder('CONG TY FLEXPAY');
+      result.current.setFlexPayTransferBankNumber('444555666');
+      result.current.setFlexPayTransferBankName('Ngân hàng FlexPay');
+    });
+    act(() => {
+      result.current.handleSaveFlexPayTransferBank();
+    });
+
+    for (const [key, value] of [
+      ['flexpay_transfer_bank_account_holder', 'CONG TY FLEXPAY'],
+      ['flexpay_transfer_bank_account_number', '444555666'],
+      ['flexpay_transfer_bank_name', 'Ngân hàng FlexPay'],
+    ] as const) {
+      expect(mocks.mutate).toHaveBeenCalledWith(
+        { key, value, value_type: 'string' },
+        expect.objectContaining({ onSuccess: expect.any(Function) }),
+      );
+    }
+
+    const holderCall = mocks.mutate.mock.calls.find((call) => {
+      const [arg] = call as [{ key?: string }];
+      return arg.key === 'flexpay_transfer_bank_account_holder';
+    });
+    const [, holderOptions] = holderCall as [unknown, { onSuccess: () => void }];
+    act(() => holderOptions.onSuccess());
+    expect(result.current.originalFlexPayTransferBankHolder).toBe('CONG TY FLEXPAY');
   });
 });

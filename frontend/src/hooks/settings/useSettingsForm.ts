@@ -12,6 +12,10 @@ const SETTINGS_KEYS = {
   TRANSFER_BANK_NUMBER: 'transfer_bank_account_number',
   TRANSFER_BANK_NAME: 'transfer_bank_name',
   TRANSFER_BANK_VISIBLE: 'transfer_bank_visible',
+  FLEXPAY_TRANSFER_BANK_HOLDER: 'flexpay_transfer_bank_account_holder',
+  FLEXPAY_TRANSFER_BANK_NUMBER: 'flexpay_transfer_bank_account_number',
+  FLEXPAY_TRANSFER_BANK_NAME: 'flexpay_transfer_bank_name',
+  FLEXPAY_TRANSFER_BANK_VISIBLE: 'flexpay_transfer_bank_visible',
 } as const;
 
 // Defaults shown until the admin saves a value (must mirror backend defaults).
@@ -44,6 +48,14 @@ export interface SettingsFormState {
   originalTransferBankName: string;
   transferBankVisible: boolean;
   originalTransferBankVisible: boolean;
+  flexPayTransferBankHolder: string;
+  originalFlexPayTransferBankHolder: string;
+  flexPayTransferBankNumber: string;
+  originalFlexPayTransferBankNumber: string;
+  flexPayTransferBankName: string;
+  originalFlexPayTransferBankName: string;
+  flexPayTransferBankVisible: boolean;
+  originalFlexPayTransferBankVisible: boolean;
   loadError: string | null;
   isSaving: boolean;
   isLoading: boolean;
@@ -57,6 +69,10 @@ export interface SettingsFormState {
   setTransferBankNumber: (v: string) => void;
   setTransferBankName: (v: string) => void;
   setTransferBankVisible: (v: boolean) => void;
+  setFlexPayTransferBankHolder: (v: string) => void;
+  setFlexPayTransferBankNumber: (v: string) => void;
+  setFlexPayTransferBankName: (v: string) => void;
+  setFlexPayTransferBankVisible: (v: boolean) => void;
   handleSaveWeeklyPayment: () => void;
   handleSaveMonthlyPayment: () => void;
   handleSavePartnerCompany: () => void;
@@ -65,6 +81,8 @@ export interface SettingsFormState {
   handleSaveSelfCheckInAdvanceHoldHours: () => void;
   handleSaveTransferBank: () => void;
   handleSaveTransferBankVisible: () => void;
+  handleSaveFlexPayTransferBank: () => void;
+  handleSaveFlexPayTransferBankVisible: () => void;
   retryLoading: () => void;
 }
 
@@ -85,6 +103,10 @@ export function useSettingsForm(): SettingsFormState {
     SETTINGS_KEYS.TRANSFER_BANK_NUMBER,
     SETTINGS_KEYS.TRANSFER_BANK_NAME,
     SETTINGS_KEYS.TRANSFER_BANK_VISIBLE,
+    SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_HOLDER,
+    SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_NUMBER,
+    SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_NAME,
+    SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_VISIBLE,
   ]);
 
   const updateMutation = useUpdateSetting();
@@ -110,6 +132,14 @@ export function useSettingsForm(): SettingsFormState {
   const [originalTransferBankName, setOriginalTransferBankName] = useState('');
   const [transferBankVisible, setTransferBankVisibleState] = useState(true);
   const [originalTransferBankVisible, setOriginalTransferBankVisible] = useState(true);
+  const [flexPayTransferBankHolder, setFlexPayTransferBankHolder] = useState('');
+  const [originalFlexPayTransferBankHolder, setOriginalFlexPayTransferBankHolder] = useState('');
+  const [flexPayTransferBankNumber, setFlexPayTransferBankNumber] = useState('');
+  const [originalFlexPayTransferBankNumber, setOriginalFlexPayTransferBankNumber] = useState('');
+  const [flexPayTransferBankName, setFlexPayTransferBankName] = useState('');
+  const [originalFlexPayTransferBankName, setOriginalFlexPayTransferBankName] = useState('');
+  const [flexPayTransferBankVisible, setFlexPayTransferBankVisibleState] = useState(true);
+  const [originalFlexPayTransferBankVisible, setOriginalFlexPayTransferBankVisible] = useState(true);
   const [bulkTransferWorkbookLimitSaveError, setBulkTransferWorkbookLimitSaveError] =
     useState<string | null>(null);
 
@@ -138,6 +168,18 @@ export function useSettingsForm(): SettingsFormState {
       );
       const transferBankVisibleSetting = settings.find(
         (s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_VISIBLE,
+      );
+      const flexPayTransferBankHolderSetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_HOLDER,
+      );
+      const flexPayTransferBankNumberSetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_NUMBER,
+      );
+      const flexPayTransferBankNameSetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_NAME,
+      );
+      const flexPayTransferBankVisibleSetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_VISIBLE,
       );
 
       if (weeklySetting?.value) {
@@ -180,6 +222,35 @@ export function useSettingsForm(): SettingsFormState {
       const bankVisible = rawBankVisible === undefined || rawBankVisible === '' || rawBankVisible === 'true';
       setTransferBankVisibleState(bankVisible);
       setOriginalTransferBankVisible(bankVisible);
+
+      // FlexPay rows mirror the backend fallback: an unset (or empty) FlexPay
+      // field shows the weekly payroll account so admins see what is currently
+      // printed before saving a FlexPay-only override.
+      const flexPayHolder =
+        flexPayTransferBankHolderSetting?.value ||
+        transferBankHolderSetting?.value ||
+        TRANSFER_BANK_DEFAULTS.HOLDER;
+      const flexPayNumber =
+        flexPayTransferBankNumberSetting?.value ||
+        transferBankNumberSetting?.value ||
+        TRANSFER_BANK_DEFAULTS.NUMBER;
+      const flexPayName =
+        flexPayTransferBankNameSetting?.value ||
+        transferBankNameSetting?.value ||
+        TRANSFER_BANK_DEFAULTS.NAME;
+      setFlexPayTransferBankHolder(flexPayHolder);
+      setOriginalFlexPayTransferBankHolder(flexPayHolder);
+      setFlexPayTransferBankNumber(flexPayNumber);
+      setOriginalFlexPayTransferBankNumber(flexPayNumber);
+      setFlexPayTransferBankName(flexPayName);
+      setOriginalFlexPayTransferBankName(flexPayName);
+      const rawFlexPayVisible = flexPayTransferBankVisibleSetting?.value?.trim().toLowerCase();
+      const flexPayVisible =
+        rawFlexPayVisible === undefined || rawFlexPayVisible === ''
+          ? bankVisible
+          : rawFlexPayVisible === 'true';
+      setFlexPayTransferBankVisibleState(flexPayVisible);
+      setOriginalFlexPayTransferBankVisible(flexPayVisible);
     }
   }, [settings]);
 
@@ -271,57 +342,57 @@ export function useSettingsForm(): SettingsFormState {
     }
   };
 
-  const handleSaveTransferBank = () => {
-    if (!settings || !Array.isArray(settings)) return;
-    const fields: Array<{
-      key: string;
-      value: string;
-      setting?: { id: number };
-    }> = [
-      { key: SETTINGS_KEYS.TRANSFER_BANK_HOLDER, value: transferBankHolder, setting: settings.find((s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_HOLDER) },
-      { key: SETTINGS_KEYS.TRANSFER_BANK_NUMBER, value: transferBankNumber, setting: settings.find((s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_NUMBER) },
-      { key: SETTINGS_KEYS.TRANSFER_BANK_NAME, value: transferBankName, setting: settings.find((s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_NAME) },
-    ];
-    for (const field of fields) {
-      if (field.setting?.id) {
-        updateMutation.mutate(
-          { id: field.setting.id, data: { value: field.value } },
-          { onSuccess: () => {
-            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_HOLDER) setOriginalTransferBankHolder(field.value);
-            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_NUMBER) setOriginalTransferBankNumber(field.value);
-            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_NAME) setOriginalTransferBankName(field.value);
-          } },
-        );
-      } else {
-        // Row does not exist yet (e.g. first save on an environment where the
-        // key was never seeded) — create it.
-        createMutation.mutate(
-          { key: field.key, value: field.value, value_type: 'string' },
-          { onSuccess: () => {
-            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_HOLDER) setOriginalTransferBankHolder(field.value);
-            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_NUMBER) setOriginalTransferBankNumber(field.value);
-            if (field.key === SETTINGS_KEYS.TRANSFER_BANK_NAME) setOriginalTransferBankName(field.value);
-          } },
-        );
-      }
+  // Upserts one string setting. The row may not exist yet on an environment
+  // where the key was never seeded, so a miss creates it.
+  const upsertStringSetting = (key: string, value: string, onSaved: () => void) => {
+    const setting = settings?.find((s) => s?.key === key);
+    if (setting?.id) {
+      updateMutation.mutate({ id: setting.id, data: { value } }, { onSuccess: onSaved });
+    } else {
+      createMutation.mutate({ key, value, value_type: 'string' }, { onSuccess: onSaved });
     }
   };
 
+  const upsertVisibleSetting = (key: string, visible: boolean, onSaved: () => void) => {
+    upsertStringSetting(key, visible ? 'true' : 'false', onSaved);
+  };
+
+  const handleSaveTransferBank = () => {
+    upsertStringSetting(SETTINGS_KEYS.TRANSFER_BANK_HOLDER, transferBankHolder, () =>
+      setOriginalTransferBankHolder(transferBankHolder),
+    );
+    upsertStringSetting(SETTINGS_KEYS.TRANSFER_BANK_NUMBER, transferBankNumber, () =>
+      setOriginalTransferBankNumber(transferBankNumber),
+    );
+    upsertStringSetting(SETTINGS_KEYS.TRANSFER_BANK_NAME, transferBankName, () =>
+      setOriginalTransferBankName(transferBankName),
+    );
+  };
+
   const handleSaveTransferBankVisible = () => {
-    if (!settings || !Array.isArray(settings)) return;
-    const setting = settings.find((s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_VISIBLE);
-    const value = transferBankVisible ? 'true' : 'false';
-    if (setting?.id) {
-      updateMutation.mutate(
-        { id: setting.id, data: { value } },
-        { onSuccess: () => setOriginalTransferBankVisible(transferBankVisible) },
-      );
-    } else {
-      createMutation.mutate(
-        { key: SETTINGS_KEYS.TRANSFER_BANK_VISIBLE, value, value_type: 'string' },
-        { onSuccess: () => setOriginalTransferBankVisible(transferBankVisible) },
-      );
-    }
+    upsertVisibleSetting(SETTINGS_KEYS.TRANSFER_BANK_VISIBLE, transferBankVisible, () =>
+      setOriginalTransferBankVisible(transferBankVisible),
+    );
+  };
+
+  const handleSaveFlexPayTransferBank = () => {
+    upsertStringSetting(SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_HOLDER, flexPayTransferBankHolder, () =>
+      setOriginalFlexPayTransferBankHolder(flexPayTransferBankHolder),
+    );
+    upsertStringSetting(SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_NUMBER, flexPayTransferBankNumber, () =>
+      setOriginalFlexPayTransferBankNumber(flexPayTransferBankNumber),
+    );
+    upsertStringSetting(SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_NAME, flexPayTransferBankName, () =>
+      setOriginalFlexPayTransferBankName(flexPayTransferBankName),
+    );
+  };
+
+  const handleSaveFlexPayTransferBankVisible = () => {
+    upsertVisibleSetting(
+      SETTINGS_KEYS.FLEXPAY_TRANSFER_BANK_VISIBLE,
+      flexPayTransferBankVisible,
+      () => setOriginalFlexPayTransferBankVisible(flexPayTransferBankVisible),
+    );
   };
 
   const retryLoading = () => {
@@ -351,6 +422,14 @@ export function useSettingsForm(): SettingsFormState {
     originalTransferBankName,
     transferBankVisible,
     originalTransferBankVisible,
+    flexPayTransferBankHolder,
+    originalFlexPayTransferBankHolder,
+    flexPayTransferBankNumber,
+    originalFlexPayTransferBankNumber,
+    flexPayTransferBankName,
+    originalFlexPayTransferBankName,
+    flexPayTransferBankVisible,
+    originalFlexPayTransferBankVisible,
     loadError,
     // Covers both save paths: a missing settings row (e.g. the not-yet-seeded
     // transfer_bank_visible toggle) is created, an existing one updated.
@@ -366,6 +445,10 @@ export function useSettingsForm(): SettingsFormState {
     setTransferBankNumber,
     setTransferBankName,
     setTransferBankVisible: setTransferBankVisibleState,
+    setFlexPayTransferBankHolder,
+    setFlexPayTransferBankNumber,
+    setFlexPayTransferBankName,
+    setFlexPayTransferBankVisible: setFlexPayTransferBankVisibleState,
     handleSaveWeeklyPayment,
     handleSaveMonthlyPayment,
     handleSavePartnerCompany,
@@ -374,6 +457,8 @@ export function useSettingsForm(): SettingsFormState {
     handleSaveSelfCheckInAdvanceHoldHours,
     handleSaveTransferBank,
     handleSaveTransferBankVisible,
+    handleSaveFlexPayTransferBank,
+    handleSaveFlexPayTransferBankVisible,
     retryLoading,
   };
 }

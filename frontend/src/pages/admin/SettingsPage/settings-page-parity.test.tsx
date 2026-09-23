@@ -26,6 +26,16 @@ const mocks = vi.hoisted(() => ({
     originalTransferBankNumber: '271866699',
     transferBankName: 'Ngân hàng Quân đội (MB)',
     originalTransferBankName: 'Ngân hàng Quân đội (MB)',
+    transferBankVisible: true,
+    originalTransferBankVisible: true,
+    flexPayTransferBankHolder: 'CONG TY FLEXPAY',
+    originalFlexPayTransferBankHolder: 'CONG TY FLEXPAY',
+    flexPayTransferBankNumber: '444555666',
+    originalFlexPayTransferBankNumber: '444555666',
+    flexPayTransferBankName: 'Ngân hàng FlexPay',
+    originalFlexPayTransferBankName: 'Ngân hàng FlexPay',
+    flexPayTransferBankVisible: true,
+    originalFlexPayTransferBankVisible: true,
     bulkTransferWorkbookLimitSaveError: null,
     bulkTransferWorkbookLimitUnavailableMessage: null,
     loadError: null as string | null,
@@ -40,6 +50,11 @@ const mocks = vi.hoisted(() => ({
     setTransferBankHolder: vi.fn(),
     setTransferBankNumber: vi.fn(),
     setTransferBankName: vi.fn(),
+    setTransferBankVisible: vi.fn(),
+    setFlexPayTransferBankHolder: vi.fn(),
+    setFlexPayTransferBankNumber: vi.fn(),
+    setFlexPayTransferBankName: vi.fn(),
+    setFlexPayTransferBankVisible: vi.fn(),
     handleSaveWeeklyPayment: vi.fn(),
     handleSaveMonthlyPayment: vi.fn(),
     handleSavePartnerCompany: vi.fn(),
@@ -47,6 +62,9 @@ const mocks = vi.hoisted(() => ({
     handleSaveSelfCheckInAdvancePercentage: vi.fn(),
     handleSaveSelfCheckInAdvanceHoldHours: vi.fn(),
     handleSaveTransferBank: vi.fn(),
+    handleSaveTransferBankVisible: vi.fn(),
+    handleSaveFlexPayTransferBank: vi.fn(),
+    handleSaveFlexPayTransferBankVisible: vi.fn(),
     retryLoading: vi.fn(),
   },
 }));
@@ -138,18 +156,22 @@ describe.each([
     expect(holdInput).toHaveAttribute('step', '1');
   });
 
-  it('keeps the transfer account settings available in both responsive views', () => {
+  it('keeps both transfer account settings available in both responsive views', () => {
     render(
       <MemoryRouter>
         <PageComponent />
       </MemoryRouter>,
     );
 
-    expect(screen.getByLabelText('Chủ tài khoản')).toHaveValue(
+    expect(screen.getByLabelText('Chủ tài khoản lương tuần')).toHaveValue(
       'CONG TY TNHH MTV GPPM TING TING',
     );
-    expect(screen.getByLabelText('Số tài khoản')).toHaveValue('271866699');
-    expect(screen.getByLabelText('Ngân hàng')).toHaveValue('Ngân hàng Quân đội (MB)');
+    expect(screen.getByLabelText('Số tài khoản lương tuần')).toHaveValue('271866699');
+    expect(screen.getByLabelText('Ngân hàng lương tuần')).toHaveValue('Ngân hàng Quân đội (MB)');
+
+    expect(screen.getByLabelText('Chủ tài khoản FlexPay')).toHaveValue('CONG TY FLEXPAY');
+    expect(screen.getByLabelText('Số tài khoản FlexPay')).toHaveValue('444555666');
+    expect(screen.getByLabelText('Ngân hàng FlexPay')).toHaveValue('Ngân hàng FlexPay');
   });
 
   it('shows a page-level retry state when any required setting cannot load', () => {

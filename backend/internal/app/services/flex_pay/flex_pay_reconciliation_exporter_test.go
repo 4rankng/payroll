@@ -15,10 +15,12 @@ import (
 	"testing"
 	"time"
 
+	appconfig "api-server/internal/app/services/config"
 	"api-server/internal/domain"
 	domainServices "api-server/internal/domain/services"
 
 	"github.com/stretchr/testify/require"
+	"github.com/xuri/excelize/v2"
 )
 
 var testMCIgnorablePattern = regexp.MustCompile(`\s+mc:Ignorable="([^"]*)"`)
@@ -198,4 +200,70 @@ func chdirBackendRoot(t *testing.T) {
 	t.Cleanup(func() {
 		require.NoError(t, os.Chdir(previousWD))
 	})
+}
+
+// stubFlexPayBankProvider feeds the exporter a FlexPay-only beneficiary so the
+// test proves the FlexPay statement reads its own account, not the weekly one.
+type stubFlexPayBankProvider struct {
+	info appconfig.TransferBankInfo
+}
+
+func (s stubFlexPayBankProvider) GetFlexPayTransferBankInfo(context.Context) appconfig.TransferBankInfo {
+	return s.info
+}
+
+func TestFlexPayExcelShowsConfiguredBank(t *testing.T) {
+	chdirBackendRoot(t)
+
+	reportData := []*domainServices.ProjectFlexPayReportData{
+		{Project: &domain.Project{ID: 1, Name: "Dự án A"}, TotalAmount: 500_000, RequestIDs: []uint{1}},
+	}
+	provider := stubFlexPayBankProvider{info: appconfig.TransferBankInfo{
+		Holder: "CONG TY FLEXPAY",
+		Number: "444555666",
+		Name:   "Ngân hàng FlexPay",
+	}}
+	out, _, err := NewFlexPayReconciliationExporter(provider).GenerateExcel(
+		context.Background(), reportData, time.Date(2026, time.August, 19, 0, 0, 0, 0, time.UTC),
+	)
+	require.NoError(t, err)
+
+	f, err := excelize.OpenReader(bytes.NewReader(out))
+	require.NoError(t, err)
+	defer func() { _ = f.Close() }()
+
+	for cell, want := range map[string]string{
+		"E8":  "CONG TY FLEXPAY",
+		"E9":  "444555666",
+		"E10": "Ngân hàng FlexPay",
+	} {
+		got, err := f.GetCellValue("Summary", cell)
+		require.NoErrorf(t, err, "read %s", cell)
+		require.Equalf(t, want, got, "Summary!%s", cell)
+	}
+}
+
+// TestFlexPayEmailUsesFlexPayAccount exercises the same composition the manual
+// reconciliation handler uses: the exporter's BankInfoForStatement feeds
+// BuildSaoKeEmailBodies. The statement email must print the FlexPay account,
+// not the weekly payroll one.
+func TestFlexPayEmailUsesFlexPayAccount(t *testing.T) {
+	provider := stubFlexPayBankProvider{info: appconfig.TransferBankInfo{
+		Holder: "CONG TY FLEXPAY",
+		Number: "444555666",
+		Name:   "Ngân hàng FlexPay",
+	}}
+	exporter := NewFlexPayReconciliationExporter(provider)
+
+	htmlBody, textBody := BuildSaoKeEmailBodies(
+		"2026-06", "31/07/2026", "118.110.000 đ", exporter.BankInfoForStatement(context.Background()),
+	)
+
+	for _, body := range []string{htmlBody, textBody} {
+		for _, want := range []string{"CONG TY FLEXPAY", "444555666", "Ngân hàng FlexPay"} {
+			require.Containsf(t, body, want, "FlexPay statement email must print the FlexPay account")
+		}
+		require.NotContains(t, body, appconfig.DefaultTransferBankHolder,
+			"FlexPay statement email must not fall back to the weekly account")
+	}
 }

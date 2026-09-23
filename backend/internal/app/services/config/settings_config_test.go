@@ -347,3 +347,51 @@ func TestGetTransferBankInfoFallsBackToDefaults(t *testing.T) {
 	assert.Equal(t, DefaultTransferBankName, info.Name)
 	assert.False(t, info.Hidden, "missing toggle row must default to visible")
 }
+
+func TestGetFlexPayTransferBankInfoUsesItsOwnKeys(t *testing.T) {
+	service := NewSettingsConfigService(&keyedStubSettingReader{values: map[string]string{
+		SettingKeyTransferBankHolder:         "CONG TY LUONG TUAN",
+		SettingKeyTransferBankNumber:         "111222333",
+		SettingKeyTransferBankName:           "Ngân hàng Tuần",
+		SettingKeyFlexPayTransferBankHolder:  "CONG TY FLEXPAY",
+		SettingKeyFlexPayTransferBankNumber:  "444555666",
+		SettingKeyFlexPayTransferBankName:    "Ngân hàng FlexPay",
+		SettingKeyFlexPayTransferBankVisible: "false",
+	}})
+
+	weekly := service.GetTransferBankInfo(context.Background())
+	assert.Equal(t, "CONG TY LUONG TUAN", weekly.Holder)
+	assert.Equal(t, "111222333", weekly.Number)
+	assert.False(t, weekly.Hidden, "the weekly block stays visible")
+
+	flexPay := service.GetFlexPayTransferBankInfo(context.Background())
+	assert.Equal(t, "CONG TY FLEXPAY", flexPay.Holder)
+	assert.Equal(t, "444555666", flexPay.Number)
+	assert.Equal(t, "Ngân hàng FlexPay", flexPay.Name)
+	assert.True(t, flexPay.Hidden, "flexpay_transfer_bank_visible=false must hide only the FlexPay block")
+}
+
+func TestGetFlexPayTransferBankInfoFallsBackToWeeklyAccount(t *testing.T) {
+	service := NewSettingsConfigService(&keyedStubSettingReader{values: map[string]string{
+		SettingKeyTransferBankHolder:  "CONG TY LUONG TUAN",
+		SettingKeyTransferBankNumber:  "111222333",
+		SettingKeyTransferBankName:    "Ngân hàng Tuần",
+		SettingKeyTransferBankVisible: "false",
+	}})
+
+	info := service.GetFlexPayTransferBankInfo(context.Background())
+	assert.Equal(t, "CONG TY LUONG TUAN", info.Holder)
+	assert.Equal(t, "111222333", info.Number)
+	assert.Equal(t, "Ngân hàng Tuần", info.Name)
+	assert.True(t, info.Hidden, "an unconfigured FlexPay block mirrors the weekly visibility")
+}
+
+func TestGetFlexPayTransferBankInfoFallsBackToDefaults(t *testing.T) {
+	service := NewSettingsConfigService(&stubSettingReader{setting: nil, err: errors.New("not found")})
+
+	info := service.GetFlexPayTransferBankInfo(context.Background())
+	assert.Equal(t, DefaultTransferBankHolder, info.Holder)
+	assert.Equal(t, DefaultTransferBankNumber, info.Number)
+	assert.Equal(t, DefaultTransferBankName, info.Name)
+	assert.False(t, info.Hidden)
+}

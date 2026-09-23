@@ -26,6 +26,14 @@ const (
 	SettingKeyTransferBankNumber        = "transfer_bank_account_number"
 	SettingKeyTransferBankName          = "transfer_bank_name"
 	SettingKeyTransferBankVisible       = "transfer_bank_visible"
+
+	// FlexPay (OnePay early-salary) reconciliation statements print their own
+	// beneficiary account, configured separately from the weekly payroll
+	// statement account above.
+	SettingKeyFlexPayTransferBankHolder  = "flexpay_transfer_bank_account_holder"
+	SettingKeyFlexPayTransferBankNumber  = "flexpay_transfer_bank_account_number"
+	SettingKeyFlexPayTransferBankName    = "flexpay_transfer_bank_name"
+	SettingKeyFlexPayTransferBankVisible = "flexpay_transfer_bank_visible"
 )
 
 // TransferBankInfo carries the beneficiary identity printed on payroll
@@ -507,15 +515,47 @@ func (s *SettingsConfigService) getTransferBankString(ctx context.Context, key, 
 }
 
 // GetTransferBankInfo retrieves the beneficiary bank details printed on
-// payroll statement emails and Excel attachments, plus the visibility flag.
-// Unconfigured rows fall back to the MB bank defaults; the visibility flag
-// defaults to true.
+// weekly payroll statement emails and Excel attachments, plus the visibility
+// flag. Unconfigured rows fall back to the MB bank defaults; the visibility
+// flag defaults to true.
 func (s *SettingsConfigService) GetTransferBankInfo(ctx context.Context) TransferBankInfo {
+	return s.getTransferBankInfo(ctx,
+		SettingKeyTransferBankHolder,
+		SettingKeyTransferBankNumber,
+		SettingKeyTransferBankName,
+		SettingKeyTransferBankVisible,
+		DefaultTransferBankInfo(),
+	)
+}
+
+// GetFlexPayTransferBankInfo retrieves the beneficiary bank details printed on
+// FlexPay (OnePay early-salary) reconciliation statements — email body and
+// Excel attachment. Each field falls back to the weekly payroll account when
+// its own row is unset, so environments that never configured a separate
+// FlexPay account keep printing exactly what they printed before the two
+// accounts were split.
+func (s *SettingsConfigService) GetFlexPayTransferBankInfo(ctx context.Context) TransferBankInfo {
+	return s.getTransferBankInfo(ctx,
+		SettingKeyFlexPayTransferBankHolder,
+		SettingKeyFlexPayTransferBankNumber,
+		SettingKeyFlexPayTransferBankName,
+		SettingKeyFlexPayTransferBankVisible,
+		s.GetTransferBankInfo(ctx),
+	)
+}
+
+// getTransferBankInfo resolves one beneficiary block from its four setting
+// keys, using fallback for every row that is missing or empty.
+func (s *SettingsConfigService) getTransferBankInfo(
+	ctx context.Context,
+	holderKey, numberKey, nameKey, visibleKey string,
+	fallback TransferBankInfo,
+) TransferBankInfo {
 	return TransferBankInfo{
-		Holder: s.getTransferBankString(ctx, SettingKeyTransferBankHolder, DefaultTransferBankHolder),
-		Number: s.getTransferBankString(ctx, SettingKeyTransferBankNumber, DefaultTransferBankNumber),
-		Name:   s.getTransferBankString(ctx, SettingKeyTransferBankName, DefaultTransferBankName),
-		Hidden: !s.getTransferBankBool(ctx, SettingKeyTransferBankVisible, true),
+		Holder: s.getTransferBankString(ctx, holderKey, fallback.Holder),
+		Number: s.getTransferBankString(ctx, numberKey, fallback.Number),
+		Name:   s.getTransferBankString(ctx, nameKey, fallback.Name),
+		Hidden: !s.getTransferBankBool(ctx, visibleKey, !fallback.Hidden),
 	}
 }
 

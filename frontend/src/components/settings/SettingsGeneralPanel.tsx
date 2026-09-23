@@ -242,12 +242,12 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
 
     <SettingsSection
       icon={Landmark}
-      title="Tài khoản nhận chuyển khoản"
-      description="Thông tin thụ hưởng in trên email sao kê và file Excel đính kèm."
+      title="Tài khoản nhận chuyển khoản lương tuần"
+      description="Thông tin thụ hưởng in trên email sao kê lương tuần và file Excel đính kèm."
     >
       <SettingToggleCard
-        title="Hiện tài khoản nhận chuyển khoản"
-        description="Khi tắt, sao kê (email và file Excel) chỉ là thông báo đối chiếu, không kèm thông tin chuyển khoản."
+        title="Hiện tài khoản nhận chuyển khoản lương tuần"
+        description="Khi tắt, sao kê lương tuần (email và file Excel) chỉ là thông báo đối chiếu, không kèm thông tin chuyển khoản."
         checked={form.transferBankVisible}
         originalChecked={form.originalTransferBankVisible}
         onCheckedChange={form.setTransferBankVisible}
@@ -256,8 +256,8 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
         isSaving={form.isSaving}
       />
       <SettingCard
-        title="Chủ tài khoản"
-        description="Tên chủ tài khoản thụ hưởng in trên sao kê."
+        title="Chủ tài khoản lương tuần"
+        description="Tên chủ tài khoản thụ hưởng in trên sao kê lương tuần."
         value={form.transferBankHolder}
         originalValue={form.originalTransferBankHolder}
         onChange={form.setTransferBankHolder}
@@ -267,8 +267,8 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
         isSaving={form.isSaving}
       />
       <SettingCard
-        title="Số tài khoản"
-        description="Số tài khoản nhận chuyển khoản in trên sao kê."
+        title="Số tài khoản lương tuần"
+        description="Số tài khoản nhận chuyển khoản in trên sao kê lương tuần."
         value={form.transferBankNumber}
         originalValue={form.originalTransferBankNumber}
         onChange={form.setTransferBankNumber}
@@ -279,14 +279,69 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
         displayMode="account-number"
       />
       <SettingCard
-        title="Ngân hàng"
-        description="Tên ngân hàng nhận chuyển khoản in trên sao kê."
+        title="Ngân hàng lương tuần"
+        description="Tên ngân hàng nhận chuyển khoản in trên sao kê lương tuần."
         value={form.transferBankName}
         originalValue={form.originalTransferBankName}
         onChange={form.setTransferBankName}
         onSave={form.handleSaveTransferBank}
         onReset={() => form.setTransferBankName(form.originalTransferBankName)}
         isDirty={form.transferBankName !== form.originalTransferBankName}
+        isSaving={form.isSaving}
+      />
+    </SettingsSection>
+
+    <SettingsSection
+      icon={Landmark}
+      title="Tài khoản nhận chuyển khoản FlexPay (OnePay)"
+      description="Thông tin thụ hưởng in trên email sao kê FlexPay và file Excel đối chiếu đính kèm. Để trống sẽ dùng chung tài khoản lương tuần."
+    >
+      <SettingToggleCard
+        title="Hiện tài khoản nhận chuyển khoản FlexPay"
+        description="Khi tắt, sao kê FlexPay (email và file Excel) chỉ là thông báo đối chiếu, không kèm thông tin chuyển khoản."
+        checked={form.flexPayTransferBankVisible}
+        originalChecked={form.originalFlexPayTransferBankVisible}
+        onCheckedChange={form.setFlexPayTransferBankVisible}
+        onSave={form.handleSaveFlexPayTransferBankVisible}
+        onReset={() => form.setFlexPayTransferBankVisible(form.originalFlexPayTransferBankVisible)}
+        isSaving={form.isSaving}
+      />
+      <SettingCard
+        title="Chủ tài khoản FlexPay"
+        description="Tên chủ tài khoản thụ hưởng in trên sao kê FlexPay."
+        value={form.flexPayTransferBankHolder}
+        originalValue={form.originalFlexPayTransferBankHolder}
+        onChange={form.setFlexPayTransferBankHolder}
+        onSave={form.handleSaveFlexPayTransferBank}
+        onReset={() =>
+          form.setFlexPayTransferBankHolder(form.originalFlexPayTransferBankHolder)
+        }
+        isDirty={form.flexPayTransferBankHolder !== form.originalFlexPayTransferBankHolder}
+        isSaving={form.isSaving}
+      />
+      <SettingCard
+        title="Số tài khoản FlexPay"
+        description="Số tài khoản nhận chuyển khoản in trên sao kê FlexPay."
+        value={form.flexPayTransferBankNumber}
+        originalValue={form.originalFlexPayTransferBankNumber}
+        onChange={form.setFlexPayTransferBankNumber}
+        onSave={form.handleSaveFlexPayTransferBank}
+        onReset={() =>
+          form.setFlexPayTransferBankNumber(form.originalFlexPayTransferBankNumber)
+        }
+        isDirty={form.flexPayTransferBankNumber !== form.originalFlexPayTransferBankNumber}
+        isSaving={form.isSaving}
+        displayMode="account-number"
+      />
+      <SettingCard
+        title="Ngân hàng FlexPay"
+        description="Tên ngân hàng nhận chuyển khoản in trên sao kê FlexPay."
+        value={form.flexPayTransferBankName}
+        originalValue={form.originalFlexPayTransferBankName}
+        onChange={form.setFlexPayTransferBankName}
+        onSave={form.handleSaveFlexPayTransferBank}
+        onReset={() => form.setFlexPayTransferBankName(form.originalFlexPayTransferBankName)}
+        isDirty={form.flexPayTransferBankName !== form.originalFlexPayTransferBankName}
         isSaving={form.isSaving}
       />
     </SettingsSection>
