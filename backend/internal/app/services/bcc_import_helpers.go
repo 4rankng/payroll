@@ -187,7 +187,10 @@ func applySTKBankFields(emp *domain.Employee, row excelparser.STKRow, bankID *ui
 
 	emp.BankID = bankID
 	emp.BankAccountNumber = row.BankAccount
-	emp.BankAccountName = strings.ToUpper(strings.TrimSpace(fullName))
+	// An empty holder name in the sheet must not clear the stored one.
+	if synthesizedName := strings.ToUpper(strings.TrimSpace(fullName)); synthesizedName != "" {
+		emp.BankAccountName = synthesizedName
+	}
 }
 
 // buildSTKBankUpdates returns a complete targeted update when an STK row
@@ -222,7 +225,10 @@ func buildSTKBankUpdates(
 
 	updates := map[string]any{
 		"bank_account_number": accountNumber,
-		"bank_account_name":   accountName,
+	}
+	// An empty synthesized holder name must not wipe the stored one.
+	if accountName != "" {
+		updates["bank_account_name"] = accountName
 	}
 	if bankNameProvided && bankID == nil {
 		// A supplied but unknown bank is authoritative evidence that the old

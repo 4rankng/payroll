@@ -189,6 +189,85 @@ func TestEmployeeUpdate_ExcelImportOverwritesEmployeeFields(t *testing.T) {
 	}
 }
 
+// TestEmployeeUpdate_EmptyExcelCellsNeverWipe pins the no-wipe rule: a row
+// whose cells are empty must not blank out stored employee info. Mirrors the
+// FlexPay importer's guards: fullname and mobile only overwrite when the cell
+// is non-empty, the account name only when its own cell is non-empty, and the
+// bank only when the workbook names one that resolves.
+func TestEmployeeUpdate_EmptyExcelCellsNeverWipe(t *testing.T) {
+	gormDB := newBankSyncTestDB(t)
+	repo := NewEmployeeRepository(&Database{DB: gormDB})
+	ctx := context.Background()
+
+	oldBank := &domain.Bank{BranchName: "Hàng hải (MSB)", BankCode: "MSB"}
+	if err := gormDB.Create(oldBank).Error; err != nil {
+		t.Fatalf("seed bank: %v", err)
+	}
+	employee := &domain.Employee{
+		Fullname:          "Nguyễn Văn Nguyên",
+		CCCD:              "034203013000",
+		BankID:            &oldBank.ID,
+		BankAccountNumber: "0000000000",
+		BankAccountName:   "NGUYEN VAN NGUYEN",
+		Mobile:            "0900000000",
+	}
+	if err := gormDB.Create(employee).Error; err != nil {
+		t.Fatalf("seed employee: %v", err)
+	}
+
+	loaded, err := repo.GetByCCCD(ctx, employee.CCCD)
+	if err != nil {
+		t.Fatalf("GetByCCCD: %v", err)
+	}
+
+	// Import row: only the account number is filled; every other cell is empty
+	// and the bank name does not resolve. Values come through variables so the
+	// guards below read exactly like the importer's.
+	const newAccountNumber = "0347921581"
+	var (
+		excelFullname    string // empty cell
+		excelAccountName string // empty cell
+		excelMobile      string // empty cell
+	)
+	if excelFullname != "" {
+		loaded.Fullname = excelFullname
+	}
+	if newAccountNumber != "" {
+		loaded.BankAccountNumber = newAccountNumber
+		if excelAccountName != "" {
+			loaded.BankAccountName = excelAccountName
+		}
+	}
+	if excelMobile != "" {
+		loaded.Mobile = excelMobile
+	}
+	// resolveBankID("") → nil → BankID untouched.
+
+	if err := repo.Update(ctx, loaded); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	var after domain.Employee
+	if err := gormDB.First(&after, employee.ID).Error; err != nil {
+		t.Fatalf("reload: %v", err)
+	}
+	if after.BankAccountNumber != newAccountNumber {
+		t.Fatalf("account number should follow the Excel: got %q", after.BankAccountNumber)
+	}
+	if after.BankAccountName != "NGUYEN VAN NGUYEN" {
+		t.Fatalf("empty account-name cell wiped the stored holder name: got %q", after.BankAccountName)
+	}
+	if after.Fullname != "Nguyễn Văn Nguyên" {
+		t.Fatalf("empty fullname cell wiped the stored name: got %q", after.Fullname)
+	}
+	if after.Mobile != "0900000000" {
+		t.Fatalf("empty mobile cell wiped the stored mobile: got %q", after.Mobile)
+	}
+	if after.BankID == nil || *after.BankID != oldBank.ID {
+		t.Fatalf("unresolved bank name must leave the stored bank alone: got bank_id=%v", after.BankID)
+	}
+}
+
 // TestEmployeeUpdate_KeepsBankIDWhenAssociationUnchanged pins the flip side:
 // an Update that does not touch banking fields must not clear or alter the
 // stored bank_id just because an association happens to be (or not be) loaded.

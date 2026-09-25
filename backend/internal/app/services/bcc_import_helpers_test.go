@@ -145,6 +145,18 @@ func TestBuildSTKBankUpdates(t *testing.T) {
 		assert.Nil(t, updates)
 	})
 
+	t.Run("empty synthesized holder name is not written", func(t *testing.T) {
+		updates := buildSTKBankUpdates(
+			employee,
+			excelparser.STKRow{BankAccount: "987654321"},
+			nil,
+			"",
+		)
+
+		assert.Equal(t, "987654321", updates["bank_account_number"])
+		assert.NotContains(t, updates, "bank_account_name")
+	})
+
 	t.Run("provided but unresolved bank clears the stale bank relation", func(t *testing.T) {
 		updates := buildSTKBankUpdates(
 			employee,

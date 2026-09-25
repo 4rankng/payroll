@@ -437,7 +437,10 @@ func (s *Service) getOrCreateEmployee(ctx context.Context, cccd, name, accountNu
 		// Update bank info if account number is different or provided
 		if accountNumber != "" {
 			employee.BankAccountNumber = accountNumber
-			employee.BankAccountName = accountName
+			// Empty account-name cell must not wipe the stored holder name.
+			if accountName != "" {
+				employee.BankAccountName = accountName
+			}
 			bankID := s.resolveBankID(ctx, bankName)
 			if bankID != nil {
 				employee.BankID = bankID
