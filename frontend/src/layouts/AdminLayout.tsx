@@ -5,7 +5,6 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationFAB } from "@/components/notifications/NotificationFAB";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
-import { SidebarToggle } from "@/components/SidebarToggle";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { useAuth } from "@/contexts";
 import { useIsMobile, useIsTablet } from "@/hooks/useBreakpoint";
@@ -63,7 +62,6 @@ const AdminLayoutInner = () => {
       }
     >
       <AdminSidebar />
-      <SidebarToggle />
       <div
         className={
           isMobile

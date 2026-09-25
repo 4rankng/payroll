@@ -5,7 +5,6 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationFAB } from "@/components/notifications/NotificationFAB";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
-import { SidebarToggle } from "@/components/SidebarToggle";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { Briefcase, Users, Calendar, LayoutDashboard } from "lucide-react";
 import type { NavGroup } from "@/components/MobileBottomNav";
@@ -32,7 +31,6 @@ const PartnerLayoutInner = ({ isPartner }: { isPartner: boolean }) => {
       className={isPartner ? "partner-shell-scope relative flex h-dvh w-full group/layout" : "relative flex h-dvh w-full group/layout"}
     >
       <PartnerSidebar />
-      <SidebarToggle />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <main
           id="main-content"

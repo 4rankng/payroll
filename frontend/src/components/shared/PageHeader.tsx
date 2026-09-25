@@ -1,7 +1,18 @@
 import { Button } from '@/components/ui/button';
+import { SidebarTrigger, useSidebarOptional } from '@/components/ui/sidebar';
 import { LucideIcon } from 'lucide-react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+
+/**
+ * Sidebar show/hide rendered inside every page header. Null-safe: outside a
+ * SidebarProvider (isolated tests) it renders nothing instead of throwing.
+ */
+function PageSidebarTrigger() {
+  const sidebar = useSidebarOptional();
+  if (!sidebar) return null;
+  return <SidebarTrigger className="h-8 w-8 shrink-0" />;
+}
 
 interface PageHeaderAction {
   label: string;
@@ -43,6 +54,8 @@ export const PageHeader = ({
       >
         <div className="min-w-0 flex-1 sm:min-w-64 sm:basis-64">
           <div className="flex items-center gap-2">
+              {/* Persistent sidebar show/hide — replaces the floating toggle tab */}
+              <PageSidebarTrigger />
               {Icon && (
                 <div data-slot="page-header-icon" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
                   <Icon className="h-4 w-4 text-muted-foreground" />
