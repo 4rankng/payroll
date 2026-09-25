@@ -42,9 +42,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 43% 11%;
 
-    /* Muted States - Sophisticated Grays */
+    /* Muted States - Sophisticated Grays
+       muted-foreground is the workhorse for 11-12px uppercase kickers and
+       metadata; keep it clearly readable (7:1), not just AA-compliant. */
     --muted: 216 24% 96%;             /* #f2f4f7 */
-    --muted-foreground: 220 13% 46%;  /* #667085 */
+    --muted-foreground: 220 18% 34%;  /* #475467 — 7.0:1 on white */
 
     /* Accents - Refined Neutrals */
     --accent: 145 54% 95%;             /* soft emerald */
@@ -231,7 +233,7 @@
     --admin-secondary: 36 73% 44%;
     --admin-secondary-foreground: 220 43% 11%;
     --admin-muted: 210 20% 95%;
-    --admin-muted-foreground: 145 13% 38%;
+    --admin-muted-foreground: 145 13% 27%;  /* deep green-gray, 8.4:1 on white */
     --admin-accent-soft: 148 38% 90%;
     --admin-accent-foreground: 151 46% 22%;
     --admin-border: 214 18% 88%;
@@ -280,7 +282,7 @@
     --partner-secondary: 36 73% 44%;
     --partner-secondary-foreground: 220 43% 11%;
     --partner-muted: 210 20% 95%;
-    --partner-muted-foreground: 145 13% 38%;
+    --partner-muted-foreground: 145 13% 27%;  /* deep green-gray, 8.4:1 on white */
     --partner-accent-soft: 148 38% 90%;
     --partner-accent-foreground: 151 46% 22%;
     --partner-border: 214 18% 88%;

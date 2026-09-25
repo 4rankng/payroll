@@ -492,7 +492,9 @@
 }
 
 [data-admin-ui] .admin-kicker {
-    color: hsl(var(--sidebar-foreground) / 0.62);
+    /* Was sidebar-foreground (near-white, for the dark sidebar) at 0.62 —
+       ~1.7:1 on white cards. Kickers sit on white; use the dark muted token. */
+    color: hsl(var(--admin-muted-foreground));
     font-size: 0.66rem;
     font-weight: 700;
     letter-spacing: 0.18em;
