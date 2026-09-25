@@ -188,6 +188,11 @@ type AdvancePaymentRequestRepository interface {
 	// gross amount already consuming it. The capacity is a ceiling for projected
 	// future demand, never a substitute for demand from actual requests.
 	GetCycleForecastState(ctx context.Context, forMonth string) (*AdvancePaymentCycleForecastState, error)
+	// GetCompletedDisbursedTotal returns the total already disbursed for one
+	// salary period: SUM(request_amount) over COMPLETED requests joined to
+	// advance_payments by for_month — the same figure the admin summary's
+	// "Giải ngân kỳ này" tile shows.
+	GetCompletedDisbursedTotal(ctx context.Context, forMonth string) (int64, error)
 }
 
 // CohortRow is one cell of the advance-payment request cohort matrix: the request

@@ -66,6 +66,10 @@ type AdvancePaymentRepository interface {
 	GetByEmployeeAndMonth(ctx context.Context, employeeID uint64, forMonth string) ([]*AdvancePayment, error)
 	GetMonthsByEmployee(ctx context.Context, employeeID uint64) ([]string, error)
 	SumMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error)
+	// HasForMonth reports whether a FlexPay upload (bảng công) has produced
+	// advance_payments rows for the given salary period — the deterministic
+	// switch between the quota-based and previous-cycle wallet forecast.
+	HasForMonth(ctx context.Context, forMonth string) (bool, error)
 	SumSalaryAndMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (salary, maxAdv uint64, err error)
 	// SumPendingEarningsByEmployeeMonth returns the total earning_amount held in
 	// the configured credit-hold window for the employee's month: checked-out attendances

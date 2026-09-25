@@ -747,6 +747,26 @@ func (r *AdvancePaymentRequestRepository) GetTotalPayableAmount(ctx context.Cont
 	return total, nil
 }
 
+// GetCompletedDisbursedTotal returns the total already disbursed for one
+// salary period: SUM(request_amount) over COMPLETED requests joined to
+// advance_payments by for_month. Deliberately mirrors the admin summary's
+// "Giải ngân kỳ này" tile (GetStatsSummary's total_amount) so the wallet
+// forecast reconciles with the number the operator sees beside it.
+func (r *AdvancePaymentRequestRepository) GetCompletedDisbursedTotal(ctx context.Context, forMonth string) (int64, error) {
+	var total int64
+	err := r.DB.WithContext(ctx).
+		Model(&domain.AdvancePaymentRequest{}).
+		Select("COALESCE(SUM(advance_payment_requests.request_amount), 0)").
+		Joins("JOIN advance_payments ap ON ap.id = advance_payment_requests.adv_pay_id").
+		Where("ap.for_month = ?", forMonth).
+		Where("advance_payment_requests.status = ?", domain.AdvancePaymentStatusCompleted).
+		Scan(&total).Error
+	if err != nil {
+		return 0, r.errorHandler.HandleGetError(err, "advance_payment_request", "completed_disbursed_total")
+	}
+	return total, nil
+}
+
 // ResetToPending atomically resets APPROVED requests back to PENDING.
 // Used by the poller when wallet balance is insufficient to process claimed requests.
 // Only resets requests that are still APPROVED (idempotent, safe for concurrent pollers).

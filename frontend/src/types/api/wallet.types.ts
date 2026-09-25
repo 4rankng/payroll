@@ -159,7 +159,14 @@ export interface WalletDemandPrediction {
   shortfall: number;
   surplus: number;
   completion_rate: number;
-  method: 'monte-carlo' | 'gamma-fit' | 'cohort-median' | 'avg-final' | 'no-history';
+  method:
+    | 'quota-based'
+    | 'prev-cycle'
+    | 'monte-carlo'
+    | 'gamma-fit'
+    | 'cohort-median'
+    | 'avg-final'
+    | 'no-history';
   confidence: 'high' | 'medium' | 'low';
   basis_periods: number;
   lead_days?: number;

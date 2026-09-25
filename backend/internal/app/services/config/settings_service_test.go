@@ -197,6 +197,10 @@ func (r *fakeQuotaRepoForUpdate) SumMaxAdvByEmployeeMonth(context.Context, uint6
 	panic("unexpected SumMaxAdvByEmployeeMonth call")
 }
 
+func (r *fakeQuotaRepoForUpdate) HasForMonth(context.Context, string) (bool, error) {
+	panic("unexpected HasForMonth call")
+}
+
 func (r *fakeQuotaRepoForUpdate) SumSalaryAndMaxAdvByEmployeeMonth(context.Context, uint64, string) (uint64, uint64, error) {
 	panic("unexpected SumSalaryAndMaxAdvByEmployeeMonth call")
 }

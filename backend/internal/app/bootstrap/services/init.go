@@ -548,7 +548,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	}
 
 	walletService := services.NewWalletService(repos.WalletTopup, repos.WalletPayment, disbursementRegistry)
-	walletDemandForecastService := services.NewWalletDemandForecastService(repos.AdvancePaymentRequest, walletService, clk, cfg.WalletForecast)
+	walletDemandForecastService := services.NewWalletDemandForecastService(repos.AdvancePaymentRequest, repos.AdvancePayment, walletService, clk, cfg.WalletForecast)
 	cashReadinessService := services.NewCashReadinessForecastService(
 		repos.Timesheet,
 		walletService,

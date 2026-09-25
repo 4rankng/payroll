@@ -26,6 +26,7 @@ const (
 // would re-introduce the wallet-balance-inflation bug.
 type WalletDemandForecastService struct {
 	requestRepo domain.AdvancePaymentRequestRepository
+	advPayRepo  domain.AdvancePaymentRepository
 	walletSvc   wallet.WalletService
 	clock       clock.Clock
 	cfg         config.WalletForecastConfig
@@ -35,6 +36,7 @@ type WalletDemandForecastService struct {
 // the real clock when nil.
 func NewWalletDemandForecastService(
 	requestRepo domain.AdvancePaymentRequestRepository,
+	advPayRepo domain.AdvancePaymentRepository,
 	walletSvc wallet.WalletService,
 	clk clock.Clock,
 	cfg config.WalletForecastConfig,
@@ -44,6 +46,7 @@ func NewWalletDemandForecastService(
 	}
 	return &WalletDemandForecastService{
 		requestRepo: requestRepo,
+		advPayRepo:  advPayRepo,
 		walletSvc:   walletSvc,
 		clock:       clk,
 		cfg:         cfg,
@@ -156,8 +159,38 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		CostOver:          s.cfg.CostOver,
 		UncertaintyFactor: s.cfg.UncertaintyFactor,
 	}
-	recommended, coverage := newsvendorRecommendation(cycleDist, sl)
-	recommended += knownUnpaid
+	_, coverage := newsvendorRecommendation(cycleDist, sl)
+
+	// Deterministic cash-prep rule (product decision 2026-09-25). The
+	// statistical pipeline above only feeds the reference ladder; the
+	// recommendation the operator acts on follows the bảng công state:
+	//
+	//   - uploaded for this kỳ  → total max quota − total already disbursed
+	//     (the quota is committed money, and completed payouts have left)
+	//   - not uploaded          → the previous kỳ's total disbursement
+	bangCongUploaded, err := s.advPayRepo.HasForMonth(ctx, currentForMonth)
+	if err != nil {
+		return nil, fmt.Errorf("kiểm tra bảng công đã tải cho kỳ %s: %w", currentForMonth, err)
+	}
+	disbursedMonth := currentForMonth
+	quotaMethod := "quota-based"
+	if !bangCongUploaded {
+		disbursedMonth = addMonths(currentForMonth, -1)
+		quotaMethod = "prev-cycle"
+	}
+	disbursedTotal, err := s.requestRepo.GetCompletedDisbursedTotal(ctx, disbursedMonth)
+	if err != nil {
+		return nil, fmt.Errorf("lấy tổng đã giải ngân kỳ %s: %w", disbursedMonth, err)
+	}
+	var requiredCash int64
+	if bangCongUploaded {
+		requiredCash = int64(cycleState.MaxAdvanceAmount) - disbursedTotal
+	} else {
+		requiredCash = disbursedTotal
+	}
+	requiredCash = max(int64(0), requiredCash)
+
+	recommended := requiredCash
 
 	// Pace-projection fields remain for API continuity. The recommendation and
 	// reference ladder above now use the same current-state conditioning signal.
@@ -208,8 +241,8 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 			Shortfall:           shortfall,
 			Surplus:             surplus,
 			CompletionRate:      rate,
-			Method:              cycleDist.method,
-			Confidence:          confidenceLabel(cycleDist),
+			Method:              quotaMethod,
+			Confidence:          "high",
 			BasisPeriods:        cycleDist.basisPeriods,
 			LeadDays:            leadDays,
 			HorizonCycleDay:     horizonCycleDay,

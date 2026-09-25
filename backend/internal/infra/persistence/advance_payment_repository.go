@@ -83,6 +83,21 @@ func (r *AdvancePaymentRepository) GetMonthsByEmployee(ctx context.Context, empl
 	return months, nil
 }
 
+// HasForMonth reports whether a FlexPay upload (bảng công) has produced
+// advance_payments rows for the given salary period.
+func (r *AdvancePaymentRepository) HasForMonth(ctx context.Context, forMonth string) (bool, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&domain.AdvancePayment{}).
+		Where("for_month = ?", forMonth).
+		Limit(1).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (r *AdvancePaymentRepository) SumMaxAdvByEmployeeMonth(ctx context.Context, employeeID uint64, forMonth string) (uint64, error) {
 	var result struct {
 		Total uint64

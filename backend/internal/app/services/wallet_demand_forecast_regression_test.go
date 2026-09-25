@@ -127,44 +127,51 @@ func TestForecastDistribution_SingleSpikeBasisKeepsRawLevel(t *testing.T) {
 	}
 }
 
-// TestWalletDemandForecast_RecommendationNotPinnedToQuotaCeiling replays the
-// full production input through the service with a fake repo and asserts the
-// recommendation stays an evidence-based figure: below the remaining quota
-// ceiling that the old pipeline saturated, and below the headline 1.5B the
-// admin flagged as impossible.
-func TestWalletDemandForecast_RecommendationNotPinnedToQuotaCeiling(t *testing.T) {
+// TestWalletDemandForecast_QuotaBasedRuleOnProdCohort replays the full
+// 2026-09-25 production input through the service and pins the deterministic
+// quota-based rule: the bảng công for 2026-09 IS uploaded (advance_payments
+// rows exist), so the recommendation is exactly quota − completed
+// disbursements, with the shortfall measured against the wallet balance.
+func TestWalletDemandForecast_QuotaBasedRuleOnProdCohort(t *testing.T) {
 	const quotaCeiling = uint64(2036704600)
-	const usedQuota = uint64(205385000)
 	const walletAvailable = int64(174141975)
+
+	// Completed 2026-09 rows in the fixture: 1.166.620 + 646.800 + 980.000 +
+	// 199.860.920 = 202.653.920 (the FAILED 8.053.920 row is excluded).
+	const completedDisbursed = int64(202653920)
 
 	now := time.Date(2026, 9, 25, 13, 45, 0, 0, clock.DefaultLocation)
 	repo := &walletDemandForecastRequestRepoStub{
 		rows: prodLGD2026Cohort(),
 		cycleState: domain.AdvancePaymentCycleForecastState{
 			MaxAdvanceAmount:  quotaCeiling,
-			UsedRequestAmount: usedQuota,
+			UsedRequestAmount: 205385000,
 		},
 	}
 	walletSvc := &walletDemandForecastWalletStub{balance: &walletdomain.WalletBalance{Available: walletAvailable}}
 
-	svc := NewWalletDemandForecastService(repo, walletSvc, clock.NewFake(now), config.WalletForecastConfig{
+	svc := NewWalletDemandForecastService(repo, &walletDemandForecastAdvPayRepoStub{rows: repo.rows}, walletSvc, clock.NewFake(now), config.WalletForecastConfig{
 		ServiceLevel:  0.95,
 		NSim:          5000,
 		HistoryMonths: 3,
 		LeadDays:      2,
 	})
 
-	resp, err := svc.GetDemandForecast(context.Background())
+	got, err := svc.GetDemandForecast(context.Background())
 	if err != nil {
 		t.Fatalf("GetDemandForecast: %v", err)
 	}
 
-	pred := resp.Prediction
-	remainingQuota := int64(quotaCeiling - usedQuota)
-	if pred.RecommendedBalance >= remainingQuota {
-		t.Fatalf("recommendation %d saturated the remaining quota %d — forecast is ceiling-pinned, not evidence-based", pred.RecommendedBalance, remainingQuota)
+	pred := got.Prediction
+	if pred.Method != "quota-based" {
+		t.Fatalf("Method = %q, want quota-based (bảng công uploaded for 2026-09)", pred.Method)
 	}
-	if pred.Shortfall >= 1_500_000_000 {
-		t.Fatalf("shortfall %d reproduces the impossible 'Cần nạp thêm 1.5 tỷ' headline", pred.Shortfall)
+	wantRecommended := int64(quotaCeiling) - completedDisbursed
+	if pred.RecommendedBalance != wantRecommended {
+		t.Fatalf("RecommendedBalance = %d, want quota − disbursed = %d", pred.RecommendedBalance, wantRecommended)
+	}
+	wantShortfall := wantRecommended - walletAvailable
+	if pred.Shortfall != wantShortfall {
+		t.Fatalf("Shortfall = %d, want %d", pred.Shortfall, wantShortfall)
 	}
 }
