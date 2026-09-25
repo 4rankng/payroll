@@ -22,8 +22,13 @@ func (h *AdvancePaymentHandler) ListAdvancePayments(c *gin.Context) {
 	if page < 1 {
 		page = 1
 	}
-	if pageSize < 1 || pageSize > 100 {
+	// Clamp instead of silently resetting: a client asking for 150 gets the
+	// maximum page (100), not a surprise 20.
+	if pageSize < 1 {
 		pageSize = 20
+	}
+	if pageSize > 100 {
+		pageSize = 100
 	}
 
 	filters := domain.AdvancePaymentRequestFilters{

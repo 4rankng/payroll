@@ -465,7 +465,8 @@ func (r *AdvancePaymentRequestRepository) applyFilters(query *gorm.DB, filters d
 		query = query.Where("advance_payment_requests.created_at >= ?", *filters.FromDate)
 	}
 	if filters.ToDate != nil {
-		query = query.Where("advance_payment_requests.created_at <= ?", *filters.ToDate)
+		// toDate is day-inclusive: created_at < midnight of the next day.
+		query = query.Where("advance_payment_requests.created_at < DATE_ADD(?, INTERVAL 1 DAY)", *filters.ToDate)
 	}
 	if filters.ForMonth != nil {
 		query = query.Joins("JOIN advance_payments ap ON advance_payment_requests.adv_pay_id = ap.id").
@@ -537,8 +538,16 @@ func (r *AdvancePaymentRequestRepository) GetStatsSummary(ctx context.Context, f
 		selectClause += ` JOIN advance_payments ap ON advance_payment_requests.adv_pay_id = ap.id WHERE ap.for_month = ?`
 		query = query.Raw(selectClause, forMonth)
 	} else if !fromDate.IsZero() && !toDate.IsZero() {
-		selectClause += ` WHERE advance_payment_requests.created_at >= ? AND advance_payment_requests.created_at <= ?`
+		// toDate is day-inclusive: created_at < midnight of the next day.
+		selectClause += ` WHERE advance_payment_requests.created_at >= ? AND advance_payment_requests.created_at < DATE_ADD(?, INTERVAL 1 DAY)`
 		query = query.Raw(selectClause, fromDate, toDate)
+	} else if !fromDate.IsZero() {
+		selectClause += ` WHERE advance_payment_requests.created_at >= ?`
+		query = query.Raw(selectClause, fromDate)
+	} else if !toDate.IsZero() {
+		// toDate is day-inclusive: created_at < midnight of the next day.
+		selectClause += ` WHERE advance_payment_requests.created_at < DATE_ADD(?, INTERVAL 1 DAY)`
+		query = query.Raw(selectClause, toDate)
 	} else {
 		query = query.Raw(selectClause)
 	}

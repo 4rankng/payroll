@@ -1,7 +1,6 @@
 package advance_payment
 
 import (
-	"api-server/internal/app/dto"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/transport/http/response"
@@ -89,44 +88,14 @@ func (h *AdvancePaymentHandler) GetAdvancePaymentSummary(c *gin.Context) {
 
 	forMonthStr := c.Query("forMonth")
 
+	// The service already returns the full response DTO (including derived
+	// metrics and FromDate/ToDate); re-copying fields here would silently drop
+	// any future field the service adds.
 	summary, err := h.service.GetSummary(c.Request.Context(), fromTime, toTime, forMonthStr)
 	if err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
 
-	resp := dto.AdvancePaymentSummaryResponse{
-		TotalRequests:           summary.TotalRequests,
-		TotalPending:            summary.TotalPending,
-		TotalApproved:           summary.TotalApproved,
-		TotalCancelled:          summary.TotalCancelled,
-		TotalFailed:             summary.TotalFailed,
-		TotalPaid:               summary.TotalPaid,
-		TotalAmount:             summary.TotalAmount,
-		TotalPaidAmount:         summary.TotalPaidAmount,
-		TotalPendingAmount:      summary.TotalPendingAmount,
-		TotalFailedAmount:       summary.TotalFailedAmount,
-		TotalCancelledAmount:    summary.TotalCancelledAmount,
-		TotalFee:                summary.TotalFee,
-		TotalFeeEarned:          summary.TotalFeeEarned,
-		TotalFeeEarnedAllTime:   summary.TotalFeeEarnedAllTime,
-		TotalNet:                summary.TotalNet,
-		TotalProviderFee:        summary.TotalProviderFee,
-		TotalProviderFeeAllTime: summary.TotalProviderFeeAllTime,
-		AvgProcessingTimeSecs:   summary.AvgProcessingTimeSecs,
-		CompletedUnder30s:       summary.CompletedUnder30s,
-		Completed30sTo2m:        summary.Completed30sTo2m,
-		Completed2mTo5m:         summary.Completed2mTo5m,
-		Completed5mTo15m:        summary.Completed5mTo15m,
-		CompletedOver15m:        summary.CompletedOver15m,
-		FeePercentage:           summary.FeePercentage,
-		AvgFeePerRequest:        summary.AvgFeePerRequest,
-		AvgFeePerEmployee:       summary.AvgFeePerEmployee,
-		SuccessRate:             summary.SuccessRate,
-		DisbursementPercentage:  summary.DisbursementPercentage,
-		FromDate:                summary.FromDate,
-		ToDate:                  summary.ToDate,
-	}
-
-	response.Success(c, resp, "Lấy tổng hợp ứng lương thành công")
+	response.Success(c, summary, "Lấy tổng hợp ứng lương thành công")
 }
