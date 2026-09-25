@@ -362,6 +362,25 @@ func bankFieldsChanged(original, updated *domain.Employee) bool {
 		original.BankAccountName != updated.BankAccountName
 }
 
+// CheckBankUpdate pre-checks a proposed bank-tuple change for an existing
+// employee against the active provider, on behalf of import paths that must
+// not overwrite a working bank with a wrong one.
+//
+// Returns the verdict and whether the caller may write the new tuple:
+//   - confirmed invalid → (verdict, false): the caller keeps the stored
+//     tuple and persists the verdict so the row surfaces in the warning list.
+//   - valid / unverified (fail-open) → (verdict, true): write the tuple and
+//     stamp the verdict fields.
+//   - validation disabled (nil validator) → (zero, true): write the tuple
+//     and leave the status fields untouched.
+func (s *EmployeeService) CheckBankUpdate(ctx context.Context, bankID *uint, accountNo, accountName string) (ValidationResult, bool) {
+	if s.bankAccountValidator == nil {
+		return ValidationResult{}, true
+	}
+	r := s.bankAccountValidator.Validate(ctx, bankID, accountNo, accountName)
+	return r, r.Status != domain.BankAccountStatusInvalid
+}
+
 // rowBankFieldsPresent reports whether an import row carries any banking
 // data. Used to decide whether the XLSX-import update path needs to
 // re-run OnePay validation.

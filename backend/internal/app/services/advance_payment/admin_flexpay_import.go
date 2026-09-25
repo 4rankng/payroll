@@ -436,16 +436,12 @@ func (s *Service) getOrCreateEmployee(ctx context.Context, cccd, name, accountNu
 
 		// Update bank info if account number is different or provided
 		if accountNumber != "" {
-			employee.BankAccountNumber = accountNumber
-			// Empty account-name cell must not wipe the stored holder name.
-			if accountName != "" {
-				employee.BankAccountName = accountName
-			}
-			bankID := s.resolveBankID(ctx, bankName)
-			if bankID != nil {
-				employee.BankID = bankID
-			}
-			needsUpdate = true
+			newBankID := s.resolveBankID(ctx, bankName)
+			needsUpdate = applyImportBankUpdate(employee, newBankID, accountNumber, accountName,
+				func(bankID *uint, no, name string) (status string, reason *string, allowed bool) {
+					verdict, ok := s.config.EmployeeService.CheckBankUpdate(ctx, bankID, no, name)
+					return verdict.Status, verdict.Reason, ok
+				})
 		}
 
 		// Update mobile if different
@@ -486,6 +482,75 @@ func (s *Service) getOrCreateEmployee(ctx context.Context, cccd, name, accountNu
 	}
 
 	return createdEmployee, true, false, nil
+}
+
+// bankTupleChanged reports whether the proposed tuple differs from the
+// employee's stored one. Unchanged tuples skip the provider call entirely —
+// most rows in a monthly re-upload are identical.
+func bankTupleChanged(emp *domain.Employee, newBankID *uint, accountNumber, accountName string) bool {
+	if emp.BankAccountNumber != accountNumber || emp.BankAccountName != accountName {
+		return true
+	}
+	if (emp.BankID == nil) != (newBankID == nil) {
+		return true
+	}
+	return emp.BankID != nil && newBankID != nil && *emp.BankID != *newBankID
+}
+
+// applyImportBankUpdate merges an import row's proposed bank tuple onto the
+// loaded employee, gated by the provider's account verdict.
+//
+//   - unchanged tuple → no write, no provider call, false.
+//   - changed + allowed (valid / unverified fail-open / validation disabled)
+//     → write the tuple, stamp the verdict status fields when a verdict was
+//     produced, true.
+//   - changed + OnePay confirmed invalid → keep the STORED tuple (never
+//     overwrite a working bank with a wrong one), stamp the invalid verdict
+//     so the row surfaces in the warning list, true (name/mobile still flow).
+//
+// check is the injected verdict source (EmployeeService.CheckBankUpdate);
+// status "" means validation is disabled and nothing is stamped.
+func applyImportBankUpdate(
+	emp *domain.Employee,
+	newBankID *uint,
+	accountNumber, accountName string,
+	check func(bankID *uint, no, name string) (status string, reason *string, allowed bool),
+) bool {
+	// A blank holder-name cell proposes the stored name: the verifier must
+	// see the tuple that would actually end up on the record, and the stored
+	// name must survive the merge.
+	if accountName == "" {
+		accountName = emp.BankAccountName
+	}
+
+	if !bankTupleChanged(emp, newBankID, accountNumber, accountName) {
+		return false
+	}
+
+	status, reason, allowed := check(newBankID, accountNumber, accountName)
+	if !allowed {
+		// OnePay confirmed the account bad: keep the stored tuple, flag it.
+		emp.BankAccountStatus = status
+		emp.BankAccountInvalidReason = reason
+		now := clock.Now()
+		emp.BankAccountValidatedAt = &now
+		return true
+	}
+
+	emp.BankAccountNumber = accountNumber
+	if accountName != "" {
+		emp.BankAccountName = accountName
+	}
+	if newBankID != nil {
+		emp.BankID = newBankID
+	}
+	if status != "" {
+		emp.BankAccountStatus = status
+		emp.BankAccountInvalidReason = reason
+		now := clock.Now()
+		emp.BankAccountValidatedAt = &now
+	}
+	return true
 }
 
 func (s *Service) resolveBankID(ctx context.Context, bankName string) *uint {
