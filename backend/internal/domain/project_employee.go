@@ -112,6 +112,11 @@ type ProjectEmployeeRepository interface {
 
 	// HasAccessViaProject checks if user can access employee through project assignments
 	HasAccessViaProject(ctx context.Context, employeeID, userID uint) (bool, error)
+
+	// HasFlexibleAssignment reports whether the employee has at least one
+	// live flexible (FlexPay) project assignment — the population the
+	// adv_partner edit route manages.
+	HasFlexibleAssignment(ctx context.Context, employeeID uint) (bool, error)
 }
 
 type CheckInConfigurationStatus string

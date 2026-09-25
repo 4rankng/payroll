@@ -93,6 +93,13 @@ func NewProjectEmployeeService(
 	}
 }
 
+// HasFlexibleAssignment reports whether the employee has at least one live
+// flexible (FlexPay) project assignment. Thin pass-through mirroring the
+// repository gate; see ProjectEmployeeRepository.HasFlexibleAssignment.
+func (s *ProjectEmployeeService) HasFlexibleAssignment(ctx context.Context, employeeID uint) (bool, error) {
+	return s.projectEmployeeRepo.HasFlexibleAssignment(ctx, employeeID)
+}
+
 // AssignEmployee orchestrates employee assignment (no business logic here)
 func (s *ProjectEmployeeService) AssignEmployee(ctx context.Context, assignment *domain.ProjectEmployee, assignedBy uint) (*domain.ProjectEmployee, error) {
 	var result *domain.ProjectEmployee

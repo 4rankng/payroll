@@ -192,6 +192,11 @@ func (m *MockProjectEmployeeRepository) HasAccessViaProject(ctx context.Context,
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockProjectEmployeeRepository) HasFlexibleAssignment(ctx context.Context, employeeID uint) (bool, error) {
+	args := m.Called(ctx, employeeID)
+	return args.Bool(0), args.Error(1)
+}
+
 // MockEmployeeRepository is a mock for EmployeeRepository
 type MockEmployeeRepository struct {
 	mock.Mock

@@ -1002,3 +1002,26 @@ func (r *ProjectEmployeeRepository) HasAccessViaProject(ctx context.Context, emp
 	}
 	return count > 0, nil
 }
+
+// HasFlexibleAssignment reports whether the employee has at least one live
+// flexible (FlexPay) project assignment — the same population the
+// advance-payments employee list exposes to the adv_partner role. The list
+// has no per-partner scoping (projects are frequently auto-created by admin
+// FlexPay imports, so created_by/project_users membership is almost never
+// the partner), so the edit gate matches that visibility instead of
+// HasAccessViaProject's stricter creator-or-member rule.
+func (r *ProjectEmployeeRepository) HasFlexibleAssignment(ctx context.Context, employeeID uint) (bool, error) {
+	var count int64
+	err := r.DB.WithContext(ctx).
+		Model(&domain.ProjectEmployee{}).
+		Joins("INNER JOIN projects ON projects.id = project_employees.project_id AND projects.deleted_at IS NULL").
+		Where("project_employees.employee_id = ?", employeeID).
+		Where("project_employees.deleted_at IS NULL").
+		Where("project_employees.payment_schedule = ?", string(domain.PaymentScheduleFlexible)).
+		Count(&count).Error
+
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}

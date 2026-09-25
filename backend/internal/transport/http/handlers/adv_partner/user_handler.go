@@ -52,13 +52,16 @@ func (h *UserHandler) UpdateAdvPartnerUser(c *gin.Context) {
 	ctx := c.Request.Context()
 	employeeID := uint(id)
 
-	// Ownership gate: adv_partner may only modify employees inside their own
-	// project scope. Checked once up-front so all three mutation paths below
-	// (employee fields, username, password) are covered. A denied attempt
-	// returns NotFound so it is indistinguishable from a missing record (no
-	// enumeration). Only adv_partner reaches this scoped route (casbin), so the
-	// gate never over-denies admin/manager paths.
-	hasAccess, err := h.employeeService.EmployeeHasAccess(ctx, employeeID, userID.(uint))
+	// Scope gate: adv_partner manages the FlexPay employee population, so the
+	// gate mirrors the list endpoint's visibility — the employee must have a
+	// live flexible (FlexPay) project assignment. HasAccessViaProject's
+	// creator-or-member rule almost never matches here: FlexPay imports
+	// auto-create projects under the importing admin, leaving the partner
+	// neither creator nor project_users member, which made every save fail.
+	// A denied attempt returns NotFound so it is indistinguishable from a
+	// missing record (no enumeration). Only adv_partner reaches this scoped
+	// route (casbin), so the gate never over-denies admin/manager paths.
+	hasAccess, err := h.projectEmployeeService.HasFlexibleAssignment(ctx, employeeID)
 	if err != nil {
 		response.HandleDomainError(c, err)
 		return
