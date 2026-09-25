@@ -86,7 +86,7 @@ export default function CreateTopupDialog({
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2 space-y-2">
               <Label htmlFor="amount">
-                Số tiền nạp <span className="text-red-500">*</span>
+                Số tiền nạp <span className="text-red-600">*</span>
               </Label>
               <Input
                 id="amount"
@@ -107,7 +107,7 @@ export default function CreateTopupDialog({
             </div>
             <div className="space-y-2">
               <Label>
-                Ngày nạp <span className="text-red-500">*</span>
+                Ngày nạp <span className="text-red-600">*</span>
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -144,7 +144,7 @@ export default function CreateTopupDialog({
 
           <div className="space-y-2">
             <Label htmlFor="bank_ref">
-              Mã giao dịch ngân hàng <span className="text-red-500">*</span>
+              Mã giao dịch ngân hàng <span className="text-red-600">*</span>
             </Label>
             <Input
               id="bank_ref"

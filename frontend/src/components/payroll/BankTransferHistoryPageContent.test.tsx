@@ -229,7 +229,7 @@ describe('BankTransferHistoryPageContent', () => {
     expect(panel!.firstElementChild).toHaveClass('xl:grid', 'border-slate-200/80');
     expect(panel!.querySelector('[role="list"]')).toHaveClass('divide-y', 'divide-slate-200/70');
     // Emerald is reserved for the money value and the open-state chevron.
-    expect(chevron).toHaveClass('group-open/record:text-emerald-600');
+    expect(chevron).toHaveClass('group-open/record:text-emerald-700');
   });
 
   it('keeps employee identity readable on narrow screens', () => {

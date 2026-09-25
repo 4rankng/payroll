@@ -325,7 +325,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                               ) : (
                                 <button
                                   type="button"
-                                  className="fpe-mono min-h-11 cursor-pointer text-left text-sm font-bold tracking-tight transition-colors hover:text-emerald-600"
+                                  className="fpe-mono min-h-11 cursor-pointer text-left text-sm font-bold tracking-tight transition-colors hover:text-emerald-700"
                                   onClick={() => startShiftEdit(i)}
                                   title="Nhấn để đổi thời gian ca"
                                   aria-label={`Chỉnh khung giờ ${s.start}-${s.end}`}
@@ -339,7 +339,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             </div>
                             <div className="flex items-center gap-1.5">
                               {s.label && <span className="text-xs text-muted-foreground">{s.label}</span>}
-                              <span className={`text-xs font-semibold ${ov?'text-emerald-600':'text-muted-foreground/50'}`}>
+                              <span className={`text-xs font-semibold ${ov?'text-emerald-700':'text-muted-foreground/50'}`}>
                                 {ov && '🌙'}{durH(s.start,s.end)}h
                               </span>
                             </div>
@@ -384,7 +384,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             />
                           ) : (
                             <span
-                              className={`text-sm font-bold ${!readOnly ? 'cursor-pointer hover:text-emerald-600 transition-colors' : ''}`}
+                              className={`text-sm font-bold ${!readOnly ? 'cursor-pointer hover:text-emerald-700 transition-colors' : ''}`}
                               onClick={() => startPositionEdit(pos)}
                               title={readOnly ? undefined : 'Nhấn để đổi tên vị trí'}
                             >
@@ -393,7 +393,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                           )}
                           {!readOnly && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={()=>copyRow(pos)} title="Sao chép sang cả hàng" className="flex h-11 w-11 items-center justify-center rounded border border-border bg-white text-xs text-muted-foreground transition-colors hover:border-emerald-400 hover:text-emerald-600">→</button>
+                              <button onClick={()=>copyRow(pos)} title="Sao chép sang cả hàng" className="flex h-11 w-11 items-center justify-center rounded border border-border bg-white text-xs text-muted-foreground transition-colors hover:border-emerald-400 hover:text-emerald-700">→</button>
                               <button onClick={()=>togglePos(pos)} title="Xoá vị trí" className="flex h-11 w-11 items-center justify-center rounded text-base leading-none text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">×</button>
                             </div>
                           )}
@@ -453,7 +453,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
             /* empty state */
             <div className="flex flex-col items-center justify-center py-12 gap-3 border-t border-border">
               <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                <svg viewBox="0 0 24 24" className="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
               </div>
               <p className="text-sm font-bold text-foreground">Ma trận đang trống</p>
               <p className="text-xs text-muted-foreground text-center max-w-xs">
@@ -476,7 +476,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                 aria-labelledby="payrate-positions-heading"
               >
                 <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3"/><path d="M22 19v-1a4 4 0 0 0-3-3.87M16 4.13A4 4 0 0 1 16 11"/></svg>
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3"/><path d="M22 19v-1a4 4 0 0 0-3-3.87M16 4.13A4 4 0 0 1 16 11"/></svg>
                   <h3 id="payrate-positions-heading" className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Vị trí</h3>
                   <span className="w-full pl-[22px] text-xs text-muted-foreground/70 sm:ml-auto sm:w-auto sm:pl-0">Chọn để thêm hoặc bỏ</span>
                 </div>
@@ -506,7 +506,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                 aria-labelledby="payrate-shifts-heading"
               >
                 <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                   <h3 id="payrate-shifts-heading" className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Ca làm việc</h3>
                   <span className="w-full pl-[22px] text-xs text-muted-foreground/70 sm:ml-auto sm:w-auto sm:pl-0">Chọn ca phổ biến</span>
                 </div>
@@ -564,7 +564,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                         <button
                           type="button"
                           onClick={() => { setCustomShift(shiftErr.fix); setShiftErr(null); shiftInputRef.current?.focus(); }}
-                          className="fpe-mono font-bold text-emerald-600 underline underline-offset-2 ml-1">
+                          className="fpe-mono font-bold text-emerald-700 underline underline-offset-2 ml-1">
                           Dùng: {shiftErr.fix}
                         </button>
                       )}

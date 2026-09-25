@@ -371,7 +371,7 @@ export function TimesheetGroupedTable({
                         {/* Hours Card */}
                         <div className="flex-1 bg-green-50 border border-green-200 rounded-xl p-2.5">
                           <div className="flex items-center gap-1.5 mb-0.5">
-                            <Clock className="w-3.5 h-3.5 text-green-600" />
+                            <Clock className="w-3.5 h-3.5 text-green-700" />
                             <span className="typography-label-small text-green-700">Ca làm việc</span>
                           </div>
                           <p className="typography-title-medium font-bold text-green-800">

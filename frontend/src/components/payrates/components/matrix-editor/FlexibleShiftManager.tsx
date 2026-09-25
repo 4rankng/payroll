@@ -145,11 +145,11 @@ export function FlexibleShiftManager({
           <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-[minmax(0,1fr)_auto_auto] min-[380px]:items-center">
             <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
               <span className="shrink-0">Khung giờ:</span>
-              <span className={`min-w-0 break-all font-mono font-semibold ${alreadyExists ? 'text-amber-600' : 'text-foreground'}`}>
+              <span className={`min-w-0 break-all font-mono font-semibold ${alreadyExists ? 'text-amber-700' : 'text-foreground'}`}>
                 {previewKey}
               </span>
               {alreadyExists && (
-                <span className="text-amber-600 text-xs shrink-0">(đã tồn tại)</span>
+                <span className="text-amber-700 text-xs shrink-0">(đã tồn tại)</span>
               )}
             </div>
             <button

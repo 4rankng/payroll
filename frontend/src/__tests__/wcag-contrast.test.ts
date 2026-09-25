@@ -17,8 +17,10 @@ const css = readFileSync(resolve(__dirname, "../styles/variables.css"), "utf8");
 /** Reads a token's value from the :root block (first occurrence). */
 function rootToken(name: string): string {
   const rootStart = css.indexOf(":root");
-  const scoped = css.indexOf("[data-");
-  const rootBlock = css.slice(rootStart, scoped > rootStart ? scoped : undefined);
+  // The :root block ends where .dark begins; "[data-" markers appear inside
+  // :root comments, so they cannot be used as the end boundary here.
+  const rootEnd = css.indexOf(".dark {");
+  const rootBlock = css.slice(rootStart, rootEnd > rootStart ? rootEnd : undefined);
   const m = rootBlock.match(new RegExp(`--${name}:\\s*([^;]+);`));
   expect(m, `token --${name} must exist in :root`).toBeTruthy();
   return m![1].trim();
@@ -55,16 +57,18 @@ function luminance(rgb: [number, number, number]): number {
 }
 
 function contrastRatio(fgHsl: string, bgHsl: string): number {
-  const parse = (token: string) =>
-    token
-      .trim()
-      .replace(/%/g, "")
-      .split(/\s+/)
-      .map(Number) as [number, number, number];
-  const [fh, fs, fl] = parse(fgHsl);
-  const [bh, bs, bl] = parse(bgHsl);
-  const lf = luminance(hslToRgb(fh, fs, fl));
-  const lb = luminance(hslToRgb(bh, bs, bl));
+  const toRgb = (token: string): [number, number, number] => {
+    const t = token.trim();
+    // Employee tokens are hex; admin/partner/global tokens are HSL triplets.
+    if (t.startsWith("#")) {
+      const n = parseInt(t.slice(1), 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+    const [h, s, l] = t.replace(/%/g, "").split(/\s+/).map(Number) as [number, number, number];
+    return hslToRgb(h, s, l);
+  };
+  const lf = luminance(toRgb(fgHsl));
+  const lb = luminance(toRgb(bgHsl));
   return (Math.max(lf, lb) + 0.05) / (Math.min(lf, lb) + 0.05);
 }
 
@@ -74,10 +78,13 @@ describe("WCAG 2.1 AA contrast contract (variables.css)", () => {
   it.each([
     ["--success on white (money/positive text)", () => rootToken("success")],
     ["--warning on white (pending text)", () => rootToken("warning")],
+    ["--info on white (informational text)", () => rootToken("info")],
     ["--destructive on white (failed text)", () => rootToken("destructive")],
     ["--admin-success on white", () => adminToken("admin-success")],
     ["--admin-warning on white", () => adminToken("admin-warning")],
     ["--admin-destructive on white", () => adminToken("admin-destructive")],
+    ["--partner-success on white (partner pages)", () => rootToken("partner-success")],
+    ["--partner-warning on white (partner pages)", () => rootToken("partner-warning")],
     ["--muted-foreground on white (11px data text)", () => rootToken("muted-foreground")],
   ])("%s meets 4.5:1", (_label, read) => {
     expect(contrastRatio(read(), WHITE)).toBeGreaterThanOrEqual(4.5);
@@ -102,5 +109,11 @@ describe("WCAG 2.1 AA contrast contract (variables.css)", () => {
 
   it("sidebar foreground meets 4.5:1 on the sidebar background", () => {
     expect(contrastRatio(rootToken("sidebar-foreground"), rootToken("sidebar-background"))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("employee portal muted/secondary text meets 4.5:1 on white", () => {
+    // Hex tokens; muted metadata is the floor (12px metadata text).
+    expect(contrastRatio(rootToken("employee-text-secondary"), "#ffffff")).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(rootToken("employee-text-muted"), "#ffffff")).toBeGreaterThanOrEqual(4.5);
   });
 });

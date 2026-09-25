@@ -88,7 +88,7 @@ export const EmployeeMobileCard = React.memo(function EmployeeMobileCard({
                 aria-hidden="true"
                 className={cn(
                   "h-2.5 w-2.5",
-                  hasBankDetails ? "text-emerald-600" : "text-amber-600",
+                  hasBankDetails ? "text-emerald-700" : "text-amber-700",
                 )}
               />
               <span className="sr-only">

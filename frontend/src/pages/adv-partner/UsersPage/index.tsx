@@ -163,7 +163,7 @@ function EmployeeCard({
       <div className="border-t border-border/40 bg-muted/25 px-4 py-2 flex items-center gap-0 flex-wrap min-h-[34px]">
         {/* Project */}
         <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 pr-2.5">
-          <Building2 className="w-3 h-3 shrink-0 text-emerald-600/80" />
+          <Building2 className="w-3 h-3 shrink-0 text-emerald-700/80" />
           {emp.project?.name || "—"}
         </span>
 
@@ -172,7 +172,7 @@ function EmployeeCard({
           <>
             <span className="text-border mr-2.5" aria-hidden>·</span>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-400 pr-2.5">
-              <CreditCard className="w-3 h-3 shrink-0 text-blue-500/80" />
+              <CreditCard className="w-3 h-3 shrink-0 text-blue-600/80" />
               {emp.bank!.bankName}
             </span>
           </>

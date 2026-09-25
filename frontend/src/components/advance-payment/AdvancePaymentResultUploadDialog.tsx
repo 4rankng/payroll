@@ -107,7 +107,7 @@ export const AdvancePaymentResultUploadDialog = memo(
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {[
                   { label: "Tổng giao dịch", value: uploadResult.total_txn, color: "text-foreground" },
-                  { label: "Thành công", value: uploadResult.completed_txn, color: "text-emerald-600" },
+                  { label: "Thành công", value: uploadResult.completed_txn, color: "text-emerald-700" },
                   { label: "Thất bại", value: uploadResult.failed_txn, color: "text-destructive" },
                 ].map(({ label, value, color }) => (
                   <div key={label} className="rounded-xl border bg-muted/30 px-3 py-2.5 text-center">
@@ -133,7 +133,7 @@ export const AdvancePaymentResultUploadDialog = memo(
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex min-w-0 items-center gap-1.5">
                             {isPaid
-                              ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                              ? <CheckCircle className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
                               : <XCircle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
                             }
                             <span className="text-xs text-muted-foreground">Dòng {detail.row}</span>

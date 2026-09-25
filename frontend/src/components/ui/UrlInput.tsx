@@ -97,7 +97,7 @@ export function UrlInput({
       {label && (
         <Label htmlFor="url-input" className="typography-body-medium text-gray-700">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-red-600 ml-1">*</span>}
         </Label>
       )}
 
@@ -123,13 +123,13 @@ export function UrlInput({
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {/* Validation status */}
           {isValid === true && (
-            <div className="text-green-500" title="URL hợp lệ">
+            <div className="text-green-700" title="URL hợp lệ">
               <Check className="w-4 h-4" />
             </div>
           )}
           
           {isValid === false && (
-            <div className="text-red-500" title="URL không hợp lệ">
+            <div className="text-red-600" title="URL không hợp lệ">
               <AlertCircle className="w-4 h-4" />
             </div>
           )}
@@ -188,7 +188,7 @@ export function UrlInput({
         <div className="p-2 bg-gray-50 rounded-md">
           <p className="typography-body-small text-gray-600 font-medium mb-1">Xem trước:</p>
           <div className="flex items-center gap-2">
-            <ExternalLink className="w-3 h-3 text-gray-400 flex-shrink-0" />
+            <ExternalLink className="w-3 h-3 text-gray-500 flex-shrink-0" />
             <p className="typography-body-small text-gray-700 truncate" title={inputValue}>
               {inputValue}
             </p>

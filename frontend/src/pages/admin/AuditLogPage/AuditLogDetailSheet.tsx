@@ -138,7 +138,7 @@ export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps
                   icon={LogIn}
                   label="Đăng nhập bằng"
                   value={
-                    <span className="font-medium text-amber-600">{loginIdentifier}</span>
+                    <span className="font-medium text-amber-700">{loginIdentifier}</span>
                   }
                 />
               )}

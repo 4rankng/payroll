@@ -291,7 +291,7 @@ export const EntryRow = memo(({
                 {/* Warn user if existing data — changing day type requires deleting hours first */}
                 {entry.originalValues && totalHours > 0 && (
                   <div className="px-2 py-1.5 mb-1 border-b border-amber-100 bg-amber-50 flex items-start gap-1.5">
-                    <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-3 w-3 text-amber-700 shrink-0 mt-0.5" />
                     <p className="text-xs text-amber-700 leading-tight">
                       Xóa giờ công trước khi đổi loại ngày
                     </p>
@@ -333,7 +333,7 @@ export const EntryRow = memo(({
                           : hourValue > 16
                             ? 'border-red-300 bg-red-50/60 text-red-700 font-bold'
                             : hourValue > 12
-                              ? 'border-amber-300 bg-amber-50/60 text-amber-600 font-semibold'
+                              ? 'border-amber-300 bg-amber-50/60 text-amber-700 font-semibold'
                               : hourValue > 0
                                 ? 'border-emerald-300 bg-emerald-50/60 text-emerald-700 font-semibold'
                                 : 'border-border/60 text-muted-foreground';
@@ -390,7 +390,7 @@ export const EntryRow = memo(({
                 {hourStatus !== 'normal' && (
                   <span className={cn(
                     'inline-flex items-center gap-0.5 text-xs font-bold px-1 py-0.5 rounded-full self-start',
-                    hourStatus === 'excessive' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-600'
+                    hourStatus === 'excessive' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
                   )}>
                     <AlertTriangle className="h-2 w-2" />
                     {totalHours}h

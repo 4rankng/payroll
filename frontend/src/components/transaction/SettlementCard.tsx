@@ -61,7 +61,7 @@ export function SettlementCard({ settlement, userMap }: SettlementCardProps) {
             disabled={!hasProof}
             className={`flex-shrink-0 rounded-xl p-2 transition-all ${
               hasProof
-                ? 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:shadow-sm cursor-pointer'
+                ? 'text-emerald-700 hover:text-emerald-700 hover:bg-emerald-50 hover:shadow-sm cursor-pointer'
                 : 'text-slate-300 cursor-not-allowed'
             }`}
             title={hasProof ? 'Tải xuống chứng từ' : 'Không có chứng từ'}

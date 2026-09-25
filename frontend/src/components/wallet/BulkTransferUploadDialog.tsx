@@ -193,7 +193,7 @@ export const BulkTransferUploadDialog = memo(function BulkTransferUploadDialog({
           {phase === 'result' && result && (
             <div className="space-y-4 py-2">
               <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-700" />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-emerald-900">
                     Đã tải lên lô chuyển tiền thành công

@@ -254,7 +254,7 @@ export function LedgerPageHeader({
           isPositive ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50',
         )}>
           <div className="flex items-center gap-1 mb-1">
-            <TrendingUp className={cn('h-3 w-3', isPositive ? 'text-emerald-600' : 'text-red-600')} />
+            <TrendingUp className={cn('h-3 w-3', isPositive ? 'text-emerald-700' : 'text-red-600')} />
             <p className={cn('text-xs', isPositive ? 'text-emerald-700' : 'text-red-700')}>Dòng tiền ròng</p>
           </div>
           <p className={cn('text-base font-bold tabular-nums', isPositive ? 'text-emerald-800' : 'text-red-800')}>

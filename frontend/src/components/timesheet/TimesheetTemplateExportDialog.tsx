@@ -104,7 +104,7 @@ export const TimesheetTemplateExportDialog = memo(function TimesheetTemplateExpo
           {/* Project Selection */}
           <div className="space-y-1.5">
             <Label htmlFor="project" className="text-xs text-muted-foreground">
-              Dự án <span className="text-red-500">*</span>
+              Dự án <span className="text-red-600">*</span>
             </Label>
             <ProjectSelector
               value={selectedProject}
@@ -118,7 +118,7 @@ export const TimesheetTemplateExportDialog = memo(function TimesheetTemplateExpo
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="from-date" className="text-xs text-muted-foreground">
-                Từ ngày <span className="text-red-500">*</span>
+                Từ ngày <span className="text-red-600">*</span>
               </Label>
               <Popover open={fromDateOpen} onOpenChange={setFromDateOpen}>
                 <PopoverTrigger asChild>
@@ -154,7 +154,7 @@ export const TimesheetTemplateExportDialog = memo(function TimesheetTemplateExpo
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="to-date" className="text-xs text-muted-foreground">
-                Đến ngày <span className="text-red-500">*</span>
+                Đến ngày <span className="text-red-600">*</span>
               </Label>
               <Popover open={toDateOpen} onOpenChange={setToDateOpen}>
                 <PopoverTrigger asChild>

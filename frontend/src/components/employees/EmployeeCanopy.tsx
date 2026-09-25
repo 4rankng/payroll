@@ -127,7 +127,7 @@ export function EmployeeCanopy({
                 data-theme="employee"
               >
                 <DropdownMenuItem onClick={onChangePassword} className="min-h-11 gap-3 rounded-xl py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-900">
-                  <Settings className="h-4 w-4 text-slate-400" />
+                  <Settings className="h-4 w-4 text-slate-500" />
                   <span className="employee-type-action">Đổi mật khẩu</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="my-1 bg-slate-100" />

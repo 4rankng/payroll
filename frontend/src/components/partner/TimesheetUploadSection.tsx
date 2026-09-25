@@ -45,7 +45,7 @@ export const TimesheetUploadSection = ({
         {selectedFile && (
           <div className="flex items-center space-x-2 p-3 bg-card/50 rounded-xl border">
             <div className="p-1 bg-green-100 rounded">
-              <FileSpreadsheet className="w-4 h-4 text-green-600" />
+              <FileSpreadsheet className="w-4 h-4 text-green-700" />
             </div>
             <div className="flex-1">
               <span className="typography-body-medium">{selectedFile.name}</span>

@@ -92,7 +92,7 @@ export const FlexibleEmployeeListUploadDialog = memo(function FlexibleEmployeeLi
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {[
                 { label: "Tổng dòng", value: importResult.total_rows, color: "text-foreground" },
-                { label: "Nhân viên mới", value: importResult.created_count, color: "text-emerald-600" },
+                { label: "Nhân viên mới", value: importResult.created_count, color: "text-emerald-700" },
                 { label: "Đã cập nhật", value: importResult.updated_count, color: "text-primary" },
               ].map(({ label, value, color }) => (
                 <div key={label} className="rounded-xl border bg-muted/30 px-3 py-2.5 text-center">

@@ -355,7 +355,7 @@ export const FeeScheduleFormDialog = ({
                               {pctErr}
                             </p>
                           ) : pctWarn ? (
-                            <p className="text-xs text-amber-600 dark:text-amber-400">
+                            <p className="text-xs text-amber-700 dark:text-amber-400">
                               {pctWarn}
                             </p>
                           ) : null}
@@ -410,7 +410,7 @@ export const FeeScheduleFormDialog = ({
                     {fieldErrors.minFee}
                   </p>
                 ) : fieldWarnings.minFee ? (
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                  <p className="text-xs text-amber-700 dark:text-amber-400">
                     {fieldWarnings.minFee}
                   </p>
                 ) : null}

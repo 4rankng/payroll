@@ -160,14 +160,14 @@ export function FileList({
                 
                 {!compact && (
                   <>
-                    <p className="typography-body-small text-gray-400">
+                    <p className="typography-body-small text-gray-500">
                       {format(new Date(asset.created_at), 'dd/MM/yyyy')}
                     </p>
                     
                     {(asset as unknown as { is_public?: boolean }).is_public && (
                       <div className="flex items-center gap-1">
-                        <ExternalLink className="w-3 h-3 text-gray-400" />
-                        <span className="typography-body-small text-gray-400">Công khai</span>
+                        <ExternalLink className="w-3 h-3 text-gray-500" />
+                        <span className="typography-body-small text-gray-500">Công khai</span>
                       </div>
                     )}
                   </>
@@ -201,7 +201,7 @@ export function FileList({
                     size="sm"
                     onClick={() => handleDownload(asset)}
                     disabled={downloadAsset.isPending}
-                    className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
+                    className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-700"
                     title="Tải xuống"
                   >
                     <Download className="w-4 h-4" />

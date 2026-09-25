@@ -132,7 +132,7 @@ function EmployeeDetailHeader({ employee: emp }: { employee: FlexPayEmployeeList
           <SheetTitle className="text-[17px] font-bold text-slate-900 leading-tight">
             {emp.fullname}
           </SheetTitle>
-          <p className="text-xs font-mono text-slate-400 mt-0.5 tracking-wide">
+          <p className="text-xs font-mono text-slate-500 mt-0.5 tracking-wide">
             {emp.cccd}
           </p>
           <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
@@ -176,12 +176,12 @@ function AdvanceLimitCard({ employee: emp, usedPct, isOverLimit }: AdvanceLimitC
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
       {/* Top: remaining amount hero */}
       <div className="px-4 pt-4 pb-3">
-        <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
           Còn lại có thể ứng
         </p>
         <p
           className={`text-2xl font-bold tabular-nums ${
-            emp.availableAmount > 0 ? "text-slate-900" : "text-slate-400"
+            emp.availableAmount > 0 ? "text-slate-900" : "text-slate-500"
           }`}
         >
           {formatCurrency(emp.availableAmount)}
@@ -201,10 +201,10 @@ function AdvanceLimitCard({ employee: emp, usedPct, isOverLimit }: AdvanceLimitC
           />
         </div>
         <div className="flex items-center justify-between mt-1.5">
-          <span className="text-xs text-slate-400">Đã sử dụng</span>
+          <span className="text-xs text-slate-500">Đã sử dụng</span>
           <span
             className={`text-xs font-semibold tabular-nums ${
-              isOverLimit ? "text-red-500" : "text-slate-600"
+              isOverLimit ? "text-red-600" : "text-slate-600"
             }`}
           >
             {usedPct}%
@@ -221,12 +221,12 @@ function AdvanceLimitCard({ employee: emp, usedPct, isOverLimit }: AdvanceLimitC
         <LimitBreakdownCell
           label="Đã dùng"
           value={formatCurrency(emp.utilizedAmount)}
-          valueClassName="text-orange-500"
+          valueClassName="text-orange-700"
         />
         <LimitBreakdownCell
           label="Chờ xử lý"
           value={formatCurrency(emp.pendingAmount)}
-          valueClassName="text-amber-500"
+          valueClassName="text-amber-700"
         />
       </div>
     </div>
@@ -244,7 +244,7 @@ function LimitBreakdownCell({
 }) {
   return (
     <div className="px-3 py-3 text-center">
-      <p className="text-xs text-slate-400 mb-1">{label}</p>
+      <p className="text-xs text-slate-500 mb-1">{label}</p>
       <p className={`text-xs font-bold tabular-nums ${valueClassName}`}>{value}</p>
     </div>
   );
@@ -253,7 +253,7 @@ function LimitBreakdownCell({
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-3 py-2.5">
-      <p className="text-xs text-slate-400 mb-0.5">{label}</p>
+      <p className="text-xs text-slate-500 mb-0.5">{label}</p>
       <p className="text-sm font-bold text-slate-800 tabular-nums">{value}</p>
     </div>
   );
@@ -269,7 +269,7 @@ function BankInfoCard({
   return (
     <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-3 py-2.5 flex items-center justify-between">
       <div>
-        <p className="text-xs text-slate-400 mb-0.5">Ngân hàng</p>
+        <p className="text-xs text-slate-500 mb-0.5">Ngân hàng</p>
         <p className="text-sm font-semibold text-slate-800">{bankName || "—"}</p>
       </div>
       <p className="text-xs font-mono text-slate-500 tabular-nums">{accountNumber}</p>
@@ -283,7 +283,7 @@ function RequestsList({ requests }: { requests: AdvancePaymentListItem[] }) {
       <div className="flex items-center justify-between mb-2.5">
         <p className="text-xs font-semibold text-slate-700">Yêu cầu ứng lương</p>
         {requests.length > 0 && (
-          <span className="text-xs text-slate-400 tabular-nums">
+          <span className="text-xs text-slate-500 tabular-nums">
             {requests.length} yêu cầu
           </span>
         )}
@@ -327,7 +327,7 @@ function RequestCard({ request: req }: { request: AdvancePaymentListItem }) {
             {getVietnameseAdvancePaymentStatus(req.status)}
           </Badge>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
+        <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
           <span className="tabular-nums">
             {format(new Date(req.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })}
           </span>

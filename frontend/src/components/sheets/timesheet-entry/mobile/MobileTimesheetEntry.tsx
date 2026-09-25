@@ -476,7 +476,7 @@ export function MobileTimesheetEntry({
         </div>
 
         {formData.projectId > 0 && !isPayRateReady && (
-          <p className="text-xs text-amber-600 bg-amber-50 rounded-xl px-3 py-2">
+          <p className="text-xs text-amber-700 bg-amber-50 rounded-xl px-3 py-2">
             {isLoadingPayRate
               ? "Đang tải cấu hình lương..."
               : payRateForbidden
@@ -703,7 +703,7 @@ export function MobileTimesheetEntry({
                             {activeEntry.originalValues &&
                               activeEntryTotalHours > 0 && (
                                 <div className="px-2 py-1.5 mb-1 border-b border-amber-100 bg-amber-50 flex items-start gap-1.5">
-                                  <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0 mt-0.5" />
+                                  <AlertTriangle className="h-3 w-3 text-amber-700 shrink-0 mt-0.5" />
                                   <p className="text-xs text-amber-700 leading-tight">
                                     Xóa giờ công trước khi đổi loại ngày
                                   </p>
@@ -800,7 +800,7 @@ export function MobileTimesheetEntry({
                           );
                         }, 0);
                         return rowEarnings > 0 ? (
-                          <span className="text-xs text-emerald-600 font-semibold tabular-nums pl-0.5">
+                          <span className="text-xs text-emerald-700 font-semibold tabular-nums pl-0.5">
                             {formatCurrency(rowEarnings)}
                           </span>
                         ) : null;

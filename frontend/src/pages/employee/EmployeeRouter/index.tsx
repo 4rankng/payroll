@@ -39,7 +39,7 @@ const EmployeeRouter = () => {
       <SectionErrorBoundary sectionName="trang nhân viên">
         <EmployeeMobileShell chrome="error" contentClassName="max-w-md">
           <div className="flex min-h-[calc(100dvh-9rem)] flex-col items-center justify-center text-center" role="alert">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-200/70">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 ring-1 ring-amber-200/70">
               <AlertCircle className="h-8 w-8" />
             </div>
             <h1 className="employee-type-section-title text-slate-900">

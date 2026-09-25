@@ -16,7 +16,7 @@ export function MobileValidationAlert({ validationErrors }: MobileValidationAler
   return (
     <div className="mx-2 sm:mx-4 p-2 sm:p-3 border border-red-200 bg-red-50 rounded-xl">
       <div className="flex items-center gap-2">
-        <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
+        <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0" />
         <div>
           <div className="font-medium text-red-800 typography-body-medium">
             Có {validationErrors.length} nhân viên vượt quá giới hạn 24 giờ/ngày

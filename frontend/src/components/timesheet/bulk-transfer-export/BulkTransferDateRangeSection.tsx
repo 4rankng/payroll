@@ -129,7 +129,7 @@ export function BulkTransferDateRangeSection({
   return (
     <div className="space-y-2.5">
       <Label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        Khoảng thời gian <span className="text-red-500">*</span>
+        Khoảng thời gian <span className="text-red-600">*</span>
       </Label>
 
       {paymentSchedule === 'weekly' ? (

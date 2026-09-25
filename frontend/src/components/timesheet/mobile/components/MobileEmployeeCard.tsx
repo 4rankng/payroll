@@ -85,7 +85,7 @@ export function MobileEmployeeCard({
                 {employee.fullname}
               </h3>
               <div className="flex items-center gap-1 sm:gap-2 mt-1">
-                <IdCard className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                <IdCard className="w-3 h-3 text-gray-500 flex-shrink-0" />
                 <span className="typography-body-small sm:typography-body-medium text-muted-foreground font-mono truncate">
                   {employee.cccd}
                 </span>
@@ -100,7 +100,7 @@ export function MobileEmployeeCard({
                   <TooltipTrigger>
                     <AlertTriangle className={cn(
                       "h-4 w-4",
-                      hourStatus === 'excessive' ? "text-red-500" : "text-orange-500"
+                      hourStatus === 'excessive' ? "text-red-600" : "text-orange-700"
                     )} />
                   </TooltipTrigger>
                   <TooltipContent>
@@ -120,7 +120,7 @@ export function MobileEmployeeCard({
                 <div className={cn(
                   "typography-body-medium",
                   hourStatus === 'excessive' ? "text-red-600" :
-                  hourStatus === 'exceeded' ? "text-orange-600" :
+                  hourStatus === 'exceeded' ? "text-orange-700" :
                   "text-foreground"
                 )}>
                   {totalHours.toFixed(1)}h
@@ -145,7 +145,7 @@ export function MobileEmployeeCard({
           >
             {entry?.position || employee.position}
           </Badge>
-          <span className="typography-body-small text-gray-400">
+          <span className="typography-body-small text-gray-500">
             {employee.employee_code}
           </span>
         </div>

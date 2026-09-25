@@ -97,9 +97,9 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
   // Results display helpers
   const getStatusIcon = useCallback((hasError: boolean) => {
     return hasError ? (
-      <XCircle className="w-4 h-4 text-red-500" />
+      <XCircle className="w-4 h-4 text-red-600" />
     ) : (
-      <CheckCircle className="w-4 h-4 text-green-500" />
+      <CheckCircle className="w-4 h-4 text-green-700" />
     );
   }, []);
 
@@ -133,7 +133,7 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
             {/* Summary */}
             <div className="flex items-center gap-6 p-4 bg-muted/50 rounded-xl border">
               <div className="typography-body-medium text-muted-foreground">
-                <span className="typography-data-large font-semibold text-emerald-600">{uploadResult.created_count}</span>
+                <span className="typography-data-large font-semibold text-emerald-700">{uploadResult.created_count}</span>
                 <span className="ml-2">Tạo mới</span>
               </div>
               <div className="w-px h-6 bg-slate-200"></div>
@@ -188,7 +188,7 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
             {/* Success message when no errors */}
             {uploadResult.error_count === 0 && (
               <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+                <CheckCircle className="w-5 h-5 text-green-700" />
                 <p className="typography-body-medium text-green-800">
                   Đã nhập thành công {uploadResult.created_count} bản ghi công.
                 </p>
@@ -233,7 +233,7 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
           {/* File Upload Section */}
           <div className="space-y-4">
             <Label className="typography-body-medium">
-              FILE EXCEL <span className="text-red-500">*</span>
+              FILE EXCEL <span className="text-red-600">*</span>
             </Label>
 
             {!selectedFile ? (
@@ -260,7 +260,7 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
                         chọn file
                       </span>
                     </p>
-                    <p className="typography-body-small text-gray-400">
+                    <p className="typography-body-small text-gray-500">
                       Chỉ chấp nhận file Excel (.xls, .xlsx) - Tối đa 10MB
                     </p>
                   </div>
@@ -271,7 +271,7 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded bg-green-100 flex items-center justify-center">
-                      <FileSpreadsheet className="w-5 h-5 text-green-600" />
+                      <FileSpreadsheet className="w-5 h-5 text-green-700" />
                     </div>
                     <div>
                       <p className="typography-body-medium font-medium text-foreground">

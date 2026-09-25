@@ -103,12 +103,12 @@ export function EmployeeSummaryCard({ employee, className }: EmployeeSummaryCard
           {/* Total Earnings */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-green-600" />
+              <DollarSign className="h-4 w-4 text-green-700" />
               <span className="typography-body-medium typography-label-medium text-muted-foreground">
                 Tổng thu nhập
               </span>
             </div>
-            <div className="typography-headline-large text-green-600">
+            <div className="typography-headline-large text-green-700">
               {formatCurrency(summary.total_earnings_vnd)}
             </div>
           </div>
@@ -116,7 +116,7 @@ export function EmployeeSummaryCard({ employee, className }: EmployeeSummaryCard
           {/* Last Payment Date */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-orange-600" />
+              <Calendar className="h-4 w-4 text-orange-700" />
               <span className="typography-body-medium typography-label-medium text-muted-foreground">
                 Thanh toán cuối
               </span>
@@ -133,12 +133,12 @@ export function EmployeeSummaryCard({ employee, className }: EmployeeSummaryCard
           {/* Average Weekly Earnings */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-teal-600" />
+              <TrendingUp className="h-4 w-4 text-teal-700" />
               <span className="typography-body-medium typography-label-medium text-muted-foreground">
                 Thu nhập TB/tuần
               </span>
             </div>
-            <div className="typography-title-large text-teal-600">
+            <div className="typography-title-large text-teal-700">
               {formatCurrency(summary.avg_weekly_earnings_vnd)}
             </div>
           </div>

@@ -70,7 +70,7 @@ export function TimesheetDayEntriesModal({
             <span className="typography-title-medium font-semibold">Tổng cộng ngày {format(date, 'dd/MM')}:</span>
             <div className="flex gap-4">
               <div className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-xl border border-green-200">
-                <Clock className="h-5 w-5 text-green-600" />
+                <Clock className="h-5 w-5 text-green-700" />
                 <div>
                   <p className="typography-body-small text-muted-foreground">Ca làm việc</p>
                   <Badge variant="secondary" className="typography-data font-bold text-green-700 bg-green-100 mt-0.5">

@@ -36,7 +36,7 @@ export const DatePicker = memo(function DatePicker({
         <div className="flex items-center gap-2">
           <Label htmlFor="effective-from" className="typography-body-medium text-muted-foreground shrink-0">
             Có hiệu lực từ
-            {required && <span className="text-red-500 ml-1" aria-label="bắt buộc">*</span>}
+            {required && <span className="text-red-600 ml-1" aria-label="bắt buộc">*</span>}
           </Label>
           <Input
             id="effective-from"
@@ -70,7 +70,7 @@ export const DatePicker = memo(function DatePicker({
       {!hasFromErrors && hasFromWarnings && (
         <div className="space-y-1">
           {fromWarnings.map((warning, index) => (
-            <div key={index} className="flex items-start gap-2 typography-body-medium text-yellow-600">
+            <div key={index} className="flex items-start gap-2 typography-body-medium text-yellow-700">
               <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
               <span>{warning}</span>
             </div>

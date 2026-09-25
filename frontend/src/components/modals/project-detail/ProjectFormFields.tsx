@@ -40,7 +40,7 @@ export function ProjectNameField({ formData, setFormData, errors, isEditing }: P
         disabled={!isEditing}
         className={errors.name ? 'border-red-500' : ''}
       />
-      {errors.name && <p className="typography-body-medium text-red-500 mt-1">{errors.name}</p>}
+      {errors.name && <p className="typography-body-medium text-red-600 mt-1">{errors.name}</p>}
     </div>
   );
 }
@@ -56,7 +56,7 @@ export function ProjectClientField({ formData, setFormData, errors, isEditing }:
         disabled={!isEditing}
         className={errors.client_name ? 'border-red-500' : ''}
       />
-      {errors.client_name && <p className="typography-body-medium text-red-500 mt-1">{errors.client_name}</p>}
+      {errors.client_name && <p className="typography-body-medium text-red-600 mt-1">{errors.client_name}</p>}
     </div>
   );
 }
@@ -115,7 +115,7 @@ export function ProjectEmployeeCountField({ formData, setFormData, errors, isEdi
         disabled={!isEditing}
         className={errors.employee_count ? 'border-red-500' : ''}
       />
-      {errors.employee_count && <p className="typography-body-medium text-red-500 mt-1">{errors.employee_count}</p>}
+      {errors.employee_count && <p className="typography-body-medium text-red-600 mt-1">{errors.employee_count}</p>}
     </div>
   );
 }
@@ -133,7 +133,7 @@ export function ProjectBudgetField({ formData, setFormData, errors, isEditing }:
         placeholder="100000000"
         className={errors.budget ? 'border-red-500' : ''}
       />
-      {errors.budget && <p className="typography-body-medium text-red-500 mt-1">{errors.budget}</p>}
+      {errors.budget && <p className="typography-body-medium text-red-600 mt-1">{errors.budget}</p>}
     </div>
   );
 }
@@ -172,7 +172,7 @@ export function ProjectDateFields({ formData, setFormData, errors, isEditing }: 
           disabled={!isEditing}
           className={errors.end_date ? 'border-red-500' : ''}
         />
-        {errors.end_date && <p className="typography-body-medium text-red-500 mt-1">{errors.end_date}</p>}
+        {errors.end_date && <p className="typography-body-medium text-red-600 mt-1">{errors.end_date}</p>}
       </div>
     </div>
   );

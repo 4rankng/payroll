@@ -174,7 +174,7 @@ export function ProjectCreateModal({ onProjectCreate, isOpen = false, onClose }:
               onChange={(e) => handleInputChange("name", e.target.value)}
               className={errors.name ? "border-red-500" : ""}
             />
-            {errors.name && <p className="typography-body-medium text-red-500">{errors.name}</p>}
+            {errors.name && <p className="typography-body-medium text-red-600">{errors.name}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="client">Khách hàng *</Label>
@@ -186,7 +186,7 @@ export function ProjectCreateModal({ onProjectCreate, isOpen = false, onClose }:
               className={errors.client_name ? "border-red-500" : ""}
               required
             />
-            {errors.client_name && <p className="typography-body-medium text-red-500">{errors.client_name}</p>}
+            {errors.client_name && <p className="typography-body-medium text-red-600">{errors.client_name}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="code">Mã dự án</Label>
@@ -215,7 +215,7 @@ export function ProjectCreateModal({ onProjectCreate, isOpen = false, onClose }:
               onChange={(e) => handleInputChange("end_date", e.target.value)}
               className={errors.end_date ? "border-red-500" : ""}
             />
-            {errors.end_date && <p className="typography-body-medium text-red-500">{errors.end_date}</p>}
+            {errors.end_date && <p className="typography-body-medium text-red-600">{errors.end_date}</p>}
           </div>
           <div className="col-span-2 space-y-2">
             <Label htmlFor="description">Mô tả</Label>

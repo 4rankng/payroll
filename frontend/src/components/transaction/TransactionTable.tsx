@@ -28,9 +28,9 @@ interface TransactionTableProps {
 
 // Badge styles keyed by settlement status — mirrors the strip/legend colors
 const STATUS_BADGE: Record<string, { badge: string; remaining: string }> = {
-  settled:           { badge: 'bg-emerald-50 text-emerald-700', remaining: 'text-emerald-600/60' },
-  pending:           { badge: 'bg-amber-50 text-amber-700',     remaining: 'text-amber-600/60'   },
-  partially_settled: { badge: 'bg-teal-50 text-teal-700',   remaining: 'text-teal-600/60'  },
+  settled:           { badge: 'bg-emerald-50 text-emerald-700', remaining: 'text-emerald-700/60' },
+  pending:           { badge: 'bg-amber-50 text-amber-700',     remaining: 'text-amber-700/60'   },
+  partially_settled: { badge: 'bg-teal-50 text-teal-700',   remaining: 'text-teal-700/60'  },
 };
 const FALLBACK_BADGE = { badge: 'bg-slate-100 text-foreground', remaining: 'text-muted-foreground/60' };
 

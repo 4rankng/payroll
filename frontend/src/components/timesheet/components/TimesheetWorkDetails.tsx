@@ -50,7 +50,7 @@ export function TimesheetWorkDetails({
               className="mt-1"
             />
           ) : (
-            <p className="typography-title-large text-green-600 mt-1">{timesheet.hours_worked} giờ</p>
+            <p className="typography-title-large text-green-700 mt-1">{timesheet.hours_worked} giờ</p>
           )}
         </div>
       </div>

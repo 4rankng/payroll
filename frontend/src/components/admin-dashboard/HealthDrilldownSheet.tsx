@@ -800,11 +800,11 @@ function Td({ children, className }: { children: ReactNode; className?: string }
 
 const MONOGRAM_PALETTE = [
   'bg-blue-500/10 text-blue-600',
-  'bg-emerald-500/10 text-emerald-600',
-  'bg-amber-500/10 text-amber-600',
-  'bg-teal-500/10 text-teal-600',
+  'bg-emerald-500/10 text-emerald-700',
+  'bg-amber-500/10 text-amber-700',
+  'bg-teal-500/10 text-teal-700',
   'bg-rose-500/10 text-rose-600',
-  'bg-sky-500/10 text-sky-600',
+  'bg-sky-500/10 text-sky-700',
   'bg-primary/10 text-primary',
 ];
 
@@ -845,7 +845,7 @@ function AttemptTypeBadge({ attemptType }: { attemptType: string }) {
     attemptType === 'check_in'
       ? 'bg-primary/10 text-primary border-primary/20'
       : attemptType === 'check_out'
-        ? 'bg-teal-500/10 text-teal-600 border-teal-500/20'
+        ? 'bg-teal-500/10 text-teal-700 border-teal-500/20'
         : 'bg-muted text-muted-foreground border-border/60';
   return (
     <span className={cn('inline-flex max-w-full items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium leading-tight', tone)}>

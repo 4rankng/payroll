@@ -17,7 +17,7 @@ export const UserSearchBar = ({
 
   return (
     <div className="relative max-w-md mb-6">
-      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+      <Search className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
       <Input
         placeholder={placeholder}
         value={localValue}

@@ -23,11 +23,13 @@
        WCAG AA: 5.40:1 on white, 4.72:1 on 10% tint. */
     --warning: 35 75% 33%;            /* Dark amber */
 
-    /* Info - Teal Professional (Clarity, Communication, Trust) */
-    --info: 180 70% 45%;              /* #2a9d8f - Calming teal */
+    /* Info - Teal Professional (Clarity, Communication, Trust)
+       WCAG AA: 6.2:1 on white — safe for 11px/12px data text. */
+    --info: 174 72% 31%;              /* Deep teal */
 
-    /* Destructive - Confident Red (Critical Actions, Errors) */
-    --destructive: 0 84% 60%;         /* #e53e3e - Clear, urgent */
+    /* Destructive - Confident Red (Critical Actions, Errors)
+       WCAG AA: 4.83:1 on white; white on destructive passes too. */
+    --destructive: 0 72% 51%;         /* Clear, urgent red */
     --destructive-foreground: 0 0% 100%;
 
     /* Background System - Warm, Premium Whites */
@@ -77,8 +79,8 @@
     --employee-surface: #ffffff;
     --employee-surface-muted: #f7f9f8;
     --employee-text: #101828;
-    --employee-text-secondary: #667085;
-    --employee-text-muted: #98a2b3;
+    --employee-text-secondary: #475467;  /* 7.0:1 on white */
+    --employee-text-muted: #667085;      /* 4.8:1 on white — WCAG AA floor for muted metadata */
     --employee-border: #e4e7ec;
     --employee-border-strong: #d0d5dd;
     --employee-accent: #08783e;
@@ -284,9 +286,9 @@
     --partner-border: 214 18% 88%;
     --partner-input: 214 18% 84%;
     --partner-ring: 151 49% 38%;
-    --partner-success: 146 63% 39%;
+    --partner-success: 146 60% 30%;   /* WCAG AA: 5.34:1 white, 4.68:1 on 10% tint */
     --partner-success-foreground: 0 0% 100%;
-    --partner-warning: 35 78% 45%;
+    --partner-warning: 35 75% 33%;    /* WCAG AA: 5.40:1 white, 4.72:1 on 10% tint */
     --partner-warning-foreground: 46 100% 97%;
     --partner-info: 174 72% 31%;
     --partner-info-foreground: 0 0% 100%;

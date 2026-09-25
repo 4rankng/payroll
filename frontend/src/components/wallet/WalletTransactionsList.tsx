@@ -123,7 +123,7 @@ function CopyButton({ value }: { value: string }) {
       className="ml-1 inline-flex h-11 w-11 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
       title="Sao chép"
     >
-      {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+      {copied ? <Check className="h-3 w-3 text-emerald-700" /> : <Copy className="h-3 w-3" />}
     </button>
   );
 }
@@ -156,7 +156,7 @@ function TypeLabel({ type }: { type: UnifiedTransaction["type"] }) {
     return (
       <span className="inline-flex items-center gap-1.5">
         <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 ring-1 ring-emerald-100">
-          <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-600" />
+          <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-700" />
         </span>
         <span className="text-xs text-emerald-700 font-medium whitespace-nowrap">Nạp tiền</span>
       </span>
@@ -245,7 +245,7 @@ function TransactionDetailSheet({
           <div className="flex items-start justify-between mb-4">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isInflow ? "bg-emerald-100" : "bg-slate-200"}`}>
               {isInflow
-                ? <ArrowDownLeft className="h-5 w-5 text-emerald-600" />
+                ? <ArrowDownLeft className="h-5 w-5 text-emerald-700" />
                 : <ArrowUpRight className="h-5 w-5 text-slate-600" />
               }
             </div>
@@ -359,7 +359,7 @@ function PaymentDetail({ payment, tx }: { payment: WalletPayment; tx: UnifiedTra
         <DetailRow
           label="Mã phản hồi"
           value={
-            <span className="inline-flex items-center gap-1.5 text-emerald-600">
+            <span className="inline-flex items-center gap-1.5 text-emerald-700">
               <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
               {payment.error_code} — {payment.error_message}
             </span>
@@ -694,7 +694,7 @@ function MobileTransactionList({
             {/* Icon */}
             <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${isInflow ? "bg-emerald-50 ring-1 ring-emerald-100" : "bg-slate-100 ring-1 ring-slate-200"}`}>
               {isInflow
-                ? <ArrowDownLeft className="h-4 w-4 text-emerald-600" />
+                ? <ArrowDownLeft className="h-4 w-4 text-emerald-700" />
                 : <ArrowUpRight className="h-4 w-4 text-slate-500" />
               }
             </div>
@@ -797,7 +797,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-14 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 mb-3">
-        <AlertCircle className="h-5 w-5 text-rose-500" />
+        <AlertCircle className="h-5 w-5 text-rose-600" />
       </div>
       <p className="text-sm font-medium text-rose-700">Không thể tải lịch sử giao dịch</p>
       <p className="text-xs text-slate-500 mt-1 mb-4">Đã xảy ra lỗi khi gọi API. Vui lòng thử lại.</p>

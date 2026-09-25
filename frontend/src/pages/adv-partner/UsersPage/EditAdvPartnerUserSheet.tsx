@@ -152,7 +152,7 @@ function ProjectPill({ project }: { project: CurrentProject }) {
         {project.name}
       </span>
       {project.code && (
-        <span className="text-emerald-600/60 dark:text-emerald-500/60 font-mono">
+        <span className="text-emerald-700/60 dark:/60 font-mono">
           {project.code}
         </span>
       )}
@@ -551,7 +551,7 @@ export default function EditAdvPartnerUserSheet({
                     disabled={isSaving || !password}
                   >
                     {savedPassword ? (
-                      <span className="inline-flex items-center gap-2 text-emerald-600">
+                      <span className="inline-flex items-center gap-2 text-emerald-700">
                         <CheckCircle2 className="w-4 h-4" /> Đã đổi mật khẩu
                       </span>
                     ) : isSaving ? (

@@ -87,7 +87,7 @@ export function MobileTimesheetSummary({
       {hasValidationErrors && (
         <div className="p-4 bg-red-50 border-t border-red-100">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0" />
             <div className="typography-body-medium text-red-700">
               <span className="font-medium">
                 {summary.validationErrors.length} nhân viên vượt quá 24h/ngày

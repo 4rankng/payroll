@@ -142,7 +142,7 @@ export function createPartnerTimesheetColumns(): ColumnDef<Timesheet>[] {
         );
 
         return (
-          <div className="typography-data-medium tabular-nums font-semibold text-emerald-600">
+          <div className="typography-data-medium tabular-nums font-semibold text-emerald-700">
             {formatCurrency(paidAmount)}
           </div>
         );

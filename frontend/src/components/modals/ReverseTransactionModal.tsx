@@ -113,7 +113,7 @@ function ReverseTransactionModalComponent({
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-              <RotateCcw className="h-5 w-5 text-orange-600" />
+              <RotateCcw className="h-5 w-5 text-orange-700" />
             </div>
             <div>
               <AlertDialogTitle className="text-lg font-semibold">
@@ -139,7 +139,7 @@ function ReverseTransactionModalComponent({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Số tiền:</span>
                   <span className={`font-semibold ${
-                    transaction.transaction_type === 'revenue' ? 'text-emerald-600' : 'text-red-600'
+                    transaction.transaction_type === 'revenue' ? 'text-emerald-700' : 'text-red-600'
                   }`}>
                     {formatCurrency(transaction.amount)}
                   </span>
@@ -159,7 +159,7 @@ function ReverseTransactionModalComponent({
 
             {/* Warning Alert */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-amber-700 flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="typography-body-small font-medium text-amber-900">
                   Lưu ý quan trọng

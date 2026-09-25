@@ -31,7 +31,7 @@ function Field({ id, label, children, warning }: { id?: string; label: string; c
       <Label htmlFor={id} className="text-xs text-muted-foreground font-medium">{label}</Label>
       {children}
       {warning && (
-        <p className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+        <p className="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
           <AlertCircle className="h-3 w-3 shrink-0" />
           {warning}
         </p>

@@ -1388,7 +1388,7 @@ export function EmployeeCheckInCard({
       ) : attendance?.status === "rejected" ? (
         <div className="rounded-2xl border border-orange-200 bg-orange-50 p-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-orange-600">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-orange-700">
               <AlertCircle className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">

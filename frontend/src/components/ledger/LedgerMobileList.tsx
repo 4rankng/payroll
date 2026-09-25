@@ -150,7 +150,7 @@ export function LedgerMobileList({
                     }
                   }}>
                     {evidence.type === 'url' ? (
-                      <ExternalLink className="h-3 w-3 text-blue-500" />
+                      <ExternalLink className="h-3 w-3 text-blue-600" />
                     ) : (
                       <Download className="h-3 w-3 text-emerald-700" />
                     )}

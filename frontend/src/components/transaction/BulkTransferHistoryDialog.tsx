@@ -95,14 +95,14 @@ const HistoryRow = memo(function HistoryRow({ history, onClick, isLast }: Histor
             {history.filename}
           </p>
           {allSuccess ? (
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
           ) : (
             <Badge variant="destructive" className="h-4 px-1.5 text-xs shrink-0">
               {history.failed_txn} lỗi
             </Badge>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-400">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-500">
           <span className="tabular-nums">
             {history.completed_txn}/{history.total_txn} thành công
           </span>
@@ -201,7 +201,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
           <div className="flex items-start justify-between gap-3">
             <SheetHeader className="text-left space-y-0">
               <SheetTitle className="text-sm font-semibold">Lịch sử chuyển lô</SheetTitle>
-              <SheetDescription className="text-xs text-slate-400">
+              <SheetDescription className="text-xs text-slate-500">
                 Danh sách file kết quả đã tải lên
               </SheetDescription>
             </SheetHeader>
@@ -209,7 +209,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-11 w-11 shrink-0 rounded-xl text-slate-400 hover:text-foreground hover:bg-slate-100"
+                className="h-11 w-11 shrink-0 rounded-xl text-slate-500 hover:text-foreground hover:bg-slate-100"
                 aria-label="Đóng"
               >
                 <X className="h-3.5 w-3.5" />
@@ -296,7 +296,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
               {hasMore && (
                 <div ref={loadMoreRef} className="py-3 flex justify-center">
                   {isFetching && (
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
                       <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       Đang tải thêm...
                     </div>
@@ -305,7 +305,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
               )}
 
               {!hasMore && histories.length > 0 && (
-                <p className="py-3 text-center text-xs text-slate-400">
+                <p className="py-3 text-center text-xs text-slate-500">
                   {histories.length} kết quả
                 </p>
               )}

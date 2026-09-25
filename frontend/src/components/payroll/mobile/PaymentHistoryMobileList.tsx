@@ -79,7 +79,7 @@ export function PaymentHistoryMobileList({ data, isLoading }: PaymentHistoryMobi
               {/* Amount with icon */}
               <div className="flex min-w-0 items-center gap-1.5">
                 <Banknote className="w-4 h-4 shrink-0 text-muted-foreground" />
-                <span className="typography-currency typography-data-medium break-words font-semibold text-emerald-600">
+                <span className="typography-currency typography-data-medium break-words font-semibold text-emerald-700">
                   {formatCurrency(payment.total_paid_amount)}
                 </span>
               </div>

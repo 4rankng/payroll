@@ -72,7 +72,7 @@ interface LocationMapProps {
 
 const REASON_ICON_COLOR: Record<ReasonSeverity, string> = {
   danger: 'text-rose-600',
-  warning: 'text-amber-600',
+  warning: 'text-amber-700',
   info: 'text-primary',
   neutral: 'text-muted-foreground',
 };
@@ -286,7 +286,7 @@ export function LocationMap({
                 <span
                   className={cn(
                     'text-[1.65rem] font-bold leading-none tabular-nums min-[380px]:shrink-0',
-                    isInside ? 'text-emerald-600' : 'text-rose-600',
+                    isInside ? 'text-emerald-700' : 'text-rose-600',
                   )}
                 >
                   {formatDistanceMeters(distanceMeters)}

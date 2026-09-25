@@ -339,7 +339,7 @@ export function AdvancePaymentHistoryCard({
           <p className="mt-4 text-[1rem] font-semibold text-slate-700">
             Chưa tải được lịch sử
           </p>
-          <p className="mt-1 text-[0.8125rem] text-slate-400">
+          <p className="mt-1 text-[0.8125rem] text-slate-500">
             Kiểm tra kết nối rồi thử lại.
           </p>
           {onRetry && (

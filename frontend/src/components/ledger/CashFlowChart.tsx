@@ -107,15 +107,15 @@ export function CashFlowChart({ className }: CashFlowChartProps) {
           <div>
             <CardTitle className="text-base flex items-center gap-2">
               Dòng Tiền 6 Tháng Gần Đây
-              {trend === 'up' && <TrendingUp className="h-4 w-4 text-green-500" />}
-              {trend === 'down' && <TrendingDown className="h-4 w-4 text-red-500" />}
+              {trend === 'up' && <TrendingUp className="h-4 w-4 text-green-700" />}
+              {trend === 'down' && <TrendingDown className="h-4 w-4 text-red-600" />}
             </CardTitle>
             <CardDescription>
               Tổng ròng: {totalNetFlow >= 0 ? '+' : ''}{ledgerService.formatCurrency(totalNetFlow)}
             </CardDescription>
           </div>
           <div className="text-right text-xs text-muted-foreground">
-            <div className="text-green-600">
+            <div className="text-green-700">
               ↗ Vào: {ledgerService.formatCurrency(totalInflow)}
             </div>
             <div className="text-red-600">

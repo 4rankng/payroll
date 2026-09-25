@@ -62,8 +62,8 @@ function TransactionRow({ detail, isLast }: TransactionRowProps) {
       {/* Status icon */}
       <div className="flex justify-center">
         {isPaid
-          ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-          : <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />}
+          ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+          : <XCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />}
       </div>
 
       {/* Employee */}
@@ -71,7 +71,7 @@ function TransactionRow({ detail, isLast }: TransactionRowProps) {
         <p className="typography-body-small font-medium text-foreground truncate leading-tight">
           {detail.employee_name}
         </p>
-        <p className="typography-label-medium text-slate-400 truncate leading-tight mt-0.5">
+        <p className="typography-label-medium text-slate-500 truncate leading-tight mt-0.5">
           {detail.employee_bank} · {detail.employee_account_number}
         </p>
       </div>
@@ -198,7 +198,7 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
                 </span>
                 <span className="text-slate-300">|</span>
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  <CheckCircle2 className="w-3 h-3 text-emerald-700" />
                   Thành công: <span className="font-semibold text-emerald-700 ml-0.5">{historyDetail.completed_txn}</span>
                 </span>
                 <span className="text-slate-300">|</span>
@@ -215,7 +215,7 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
                 <div className="divide-y-0">
                   {/* Shared timestamp above table */}
                   {detailItems[0]?.paid_at && (
-                    <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/50 border-b text-xs text-slate-400">
+                    <div className="flex items-center gap-1.5 px-3 py-2 bg-muted/50 border-b text-xs text-slate-500">
                       <Clock className="w-3 h-3 shrink-0" />
                       Thời gian xử lý: <span className="font-medium text-muted-foreground ml-0.5">{formatDate(detailItems[0].paid_at)}</span>
                     </div>
@@ -223,8 +223,8 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
                   {/* Column headers */}
                   <div className="grid grid-cols-[1.5rem_1fr_auto] gap-x-3 px-3 py-1.5 bg-muted/50 border-b">
                     <div />
-                    <p className="typography-label-small text-slate-400 uppercase">Nhân viên</p>
-                    <p className="typography-label-small text-slate-400 uppercase text-right">Số tiền</p>
+                    <p className="typography-label-small text-slate-500 uppercase">Nhân viên</p>
+                    <p className="typography-label-small text-slate-500 uppercase text-right">Số tiền</p>
                   </div>
                   {detailItems.map((detail, index) => (
                     <TransactionRow

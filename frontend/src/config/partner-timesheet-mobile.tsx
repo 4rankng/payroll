@@ -108,7 +108,7 @@ export function createPartnerTimesheetMobileConfig({
         );
 
         return (
-          <div className="typography-data-small tabular-nums font-semibold text-emerald-600">
+          <div className="typography-data-small tabular-nums font-semibold text-emerald-700">
             {formatCurrency(timesheet.paid_amount)}
           </div>
         );

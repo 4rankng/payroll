@@ -292,7 +292,7 @@ export function AddEmployeesToProject({
         return (
           <div className="flex min-h-11 items-center justify-center">
             {isAdded ? (
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <CheckCircle2 className="w-5 h-5 text-green-700" />
             ) : assigningId === employeeId ? (
               <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
             ) : (

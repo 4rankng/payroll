@@ -83,7 +83,7 @@ export function MobileHourEntry({
             variant="ghost"
             size="sm"
             onClick={() => onRemove(hourType)}
-            className="h-10 w-10 text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+            className="h-10 w-10 text-red-600 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -132,7 +132,7 @@ export function MobileHourEntry({
           <div className="flex items-center justify-between typography-body-medium text-muted-foreground pt-2 border-t">
             <div>
               <span className="font-medium">{formatCurrency(rate)}</span>
-              <span className="text-gray-400 ml-1">/giờ</span>
+              <span className="text-gray-500 ml-1">/giờ</span>
             </div>
             {totalAmount > 0 && (
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">

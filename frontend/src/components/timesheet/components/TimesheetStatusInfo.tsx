@@ -26,7 +26,7 @@ export function TimesheetStatusInfo({ timesheet }: TimesheetStatusInfoProps) {
 
       {/* Approval Date */}
       {timesheet.status === 'approved' && timesheet.approved_at && (
-        <div className="text-center typography-body-medium text-green-600">
+        <div className="text-center typography-body-medium text-green-700">
           Đã duyệt ngày {format(new Date(timesheet.approved_at), 'dd/MM/yyyy')}
         </div>
       )}

@@ -105,7 +105,7 @@ export const MarkExternallyPaidDialog = memo(function MarkExternallyPaidDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="external-paid-ref" className="text-xs font-medium">
-              Số tham chiếu <span className="text-red-500">*</span>
+              Số tham chiếu <span className="text-red-600">*</span>
             </Label>
             <Input
               id="external-paid-ref"

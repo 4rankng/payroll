@@ -88,7 +88,7 @@ export const HourInputField = memo(
           )}
         />
         {entryAmount > 0 && (
-          <span className="text-xs text-emerald-600 font-medium tabular-nums">
+          <span className="text-xs text-emerald-700 font-medium tabular-nums">
             {formatVND(entryAmount)}
           </span>
         )}

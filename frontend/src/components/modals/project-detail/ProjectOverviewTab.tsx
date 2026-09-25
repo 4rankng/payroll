@@ -106,14 +106,14 @@ export function ProjectOverviewTab({
             icon={DollarSign}
             value={`${Math.round(calculateBudgetUsage())}%`}
             label="Ngân sách đã sử dụng"
-            color="text-green-600"
+            color="text-green-700"
           />
 
           <ProjectStatusCard
             icon={Target}
             value="-"
             label="Tiến độ"
-            color="text-emerald-600"
+            color="text-emerald-700"
           />
 
           <ProjectStatusCard
@@ -133,7 +133,7 @@ export function ProjectOverviewTab({
               }
             })()}
             label="Ngày còn lại"
-            color="text-orange-600"
+            color="text-orange-700"
           />
         </div>
       )}

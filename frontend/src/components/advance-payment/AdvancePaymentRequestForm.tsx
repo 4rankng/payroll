@@ -165,7 +165,7 @@ export function AdvancePaymentRequestForm({
         chipClassName: "bg-slate-100 text-slate-600 border border-slate-200",
         chipIcon: "lock",
         amount: null,
-        amountClassName: "text-slate-400",
+        amountClassName: "text-slate-500",
         amountLabel: `Kỳ ứng lương ${viewedMonthLabel} kết thúc`,
         helperLine: "Kỳ ứng lương này đã đóng, chọn kỳ hiện tại để tiếp tục.",
         actionEnabled: false,
@@ -179,7 +179,7 @@ export function AdvancePaymentRequestForm({
         chipClassName: "bg-amber-50 text-amber-700 border border-amber-200",
         chipIcon: "clock",
         amount: null,
-        amountClassName: "text-slate-400",
+        amountClassName: "text-slate-500",
         amountLabel: "Chưa có tài khoản nhận tiền",
         helperLine: "Liên hệ quản lý cập nhật thông tin ngân hàng để ứng lương.",
         actionEnabled: false,
@@ -193,7 +193,7 @@ export function AdvancePaymentRequestForm({
         chipClassName: "bg-amber-50 text-amber-700 border border-amber-200",
         chipIcon: "clock",
         amount: null,
-        amountClassName: "text-slate-400",
+        amountClassName: "text-slate-500",
         amountLabel: "Chưa có hạn mức",
         helperLine: `Chờ bảng lương tháng ${viewedMonthLabel}`,
         actionEnabled: false,
@@ -207,7 +207,7 @@ export function AdvancePaymentRequestForm({
         chipClassName: "bg-amber-50 text-amber-700 border border-amber-200",
         chipIcon: "clock",
         amount: 0,
-        amountClassName: "text-slate-400",
+        amountClassName: "text-slate-500",
         amountLabel: "Đã dùng hết hạn mức",
         helperLine: null,
         actionEnabled: false,
@@ -221,7 +221,7 @@ export function AdvancePaymentRequestForm({
         chipClassName: "bg-amber-50 text-amber-700 border border-amber-200",
         chipIcon: "clock",
         amount: null,
-        amountClassName: "text-slate-400",
+        amountClassName: "text-slate-500",
         amountLabel: info.canRequestTitle || "Chưa thể ứng lương",
         helperLine: info.canRequestReason || "Vui lòng quay lại trong kỳ ứng lương tiếp theo.",
         actionEnabled: false,
@@ -445,7 +445,7 @@ export function AdvancePaymentRequestForm({
             role="status"
             aria-live="polite"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
               <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="min-w-0">
@@ -489,7 +489,7 @@ export function AdvancePaymentRequestForm({
                   : "border-slate-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none",
               )}
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[0.875rem] font-medium text-slate-400">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[0.875rem] font-medium text-slate-500">
               ₫
             </span>
           </div>
@@ -572,7 +572,7 @@ export function AdvancePaymentRequestForm({
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-[0.9375rem] font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-xl hover:shadow-emerald-500/30 active:scale-[0.98] disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:from-slate-200 disabled:hover:to-slate-200"
+              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-[0.9375rem] font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-xl hover:shadow-emerald-500/30 active:scale-[0.98] disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:from-slate-200 disabled:hover:to-slate-200"
             >
               {isPending ? (
                 <>
@@ -592,7 +592,7 @@ export function AdvancePaymentRequestForm({
             <button
               type="button"
               disabled
-              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 text-[0.9375rem] font-semibold text-slate-400 cursor-not-allowed"
+              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 text-[0.9375rem] font-semibold text-slate-500 cursor-not-allowed"
             >
               {status.actionLabel}
               <Lock className="h-4 w-4" aria-hidden="true" />
@@ -604,13 +604,13 @@ export function AdvancePaymentRequestForm({
       {!visibleConfirmation && latestPendingRequest && (
         <div className="border-t border-slate-100 px-4 py-3.5" role="status">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
               <Clock3 className="h-4 w-4" aria-hidden="true" />
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[0.8125rem] font-semibold text-amber-700">Yêu cầu đang chờ xử lý</p>
               {latestPendingDate && (
-                <p className="mt-0.5 text-[0.75rem] text-amber-600">
+                <p className="mt-0.5 text-[0.75rem] text-amber-700">
                   Gửi ngày {latestPendingDate}
                 </p>
               )}
@@ -627,9 +627,9 @@ export function AdvancePaymentRequestForm({
         <div className="border-t border-slate-100 px-4 py-3.5">
           <div className="flex items-start gap-2.5 rounded-lg bg-slate-50 px-3.5 py-3 text-[0.8125rem] text-slate-500">
             {status.chipIcon === "lock" ? (
-              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
             ) : (
-              <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
+              <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
             )}
             <p className="leading-relaxed">{status.helperLine}</p>
           </div>

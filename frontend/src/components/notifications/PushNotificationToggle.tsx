@@ -38,7 +38,7 @@ export const PushNotificationToggle = ({ className }: PushNotificationToggleProp
     return (
       <div className={cn('flex min-h-16 items-center gap-3 rounded-xl border border-red-100 bg-red-50 p-3', className)}>
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100">
-          <BellOff className="h-4 w-4 text-red-500" />
+          <BellOff className="h-4 w-4 text-red-600" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-red-700">Thông báo đã bị chặn</p>

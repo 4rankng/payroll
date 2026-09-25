@@ -61,7 +61,7 @@ export const createEmployeeColumns = (
                   <TooltipProvider delayDuration={200}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />
+                        <AlertTriangle className="h-3 w-3 text-amber-700 shrink-0" />
                       </TooltipTrigger>
                       <TooltipContent side="top" className="text-xs">
                         Thiếu thông tin ngân hàng

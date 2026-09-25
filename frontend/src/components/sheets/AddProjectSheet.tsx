@@ -274,7 +274,7 @@ export function AddProjectSheet({
                     disabled={isSaving}
                   />
                   {errors.name && (
-                    <p className="text-xs text-red-500 flex items-center gap-1">
+                    <p className="text-xs text-red-600 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {errors.name}
                     </p>
@@ -294,7 +294,7 @@ export function AddProjectSheet({
                     disabled={isSaving}
                   />
                   {errors.client_name && (
-                    <p className="text-xs text-red-500 flex items-center gap-1">
+                    <p className="text-xs text-red-600 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {errors.client_name}
                     </p>
@@ -314,7 +314,7 @@ export function AddProjectSheet({
                     disabled={isSaving}
                   />
                   {errors.code && (
-                    <p className="text-xs text-red-500 flex items-center gap-1">
+                    <p className="text-xs text-red-600 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {errors.code}
                     </p>
@@ -347,7 +347,7 @@ export function AddProjectSheet({
                       disabled={isSaving}
                     />
                     {errors.start_date && (
-                      <p className="text-xs text-red-500 flex items-center gap-1">
+                      <p className="text-xs text-red-600 flex items-center gap-1">
                         <AlertTriangle className="h-3 w-3" />
                         {errors.start_date}
                       </p>
@@ -367,7 +367,7 @@ export function AddProjectSheet({
                       disabled={isSaving}
                     />
                     {errors.end_date && (
-                      <p className="text-xs text-red-500 flex items-center gap-1">
+                      <p className="text-xs text-red-600 flex items-center gap-1">
                         <AlertTriangle className="h-3 w-3" />
                         {errors.end_date}
                       </p>

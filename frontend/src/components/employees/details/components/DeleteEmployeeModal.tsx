@@ -120,7 +120,7 @@ export function DeleteEmployeeModal({
           {currentProjects.length > 0 && !hasTimesheets && (
             <div className="p-3 border border-amber-200 bg-amber-50 rounded-xl">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="h-4 w-4 text-amber-700 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-amber-800">
                   Nhân viên này đang được gán vào {currentProjects.length} dự án.
                   Hành động này sẽ gỡ bỏ nhân viên khỏi tất cả dự án và không thể hoàn thành.

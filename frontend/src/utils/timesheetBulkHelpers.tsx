@@ -159,7 +159,7 @@ export function createGroupBulkApprovalContent(
             </div>
             <div>
               <div className="typography-body-small text-muted-foreground">Tổng giờ</div>
-              <div className="font-medium text-green-600">{stats.totalHours} giờ</div>
+              <div className="font-medium text-green-700">{stats.totalHours} giờ</div>
             </div>
             <div>
               <div className="typography-body-small text-muted-foreground">Thành tiền</div>

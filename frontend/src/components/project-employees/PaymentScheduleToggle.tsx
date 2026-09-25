@@ -88,7 +88,7 @@ export function PaymentScheduleToggle({ assignment, disabled }: PaymentScheduleT
 
       {hasPendingChange && (
         <div className="flex items-center gap-1">
-          <Badge variant="outline" className="text-orange-600 border-orange-600">
+          <Badge variant="outline" className="text-orange-700 border-orange-600">
             <AlertCircle className="h-3 w-3 mr-1" />
             Chờ: {getScheduleLabel(assignment.pending_payment_schedule!)}
           </Badge>

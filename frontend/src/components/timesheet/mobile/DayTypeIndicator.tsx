@@ -79,7 +79,7 @@ export function DayTypeIndicator({
       <div className="space-y-3">
         <div className="flex items-center gap-2">
           <Label className="typography-body-medium">Loại ngày</Label>
-          <div className="flex items-center gap-1 typography-body-medium font-medium text-amber-600">
+          <div className="flex items-center gap-1 typography-body-medium font-medium text-amber-700">
             <AlertTriangle className="h-3 w-3" />
             cần xác định
           </div>

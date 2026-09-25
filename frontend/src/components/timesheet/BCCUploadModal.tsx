@@ -111,7 +111,7 @@ const ProjectCombobox = memo(function ProjectCombobox({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`block w-full rounded-lg border px-3 py-2 text-left text-sm leading-6 font-medium transition-colors placeholder:text-slate-400 focus:outline-none focus:ring-2
+        className={`block w-full rounded-lg border px-3 py-2 text-left text-sm leading-6 font-medium transition-colors placeholder:text-slate-500 focus:outline-none focus:ring-2
           ${hasProject
             ? 'border-emerald-500 bg-white text-slate-900'
             : !value
@@ -125,7 +125,7 @@ const ProjectCombobox = memo(function ProjectCombobox({
           {selectedName ?? 'Chọn dự án...'}
         </span>
         <ChevronDown
-          className={`float-right mt-1 h-4 w-4 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`float-right mt-1 h-4 w-4 text-slate-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -134,17 +134,17 @@ const ProjectCombobox = memo(function ProjectCombobox({
         <div className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
           {/* Search input */}
           <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2.5">
-            <Search className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+            <Search className="h-3.5 w-3.5 shrink-0 text-slate-500" />
             <input
               ref={inputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm dự án..."
-              className="flex-1 bg-transparent text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none"
+              className="flex-1 bg-transparent text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="text-slate-400 hover:text-slate-700">
+              <button onClick={() => setSearch('')} className="text-slate-500 hover:text-slate-700">
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
@@ -329,7 +329,7 @@ const ResultSuccess = memo(function ResultSuccess({ result }: ResultSuccessProps
             Tháng {formatMonthLabel(result.for_month)} · Tất cả dữ liệu hợp lệ đã được nhập.
           </p>
         </div>
-        <PartyPopper className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden="true" />
+        <PartyPopper className="h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
       </div>
       <ResultCounts result={result} />
     </div>
@@ -478,7 +478,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
               </span>
               <span className="flex flex-col leading-tight">
                 <span className="text-[15px] font-semibold">Tải lên Bảng Chấm Công</span>
-                <span className="text-[12px] font-normal text-slate-500 dark:text-slate-400">
+                <span className="text-[12px] font-normal text-slate-500 dark:">
                   Nhập dữ liệu chấm công từ tệp Excel
                 </span>
               </span>
@@ -486,7 +486,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
           </DialogTitle>
           <button
             onClick={handleClose}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-transparent text-slate-500 transition-colors hover:bg-slate-200/60 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-transparent text-slate-500 transition-colors hover:bg-slate-200/60 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark: dark:hover:bg-slate-700 dark:hover:text-slate-200"
             title="Đóng"
             aria-label="Đóng"
           >
@@ -503,9 +503,9 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                 <div className="space-y-1.5">
                   <label className="flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                     Dự án áp dụng
-                    <span className="text-emerald-600">*</span>
+                    <span className="text-emerald-700">*</span>
                     {hasProject && (
-                      <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                      <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
                         <Check className="h-3 w-3" strokeWidth={3} />
                         Đã chọn
                       </span>
@@ -524,8 +524,8 @@ export const BCCUploadModal = memo(function BCCUploadModal({
               <div className="space-y-1.5">
                 <label className="flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                   Tháng áp dụng
-                  <span className="text-emerald-600">*</span>
-                  <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                  <span className="text-emerald-700">*</span>
+                  <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
                     <Check className="h-3 w-3" strokeWidth={3} />
                     Đã chọn
                   </span>
@@ -547,7 +547,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
 
               {/* Info callout (Tailkit alert pattern) */}
               <div className="flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 p-3.5 text-sm leading-relaxed text-emerald-800 dark:border-emerald-700/50 dark:bg-emerald-900/20 dark:text-emerald-200/90">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700 dark:" />
                 <p className="flex-1">
                   Các ngày trong tệp Excel sẽ được gán vào tháng đã chọn — ví dụ ngày{' '}
                   <code className="rounded bg-emerald-600/10 px-1 py-px font-mono text-[12px] font-semibold">
@@ -585,7 +585,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
               <div className="space-y-1.5">
                 <label className="flex items-center gap-1 text-sm font-medium text-slate-700 dark:text-slate-300">
                   Tệp bảng chấm công
-                  <span className="text-emerald-600">*</span>
+                  <span className="text-emerald-700">*</span>
                 </label>
 
                 {/* Dropzone */}
@@ -607,9 +607,9 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                     </span>
                     <div>
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        Kéo thả tệp <span className="text-emerald-700 dark:text-emerald-400">BCC</span> vào đây
+                        Kéo thả tệp <span className="text-emerald-700 dark:">BCC</span> vào đây
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-0.5 text-xs text-slate-500 dark:">
                         hoặc nhấn để chọn tệp · định dạng .xlsx · tối đa 10 MB
                       </p>
                     </div>
@@ -634,7 +634,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                       <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {file.name}
                       </p>
-                      <p className="mt-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-0.5 font-mono text-xs text-slate-500 dark:">
                         {(file.size / 1024).toFixed(0)} KB
                       </p>
                     </div>
@@ -658,7 +658,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                         style={{ width: '60%' }}
                       />
                     </div>
-                    <p className="mt-1.5 flex items-center justify-end gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                    <p className="mt-1.5 flex items-center justify-end gap-1 text-xs font-semibold text-slate-600 dark:">
                       <Loader2 className="h-3 w-3 animate-spin" />
                       Đang tải lên…
                     </p>
@@ -687,7 +687,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
         <div className="flex shrink-0 items-center gap-2 border-t border-slate-100 bg-slate-50 px-4 py-3 sm:gap-3 sm:px-5 sm:py-4 dark:border-slate-700 dark:bg-slate-800/50">
           {!result && (
             <div
-              className={`flex min-w-0 flex-1 items-center gap-1.5 ${isReady ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}
+              className={`flex min-w-0 flex-1 items-center gap-1.5 ${isReady ? 'text-emerald-700 dark:' : 'text-slate-500 dark:'}`}
             >
               {isReady ? (
                 <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />

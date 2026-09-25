@@ -136,9 +136,9 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
   // Results display helpers
   const getStatusIcon = useCallback((status: string) => {
     return status === 'paid' ? (
-      <CheckCircle className="w-4 h-4 text-green-500" />
+      <CheckCircle className="w-4 h-4 text-green-700" />
     ) : (
-      <XCircle className="w-4 h-4 text-red-500" />
+      <XCircle className="w-4 h-4 text-red-600" />
     );
   }, []);
 
@@ -171,7 +171,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
                 <span className="ml-2">Tổng số bản ghi</span>
               </div>
               <div className="typography-body-medium min-w-0 text-muted-foreground">
-                <span className="typography-data-large font-semibold text-emerald-600">{uploadResult.completed_txn}</span>
+                <span className="typography-data-large font-semibold text-emerald-700">{uploadResult.completed_txn}</span>
                 <span className="ml-2">Thành công</span>
               </div>
               <div className="typography-body-medium min-w-0 text-muted-foreground">
@@ -287,7 +287,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
                   dismissPendingExport(pendingHint.id);
                   setPendingHint(null);
                 }}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-blue-500 transition-colors hover:bg-blue-100 hover:text-blue-700"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700"
                 aria-label="Bỏ qua nhắc nhở"
               >
                 <X className="h-4 w-4" />
@@ -298,7 +298,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
           {/* File Upload Section */}
           <div className="space-y-4">
             <Label className="typography-body-medium">
-              FILE EXCEL <span className="text-red-500">*</span>
+              FILE EXCEL <span className="text-red-600">*</span>
             </Label>
 
             {!selectedFile ? (
@@ -325,7 +325,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
                         chọn file
                       </span>
                     </p>
-                    <p className="typography-body-small text-gray-400">
+                    <p className="typography-body-small text-gray-500">
                       Chỉ chấp nhận file Excel (.xls, .xlsx) - Tối đa 10MB
                     </p>
                   </div>
@@ -336,7 +336,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="w-10 h-10 rounded bg-green-100 flex items-center justify-center">
-                      <FileSpreadsheet className="w-5 h-5 text-green-600" />
+                      <FileSpreadsheet className="w-5 h-5 text-green-700" />
                     </div>
                     <div className="min-w-0">
                       <p className="typography-body-medium break-words font-medium text-foreground">

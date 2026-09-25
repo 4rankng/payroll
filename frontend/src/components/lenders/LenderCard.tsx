@@ -102,7 +102,7 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
         </div>
       ) : (
         <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded">
-          <FileText className="w-4 h-4 text-amber-600 shrink-0" />
+          <FileText className="w-4 h-4 text-amber-700 shrink-0" />
           <span className="typography-body-small text-amber-900">
             Chưa có thông tin ngân hàng
           </span>

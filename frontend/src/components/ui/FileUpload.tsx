@@ -236,7 +236,7 @@ export function FileUpload({
                   "w-5 h-5",
                   dragActive && !disabled && "text-blue-600",
                   !dragActive && !disabled && "text-gray-500",
-                  disabled && "text-gray-400"
+                  disabled && "text-gray-500"
                 )}
               />
             </div>
@@ -308,7 +308,7 @@ export function FileUpload({
                   {/* Error */}
                   {file.error && (
                     <div className="flex items-center gap-1 mt-1">
-                      <AlertCircle className="w-3 h-3 text-red-500" />
+                      <AlertCircle className="w-3 h-3 text-red-600" />
                       <p className="typography-body-small text-red-600">{file.error}</p>
                     </div>
                   )}

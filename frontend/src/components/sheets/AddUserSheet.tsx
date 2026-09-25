@@ -245,7 +245,7 @@ function AddUserSheet({
                       placeholder="Nguyễn Văn A"
                       className={errors.fullname ? 'border-red-500 h-11' : 'h-11'}
                     />
-                    {errors.fullname && <p className="text-xs text-red-500 mt-0.5">{errors.fullname}</p>}
+                    {errors.fullname && <p className="text-xs text-red-600 mt-0.5">{errors.fullname}</p>}
                   </div>
 
                   <div className="space-y-1">
@@ -265,7 +265,7 @@ function AddUserSheet({
                         <SelectItem value="accountant">Kế toán</SelectItem>
                       </SelectContent>
                     </Select>
-                    {errors.role && <p className="text-xs text-red-500 mt-0.5">{errors.role}</p>}
+                    {errors.role && <p className="text-xs text-red-600 mt-0.5">{errors.role}</p>}
                   </div>
                 </div>
 
@@ -279,7 +279,7 @@ function AddUserSheet({
                       placeholder="admin123"
                       className={errors.username ? 'border-red-500 h-11' : 'h-11'}
                     />
-                    {errors.username && <p className="text-xs text-red-500 mt-0.5">{errors.username}</p>}
+                    {errors.username && <p className="text-xs text-red-600 mt-0.5">{errors.username}</p>}
                   </div>
 
                   <div className="space-y-1">
@@ -292,7 +292,7 @@ function AddUserSheet({
                       placeholder="admin@example.com"
                       className={errors.email ? 'border-red-500 h-11' : 'h-11'}
                     />
-                    {errors.email && <p className="text-xs text-red-500 mt-0.5">{errors.email}</p>}
+                    {errors.email && <p className="text-xs text-red-600 mt-0.5">{errors.email}</p>}
                   </div>
                 </div>
 
@@ -309,7 +309,7 @@ function AddUserSheet({
                       placeholder="090 123 4567"
                       className={errors.mobile ? "h-11 border-red-500" : "h-11"}
                     />
-                    {errors.mobile && <p className="mt-0.5 text-xs text-red-500">{errors.mobile}</p>}
+                    {errors.mobile && <p className="mt-0.5 text-xs text-red-600">{errors.mobile}</p>}
                   </div>
                 )}
 
@@ -340,7 +340,7 @@ function AddUserSheet({
                       )}
                     </Button>
                   </div>
-                  {errors.password && <p className="text-xs text-red-500 mt-0.5">{errors.password}</p>}
+                  {errors.password && <p className="text-xs text-red-600 mt-0.5">{errors.password}</p>}
                 </div>
 
                 {/* Compact Password Requirements */}

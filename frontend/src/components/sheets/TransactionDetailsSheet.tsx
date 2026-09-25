@@ -364,8 +364,8 @@ function TransactionDetailsSheetComponent({
               transaction.transaction_type === 'write_off' ? 'bg-amber-100' : 'bg-red-100'
             }`}>
               <Receipt className={`h-6 w-6 ${
-                transaction.transaction_type === 'revenue' ? 'text-emerald-600' :
-                transaction.transaction_type === 'write_off' ? 'text-amber-600' : 'text-red-600'
+                transaction.transaction_type === 'revenue' ? 'text-emerald-700' :
+                transaction.transaction_type === 'write_off' ? 'text-amber-700' : 'text-red-600'
               }`} />
             </div>
             <div className="space-y-1 flex-1 min-w-0">
@@ -431,7 +431,7 @@ function TransactionDetailsSheetComponent({
           </div>
           <div className={`typography-display-large typography-currency break-words text-3xl sm:text-4xl ${
             transaction.transaction_type === 'revenue' ? 'text-financial-positive' :
-            transaction.transaction_type === 'write_off' ? 'text-amber-600' : 'text-financial-negative'
+            transaction.transaction_type === 'write_off' ? 'text-amber-700' : 'text-financial-negative'
           }`}>
             {formatCurrency(transaction.amount)}
           </div>
@@ -473,7 +473,7 @@ function TransactionDetailsSheetComponent({
             <div className="space-y-1.5">
               <div className="typography-label-small text-muted-foreground">Người tạo</div>
               <div className="flex items-start gap-2">
-                <User className="h-4 w-4 flex-shrink-0 text-slate-400" />
+                <User className="h-4 w-4 flex-shrink-0 text-slate-500" />
                 <span className="typography-body-medium text-high-contrast font-medium break-words">{createdByName}</span>
               </div>
             </div>
@@ -481,7 +481,7 @@ function TransactionDetailsSheetComponent({
               <div className="space-y-1.5">
                 <div className="typography-label-small text-muted-foreground">Ngày tạo</div>
                 <div className="flex items-start gap-2">
-                  <Calendar className="h-4 w-4 flex-shrink-0 text-slate-400" />
+                  <Calendar className="h-4 w-4 flex-shrink-0 text-slate-500" />
                   <span className="typography-body-small text-medium-contrast break-words">{formatDate(transaction.created_at)}</span>
                 </div>
               </div>
@@ -489,7 +489,7 @@ function TransactionDetailsSheetComponent({
                 <div className="space-y-1.5">
                   <div className="typography-label-small text-muted-foreground">Ngày thanh toán</div>
                   <div className="flex items-start gap-2">
-                    <Calendar className="h-4 w-4 flex-shrink-0 text-slate-400" />
+                    <Calendar className="h-4 w-4 flex-shrink-0 text-slate-500" />
                     <span className="typography-body-small text-medium-contrast break-words">
                       {formatSettlementBusinessDate(paymentDate)}
                     </span>
@@ -502,7 +502,7 @@ function TransactionDetailsSheetComponent({
               <div className="space-y-1.5">
                 <div className="typography-label-small text-muted-foreground">Người thanh toán</div>
                 <div className="flex items-start gap-2">
-                  <User className="h-4 w-4 flex-shrink-0 text-slate-400" />
+                  <User className="h-4 w-4 flex-shrink-0 text-slate-500" />
                   <span className="typography-body-medium text-high-contrast font-medium break-words">{settledByName}</span>
                 </div>
               </div>
@@ -561,7 +561,7 @@ function TransactionDetailsSheetComponent({
 
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-medium-contrast break-all">
-              <Link2 className="h-4 w-4 text-slate-400 flex-shrink-0" />
+              <Link2 className="h-4 w-4 text-slate-500 flex-shrink-0" />
               {hasEvidenceUrl ? (
                 <a
                   href={transaction?.url}
@@ -578,7 +578,7 @@ function TransactionDetailsSheetComponent({
               )}
             </div>
             <div className="flex items-start gap-2 text-sm text-medium-contrast break-all">
-              <FileText className="h-4 w-4 text-slate-400 flex-shrink-0" />
+              <FileText className="h-4 w-4 text-slate-500 flex-shrink-0" />
               {hasEvidenceAsset ? (
                 <span>{evidenceFileDisplay}</span>
               ) : !hasEvidenceUrl ? (

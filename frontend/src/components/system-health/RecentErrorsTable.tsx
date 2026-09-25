@@ -34,7 +34,7 @@ export function RecentErrorsTable({ days = 1, defaultVisible = 10 }: Props) {
         <CardHeader className="pb-3 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-red-500 shrink-0" />
+              <Activity className="h-4 w-4 text-red-600 shrink-0" />
               <CardTitle className="text-sm font-semibold">
                 Lỗi Gần Đây ({days === 1 ? "24h" : `${days}d`})
               </CardTitle>

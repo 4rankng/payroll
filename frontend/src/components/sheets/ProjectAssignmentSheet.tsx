@@ -236,7 +236,7 @@ function ProjectAssignmentSheet({
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
                 <div className="flex items-center gap-2">
                   <div className="h-5 w-5 rounded-full bg-amber-100 flex items-center justify-center">
-                    <span className="text-amber-600 text-xs">!</span>
+                    <span className="text-amber-700 text-xs">!</span>
                   </div>
                   <p className="typography-body-medium text-amber-800 font-medium">
                     Không thể phân công nhân viên

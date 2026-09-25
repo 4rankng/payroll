@@ -39,7 +39,7 @@ export const ActivityEmptyState: React.FC<ActivityEmptyStateProps> = ({
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4">
         <div className="p-3 rounded-full bg-red-50">
-          <AlertCircle className="h-6 w-6 text-red-500" />
+          <AlertCircle className="h-6 w-6 text-red-600" />
         </div>
         <div className="text-center space-y-2">
           <h4 className="text-sm font-medium text-foreground">

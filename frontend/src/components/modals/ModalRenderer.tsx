@@ -100,7 +100,7 @@ function ModalLoader({ modalId, params }: { modalId: string; params: Record<stri
         <div className="fixed inset-y-0 right-0 h-full w-full border-l bg-background shadow-sm sm:max-w-sm">
           <div className="flex items-center justify-center h-full p-6">
             <div className="text-center space-y-4">
-              <div className="text-red-500 text-lg font-medium">Lỗi tải modal</div>
+              <div className="text-red-600 text-lg font-medium">Lỗi tải modal</div>
               <div className="text-muted-foreground text-sm">{error}</div>
               <button
                 onClick={() => useModalStore.getState().closeModal()}

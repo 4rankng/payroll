@@ -85,7 +85,7 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
         </li>
         <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5">
           <div className="min-w-0">
-            <span className="employee-type-label-caps block text-slate-400">
+            <span className="employee-type-label-caps block text-slate-500">
               Điểm gần nhất
             </span>
             <span className="mt-0.5 block break-words font-semibold text-slate-700">
@@ -295,7 +295,7 @@ function EmployeeMapCanvas({
       element.className = "checkpoint-direction-arrow-marker grid h-8 w-8 place-items-center";
       element.setAttribute("aria-hidden", "true");
       const arrow = document.createElement("span");
-      arrow.className = "checkpoint-direction-arrow text-sky-600";
+      arrow.className = "checkpoint-direction-arrow text-sky-700";
       arrow.style.transform = `rotate(${getBearingDegrees(sample, guidance.nearestGate)}deg)`;
       arrow.textContent = "▲";
       element.appendChild(arrow);

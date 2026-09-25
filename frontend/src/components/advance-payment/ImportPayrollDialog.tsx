@@ -105,7 +105,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
           <>
             <div className="px-5 py-8 flex flex-col items-center gap-5">
               <div className="flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30">
-                <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+                <CheckCircle2 className="w-8 h-8 text-green-700 dark:text-green-400" />
               </div>
               <div className="text-center space-y-1">
                 <p className="font-semibold text-base">Nhập file thành công!</p>
@@ -125,7 +125,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
                       <div className="flex items-center gap-2 text-sm">
                         <Users className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                         <span className="text-muted-foreground">Nhân viên mới</span>
-                        <span className="ml-auto font-semibold tabular-nums text-green-600 dark:text-green-400">
+                        <span className="ml-auto font-semibold tabular-nums text-green-700 dark:text-green-400">
                           +{importResult.result.employeesCreated}
                         </span>
                       </div>
@@ -139,7 +139,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
                       <div className="flex items-center gap-2 text-sm">
                         <FolderKanban className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                         <span className="text-muted-foreground">Dự án mới</span>
-                        <span className="ml-auto font-semibold tabular-nums text-green-600 dark:text-green-400">
+                        <span className="ml-auto font-semibold tabular-nums text-green-700 dark:text-green-400">
                           +{importResult.result.projectsCreated}
                         </span>
                       </div>
@@ -153,7 +153,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
                       <div className="flex items-center gap-2 text-sm">
                         <Link className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                         <span className="text-muted-foreground">Phân công mới</span>
-                        <span className="ml-auto font-semibold tabular-nums text-green-600 dark:text-green-400">
+                        <span className="ml-auto font-semibold tabular-nums text-green-700 dark:text-green-400">
                           +{importResult.result.assignmentsCreated}
                         </span>
                       </div>

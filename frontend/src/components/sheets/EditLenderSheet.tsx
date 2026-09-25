@@ -356,13 +356,13 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                   </div>
                   <div className="space-y-1">
                     <p className="typography-body-small text-muted-foreground">Dư nợ</p>
-                    <p className="typography-body-medium font-semibold text-orange-600">
+                    <p className="typography-body-medium font-semibold text-orange-700">
                       {new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(lenderData.summary.outstanding_principal)}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <p className="typography-body-small text-muted-foreground">Đã trả</p>
-                    <p className="typography-body-medium font-semibold text-green-600">
+                    <p className="typography-body-medium font-semibold text-green-700">
                       {new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(lenderData.summary.total_principal_repaid)}
                     </p>
                   </div>

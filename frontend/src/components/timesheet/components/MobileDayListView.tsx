@@ -135,7 +135,7 @@ export function MobileDayListView({
               <div className="w-10 shrink-0 text-center">
                 <p className={cn(
                   'text-xs font-medium leading-none mb-0.5',
-                  isSun ? 'text-red-500' : isSat ? 'text-blue-500' : 'text-muted-foreground',
+                  isSun ? 'text-red-600' : isSat ? 'text-blue-600' : 'text-muted-foreground',
                 )}>
                   {WEEKDAY_SHORT[weekday]}
                 </p>
@@ -190,7 +190,7 @@ export function MobileDayListView({
                       <span className="text-xs text-muted-foreground">{entries.length} bản ghi</span>
                     )}
                     {hasForcePayroll && (
-                      <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 shrink-0" />
+                      <Star className="h-3 w-3 text-yellow-700 fill-yellow-500 shrink-0" />
                     )}
                   </div>
                 </div>

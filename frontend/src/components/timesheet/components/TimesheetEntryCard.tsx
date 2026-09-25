@@ -81,7 +81,7 @@ export function TimesheetEntryCard({
               {getPaytypeText(entry.paytype)}
             </Badge>
             {entry.force_payroll && (
-              <Star className="h-4 w-4 text-yellow-600 fill-yellow-600 shrink-0" />
+              <Star className="h-4 w-4 text-yellow-700 fill-yellow-600 shrink-0" />
             )}
           </div>
 
@@ -118,7 +118,7 @@ export function TimesheetEntryCard({
               <span className="typography-body-medium font-medium truncate">{entry.projectName}</span>
             </div>
             {entry.force_payroll && (
-              <Star className="h-4 w-4 text-yellow-600 fill-yellow-600 shrink-0" />
+              <Star className="h-4 w-4 text-yellow-700 fill-yellow-600 shrink-0" />
             )}
           </div>
 
@@ -182,7 +182,7 @@ export function TimesheetEntryCard({
             </div>
             <div className="flex items-center gap-2">
               {entry.force_payroll && (
-                <Star className="h-4 w-4 text-yellow-600 fill-yellow-600" />
+                <Star className="h-4 w-4 text-yellow-700 fill-yellow-600" />
               )}
               <Badge variant="outline" className={cn('typography-body-small', statusColor.badge)}>
                 {getStatusLabel(entry.status)}
@@ -277,7 +277,7 @@ export function TimesheetEntryCard({
           </div>
           <div className="flex items-center gap-2">
             {entry.force_payroll && (
-              <Star className="h-5 w-5 text-yellow-600 fill-yellow-600" />
+              <Star className="h-5 w-5 text-yellow-700 fill-yellow-600" />
             )}
             <Badge variant="outline" className={cn('typography-body-medium', statusColor.badge)}>
               {getStatusLabel(entry.status)}

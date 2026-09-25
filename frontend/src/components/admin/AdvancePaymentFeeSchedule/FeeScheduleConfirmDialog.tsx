@@ -152,7 +152,7 @@ export const FeeScheduleConfirmDialog = ({
                         className={cn(
                           "px-3 py-2 text-right text-xs whitespace-nowrap",
                           row.direction === "decrease" &&
-                            "text-emerald-600 dark:text-emerald-400",
+                            "text-emerald-700 dark:text-emerald-400",
                           row.direction === "increase" &&
                             "text-red-600 dark:text-red-400",
                           row.direction === "same" && "text-muted-foreground",
@@ -188,7 +188,7 @@ export const FeeScheduleConfirmDialog = ({
             </div>
             {current && (
               <p className="text-xs text-muted-foreground">
-                <span className="text-emerald-600 dark:text-emerald-400">
+                <span className="text-emerald-700 dark:text-emerald-400">
                   Xanh
                 </span>{" "}
                 = phí giảm,{" "}

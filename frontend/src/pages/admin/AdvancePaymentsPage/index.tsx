@@ -537,7 +537,7 @@ const AdvancePaymentsPage = () => {
               rowSubtitle={(row: AdvancePaymentListItem) => (
                 <div>
                   <div className="text-[13px] font-medium text-slate-500">{row.employeeCCCD}</div>
-                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-400">{row.projectName || "-"}</div>
+                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-500">{row.projectName || "-"}</div>
                 </div>
               )}
               getRowId={(row: AdvancePaymentListItem) => row.id.toString()}
@@ -561,7 +561,7 @@ const AdvancePaymentsPage = () => {
               rowSubtitle={(row: FlexPayEmployeeListItem) => (
                 <div>
                   <div className="text-[13px] font-medium text-slate-500">{row.cccd}</div>
-                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-400">{row.project?.name || "-"}</div>
+                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-500">{row.project?.name || "-"}</div>
                 </div>
               )}
               getRowId={(row: FlexPayEmployeeListItem) =>
@@ -587,7 +587,7 @@ const AdvancePaymentsPage = () => {
               )}
               rowSubtitle={(row: AdminAttendanceResponse) => (
                 <div>
-                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-400">{row.project_name || "-"}</div>
+                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-500">{row.project_name || "-"}</div>
                 </div>
               )}
               getRowId={(row: AdminAttendanceResponse) => row.id.toString()}

@@ -99,11 +99,11 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
                 <p className="text-xs text-muted-foreground">Tổng</p>
               </div>
               <div className="rounded-lg border bg-muted/30 p-3">
-                <p className="text-2xl font-bold text-green-600">{status?.completed ?? 0}</p>
+                <p className="text-2xl font-bold text-green-700">{status?.completed ?? 0}</p>
                 <p className="text-xs text-muted-foreground">Hoàn tất</p>
               </div>
               <div className="rounded-lg border bg-muted/30 p-3">
-                <p className="text-2xl font-bold text-red-500">{status?.failed ?? 0}</p>
+                <p className="text-2xl font-bold text-red-600">{status?.failed ?? 0}</p>
                 <p className="text-xs text-muted-foreground">Thất bại</p>
               </div>
             </div>
@@ -119,13 +119,13 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
               <div className="flex items-center justify-center gap-2 text-sm font-medium">
                 {status && status.failed === 0 ? (
                   <>
-                    <CheckCircle2 className="w-5 h-5 text-green-600" />
-                    <span className="text-green-600">Tất cả giao dịch đã hoàn tất</span>
+                    <CheckCircle2 className="w-5 h-5 text-green-700" />
+                    <span className="text-green-700">Tất cả giao dịch đã hoàn tất</span>
                   </>
                 ) : (
                   <>
-                    <XCircle className="w-5 h-5 text-orange-500" />
-                    <span className="text-orange-600">
+                    <XCircle className="w-5 h-5 text-orange-700" />
+                    <span className="text-orange-700">
                       Hoàn tất ({status.completed} thành công, {status.failed} thất bại)
                     </span>
                   </>
@@ -196,7 +196,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
           {!isOnePay && (
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Chu kỳ trả lương <span className="text-red-500">*</span>
+                Chu kỳ trả lương <span className="text-red-600">*</span>
               </Label>
               <ButtonGroup
                 options={[

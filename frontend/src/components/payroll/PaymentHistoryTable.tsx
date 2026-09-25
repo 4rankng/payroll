@@ -69,7 +69,7 @@ export function PaymentHistoryTable({ data, isLoading, pagination, sorting, onSo
       header: 'Số tiền',
       size: 130,
       cell: ({ row }) => (
-        <div className="text-right font-semibold text-emerald-600">
+        <div className="text-right font-semibold text-emerald-700">
           {formatCurrency(row.original.total_paid_amount)}
         </div>
       ),

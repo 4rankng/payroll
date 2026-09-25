@@ -61,7 +61,7 @@ const HistoryItemCard = ({ item, onCancel }: { item: AdvancePaymentHistoryItem; 
               {getVietnameseAdvancePaymentStatus(item.status)}
             </span>
             {item.status === "PENDING" && !showConfirmCancel && (
-              <button onClick={handleCancelClick} className="text-xs font-medium text-red-500 border border-red-200 rounded px-1.5 py-0.5 hover:bg-red-50 transition-colors shrink-0">
+              <button onClick={handleCancelClick} className="text-xs font-medium text-red-600 border border-red-200 rounded px-1.5 py-0.5 hover:bg-red-50 transition-colors shrink-0">
                 Hủy
               </button>
             )}
@@ -76,7 +76,7 @@ const HistoryItemCard = ({ item, onCancel }: { item: AdvancePaymentHistoryItem; 
           {showConfirmCancel && item.status === "PENDING" && (
             <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border">              <span className="text-xs text-muted-foreground flex-1">Xác nhận hủy?</span>
               <button onClick={() => setShowConfirmCancel(false)} className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Không</button>
-              <button onClick={handleCancelClick} className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors">Xác nhận</button>
+              <button onClick={handleCancelClick} className="text-xs font-semibold text-red-600 hover:text-red-700 transition-colors">Xác nhận</button>
             </div>
           )}
         </div>
@@ -169,7 +169,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="p-2 bg-sky-100 rounded-xl">
-                <Wallet className="h-4 w-4 text-sky-600" />
+                <Wallet className="h-4 w-4 text-sky-700" />
               </div>
               <div>
                 <h2 className="text-base font-bold text-slate-800">Ứng lương</h2>
@@ -190,18 +190,18 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
               {/* Limit card */}
               <div className="rounded-xl p-4 glass-card">
                 <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp className="h-4 w-4 text-sky-600" />
+                  <TrendingUp className="h-4 w-4 text-sky-700" />
                   <span className="text-sm font-bold text-slate-800">Hạn mức tháng này</span>
                 </div>
                 {info && (
                   <>
                     <div className="flex items-end justify-between mb-3">
                       <div>
-                        <p className="text-xs text-slate-400 mb-0.5">Còn lại</p>
-                        <p className="text-2xl font-bold text-sky-600">{formatCurrency(info.remainingAmount)}</p>
+                        <p className="text-xs text-slate-500 mb-0.5">Còn lại</p>
+                        <p className="text-2xl font-bold text-sky-700">{formatCurrency(info.remainingAmount)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-slate-400 mb-0.5">Tối đa</p>
+                        <p className="text-xs text-slate-500 mb-0.5">Tối đa</p>
                         <p className="text-sm font-semibold text-muted-foreground">{formatCurrency(info.maxAdvanceAmount)}</p>
                       </div>
                     </div>
@@ -210,12 +210,12 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-emerald-50/80 rounded-xl px-3 py-2 border border-emerald-100">
-                        <p className="text-xs text-slate-400 mb-0.5">Đã ứng</p>
-                        <p className="text-xs font-bold text-emerald-600">{formatCurrency(info.completedAmount)}</p>
+                        <p className="text-xs text-slate-500 mb-0.5">Đã ứng</p>
+                        <p className="text-xs font-bold text-emerald-700">{formatCurrency(info.completedAmount)}</p>
                       </div>
                       <div className="bg-amber-50/80 rounded-xl px-3 py-2 border border-amber-100">
-                        <p className="text-xs text-slate-400 mb-0.5">Đang chờ</p>
-                        <p className="text-xs font-bold text-amber-600">{formatCurrency(info.pendingAmount)}</p>
+                        <p className="text-xs text-slate-500 mb-0.5">Đang chờ</p>
+                        <p className="text-xs font-bold text-amber-700">{formatCurrency(info.pendingAmount)}</p>
                       </div>
                     </div>
                   </>
@@ -226,7 +226,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
               {info?.canRequest ? (
                 <div className="rounded-xl p-4 glass-card">
                   <div className="flex items-center gap-2 mb-3">
-                    <DollarSign className="h-4 w-4 text-sky-600" />
+                    <DollarSign className="h-4 w-4 text-sky-700" />
                     <h3 className="text-sm font-bold text-slate-800">Yêu cầu ứng lương</h3>
                   </div>
                   <div className="space-y-3">
@@ -237,16 +237,16 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                         className={`w-full h-11 px-4 pr-14 text-sm font-medium rounded-xl border bg-card/80 focus:bg-card focus:outline-none focus:ring-2 transition-all ${
                           error ? "border-red-300 focus:ring-red-200" : "border-border focus:ring-sky-200 focus:border-border"                        }`}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">₫</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-medium">₫</span>
                     </div>
 
                     {error && (
-                      <p className="text-xs text-red-500 flex items-center gap-1">
+                      <p className="text-xs text-red-600 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3 shrink-0" />{error}
                       </p>
                     )}
                     {isTouched && numericAmount > 0 && numericAmount < ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT && (
-                      <p className="text-xs text-slate-400">Tối thiểu: {formatCurrency(ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT)}</p>
+                      <p className="text-xs text-slate-500">Tối thiểu: {formatCurrency(ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT)}</p>
                     )}
 
                     {feeDetails && numericAmount >= ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT && (
@@ -256,10 +256,10 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                         </div>
                         <div className="flex justify-between text-muted-foreground">
                           <span>Phí giao dịch</span>
-                          <span className="font-medium text-red-500">-{formatCurrency(feeDetails.fee)}</span>
+                          <span className="font-medium text-red-600">-{formatCurrency(feeDetails.fee)}</span>
                         </div>
                         <div className="flex justify-between pt-1.5 border-t border-border">                          <span className="font-semibold text-foreground">Thực nhận</span>
-                          <span className="font-bold text-emerald-600">{formatCurrency(feeDetails.netAmount)}</span>
+                          <span className="font-bold text-emerald-700">{formatCurrency(feeDetails.netAmount)}</span>
                         </div>
                       </div>
                     )}
@@ -291,7 +291,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
               {/* History */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <History className="h-4 w-4 text-sky-600" />
+                  <History className="h-4 w-4 text-sky-700" />
                   <h3 className="text-sm font-bold text-slate-800">Lịch sử yêu cầu</h3>
                 </div>
                 {historyLoading ? (

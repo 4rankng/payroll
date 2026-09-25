@@ -180,7 +180,7 @@ export function EmployeeProjectsList({ employee, className }: EmployeeProjectsLi
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1 text-green-600">
+                        <div className="flex items-center gap-1 text-green-700">
                           <DollarSign className="h-4 w-4" />
                           {formatCurrency(project.total_earned_vnd)}
                         </div>
@@ -220,7 +220,7 @@ export function EmployeeProjectsList({ employee, className }: EmployeeProjectsLi
                       </div>
                       <div>
                         <span className="text-muted-foreground">Thu nhập:</span>
-                        <div className="text-green-600">{formatCurrency(project.total_earned_vnd)}</div>
+                        <div className="text-green-700">{formatCurrency(project.total_earned_vnd)}</div>
                       </div>
                     </div>
 

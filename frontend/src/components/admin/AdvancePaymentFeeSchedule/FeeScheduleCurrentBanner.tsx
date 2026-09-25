@@ -164,7 +164,7 @@ const UpcomingCard = ({
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
-            <CalendarClock className="h-4 w-4 text-amber-600" />
+            <CalendarClock className="h-4 w-4 text-amber-700" />
           </div>
           <span className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
             Đang chờ

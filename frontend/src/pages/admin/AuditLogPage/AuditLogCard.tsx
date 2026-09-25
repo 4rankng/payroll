@@ -115,7 +115,7 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
 
         {/* Login identifier */}
         {showLoginId && (
-          <p className={cn('break-words text-xs font-medium text-amber-600', compact && 'rounded-lg bg-amber-50 px-2.5 py-2 text-amber-700')}>
+          <p className={cn('break-words text-xs font-medium text-amber-700', compact && 'rounded-lg bg-amber-50 px-2.5 py-2 text-amber-700')}>
             Đăng nhập bằng: {loginId}
           </p>
         )}

@@ -30,7 +30,7 @@ function ChangedFieldsDiff({ fields }: { fields: Record<string, AuditFieldChange
             <tr className="border-b border-border bg-muted/50">
               <th className="text-left px-3 py-2 text-muted-foreground font-medium w-1/3">Trường</th>
               <th className="text-left px-3 py-2 text-red-600 font-medium w-1/3">Trước</th>
-              <th className="text-left px-3 py-2 text-emerald-600 font-medium w-1/3">Sau</th>
+              <th className="text-left px-3 py-2 text-emerald-700 font-medium w-1/3">Sau</th>
             </tr>
           </thead>
           <tbody>

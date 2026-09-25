@@ -107,7 +107,7 @@ const PendingBadge = memo(function PendingBadge({
         'tabular-nums text-xs px-1.5 py-px rounded-full font-semibold',
         active
           ? 'bg-amber-300/30 text-amber-100'
-          : 'bg-amber-400/15 text-amber-600',
+          : 'bg-amber-400/15 text-amber-700',
       )}
     >
       {value} {label}

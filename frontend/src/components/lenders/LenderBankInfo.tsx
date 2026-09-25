@@ -20,7 +20,7 @@ export function LenderBankInfo({ lender }: LenderBankInfoProps) {
   if (!hasBankDetails) {
     return (
       <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+        <AlertCircle className="w-5 h-5 text-amber-700 shrink-0" />
         <div className="flex-1">
           <p className="typography-body-medium text-amber-900">
             Chủ nợ chưa có thông tin ngân hàng

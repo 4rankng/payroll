@@ -135,11 +135,11 @@ function TransferReferences({ item }: { item: BankTransferHistory }) {
   return (
     <div className="border-t border-slate-200/80 bg-slate-50/80">
       <div className="hidden grid-cols-[36px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] gap-4 border-b border-slate-200/80 px-4 py-1.5 xl:grid">
-        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-400">STT</span>
-        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-400">Ghi chú chuyển khoản</span>
-        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-400">Mã giao dịch ngân hàng</span>
-        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-400">Thời gian xử lý</span>
-        <span className="text-right font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-400">Số tiền</span>
+        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500">STT</span>
+        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500">Ghi chú chuyển khoản</span>
+        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500">Mã giao dịch ngân hàng</span>
+        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500">Thời gian xử lý</span>
+        <span className="text-right font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500">Số tiền</span>
       </div>
 
       <div className="divide-y divide-slate-200/70 px-1 pb-1 xl:px-0 xl:pb-0" aria-label={`${item.transfers.length} chi tiết thanh toán`} role="list">
@@ -174,7 +174,7 @@ function TransferReferences({ item }: { item: BankTransferHistory }) {
             <div className="col-span-2 min-w-0 sm:col-span-1 xl:col-start-4 xl:row-start-1">
               <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Thời gian xử lý</p>
               <p className="mt-1 flex items-center gap-1.5 xl:mt-0">
-                <Clock3 className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                <Clock3 className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" />
                 <time className="font-financial text-xs font-semibold tabular-nums text-slate-700" dateTime={transfer.paid_at}>
                   {formatBankTransferDateTime(transfer.paid_at)}
                 </time>
@@ -244,7 +244,7 @@ function HistoryRecord({ item, isOpen, onToggle }: { item: BankTransferHistory; 
             <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Kỳ thanh toán</p>
             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs font-semibold tabular-nums text-slate-800 xl:mt-0">
               <span className="flex min-w-0 items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+                <CalendarDays className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" />
                 <span
                   className="whitespace-nowrap"
                   aria-label={`Từ ${formatBankTransferDate(item.from_date)} đến ${formatBankTransferDate(item.to_date)}`}
@@ -278,8 +278,8 @@ function HistoryRecord({ item, isOpen, onToggle }: { item: BankTransferHistory; 
           </div>
 
           <div className="absolute right-3 top-3 flex items-center justify-end xl:static">
-            <span className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-400 transition-[color,background-color] group-hover/summary:bg-emerald-50 group-hover/summary:text-emerald-700 xl:h-8 xl:w-8">
-              <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open/record:rotate-180 group-open/record:text-emerald-600" aria-hidden="true" />
+            <span className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 transition-[color,background-color] group-hover/summary:bg-emerald-50 group-hover/summary:text-emerald-700 xl:h-8 xl:w-8">
+              <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open/record:rotate-180 group-open/record:text-emerald-700" aria-hidden="true" />
             </span>
           </div>
         </summary>

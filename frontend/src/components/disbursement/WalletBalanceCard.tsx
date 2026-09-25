@@ -328,7 +328,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
           <AlertDialogHeader>
             <div className="flex items-center gap-2.5 mb-1">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
-                <RefreshCw className="h-3.5 w-3.5 text-amber-600" />
+                <RefreshCw className="h-3.5 w-3.5 text-amber-700" />
               </div>
               <AlertDialogTitle className="text-sm">Phát hiện chênh lệch số dư</AlertDialogTitle>
             </div>

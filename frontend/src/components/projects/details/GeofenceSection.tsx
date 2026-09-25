@@ -218,7 +218,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 shrink-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                      className="h-6 w-6 shrink-0 text-green-700 hover:text-green-700 hover:bg-green-50"
                       disabled={
                         !editValues.name.trim() ||
                         isNaN(parseFloat(editValues.lat)) ||

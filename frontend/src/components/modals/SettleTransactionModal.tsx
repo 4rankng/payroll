@@ -238,11 +238,11 @@ function SettleTransactionModalComponent({
                       <>
                         <div className="flex items-start justify-between gap-4">
                           <span className="text-muted-foreground">Đã thanh toán:</span>
-                          <span className="text-right font-medium text-green-600">{formatCurrency(transaction.settled_amount)}</span>
+                          <span className="text-right font-medium text-green-700">{formatCurrency(transaction.settled_amount)}</span>
                         </div>
                         <div className="flex items-start justify-between gap-4">
                           <span className="text-muted-foreground">Còn lại:</span>
-                          <span className="text-right font-medium text-amber-600">{formatCurrency(getTransactionRemainingAmount(transaction))}</span>
+                          <span className="text-right font-medium text-amber-700">{formatCurrency(getTransactionRemainingAmount(transaction))}</span>
                         </div>
                       </>
                     )}
@@ -342,7 +342,7 @@ function SettleTransactionModalComponent({
                       ) : (
                         <div className="flex items-center justify-between gap-2 p-3 bg-green-50 rounded border">
                           <div className="flex min-w-0 flex-1 items-center gap-2">
-                            <Receipt className="h-4 w-4 text-green-600" />
+                            <Receipt className="h-4 w-4 text-green-700" />
                             <span className="min-w-0 break-all text-sm text-green-700">
                               {evidenceFile.name}
                             </span>

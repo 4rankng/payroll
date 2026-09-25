@@ -107,7 +107,7 @@ export function CalendarDayCell({
         {/* Force Payroll Icon */}
         {day.hasForcePayroll && (
           <span className="inline-flex items-center" aria-label="Đánh dấu xuất hiện trong kỳ trả lương tiếp theo">
-            <Star className="h-4 w-4 text-yellow-600 fill-yellow-600" />
+            <Star className="h-4 w-4 text-yellow-700 fill-yellow-600" />
           </span>
         )}
       </div>
@@ -255,7 +255,7 @@ export function CalendarDayCellMobile({
         {/* Force Payroll Icon */}
         {day.hasForcePayroll && (
           <span className="inline-flex items-center" aria-label="Đánh dấu xuất hiện trong kỳ trả lương tiếp theo">
-            <Star className="h-3 w-3 text-yellow-600 fill-yellow-600" />
+            <Star className="h-3 w-3 text-yellow-700 fill-yellow-600" />
           </span>
         )}
       </div>

@@ -263,7 +263,7 @@ function ResultView({ result }: { result: SettlementSimulationResult }) {
       {remainders.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-amber-600" />
+            <Clock className="w-4 h-4 text-amber-700" />
             Còn lại (chưa bao phủ) — {remainders.length} nhóm, {formatCurrency(remainders.reduce((s, r) => s + r.amount, 0))}
           </h3>
           <RemaindersTable remainders={remainders} />

@@ -24,7 +24,7 @@ export const TimesheetRecordCard = memo(({ record }: TimesheetRecordCardProps) =
       <div className="flex items-start justify-between">
         <div className="space-y-1 flex-1">
           <div className="flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-green-600" />
+            <DollarSign className="w-4 h-4 text-green-700" />
             <span className="typography-title-large">
               {displayData.amount}
             </span>

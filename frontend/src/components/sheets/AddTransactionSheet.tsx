@@ -509,7 +509,7 @@ function TransactionFormComponent({
               ) : (
                 <div className="flex items-center justify-between gap-2 rounded border bg-green-50 p-3">
                   <div className="flex min-w-0 items-center gap-2">
-                    <Receipt className="h-4 w-4 text-green-600" />
+                    <Receipt className="h-4 w-4 text-green-700" />
                     <span className="typography-caption break-all text-green-700">
                       Đã chọn: {evidenceFile.name}
                     </span>

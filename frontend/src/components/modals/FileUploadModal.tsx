@@ -338,7 +338,7 @@ export function FileUploadModal({
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <Upload className="h-12 w-12 mx-auto text-gray-400" />
+                      <Upload className="h-12 w-12 mx-auto text-gray-500" />
                       <div>
                         <p className="typography-title-large">Kéo thả file vào đây</p>
                         <p className="text-muted-foreground">hoặc</p>
@@ -472,7 +472,7 @@ export function FileUploadModal({
                     const IconComponent = result.success ? CheckCircle : XCircle;
                     return (
                       <div key={index} className="flex items-start gap-3 p-3 border rounded-xl">
-                        <IconComponent className={`h-5 w-5 mt-0.5 ${result.success ? 'text-green-500' : 'text-red-500'}`} />
+                        <IconComponent className={`h-5 w-5 mt-0.5 ${result.success ? 'text-green-700' : 'text-red-600'}`} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium truncate">{result.fileName}</p>
@@ -482,7 +482,7 @@ export function FileUploadModal({
                           </div>
                           
                           {result.success && result.recordCount && (
-                            <p className="typography-body-medium text-green-600 mt-1">
+                            <p className="typography-body-medium text-green-700 mt-1">
                               Đã xử lý {result.recordCount} bản ghi
                             </p>
                           )}
@@ -490,7 +490,7 @@ export function FileUploadModal({
                           {result.warnings && result.warnings.length > 0 && (
                             <div className="mt-2">
                               {result.warnings.map((warning, wIndex) => (
-                                <div key={wIndex} className="flex items-center gap-2 typography-body-medium text-yellow-600">
+                                <div key={wIndex} className="flex items-center gap-2 typography-body-medium text-yellow-700">
                                   <AlertTriangle className="h-4 w-4" />
                                   {warning}
                                 </div>

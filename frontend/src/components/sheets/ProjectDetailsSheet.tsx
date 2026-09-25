@@ -564,7 +564,7 @@ function ProjectDetailsSheet({
             ) : (
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-yellow-600 font-medium">⚠️ Cảnh báo:</span>
+                  <span className="text-yellow-700 font-medium">⚠️ Cảnh báo:</span>
                 </div>
                 <ul className="text-sm text-yellow-800 space-y-1">
                   <li>• Nhân viên được giao: <strong>{activeEmployeesCount} người</strong></li>

@@ -306,7 +306,7 @@ const FlexiblePayEmployeePage = () => {
               <AlertCircle className="h-6 w-6" aria-hidden="true" />
             </div>
             <h2 className="mt-3 text-[1rem] font-semibold text-slate-700">Chưa tải được hạn mức ứng lương</h2>
-            <p className="mt-1 text-[0.8125rem] text-slate-400">Kiểm tra kết nối rồi thử lại.</p>
+            <p className="mt-1 text-[0.8125rem] text-slate-500">Kiểm tra kết nối rồi thử lại.</p>
             <button
               type="button"
               onClick={() => { void refetchInfo(); }}

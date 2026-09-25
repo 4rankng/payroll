@@ -167,7 +167,7 @@ export const GroupedEntryCard = memo(({
         if (globalErrors.length === 0) return null;
         return (
           <div className="px-3 py-2 bg-red-50 border-b border-red-100 flex items-start gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
+            <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
               {globalErrors.map((err, i) => (
                 <p key={i} className="text-xs text-red-600">{err}</p>

@@ -310,7 +310,7 @@ export function LoanDetailsSheet({
             {/* Disbursement Status Alert */}
             {!loan.disbursement_date && (
               <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 sm:p-4 flex items-start gap-3">
-                <Banknote className="h-4 w-4 text-orange-600 flex-shrink-0 mt-0.5" />
+                <Banknote className="h-4 w-4 text-orange-700 flex-shrink-0 mt-0.5" />
                 <p className="typography-body-small text-orange-800">
                   <span className="font-semibold">Chưa giải ngân:</span> Khoản
                   vay này chưa được giải ngân. Vui lòng nhấn nút "Giải ngân" bên
@@ -321,7 +321,7 @@ export function LoanDetailsSheet({
 
             {loan.disbursement_date && (
               <div className="bg-green-50 border border-green-200 rounded-xl p-3 sm:p-4 flex items-start gap-3">
-                <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                <CheckCircle className="h-4 w-4 text-green-700 flex-shrink-0 mt-0.5" />
                 <p className="typography-body-small text-green-800">
                   <span className="font-semibold">Đã giải ngân:</span>{" "}
                   {formatDate(loan.disbursement_date)}
@@ -349,7 +349,7 @@ export function LoanDetailsSheet({
                     <Wallet className="h-4 w-4" aria-hidden="true" />
                     <span>Dư nợ</span>
                   </div>
-                  <div className="typography-body-medium font-semibold text-orange-600">
+                  <div className="typography-body-medium font-semibold text-orange-700">
                     {formatVND(loan.outstanding_principal)}
                   </div>
                 </div>

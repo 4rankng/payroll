@@ -568,7 +568,7 @@ function TimesheetEntrySheetComponent({
         {/* Global error banner — only for errors not tied to a specific employee */}
         {getErrorsForEmployee(0) && (
           <div className="px-4 py-2 bg-red-50 border-b border-red-100 flex items-start gap-2 flex-shrink-0">
-            <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
+            <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
               {getErrorsForEmployee(0)!.map((err, i) => (
                 <p key={i} className="text-xs text-red-600">{err}</p>
@@ -633,13 +633,13 @@ function TimesheetEntrySheetComponent({
                     {footerSummary.editedFieldCount > 0 && (
                       <span className="flex items-center gap-0.5">
                         <span className="inline-block w-2 h-2 rounded-sm border border-amber-300 bg-amber-100" />
-                        <span className="text-amber-600 font-medium">{footerSummary.editedFieldCount} sửa</span>
+                        <span className="text-amber-700 font-medium">{footerSummary.editedFieldCount} sửa</span>
                       </span>
                     )}
                     {footerSummary.deletedFieldCount > 0 && (
                       <span className="flex items-center gap-0.5">
                         <span className="inline-block w-2 h-2 rounded-sm border border-red-300 bg-red-100" />
-                        <span className="text-red-500 font-medium">{footerSummary.deletedFieldCount} xóa</span>
+                        <span className="text-red-600 font-medium">{footerSummary.deletedFieldCount} xóa</span>
                       </span>
                     )}
                   </span>

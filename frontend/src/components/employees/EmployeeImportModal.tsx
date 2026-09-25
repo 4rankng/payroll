@@ -362,7 +362,7 @@ export function EmployeeImportModal({
 
                 {uploadedFileName && !importId && (
                   <div className="flex items-center gap-2 p-3 bg-muted rounded-xl">
-                    <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                    <FileSpreadsheet className="h-4 w-4 text-green-700" />
                     <span className="text-sm">{uploadedFileName}</span>
                   </div>
                 )}
@@ -377,9 +377,9 @@ export function EmployeeImportModal({
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     {importStatus.status === 'processing' && <Loader2 className="h-5 w-5 animate-spin" />}
-                    {importStatus.status === 'completed' && <CheckCircle className="h-5 w-5 text-green-600" />}
+                    {importStatus.status === 'completed' && <CheckCircle className="h-5 w-5 text-green-700" />}
                     {importStatus.status === 'failed' && <XCircle className="h-5 w-5 text-red-600" />}
-                    {importStatus.status === 'pending' && <AlertCircle className="h-5 w-5 text-yellow-600" />}
+                    {importStatus.status === 'pending' && <AlertCircle className="h-5 w-5 text-yellow-700" />}
                     Trạng thái import
                   </CardTitle>
                   {getStatusBadge()}
@@ -409,12 +409,12 @@ export function EmployeeImportModal({
                     <div className="text-sm text-blue-600">Tổng dòng</div>
                   </div>
                   <div className="p-3 bg-green-50 rounded-xl">
-                    <div className="text-2xl font-bold text-green-600">{importStatus.created_count}</div>
-                    <div className="text-sm text-green-600">Mới</div>
+                    <div className="text-2xl font-bold text-green-700">{importStatus.created_count}</div>
+                    <div className="text-sm text-green-700">Mới</div>
                   </div>
                   <div className="p-3 bg-yellow-50 rounded-xl">
-                    <div className="text-2xl font-bold text-yellow-600">{importStatus.updated_count}</div>
-                    <div className="text-sm text-yellow-600">Cập nhật</div>
+                    <div className="text-2xl font-bold text-yellow-700">{importStatus.updated_count}</div>
+                    <div className="text-sm text-yellow-700">Cập nhật</div>
                   </div>
                   <div className="p-3 bg-red-50 rounded-xl">
                     <div className="text-2xl font-bold text-red-600">{importStatus.error_count}</div>

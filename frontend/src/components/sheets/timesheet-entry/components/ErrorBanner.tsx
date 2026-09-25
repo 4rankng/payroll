@@ -12,7 +12,7 @@ export const ErrorBanner = memo(({ errors, className }: ErrorBannerProps) => {
     <div
       className={`flex items-start gap-2 px-3 py-2 bg-red-50 rounded-xl border border-red-200 ${className ?? ""}`}
     >
-      <AlertTriangle className="h-3.5 w-3.5 text-red-500 shrink-0 mt-0.5" />
+      <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />
       <div className="space-y-0.5">
         {errors.map((err, i) => (
           <p key={i} className="text-xs font-medium text-red-600">

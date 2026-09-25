@@ -9,7 +9,7 @@ export const DeletionStateBanner = memo(
   ({ onUndo }: DeletionStateBannerProps) => (
     <div className="flex items-center justify-between gap-2 px-3 py-2 bg-red-100 rounded-xl border border-red-200">
       <div className="flex items-center gap-2">
-        <Trash2 className="h-3.5 w-3.5 text-red-500 shrink-0" />
+        <Trash2 className="h-3.5 w-3.5 text-red-600 shrink-0" />
         <p className="text-xs font-medium text-red-700">Sẽ xóa khi lưu</p>
       </div>
       <button

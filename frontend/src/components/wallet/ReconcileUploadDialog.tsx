@@ -207,8 +207,8 @@ export default function ReconcileUploadDialog({
         <div className="px-4 pb-4">
           {tab === "auto" ? (
             <div>
-              <label className="text-xs font-bold uppercase tracking-tight text-slate-400 flex items-center gap-1 mb-1.5">
-                <Calendar size={10} className="text-slate-400" />
+              <label className="text-xs font-bold uppercase tracking-tight text-slate-500 flex items-center gap-1 mb-1.5">
+                <Calendar size={10} className="text-slate-500" />
                 Khoảng thời gian
               </label>
               <div className="rounded-md border border-slate-200 bg-white px-2.5 py-1.5">
@@ -246,14 +246,14 @@ export default function ReconcileUploadDialog({
 
               {file ? (
                 <div className="flex items-center gap-2.5 rounded border border-slate-200 bg-white p-2.5">
-                  <FileCheck size={14} className="text-emerald-600 shrink-0" />
+                  <FileCheck size={14} className="text-emerald-700 shrink-0" />
                   <span className="text-xs text-slate-600 truncate flex-1 font-medium">
                     {file.name}
                   </span>
                   <button
                     type="button"
                     onClick={() => setFile(null)}
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-slate-500 hover:text-slate-600 transition-colors"
                   >
                     &times;
                   </button>
@@ -263,14 +263,14 @@ export default function ReconcileUploadDialog({
                   onClick={() => fileInputRef.current?.click()}
                   className="border border-dashed border-slate-300 rounded bg-white py-4 flex flex-col items-center justify-center gap-1.5 hover:border-blue-500 transition-colors cursor-pointer"
                 >
-                  <div className="w-7 h-7 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center">
+                  <div className="w-7 h-7 bg-slate-50 text-slate-500 rounded-full flex items-center justify-center">
                     <Upload size={14} />
                   </div>
                   <div className="text-center">
-                    <span className="text-xs font-bold text-blue-500 block">
+                    <span className="text-xs font-bold text-blue-600 block">
                       Nhấn để chọn file
                     </span>
-                    <p className="text-xs text-slate-400">CSV (Max 10MB)</p>
+                    <p className="text-xs text-slate-500">CSV (Max 10MB)</p>
                   </div>
                 </div>
               )}
@@ -289,7 +289,7 @@ export default function ReconcileUploadDialog({
                 </>
               ) : job?.status === "completed" ? (
                 <>
-                  <FileCheck className="h-3.5 w-3.5 text-emerald-600" />
+                  <FileCheck className="h-3.5 w-3.5 text-emerald-700" />
                   <span className="text-xs font-medium text-emerald-700">
                     Đối soát hoàn tất
                   </span>
@@ -328,7 +328,7 @@ export default function ReconcileUploadDialog({
             {job?.status === "completed" && (job?.unmatched ?? 0) > 0 && job?.raw_rows?.length && (
               <button
                 onClick={() => walletService.downloadBreakTransactionsCsv(job)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-blue-500 hover:text-blue-600 transition-colors mt-1"
+                className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-600 transition-colors mt-1"
               >
                 <Download size={12} />
                 Tải giao dịch không khớp

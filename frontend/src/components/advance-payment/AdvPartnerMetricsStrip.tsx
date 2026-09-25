@@ -38,8 +38,8 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
   // <30s / <5m / >5m — the last two cells each sum two backend buckets.
   // Tone encodes the speed: fast = emerald, mid = amber, slow = red.
   const processingCells = [
-    { label: '<30 giây', count: completedUnder30s, tone: 'text-emerald-600' },
-    { label: '<5 phút', count: completed30sTo2m + completed2mTo5m, tone: 'text-amber-600' },
+    { label: '<30 giây', count: completedUnder30s, tone: 'text-emerald-700' },
+    { label: '<5 phút', count: completed30sTo2m + completed2mTo5m, tone: 'text-amber-700' },
     { label: '>5 phút', count: completed5mTo15m + completedOver15m, tone: 'text-red-600' },
   ];
 

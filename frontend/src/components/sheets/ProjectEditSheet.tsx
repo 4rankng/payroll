@@ -256,7 +256,7 @@ function ProjectEditSheet({
               className={`h-11 text-sm ${errors.name ? "border-red-500" : ""}`}
               placeholder="Tên dự án"
             />
-            {errors.name && <p className="text-xs text-red-500 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{errors.name}</p>}
+            {errors.name && <p className="text-xs text-red-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{errors.name}</p>}
           </div>
 
           {/* Khách hàng */}
@@ -269,7 +269,7 @@ function ProjectEditSheet({
               className={`h-11 text-sm ${errors.client_name ? "border-red-500" : ""}`}
               placeholder="Tên khách hàng"
             />
-            {errors.client_name && <p className="text-xs text-red-500 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{errors.client_name}</p>}
+            {errors.client_name && <p className="text-xs text-red-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{errors.client_name}</p>}
           </div>
 
           {/* Mã dự án */}
@@ -282,7 +282,7 @@ function ProjectEditSheet({
               className={`h-11 text-sm font-mono ${errors.code ? "border-red-500" : ""}`}
               placeholder="VD: PRJ001"
             />
-            {errors.code && <p className="text-xs text-red-500 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{errors.code}</p>}
+            {errors.code && <p className="text-xs text-red-600 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{errors.code}</p>}
           </div>
 
           {/* Trạng thái */}
@@ -297,10 +297,10 @@ function ProjectEditSheet({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="draft"><div className="flex items-center gap-2"><Edit className="h-3.5 w-3.5 text-muted-foreground" />{getVietnameseProjectStatus('draft')}</div></SelectItem>
-                <SelectItem value="active"><div className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-green-500" />{getVietnameseProjectStatus('active')}</div></SelectItem>
-                <SelectItem value="completed"><div className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-blue-500" />{getVietnameseProjectStatus('completed')}</div></SelectItem>
-                <SelectItem value="paused"><div className="flex items-center gap-2"><Pause className="h-3.5 w-3.5 text-orange-500" />{getVietnameseProjectStatus('paused')}</div></SelectItem>
-                <SelectItem value="cancelled"><div className="flex items-center gap-2"><XCircle className="h-3.5 w-3.5 text-red-500" />{getVietnameseProjectStatus('cancelled')}</div></SelectItem>
+                <SelectItem value="active"><div className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-green-700" />{getVietnameseProjectStatus('active')}</div></SelectItem>
+                <SelectItem value="completed"><div className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-blue-600" />{getVietnameseProjectStatus('completed')}</div></SelectItem>
+                <SelectItem value="paused"><div className="flex items-center gap-2"><Pause className="h-3.5 w-3.5 text-orange-700" />{getVietnameseProjectStatus('paused')}</div></SelectItem>
+                <SelectItem value="cancelled"><div className="flex items-center gap-2"><XCircle className="h-3.5 w-3.5 text-red-600" />{getVietnameseProjectStatus('cancelled')}</div></SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -318,7 +318,7 @@ function ProjectEditSheet({
               <div className="space-y-1">
                 <Label htmlFor="end_date" className="text-xs text-muted-foreground">Ngày kết thúc</Label>
                 <Input id="end_date" type="date" value={formData.end_date} onChange={(e) => handleInputChange('end_date', e.target.value)} className={`h-11 text-sm ${errors.end_date ? "border-red-500" : ""}`} />
-                {errors.end_date && <p className="text-xs text-red-500">{errors.end_date}</p>}
+                {errors.end_date && <p className="text-xs text-red-600">{errors.end_date}</p>}
               </div>
             </div>
 
@@ -372,7 +372,7 @@ function ProjectEditSheet({
               className={`resize-none text-sm ${errors.description ? "border-red-500" : ""}`}
               placeholder="Nhập mô tả chi tiết về dự án..."
             />
-            {errors.description && <p className="text-xs text-red-500">{errors.description}</p>}
+            {errors.description && <p className="text-xs text-red-600">{errors.description}</p>}
             <p className="text-xs text-muted-foreground text-right">{formData.description.length}/1000</p>
           </div>
         </div>

@@ -107,7 +107,7 @@ function Field({ id, label, required, children }: { id?: string; label: string; 
   return (
     <div className="space-y-1">
       <Label htmlFor={id} className="typography-label-medium text-muted-foreground">
-        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        {label}{required && <span className="text-red-600 ml-0.5">*</span>}
       </Label>
       {children}
     </div>
