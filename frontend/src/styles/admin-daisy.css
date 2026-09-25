@@ -446,17 +446,12 @@
     [data-admin-ui] .admin-page-header {
       padding: 0;
     }
-
-    [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] button,
-    [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] [role="combobox"],
-    [data-admin-ui] .admin-filter-bar button,
-    [data-admin-ui] .admin-filter-bar input,
-    [data-admin-ui] .admin-filter-bar [role="combobox"] {
-      min-height: 2.25rem;
-    }
   }
 
-  @media (min-width: 640px) {
+  /* Data-dense 36px header/filter controls are a DESKTOP decision (>=1200px).
+     Tablets (768–1199px) keep the 2.75rem touch floor instead — see the
+     tablet touch floor in variables.css. */
+  @media (min-width: 1200px) {
     [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] button,
     [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] [role="combobox"],
     [data-admin-ui] .admin-filter-bar button,

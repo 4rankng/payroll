@@ -436,3 +436,24 @@
     --partner-accent: 43 81% 63%;
   }
 }
+
+/* ========================================================================
+   TABLET TOUCH FLOOR (768–1199px): the data-dense admin shell renders at
+   desktop scale on tablets (useBreakpoint switch at 768px), which leaves
+   standard h-9 buttons and h-8 inputs at 36/32px — under-thumb controls on
+   an 11" tablet. A min-height floor lifts them to 40px without touching
+   phones (<768px, card layouts) or full desktops (>=1200px). Checkboxes,
+   radios, and switches are excluded (they size themselves). Declared
+   OUTSIDE any cascade layer so it wins over Tailwind utilities (min-h-*)
+   regardless of layer order.
+   ======================================================================== */
+@media (min-width: 768px) and (max-width: 1199.9px) {
+  [data-admin-ui] button:not([role="switch"]),
+  [data-admin-ui] input:not([type="checkbox"]):not([type="radio"]),
+  [data-admin-ui] select,
+  [data-partner-ui] button:not([role="switch"]),
+  [data-partner-ui] input:not([type="checkbox"]):not([type="radio"]),
+  [data-partner-ui] select {
+    min-height: 40px;
+  }
+}
