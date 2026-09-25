@@ -198,7 +198,14 @@ func (r *EmployeeRepository) GetByBankAccountNumber(ctx context.Context, bankAcc
 	return &employee, nil
 }
 
+// Update persists the full employee row. The BankID column is authoritative:
+// callers resolve a bank and set BankID, so any preloaded Bank association is
+// stale by construction and must not influence the write. GORM's Save would
+// otherwise re-sync the bank_id FK from that stale association, silently
+// reverting the change — a FlexPay upload with "MB BANK" kept saving the
+// employee's old MSB bank while the account number updated normally.
 func (r *EmployeeRepository) Update(ctx context.Context, employee *domain.Employee) error {
+	employee.Bank = nil
 	return r.SafeUpdate(ctx, employee)
 }
 
