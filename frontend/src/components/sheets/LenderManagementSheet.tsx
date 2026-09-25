@@ -98,7 +98,7 @@ export function LenderManagementSheet({ isOpen, onClose }: LenderManagementSheet
             </div>
           ) : lenders.length === 0 ? (
             <div className="text-center py-12">
-              <Users2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
+              <Users2 className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-4 typography-title-large">Chưa có chủ nợ nào</h3>
               <p className="mt-2 typography-body-medium text-muted-foreground">
                 Thêm chủ nợ đầu tiên để bắt đầu quản lý khoản vay.

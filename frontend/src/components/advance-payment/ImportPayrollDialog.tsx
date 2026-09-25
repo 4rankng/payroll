@@ -216,7 +216,7 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
                     <div className="flex gap-2"><span className="font-semibold text-primary w-4">G</span><span className="text-muted-foreground">Tên tài khoản NH</span></div>
                     <div className="flex gap-2"><span className="font-semibold text-primary w-4">H</span><span className="text-muted-foreground">Số tài khoản NH</span></div>
                     <div className="flex gap-2"><span className="font-semibold text-primary w-4">I</span><span className="text-muted-foreground">Tên ngân hàng</span></div>
-                    <div className="flex gap-2"><span className="font-semibold text-primary w-4">J</span><span className="text-muted-foreground">Hạn mức được ứng <span className="text-muted-foreground/60">(để trống hoặc 0 = chỉ nhập NV)</span></span></div>
+                    <div className="flex gap-2"><span className="font-semibold text-primary w-4">J</span><span className="text-muted-foreground">Hạn mức được ứng <span className="text-muted-foreground">(để trống hoặc 0 = chỉ nhập NV)</span></span></div>
                   </div>
                 </div>
                 <FileDropZone

@@ -90,7 +90,7 @@ export function EmployeeTimesheetPanel({
             <ClipboardList className="h-6 w-6" aria-hidden="true" />
           </span>
           <p className="employee-type-card-title mt-3 text-base-content">Chưa có bảng công</p>
-          <p className="employee-type-body-sm mx-auto mt-1 max-w-[18rem] text-base-content/50">
+          <p className="employee-type-body-sm mx-auto mt-1 max-w-[18rem] text-base-content">
             Bảng công của bạn sẽ xuất hiện tại đây sau khi được ghi nhận.
           </p>
         </div>
@@ -142,7 +142,7 @@ export function EmployeeTimesheetPanel({
       )}
 
       {!isError && isFetchingNextPage && (
-        <div className="flex items-center justify-center gap-2 py-4 text-sm text-base-content/50">
+        <div className="flex items-center justify-center gap-2 py-4 text-sm text-base-content">
           <LoaderCircle className="h-4 w-4 animate-spin text-[var(--employee-accent)]" aria-hidden="true" />
           Đang tải thêm...
         </div>

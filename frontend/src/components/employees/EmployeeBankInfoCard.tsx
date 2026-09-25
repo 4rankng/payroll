@@ -37,14 +37,14 @@ export function EmployeeBankInfoCard({
       <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-r from-base-100/45 via-base-100/10 to-transparent" />
 
       <div className="flex min-h-[188px] flex-col sm:min-h-[202px]">
-        <h2 id="employee-bank-title" className="employee-type-card-title text-base-content/75">
+        <h2 id="employee-bank-title" className="employee-type-card-title text-base-content">
           Tài khoản nhận tiền
         </h2>
 
         {hasBankInfo ? (
           <div className="mt-5 flex flex-1 flex-col sm:mt-6">
             <dl className="min-w-0">
-              <dt className="employee-type-label-caps text-base-content/55">Số tài khoản</dt>
+              <dt className="employee-type-label-caps text-base-content">Số tài khoản</dt>
               <dd className="employee-type-bank-value mt-1.5 min-w-0 break-all text-base-content tabular-nums">
                 {profile.bank_account_number || "—"}
               </dd>
@@ -52,13 +52,13 @@ export function EmployeeBankInfoCard({
 
             <div className="mt-auto grid grid-cols-2 gap-4 border-t border-base-content/10 pt-4">
               <dl className="min-w-0">
-                <dt className="employee-type-label-caps text-base-content/55">Ngân hàng</dt>
+                <dt className="employee-type-label-caps text-base-content">Ngân hàng</dt>
                 <dd className="employee-type-bank-value mt-1 break-words text-base-content">
                   {profile.bank?.branch_name || "—"}
                 </dd>
               </dl>
               <dl className="min-w-0 text-right">
-                <dt className="employee-type-label-caps text-base-content/55">Chủ tài khoản</dt>
+                <dt className="employee-type-label-caps text-base-content">Chủ tài khoản</dt>
                 <dd className="employee-type-bank-value mt-1 break-words text-base-content">
                   {accountOwner || "—"}
                 </dd>
@@ -70,7 +70,7 @@ export function EmployeeBankInfoCard({
             <p className="employee-type-strong text-base-content">
               Chưa có thông tin ngân hàng
             </p>
-            <p className="employee-type-body-sm mt-1 max-w-xs text-base-content/60">
+            <p className="employee-type-body-sm mt-1 max-w-xs text-base-content">
               Liên hệ quản lý để cập nhật
             </p>
           </div>

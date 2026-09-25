@@ -142,7 +142,7 @@ const ActivityUsersPage = () => {
                   </span>
                 </div>
                 {user.last_login && (
-                  <p className="text-xs text-muted-foreground/70 leading-none">
+                  <p className="text-xs text-muted-foreground leading-none">
                     {format(parseISO(user.last_login), "dd/MM/yyyy HH:mm", {
                       locale: vi,
                     })}

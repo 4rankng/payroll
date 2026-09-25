@@ -187,7 +187,7 @@ export const SendNotificationComposer = memo(function SendNotificationComposer()
               aria-labelledby="notification-message-label"
               className={cn(
                 'min-h-56 flex-1 resize-none rounded-lg border bg-background p-3 text-sm leading-relaxed text-foreground',
-                'placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 messageError && 'border-destructive focus-visible:ring-destructive',
               )}
             />

@@ -81,7 +81,7 @@ function DashboardDisclosureSection({
       <AccordionTrigger className="min-h-11 px-3 py-3 no-underline hover:no-underline">
         <div className="flex min-w-0 items-start gap-2 pr-1 text-left">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/5">
-            <Icon className="h-4 w-4 text-primary/70" />
+            <Icon className="h-4 w-4 text-primary" />
           </span>
           <span className="min-w-0">
             <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">

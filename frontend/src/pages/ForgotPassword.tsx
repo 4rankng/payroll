@@ -94,22 +94,22 @@ const ForgotPassword = () => {
                 <h2 className="font-display text-3xl font-black leading-tight tracking-[-0.04em] sm:text-4xl">
                   Quên mật khẩu?
                 </h2>
-                <p className="mt-2 text-sm text-base-content/60">
+                <p className="mt-2 text-sm text-base-content">
                   Nhập email hoặc số điện thoại đã đăng ký để đặt lại mật khẩu.
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <div className="space-y-2">
-                  <label htmlFor="identifier" className="block text-xs font-bold text-base-content/65">
+                  <label htmlFor="identifier" className="block text-xs font-bold text-base-content">
                     Email hoặc số điện thoại
                   </label>
                   <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
                     {/* Swap icon based on detected input type */}
                     {isEmailMode ? (
-                      <Mail className="h-4 w-4 shrink-0 text-base-content/35" aria-hidden="true" />
+                      <Mail className="h-4 w-4 shrink-0 text-base-content" aria-hidden="true" />
                     ) : (
-                      <Phone className="h-4 w-4 shrink-0 text-base-content/35" aria-hidden="true" />
+                      <Phone className="h-4 w-4 shrink-0 text-base-content" aria-hidden="true" />
                     )}
                     <input
                       id="identifier"
@@ -118,7 +118,7 @@ const ForgotPassword = () => {
                       placeholder="email@cua-ban.vn  hoặc  0987 654 321"
                       value={identifier}
                       onChange={(e) => setIdentifier(e.target.value)}
-                      className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content/35"
+                      className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content"
                       required
                       autoComplete="off"
                       disabled={pending}
@@ -126,7 +126,7 @@ const ForgotPassword = () => {
                   </label>
                   {/* Channel hint — neutral; does NOT confirm the value exists in the DB. */}
                   {identifier.trim() && (
-                    <p className="text-xs text-base-content/45">
+                    <p className="text-xs text-base-content">
                       {isEmailMode
                         ? "📧 Nếu email tồn tại, liên kết đặt lại sẽ gửi qua email."
                         : "💬 Nếu số điện thoại tồn tại, mã OTP sẽ gửi qua Zalo."}
@@ -150,7 +150,7 @@ const ForgotPassword = () => {
               <button
                 type="button"
                 onClick={() => navigate("/login", { replace: true })}
-                className="mt-5 flex items-center gap-1.5 text-xs font-bold text-base-content/55 hover:text-base-content"
+                className="mt-5 flex items-center gap-1.5 text-xs font-bold text-base-content hover:text-base-content"
               >
                 <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
                 Quay lại đăng nhập
@@ -164,7 +164,7 @@ const ForgotPassword = () => {
                   <p className="text-sm font-bold text-base-content">
                     Nếu email tồn tại trong hệ thống
                   </p>
-                  <p className="mt-1 text-sm leading-5 text-base-content/70">
+                  <p className="mt-1 text-sm leading-5 text-base-content">
                     Bạn sẽ nhận được liên kết đặt lại mật khẩu trong vài phút. Vui lòng kiểm tra hộp thư (kể cả thư rác).
                   </p>
                 </div>

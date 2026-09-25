@@ -214,7 +214,7 @@ function SortHeader({ label, field, ctx }: { label: string; field: string; ctx: 
       onClick={() => ctx.onSort(field)}
     >
       {label}
-      <Icon className={`h-3 w-3 ${isActive ? "text-foreground" : "text-muted-foreground/50"}`} />
+      <Icon className={`h-3 w-3 ${isActive ? "text-foreground" : "text-muted-foreground"}`} />
     </button>
   );
 }

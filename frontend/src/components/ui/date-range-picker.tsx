@@ -370,7 +370,7 @@ export function DateRangePicker({
         popperClassName={popperClassName}
       />
       <span className={cn(
-        "select-none text-muted-foreground/40",
+        "select-none text-muted-foreground",
         variant === "compact" ? "text-xs" : "text-xs"
       )}>–</span>
       <SinglePicker

@@ -117,7 +117,7 @@ const ProfitRow = memo(({ item, isHighlighted, onHover }: ProfitRowProps) => {
       </td>
       <td className="py-2 px-2 text-center">
         <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-          <Users className="h-3 w-3 text-muted-foreground/50" />
+          <Users className="h-3 w-3 text-muted-foreground" />
           <span className="tabular-nums font-medium">{item.employee_count}</span>
         </div>
       </td>
@@ -274,9 +274,9 @@ export const ProjectProfitabilityCard = memo(() => {
                     className={`flex min-h-11 items-center gap-1.5 rounded-lg border px-2 py-1 text-xs select-none sm:min-h-8
                       transition-all duration-200
                       ${hidden
-                        ? 'border-border/30 bg-muted/30 text-muted-foreground/40'
+                        ? 'border-border/30 bg-muted/30 text-muted-foreground'
                         : dimmed
-                          ? 'border-border/20 bg-card text-muted-foreground/40 opacity-50'
+                          ? 'border-border/20 bg-card text-muted-foreground opacity-50'
                           : 'border-border bg-card text-foreground hover:border-primary/30'
                       }`}
                     title={hidden ? 'Hiện dòng này' : hasFocus && focusedId === s.project_id ? 'Bỏ lọc' : 'Lọc dự án này'}

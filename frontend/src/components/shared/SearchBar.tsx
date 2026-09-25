@@ -78,7 +78,7 @@ export const SearchBar = React.memo(function SearchBar({
         onChange={handleChange}
         aria-label={inputId ? undefined : placeholder}
         placeholder={placeholder}
-        className="h-11 flex-1 min-w-0 bg-transparent outline-none placeholder:text-muted-foreground/60 text-foreground sm:h-8"
+        className="h-11 flex-1 min-w-0 bg-transparent outline-none placeholder:text-muted-foreground text-foreground sm:h-8"
       />
       {showClearButton && localValue && (
         <button

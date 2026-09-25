@@ -109,7 +109,7 @@ function HorizontalCycleSection({ label, values, summary }: CycleSectionProps) {
         ].map(({ title, value, icon: Icon }) => (
           <div key={title} className="p-2 rounded-xl border border-border/40 bg-muted/30">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <Icon className="h-3 w-3 text-muted-foreground/60" />
+              <Icon className="h-3 w-3 text-muted-foreground" />
               <span className="text-xs font-medium text-muted-foreground">{title}</span>
             </div>
             <p className="text-sm font-semibold text-foreground">{value}</p>

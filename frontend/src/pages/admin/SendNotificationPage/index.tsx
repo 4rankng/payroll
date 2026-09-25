@@ -219,7 +219,7 @@ const SendNotificationPage = () => {
               value={message}
               onChange={handleMessageChange}
               placeholder="Nhập nội dung thông báo..."
-              className="flex-1 w-full resize-none rounded-lg border border-border/60 bg-background text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 p-3"
+              className="flex-1 w-full resize-none rounded-lg border border-border/60 bg-background text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 p-3"
             />
             {messageError && (
               <div className="flex items-center gap-1.5 text-xs text-red-600 mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -257,7 +257,7 @@ const SendNotificationPage = () => {
                 value={message}
                 onChange={handleMessageChange}
                 placeholder="Nhập nội dung thông báo..."
-                className="flex-1 w-full resize-none rounded-lg border border-border/60 bg-background text-sm leading-relaxed text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/30 p-3"
+                className="flex-1 w-full resize-none rounded-lg border border-border/60 bg-background text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 p-3"
               />
               {messageError && (
                 <div className="flex items-center gap-1.5 text-xs text-red-600 mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -279,7 +279,7 @@ const SendNotificationPage = () => {
             >
               <Bell className={cn(
                 'h-4 w-4 transition-colors duration-500',
-                canSend ? 'text-white' : 'text-muted-foreground/30'
+                canSend ? 'text-white' : 'text-muted-foreground'
               )} />
             </div>
           </div>

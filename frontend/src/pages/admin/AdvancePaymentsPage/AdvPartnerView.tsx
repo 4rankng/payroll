@@ -99,7 +99,7 @@ function ViewTabs({
                   "tabular-nums text-xs px-1.5 py-px rounded font-semibold leading-none",
                   isActive
                     ? "bg-muted text-foreground/70"
-                    : "bg-transparent text-muted-foreground/70",
+                    : "bg-transparent text-muted-foreground",
                 )}
               >
                 {tab.count}
@@ -148,7 +148,7 @@ function MonthNavigator({
     <div className="inline-flex items-center gap-0.5 rounded-lg border border-border/70 bg-card px-1 h-8">
       <button
         onClick={handlePrev}
-        className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors"
+        className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
         aria-label="Tháng trước"
       >
         <ChevronLeft className="h-3.5 w-3.5" />
@@ -163,7 +163,7 @@ function MonthNavigator({
       </span>
       <button
         onClick={handleNext}
-        className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors"
+        className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
         aria-label="Tháng sau"
       >
         <ChevronRight className="h-3.5 w-3.5" />
@@ -415,7 +415,7 @@ const AdvPartnerAdvancePaymentsPage = () => {
             rowSubtitle={(row: AdvancePaymentListItem) => (
               <div className="space-y-0.5 mt-0.5">
                 <div className="text-[12px] text-muted-foreground font-medium tabular-nums">{row.employeeCCCD}</div>
-                <div className="text-[12px] text-muted-foreground/70 truncate max-w-[150px]">{row.projectName || "—"}</div>
+                <div className="text-[12px] text-muted-foreground truncate max-w-[150px]">{row.projectName || "—"}</div>
               </div>
             )}
             getRowId={(row: AdvancePaymentListItem) => row.id.toString()}
@@ -438,7 +438,7 @@ const AdvPartnerAdvancePaymentsPage = () => {
             rowSubtitle={(row: FlexPayEmployeeListItem) => (
               <div className="space-y-0.5 mt-0.5">
                 <div className="text-[12px] text-muted-foreground font-medium tabular-nums">{row.cccd}</div>
-                <div className="text-[12px] text-muted-foreground/70 truncate max-w-[150px]">{row.project?.name || "—"}</div>
+                <div className="text-[12px] text-muted-foreground truncate max-w-[150px]">{row.project?.name || "—"}</div>
               </div>
             )}
             getRowId={(row: FlexPayEmployeeListItem) =>

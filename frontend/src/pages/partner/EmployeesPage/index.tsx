@@ -339,7 +339,7 @@ const EmployeesPage = () => {
             <div className="space-y-0.5 min-w-0">
               <div className="flex items-center gap-2">
                 <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/5 border border-primary/10 shrink-0">
-                  <Landmark className="h-2.5 w-2.5 text-primary/50" />
+                  <Landmark className="h-2.5 w-2.5 text-primary" />
                 </div>
                 <span className="typography-body-medium text-foreground/80 truncate" title={branch}>
                   {branch}

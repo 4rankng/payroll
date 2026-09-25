@@ -31,7 +31,7 @@ export function AdvancePaymentPageHeaderMobile({
     // wraps onto its own line instead of crushing the title mid-word.
     <div className="flex flex-wrap items-center gap-3">
       <div className="flex min-w-[10rem] flex-1 items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/[0.07] text-primary/75 shadow-sm">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/[0.07] text-primary shadow-sm">
           <FileSpreadsheet className="h-[18px] w-[18px]" strokeWidth={2} />
         </div>
 

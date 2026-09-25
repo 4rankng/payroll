@@ -152,9 +152,9 @@ export function TimesheetMobileList() {
                   <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
                     {getMergedStatusBadge(dominantStatus, dominantPayment)}
                     {group.entries.length > 1 ? (
-                      <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground/60 transition-transform', isExpanded && 'rotate-180')} />
+                      <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
                     ) : (
-                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                     )}
                   </div>
                 </div>
@@ -198,7 +198,7 @@ export function TimesheetMobileList() {
                           <p className="text-xs text-muted-foreground tabular-nums">{formatCurrency(entry.amount)}</p>
                         </div>
                         {getMergedStatusBadge(entry.status, entry.payment_status)}
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       </div>
                     </div>
                   ))}

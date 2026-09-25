@@ -24,7 +24,7 @@ export const DashboardSectionHeader = ({
     <div className="flex min-w-0 items-start gap-2.5">
       {Icon && (
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/5">
-          <Icon className="h-4 w-4 text-primary/70" />
+          <Icon className="h-4 w-4 text-primary" />
         </div>
       )}
       <div className="min-w-0 space-y-0.5">

@@ -229,7 +229,7 @@ export function MobileTable<T extends Record<string, unknown>>({
                         if (!value) return null;
                         return (
                           <div key={String(field.key)} className="min-w-0">
-                            <dt className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-[0.06em] mb-1">{field.label}</dt>
+                            <dt className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.06em] mb-1">{field.label}</dt>
                             <dd className="min-w-0 break-words text-[13px] leading-relaxed text-foreground">{value}</dd>
                           </div>
                         );

@@ -91,7 +91,7 @@ export const MobilePageHeader = ({
           )}
           {Icon && (
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/[0.07]">
-              <Icon className="h-4 w-4 text-primary/75" strokeWidth={2} />
+              <Icon className="h-4 w-4 text-primary" strokeWidth={2} />
             </div>
           )}
           <div className="min-w-0 flex-1">

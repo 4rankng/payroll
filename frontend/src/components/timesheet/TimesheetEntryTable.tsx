@@ -264,7 +264,7 @@ export function TimesheetEntryTable({
     // Golden Yellow - Medium cost
     {
       header: 'bg-[#fff8e1]',
-      cellFilled: 'bg-[#fff8e1] text-[#e65100]',
+      cellFilled: 'bg-[#fff8e1] text-[#b45309]',
       cellEmpty: 'bg-[#fffcf0]'
     },
     // Coral Orange - High cost

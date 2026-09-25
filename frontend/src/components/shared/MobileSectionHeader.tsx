@@ -28,7 +28,7 @@ export const MobileSectionHeader = ({
   return (
     <div className={cn('flex items-center gap-2 mb-3', className)}>
       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/5">
-        <Icon className="h-3.5 w-3.5 text-primary/70" strokeWidth={2} />
+        <Icon className="h-3.5 w-3.5 text-primary" strokeWidth={2} />
       </div>
       <h2 className="font-display text-sm font-bold text-foreground tracking-tight leading-tight">
         {title}

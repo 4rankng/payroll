@@ -444,7 +444,7 @@ function TimesheetEntrySheetComponent({
                 aria-label={selectedProject ? `Dự án: ${selectedProject.name}` : "Chọn dự án"}
                 className="min-h-11 max-w-full justify-between gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 text-xs font-normal hover:bg-card hover:border-primary/25"
               >
-                <Building2 className="h-3.5 w-3.5 shrink-0 text-primary/70" />
+                <Building2 className="h-3.5 w-3.5 shrink-0 text-primary" />
                 <span className="min-w-0 truncate">
                   {selectedProject
                     ? <><span className="font-medium">{selectedProject.name}</span>{selectedProject.code && <span className="text-muted-foreground ml-1 text-xs">{selectedProject.code}</span>}</>
@@ -494,7 +494,7 @@ function TimesheetEntrySheetComponent({
                 className="min-h-11 max-w-full justify-between gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 text-xs font-normal hover:bg-card hover:border-primary/25"
                 disabled={availableEmployees.length === 0 || !isPayRateReady}
               >
-                <UsersRound className="h-3.5 w-3.5 shrink-0 text-primary/70" />
+                <UsersRound className="h-3.5 w-3.5 shrink-0 text-primary" />
                 <span className="min-w-0 truncate">
                   {selectedEmployeeFilter && selectedEmployee
                     ? <span className="font-medium">{selectedEmployee.fullname}</span>

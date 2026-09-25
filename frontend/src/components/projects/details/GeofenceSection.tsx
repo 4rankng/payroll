@@ -173,7 +173,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
         {/* Gate list */}
         {gates.length === 0 && !adding ? (
           <div className="flex flex-col items-center justify-center py-6 text-center">
-            <MapPin className="h-8 w-8 text-muted-foreground/40 mb-2" />
+            <MapPin className="h-8 w-8 text-muted-foreground mb-2" />
             <p className="text-xs text-muted-foreground">
               Chưa có cổng check-in. Thêm cổng mới để bắt đầu.
             </p>

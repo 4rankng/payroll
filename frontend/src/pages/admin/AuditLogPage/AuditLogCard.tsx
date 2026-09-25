@@ -91,7 +91,7 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
           <span className={cn('min-w-0 text-xs text-muted-foreground min-[380px]:whitespace-nowrap', compact && 'text-xs font-medium text-slate-600')}>
             {compact ? compactTime : `${dateStr} ${timeStr}`}
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-colors group-hover:text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-muted-foreground" />
         </div>
       </div>
 

@@ -77,7 +77,7 @@ export const MobileInfoCard = ({
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold tabular-nums mt-0.5">{value}</p>
       {sublabel && (
-        <p className="text-xs text-muted-foreground/70 mt-0.5">{sublabel}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{sublabel}</p>
       )}
     </MobileCard>
   );

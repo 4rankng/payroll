@@ -213,7 +213,7 @@ const Login = () => {
                 Ứng lương khi cần.
                 <span className="mt-2 block text-primary">Trả lương mỗi tuần.</span>
               </h1>
-              <p className="mt-6 max-w-[470px] text-base font-medium leading-7 text-base-content/65 xl:text-lg">
+              <p className="mt-6 max-w-[470px] text-base font-medium leading-7 text-base-content xl:text-lg">
                 Dòng tiền linh hoạt cho người lao động. Một chu kỳ lương gọn gàng, dễ kiểm soát cho doanh nghiệp.
               </p>
             </div>
@@ -235,7 +235,7 @@ const Login = () => {
                 <p className="mt-1.5 max-w-[280px] font-display text-2xl font-black leading-[1.05] tracking-[-0.035em] sm:text-3xl">
                   Ứng lương khi cần.<br /><span className="text-primary">Trả lương mỗi tuần.</span>
                 </p>
-                <p className="mt-2.5 text-xs font-medium leading-[1.45] text-base-content/60 sm:text-xs">
+                <p className="mt-2.5 text-xs font-medium leading-[1.45] text-base-content sm:text-xs">
                   Dòng tiền linh hoạt cho người lao động. Một chu kỳ lương gọn gàng, dễ kiểm soát cho doanh nghiệp.
                 </p>
               </div>
@@ -272,9 +272,9 @@ const Login = () => {
                     <legend className="sr-only">Thông tin đăng nhập</legend>
 
                     <div className="space-y-2">
-                      <label htmlFor="emailOrUsername" className="block text-xs font-bold text-base-content/65">Tên đăng nhập</label>
+                      <label htmlFor="emailOrUsername" className="block text-xs font-bold text-base-content">Tên đăng nhập</label>
                       <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
-                        <User className="h-4 w-4 shrink-0 text-base-content/35" aria-hidden="true" />
+                        <User className="h-4 w-4 shrink-0 text-base-content" aria-hidden="true" />
                         <input
                           id="emailOrUsername"
                           type="text"
@@ -282,7 +282,7 @@ const Login = () => {
                           value={emailOrUsername}
                           onChange={(e) => setEmailOrUsername(e.target.value)}
                           onBlur={() => void syncCaptchaRequirement()}
-                          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content/35"
+                          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content"
                           required
                           autoComplete="username"
                           autoCapitalize="none"
@@ -292,9 +292,9 @@ const Login = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <label htmlFor="password" className="block text-xs font-bold text-base-content/65">Mật khẩu</label>
+                      <label htmlFor="password" className="block text-xs font-bold text-base-content">Mật khẩu</label>
                       <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
-                        <Lock className="h-4 w-4 shrink-0 text-base-content/35" aria-hidden="true" />
+                        <Lock className="h-4 w-4 shrink-0 text-base-content" aria-hidden="true" />
                         <input
                           id="password"
                           type={showPassword ? "text" : "password"}
@@ -304,7 +304,7 @@ const Login = () => {
                           placeholder="Nhập mật khẩu của bạn"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
-                          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content/35"
+                          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content"
                           required
                           autoComplete="current-password"
                           disabled={isDisabled}
@@ -313,7 +313,7 @@ const Login = () => {
                           type="button"
                           onClick={togglePassword}
                           aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                          className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square -mr-2 min-h-9 h-9 w-9 text-base-content/40 hover:text-base-content"
+                          className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square -mr-2 min-h-9 h-9 w-9 text-base-content hover:text-base-content"
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
@@ -328,7 +328,7 @@ const Login = () => {
 
                     {needsCaptcha && (
                       <div className="space-y-2 animate-fade-in-up">
-                        <label htmlFor="captchaCode" className="block text-xs font-bold text-base-content/65">Mã xác nhận</label>
+                        <label htmlFor="captchaCode" className="block text-xs font-bold text-base-content">Mã xác nhận</label>
                         <div className="flex items-center gap-2">
                           {captchaImage ? (
                             <button
@@ -341,7 +341,7 @@ const Login = () => {
                             </button>
                           ) : (
                             <div className="flex h-12 min-w-24 items-center justify-center rounded-xl border border-base-300 bg-base-200" aria-hidden="true">
-                              <span className="ct-loading ct-loading-spinner ct-loading-sm text-base-content/35" />
+                              <span className="ct-loading ct-loading-spinner ct-loading-sm text-base-content" />
                             </div>
                           )}
                           <input
@@ -386,7 +386,7 @@ const Login = () => {
                   </button>
                 </form>
 
-                <div className="mt-6 flex items-center justify-center gap-2 text-xs text-base-content/45">
+                <div className="mt-6 flex items-center justify-center gap-2 text-xs text-base-content">
                   <ShieldCheck className="h-4 w-4 text-success" aria-hidden="true" />
                   <span>Phiên đăng nhập được bảo vệ và mã hóa</span>
                 </div>
@@ -394,7 +394,7 @@ const Login = () => {
             </div>
           </div>
 
-          <footer className="px-5 pb-6 text-center text-xs text-base-content/40 lg:px-10">
+          <footer className="px-5 pb-6 text-center text-xs text-base-content lg:px-10">
             <p>© {new Date().getFullYear()} TingTing · Ứng lương nhanh · Trả lương tuần</p>
             <div className="mt-2 flex items-center justify-center gap-3">
               <span>Điều khoản</span>

@@ -151,7 +151,7 @@ export function EmployeeDetailSheet({
 
                     {requests.length === 0 ? (
                       <div className="px-4 pb-6 text-center">
-                        <Wallet className="mx-auto h-8 w-8 text-muted-foreground/40 mb-2" />
+                        <Wallet className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                         <p className="text-xs text-muted-foreground">
                           Chưa có yêu cầu nào
                         </p>

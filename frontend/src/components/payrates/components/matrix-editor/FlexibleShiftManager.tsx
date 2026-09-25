@@ -179,7 +179,7 @@ export function FlexibleShiftManager({
               className="flex min-h-11 items-center gap-1 rounded-full border border-border bg-background px-3 text-xs transition-colors hover:border-primary hover:text-primary"
             >
               <span className="font-mono">{preset.value}</span>
-              <span className="text-muted-foreground/60">({preset.label})</span>
+              <span className="text-muted-foreground">({preset.label})</span>
             </button>
           ))}
         </div>

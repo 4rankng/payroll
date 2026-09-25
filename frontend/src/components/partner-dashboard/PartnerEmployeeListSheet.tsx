@@ -210,10 +210,10 @@ export function PartnerEmployeeListSheet({ type, month, onClose }: PartnerEmploy
             <div className="flex flex-col items-center justify-center h-40 text-center gap-2">
               <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center">
                 {type === 'active'
-                  ? <UserCheck className="w-6 h-6 text-muted-foreground/40" />
+                  ? <UserCheck className="w-6 h-6 text-muted-foreground" />
                   : type === 'dropped'
-                    ? <UserX className="w-6 h-6 text-muted-foreground/40" />
-                    : <DollarSign className="w-6 h-6 text-muted-foreground/40" />
+                    ? <UserX className="w-6 h-6 text-muted-foreground" />
+                    : <DollarSign className="w-6 h-6 text-muted-foreground" />
                 }
               </div>
               <p className="text-sm text-muted-foreground">

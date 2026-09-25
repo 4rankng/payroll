@@ -90,7 +90,7 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
               <>
                 <span className="hidden items-baseline gap-1 whitespace-nowrap text-sm sm:flex">
                   <span className="capitalize font-medium text-muted-foreground">{monthLabel}</span>
-                  <span className="text-muted-foreground/40">·</span>
+                  <span className="text-muted-foreground">·</span>
                   <span className="font-semibold text-foreground">{yearLabel}</span>
                 </span>
                 <span className="whitespace-nowrap text-sm font-semibold text-foreground sm:hidden">

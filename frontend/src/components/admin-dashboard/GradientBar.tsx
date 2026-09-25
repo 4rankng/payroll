@@ -58,7 +58,7 @@ export function GradientBar({ label, count, maxCount, binRange }: GradientBarPro
         {/* Count */}
         <span className={cn(
           'text-xs font-semibold tabular-nums w-7 text-right flex-shrink-0 leading-none',
-          isEmpty ? 'text-muted-foreground/50' : 'text-foreground',
+          isEmpty ? 'text-muted-foreground' : 'text-foreground',
         )}>
           {count}
         </span>

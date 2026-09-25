@@ -43,7 +43,7 @@ export function ProjectHeader({ project, showName = true }: ProjectHeaderProps) 
           </span>
           {dateRange && (
             <>
-              <span className="text-muted-foreground/40">·</span>
+              <span className="text-muted-foreground">·</span>
               <span className="inline-flex items-center gap-1 min-w-0">
                 <CalendarRange className="h-3 w-3 shrink-0 opacity-70" />
                 <span className="truncate">{dateRange}</span>

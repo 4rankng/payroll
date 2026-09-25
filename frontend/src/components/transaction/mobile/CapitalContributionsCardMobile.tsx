@@ -41,8 +41,8 @@ export function CapitalContributionsCardMobile({ contributions, isLoading }: Cap
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5 px-0.5">
-        <TrendingUp className="h-3 w-3 text-muted-foreground/60 shrink-0" />
-        <span className="text-xs font-medium text-muted-foreground/70">Vốn chủ sở hữu</span>
+        <TrendingUp className="h-3 w-3 text-muted-foreground shrink-0" />
+        <span className="text-xs font-medium text-muted-foreground">Vốn chủ sở hữu</span>
       </div>
       <div className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border/60 bg-border/40 min-[380px]:grid-cols-3">
         {items.map((item, i) => (

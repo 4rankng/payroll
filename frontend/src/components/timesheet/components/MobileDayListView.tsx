@@ -196,8 +196,8 @@ export function MobileDayListView({
                 </div>
               ) : (
                 <div className="flex-1 flex items-center gap-1.5">
-                  <Plus className="h-3.5 w-3.5 text-muted-foreground/50" />
-                  <span className="text-xs text-muted-foreground/60">Thêm công</span>
+                  <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Thêm công</span>
                 </div>
               )}
             </div>

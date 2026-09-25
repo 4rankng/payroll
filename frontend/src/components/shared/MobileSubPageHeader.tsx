@@ -55,7 +55,7 @@ export const MobileSubPageHeader = ({
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="hidden h-8 w-8 items-center justify-center rounded-lg border border-primary/10 bg-primary/[0.07] shrink-0 min-[420px]:flex">
-          <Icon className="h-[18px] w-[18px] text-primary/75" strokeWidth={2} />
+          <Icon className="h-[18px] w-[18px] text-primary" strokeWidth={2} />
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="break-words font-display text-lg font-extrabold leading-tight tracking-tight text-slate-950">

@@ -217,7 +217,7 @@ const GroupRow = memo(function GroupRow({
               {userRole === "admin" ? (
                 <AdminGroupProjectColumn group={group} />
               ) : (
-                <span className="text-xs text-muted-foreground/35">—</span>
+                <span className="text-xs text-muted-foreground">—</span>
               )}
             </TableCell>
             {/* [6] total amount */}
@@ -279,7 +279,7 @@ const AdminGroupProjectColumn = memo(function AdminGroupProjectColumn({ group }:
       className="ml-auto flex w-full min-w-0 items-center justify-end gap-1.5 text-left"
       title={projects.join(", ")}
     >
-      <Building2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-primary/70" />
+      <Building2 aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-primary" />
       <span className="min-w-0 truncate text-xs font-semibold text-foreground">
         {projectLabel}
       </span>
@@ -361,7 +361,7 @@ const ProjectSection = memo(function ProjectSection({
             </div>
           </TableCell>
           <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">{formatTimesheetHours(project.totalHours)}h</TableCell>
-          <TableCell className="px-4 py-2.5 text-right text-xs text-muted-foreground/35">—</TableCell>
+          <TableCell className="px-4 py-2.5 text-right text-xs text-muted-foreground">—</TableCell>
           <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">
             {project.totalAmount.toLocaleString("vi-VN")}
             <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
@@ -509,7 +509,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
         </div>
       </TableCell>
       <TableCell className="py-2 px-2">
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 mx-auto" />
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground mx-auto" />
       </TableCell>
     </TableRow>
   );

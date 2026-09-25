@@ -153,7 +153,7 @@ export function CalendarDayCell({
         <div className="flex-1 flex items-start justify-center pt-4">
           <div className={cn(
             "text-4xl font-bold opacity-0 group-hover:opacity-100 group-hover:animate-bounce group-hover:scale-150 transition-all duration-300 ease-out",
-            isSundayColumn ? "text-white/40" : "text-primary/40"
+            isSundayColumn ? "text-white/40" : "text-primary"
           )}>
             +
           </div>
@@ -289,7 +289,7 @@ export function CalendarDayCellMobile({
         <div className="flex-1 flex items-start justify-center pt-2">
           <div className={cn(
             "text-2xl font-bold opacity-0 group-hover:opacity-100 group-hover:animate-bounce group-hover:scale-150 transition-all duration-300 ease-out",
-            isSundayColumn ? "text-white/40" : "text-primary/40"
+            isSundayColumn ? "text-white/40" : "text-primary"
           )}>
             +
           </div>

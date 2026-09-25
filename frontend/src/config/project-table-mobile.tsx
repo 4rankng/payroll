@@ -34,7 +34,7 @@ export const createProjectMobileConfig = (
         const monthly = row.monthly_salary_employee_count || 0;
         const total = weekly + monthly;
 
-        if (total === 0) return <span className="text-muted-foreground/50">—</span>;
+        if (total === 0) return <span className="text-muted-foreground">—</span>;
 
         return (
           <div className="flex flex-col gap-0.5">
@@ -62,7 +62,7 @@ export const createProjectMobileConfig = (
         {row.name}
       </p>
       {row.code && (
-        <p className="typography-label-medium text-muted-foreground/60 font-mono truncate">
+        <p className="typography-label-medium text-muted-foreground font-mono truncate">
           {row.code}
         </p>
       )}

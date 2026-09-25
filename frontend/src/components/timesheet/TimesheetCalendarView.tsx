@@ -313,7 +313,7 @@ export function TimesheetCalendarView({
   if (!calendarData) {
     return (
       <div className="text-center py-12">
-        <Calendar className="mx-auto h-12 w-12 text-muted-foreground/50" />
+        <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
         <h3 className="mt-4 typography-title-large">Chưa chọn nhân viên</h3>
         <p className="mt-2 typography-body-medium text-muted-foreground">
           Vui lòng chọn nhân viên để xem bảng công.

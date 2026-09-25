@@ -87,7 +87,7 @@ function TimesheetStatsRow({
       value: totalEntries,
       icon: ClipboardList,
       iconText: "text-muted-foreground",
-      watermark: "text-muted-foreground/15",
+      watermark: "text-muted-foreground",
       active: false,
       onClick: undefined,
     },
@@ -97,7 +97,7 @@ function TimesheetStatsRow({
       value: pendingCount,
       icon: AlertCircle,
       iconText: pendingCount > 0 ? "text-warning" : "text-muted-foreground",
-      watermark: pendingCount > 0 ? "text-warning/15" : "text-muted-foreground/10",
+      watermark: pendingCount > 0 ? "text-warning/15" : "text-muted-foreground",
       active: statusFilter === "pending_approval",
       onClick: pendingCount > 0
         ? () => onToggleStatus(statusFilter === "pending_approval" ? "all" : "pending_approval")
@@ -109,7 +109,7 @@ function TimesheetStatsRow({
       value: pendingEmployees,
       icon: Wallet,
       iconText: pendingEmployees > 0 ? "text-info" : "text-muted-foreground",
-      watermark: pendingEmployees > 0 ? "text-info/15" : "text-muted-foreground/10",
+      watermark: pendingEmployees > 0 ? "text-info/15" : "text-muted-foreground",
       active: statusFilter === "pending_payment",
       onClick: pendingEmployees > 0
         ? () => onToggleStatus(statusFilter === "pending_payment" ? "all" : "pending_payment")
@@ -121,7 +121,7 @@ function TimesheetStatsRow({
       value: approvedCount,
       icon: CheckCircle2,
       iconText: approvedCount > 0 ? "text-success" : "text-muted-foreground",
-      watermark: approvedCount > 0 ? "text-success/15" : "text-muted-foreground/10",
+      watermark: approvedCount > 0 ? "text-success/15" : "text-muted-foreground",
       active: statusFilter === "approved",
       onClick: approvedCount > 0
         ? () => onToggleStatus(statusFilter === "approved" ? "all" : "approved")

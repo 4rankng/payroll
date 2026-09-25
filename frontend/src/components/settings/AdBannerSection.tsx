@@ -239,7 +239,7 @@ export const AdBannerSection = () => {
         </p>
       ) : ordered.length === 0 ? (
         <div className="rounded-xl border bg-card px-6 py-14 text-center shadow-sm">
-          <Megaphone className="mx-auto h-6 w-6 text-muted-foreground/60" aria-hidden="true" />
+          <Megaphone className="mx-auto h-6 w-6 text-muted-foreground" aria-hidden="true" />
           <p className="mt-3 text-sm font-medium text-foreground">Chưa có chiến dịch nào</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
             Tạo chiến dịch đầu tiên để bắt đầu hiển thị quảng cáo cho nhân viên.

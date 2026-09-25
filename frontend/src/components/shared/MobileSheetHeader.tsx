@@ -42,7 +42,7 @@ export const MobileSheetHeader = ({
       <div className="flex items-center gap-3 min-w-0">
         {Icon && (
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-            <Icon className="h-[18px] w-[18px] text-primary/70" strokeWidth={2} />
+            <Icon className="h-[18px] w-[18px] text-primary" strokeWidth={2} />
           </div>
         )}
         <div className="min-w-0">

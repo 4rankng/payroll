@@ -87,7 +87,7 @@ const ResetPassword = () => {
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden="true" />
             <div>
               <p className="text-sm font-bold text-base-content">Đặt lại mật khẩu thành công</p>
-              <p className="mt-1 text-sm leading-5 text-base-content/70">
+              <p className="mt-1 text-sm leading-5 text-base-content">
                 Vui lòng đăng nhập bằng mật khẩu mới.
               </p>
             </div>
@@ -113,7 +113,7 @@ const ResetPassword = () => {
         <h2 className="font-display text-3xl font-black leading-tight tracking-[-0.04em] sm:text-4xl">
           Đặt lại mật khẩu
         </h2>
-        <p className="mt-2 text-sm text-base-content/60">Nhập mật khẩu mới cho tài khoản của bạn.</p>
+        <p className="mt-2 text-sm text-base-content">Nhập mật khẩu mới cho tài khoản của bạn.</p>
       </div>
 
       {apiError && (
@@ -134,18 +134,18 @@ const ResetPassword = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="space-y-2">
-          <label htmlFor="newPassword" className="block text-xs font-bold text-base-content/65">
+          <label htmlFor="newPassword" className="block text-xs font-bold text-base-content">
             Mật khẩu mới
           </label>
           <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
-            <Lock className="h-4 w-4 shrink-0 text-base-content/35" aria-hidden="true" />
+            <Lock className="h-4 w-4 shrink-0 text-base-content" aria-hidden="true" />
             <input
               id="newPassword"
               type={showPassword ? "text" : "password"}
               placeholder="Nhập mật khẩu mới"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content/35"
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content"
               required
               autoComplete="new-password"
               disabled={mutation.isPending}
@@ -154,7 +154,7 @@ const ResetPassword = () => {
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square -mr-2 min-h-9 h-9 w-9 text-base-content/40 hover:text-base-content"
+              className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square -mr-2 min-h-9 h-9 w-9 text-base-content hover:text-base-content"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -163,18 +163,18 @@ const ResetPassword = () => {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="block text-xs font-bold text-base-content/65">
+          <label htmlFor="confirmPassword" className="block text-xs font-bold text-base-content">
             Xác nhận mật khẩu
           </label>
           <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
-            <Lock className="h-4 w-4 shrink-0 text-base-content/35" aria-hidden="true" />
+            <Lock className="h-4 w-4 shrink-0 text-base-content" aria-hidden="true" />
             <input
               id="confirmPassword"
               type={showPassword ? "text" : "password"}
               placeholder="Nhập lại mật khẩu mới"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content/35"
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content"
               required
               autoComplete="new-password"
               disabled={mutation.isPending}
@@ -228,7 +228,7 @@ const InvalidLinkState: React.FC<{ title: string; message: string }> = ({ title,
       <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
       <div>
         <p className="text-sm font-bold text-base-content">{title}</p>
-        <p className="mt-1 text-sm leading-5 text-base-content/70">{message}</p>
+        <p className="mt-1 text-sm leading-5 text-base-content">{message}</p>
       </div>
     </div>
     <Link

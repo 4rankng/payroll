@@ -132,7 +132,7 @@ export const createEmployeeColumns = (
                 <TooltipProvider delayDuration={200}>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded text-xs font-bold bg-primary/5 text-primary/60 border border-primary/10 shrink-0">
+                      <span className="inline-flex items-center justify-center h-4 min-w-[1.25rem] px-1 rounded text-xs font-bold bg-primary/5 text-primary border border-primary/10 shrink-0">
                         +{more}
                       </span>
                     </TooltipTrigger>
@@ -156,12 +156,12 @@ export const createEmployeeColumns = (
         const employee = row.original;
         const branch = employee.bank?.branch_name;
         if (!branch) {
-          return <span className="text-muted-foreground/40">—</span>;
+          return <span className="text-muted-foreground">—</span>;
         }
         return (
           <div className="flex items-center gap-2 min-w-0 max-w-[180px]">
             <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/5 border border-primary/10 shrink-0">
-              <Landmark className="h-3 w-3 text-primary/50" />
+              <Landmark className="h-3 w-3 text-primary" />
             </div>
             <span className="typography-body-medium text-foreground/80 truncate" title={branch}>
               {branch}
@@ -176,10 +176,10 @@ export const createEmployeeColumns = (
       cell: ({ row }) => {
         const raw = (row.getValue("address") as string) || "";
         const cleaned = raw.replace(/\\'/g, "'");
-        if (!cleaned) return <span className="text-muted-foreground/40">—</span>;
+        if (!cleaned) return <span className="text-muted-foreground">—</span>;
         return (
           <div className="flex items-center gap-1.5 min-w-0" title={cleaned}>
-            <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+            <MapPin className="h-3 w-3 shrink-0 text-muted-foreground" />
             <span className="typography-body-medium text-muted-foreground truncate">
               {cleaned}
             </span>

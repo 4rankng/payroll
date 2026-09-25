@@ -87,7 +87,7 @@ function ImportCard({ item, projectMap, onDownload }: {
             {projectMap.size > 0 && item.project_id != null && (
               <>
                 <span>·</span>
-                <span className="text-primary/80 font-medium">
+                <span className="text-primary font-medium">
                   {projectMap.get(item.project_id) ?? `Dự án #${item.project_id}`}
                 </span>
               </>

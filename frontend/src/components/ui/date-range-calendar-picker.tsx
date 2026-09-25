@@ -86,7 +86,7 @@ export function DateRangeCalendarPicker({
         </PopoverContent>
       </Popover>
 
-      <span className="shrink-0 select-none text-xs text-muted-foreground/40" aria-hidden="true">–</span>
+      <span className="shrink-0 select-none text-xs text-muted-foreground" aria-hidden="true">–</span>
 
       <Popover open={endOpen} onOpenChange={setEndOpen}>
         <PopoverTrigger asChild>

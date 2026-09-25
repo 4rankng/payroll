@@ -40,10 +40,10 @@ export function UserHeader({ user, showName = true }: UserHeaderProps) {
         )}
         <p className="text-xs text-muted-foreground break-all">@{user.username}</p>
         {user.email && (
-          <p className="hidden text-xs text-muted-foreground/70 break-all sm:block">{user.email}</p>
+          <p className="hidden text-xs text-muted-foreground break-all sm:block">{user.email}</p>
         )}
         {(user.role === "admin" || user.role === "partner") && user.mobile && (
-          <p className="hidden text-xs text-muted-foreground/70 break-all sm:block">SĐT: {user.mobile}</p>
+          <p className="hidden text-xs text-muted-foreground break-all sm:block">SĐT: {user.mobile}</p>
         )}
       </div>
     </div>

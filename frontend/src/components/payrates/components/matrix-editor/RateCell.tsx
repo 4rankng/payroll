@@ -46,7 +46,7 @@ export function RateCell({ position, dayType, hourType, rate, readOnly = false, 
     return (
       <div className={cn(
         "text-center tabular-nums text-sm px-2 py-1 rounded",
-        isEmpty && !diffState ? "text-muted-foreground/40" : "",
+        isEmpty && !diffState ? "text-muted-foreground" : "",
         diffState && diffState !== 'unchanged' ? diffClasses[diffState] : "",
       )}>
         {isEmpty ? '—' : rate.toLocaleString('vi-VN')}
@@ -70,7 +70,7 @@ export function RateCell({ position, dayType, hourType, rate, readOnly = false, 
           hasDiff
             ? diffClasses[diffState]
             : isEmpty
-              ? "border-transparent bg-muted/25 text-muted-foreground placeholder:text-muted-foreground/40 focus:bg-background"
+              ? "border-transparent bg-muted/25 text-muted-foreground placeholder:text-muted-foreground focus:bg-background"
               : "border-transparent bg-muted/35 text-foreground",
           !hasDiff && "hover:border-primary/60 focus:border-primary focus:ring-1 focus:ring-primary/20"
         )}

@@ -242,7 +242,7 @@ export function EmployeeAttendanceHistoryCard({
         />
       ) : history.length === 0 ? (
         <div className="mx-4 mb-4 rounded-xl border border-dashed border-[#D0D5DD] px-4 py-7 text-center text-[#475467]">
-          <Calendar className="mx-auto mb-2 h-8 w-8 text-[#98A2B3]" aria-hidden="true" />
+          <Calendar className="mx-auto mb-2 h-8 w-8 text-[#667085]" aria-hidden="true" />
           <p className="employee-type-card-title">Chưa có ca làm trong tháng {monthLabel}</p>
           <p className="employee-type-body-sm mt-1">Chọn tháng khác để xem lịch sử trước đó.</p>
         </div>

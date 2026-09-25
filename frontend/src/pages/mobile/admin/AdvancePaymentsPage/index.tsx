@@ -569,7 +569,7 @@ const AdvancePaymentsPageMobile = () => {
             </div>
           ) : attendance.attendances.length === 0 ? (
             <div className="py-12 text-center">
-              <UsersIcon className="mx-auto h-10 w-10 text-muted-foreground/40" />
+              <UsersIcon className="mx-auto h-10 w-10 text-muted-foreground" />
               <p className="mt-3 text-sm font-medium text-muted-foreground">
                 Không có dữ liệu chấm công
               </p>

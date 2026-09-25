@@ -195,7 +195,7 @@ function ProjectCard({
 
         <div className="mt-4 border-y border-border/55 py-3">
           <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-            <Building2 className="h-3.5 w-3.5 shrink-0 text-primary/75" />
+            <Building2 className="h-3.5 w-3.5 shrink-0 text-primary" />
             <span className="truncate font-medium text-foreground/85">{project.client_name || 'Chưa cập nhật khách hàng'}</span>
           </div>
           {project.description && <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">{project.description}</p>}
@@ -440,7 +440,7 @@ const ProjectsPage = () => {
                 const gap = prev !== undefined && p - prev > 1;
                 return (
                   <span key={p} className="inline-flex items-center gap-1">
-                    {gap && <span className="text-muted-foreground/60 px-1 text-xs">…</span>}
+                    {gap && <span className="text-muted-foreground px-1 text-xs">…</span>}
                     <button
                       type="button"
                       onClick={() => filterControls.setPage(p)}

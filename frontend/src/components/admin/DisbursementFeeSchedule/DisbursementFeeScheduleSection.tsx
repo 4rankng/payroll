@@ -352,7 +352,7 @@ const UpcomingCard = ({
 
 const NoUpcomingCard = () => (
   <div className="rounded-xl border border-dashed bg-muted/20 p-4 sm:p-5 flex flex-col justify-center text-center gap-2">
-    <Sparkles className="h-5 w-5 text-muted-foreground/60 mx-auto" />
+    <Sparkles className="h-5 w-5 text-muted-foreground mx-auto" />
     <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
       Không có cấu hình sắp có hiệu lực. Thêm cấu hình mới để thay đổi phí từ
       một ngày trong tương lai.

@@ -261,7 +261,7 @@ export const EntryRow = memo(({
           <div className="flex items-center gap-1.5 pt-0.5">
             <span className={cn(
               'text-xs font-medium tabular-nums',
-              isMarkedForDeletion ? 'text-muted-foreground/50 line-through' : isWeekend ? 'text-orange-700' : 'text-foreground'
+              isMarkedForDeletion ? 'text-muted-foreground line-through' : isWeekend ? 'text-orange-700' : 'text-foreground'
             )}>
               {formattedDate}
             </span>
@@ -308,7 +308,7 @@ export const EntryRow = memo(({
         {/* Hour inputs */}
         <TableCell className="py-2.5 px-2">
           {hourTypes.length === 0 ? (
-            <span className="text-xs text-muted-foreground/40">—</span>
+            <span className="text-xs text-muted-foreground">—</span>
           ) : (
             <div className="flex items-end gap-1.5">
               <div className="flex-1 flex flex-wrap items-start gap-x-2 gap-y-1">
@@ -323,7 +323,7 @@ export const EntryRow = memo(({
                   const thisFieldNew = !entry.originalValues && hourValue > 0;
 
                   const boxStyle = isDisabled
-                    ? 'border-border/40 bg-muted/30 text-muted-foreground/50'
+                    ? 'border-border/40 bg-muted/30 text-muted-foreground'
                     : thisFieldDeleted
                       ? 'border-red-300 bg-red-50/70 text-red-400'
                       : thisFieldEdited
@@ -362,7 +362,7 @@ export const EntryRow = memo(({
                             'w-9 h-6 px-1 text-center text-xs tabular-nums rounded border',
                             'hover:border-input hover:bg-background',
                             'focus:border-primary focus:bg-background focus:outline-none focus:ring-1 focus:ring-primary/30',
-                            'transition-all duration-150 placeholder:text-muted-foreground/30',
+                            'transition-all duration-150 placeholder:text-muted-foreground',
                             boxStyle,
                             isDisabled && 'cursor-not-allowed'
                           )}
@@ -412,7 +412,7 @@ export const EntryRow = memo(({
                   <button
                     onClick={handleRemove}
                     disabled={isLoading}
-                    className="h-5 w-5 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 text-muted-foreground/40 group-hover:text-destructive/60 group-hover:bg-destructive/10 transition-all disabled:pointer-events-none"
+                    className="h-5 w-5 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 text-muted-foreground group-hover:text-destructive/60 group-hover:bg-destructive/10 transition-all disabled:pointer-events-none"
                     title="Xóa dòng"
                     aria-label="Xóa dòng chấm công"
                   >

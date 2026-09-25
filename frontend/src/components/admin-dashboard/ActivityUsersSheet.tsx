@@ -132,7 +132,7 @@ export function ActivityUsersSheet({ schedule, month, onClose }: ActivityUsersSh
                       <span className="break-words text-right">{SCHEDULE_BADGE_LABELS[user.payment_schedule] ?? user.payment_schedule}</span>
                     </div>
                     {user.last_login && (
-                      <p className="text-xs text-muted-foreground/70 leading-none">
+                      <p className="text-xs text-muted-foreground leading-none">
                         {format(parseISO(user.last_login), 'dd/MM/yyyy HH:mm', { locale: vi })}
                       </p>
                     )}

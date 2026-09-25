@@ -56,7 +56,7 @@ export function EmployeePortalHeader({
               data-theme="employee"
             >
               <DropdownMenuItem onClick={onChangePassword} className="gap-2.5 rounded-lg py-2.5">
-                <Settings className="h-4 w-4 text-base-content/50" />
+                <Settings className="h-4 w-4 text-base-content" />
                 <span className="type-body">Đổi mật khẩu</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

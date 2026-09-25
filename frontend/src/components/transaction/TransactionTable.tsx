@@ -32,7 +32,7 @@ const STATUS_BADGE: Record<string, { badge: string; remaining: string }> = {
   pending:           { badge: 'bg-amber-50 text-amber-700',     remaining: 'text-amber-700/60'   },
   partially_settled: { badge: 'bg-teal-50 text-teal-700',   remaining: 'text-teal-700/60'  },
 };
-const FALLBACK_BADGE = { badge: 'bg-slate-100 text-foreground', remaining: 'text-muted-foreground/60' };
+const FALLBACK_BADGE = { badge: 'bg-slate-100 text-foreground', remaining: 'text-muted-foreground' };
 
 // Color palette keyed by transaction type — chip only
 const TYPE_COLORS: Record<string, string> = {

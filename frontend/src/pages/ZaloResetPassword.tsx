@@ -134,7 +134,7 @@ const ZaloResetPassword = () => {
             <h2 className="font-display text-2xl font-black leading-tight tracking-[-0.04em]">
               Đặt lại mật khẩu thành công
             </h2>
-            <p className="text-sm text-base-content/70">Vui lòng đăng nhập bằng mật khẩu mới.</p>
+            <p className="text-sm text-base-content">Vui lòng đăng nhập bằng mật khẩu mới.</p>
           </div>
         </div>
       </div>
@@ -150,7 +150,7 @@ const ZaloResetPassword = () => {
     >
       <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100">
         <div className="ct-card-body gap-0 p-6 sm:p-8">
-          <Link to="/forgot-password" className="mb-4 inline-flex items-center gap-1.5 text-xs font-bold text-base-content/60 hover:text-primary">
+          <Link to="/forgot-password" className="mb-4 inline-flex items-center gap-1.5 text-xs font-bold text-base-content hover:text-primary">
             <ArrowLeft className="h-3.5 w-3.5" /> Quay lại
           </Link>
 
@@ -160,7 +160,7 @@ const ZaloResetPassword = () => {
             </div>
             <div>
               <h2 className="font-display text-2xl font-black leading-none tracking-[-0.03em]">Đặt lại mật khẩu</h2>
-              <p className="mt-1 text-xs text-base-content/60">
+              <p className="mt-1 text-xs text-base-content">
                 {mobile
                   ? `Nếu số điện thoại ${mobile} tồn tại trong hệ thống, mã OTP đã được gửi qua Zalo.`
                   : "Nếu số điện thoại tồn tại trong hệ thống, mã OTP đã được gửi qua Zalo."}
@@ -180,7 +180,7 @@ const ZaloResetPassword = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* 6-digit OTP input */}
             <div>
-              <label className="mb-2 block text-xs font-bold text-base-content/70">Mã OTP (6 số)</label>
+              <label className="mb-2 block text-xs font-bold text-base-content">Mã OTP (6 số)</label>
               <div className="flex justify-between gap-1.5 sm:gap-2" onPaste={handleCodePaste}>
                 {code.map((digit, idx) => (
                   <input
@@ -203,11 +203,11 @@ const ZaloResetPassword = () => {
 
             {/* New password */}
             <div>
-              <label htmlFor="zalo-new-pwd" className="mb-2 block text-xs font-bold text-base-content/70">
+              <label htmlFor="zalo-new-pwd" className="mb-2 block text-xs font-bold text-base-content">
                 Mật khẩu mới
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/40" />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content" />
                 <input
                   id="zalo-new-pwd"
                   type={showPassword ? "text" : "password"}
@@ -222,7 +222,7 @@ const ZaloResetPassword = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content hover:text-base-content"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -233,11 +233,11 @@ const ZaloResetPassword = () => {
 
             {/* Confirm password */}
             <div>
-              <label htmlFor="zalo-confirm-pwd" className="mb-2 block text-xs font-bold text-base-content/70">
+              <label htmlFor="zalo-confirm-pwd" className="mb-2 block text-xs font-bold text-base-content">
                 Xác nhận mật khẩu mới
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/40" />
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content" />
                 <input
                   id="zalo-confirm-pwd"
                   type={showPassword ? "text" : "password"}
@@ -266,7 +266,7 @@ const ZaloResetPassword = () => {
             </button>
           </form>
 
-          <p className="mt-4 text-center text-xs text-base-content/50">
+          <p className="mt-4 text-center text-xs text-base-content">
             Không nhận được mã?{" "}
             <Link to="/forgot-password" className="font-bold text-primary hover:underline">
               Yêu cầu lại

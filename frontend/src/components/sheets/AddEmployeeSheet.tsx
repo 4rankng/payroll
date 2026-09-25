@@ -49,7 +49,7 @@ function DuplicateMatchCard({
               <span className="typography-label-medium">{match.email_masked}</span>
             )}
           </div>
-          <p className="typography-label-medium text-muted-foreground/70">
+          <p className="typography-label-medium text-muted-foreground">
             {[
               match.created_by_name && `Quản lý: ${match.created_by_name}`,
               match.current_project_names?.length

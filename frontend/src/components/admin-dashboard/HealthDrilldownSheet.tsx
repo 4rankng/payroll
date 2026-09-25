@@ -529,7 +529,7 @@ function AttendanceRowsTable({
                 </Td>
                 <Td className="text-muted-foreground">
                   <span className="block">{row.check_in_gate || '—'}</span>
-                  <span className="mt-1 block text-xs text-muted-foreground/80">{formatGpsAccuracy(row.check_in_accuracy)}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{formatGpsAccuracy(row.check_in_accuracy)}</span>
                 </Td>
                 {isRejected ? (
                   <>
@@ -549,7 +549,7 @@ function AttendanceRowsTable({
                     </Td>
                     <Td className="text-muted-foreground">
                       <span className="block">{row.check_out_gate || '—'}</span>
-                      <span className="mt-1 block text-xs text-muted-foreground/80">{formatGpsAccuracy(row.check_out_accuracy)}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">{formatGpsAccuracy(row.check_out_accuracy)}</span>
                       <MapButton onClick={() => setMapRow(row)} />
                     </Td>
                     <Td className="whitespace-nowrap tabular-nums font-medium text-financial-positive">
@@ -944,7 +944,7 @@ function CheckpointLocation({ row }: { row: AdminFailedAttempt }) {
   return (
     <div className="min-w-0">
       <p className="flex items-start gap-1 font-medium leading-snug text-foreground">
-        <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
+        <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         <span className="min-w-0 break-words">{checkpointName}</span>
       </p>
       <p className="mt-1 pl-[18px] text-xs text-muted-foreground">{accuracy}</p>
@@ -979,7 +979,7 @@ function FailedAttemptOverrideAction({ row }: { row: AdminFailedAttempt }) {
 
 function FailedAttemptHeader({ children }: { children: ReactNode }) {
   return (
-    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
+    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
       {children}
     </span>
   );
@@ -1065,11 +1065,11 @@ function FailedAttemptCard({
 
       <div className="mt-3 grid grid-cols-1 gap-2 rounded-lg border border-border/60 bg-muted/50 p-3 min-[380px]:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <div className="min-w-0">
-          <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground/80">Khoảng cách</p>
+          <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Khoảng cách</p>
           <ContextualDistance row={row} />
         </div>
         <div className="min-w-0 border-t border-border pt-2 min-[380px]:border-l min-[380px]:border-t-0 min-[380px]:pl-3 min-[380px]:pt-0">
-          <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground/80">Địa điểm</p>
+          <p className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Địa điểm</p>
           <p className="break-words text-sm font-semibold text-foreground">
             {row.nearest_checkpoint_name?.trim() || 'Điểm chấm gần nhất'}
           </p>
