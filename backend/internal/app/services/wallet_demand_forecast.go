@@ -122,6 +122,13 @@ func (s *WalletDemandForecastService) GetDemandForecast(ctx context.Context) (*w
 		projectionCycleDay = horizonCycleDay
 	}
 	paceTotal, paceMethod, _, _ := forecastProjectedTotal(actualSoFar, historical, projectionCycleDay)
+	// The uploaded advance ceiling is a physical bound on what the cycle can
+	// pay out; a pace projection beyond it is statistical noise (e.g. a
+	// near-zero historical pace ratio inverted into a huge multiple), never
+	// real demand.
+	if cycleState != nil && cycleState.MaxAdvanceAmount > 0 && paceTotal > int64(cycleState.MaxAdvanceAmount) {
+		paceTotal = int64(cycleState.MaxAdvanceAmount)
+	}
 	projectedPaid := int64(float64(paceTotal) * rate)
 
 	cycleDist := forecastRemainingCycleDistribution(

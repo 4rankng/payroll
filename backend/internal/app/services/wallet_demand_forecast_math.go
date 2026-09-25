@@ -181,7 +181,7 @@ func forecastProjectedTotal(actualSoFar int64, historical []cohortSeries, todayC
 			continue
 		}
 		r := float64(cumThrough) / float64(final)
-		if r > 0 && r <= 1 {
+		if r >= paceScaleFloor && r <= 1 {
 			scales = append(scales, r)
 		}
 	}
@@ -219,6 +219,16 @@ func forecastProjectedTotal(actualSoFar int64, historical []cohortSeries, todayC
 	}
 	return actualSoFar, "no-history", 0, "low"
 }
+
+// paceScaleFloor is the minimum fraction of a historical period's final total
+// that must be observable at todayCycleDay for that period to contribute a
+// pace ratio. A period with less than this observed has effectively not
+// started (batch-driven cycles dump their volume days later); inverting a
+// near-zero ratio projects an absurd multiple of actual demand — e.g. a
+// 0.5%-by-day-6 period turned 209M of observed payout into a 44B projection,
+// pinned the forecast to the wallet ceiling, and surfaced "Cần nạp thêm
+// 1.5 tỷ". Such periods are dropped; the remaining scales decide.
+const paceScaleFloor = 0.02
 
 // completionRate is Σ COMPLETED amount / Σ all amount over historical periods,
 // clamped to [0,1]. Returns 0 when there is no historical volume.
@@ -734,10 +744,13 @@ const growthRateDispersionCutoff = 2.0
 
 // growthRatesConsistent reports whether the growth-rate window shows shared
 // direction rather than one dominant spike: its max rate must not exceed
-// growthRateDispersionCutoff × its median rate. An empty window is consistent.
+// growthRateDispersionCutoff × its median rate. A window with fewer than two
+// rates cannot demonstrate shared direction — a single spike is exactly the
+// pattern the dispersion check exists to catch — so it reports false and the
+// caller keeps the growth factor at 1.
 func growthRatesConsistent(window []float64) bool {
-	if len(window) == 0 {
-		return true
+	if len(window) < 2 {
+		return false
 	}
 	s := append([]float64(nil), window...)
 	sort.Float64s(s)
