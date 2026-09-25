@@ -261,10 +261,10 @@ func registerSchedulerJobs(
 		},
 	})
 
-	// 8. Sync wallet balance with provider every 30 minutes
+	// 8. Sync wallet balance with provider every 5 minutes
 	s.AddJob(scheduler.Job{
 		Name:    "sync_wallet_balance",
-		Cron:    "*/30 * * * *",
+		Cron:    "*/5 * * * *",
 		Enabled: true,
 		Handler: func() {
 			ctx := context.Background()
