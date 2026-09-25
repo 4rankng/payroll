@@ -530,6 +530,7 @@ const AdvancePaymentsPage = () => {
               columns={columns}
               mobileFields={requestMobileFields}
               embedded
+              columnVisibilityKey="adv-payments:requests"
               rowTitle={(row: AdvancePaymentListItem) => (
                 <div className="text-[15px] font-semibold text-slate-800">{row.employeeName}</div>
               )}
@@ -553,6 +554,7 @@ const AdvancePaymentsPage = () => {
               columns={flexPayColumns}
               mobileFields={flexPayMobileFields}
               embedded
+              columnVisibilityKey="adv-payments:employees"
               rowTitle={(row: FlexPayEmployeeListItem) => (
                 <div className="text-[15px] font-semibold text-slate-800">{row.fullname}</div>
               )}
@@ -579,6 +581,7 @@ const AdvancePaymentsPage = () => {
               columns={attendanceColumns}
               mobileFields={attendanceMobileFields}
               embedded
+              columnVisibilityKey="adv-payments:attendances"
               rowTitle={(row: AdminAttendanceResponse) => (
                 <div className="text-[15px] font-semibold text-slate-800">{row.employee_name}</div>
               )}

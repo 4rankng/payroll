@@ -30,21 +30,22 @@ export const useBreakpoint = (breakpoint: BreakpointKey): boolean => {
 };
 
 /**
- * Convenience hook: returns true when viewport < 1024px (Tailwind lg breakpoint).
+ * Convenience hook: returns true when viewport < 768px (Tailwind md breakpoint).
  *
- * Why `lg` instead of `md`?
- * - The desktop admin/partner layout renders a 256px sidebar. Below lg (1024px),
- *   the remaining content area is too narrow for data tables — they overflow
- *   horizontally.
- * - The mobile-optimised pages (under `pages/mobile/`) are already polished for
- *   vertical scrolling on any width < 1024px, including tablets (768x1024).
- * - Treating tablet as mobile here gives us a clean rule: <lg uses mobile page,
- *   ≥lg uses desktop page. The single threshold keeps routing simple and avoids
- *   maintaining a third tablet layout.
+ * Why `md` instead of `lg`?
+ * - Below 768px (phones), the dedicated mobile pages (under `pages/mobile/`)
+ *   give the best vertical-scroll experience.
+ * - From 768px up — tablets — the desktop admin layout renders with the
+ *   sidebar collapsed to an icon rail and the responsive data tables in dense
+ *   mode, giving tablet users the full tabular data density they asked for.
+ *   (Product decision 2026-09-25: tablets are data-first, no longer treated
+ *   as phones.)
  *
- * Drop-in replacement for the old useIsMobile / use-mobile hooks.
+ * Historical note: this hook used to switch at `lg` (1024px), which forced
+ * iPads onto the phone card layouts. That was the regression the tablet
+ * overhaul fixed.
  */
-export const useIsMobile = (): boolean => useBreakpoint('lg');
+export const useIsMobile = (): boolean => useBreakpoint('md');
 
 /**
  * Convenience hook: returns true when viewport is in the tablet range

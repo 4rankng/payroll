@@ -8,7 +8,7 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SidebarToggle } from "@/components/SidebarToggle";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { useAuth } from "@/contexts";
-import { useIsMobile } from "@/hooks/useBreakpoint";
+import { useIsMobile, useIsTablet } from "@/hooks/useBreakpoint";
 import {
   Home,
   Users,
@@ -97,6 +97,9 @@ const AdminLayout = () => {
   const { user } = useAuth();
   const isAdvPartner = user?.role === 'adv_partner';
   const isAdmin = user?.role === 'admin';
+  // Tablet (768–1023px): start with the sidebar collapsed to the icon rail so
+  // data tables get the full remaining width. Desktop keeps it expanded.
+  const isTablet = useIsTablet();
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -106,7 +109,7 @@ const AdminLayout = () => {
 
   return (
     <ProtectedRoute requiredRole={["admin", "adv_partner"]}>
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={!isTablet}>
         <div
           data-admin-ui={isAdmin ? "" : undefined}
           data-theme={isAdmin ? "congtruong" : undefined}

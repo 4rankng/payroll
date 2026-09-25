@@ -8,16 +8,16 @@ vi.mock('@/hooks/api/useNotifications', () => ({
 }));
 
 // The global jsdom matchMedia mock (src/test/setup.ts) only matches
-// `prefers-reduced-motion`, so `useIsMobile` (backed by `useBreakpoint('lg')`,
-// i.e. `(max-width: 1023px)`) always reads false there — the desktop branch
-// only. Override it here so this test exercises the mobile bottom-sheet
-// branch, which is the one the regression actually broke.
+// `prefers-reduced-motion`, so `useIsMobile` (backed by `useBreakpoint('md')`,
+// i.e. `(max-width: 767px)` since the tablet overhaul) always reads false
+// there — the desktop branch only. Override it here so this test exercises
+// the phone bottom-sheet branch, which is the one the regression broke.
 function mockMobileViewport() {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     configurable: true,
     value: (query: string): MediaQueryList => ({
-      matches: query.includes('max-width: 1023px'),
+      matches: query.includes('max-width: 767px'),
       media: query,
       onchange: null,
       addListener: () => {},

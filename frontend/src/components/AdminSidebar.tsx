@@ -115,7 +115,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
             : "h-11 px-2.5 lg:h-9",
           isActive
             ? "bg-card/[0.08] text-white"
-            : "text-white/65 hover:bg-card/10 hover:text-white/90"
+            : "text-white/85 hover:bg-card/10 hover:text-white"
         )}
       >
         {/* Gliding active pill — slides in with a scale animation */}
@@ -127,7 +127,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
             "shrink-0 transition-all duration-150",
             isCollapsed ? "w-[17px] h-[17px]" : "w-[15px] h-[15px]",
             // Icon morphs from outline-weight to accent color when active
-            isActive ? "text-[hsl(var(--admin-accent))]" : "text-white/80 group-hover:text-white"
+            isActive ? "text-[hsl(var(--admin-accent))]" : "text-white/90 group-hover:text-white"
           )}
         />
         {!isCollapsed && (
@@ -214,12 +214,12 @@ const NavGroup = React.memo(
           className="mt-4 flex min-h-11 w-full cursor-pointer select-none items-center px-2.5 py-1 group/label lg:min-h-0"
           aria-expanded={isExpanded}
         >
-          <span className="flex-1 text-left text-xs font-semibold uppercase tracking-[0.1em] text-white/65 group-hover/label:text-white/85 transition-colors">
+          <span className="flex-1 text-left text-xs font-semibold uppercase tracking-[0.1em] text-white/75 group-hover/label:text-white/90 transition-colors">
             {label}
           </span>
           <ChevronDown
             className={cn(
-              "w-3.5 h-3.5 shrink-0 text-white/40 group-hover/label:text-white/60 transition-all duration-200",
+              "w-3.5 h-3.5 shrink-0 text-white/60 group-hover/label:text-white/80 transition-all duration-200",
               isExpanded && "rotate-180"
             )}
           />
@@ -477,10 +477,10 @@ const AdminSidebar = () => {
                 {!isCollapsed && user && (
                   <>
                     <div className="flex flex-col min-w-0 flex-1 text-left">
-                      <span className="text-xs text-white/60 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
+                      <span className="text-xs text-white/75 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
                       <span className="text-base font-medium truncate leading-tight text-white/90">{user.name}</span>
                     </div>
-                    <ChevronUp className="w-3.5 h-3.5 shrink-0 text-white/45" />
+                    <ChevronUp className="w-3.5 h-3.5 shrink-0 text-white/60" />
                   </>
                 )}
                 {unreadCount > 0 && (

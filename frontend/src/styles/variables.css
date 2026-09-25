@@ -14,12 +14,14 @@
     --primary: 151 87% 25%;           /* #08783e */
     --primary-foreground: 0 0% 100%;  /* Pure white for contrast */
 
-    /* Success - Professional Green (Positive, Achievement, Growth) */
-    --success: 142 71% 45%;            /* Rich emerald green */
+    /* Success - Professional Green (Positive, Achievement, Growth)
+       WCAG AA: 5.12:1 on white — safe for 11px/12px data text. */
+    --success: 142 65% 30%;            /* Deep emerald green */
     --success-foreground: 142 100% 10%; /* Dark green for readability */
 
-    /* Warning - Amber Warmth (Attention, Energy, Alert) */
-    --warning: 35 90% 60%;            /* #e8973b - Warm amber */
+    /* Warning - Amber Warmth (Attention, Energy, Alert)
+       WCAG AA: 5.40:1 on white, 4.72:1 on 10% tint. */
+    --warning: 35 75% 33%;            /* Dark amber */
 
     /* Info - Teal Professional (Clarity, Communication, Trust) */
     --info: 180 70% 45%;              /* #2a9d8f - Calming teal */
@@ -233,9 +235,9 @@
     --admin-border: 214 18% 88%;
     --admin-input: 214 18% 84%;
     --admin-ring: 151 49% 38%;
-    --admin-success: 146 63% 39%;
+    --admin-success: 146 60% 30%;   /* WCAG AA: 5.34:1 white, 4.68:1 on 10% tint */
     --admin-success-foreground: 0 0% 100%;
-    --admin-warning: 35 78% 45%;
+    --admin-warning: 35 75% 33%;    /* WCAG AA: 5.40:1 white, 4.72:1 on 10% tint */
     --admin-warning-foreground: 46 100% 97%;
     --admin-info: 174 72% 31%;
     --admin-info-foreground: 0 0% 100%;

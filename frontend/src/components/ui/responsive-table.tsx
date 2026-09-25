@@ -48,8 +48,15 @@ interface ResponsiveTableProps<TData = Record<string, unknown>> {
   /** Pass true when the table sits inside an existing card/panel so the
    *  inner border wrapper is removed and pagination gets a flush separator. */
   embedded?: boolean;
+  /** "dense" = data-first tablet/desktop mode: 12px text, 40px rows. */
+  density?: "comfortable" | "dense";
+  /** Freezes the first (identifier) column for horizontal scrolling. */
+  stickyFirstColumn?: boolean;
+  /** Enables the persisted column show/hide menu under this key. */
+  columnVisibilityKey?: string;
 
-  // Breakpoint for switching (default: lg = 1024px)
+  // Breakpoint for switching (default: md = 768px — tablets render the data
+  // table; only phones get the mobile card list)
   breakpoint?: "sm" | "md" | "lg" | "xl";
 }
 
@@ -71,10 +78,13 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
   emptyState,
   accordionType = "single",
   showPagination = true,
-  breakpoint = "lg",
+  breakpoint = "md",
   caption,
   getRowClassName,
   embedded = false,
+  density = "dense",
+  stickyFirstColumn = true,
+  columnVisibilityKey,
 }: ResponsiveTableProps<TData>) {
   // Determine breakpoint value
   const breakpointQuery = {
@@ -108,6 +118,9 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
           getRowClassName={getRowClassName}
           embedded={embedded}
           emptyState={emptyState}
+          density={density}
+          stickyFirstColumn={stickyFirstColumn}
+          columnVisibilityKey={columnVisibilityKey}
         />
       </div>
     );
