@@ -11,8 +11,8 @@ export function MobilePageShell({ children, className }: MobilePageShellProps) {
     <div
       className={cn(
         "min-h-[100dvh] max-w-full overflow-x-clip bg-[hsl(var(--surface-page))]",
-        "[--mobile-nonsticky-header-top-padding:1rem]",
-        "px-4 pb-[var(--mobile-page-bottom-padding,calc(5.75rem+env(safe-area-inset-bottom)))] pt-[var(--mobile-page-top-padding,calc(0.75rem+env(safe-area-inset-top)))]",
+        "[--mobile-nonsticky-header-top-padding:0.75rem]",
+        "px-3 pb-[var(--mobile-page-bottom-padding,calc(5rem+env(safe-area-inset-bottom)))] pt-[var(--mobile-page-top-padding,calc(0.5rem+env(safe-area-inset-top)))]",
         className,
       )}
     >
@@ -30,7 +30,7 @@ export function MobileSurface({ children, className }: MobileSurfaceProps) {
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-[28px] border border-[hsl(var(--surface-border))] bg-white shadow-none",
+        "overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white shadow-none",
         className,
       )}
     >
