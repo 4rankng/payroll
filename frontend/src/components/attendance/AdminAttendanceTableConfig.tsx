@@ -81,7 +81,7 @@ function StatusBadges({
     );
   }
   const operationalStatus = getAttendanceOperationalStatus(attendance);
-  const sys = SYSTEM_STATUS_CONFIG[operationalStatus] ?? { label: "Không rõ", className: "bg-gray-100 text-gray-600 border-gray-200" };
+  const sys = SYSTEM_STATUS_CONFIG[operationalStatus] ?? { label: "Không rõ", className: "bg-gray-100 text-gray-600 border-gray-300" };
   const review = reviewAction ? REVIEW_BADGE_CONFIG[reviewAction] : null;
   return (
     <div className="flex flex-col items-start gap-1">

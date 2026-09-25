@@ -346,7 +346,7 @@ export function AdvancePaymentHistoryCard({
             <button
               type="button"
               onClick={onRetry}
-              className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-[0.875rem] font-semibold text-slate-600 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95"
+              className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-[0.875rem] font-semibold text-slate-600 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Tải lại

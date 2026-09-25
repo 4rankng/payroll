@@ -62,7 +62,7 @@ function FilterChipGroup({
               'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors touch-manipulation active:scale-95',
               isActive
                 ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-slate-200 bg-white text-slate-600',
+                : 'border-slate-300 bg-white text-slate-600',
             )}
           >
             {isActive && <Check className="h-3 w-3" />}
@@ -142,7 +142,7 @@ export default function AuditLogPageMobile() {
         actions={
           <button
             type="button"
-            className="ct-btn ct-btn-outline h-11 min-h-11 gap-1.5 rounded-xl border-slate-200 bg-white px-3 text-xs font-semibold normal-case text-slate-700 shadow-none"
+            className="ct-btn ct-btn-outline h-11 min-h-11 gap-1.5 rounded-xl border-slate-300 bg-white px-3 text-xs font-semibold normal-case text-slate-700 shadow-none"
             onClick={() => setIsFilterOpen(true)}
           >
             <Filter className="h-3.5 w-3.5" />
@@ -328,7 +328,7 @@ export default function AuditLogPageMobile() {
             <div className="grid grid-cols-1 gap-2 pt-2 min-[380px]:grid-cols-2">
               <Button
                 variant="outline"
-                className="h-11 w-full border-slate-200"
+                className="h-11 w-full border-slate-300"
                 onClick={reset}
                 disabled={activeCount === 0}
               >

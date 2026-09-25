@@ -214,7 +214,7 @@ export function AdvancePaymentMobileList({
         title="Chưa có yêu cầu nào"
         description="Yêu cầu ứng lương sẽ hiển thị tại đây"
         size="sm"
-        className="min-h-[168px] rounded-xl border border-dashed border-slate-200 bg-slate-50/55 py-7"
+        className="min-h-[168px] rounded-xl border border-dashed border-slate-300 bg-slate-50/55 py-7"
       />
     );
   }

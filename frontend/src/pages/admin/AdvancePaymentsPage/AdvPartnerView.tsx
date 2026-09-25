@@ -275,7 +275,7 @@ const AdvPartnerAdvancePaymentsPage = () => {
                 `sao_ke_thanh_toan_${page.selectedMonth}.xlsx`,
               ).catch((error) => { showErrorNotification(error); });
             }}
-            className="h-8 px-3 font-medium text-[13px] gap-1.5 rounded-lg bg-white/80 hover:bg-white border border-neutral-200/80 text-neutral-700 shadow-sm hover:shadow-md transition-all duration-200"
+            className="h-8 px-3 font-medium text-[13px] gap-1.5 rounded-lg bg-white/80 hover:bg-white border border-neutral-300 text-neutral-700 shadow-sm hover:shadow-md transition-all duration-200"
           >
             <FileText className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
             Xuất sao kê
@@ -285,7 +285,7 @@ const AdvPartnerAdvancePaymentsPage = () => {
             onClick={page.handleExportFlexPayEmployees}
             disabled={page.exportFlexPayMutation.isPending}
             aria-label="Xuất danh sách"
-            className="h-8 px-3 font-medium text-[13px] gap-1.5 rounded-lg bg-white/80 hover:bg-white border border-neutral-200/80 text-neutral-700 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50"
+            className="h-8 px-3 font-medium text-[13px] gap-1.5 rounded-lg bg-white/80 hover:bg-white border border-neutral-300 text-neutral-700 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50"
           >
             <Download className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
             Xuất DS

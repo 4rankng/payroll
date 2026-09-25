@@ -174,7 +174,7 @@ export function FileUpload({
           "relative border-2 border-dashed rounded-lg p-4 transition-colors w-full",
           dragActive && !disabled && "border-blue-400 bg-blue-50",
           !dragActive && !disabled && "border-gray-300 hover:border-gray-400",
-          disabled && "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60",
+          disabled && "border-gray-300 bg-gray-50 cursor-not-allowed opacity-60",
           className
         )}
         onDragOver={handleDragOver}

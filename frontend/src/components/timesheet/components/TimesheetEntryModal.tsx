@@ -133,7 +133,7 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
                   <div className="relative">
                     <Input id="hoursWorked" type="number" min="0" max="24" step="0.5"
                       value={f.formData.hoursWorked} onChange={f.handleHoursChange} disabled={f.isReadOnly}
-                      className="w-full border-2 border-slate-200 rounded-lg py-3 px-4 text-2xl font-bold text-slate-900 focus:border-blue-500 tabular-nums pr-14 h-auto" />
+                      className="w-full border-2 border-slate-300 rounded-lg py-3 px-4 text-2xl font-bold text-slate-900 focus:border-blue-500 tabular-nums pr-14 h-auto" />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-sm pointer-events-none">giờ</span>
                   </div>
                 </div>
@@ -169,7 +169,7 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
                 <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-0.5">Loại ca</Label>
                 <Select value={f.formData.hourType} onValueChange={(v) => f.handleFormChange("hourType", v)}
                   disabled={f.isReadOnly || f.isPayrateLoading || f.isPayrateError}>
-                  <SelectTrigger className="h-10 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
+                  <SelectTrigger className="h-10 bg-slate-50 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20">
                     {f.isPayrateLoading ? (
                       <span className="flex items-center gap-1.5 text-muted-foreground text-sm">
                         <div className="w-3 h-3 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />Đang tải...
@@ -187,7 +187,7 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
                 <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-0.5">Loại ngày</Label>
                 <Select value={f.formData.dayType} onValueChange={(v) => f.handleFormChange("dayType", v as "Ngày thường" | "Ngày nghỉ" | "Ngày lễ")}
                   disabled={f.isReadOnly}>
-                  <SelectTrigger className="h-10 bg-slate-50 border-slate-200 focus:border-blue-500 focus:ring-blue-500/20">
+                  <SelectTrigger className="h-10 bg-slate-50 border-slate-300 focus:border-blue-500 focus:ring-blue-500/20">
                     <SelectValue placeholder="Chọn loại ngày" />
                   </SelectTrigger>
                   <SelectContent>
@@ -199,7 +199,7 @@ export function TimesheetEntryModal(props: TimesheetEntryModalProps) {
           </div>
 
           {/* Actions */}
-          <div className="border-t border-slate-100 pt-4 -mx-5 px-5">
+          <div className="border-t border-slate-200 pt-4 -mx-5 px-5">
             {f.isReadOnly ? (
               <div className="space-y-2">
                 {f.requestEditError && <p className="text-xs text-destructive" role="alert">{f.requestEditError}</p>}

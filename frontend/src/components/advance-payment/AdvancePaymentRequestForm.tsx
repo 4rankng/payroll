@@ -162,7 +162,7 @@ export function AdvancePaymentRequestForm({
       return {
         variant: "closed",
         chipLabel: "Đã đóng",
-        chipClassName: "bg-slate-100 text-slate-600 border border-slate-200",
+        chipClassName: "bg-slate-100 text-slate-600 border border-slate-300",
         chipIcon: "lock",
         amount: null,
         amountClassName: "text-slate-500",
@@ -350,7 +350,7 @@ export function AdvancePaymentRequestForm({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.03)]",
+        "overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.03)]",
         className,
       )}
       style={style}
@@ -486,7 +486,7 @@ export function AdvancePaymentRequestForm({
                 "h-14 w-full rounded-xl border bg-white px-4 pr-16 text-[1.125rem] font-semibold tabular-nums text-slate-900 placeholder:text-slate-300 transition-all duration-150",
                 validationError
                   ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
-                  : "border-slate-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none",
+                  : "border-slate-300 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none",
               )}
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[0.875rem] font-medium text-slate-500">
@@ -507,7 +507,7 @@ export function AdvancePaymentRequestForm({
                     "h-11 rounded-xl text-[0.8125rem] font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:scale-95",
                     numericAmount === quickAmount.amount
                       ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/20"
-                      : "border border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-700",
+                      : "border border-slate-300 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-700",
                   )}
                 >
                   {quickAmount.label}
@@ -535,7 +535,7 @@ export function AdvancePaymentRequestForm({
               )}
             </div>
           ) : canShowFeePreview && (
-            <div className="mt-4 grid grid-cols-2 divide-x divide-slate-200 rounded-xl border border-slate-200 bg-slate-50/50">
+            <div className="mt-4 grid grid-cols-2 divide-x divide-slate-300 rounded-xl border border-slate-300 bg-slate-50/50">
               <div className="px-4 py-3">
                 <p className="text-[0.75rem] font-medium text-slate-600">Phí chuyển tiền</p>
                 <p className="mt-1 text-[1rem] font-semibold tabular-nums text-slate-600">
@@ -592,7 +592,7 @@ export function AdvancePaymentRequestForm({
             <button
               type="button"
               disabled
-              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 text-[0.9375rem] font-semibold text-slate-500 cursor-not-allowed"
+              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-300 bg-slate-50 text-[0.9375rem] font-semibold text-slate-500 cursor-not-allowed"
             >
               {status.actionLabel}
               <Lock className="h-4 w-4" aria-hidden="true" />
@@ -602,7 +602,7 @@ export function AdvancePaymentRequestForm({
 
       {/* Pending request indicator */}
       {!visibleConfirmation && latestPendingRequest && (
-        <div className="border-t border-slate-100 px-4 py-3.5" role="status">
+        <div className="border-t border-slate-200 px-4 py-3.5" role="status">
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
               <Clock3 className="h-4 w-4" aria-hidden="true" />
@@ -624,7 +624,7 @@ export function AdvancePaymentRequestForm({
 
       {/* Helper line */}
       {status.helperLine && !visibleConfirmation && (
-        <div className="border-t border-slate-100 px-4 py-3.5">
+        <div className="border-t border-slate-200 px-4 py-3.5">
           <div className="flex items-start gap-2.5 rounded-lg bg-slate-50 px-3.5 py-3 text-[0.8125rem] text-slate-500">
             {status.chipIcon === "lock" ? (
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />

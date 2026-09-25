@@ -63,7 +63,7 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
       role="group"
       aria-label={mapAriaLabel(guidance, hasRoute, isAtGate, nearestGateName)}
     >
-      <ul className="employee-type-body-sm divide-y divide-slate-100 border-y border-slate-200 bg-white text-slate-700">
+      <ul className="employee-type-body-sm divide-y divide-slate-200 border-y border-slate-300 bg-white text-slate-700">
         <li className="flex items-center justify-between gap-3 px-3 py-2.5">
           <span className="min-w-0 break-words font-semibold text-slate-950">
             {statusTitle(guidance)}

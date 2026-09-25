@@ -39,7 +39,7 @@ export const MobileSubPageHeader = ({
     <div
       className={cn(
         'sticky top-0 z-20 bg-white',
-        'border-b border-slate-200 shadow-[0_1px_0_rgba(15,23,42,0.04)] shrink-0',
+        'border-b border-slate-300 shadow-[0_1px_0_rgba(15,23,42,0.04)] shrink-0',
         className,
       )}
       style={{ paddingTop: 'var(--mobile-header-top-padding, calc(env(safe-area-inset-top, 0px) + 1rem))' }}

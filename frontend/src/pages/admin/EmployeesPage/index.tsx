@@ -159,9 +159,9 @@ const EmployeesPage = () => {
         <Skeleton className="h-14 rounded-xl" />
         <AdminSectionCard>
           <Skeleton className="m-3 h-11 rounded-xl sm:m-4" />
-          <div className="border-t border-slate-200/70">
+          <div className="border-t border-slate-300">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 border-b border-slate-200/60 px-4 py-3 last:border-b-0">
+              <div key={i} className="flex items-center gap-3 border-b border-slate-300 px-4 py-3 last:border-b-0">
                 <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-3.5 w-36" />
@@ -252,7 +252,7 @@ const EmployeesPage = () => {
             embedded
           />
 
-          <div className="border-t border-slate-200/70 px-3 py-2.5 sm:px-5">
+          <div className="border-t border-slate-300 px-3 py-2.5 sm:px-5">
             <PaginationControls
               pagination={pagination}
               onPageChange={onPageChange}

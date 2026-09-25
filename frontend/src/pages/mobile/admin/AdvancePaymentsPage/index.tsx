@@ -497,7 +497,7 @@ const AdvancePaymentsPageMobile = () => {
                 value={((page.filters.status as string) || "all") as import("@/types/api/advance-payment.types").AdvancePaymentRequestStatus | "all"}
                 onChange={page.handleStatusChange}
                 counts={page.statusCounts}
-                triggerClassName="h-11 min-w-[108px] rounded-lg border-slate-200 bg-slate-50 px-3 text-[13px]"
+                triggerClassName="h-11 min-w-[108px] rounded-lg border-slate-300 bg-slate-50 px-3 text-[13px]"
               />
             </div>
           </div>

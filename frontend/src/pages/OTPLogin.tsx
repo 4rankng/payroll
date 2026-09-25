@@ -120,7 +120,7 @@ const OTPLogin = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md space-y-6 rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+      <div className="w-full max-w-md space-y-6 rounded-xl border border-slate-300 bg-white p-8 shadow-sm">
         <div className="space-y-2 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
             <ShieldCheck className="h-6 w-6 text-slate-600" aria-hidden="true" />

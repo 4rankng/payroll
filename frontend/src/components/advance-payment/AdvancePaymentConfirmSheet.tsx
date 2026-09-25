@@ -35,14 +35,14 @@ export function AdvancePaymentConfirmSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="mx-auto flex h-auto max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-[28px] border-t border-slate-200 bg-white p-0 shadow-none sm:max-w-lg"
+        className="mx-auto flex h-auto max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-[28px] border-t border-slate-300 bg-white p-0 shadow-none sm:max-w-lg"
         title="Xác nhận yêu cầu ứng lương"
         description="Kiểm tra số tiền thực nhận và tài khoản nhận tiền"
       >
         <div className="flex shrink-0 justify-center pt-3">
           <div className="h-1.5 w-12 rounded-full bg-slate-300" />
         </div>
-        <SheetHeader className="shrink-0 border-b border-slate-200 px-5 pb-3 pt-3 text-left">
+        <SheetHeader className="shrink-0 border-b border-slate-300 px-5 pb-3 pt-3 text-left">
           <SheetTitle className="employee-type-hero-title text-slate-950">
             Xác nhận yêu cầu ứng lương
           </SheetTitle>
@@ -52,7 +52,7 @@ export function AdvancePaymentConfirmSheet({
         </SheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5">
-          <section className="border-b border-slate-100 py-4">
+          <section className="border-b border-slate-200 py-4">
             <p className="employee-type-label-caps text-slate-500">
               Số tiền thực nhận
             </p>
@@ -74,7 +74,7 @@ export function AdvancePaymentConfirmSheet({
                 </span>
               </div>
               {payrollPeriodLabel && (
-                <div className="flex justify-between gap-4 border-t border-slate-100 pt-3">
+                <div className="flex justify-between gap-4 border-t border-slate-200 pt-3">
                   <span className="text-slate-500">Trong kỳ lương</span>
                   <span className="text-right font-semibold text-slate-900">
                     {payrollPeriodLabel}
@@ -98,7 +98,7 @@ export function AdvancePaymentConfirmSheet({
                   {bankAccountNumber || "Chưa cập nhật"}
                 </span>
               </div>
-              <div className="flex justify-between gap-4 border-t border-slate-100 pt-3">
+              <div className="flex justify-between gap-4 border-t border-slate-200 pt-3">
                 <span className="text-slate-500">Ngân hàng</span>
                 <span className="max-w-[58%] text-right font-semibold text-slate-900">
                   {bankName || "Chưa cập nhật"}
@@ -109,13 +109,13 @@ export function AdvancePaymentConfirmSheet({
         </div>
 
         <div
-          className="shrink-0 border-t border-slate-200 bg-white px-5 py-3"
+          className="shrink-0 border-t border-slate-300 bg-white px-5 py-3"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 0.875rem)" }}
         >
           <div className="flex gap-3">
             <button
               onClick={() => onOpenChange(false)}
-              className="employee-type-action min-h-14 flex-1 rounded-2xl border border-slate-200 py-3 text-slate-600 transition-colors active:bg-slate-100"
+              className="employee-type-action min-h-14 flex-1 rounded-2xl border border-slate-300 py-3 text-slate-600 transition-colors active:bg-slate-100"
             >
               Hủy
             </button>

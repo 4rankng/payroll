@@ -122,7 +122,7 @@ export function EmployeeCanopy({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-52 rounded-2xl border border-slate-200/80 bg-white p-1.5 shadow-xl shadow-slate-900/10"
+                className="w-52 rounded-2xl border border-slate-300 bg-white p-1.5 shadow-xl shadow-slate-900/10"
                 data-employee-ui=""
                 data-theme="employee"
               >

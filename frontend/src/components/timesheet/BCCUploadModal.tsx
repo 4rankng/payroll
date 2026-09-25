@@ -115,8 +115,8 @@ const ProjectCombobox = memo(function ProjectCombobox({
           ${hasProject
             ? 'border-emerald-500 bg-white text-slate-900'
             : !value
-              ? 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
-              : 'border-slate-200 bg-white text-slate-900 hover:border-slate-300'
+              ? 'border-slate-300 bg-white text-slate-500 hover:border-slate-300'
+              : 'border-slate-300 bg-white text-slate-900 hover:border-slate-300'
           }
           ${open ? 'border-emerald-500 ring-2 ring-emerald-500/40' : ''}
         `}
@@ -131,9 +131,9 @@ const ProjectCombobox = memo(function ProjectCombobox({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+        <div className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-lg border border-slate-300 bg-white shadow-lg">
           {/* Search input */}
-          <div className="flex items-center gap-2 border-b border-slate-100 px-3 py-2.5">
+          <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2.5">
             <Search className="h-3.5 w-3.5 shrink-0 text-slate-500" />
             <input
               ref={inputRef}
@@ -470,7 +470,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
         hideCloseButton
       >
         {/* ── Header (Tailkit modal-head pattern) ─────────────────────────── */}
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3 sm:px-5 sm:py-4 dark:border-slate-700 dark:bg-slate-800/50">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3 sm:px-5 sm:py-4 dark:border-slate-700 dark:bg-slate-800/50">
           <DialogTitle asChild className="text-slate-900 dark:text-slate-100">
             <h3 className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-slate-100">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
@@ -531,7 +531,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                   </span>
                 </label>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger className="h-auto rounded-lg border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 transition-colors hover:border-slate-300 focus:ring-2 focus:ring-emerald-500/40 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
+                  <SelectTrigger className="h-auto rounded-lg border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 transition-colors hover:border-slate-300 focus:ring-2 focus:ring-emerald-500/40 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -626,7 +626,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
 
                 {/* File card */}
                 {file && (
-                  <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-3 shadow-sm animate-in fade-in slide-in-from-bottom-1 duration-200 dark:border-slate-700 dark:bg-slate-900">
+                  <div className="flex items-center gap-3 rounded-lg border border-slate-300 bg-white p-3 shadow-sm animate-in fade-in slide-in-from-bottom-1 duration-200 dark:border-slate-700 dark:bg-slate-900">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                       <FileSpreadsheet className="h-5 w-5" />
                     </span>
@@ -642,7 +642,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                       onClick={handleRemoveFile}
                       title="Xóa tệp"
                       aria-label="Xóa tệp"
-                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-rose-700 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-rose-700 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -684,7 +684,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
         </div>
 
         {/* ── Footer (Tailkit modal footer pattern) ──────────────────────── */}
-        <div className="flex shrink-0 items-center gap-2 border-t border-slate-100 bg-slate-50 px-4 py-3 sm:gap-3 sm:px-5 sm:py-4 dark:border-slate-700 dark:bg-slate-800/50">
+        <div className="flex shrink-0 items-center gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3 sm:gap-3 sm:px-5 sm:py-4 dark:border-slate-700 dark:bg-slate-800/50">
           {!result && (
             <div
               className={`flex min-w-0 flex-1 items-center gap-1.5 ${isReady ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}
@@ -704,7 +704,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
 
           <button
             onClick={handleClose}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm leading-5 font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm leading-5 font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-200"
           >
             {isImportActive ? 'Đóng cửa sổ' : result ? 'Đóng' : 'Hủy'}
           </button>

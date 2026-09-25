@@ -294,7 +294,7 @@ function TransactionDetailSheet({
 
 function PaymentDetail({ payment, tx }: { payment: WalletPayment; tx: UnifiedTransaction }) {
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-slate-200">
       <DetailRow label="Ngày giao dịch" value={formatDateTime(tx.occurred_at)} />
       <DetailRow
         label="Người nhận"
@@ -376,7 +376,7 @@ function PaymentDetail({ payment, tx }: { payment: WalletPayment; tx: UnifiedTra
 
 function TopupDetail({ topup, tx }: { topup: WalletTopup; tx: UnifiedTransaction }) {
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="divide-y divide-slate-200">
       <DetailRow label="Ngày giao dịch" value={formatDateTime(tx.occurred_at)} />
       <DetailRow
         label="Mã tham chiếu ngân hàng"
@@ -594,7 +594,7 @@ function DesktopTable({
   onSelect: (tx: UnifiedTransaction) => void;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 overflow-x-auto">
+    <div className="rounded-xl border border-slate-300 overflow-x-auto">
       <Table className="min-w-[820px]">
         <TableHeader>
           <TableRow className="bg-slate-50 hover:bg-slate-50">
@@ -677,7 +677,7 @@ function MobileTransactionList({
   onSelect: (tx: UnifiedTransaction) => void;
 }) {
   return (
-    <div className="-mx-4 flex flex-col divide-y divide-slate-100 border-y border-slate-200">
+    <div className="-mx-4 flex flex-col divide-y divide-slate-200 border-y border-slate-300">
       {transactions.map((tx) => {
         const isInflow = tx.amount > 0;
         const cpName = tx.counterparty
@@ -727,11 +727,11 @@ function MobileTransactionList({
 
 function SkeletonTable() {
   return (
-    <div className="rounded-xl border border-slate-200 overflow-x-auto">
-      <div className="grid grid-cols-7 gap-4 px-4 py-3 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 min-w-[820px]">
+    <div className="rounded-xl border border-slate-300 overflow-x-auto">
+      <div className="grid grid-cols-7 gap-4 px-4 py-3 bg-slate-50 border-b border-slate-300 text-xs font-semibold text-slate-500 min-w-[820px]">
         <div>Ngày</div><div>Loại</div><div className="text-right">Số tiền</div><div>Người nhận</div><div>Tham chiếu</div><div>Trạng thái</div><div />
       </div>
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-slate-200">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="grid grid-cols-7 gap-4 px-4 py-4 items-center">
             <Skeleton className="h-4 w-24" />
@@ -750,7 +750,7 @@ function SkeletonTable() {
 
 function SkeletonCards() {
   return (
-    <div className="-mx-4 flex flex-col divide-y divide-slate-100 border-y border-slate-200">
+    <div className="-mx-4 flex flex-col divide-y divide-slate-200 border-y border-slate-300">
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-4 py-3.5">
           <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
@@ -788,7 +788,7 @@ function EmptyState({
       title="Chưa có giao dịch nào"
       description="Số dư được đồng bộ tự động từ nhà cung cấp."
       size="sm"
-      className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-4"
+      className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 px-4"
     />
   );
 }

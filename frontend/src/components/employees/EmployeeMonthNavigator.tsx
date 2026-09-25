@@ -127,8 +127,8 @@ export function EmployeeMonthNavigator({
               </span>
             </button>
           </PopoverTrigger>
-          <PopoverContent data-employee-ui="" data-theme="employee" className="w-[min(340px,calc(100vw-32px))] rounded-2xl border border-slate-200/80 p-4 shadow-xl shadow-slate-900/10" align="center">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <PopoverContent data-employee-ui="" data-theme="employee" className="w-[min(340px,calc(100vw-32px))] rounded-2xl border border-slate-300 p-4 shadow-xl shadow-slate-900/10" align="center">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
               <div>
                 <p className="employee-type-card-title text-slate-900">Chọn tháng</p>
                 <p className="employee-type-body-sm mt-0.5 text-slate-500">Xem lịch sử lương và yêu cầu</p>
@@ -138,7 +138,7 @@ export function EmployeeMonthNavigator({
                 <select
                   value={pickerYear}
                   onChange={(event) => setPickerYear(Number(event.target.value))}
-                  className="employee-type-action h-11 rounded-xl border border-slate-200 bg-white px-3 text-slate-800 outline-none transition-colors focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
+                  className="employee-type-action h-11 rounded-xl border border-slate-300 bg-white px-3 text-slate-800 outline-none transition-colors focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20"
                   aria-label="Chọn năm"
                 >
                   {years.map((year) => (
@@ -163,8 +163,8 @@ export function EmployeeMonthNavigator({
                       "employee-type-action min-h-11 rounded-xl px-1 py-2 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2",
                       selected
                         ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/25"
-                        : "border border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-700 active:scale-95",
-                      "disabled:cursor-not-allowed disabled:border-slate-100 disabled:bg-slate-50 disabled:text-slate-300 disabled:hover:border-slate-100 disabled:hover:bg-slate-50 disabled:hover:text-slate-300"
+                        : "border border-slate-300 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-700 active:scale-95",
+                      "disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:hover:border-slate-200 disabled:hover:bg-slate-50 disabled:hover:text-slate-300"
                     )}
                   >
                     {format(candidate, "MMM", { locale: vi })}

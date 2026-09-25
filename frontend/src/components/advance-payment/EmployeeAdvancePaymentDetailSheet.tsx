@@ -173,7 +173,7 @@ function AdvanceLimitCard({ employee: emp, usedPct, isOverLimit }: AdvanceLimitC
       : "bg-emerald-400";
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       {/* Top: remaining amount hero */}
       <div className="px-4 pt-4 pb-3">
         <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
@@ -213,10 +213,10 @@ function AdvanceLimitCard({ employee: emp, usedPct, isOverLimit }: AdvanceLimitC
       </div>
 
       {/* Divider */}
-      <div className="border-t border-slate-100 mx-4" />
+      <div className="border-t border-slate-200 mx-4" />
 
       {/* Limit breakdown */}
-      <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+      <div className="grid grid-cols-1 divide-y divide-slate-200 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         <LimitBreakdownCell label="Hạn mức" value={formatCurrency(emp.maxAdvanceAmount)} />
         <LimitBreakdownCell
           label="Đã dùng"
@@ -252,7 +252,7 @@ function LimitBreakdownCell({
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-3 py-2.5">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2.5">
       <p className="text-xs text-slate-500 mb-0.5">{label}</p>
       <p className="text-sm font-bold text-slate-800 tabular-nums">{value}</p>
     </div>
@@ -267,7 +267,7 @@ function BankInfoCard({
   accountNumber: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-100 shadow-sm px-3 py-2.5 flex items-center justify-between">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-3 py-2.5 flex items-center justify-between">
       <div>
         <p className="text-xs text-slate-500 mb-0.5">Ngân hàng</p>
         <p className="text-sm font-semibold text-slate-800">{bankName || "—"}</p>
@@ -290,7 +290,7 @@ function RequestsList({ requests }: { requests: AdvancePaymentListItem[] }) {
       </div>
 
       {requests.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-100 px-3">
+        <div className="bg-white rounded-xl border border-slate-200 px-3">
           <EmptyState title="Chưa có yêu cầu nào" size="sm" className="py-4" />
         </div>
       ) : (
@@ -316,7 +316,7 @@ function RequestCard({ request: req }: { request: AdvancePaymentListItem }) {
           : "bg-slate-300";
 
   return (
-    <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden flex">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex">
       <div className={`w-1 shrink-0 ${leftBarColor}`} aria-hidden="true" />
       <div className="flex-1 min-w-0 px-3 py-2.5">
         <div className="flex items-center justify-between gap-2 mb-1">

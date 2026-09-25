@@ -69,7 +69,7 @@ export const AdminSectionCard = ({
     aria-label={ariaLabel}
     data-mobile-stats
     className={cn(
-      'overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]',
+      'overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]',
       className,
     )}
   >
@@ -88,7 +88,7 @@ export const AdminFilterRow = ({
 }) => (
   <div
     className={cn(
-      'flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 bg-white px-3 py-3 sm:px-5',
+      'flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 bg-white px-3 py-3 sm:px-5',
       className,
     )}
   >

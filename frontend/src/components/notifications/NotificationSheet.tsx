@@ -89,7 +89,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
       if (unreadError) return renderEmpty('Không thể tải thông báo');
       if (unreadNotifications.length === 0) return renderEmpty('Không có thông báo chưa đọc');
       return (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-gray-200">
           {unreadNotifications.map((n) => (
             <NotificationItem key={n.id} notification={n} showMarkAsRead onClick={() => handleNotificationClick(n)} />
           ))}
@@ -109,7 +109,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
         isError={!!allError}
         className="h-full"
       >
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-gray-200">
           {allNotifications.map((n) => {
             if (!n?.id) return null;
             return <NotificationItem key={n.id} notification={n} showMarkAsRead onClick={() => handleNotificationClick(n)} />;

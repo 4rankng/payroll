@@ -50,7 +50,7 @@ function BadgeItem({
         "cursor-pointer text-left",
         variant === "destructive" && "border-red-200 bg-red-50 hover:bg-red-100",
         variant === "warning" && "border-amber-200 bg-amber-50 hover:bg-amber-100",
-        variant === "secondary" && "border-slate-200 bg-slate-50 hover:bg-slate-100",
+        variant === "secondary" && "border-slate-300 bg-slate-50 hover:bg-slate-100",
       )}
     >
       <span className="font-medium text-foreground truncate max-w-[200px]">

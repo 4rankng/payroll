@@ -38,7 +38,7 @@ export const ContextStrip = memo(function ContextStrip({
         return (
           <div
             key={i}
-            className="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200"
+            className="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300"
           >
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
               {item.label}

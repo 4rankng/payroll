@@ -295,7 +295,7 @@ const AdvancePaymentsPage = () => {
         <section
           aria-label="Tổng quan kỳ ứng lương"
           className={cn(
-            "overflow-hidden rounded-2xl border border-slate-200/80 bg-white",
+            "overflow-hidden rounded-2xl border border-slate-300 bg-white",
             "shadow-[0_1px_2px_rgba(16,24,40,0.05),0_22px_60px_-42px_rgba(8,120,62,0.30)]",
             isMobile && "mobile-section-enter",
           )}
@@ -348,7 +348,7 @@ const AdvancePaymentsPage = () => {
           data-mobile-stats
           aria-label="Trạng thái xử lý ứng lương"
           className={cn(
-            "overflow-hidden rounded-2xl border border-slate-200/80 bg-white",
+            "overflow-hidden rounded-2xl border border-slate-300 bg-white",
             "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]",
             isMobile && "mobile-section-enter",
           )}
@@ -371,7 +371,7 @@ const AdvancePaymentsPage = () => {
         <section
           data-mobile-content
           className={cn(
-            "overflow-hidden rounded-2xl border border-slate-200/80 bg-white",
+            "overflow-hidden rounded-2xl border border-slate-300 bg-white",
             "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]",
             isMobile && "mobile-section-enter",
           )}
@@ -380,7 +380,7 @@ const AdvancePaymentsPage = () => {
           {/* Header row: tabs + actions */}
           <div
             data-mobile-tabs
-            className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 bg-slate-50/80 px-3 py-3 sm:px-5"
+            className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 bg-slate-50/80 px-3 py-3 sm:px-5"
           >
             <TabBarWithBadges
               tabs={[
@@ -434,7 +434,7 @@ const AdvancePaymentsPage = () => {
           </div>
 
           {/* Filter row */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 bg-white px-3 py-3 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 bg-white px-3 py-3 sm:px-5">
             <p className="text-sm font-semibold text-slate-800">
               {activeTab === "requests" && "Yêu cầu UL"}
               {activeTab === "employees" && "DS nhân viên"}

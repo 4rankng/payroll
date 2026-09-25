@@ -14,7 +14,7 @@ interface TopPaidEmployeesCardProps {
 }
 
 const RANK_COLORS = ['text-amber-700', 'text-slate-500', 'text-amber-700'];
-const RANK_BG = ['bg-amber-50 border-amber-200', 'bg-slate-50 border-slate-200', 'bg-amber-50/60 border-amber-100'];
+const RANK_BG = ['bg-amber-50 border-amber-200', 'bg-slate-50 border-slate-300', 'bg-amber-50/60 border-amber-100'];
 
 const EmployeeRow = memo(function EmployeeRow({
   item,

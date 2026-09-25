@@ -18,7 +18,7 @@ export function CronJobCard({ job, onToggle, isPending }: CronJobCardProps) {
     <div
       className={cn(
         "bg-white rounded-2xl border shadow-sm overflow-hidden",
-        isDisabled ? "border-gray-200 bg-gray-50" : "border-gray-200",
+        isDisabled ? "border-gray-300 bg-gray-50" : "border-gray-300",
         job.last_status === "failed" && !isDisabled && "border-red-200"
       )}
     >
@@ -54,7 +54,7 @@ export function CronJobCard({ job, onToggle, isPending }: CronJobCardProps) {
       </div>
 
       {/* Footer strip */}
-      <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-gray-50 border-t border-gray-100">
+      <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-gray-50 border-t border-gray-200">
         <CronStatusBadge status={job.last_status} variant="pill" />
         <div className="flex items-center gap-3 ml-auto text-xs text-muted-foreground">
           {job.last_run && (

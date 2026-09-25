@@ -261,11 +261,11 @@ const FlexiblePayEmployeePage = () => {
   if (isInitialLoading) {
     return (
       <EmployeeMobileShell chrome="skeleton" contentClassName="max-w-lg space-y-4">
-        <Skeleton className="h-14 w-full rounded-2xl border border-slate-200/60 bg-white" />
-        <Skeleton className="h-64 w-full rounded-2xl border border-slate-200/60 bg-white" />
+        <Skeleton className="h-14 w-full rounded-2xl border border-slate-300 bg-white" />
+        <Skeleton className="h-64 w-full rounded-2xl border border-slate-300 bg-white" />
         <div className="space-y-3">
           <Skeleton className="h-6 w-40 rounded-xl" />
-          <Skeleton className="h-36 w-full rounded-2xl border border-slate-200/60 bg-white" />
+          <Skeleton className="h-36 w-full rounded-2xl border border-slate-300 bg-white" />
         </div>
       </EmployeeMobileShell>
     );
@@ -299,7 +299,7 @@ const FlexiblePayEmployeePage = () => {
         {infoError ? (
           <section
             id="employee-advance-request"
-            className="scroll-mt-24 rounded-2xl border border-slate-200/60 bg-white px-5 py-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.03)] lg:col-start-1 lg:row-start-1"
+            className="scroll-mt-24 rounded-2xl border border-slate-300 bg-white px-5 py-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.03)] lg:col-start-1 lg:row-start-1"
             role="alert"
           >
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-400">
@@ -310,7 +310,7 @@ const FlexiblePayEmployeePage = () => {
             <button
               type="button"
               onClick={() => { void refetchInfo(); }}
-              className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-[0.875rem] font-semibold text-slate-600 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-[0.875rem] font-semibold text-slate-600 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               Tải lại

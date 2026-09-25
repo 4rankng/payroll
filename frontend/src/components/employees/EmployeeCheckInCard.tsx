@@ -267,7 +267,7 @@ export function AttendanceReference({
     schedule.shift_name?.trim() || (index === 0 ? "Ca ngày" : "Ca đêm");
 
   return (
-    <section className="mt-6 space-y-6 border-t border-slate-200/80 pt-5" aria-label="Thông tin chấm công">
+    <section className="mt-6 space-y-6 border-t border-slate-300 pt-5" aria-label="Thông tin chấm công">
       {schedules.length > 0 ? (
         <div>
           <h3 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-slate-950">
@@ -277,7 +277,7 @@ export function AttendanceReference({
             Ca làm việc
           </h3>
           {schedules.length > 1 ? (
-            <div className="mt-5 grid grid-cols-2 rounded-2xl border border-slate-200 bg-slate-100/80 p-1.5" role="tablist" aria-label="Chọn ca làm">
+            <div className="mt-5 grid grid-cols-2 rounded-2xl border border-slate-300 bg-slate-100/80 p-1.5" role="tablist" aria-label="Chọn ca làm">
               {schedules.map((schedule, index) => (
                 <button
                   key={`${schedule.shift_start}-${schedule.shift_end}`}
@@ -298,11 +298,11 @@ export function AttendanceReference({
             <div
               id={selectedShiftPanelId}
               aria-labelledby={selectedShiftTabId}
-              className="mt-5 overflow-hidden rounded-[22px] border border-slate-200/80 bg-white"
+              className="mt-5 overflow-hidden rounded-[22px] border border-slate-300 bg-white"
               role="tabpanel"
             >
               <div role="table" aria-label="Khung giờ ca làm">
-                <div role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] border-b border-slate-100 bg-slate-50/70 px-5 py-2.5">
+                <div role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] border-b border-slate-200 bg-slate-50/70 px-5 py-2.5">
                   <span role="columnheader" aria-label="Loại giờ" />
                   <span role="columnheader" className="employee-type-pill text-center uppercase text-slate-500">Từ</span>
                   <span role="columnheader" className="employee-type-pill text-center uppercase text-slate-500">Đến</span>
@@ -315,7 +315,7 @@ export function AttendanceReference({
                   const start = safeFormatTime(row.startIso);
                   const end = safeFormatTime(row.endIso);
                   return (
-                    <div key={row.label} role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] items-center border-b border-slate-100 px-5 py-4 last:border-b-0">
+                    <div key={row.label} role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] items-center border-b border-slate-200 px-5 py-4 last:border-b-0">
                       <span role="rowheader" className="employee-type-body font-semibold text-slate-700">{row.label}</span>
                       <span role="cell" className="text-center text-lg font-bold tracking-tight text-slate-950">{start}</span>
                       <span role="cell" className="text-center text-lg font-bold tracking-tight text-slate-950">{end}</span>
@@ -339,7 +339,7 @@ export function AttendanceReference({
             {gates.slice(0, 2).map((gate, index) => (
               <li
                 key={`${gate.name}-${gate.lat}-${gate.lng}`}
-                className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-200/80 bg-white px-3 font-semibold leading-5 text-slate-900"
+                className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-300 bg-white px-3 font-semibold leading-5 text-slate-900"
               >
                 {gate.name || `Điểm chấm công ${index + 1}`}
               </li>
@@ -352,7 +352,7 @@ export function AttendanceReference({
                   aria-controls={additionalGatesId}
                   aria-expanded={showAdditionalGates}
                   onClick={() => setShowAdditionalGates((visible) => !visible)}
-                  className={`employee-type-action flex h-14 w-full items-center justify-center rounded-xl border px-3 text-center font-semibold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${showAdditionalGates ? "border-slate-300 bg-slate-100 text-slate-950" : "border-slate-200/80 bg-white text-slate-900 hover:border-slate-300"}`}
+                  className={`employee-type-action flex h-14 w-full items-center justify-center rounded-xl border px-3 text-center font-semibold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${showAdditionalGates ? "border-slate-300 bg-slate-100 text-slate-950" : "border-slate-300 bg-white text-slate-900 hover:border-slate-300"}`}
                 >
                   <strong className="text-xl leading-none">+{gates.length - 2}</strong>
                 </button>
@@ -364,7 +364,7 @@ export function AttendanceReference({
               {gates.slice(2).map((gate, index) => (
                 <li
                   key={`${gate.name}-${gate.lat}-${gate.lng}`}
-                  className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-200/80 bg-white px-4 font-semibold leading-5 text-slate-900"
+                  className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-300 bg-white px-4 font-semibold leading-5 text-slate-900"
                 >
                   {gate.name || `Điểm chấm công ${index + 3}`}
                 </li>
@@ -819,7 +819,7 @@ export function EmployeeCheckInCard({
     return (
       <>
         <div
-          className={`rounded-2xl border border-slate-200 bg-white p-4 ${className ?? ""}`}
+          className={`rounded-2xl border border-slate-300 bg-white p-4 ${className ?? ""}`}
           style={style}
         >
           <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
@@ -846,7 +846,7 @@ export function EmployeeCheckInCard({
     return (
       <>
         <div
-          className={`rounded-2xl border border-slate-200 bg-white p-4 ${className ?? ""}`}
+          className={`rounded-2xl border border-slate-300 bg-white p-4 ${className ?? ""}`}
           style={style}
         >
           <div className="animate-pulse flex flex-col items-center justify-center space-y-4 h-32">
@@ -920,7 +920,7 @@ export function EmployeeCheckInCard({
     </div>
   ) : null;
   const locationMapDisclosure = checkInTarget ? (
-    <div ref={locationMapRef} className="mt-2 scroll-mt-24 border-t border-slate-100 pt-1" tabIndex={-1}>
+    <div ref={locationMapRef} className="mt-2 scroll-mt-24 border-t border-slate-200 pt-1" tabIndex={-1}>
       <Button
         type="button"
         variant="ghost"
@@ -1264,7 +1264,7 @@ export function EmployeeCheckInCard({
         </div>
       ) : null}
       {attendance?.status === "completed" ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-3">
+        <div className="rounded-2xl border border-slate-300 bg-white p-3">
           <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
                 <BadgeCheck className="h-5 w-5" />
@@ -1406,7 +1406,7 @@ export function EmployeeCheckInCard({
         <div>
           {/* Outside-window hint: show shift time + countdown instead of the button */}
           {!withinWindow ? (
-            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-slate-200/80 bg-white p-5">
+            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-slate-300 bg-white p-5">
               <div className="flex items-start gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200/80 bg-[#fff3ca] text-amber-700">
                   <Clock className="h-6 w-6" />
@@ -1525,7 +1525,7 @@ export function EmployeeCheckInCard({
             </div>
           ) : gpsAcquiring ? (
               <div
-                className="rounded-2xl border border-slate-200 bg-white p-3"
+                className="rounded-2xl border border-slate-300 bg-white p-3"
                 role="status"
                 aria-live="polite"
               >
@@ -1581,7 +1581,7 @@ export function EmployeeCheckInCard({
               </Button>
             </div>
           ) : (
-              <div className="rounded-2xl border border-slate-200 bg-white p-3">
+              <div className="rounded-2xl border border-slate-300 bg-white p-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-employee">
                     <MapPin className="h-5 w-5" />

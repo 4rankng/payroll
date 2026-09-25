@@ -64,14 +64,14 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
       className={cn(
         'group w-full overflow-hidden border text-left transition-all duration-150 hover:border-primary/20 hover:bg-muted/30 active:bg-muted/50',
         compact
-          ? 'rounded-2xl border-slate-200/90 bg-white shadow-[0_8px_20px_-18px_rgba(15,23,42,0.34)]'
+          ? 'rounded-2xl border-slate-300 bg-white shadow-[0_8px_20px_-18px_rgba(15,23,42,0.34)]'
           : 'rounded-xl border-border bg-card shadow-sm',
       )}
     >
       {/* Top bar: action badge + role | datetime + chevron */}
       <div className={cn(
         'flex flex-col gap-2 border-b border-border/60 px-3 pb-2.5 pt-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between',
-        compact && 'flex-row items-center justify-between gap-2 border-slate-100 bg-slate-50/80 px-3.5 py-2.5',
+        compact && 'flex-row items-center justify-between gap-2 border-slate-200 bg-slate-50/80 px-3.5 py-2.5',
       )}>
         <div className="flex min-w-0 items-center gap-2">
           <Badge
@@ -122,7 +122,7 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
 
         {/* Meta footer: IP · location · device as a single wrapping row of chips */}
         {metaChips.length > 0 && (
-          <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5', compact && 'border-t border-slate-100 pt-2.5')}>
+          <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5', compact && 'border-t border-slate-200 pt-2.5')}>
             {metaChips.map((chip, i) => (
               <span key={i} className={cn('inline-flex min-w-0 items-center gap-1 text-xs text-muted-foreground', compact && 'text-slate-600')}>
                 {chip.icon}

@@ -175,7 +175,7 @@ const UsersPage = () => {
         )}
 
         {userData.isFetchingNextPage && (
-          <div className="flex items-center justify-center border-t border-slate-200/70 py-4">
+          <div className="flex items-center justify-center border-t border-slate-300 py-4">
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             <span className="ml-2 text-sm text-muted-foreground">
               Đang tải thêm...
@@ -186,7 +186,7 @@ const UsersPage = () => {
         {!userData.error && !userData.hasMore &&
           !userData.isFetchingNextPage &&
           userData.users.length > 0 && (
-            <p className="border-t border-slate-200/70 py-3 text-center text-xs text-muted-foreground">
+            <p className="border-t border-slate-300 py-3 text-center text-xs text-muted-foreground">
               {userData.users.length} người dùng
             </p>
           )}

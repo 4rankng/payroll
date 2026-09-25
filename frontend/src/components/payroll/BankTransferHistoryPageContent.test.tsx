@@ -149,7 +149,7 @@ describe('BankTransferHistoryPageContent', () => {
     expect(workspace).toHaveClass('overflow-hidden', 'bg-white', 'rounded-xl', 'xl:overflow-visible', 'xl:rounded-none');
     // Records are flat hairline rows of the workspace module at every
     // breakpoint — no nested per-record cards.
-    expect(records).toHaveClass('divide-y', 'divide-slate-200/80');
+    expect(records).toHaveClass('divide-y', 'divide-slate-300');
     expect(records.className).not.toContain('space-y-');
     expect(records.className).not.toContain('gap-');
     expect(records.className).not.toContain('p-2');
@@ -225,9 +225,9 @@ describe('BankTransferHistoryPageContent', () => {
     // the only seam — summary and expanded rows keep exactly one divider.
     expect(detailsBody).toHaveClass('group-open/record:border-t-0');
     // The expanded panel is a flat neutral surface, not a nested card or a green slab.
-    expect(panel).toHaveClass('bg-slate-50/80', 'border-t', 'border-slate-200/80');
-    expect(panel!.firstElementChild).toHaveClass('xl:grid', 'border-slate-200/80');
-    expect(panel!.querySelector('[role="list"]')).toHaveClass('divide-y', 'divide-slate-200/70');
+    expect(panel).toHaveClass('bg-slate-50/80', 'border-t', 'border-slate-300');
+    expect(panel!.firstElementChild).toHaveClass('xl:grid', 'border-slate-300');
+    expect(panel!.querySelector('[role="list"]')).toHaveClass('divide-y', 'divide-slate-300');
     // Emerald is reserved for the money value and the open-state chevron.
     expect(chevron).toHaveClass('group-open/record:text-emerald-700');
   });
@@ -288,7 +288,7 @@ describe('BankTransferHistoryPageContent', () => {
     const { container } = render(<BankTransferHistoryPageContent />);
 
     const skeleton = container.querySelector('[aria-label="Đang tải lịch sử trả lương"]');
-    expect(skeleton).toHaveClass('divide-y', 'divide-slate-200/80');
+    expect(skeleton).toHaveClass('divide-y', 'divide-slate-300');
     // rounded-none is load-bearing: it overrides the Skeleton base rounded-md
     // so placeholder rows match the flat record rows they stand in for.
     const rows = Array.from(skeleton!.children);

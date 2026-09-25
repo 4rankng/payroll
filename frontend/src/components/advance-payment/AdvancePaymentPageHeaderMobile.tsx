@@ -68,7 +68,7 @@ export function AdvancePaymentPageHeaderMobile({
           </SheetTrigger>
           <SheetContent
             side="bottom"
-            className="h-auto rounded-t-3xl border-slate-200 bg-white px-4 pb-[max(1rem,calc(1rem+env(safe-area-inset-bottom)))] pt-3 shadow-[0_-20px_48px_rgba(15,23,42,0.16)]"
+            className="h-auto rounded-t-3xl border-slate-300 bg-white px-4 pb-[max(1rem,calc(1rem+env(safe-area-inset-bottom)))] pt-3 shadow-[0_-20px_48px_rgba(15,23,42,0.16)]"
           >
             <div className="mx-auto mb-3 h-1 w-11 rounded-full bg-slate-300" />
             <SheetHeader className="mb-3 text-left">
