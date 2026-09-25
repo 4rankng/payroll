@@ -123,6 +123,72 @@ func TestEmployeeUpdate_ChangingBankIDBeatsStaleAssociation(t *testing.T) {
 	}
 }
 
+// TestEmployeeUpdate_ExcelImportOverwritesEmployeeFields locks the full
+// import contract: when a workbook row differs from the stored employee, the
+// update must overwrite EVERY field the import manages — fullname, account
+// number, account name, and the resolved bank — exactly as the FlexPay
+// importer's GetByCCCD → mutate → Update sequence does.
+func TestEmployeeUpdate_ExcelImportOverwritesEmployeeFields(t *testing.T) {
+	gormDB := newBankSyncTestDB(t)
+	repo := NewEmployeeRepository(&Database{DB: gormDB})
+	ctx := context.Background()
+
+	oldBank := &domain.Bank{BranchName: "Hàng hải (MSB)", BankCode: "MSB"}
+	newBank := &domain.Bank{BranchName: "Quân đội (MB)", BankCode: "MB"}
+	if err := gormDB.Create(oldBank).Error; err != nil {
+		t.Fatalf("seed MSB bank: %v", err)
+	}
+	if err := gormDB.Create(newBank).Error; err != nil {
+		t.Fatalf("seed MB bank: %v", err)
+	}
+	employee := &domain.Employee{
+		Fullname:          "Old Name",
+		CCCD:              "034203013000",
+		BankID:            &oldBank.ID,
+		BankAccountNumber: "0000000000",
+		BankAccountName:   "OLD NAME",
+		Mobile:            "0900000000",
+	}
+	if err := gormDB.Create(employee).Error; err != nil {
+		t.Fatalf("seed employee: %v", err)
+	}
+
+	// Import row: load through GetByCCCD (preloads Bank), then overwrite the
+	// managed fields with the workbook values — mirror of the importer.
+	loaded, err := repo.GetByCCCD(ctx, employee.CCCD)
+	if err != nil {
+		t.Fatalf("GetByCCCD: %v", err)
+	}
+	loaded.Fullname = "Nguyễn Văn Nguyên"
+	loaded.BankID = &newBank.ID
+	loaded.BankAccountNumber = "0347921581"
+	loaded.BankAccountName = "NGUYEN VAN NGUYEN"
+	loaded.Mobile = "0347921581"
+	if err := repo.Update(ctx, loaded); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	var after domain.Employee
+	if err := gormDB.First(&after, employee.ID).Error; err != nil {
+		t.Fatalf("reload: %v", err)
+	}
+	if after.BankID == nil || *after.BankID != newBank.ID {
+		t.Fatalf("bank not updated from Excel: got bank_id=%v, want %d", after.BankID, newBank.ID)
+	}
+	if after.BankAccountNumber != "0347921581" {
+		t.Fatalf("account number not updated from Excel: got %q", after.BankAccountNumber)
+	}
+	if after.BankAccountName != "NGUYEN VAN NGUYEN" {
+		t.Fatalf("account name not updated from Excel: got %q", after.BankAccountName)
+	}
+	if after.Fullname != "Nguyễn Văn Nguyên" {
+		t.Fatalf("fullname not updated from Excel: got %q", after.Fullname)
+	}
+	if after.Mobile != "0347921581" {
+		t.Fatalf("mobile not updated from Excel: got %q", after.Mobile)
+	}
+}
+
 // TestEmployeeUpdate_KeepsBankIDWhenAssociationUnchanged pins the flip side:
 // an Update that does not touch banking fields must not clear or alter the
 // stored bank_id just because an association happens to be (or not be) loaded.
