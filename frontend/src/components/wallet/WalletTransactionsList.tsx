@@ -120,7 +120,7 @@ function CopyButton({ value }: { value: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="ml-1 inline-flex h-11 w-11 sm:h-6 sm:w-6 shrink-0 items-center justify-center rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+      className="ml-1 inline-flex h-11 w-11 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
       title="Sao chép"
     >
       {copied ? <Check className="h-3 w-3 text-emerald-700" /> : <Copy className="h-3 w-3" />}

@@ -15,7 +15,7 @@ registerLocale("vi", vi);
 const dateRangePickerVariants = cva("flex items-center shrink-0", {
   variants: {
     variant: {
-      compact: "gap-1 h-7 px-2 rounded-md border border-transparent hover:border-input hover:bg-accent text-xs",
+      compact: "gap-1 h-8 px-2 rounded-md border border-transparent hover:border-input hover:bg-accent text-xs",
       default: "gap-1.5 text-xs",
       mobile: "gap-2 h-11 px-3 rounded-lg bg-muted/40 text-sm",
     },
@@ -327,9 +327,9 @@ export function DateRangePicker({
   const inputClasses = useMemo(() => {
     const base = "bg-transparent border-0 p-0 font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0 cursor-pointer";
     switch (variant) {
-      case "compact": return cn(base, "w-[76px] text-xs");
+      case "compact": return cn(base, "h-full w-[76px] text-xs");
       case "mobile":  return cn(base, "h-11 flex-1 text-sm w-[95px]");
-      default:        return cn(base, "w-[72px] text-xs");
+      default:        return cn(base, "w-[72px] h-7 text-xs");
     }
   }, [variant]);
 

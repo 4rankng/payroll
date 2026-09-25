@@ -167,7 +167,7 @@ function ProjectPaymentScheduleControl({
           <Button
             variant="ghost"
             size="sm"
-            className="h-11 w-11 p-0 sm:h-6 sm:w-6"
+            className="h-11 w-11 p-0 sm:h-8 sm:w-8"
             onClick={handleCancelPending}
             disabled={cancelScheduleMutation.isPending}
           >

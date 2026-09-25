@@ -11,7 +11,8 @@ import { cn } from '@/lib/utils';
 function PageSidebarTrigger() {
   const sidebar = useSidebarOptional();
   if (!sidebar) return null;
-  return <SidebarTrigger className="h-8 w-8 shrink-0" />;
+  // 40px on touch widths (<768), compact 32px from md up.
+  return <SidebarTrigger className="h-10 w-10 shrink-0 md:h-8 md:w-8" />;
 }
 
 interface PageHeaderAction {

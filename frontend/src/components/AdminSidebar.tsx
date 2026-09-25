@@ -112,7 +112,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
             ? isActive
               ? "h-9 w-9 justify-center mx-auto bg-card/[0.08] ring-1 ring-white/[0.12]"
               : "h-9 w-9 justify-center mx-auto"
-            : "h-11 px-2.5 lg:h-9",
+            : "h-11 px-2.5 lg:h-10",
           isActive
             ? "bg-card/[0.08] text-white"
             : "text-white/85 hover:bg-card/10 hover:text-white"
@@ -211,7 +211,7 @@ const NavGroup = React.memo(
         <button
           type="button"
           onClick={() => onToggle(groupKey)}
-          className="mt-4 flex min-h-11 w-full cursor-pointer select-none items-center px-2.5 py-1 group/label lg:min-h-0"
+          className="mt-4 flex min-h-10 w-full cursor-pointer select-none items-center px-2.5 py-1 group/label"
           aria-expanded={isExpanded}
         >
           <span className="flex-1 text-left text-xs font-semibold uppercase tracking-[0.1em] text-white/75 group-hover/label:text-white/90 transition-colors">
