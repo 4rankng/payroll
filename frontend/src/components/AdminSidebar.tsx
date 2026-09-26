@@ -470,7 +470,7 @@ const AdminSidebar = () => {
                   "admin-sidebar-account relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer outline-none",
                   "bg-card/[0.04] border border-white/[0.06]",
                   "hover:bg-card/[0.08] hover:border-white/[0.1]",
-                  isCollapsed ? "h-9 w-9 justify-center mx-auto" : "h-auto min-h-11 px-2.5 py-2 gap-2.5 lg:min-h-[40px]"
+                  isCollapsed ? "h-9 w-9 justify-center self-center" : "h-auto min-h-11 px-2.5 py-2 gap-2.5 lg:min-h-[40px]"
                 )}
               >
                 {isCollapsed && user && (
@@ -495,7 +495,8 @@ const AdminSidebar = () => {
                 )}
                 {unreadCount > 0 && (
                   <span className={cn(
-                    "absolute -top-1.5 -right-1.5 h-4 min-w-4 flex items-center justify-center px-1",
+                    "absolute h-4 min-w-4 flex items-center justify-center px-1",
+                    isCollapsed ? "-top-0.5 -right-0.5" : "-top-1.5 -right-1.5",
                     "text-xs font-semibold rounded-full bg-red-500 text-white",
                     "animate-badge-pulse"
                   )}>
