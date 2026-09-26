@@ -110,7 +110,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
         "treasury-panel--dark relative h-full overflow-hidden text-white",
         "bg-[radial-gradient(130%_130%_at_0%_0%,#0C7A50_0%,#06452E_48%,#032B1D_100%)]",
         "ring-1 ring-inset ring-white/[0.08]",
-        compact ? "p-3.5" : "p-4 sm:px-6",
+        compact ? "p-3.5" : "px-4 py-3 sm:px-6",
         className
       )}
     >
@@ -195,7 +195,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                     : "text-white [text-shadow:0_0_36px_rgba(110,231,183,0.30)]"
                 )}>
                   {formatCurrency(available).replace('₫', '')}
-                  <span className="ml-1 text-base font-medium text-emerald-200">₫</span>
+                  <span className="ml-1 font-medium text-emerald-200">₫</span>
                 </div>
 
                 {hasDivergence && showProviderBalance && providerBalance && (
@@ -237,7 +237,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 ) : (
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/45">
-                      Đang chi trả
+                      Chờ chi trả
                     </span>
                     <span className="break-words font-financial text-[13px] font-medium leading-snug tabular-nums text-white">
                       {walletBalance ? formatCurrency(walletBalance.pending_out) : "—"}
@@ -269,7 +269,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                         : "text-white [text-shadow:0_0_36px_rgba(110,231,183,0.30)]"
                     )}>
                       {formatCurrency(available).replace('₫', '')}
-                      <span className={cn("ml-1 text-base font-medium", isLow ? "text-red-400/80" : "text-emerald-200")}>₫</span>
+                      <span className={cn("ml-1 font-medium", isLow ? "text-red-400/80" : "text-emerald-200")}>₫</span>
                     </div>
                     {hasDivergence && showProviderBalance && providerBalance && (
                       <div className="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
@@ -295,7 +295,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                     )}
                     <p className={cn("flex items-baseline gap-2", walletBalance?.as_of && "mt-1")}>
                       <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/45">
-                        Đang chi trả
+                        Chờ chi trả
                       </span>
                       <span className="font-financial text-[15px] font-medium leading-snug tabular-nums text-white">
                         {walletBalance ? formatCurrency(walletBalance.pending_out) : "—"}

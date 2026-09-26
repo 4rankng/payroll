@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Clock,
   Ban,
+  Search,
   SlidersHorizontal,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -404,6 +405,8 @@ export default function WalletTransactionsList(
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
   const [selectedTx, setSelectedTx] = useState<UnifiedTransaction | null>(null);
 
   const filter: UnifiedTransactionFilter = useMemo(() => {
@@ -412,8 +415,9 @@ export default function WalletTransactionsList(
     if (typeFilter !== "all") f.type = typeFilter;
     if (startDate) f.start_date = startDate;
     if (endDate) f.end_date = endDate;
+    if (search) f.search = search;
     return f;
-  }, [page, statusFilter, typeFilter, startDate, endDate]);
+  }, [page, statusFilter, typeFilter, startDate, endDate, search]);
 
   const { data, isLoading, isFetching, refetch, isError } = useQuery({
     queryKey: ["wallet", "transactions", filter],
@@ -425,13 +429,15 @@ export default function WalletTransactionsList(
   const transactions = data?.data ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const hasFilters = statusFilter !== "all" || typeFilter !== "all" || !!startDate || !!endDate;
+  const hasFilters = statusFilter !== "all" || typeFilter !== "all" || !!startDate || !!endDate || !!search;
 
   const onResetFilters = () => {
     setStatusFilter("all");
     setTypeFilter("all");
     setStartDate("");
     setEndDate("");
+    setSearch("");
+    setSearchInput("");
     setPage(1);
   };
 
@@ -449,27 +455,39 @@ export default function WalletTransactionsList(
             </span>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className={cn(
-            "px-2.5 text-xs font-medium text-slate-500 hover:text-slate-800 tracking-wide",
-            isMobile ? "h-11 min-h-11" : "h-8",
-          )}
-        >
-          <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isFetching ? "animate-spin" : ""}`} />
-          Làm mới
-        </Button>
       </div>
 
-      {/* Filters — single compact row for both desktop and mobile */}
+      {/* Filters — search first, then date pills + type/status dropdowns */}
       <div className="flex items-center gap-2 flex-wrap">
-        <SlidersHorizontal className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+        {!isMobile && (
+          <div className="relative min-w-[220px] flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={searchInput}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput.trim());
+                  setPage(1);
+                }
+              }}
+              onBlur={() => {
+                if (searchInput.trim() !== search) {
+                  setSearch(searchInput.trim());
+                  setPage(1);
+                }
+              }}
+              placeholder="Tìm người nhận hoặc mã tham chiếu"
+              className="h-9 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
+            />
+          </div>
+        )}
         {!isMobile && (
           <DateRangePicker
             variant="default"
+            className="rounded-lg border border-border bg-card px-3 h-9"
             startDate={startDate}
             endDate={endDate}
             onStartDateChange={(d) => { setStartDate(d); setPage(1); }}
@@ -624,7 +642,7 @@ function DesktopTable({
                 </TableCell>
                 <TableCell
                   className={`text-right font-semibold tabular-nums text-sm ${
-                    isInflow ? "text-emerald-700" : "text-slate-800"
+                    isInflow ? "text-emerald-700" : "text-red-600"
                   }`}
                 >
                   {formatAmount(tx.amount)}
@@ -711,7 +729,7 @@ function MobileTransactionList({
 
             {/* Amount + chevron */}
             <div className="flex items-center gap-1 shrink-0">
-              <span className={`text-[13.5px] font-bold tabular-nums tracking-tight ${isInflow ? "text-emerald-700" : "text-slate-800"}`}>
+              <span className={`text-[13.5px] font-bold tabular-nums tracking-tight ${isInflow ? "text-emerald-700" : "text-red-600"}`}>
                 {formatAmount(tx.amount)}
               </span>
               <ChevronRight className="h-4 w-4 text-slate-300" />

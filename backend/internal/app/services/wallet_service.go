@@ -248,6 +248,23 @@ func (s *walletService) GetTransactions(ctx context.Context, filter wallet.Trans
 		}
 	}
 
+	// Search across counterparty, reference, and note (case-insensitive).
+	// Applied after the merge so both topups and payments are covered, and
+	// before the in-memory sort/paginate.
+	if filter.Search != "" {
+		q := strings.ToLower(strings.TrimSpace(filter.Search))
+		if q != "" {
+			filtered := make([]*wallet.UnifiedTransaction, 0, len(all))
+			for _, tx := range all {
+				hay := strings.ToLower(tx.Counterparty + " " + tx.Reference + " " + tx.Note)
+				if strings.Contains(hay, q) {
+					filtered = append(filtered, tx)
+				}
+			}
+			all = filtered
+		}
+	}
+
 	// Sort by occurred_at descending
 	sort.Slice(all, func(i, j int) bool {
 		return all[i].OccurredAt > all[j].OccurredAt

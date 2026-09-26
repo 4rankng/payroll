@@ -25,7 +25,7 @@ describe('WalletPage', () => {
   it('exposes the employee account lookup action in the desktop wallet header', () => {
     render(<WalletPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Tra cứu tài khoản' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Tra cứu' }));
     expect(screen.getByText('Hộp thoại tra cứu tài khoản')).toBeInTheDocument();
     expect(employeeAccountLookupDialogProps).toHaveBeenLastCalledWith(
       expect.objectContaining({ open: true }),

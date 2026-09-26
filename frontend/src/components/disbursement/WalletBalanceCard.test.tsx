@@ -49,7 +49,7 @@ describe('WalletBalanceCard', () => {
   it('shows the pending-out companion rail when fee props are absent (wallet page)', () => {
     render(<WalletBalanceCard />);
 
-    expect(screen.getByText('Đang chi trả')).toBeInTheDocument();
+    expect(screen.getByText('Chờ chi trả')).toBeInTheDocument();
     expect(screen.getByText(/1\.250\.000/)).toBeInTheDocument();
     expect(screen.queryByText('Phí tháng này')).not.toBeInTheDocument();
   });
@@ -64,7 +64,7 @@ describe('WalletBalanceCard', () => {
     render(<WalletBalanceCard compact monthlyProviderFee={80_000} totalProviderFee={960_000} />);
 
     expect(screen.getByText('Phí tháng này')).toBeInTheDocument();
-    expect(screen.queryByText('Đang chi trả')).not.toBeInTheDocument();
+    expect(screen.queryByText('Chờ chi trả')).not.toBeInTheDocument();
     expect(screen.queryByText(/Cập nhật/)).not.toBeInTheDocument();
   });
 });

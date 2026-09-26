@@ -104,6 +104,7 @@ export interface UnifiedTransactionListResponse {
 export interface UnifiedTransactionFilter {
   type?: 'topup' | 'payment';
   status?: string;
+  search?: string;
   start_date?: string;
   end_date?: string;
   page?: number;

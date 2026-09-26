@@ -26,6 +26,7 @@ type UnifiedTransaction struct {
 type TransactionFilter struct {
 	Type     string  `json:"type"` // "topup" | "payment" | "" (both)
 	Status   string  `json:"status"`
+	Search   string  `json:"search"` // matches counterparty, reference, or note
 	FromDate *string `json:"from_date"`
 	ToDate   *string `json:"to_date"`
 	Page     int     `json:"page"`

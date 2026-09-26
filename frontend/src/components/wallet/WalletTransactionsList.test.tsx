@@ -17,13 +17,10 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 describe('WalletTransactionsList', () => {
-  it('uses mobile-sized refresh and date controls', () => {
+  it('keeps mobile date controls and drops the in-list refresh (it lives on the banner)', () => {
     render(<WalletTransactionsList />);
 
-    expect(screen.getByRole('button', { name: 'Làm mới' })).toHaveClass(
-      'h-11',
-      'min-h-11',
-    );
+    expect(screen.queryByRole('button', { name: 'Làm mới' })).not.toBeInTheDocument();
     expect(screen.getByLabelText('Ngày bắt đầu')).toHaveClass('h-11');
     expect(screen.getByLabelText('Ngày kết thúc')).toHaveClass('h-11');
   });

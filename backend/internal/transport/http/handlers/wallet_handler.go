@@ -138,6 +138,7 @@ func (h *WalletHandler) GetTransactions(c *gin.Context) {
 	filter := wallet.TransactionFilter{
 		Type:     c.Query("type"),
 		Status:   c.Query("status"),
+		Search:   c.Query("search"),
 		Page:     1,
 		PageSize: 50,
 	}

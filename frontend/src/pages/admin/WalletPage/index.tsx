@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   AdminPageCanvas,
-  AdminPageHeaderCard,
 } from "@/components/shared/AdminPageFrame";
 import { PageHeader } from "@/components/shared/PageHeader";
 import WalletTransactionsList from "@/components/wallet/WalletTransactionsList";
@@ -37,40 +36,38 @@ export default function WalletPage() {
 
   return (
     <AdminPageCanvas>
-      {/* Page header */}
-      <AdminPageHeaderCard>
-        <PageHeader
-          icon={WalletIcon}
-          title="Quản lý ví"
-          description="Theo dõi số dư, chuyển khoản và đối soát giao dịch"
+      {/* Page header — slim bar: title left, actions right */}
+      <PageHeader
+        icon={WalletIcon}
+        title="Quản lý ví"
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setEmployeeAccountLookupOpen(true)}
+          className="h-9 gap-1.5"
         >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setEmployeeAccountLookupOpen(true)}
-            className="h-9 gap-1.5"
-          >
-            <SearchCheck className="size-3.5" />
-            Tra cứu tài khoản
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setBulkTransferDialogOpen(true)}
-            className="gap-1.5 h-9"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            Tải File
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setDisbursementOpen(true)}
-            className="gap-1.5 h-9"
-          >
-            <ArrowRightLeft className="h-3.5 w-3.5" />
-            Chuyển tiền
-          </Button>
-        </PageHeader>
-      </AdminPageHeaderCard>
+          <SearchCheck className="size-3.5" />
+          Tra cứu
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setBulkTransferDialogOpen(true)}
+          className="gap-1.5 h-9"
+        >
+          <Upload className="h-3.5 w-3.5" />
+          Xuất CSV
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => setDisbursementOpen(true)}
+          className="gap-1.5 h-9"
+        >
+          <ArrowRightLeft className="h-3.5 w-3.5" />
+          Chuyển tiền
+        </Button>
+      </PageHeader>
 
       {/* Hero balance — the treasury dark panel owns sync, the as-of meta
           line, the pending-out companion on its rail, and mismatch
