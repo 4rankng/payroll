@@ -124,7 +124,6 @@ export function LedgerPageHeader({
     <div className="space-y-4">
       <PageHeader
         title="Sổ Cái"
-        description="Quản lý sổ cái và giao dịch"
         actions={[
           {
             label: 'Thêm Giao Dịch',

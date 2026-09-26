@@ -1,7 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency } from '@/utils/formatters';
 import type { LedgerSummary } from '@/types/api/financial.types';
-import { useMemo, ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 interface SupportingMetric {
@@ -10,89 +10,45 @@ interface SupportingMetric {
   valueClassName?: string;
 }
 
-function SupportingMetrics({
-  title,
-  items,
-}: {
-  title: string;
-  items: SupportingMetric[];
-}) {
+interface KpiTile {
+  label: string;
+  value: string;
+  sub?: string;
+  emphasis?: boolean;
+  wide?: boolean;
+  valueClassName?: string;
+}
+
+function KpiTileView({ tile }: { tile: KpiTile }) {
   return (
-    <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-      <div className="border-b border-border/60 px-5 py-4">
-        <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          {title}
-        </h3>
-      </div>
-      <dl className="divide-y divide-border/50">
-        {items.map((item) => (
-          <div
-            key={item.label}
-            className="flex min-h-14 items-center justify-between gap-4 px-5 py-3"
-          >
-            <dt className="text-sm text-muted-foreground">{item.label}</dt>
-            <dd
-              className={cn(
-                'min-w-0 break-words text-right font-financial text-base font-semibold tabular-nums text-foreground',
-                item.valueClassName,
-              )}
-            >
-              {item.value}
-            </dd>
-          </div>
-        ))}
-      </dl>
+    <article className={cn('overflow-hidden rounded-xl border border-border/70 bg-card px-4 py-3', tile.wide && 'sm:col-span-2', tile.emphasis && 'bg-primary/5')}>
+      <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {tile.label}
+      </h3>
+      <p className={cn('mt-1.5 break-words font-financial font-semibold tabular-nums tracking-tight', tile.emphasis ? 'text-2xl text-primary sm:text-3xl' : 'text-lg text-foreground', tile.valueClassName)}>
+        {tile.value}
+      </p>
+      {tile.emphasis && tile.sub && (
+        <p className="mt-0.5 text-xs text-muted-foreground">{tile.sub}</p>
+      )}
     </article>
   );
 }
 
 function SummarySkeleton({ showCapital }: { showCapital: boolean }) {
   return (
-    <div
-      className="grid gap-3 lg:grid-cols-2"
-      aria-busy="true"
-      aria-label="Đang tải tổng quan tài chính"
-    >
-      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-        <div className="space-y-3 px-5 py-5 sm:px-6 sm:py-6">
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-8 w-52" />
-        </div>
-        <div className="grid grid-cols-1 border-t border-border/60 sm:grid-cols-3 sm:divide-x sm:divide-border/60">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="space-y-2 border-b border-border/60 px-5 py-4 last:border-b-0 sm:border-b-0">
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-5 w-28" />
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-        <div className="border-b border-border/60 px-5 py-4">
-          <Skeleton className="h-3 w-20" />
-        </div>
-        {Array.from({ length: 3 }).map((_, rowIndex) => (
-          <div key={rowIndex} className="flex min-h-14 items-center justify-between border-b border-border/50 px-5 py-3 last:border-b-0">
-            <Skeleton className="h-3 w-16" />
-            <Skeleton className="h-4 w-28" />
-          </div>
+    <div className="grid gap-3" aria-busy="true" aria-label="Đang tải tổng quan tài chính">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <Skeleton className="h-[84px] rounded-xl sm:col-span-2" />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-[84px] rounded-xl" />
         ))}
       </div>
-      {showCapital && (
-        <div className="overflow-hidden rounded-2xl border border-border/70 bg-card lg:col-span-2">
-          <div className="border-b border-border/60 px-5 py-4">
-            <Skeleton className="h-3 w-28" />
-          </div>
-          <div className="grid grid-cols-1 min-[420px]:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="space-y-2 border-b border-border/50 px-5 py-4 last:border-b-0 min-[420px]:border-b-0 min-[420px]:border-r min-[420px]:last:border-r-0">
-                <Skeleton className="h-3 w-16" />
-                <Skeleton className="h-5 w-32" />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="grid gap-3 lg:grid-cols-3">
+        <Skeleton className="h-[124px] rounded-xl lg:col-span-2" />
+        <Skeleton className="h-[124px] rounded-xl" />
+      </div>
+      {showCapital && <div className="hidden" aria-hidden="true" />}
     </div>
   );
 }
@@ -112,21 +68,22 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
     return [
       { label: 'Phải thu', value: formatCurrency(by_account.receivable?.net_amount ?? 0) },
       { label: 'Phải trả', value: formatCurrency(payable), valueClassName: payable < 0 ? 'text-red-600' : undefined },
-      { label: 'Vay nợ',   value: formatCurrency(by_account.loan?.net_amount ?? 0) },
+      { label: 'Vay nợ', value: formatCurrency(by_account.loan?.net_amount ?? 0) },
     ];
   }, [ledgerSummary]);
 
-  const performance = useMemo(() => {
+  const perf = useMemo(() => {
     if (!ledgerSummary) return null;
     const { by_account } = ledgerSummary;
     const revenue = by_account.revenue?.net_amount ?? 0;
     const expense = by_account.expense?.net_amount ?? 0;
-    const cash    = by_account.cash?.net_amount ?? 0;
+    const cash = by_account.cash?.net_amount ?? 0;
     return {
       cash: formatCurrency(cash),
       revenue: formatCurrency(revenue),
       expense: formatCurrency(expense),
       profit: formatCurrency(revenue - expense),
+      margin: revenue > 0 ? `${((revenue - expense) / revenue * 100).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%` : '—',
     };
   }, [ledgerSummary]);
 
@@ -138,58 +95,64 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
     );
   }
 
-  if (!ledgerSummary || !performance) return null;
+  if (!ledgerSummary || !perf) return null;
+
+  // KPI strip: cash position leads (2 tiles wide, emphasized); the Công nợ
+  // rows become tiles so receivables/payables sit beside cash where they
+  // drive action.
+  const kpis: KpiTile[] = [
+    { label: 'Thanh khoản hiện tại', value: perf.cash, sub: 'Tiền mặt khả dụng trên sổ cái', emphasis: true, wide: true },
+    ...liabilityItems,
+  ];
+
+  const perfStats = [
+    { label: 'Doanh thu', value: perf.revenue },
+    { label: 'Chi phí', value: perf.expense },
+    { label: 'Lợi nhuận', value: perf.profit, highlight: true },
+    { label: 'Biên LN', value: perf.margin },
+  ];
 
   return (
-    <section
-      aria-label="Tổng quan tài chính"
-      className={cn(
-        'grid gap-3 lg:grid-cols-2',
-        className,
-      )}
-    >
+    <section aria-label="Tổng quan tài chính" className={cn('space-y-3', className)}>
       <h2 className="sr-only">Tổng quan tài chính</h2>
-      <article className="overflow-hidden rounded-2xl border border-border/70 bg-card">
-        <div className="px-5 py-5 sm:px-6 sm:py-6">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Thanh khoản hiện tại
-          </h3>
-          <p className="mt-2 break-words font-financial text-2xl font-semibold tabular-nums tracking-tight text-primary sm:text-3xl">
-            {performance.cash}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">Tiền mặt khả dụng trên sổ cái</p>
-        </div>
 
-        <dl className="grid grid-cols-1 border-t border-border/60 sm:grid-cols-3 sm:divide-x sm:divide-border/60">
-          {[
-            { label: 'Doanh thu', value: performance.revenue },
-            { label: 'Chi phí', value: performance.expense },
-            { label: 'Lợi nhuận', value: performance.profit, highlight: true },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="border-b border-border/60 px-5 py-4 last:border-b-0 sm:border-b-0"
-            >
-              <dt className="text-xs text-muted-foreground">{item.label}</dt>
-              <dd
-                className={cn(
-                  'mt-1 break-words font-financial text-base font-semibold tabular-nums text-foreground',
-                  item.highlight && 'text-primary',
-                )}
-              >
-                {item.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </article>
+      {/* KPI strip — cash (2 tiles wide) + Phải thu / Phải trả / Vay nợ */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {kpis.map((tile) => (
+          <KpiTileView key={tile.label} tile={tile} />
+        ))}
+      </div>
 
-      {liabilityItems.length > 0 && (
-        <SupportingMetrics title="Công nợ" items={liabilityItems} />
-      )}
-      {renderCapitalCard && (
-        <div className="lg:col-span-2">{renderCapitalCard()}</div>
-      )}
+      {/* P&L story (2/3) + capital structure (1/3) */}
+      <div className="grid gap-3 lg:grid-cols-3">
+        <article className="overflow-hidden rounded-xl border border-border/70 bg-card lg:col-span-2">
+          <div className="border-b border-border/60 px-4 py-2.5">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              Hiệu quả kinh doanh
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Doanh thu − Chi phí trên sổ cái trong kỳ
+            </p>
+          </div>
+          <dl className="grid grid-cols-2 sm:grid-cols-4 sm:divide-x sm:divide-border/60">
+            {perfStats.map((item) => (
+              <div key={item.label} className="px-4 py-3">
+                <dt className="text-xs text-muted-foreground">{item.label}</dt>
+                <dd
+                  className={cn(
+                    'mt-1 break-words font-financial text-base font-semibold tabular-nums text-foreground',
+                    item.highlight && 'text-primary',
+                  )}
+                >
+                  {item.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </article>
+
+        <div className="lg:col-span-1">{renderCapitalCard?.()}</div>
+      </div>
     </section>
   );
 }
