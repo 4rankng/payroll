@@ -383,12 +383,13 @@ const AdvancePaymentsPage = () => {
           )}
         >
 
-          {/* Header row: tabs, then one toolbar row with title + actions */}
+          {/* Single header row: tabs left, CTA + ⋯ overflow right */}
           <div
             data-mobile-tabs
-            className="bg-white px-3 pt-3 sm:px-5"
+            className="flex flex-wrap items-stretch justify-between gap-x-4 border-b border-border bg-white px-3 pt-2 sm:px-5"
           >
             <TabBarWithBadges
+              className="border-b-0"
               tabs={[
                 {
                   id: "requests",
@@ -413,8 +414,8 @@ const AdvancePaymentsPage = () => {
               onTabChange={(id) => setActiveTab(id as ActiveTab)}
             />
 
-            {/* Actions row: primary CTA + everything else in the ⋯ overflow */}
-            <div className="flex items-center justify-end gap-2 py-3">
+            {/* Actions: primary CTA + everything else in the ⋯ overflow */}
+            <div className="flex items-center gap-2 py-2">
               <ImportAction onClick={() => setIsImportSheetOpen(true)} />
               {(() => {
                 const overflowItems = [

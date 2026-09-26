@@ -33,7 +33,7 @@ export const TabBarWithBadges = memo(function TabBarWithBadges({
   className,
 }: TabBarWithBadgesProps) {
   return (
-    <div className={cn('flex items-center gap-1 border-b border-border', className)}>
+    <div className={cn('flex items-stretch gap-1', className)}>
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         const Icon = tab.icon;
