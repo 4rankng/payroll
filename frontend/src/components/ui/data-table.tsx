@@ -306,7 +306,7 @@ export function DataTable<TData, TValue>({
       className={cn(embedded ? "flex flex-col" : "space-y-3", className)}
     >
       {(toolbar || columnVisibilityKey) && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-3 sm:px-5">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{toolbar}</div>
           {columnVisibilityKey && (
             <DropdownMenu>
@@ -348,12 +348,12 @@ export function DataTable<TData, TValue>({
           data-slot="data-table-desktop"
           className={cn(
             "relative overflow-x-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent",
-            !embedded && "rounded-2xl border border-border/40 bg-card/90 backdrop-blur-sm shadow-sm"
+            !embedded && "rounded-xl border border-border bg-white shadow-sm"
           )}
         >
           <Table className="w-full">
               {caption && <caption className="sr-only">{caption}</caption>}
-              <TableHeader className="sticky top-0 bg-card/95 backdrop-blur-sm z-10">
+              <TableHeader className="sticky top-0 bg-card z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id} className="border-b hover:bg-transparent">
                     {headerGroup.headers.map((header, headerIndex) => {

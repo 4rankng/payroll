@@ -71,7 +71,7 @@ export const TabBarWithBadges = memo(function TabBarWithBadges({
             {isActive && (
               <span
                 aria-hidden="true"
-                className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary"
+                className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-primary"
               />
             )}
           </button>

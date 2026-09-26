@@ -324,14 +324,18 @@
   }
 
   [data-admin-ui] [data-slot="data-table-desktop"] {
-    border-color: hsl(var(--border) / 0.8);
+    border-color: hsl(var(--border));
     border-radius: 1.2rem;
-    background: hsl(var(--card) / 0.95);
+    /* Opaque white: translucent card fill composited over the tinted canvas
+       read as a mismatched gray band behind the header row. */
+    background: hsl(var(--card));
     box-shadow: var(--admin-card-shadow);
   }
 
+  /* Header shares the card surface exactly - no translucent tint, no seam
+     against the sticky first-column cell (also bg-card). */
   [data-admin-ui] [data-slot="data-table-desktop"] thead {
-    background: hsl(var(--muted) / 0.78);
+    background: hsl(var(--card));
   }
 
   [data-admin-ui] [data-slot="data-table-desktop"] th {
