@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react';
+import { memo } from 'react';
 import { type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -6,7 +6,7 @@ export interface TabWithBadges {
   id: string;
   label: string;
   icon?: LucideIcon;
-  /** Total count badge */
+  /** Total count badge (hidden when zero) */
   count?: number;
   /** Secondary accent badge (e.g. pending items) */
   pendingCount?: number;
@@ -21,8 +21,10 @@ export interface TabBarWithBadgesProps {
 }
 
 /**
- * Segmented tab bar with optional count and pending badges.
- * Implements the tab bar pattern from AdvancePaymentsPage.
+ * Underline tab bar with count badges.
+ * Flat single-surface design: no outer pill container; the active tab carries
+ * a 2px brand underline. Badges use one consistent muted style and are hidden
+ * when zero so an empty tab never reads as actionable.
  */
 export const TabBarWithBadges = memo(function TabBarWithBadges({
   tabs,
@@ -31,12 +33,7 @@ export const TabBarWithBadges = memo(function TabBarWithBadges({
   className,
 }: TabBarWithBadgesProps) {
   return (
-    <div
-      className={cn(
-        'flex items-center gap-px rounded-xl border border-border/60 bg-card p-0.5 shrink-0',
-        className,
-      )}
-    >
+    <div className={cn('flex items-center gap-1 border-b border-border', className)}>
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         const Icon = tab.icon;
@@ -46,71 +43,40 @@ export const TabBarWithBadges = memo(function TabBarWithBadges({
             onClick={() => onTabChange(tab.id)}
             aria-pressed={isActive}
             className={cn(
-              'flex min-h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-all whitespace-nowrap',
+              'relative flex min-h-10 items-center gap-1.5 rounded-t-lg px-3 text-sm font-medium transition-colors',
               isActive
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                ? 'text-primary'
+                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
             )}
           >
-            {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
+            {Icon && <Icon className="h-4 w-4 shrink-0" />}
             {tab.label}
-            {tab.count != null && (
-              <CountBadge value={tab.count} active={isActive} />
+            {tab.count != null && tab.count > 0 && (
+              <span
+                className={cn(
+                  'rounded-full px-1.5 text-xs tabular-nums font-semibold leading-5',
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-muted text-muted-foreground',
+                )}
+              >
+                {tab.count}
+              </span>
             )}
             {tab.pendingCount != null && tab.pendingCount > 0 && (
-              <PendingBadge
-                value={tab.pendingCount}
-                label={tab.pendingLabel ?? 'chờ'}
-                active={isActive}
+              <span className="rounded-full bg-warning/15 px-1.5 text-xs font-semibold leading-5 text-warning">
+                {tab.pendingCount} {tab.pendingLabel ?? 'chờ'}
+              </span>
+            )}
+            {isActive && (
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-primary"
               />
             )}
           </button>
         );
       })}
     </div>
-  );
-});
-
-const CountBadge = memo(function CountBadge({
-  value,
-  active,
-}: {
-  value: number;
-  active: boolean;
-}) {
-  return (
-    <span
-      className={cn(
-        'tabular-nums text-xs px-1.5 py-px rounded-full font-semibold',
-        active
-          ? 'bg-primary-foreground/20 text-primary-foreground'
-          : 'bg-muted-foreground/20 text-muted-foreground',
-      )}
-    >
-      {value}
-    </span>
-  );
-});
-
-const PendingBadge = memo(function PendingBadge({
-  value,
-  label,
-  active,
-}: {
-  value: number;
-  label: string;
-  active: boolean;
-}) {
-  return (
-    <span
-      className={cn(
-        'tabular-nums text-xs px-1.5 py-px rounded-full font-semibold',
-        active
-          ? 'bg-amber-300/30 text-amber-100'
-          : 'bg-amber-400/15 text-amber-700',
-      )}
-    >
-      {value} {label}
-    </span>
   );
 });

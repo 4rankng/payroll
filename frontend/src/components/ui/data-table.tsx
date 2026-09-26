@@ -297,7 +297,7 @@ export function DataTable<TData, TValue>({
     lg: "lg:block"
   }[mobileBreakpoint];
 
-  const cellPadding = isDense ? "px-2.5 py-1.5" : "px-4 py-3";
+  const cellPadding = isDense ? "px-2.5 py-2" : "px-4 py-3";
   const headerPadding = isDense ? "px-2.5 py-2" : "px-4 py-3";
 
   return (
@@ -361,12 +361,14 @@ export function DataTable<TData, TValue>({
                       const sortDirection = header.column.getIsSorted();
                       const isFirstColumn = stickyFirstColumn && headerIndex === 0;
 
+                      const align = (header.column.columnDef.meta as { align?: "left" | "right" | "center" } | undefined)?.align;
                       return (
                         <TableHead
                           key={header.id}
                           scope="col"
                           className={cn(
                             "whitespace-nowrap text-left typography-label-medium text-muted-foreground border-0",
+                            align === "right" && "text-right",
                             isDense && "h-9 text-[11px] uppercase tracking-wide font-semibold",
                             headerPadding,
                             isFirstColumn &&
@@ -418,7 +420,7 @@ export function DataTable<TData, TValue>({
                       data-state={row.getIsSelected() && "selected"}
                       className={cn(
                         "group hover:bg-muted/50 border-b",
-                        isDense && "h-10 odd:bg-muted/30",
+                        isDense && "h-10",
                         onRowClick && "cursor-pointer hover:bg-accent/50"
                       )}
                       onClick={(e) => {
@@ -443,13 +445,12 @@ export function DataTable<TData, TValue>({
                             key={cell.id}
                             className={cn(
                               "align-middle",
+                              (cell.column.columnDef.meta as { align?: "left" | "right" | "center" } | undefined)?.align === "right" && "text-right",
                               isDense && "text-[12px] leading-4",
                               cellPadding,
                               isFirstCell && getRowClassName?.(row.original),
                               isFirstCell &&
-                                "sticky left-0 z-10 bg-card shadow-[4px_0_8px_-4px_rgba(0,0,0,0.12)]",
-                              rowIndex % 2 === 1 && stickyFirstColumn && "bg-muted/30",
-                              rowIndex % 2 === 1 && stickyFirstColumn && "odd:bg-muted/30"
+                                "sticky left-0 z-10 bg-card shadow-[4px_0_8px_-4px_rgba(0,0,0,0.12)]"
                             )}
                             style={getColumnSizingStyles(cell.column)}
                           >

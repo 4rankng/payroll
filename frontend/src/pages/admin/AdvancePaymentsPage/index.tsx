@@ -30,7 +30,7 @@ import { formatMonthDisplay } from "@/utils/advancePaymentHelpers";
 import { useExportAdvancePayments } from "@/hooks/api/useAdvancePayments";
 import { useAdvancePaymentsPage } from "@/hooks/advance-payment/useAdvancePaymentsPage";
 import { useAdminAttendancePage } from "@/hooks/advance-payment/useAdminAttendancePage";
-import { ActionBar, ButtonGroup, ImportAction, ExportListAction, ExportBatchAction, UploadResultAction, CheckInAction, HistoryAction } from "@/components/advance-payment/actions";
+import { ImportAction, ExportListAction, ExportBatchAction, UploadResultAction, CheckInAction, HistoryAction } from "@/components/advance-payment/actions";
 import { ImportPayrollDialog } from "@/components/advance-payment/ImportPayrollDialog";
 import { AdvancePaymentResultUploadDialog } from "@/components/advance-payment/AdvancePaymentResultUploadDialog";
 import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/FlexibleEmployeeListUploadDialog";
@@ -295,7 +295,7 @@ const AdvancePaymentsPage = () => {
         <section
           aria-label="Tổng quan kỳ ứng lương"
           className={cn(
-            "overflow-hidden rounded-2xl border border-slate-300 bg-white",
+            "overflow-hidden rounded-xl border border-slate-300 bg-white",
             "shadow-[0_1px_2px_rgba(16,24,40,0.05),0_22px_60px_-42px_rgba(8,120,62,0.30)]",
             isMobile && "mobile-section-enter",
           )}
@@ -348,7 +348,7 @@ const AdvancePaymentsPage = () => {
           data-mobile-stats
           aria-label="Trạng thái xử lý ứng lương"
           className={cn(
-            "overflow-hidden rounded-2xl border border-slate-300 bg-white",
+            "overflow-hidden rounded-xl border border-slate-300 bg-white",
             "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]",
             isMobile && "mobile-section-enter",
           )}
@@ -371,16 +371,16 @@ const AdvancePaymentsPage = () => {
         <section
           data-mobile-content
           className={cn(
-            "overflow-hidden rounded-2xl border border-slate-300 bg-white",
+            "overflow-hidden rounded-xl border border-slate-300 bg-white",
             "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]",
             isMobile && "mobile-section-enter",
           )}
         >
 
-          {/* Header row: tabs + actions */}
+          {/* Header row: tabs, then one toolbar row with title + actions */}
           <div
             data-mobile-tabs
-            className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 bg-slate-50/80 px-3 py-3 sm:px-5"
+            className="bg-white px-3 pt-3 sm:px-5"
           >
             <TabBarWithBadges
               tabs={[
@@ -407,8 +407,16 @@ const AdvancePaymentsPage = () => {
               onTabChange={(id) => setActiveTab(id as ActiveTab)}
             />
 
-            <ActionBar>
-              <ButtonGroup>
+            {/* Single toolbar row: title left, actions right */}
+            <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-slate-800">
+                  {activeTab === "requests" && "Yêu cầu ứng lương"}
+                  {activeTab === "employees" && "Danh sách nhân viên ứng lương"}
+                  {activeTab === "attendances" && "Điểm danh"}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
                 <ImportAction onClick={() => setIsImportSheetOpen(true)} />
                 {page.handleExportFlexPayEmployees && (
                   <ExportListAction
@@ -416,30 +424,21 @@ const AdvancePaymentsPage = () => {
                     isLoading={page.exportFlexPayMutation.isPending}
                   />
                 )}
-              </ButtonGroup>
-              {!isAdvPartner && (
-                <ButtonGroup>
+                {!isAdvPartner && (
                   <ExportBatchAction
                     onClick={() => exportBatchMutation.mutate(undefined)}
                     isLoading={exportBatchMutation.isPending}
                   />
+                )}
+                {!isAdvPartner && (
                   <UploadResultAction onClick={() => setIsUploadResultDialogOpen(true)} />
-                </ButtonGroup>
-              )}
-              <CheckInAction onClick={() => navigate("/admin/advance-payments/check-in-settings")} />
-              {!isAdvPartner && (
-                <HistoryAction onClick={() => setIsHistorySheetOpen(true)} />
-              )}
-            </ActionBar>
-          </div>
-
-          {/* Tab label row; search/filter live in the table toolbar now */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 bg-white px-3 py-3 sm:px-5">
-            <p className="text-sm font-semibold text-slate-800">
-              {activeTab === "requests" && "Yêu cầu UL"}
-              {activeTab === "employees" && "DS nhân viên"}
-              {activeTab === "attendances" && "Điểm danh"}
-            </p>
+                )}
+                <CheckInAction onClick={() => navigate("/admin/advance-payments/check-in-settings")} />
+                {!isAdvPartner && (
+                  <HistoryAction onClick={() => setIsHistorySheetOpen(true)} />
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Table */}

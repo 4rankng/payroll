@@ -10,14 +10,17 @@ export function ExportBatchAction({ onClick, isLoading = false }: ExportBatchAct
     <button
       onClick={onClick}
       disabled={isLoading}
-      className="inline-flex min-h-11 items-center gap-1.5 bg-card/90 px-4 text-sm font-medium text-foreground backdrop-blur-sm transition-all whitespace-nowrap hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+      aria-label="Xuất lô chuyển tiền (Chuyển lô)"
+      title="Xuất lô chuyển tiền"
+      className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-all whitespace-nowrap hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
     >
       {isLoading ? (
         <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
       ) : (
         <FileDown className="h-4 w-4 shrink-0" />
       )}
-      Chuyển lô
+      <span className="hidden md:inline">Chuyển lô</span>
+      <span className="md:hidden">Chuyển lô</span>
     </button>
   );
 }

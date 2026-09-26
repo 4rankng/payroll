@@ -5,6 +5,7 @@ import type {
   FlexPayEmployeeListItem,
 } from "@/types/api/advance-payment.types";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AdvanceRequestToggle } from "@/components/advance-payment/AdvanceRequestToggle";
 import { Wallet, Users, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, RotateCcw, X } from "lucide-react";
@@ -46,9 +47,14 @@ export function getAdvancePaymentColumns(
           <div className="text-xs text-muted-foreground mt-0.5 tabular-nums">
             {row.original.employeeCCCD}
           </div>
-          <div className="text-xs text-muted-foreground mt-0.5 truncate max-w-[120px]">
-            {row.original.projectName || "-"}
-          </div>
+          {row.original.projectName && (
+            <div
+              className="text-xs text-muted-foreground mt-0.5 truncate max-w-[120px]"
+              title={`Dự án: ${row.original.projectName}`}
+            >
+              {row.original.projectName}
+            </div>
+          )}
         </div>
       ),
     },
@@ -56,8 +62,9 @@ export function getAdvancePaymentColumns(
       accessorKey: "requestAmount",
       header: "Yêu cầu",
       size: 100,
+      meta: { align: "right" },
       cell: ({ row }) => (
-        <span className="text-xs font-semibold tabular-nums">
+        <span className="text-xs tabular-nums">
           {formatCurrency(row.original.requestAmount)}
         </span>
       ),
@@ -66,8 +73,9 @@ export function getAdvancePaymentColumns(
       accessorKey: "fee",
       header: "Phí",
       size: 80,
+      meta: { align: "right" },
       cell: ({ row }) => (
-        <div className="text-xs text-muted-foreground tabular-nums">
+        <div className="text-xs text-muted-foreground tabular-nums text-right">
           {formatCurrency(row.original.fee)}
         </div>
       ),
@@ -76,8 +84,9 @@ export function getAdvancePaymentColumns(
       accessorKey: "netAmount",
       header: "Thực nhận",
       size: 100,
+      meta: { align: "right" },
       cell: ({ row }) => (
-        <div className="text-xs font-semibold text-emerald-700 tabular-nums">
+        <div className="text-xs font-semibold tabular-nums text-right text-[hsl(var(--success))]">
           {formatCurrency(row.original.netAmount)}
         </div>
       ),
@@ -89,11 +98,17 @@ export function getAdvancePaymentColumns(
       cell: ({ row }) => {
         const status = row.original.status;
         const isPolling = ctx.pollingIds?.has(row.original.id);
+        const label = getVietnameseAdvancePaymentStatus(status);
+        const dot =
+          status === "COMPLETED" ? "bg-emerald-500"
+          : status === "FAILED" ? "bg-red-500"
+          : status === "PENDING" ? "bg-amber-500"
+          : status === "APPROVED" ? "bg-blue-500"
+          : "bg-gray-400";
         return (
-          <div className="flex items-center gap-1.5">
-            <Badge variant="outline" className={`${getAdvancePaymentStatusColor(status)} text-xs px-1.5 py-0 h-5 whitespace-nowrap`}>
-              {getVietnameseAdvancePaymentStatus(status)}
-            </Badge>
+          <div className="flex items-center gap-1.5 whitespace-nowrap">
+            <span className={cn("h-2 w-2 shrink-0 rounded-full", dot)} />
+            <span className="text-xs">{label}</span>
             {isPolling && (
               <span className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-blue-300 border-t-blue-600" />
             )}
@@ -107,47 +122,34 @@ export function getAdvancePaymentColumns(
       size: 130,
       cell: ({ row }) => {
         const paidAt = row.original.paidAt ?? row.original.completedAt;
-        if (!paidAt) return <span className="text-xs text-muted-foreground">-</span>;
+        const createdAt = row.original.createdAt;
+        if (!paidAt) {
+          return (
+            <span
+              className="text-xs text-muted-foreground tabular-nums whitespace-nowrap"
+              title={createdAt ? `Tạo: ${format(new Date(createdAt), "dd/MM/yyyy HH:mm", { locale: vi })}` : undefined}
+            >
+              Chờ thanh toán
+            </span>
+          );
+        }
+        const diffMs = new Date(paidAt).getTime() - new Date(createdAt).getTime();
+        const totalSecs = Math.max(0, Math.round(diffMs / 1000));
+        const mins = Math.floor(totalSecs / 60);
+        const latency = mins < 1
+          ? `${totalSecs} giây`
+          : mins < 60
+            ? `${mins} phút`
+            : `${Math.floor(mins / 60)} giờ ${mins % 60} phút`;
         return (
-          <div className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+          <div
+            className="text-xs text-muted-foreground tabular-nums whitespace-nowrap cursor-help"
+            title={`Tạo: ${format(new Date(createdAt), "dd/MM/yyyy HH:mm", { locale: vi })} · Xử lý trong ${latency}`}
+          >
             {format(new Date(paidAt), "dd/MM/yyyy HH:mm", { locale: vi })}
           </div>
         );
       },
-    },
-    {
-      id: "latency",
-      header: "Độ trễ",
-      size: 80,
-      cell: ({ row }) => {
-        const completedAt = row.original.paidAt ?? row.original.completedAt;
-        const { createdAt } = row.original;
-        if (!completedAt) return <span className="text-xs text-muted-foreground">-</span>;
-        const diffMs = new Date(completedAt).getTime() - new Date(createdAt).getTime();
-        const totalSecs = Math.round(diffMs / 1000);
-        const mins = Math.floor(totalSecs / 60);
-        if (mins < 1) {
-          return <span className="text-xs tabular-nums">{totalSecs} giây</span>;
-        }
-        if (mins < 60) {
-          return <span className="text-xs tabular-nums">{mins} phút</span>;
-        }
-        const hours = Math.floor(mins / 60);
-        const remainMins = mins % 60;
-        return <span className="text-xs tabular-nums">{hours} giờ {remainMins} phút</span>;
-      },
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Ngày tạo",
-      size: 130,
-      cell: ({ row }) => (
-        <div className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-          {format(new Date(row.original.createdAt), "dd/MM/yyyy HH:mm", {
-            locale: vi,
-          })}
-        </div>
-      ),
     },
     {
       id: "actions",

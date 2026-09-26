@@ -45,7 +45,6 @@ export const StatusFilterBar = memo(function StatusFilterBar({
   triggerClassName,
 }: StatusFilterBarProps) {
   const selected = STATUS_OPTIONS.find((o) => o.value === value) ?? STATUS_OPTIONS[0];
-  const selectedCount = counts?.[selected.value as keyof StatusCounts];
 
   return (
     <Select value={value} onValueChange={onChange}>
@@ -53,14 +52,7 @@ export const StatusFilterBar = memo(function StatusFilterBar({
         {selected.dotClass && (
           <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", selected.dotClass)} />
         )}
-        <SelectValue>
-          {selected.label}
-          {selectedCount !== undefined && selectedCount > 0 && (
-            <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-xs tabular-nums font-semibold bg-foreground/10">
-              {selectedCount}
-            </span>
-          )}
-        </SelectValue>
+        <SelectValue>{selected.label}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {STATUS_OPTIONS.map((opt) => {
