@@ -1,15 +1,23 @@
 import { type FormEvent, type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { AlertTriangle, Check, Copy, Loader2, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, Copy, Download, Loader2, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useApiKeys, useCreateAPIKey, useRevokeAPIKey } from '@/hooks/api/useApiKeys';
 import type { APIKey } from '@/services/api/apiKeys.service';
+import skillMarkdown from '@/assets/skills/payroll-password-reset/SKILL.md?raw';
 
 const DATE_TIME_DISPLAY = 'dd/MM/yyyy HH:mm';
+
+// The path the downloaded skill belongs at. A zero-width space after each slash
+// lets the long segment wrap at its separators instead of mid-word on narrow
+// screens.
+const SKILL_TARGET_PATH = '.claude/skills/payroll-password-reset/SKILL.md'
+  .split('/')
+  .join('/\u200B');
 
 type SettingsSectionProps = {
   id: string;
@@ -144,6 +152,19 @@ export const ApiKeysSection = () => {
     }
   };
 
+  const handleDownloadGuide = () => {
+    const blob = new Blob([skillMarkdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'payroll-password-reset-SKILL.md';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success('Đã tải hướng dẫn API cho agent');
+  };
+
   return (
     <div className="space-y-0">
       <SettingsSection
@@ -232,6 +253,31 @@ export const ApiKeysSection = () => {
             ))}
           </ul>
         )}
+      </SettingsSection>
+
+      <SettingsSection
+        id="api-keys-guide"
+        title="Hướng dẫn cho agent"
+        description="Tải hướng dẫn tích hợp API dưới dạng Claude skill để agent (chatbot) biết cách gọi các API này."
+      >
+        <div className="space-y-3">
+          <p className="text-sm leading-5 text-muted-foreground">
+            Tệp <span className="font-mono text-xs">SKILL.md</span> mô tả 4 endpoint tích hợp, quy trình đặt lại
+            mật khẩu 3 bước và cách xử lý lỗi. Đặt tệp vào thư mục skill của agent:
+          </p>
+          <code className="block break-words rounded-md border bg-muted/40 px-3 py-2 font-mono text-xs leading-5 text-foreground">
+            {SKILL_TARGET_PATH}
+          </code>
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 sm:min-h-9"
+            onClick={handleDownloadGuide}
+          >
+            <Download className="h-4 w-4" />
+            Tải hướng dẫn API (SKILL.md)
+          </Button>
+        </div>
       </SettingsSection>
     </div>
   );
