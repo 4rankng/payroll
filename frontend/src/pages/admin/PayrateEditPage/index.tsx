@@ -265,10 +265,10 @@ export default function PayrateEditPage() {
   const fromDateIsActionable = false;
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-card">
 
       {/* ── Top bar ── */}
-      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b border-border">
+      <header className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b border-border">
         <div className="px-4 sm:px-6 h-14 flex items-center gap-3">
           <button onClick={goBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0">
             <ArrowLeft className="h-4 w-4" />
@@ -512,7 +512,7 @@ export default function PayrateEditPage() {
       </main>
 
       {/* ── Mobile save bar ── */}
-      <footer className="sticky bottom-0 sm:hidden border-t border-border bg-background/95 backdrop-blur-sm px-4 py-3 flex gap-3">
+      <footer className="sticky bottom-0 sm:hidden border-t border-border bg-card/95 backdrop-blur-sm px-4 py-3 flex gap-3">
         <Button variant="outline" className="flex-1" onClick={goBack} disabled={isValidating || isSaving}>
           Hủy
         </Button>

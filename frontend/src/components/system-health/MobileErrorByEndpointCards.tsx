@@ -56,7 +56,7 @@ export function MobileErrorByEndpointCards({ days = 1 }: MobileErrorByEndpointCa
               ? "bg-red-50/50 border-red-100"
               : row.errorRate > 5
                 ? "bg-amber-50/40 border-amber-100"
-                : "bg-background"
+                : "bg-card"
           )}
         >
           {/* Endpoint */}

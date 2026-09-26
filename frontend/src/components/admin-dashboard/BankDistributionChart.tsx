@@ -81,7 +81,7 @@ export const BankDistributionChart = memo(function BankDistributionChart({
         </div>
 
         {leadingBank ? (
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 sm:min-w-44">
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card px-2.5 py-1.5 sm:min-w-44">
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Ngân hàng phổ biến nhất

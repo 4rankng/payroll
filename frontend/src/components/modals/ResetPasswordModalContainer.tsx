@@ -86,8 +86,8 @@ export function ResetPasswordModalContainer({
   // Show loading state
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-        <div className="bg-background rounded-xl p-6 shadow-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-card/80 backdrop-blur-sm">
+        <div className="bg-card rounded-xl p-6 shadow-sm">
           <LoadingSpinner className="mx-auto" />
           <p className="mt-4 text-center text-muted-foreground">
             {config.loadingMessage}
@@ -100,8 +100,8 @@ export function ResetPasswordModalContainer({
   // Show error state
   if (error || !target) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-        <div className="bg-background rounded-xl p-6 shadow-sm max-w-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-card/80 backdrop-blur-sm">
+        <div className="bg-card rounded-xl p-6 shadow-sm max-w-md">
           <h3 className="text-lg font-semibold text-destructive mb-2">
             Lỗi tải dữ liệu
           </h3>

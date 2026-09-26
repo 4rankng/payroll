@@ -50,7 +50,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 overflow-hidden border bg-background shadow-2xl",
+          "fixed z-50 flex flex-col gap-4 overflow-hidden border bg-card shadow-2xl",
           contentPadding === 'default' && "p-4 sm:p-6",
           isMobile
             ? /* Mobile: bottom sheet */

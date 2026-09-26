@@ -302,7 +302,7 @@ const EmployeesPageMobile = () => {
         <Button
           variant="outline"
           size="icon"
-          className="relative h-11 w-11 shrink-0 rounded-lg border-border bg-background"
+          className="relative h-11 w-11 shrink-0 rounded-lg border-border bg-card"
           onClick={() => setFilterSheetOpen(true)}
           aria-label="Bộ lọc"
         >

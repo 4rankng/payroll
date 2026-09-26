@@ -496,7 +496,7 @@ export default function EditAdvPartnerUserSheet({
                     <div className="w-full border-t border-border/40" />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="px-3 bg-background text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                    <span className="px-3 bg-card text-xs text-muted-foreground uppercase tracking-wider font-medium">
                       Bảo mật tài khoản
                     </span>
                   </div>

@@ -185,7 +185,7 @@ export function RemoveEmployeeSheet({
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 h-11 px-3 sm:h-8 rounded border border-border bg-background text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 h-11 px-3 sm:h-8 rounded border border-border bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             Đóng
           </button>

@@ -19,7 +19,7 @@ const buttonVariants = cva(
           "bg-slate-100 text-slate-800 font-semibold hover:bg-slate-200 active:bg-slate-300 border border-slate-300",
 
         outline:
-          "border border-border bg-background text-foreground hover:bg-muted active:bg-muted/80",
+          "border border-border bg-card text-foreground hover:bg-muted active:bg-muted/80",
 
         ghost:
           "text-muted-foreground hover:bg-muted hover:text-foreground active:bg-muted/80",

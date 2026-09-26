@@ -157,7 +157,7 @@ export function HealthDrilldownSheet({ target, month, periodStart, periodEnd, on
           </div>
         )}
 
-        <SheetHeader className="border-b bg-background/95 px-4 py-3 flex-shrink-0 sm:px-6">
+        <SheetHeader className="border-b bg-card/95 px-4 py-3 flex-shrink-0 sm:px-6">
           <div className="flex items-start justify-between gap-3">
             <SheetTitle className="text-left text-base font-semibold leading-snug text-foreground sm:text-lg">
               {title}

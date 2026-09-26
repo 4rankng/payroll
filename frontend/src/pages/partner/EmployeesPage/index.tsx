@@ -443,7 +443,7 @@ const EmployeesPage = () => {
           <Skeleton className="h-4 w-64" />
         </div>
         <Skeleton className="h-11 w-full max-w-md rounded-xl" />
-        <div className="rounded-lg border bg-background overflow-hidden">
+        <div className="rounded-lg border bg-card overflow-hidden">
           <div className="border-b px-4 py-3">
             <div className="flex gap-6">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -559,7 +559,7 @@ const EmployeesPage = () => {
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-xs font-semibold transition-all",
                   poolView === "mine"
-                    ? "bg-background text-foreground shadow-sm"
+                    ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -571,7 +571,7 @@ const EmployeesPage = () => {
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-xs font-semibold transition-all",
                   poolView === "global"
-                    ? "bg-background text-foreground shadow-sm"
+                    ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >

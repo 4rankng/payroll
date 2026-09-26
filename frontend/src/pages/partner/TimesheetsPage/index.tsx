@@ -353,7 +353,7 @@ export default function TimesheetsPage() {
           <Skeleton className="h-9 w-36 rounded-xl" />
         </div>
         <Skeleton className="h-11 w-full max-w-lg rounded-xl" />
-        <div className="rounded-lg border bg-background overflow-hidden">
+        <div className="rounded-lg border bg-card overflow-hidden">
           <div className="border-b px-4 py-3">
             <div className="flex gap-6">
               {Array.from({ length: 6 }).map((_, i) => (

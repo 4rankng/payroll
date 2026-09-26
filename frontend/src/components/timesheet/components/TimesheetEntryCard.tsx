@@ -56,7 +56,7 @@ export function TimesheetEntryCard({
     return (
       <div
         className={cn(
-          'relative bg-background rounded-xl p-3 border transition-all',
+          'relative bg-card rounded-xl p-3 border transition-all',
           'cursor-pointer hover:shadow-sm',
           statusColor.border,
           isLoading && 'opacity-50 pointer-events-none',
@@ -157,7 +157,7 @@ export function TimesheetEntryCard({
     return (
       <div
         className={cn(
-          'relative bg-background rounded-xl p-4 border transition-all',
+          'relative bg-card rounded-xl p-4 border transition-all',
           'cursor-pointer hover:border-primary/30',
           statusColor.border,
           isLoading && 'opacity-50 pointer-events-none',
@@ -254,7 +254,7 @@ export function TimesheetEntryCard({
   return (
     <div
       className={cn(
-        'relative bg-background rounded-xl p-4 border transition-all',
+        'relative bg-card rounded-xl p-4 border transition-all',
         'cursor-pointer hover:shadow-sm hover:border-primary/40',
         statusColor.border,
         isLoading && 'opacity-50 pointer-events-none',
@@ -374,7 +374,7 @@ export function TimesheetEntryCard({
 export function TimesheetEntryCardSkeleton({ variant = 'default' }: { variant?: 'default' | 'compact' | 'timeline' }) {
   if (variant === 'compact') {
     return (
-      <div className="bg-background rounded-xl p-3 border animate-pulse">
+      <div className="bg-card rounded-xl p-3 border animate-pulse">
         <div className="hidden md:grid grid-cols-12 gap-3 items-center">
           <div className="col-span-3 h-4 bg-muted rounded" />
           <div className="col-span-3 h-4 bg-muted rounded" />
@@ -394,7 +394,7 @@ export function TimesheetEntryCardSkeleton({ variant = 'default' }: { variant?: 
   }
 
   return (
-    <div className="bg-background rounded-xl p-4 border animate-pulse">
+    <div className="bg-card rounded-xl p-4 border animate-pulse">
       <div className="space-y-4">
         <div className="flex justify-between">
           <div className="h-6 bg-muted rounded w-1/3" />

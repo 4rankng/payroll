@@ -70,7 +70,7 @@ export function RateCell({ position, dayType, hourType, rate, readOnly = false, 
           hasDiff
             ? diffClasses[diffState]
             : isEmpty
-              ? "border-transparent bg-muted/25 text-muted-foreground placeholder:text-muted-foreground focus:bg-background"
+              ? "border-transparent bg-muted/25 text-muted-foreground placeholder:text-muted-foreground focus:bg-card"
               : "border-transparent bg-muted/35 text-foreground",
           !hasDiff && "hover:border-primary/60 focus:border-primary focus:ring-1 focus:ring-primary/20"
         )}

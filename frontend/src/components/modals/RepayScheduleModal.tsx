@@ -277,7 +277,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
             <>
               <button
                 onClick={onClose}
-                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 Hủy
               </button>
@@ -295,7 +295,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
             <>
               <button
                 onClick={handleBack}
-                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 Quay lại
               </button>

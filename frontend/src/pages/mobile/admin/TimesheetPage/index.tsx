@@ -354,7 +354,7 @@ const TimesheetPageMobile = () => {
 
   if (isEntryMode) {
     return (
-      <div className="flex min-h-[100dvh] flex-col overflow-x-clip bg-background pb-[env(safe-area-inset-bottom)]">
+      <div className="flex min-h-[100dvh] flex-col overflow-x-clip bg-card pb-[env(safe-area-inset-bottom)]">
         <MobileTimesheetEntry
           isOpen={true}
           onClose={handleEntryClose}

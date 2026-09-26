@@ -25,7 +25,7 @@ export const MobileHeader = ({ className }: MobileHeaderProps) => {
     <>
       <header
         className={cn(
-          "flex h-14 shrink-0 items-center gap-2 px-3 border-b lg:hidden bg-background/95 backdrop-blur-md sticky top-0 z-50",
+          "flex h-14 shrink-0 items-center gap-2 px-3 border-b lg:hidden bg-card/95 backdrop-blur-md sticky top-0 z-50",
           className,
         )}
       >

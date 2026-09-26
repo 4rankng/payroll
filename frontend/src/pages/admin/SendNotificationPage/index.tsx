@@ -187,7 +187,7 @@ const SendNotificationPage = () => {
       {/* Mobile layout */}
       {isMobile ? (
         <div className="flex-1 overflow-y-auto flex flex-col min-h-0">
-          <div className="bg-background/80 backdrop-blur-sm border-b border-border/30 flex-shrink-0 animate-fade-in-up delay-100">
+          <div className="bg-card/80 backdrop-blur-sm border-b border-border/30 flex-shrink-0 animate-fade-in-up delay-100">
             <button
               type="button"
               onClick={() => setShowFields((v) => !v)}
@@ -219,7 +219,7 @@ const SendNotificationPage = () => {
               value={message}
               onChange={handleMessageChange}
               placeholder="Nhập nội dung thông báo..."
-              className="flex-1 w-full resize-none rounded-lg border border-border/60 bg-background text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 p-3"
+              className="flex-1 w-full resize-none rounded-lg border border-border/60 bg-card text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 p-3"
             />
             {messageError && (
               <div className="flex items-center gap-1.5 text-xs text-red-600 mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -228,7 +228,7 @@ const SendNotificationPage = () => {
               </div>
             )}
           </div>
-          <div className="flex-shrink-0 px-4 py-3 bg-background/90 backdrop-blur-md border-t border-border/40 flex items-center gap-3">
+          <div className="flex-shrink-0 px-4 py-3 bg-card/90 backdrop-blur-md border-t border-border/40 flex items-center gap-3">
             <Button type="button" variant="outline" className="flex-1 h-11" onClick={handleBack} disabled={isPending}>
               <X className="h-4 w-4 mr-2" />Hủy
             </Button>
@@ -244,7 +244,7 @@ const SendNotificationPage = () => {
         /* Desktop layout — single-column immersive */
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
           {/* Fields strip */}
-          <div className="flex-shrink-0 bg-background/80 backdrop-blur-sm border-b border-border/30 overflow-y-auto animate-fade-in-up delay-100">
+          <div className="flex-shrink-0 bg-card/80 backdrop-blur-sm border-b border-border/30 overflow-y-auto animate-fade-in-up delay-100">
             <div className="px-6 py-4 max-w-[960px] mx-auto w-full">
               <NotificationDialogHeader {...notifHeaderProps} className="space-y-3" />
             </div>
@@ -257,7 +257,7 @@ const SendNotificationPage = () => {
                 value={message}
                 onChange={handleMessageChange}
                 placeholder="Nhập nội dung thông báo..."
-                className="flex-1 w-full resize-none rounded-lg border border-border/60 bg-background text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 p-3"
+                className="flex-1 w-full resize-none rounded-lg border border-border/60 bg-card text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 p-3"
               />
               {messageError && (
                 <div className="flex items-center gap-1.5 text-xs text-red-600 mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">

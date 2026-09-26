@@ -301,7 +301,7 @@ export function FinancialChart({ className }: FinancialChartProps) {
                     onClick={() => setPeriod(option.value as FinancialChartParams['period'])}
                     className={`px-2 py-0.5 text-xs font-medium rounded-sm transition-colors ${
                       period === option.value
-                        ? 'bg-background text-foreground shadow-sm'
+                        ? 'bg-card text-foreground shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
                     }`}
                     title={option.description}
@@ -324,7 +324,7 @@ export function FinancialChart({ className }: FinancialChartProps) {
                 onClick={() => handleGroupToggle(group.value)}
                 className={`px-1.5 py-0.5 text-xs font-medium rounded-sm transition-colors ${
                   activeGroup === group.value
-                    ? 'bg-background text-foreground shadow-sm'
+                    ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
                 title={group.description}

@@ -51,7 +51,7 @@ export function DateRangeCalendarPicker({
       role="group"
       aria-labelledby={ariaLabelledBy}
       className={cn(
-        'flex min-h-11 w-full min-w-0 items-center gap-2 overflow-hidden rounded-lg border border-input bg-background px-3',
+        'flex min-h-11 w-full min-w-0 items-center gap-2 overflow-hidden rounded-lg border border-input bg-card px-3',
         disabled && 'cursor-not-allowed opacity-50',
         className,
       )}

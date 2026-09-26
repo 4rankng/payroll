@@ -25,7 +25,7 @@ export function TimeRangeToggle({ value, onChange }: TimeRangeToggleProps) {
           className={cn(
             "ct-tab h-9 min-h-9 whitespace-nowrap rounded-lg px-3 text-xs font-semibold transition-colors",
             value === opt.value
-              ? "ct-tab-active bg-background text-foreground shadow-sm"
+              ? "ct-tab-active bg-card text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",
           )}
         >

@@ -76,7 +76,7 @@ export function PayratePositionList({
         </div>
         <div className="flex flex-wrap gap-2">
           {hourTypes.map(hourType => (
-            <div key={hourType} className="flex min-h-11 min-w-0 items-center rounded-lg border border-border bg-background pl-3">
+            <div key={hourType} className="flex min-h-11 min-w-0 items-center rounded-lg border border-border bg-card pl-3">
               {editingHourType === hourType ? (
                 <Input
                   type="text"

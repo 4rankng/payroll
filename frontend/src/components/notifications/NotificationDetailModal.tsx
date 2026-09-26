@@ -36,7 +36,7 @@ export const NotificationDetailModal = memo(function NotificationDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-lg bg-background border-border"
+        className="max-w-lg bg-card border-border"
         contentPadding="none"
         title={notification.title}
         description={notification.message}

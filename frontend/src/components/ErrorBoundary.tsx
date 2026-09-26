@@ -110,7 +110,7 @@ export class ErrorBoundary extends Component<Props, State> {
       // chunk the browser was still referencing. A hard reload fixes it.
       if (isChunkLoadError(this.state.error)) {
         return (
-          <div className="min-h-screen flex items-center justify-center bg-background p-4">
+          <div className="min-h-screen flex items-center justify-center bg-card p-4">
             <Card className="max-w-md w-full">
               <CardHeader>
                 <div className="flex items-center gap-2">
@@ -135,7 +135,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="min-h-screen flex items-center justify-center bg-card p-4">
           <Card className="max-w-2xl w-full">
             <CardHeader>
               <div className="flex items-center gap-2">

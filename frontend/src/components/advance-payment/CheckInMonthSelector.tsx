@@ -66,7 +66,7 @@ export function CheckInMonthSelector({
       role="group"
       aria-label={`Tháng điểm danh ${label}`}
       className={cn(
-        "inline-flex min-h-12 items-center rounded-lg border border-border bg-background p-0.5 sm:min-h-9",
+        "inline-flex min-h-12 items-center rounded-lg border border-border bg-card p-0.5 sm:min-h-9",
         className,
       )}
     >
@@ -110,7 +110,7 @@ export function CheckInMonthSelector({
               <select
                 value={pickerYear}
                 onChange={(event) => setPickerYear(Number(event.target.value))}
-                className="h-11 rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9"
+                className="h-11 rounded-md border border-input bg-card px-3 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9"
                 aria-label="Chọn năm điểm danh"
               >
                 {years.map((year) => (
@@ -137,7 +137,7 @@ export function CheckInMonthSelector({
                     "h-11 rounded-md border text-sm font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9",
                     isSelected
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-foreground hover:bg-muted",
+                      : "border-border bg-card text-foreground hover:bg-muted",
                     "disabled:cursor-not-allowed disabled:bg-muted/40 disabled:text-muted-foreground disabled:opacity-50",
                   )}
                 >

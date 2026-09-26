@@ -416,7 +416,7 @@ export function MobileTimesheetEntry({
   // ─── filter drawer ────────────────────────────────────────────────────────
 
   const filterDrawer = filterOpen && (
-    <div className="border-b bg-background shadow-sm animate-in slide-in-from-top-2 duration-200">
+    <div className="border-b bg-card shadow-sm animate-in slide-in-from-top-2 duration-200">
       <div className="px-4 pt-3 pb-4 space-y-3">
         <div className="space-y-1">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
@@ -579,7 +579,7 @@ export function MobileTimesheetEntry({
           return (
             <div key={emp.id}>
               {/* Employee header */}
-              <div className="flex items-center gap-3 px-4 py-2.5 bg-background/95 backdrop-blur-sm sticky top-0 z-[1] border-b border-border/40">
+              <div className="flex items-center gap-3 px-4 py-2.5 bg-card/95 backdrop-blur-sm sticky top-0 z-[1] border-b border-border/40">
                 <UserAvatar
                   name={emp.fullname}
                   size="sm"
@@ -819,9 +819,9 @@ export function MobileTimesheetEntry({
   // ─── render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-card">
       {/* Top nav */}
-      <div className="flex items-center gap-2 px-4 h-14 border-b bg-background shrink-0">
+      <div className="flex items-center gap-2 px-4 h-14 border-b bg-card shrink-0">
         <button
           onClick={handleClose}
           className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl transition-colors hover:bg-muted active:bg-muted/80"

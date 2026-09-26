@@ -34,7 +34,7 @@ export function CustomScheduleFields({
               value={form.custom_term_months}
               onChange={(e) => onFieldChange('custom_term_months', e.target.value.replace(/[^0-9]/g, ''))}
               placeholder="Ví dụ: 12"
-              className={`bg-background ${errors.custom_term_months ? 'input-error' : ''}`}
+              className={`bg-card ${errors.custom_term_months ? 'input-error' : ''}`}
             />
             {errors.custom_term_months && (
               <p className="typography-body-small text-financial-negative">{errors.custom_term_months}</p>
@@ -48,7 +48,7 @@ export function CustomScheduleFields({
               value={form.custom_payment_day_of_month}
               onChange={(e) => onFieldChange('custom_payment_day_of_month', e.target.value.replace(/[^0-9]/g, ''))}
               placeholder="1"
-              className={`bg-background ${errors.custom_payment_day_of_month ? 'input-error' : ''}`}
+              className={`bg-card ${errors.custom_payment_day_of_month ? 'input-error' : ''}`}
             />
             {errors.custom_payment_day_of_month && (
               <p className="typography-body-small text-financial-negative">{errors.custom_payment_day_of_month}</p>
@@ -62,7 +62,7 @@ export function CustomScheduleFields({
               value={form.custom_monthly_amount}
               onChange={(e) => onFieldChange('custom_monthly_amount', e.target.value.replace(/[^0-9]/g, ''))}
               placeholder="Ví dụ: 10000000"
-              className={`bg-background ${errors.custom_monthly_amount ? 'input-error' : ''}`}
+              className={`bg-card ${errors.custom_monthly_amount ? 'input-error' : ''}`}
             />
             {form.custom_monthly_amount && Number(form.custom_monthly_amount) > 0 && (
               <p className="typography-label-small text-muted-foreground">{formatVND(Number(form.custom_monthly_amount))}</p>
@@ -79,7 +79,7 @@ export function CustomScheduleFields({
               value={form.custom_last_month_amount}
               onChange={(e) => onFieldChange('custom_last_month_amount', e.target.value.replace(/[^0-9]/g, ''))}
               placeholder="Tùy chọn"
-              className="bg-background"
+              className="bg-card"
             />
             {form.custom_last_month_amount && Number(form.custom_last_month_amount) > 0 && (
               <p className="typography-label-small text-muted-foreground">{formatVND(Number(form.custom_last_month_amount))}</p>

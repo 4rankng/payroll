@@ -99,7 +99,7 @@ export function FlexibleShiftManager({
           {hourTypes.map(key => (
             <div
               key={key}
-              className="group flex min-h-11 items-center gap-1 rounded-lg border border-border bg-background px-2 text-xs"
+              className="group flex min-h-11 items-center gap-1 rounded-lg border border-border bg-card px-2 text-xs"
             >
               {isTimeRange(key) && <Clock className="h-3 w-3 text-primary shrink-0" />}
               <span className={`font-medium ${isTimeRange(key) ? 'font-mono' : ''} text-foreground`}>
@@ -176,7 +176,7 @@ export function FlexibleShiftManager({
             <button
               key={preset.value}
               onClick={() => handlePreset(preset.value)}
-              className="flex min-h-11 items-center gap-1 rounded-full border border-border bg-background px-3 text-xs transition-colors hover:border-primary hover:text-primary"
+              className="flex min-h-11 items-center gap-1 rounded-full border border-border bg-card px-3 text-xs transition-colors hover:border-primary hover:text-primary"
             >
               <span className="font-mono">{preset.value}</span>
               <span className="text-muted-foreground">({preset.label})</span>

@@ -176,7 +176,7 @@ function LookupResult({ result }: { result: EmployeeAccountLookupResponse }) {
           Dữ liệu chỉ đọc từ hồ sơ của {result.employee.fullname}.
         </p>
       </div>
-      <dl className="divide-y rounded-lg border border-border bg-background">
+      <dl className="divide-y rounded-lg border border-border bg-card">
         <DetailRow
           label="Ngân hàng"
           value={result.stored_bank.bank_name}
@@ -216,7 +216,7 @@ function LookupResult({ result }: { result: EmployeeAccountLookupResponse }) {
         <p className="text-sm font-semibold text-foreground">
           Kết quả từ nhà cung cấp
         </p>
-        <dl className="mt-2 divide-y rounded-lg border border-border bg-background">
+        <dl className="mt-2 divide-y rounded-lg border border-border bg-card">
           <DetailRow
             label="Tên xác nhận"
             value={provider.AccountName}
@@ -254,7 +254,7 @@ function CustomLookupResult({
           Dữ liệu chỉ dùng cho lần tra cứu này và không được lưu.
         </p>
       </div>
-      <dl className="divide-y rounded-lg border border-border bg-background">
+      <dl className="divide-y rounded-lg border border-border bg-card">
         <DetailRow label="Mã SWIFT" value={fields.bankCode} />
         <DetailRow label="Số tài khoản" value={fields.accountNumber} />
         <DetailRow label="Tên đã nhập" value={fields.accountName} emphasize />
@@ -277,7 +277,7 @@ function CustomLookupResult({
         <p className="text-sm font-semibold text-foreground">
           Kết quả từ nhà cung cấp
         </p>
-        <dl className="mt-2 divide-y rounded-lg border border-border bg-background">
+        <dl className="mt-2 divide-y rounded-lg border border-border bg-card">
           <DetailRow
             label="Tên xác nhận"
             value={result.AccountName}
@@ -412,7 +412,7 @@ export function EmployeeAccountLookupDialog({
               className={cn(
                 "min-h-11 rounded-md px-3 text-sm font-semibold",
                 mode === "employee"
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground",
               )}
             >
@@ -426,7 +426,7 @@ export function EmployeeAccountLookupDialog({
               className={cn(
                 "min-h-11 rounded-md px-3 text-sm font-semibold",
                 mode === "custom"
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-card text-foreground shadow-sm"
                   : "text-muted-foreground",
               )}
             >
@@ -644,7 +644,7 @@ export function EmployeeAccountLookupDialog({
             </div>
           )}
         </div>
-        <DialogFooter className="border-t bg-background px-4 py-3 sm:px-5">
+        <DialogFooter className="border-t bg-card px-4 py-3 sm:px-5">
           <Button
             type="button"
             variant="outline"

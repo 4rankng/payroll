@@ -230,7 +230,7 @@ export const EntryRow = memo(({
           ? 'bg-red-50/30'
           : weekdayInfo?.isSaturday
             ? 'bg-amber-50/40'
-            : 'bg-background';
+            : 'bg-card';
 
   return (
     <>
@@ -284,7 +284,7 @@ export const EntryRow = memo(({
             <span className="text-xs text-muted-foreground">—</span>
           ) : (
             <Select value={entry.dayType || ''} onValueChange={handleDayTypeChange} disabled={isLoading}>
-              <SelectTrigger aria-label={`Loại ngày cho ${entry.employee?.fullname || "nhân viên"}, ${entry.date}`} className="h-6 text-xs border border-transparent bg-transparent px-2 shadow-none focus:ring-0 hover:border-input hover:bg-background rounded transition-colors w-auto max-w-[105px]">
+              <SelectTrigger aria-label={`Loại ngày cho ${entry.employee?.fullname || "nhân viên"}, ${entry.date}`} className="h-6 text-xs border border-transparent bg-transparent px-2 shadow-none focus:ring-0 hover:border-input hover:bg-card rounded transition-colors w-auto max-w-[105px]">
                 <SelectValue placeholder="Loại ngày" />
               </SelectTrigger>
               <SelectContent>
@@ -360,8 +360,8 @@ export const EntryRow = memo(({
                           placeholder="0"
                           className={cn(
                             'w-9 h-6 px-1 text-center text-xs tabular-nums rounded border',
-                            'hover:border-input hover:bg-background',
-                            'focus:border-primary focus:bg-background focus:outline-none focus:ring-1 focus:ring-primary/30',
+                            'hover:border-input hover:bg-card',
+                            'focus:border-primary focus:bg-card focus:outline-none focus:ring-1 focus:ring-primary/30',
                             'transition-all duration-150 placeholder:text-muted-foreground',
                             boxStyle,
                             isDisabled && 'cursor-not-allowed'

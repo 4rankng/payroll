@@ -28,7 +28,7 @@ export const DesktopHeader = ({
     <>
       <header
         className={cn(
-          "flex h-11 shrink-0 items-center gap-3 px-4 border-b border-border/40 bg-background/80 backdrop-blur-sm z-40",
+          "flex h-11 shrink-0 items-center gap-3 px-4 border-b border-border/40 bg-card/80 backdrop-blur-sm z-40",
           className
         )}
       >

@@ -47,7 +47,7 @@ export function PositionCell({
           onChange={e => setEditingPositionValue(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); onSavePosition(); } }}
           onBlur={onSavePosition}
-          className="h-11 border-primary bg-background px-3 text-sm font-semibold"
+          className="h-11 border-primary bg-card px-3 text-sm font-semibold"
           autoFocus
         />
       ) : (

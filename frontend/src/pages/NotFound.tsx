@@ -37,7 +37,7 @@ const NotFound = () => {
   const handlePartnerTimesheet = useCallback(() => navigate('/partner/timesheet'), [navigate]);
 
   return (
-    <div id="main-content" className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div id="main-content" className="min-h-screen flex items-center justify-center bg-card p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-6xl font-bold text-muted-foreground mb-4">

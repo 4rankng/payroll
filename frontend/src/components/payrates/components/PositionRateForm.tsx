@@ -137,7 +137,7 @@ export function PositionRateForm({
                     <select
                       value={copyFromPosition}
                       onChange={(e) => setCopyFromPosition(e.target.value)}
-                      className="typography-body-small bg-background border rounded px-2 py-1"
+                      className="typography-body-small bg-card border rounded px-2 py-1"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <option value="">Sao chép từ...</option>

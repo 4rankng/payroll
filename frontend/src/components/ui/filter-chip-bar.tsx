@@ -36,7 +36,7 @@ export function FilterChipBar({ chips, value, onChange, className }: FilterChipB
               <span
                 className={cn(
                   'w-1.5 h-1.5 rounded-full shrink-0',
-                  isActive ? 'bg-background/70' : chip.dotClass
+                  isActive ? 'bg-card/70' : chip.dotClass
                 )}
               />
             )}

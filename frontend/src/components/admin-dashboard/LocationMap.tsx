@@ -254,7 +254,7 @@ export function LocationMap({
 
       {/* Top floating context panel */}
       <div className="pointer-events-none absolute inset-x-3 top-[calc(env(safe-area-inset-top)+0.75rem)] z-[500] flex justify-start sm:inset-x-auto sm:left-4 sm:top-4 sm:max-w-sm">
-        <div className="pointer-events-auto w-full overflow-hidden rounded-xl border border-white/60 bg-background/90 shadow-none backdrop-blur-md">
+        <div className="pointer-events-auto w-full overflow-hidden rounded-xl border border-white/60 bg-card/90 shadow-none backdrop-blur-md">
           <div className="flex items-start justify-between gap-3 px-3.5 pb-2 pt-3 sm:px-4">
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-2">
@@ -349,7 +349,7 @@ export function LocationMap({
 
           <div className="grid grid-cols-1 gap-2 border-t border-border/50 bg-muted/20 px-3 py-2 min-[380px]:flex min-[380px]:items-center">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Lớp bản đồ</span>
-            <div className="flex w-fit items-center gap-0.5 rounded-full bg-background/70 p-0.5 ring-1 ring-inset ring-border/50 min-[380px]:ml-auto">
+            <div className="flex w-fit items-center gap-0.5 rounded-full bg-card/70 p-0.5 ring-1 ring-inset ring-border/50 min-[380px]:ml-auto">
               <LayerButton
                 active={baseLayer === 'satellite'}
                 onClick={() => switchLayer('satellite')}
@@ -370,7 +370,7 @@ export function LocationMap({
       {/* Bottom-left marker legend */}
       {showMap ? (
         <div className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-3 z-[500] sm:bottom-4 sm:left-4">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full border border-border/50 bg-background/80 px-3 py-1.5 shadow-none backdrop-blur-md">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full border border-border/50 bg-card/80 px-3 py-1.5 shadow-none backdrop-blur-md">
             {effectiveCheckpoints.map((item, i) => {
               const checkpointTone = item.tone ?? 'emerald';
               return (
@@ -452,7 +452,7 @@ function FitBounds({
 
 function StatChip({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border/60 bg-background/65 px-2.5 py-1 text-xs font-medium text-foreground/80">
+    <span className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-border/60 bg-card/65 px-2.5 py-1 text-xs font-medium text-foreground/80">
       <Icon className="h-3 w-3 text-muted-foreground" />
       {label}
     </span>
@@ -500,7 +500,7 @@ function CloseButton({ onClick }: { onClick: () => void }) {
       type="button"
       variant="outline"
       size="icon"
-      className="h-11 w-11 shrink-0 rounded-full border-border/60 bg-background/70 backdrop-blur sm:h-11 sm:w-11"
+      className="h-11 w-11 shrink-0 rounded-full border-border/60 bg-card/70 backdrop-blur sm:h-11 sm:w-11"
       onClick={onClick}
       aria-label="Đóng bản đồ"
     >

@@ -54,6 +54,8 @@ interface ResponsiveTableProps<TData = Record<string, unknown>> {
   stickyFirstColumn?: boolean;
   /** Enables the persisted column show/hide menu under this key. */
   columnVisibilityKey?: string;
+  /** Page controls (search, filters) rendered in the same row as the Cột menu */
+  toolbar?: React.ReactNode;
 
   // Breakpoint for switching (default: md = 768px — tablets render the data
   // table; only phones get the mobile card list)
@@ -85,6 +87,7 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
   density = "dense",
   stickyFirstColumn = true,
   columnVisibilityKey,
+  toolbar,
 }: ResponsiveTableProps<TData>) {
   // Determine breakpoint value
   const breakpointQuery = {
@@ -121,6 +124,7 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
           density={density}
           stickyFirstColumn={stickyFirstColumn}
           columnVisibilityKey={columnVisibilityKey}
+          toolbar={toolbar}
         />
       </div>
     );

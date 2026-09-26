@@ -96,7 +96,7 @@ export function RejectUnpaidTimesheetsDialog({
                     onStartDateChange={form.setFromDate}
                     onEndDateChange={form.setToDate}
                     variant="mobile"
-                    className="min-h-11 w-full min-w-0 justify-between overflow-hidden rounded-lg border border-input bg-background px-3"
+                    className="min-h-11 w-full min-w-0 justify-between overflow-hidden rounded-lg border border-input bg-card px-3"
                     disabled={form.isPending}
                   />
                 ) : (

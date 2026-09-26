@@ -53,7 +53,7 @@ const SortableWidget: React.FC<SortableWidgetProps> = ({ id, children, isDraggin
       )}
     >
       <div
-        className="absolute top-2 left-2 z-10 opacity-0 hover:opacity-100 transition-opacity cursor-move p-2 bg-background/80 backdrop-blur-sm rounded-xl"
+        className="absolute top-2 left-2 z-10 opacity-0 hover:opacity-100 transition-opacity cursor-move p-2 bg-card/80 backdrop-blur-sm rounded-xl"
         {...attributes}
         {...listeners}
       >

@@ -104,7 +104,7 @@ export function StatementDialog({ open, onOpenChange, forMonth: forMonthProp, do
                     "h-8 px-3 rounded-xl text-sm font-medium border transition-colors",
                     selectedStatementMonth === month.value
                       ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-foreground border-border hover:bg-muted"
+                      : "bg-card text-foreground border-border hover:bg-muted"
                   )}
                 >
                   {month.label}

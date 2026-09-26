@@ -82,7 +82,7 @@ export const QuickActionBar = ({
     <TooltipProvider>
       <Card
         className={cn(
-          'fixed z-50 p-2 shadow-sm border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
+          'fixed z-50 p-2 shadow-sm border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60',
           positionClasses[position],
           'transition-all duration-300 ease-in-out',
           isExpanded ? 'scale-100' : 'scale-95',

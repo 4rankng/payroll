@@ -69,7 +69,7 @@ export const EmployeeFiltersBar = ({
           searchPlaceholder="Tìm dự án..."
           emptyMessage="Không tìm thấy dự án."
           triggerAriaLabel="Lọc theo dự án"
-          triggerClassName="min-h-11 sm:min-h-9 w-44 justify-between rounded-xl border-border/60 bg-background text-sm font-medium"
+          triggerClassName="min-h-11 sm:min-h-9 w-44 justify-between rounded-xl border-border/60 bg-card text-sm font-medium"
           contentClassName="w-72 max-w-[calc(100vw-2rem)]"
           options={[
             { value: 'all', label: 'Tất cả dự án' },

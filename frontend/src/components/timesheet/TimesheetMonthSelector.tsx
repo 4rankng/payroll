@@ -50,7 +50,7 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
   return (
     <div
       className={cn(
-        'ct-join grid w-full grid-cols-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-xl border border-border/80 bg-background shadow-sm sm:w-auto',
+        'ct-join grid w-full grid-cols-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm sm:w-auto',
         className,
       )}
     >
@@ -61,7 +61,7 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
           'ct-join-item h-11 border-r border-border/70 px-3 text-xs font-semibold transition-colors whitespace-nowrap sm:h-9 sm:px-2.5',
           value === 'all'
             ? 'bg-foreground text-background'
-            : 'bg-background text-muted-foreground hover:bg-muted hover:text-foreground',
+            : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground',
         )}
       >
         Tất cả

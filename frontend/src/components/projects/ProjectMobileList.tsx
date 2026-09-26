@@ -78,7 +78,7 @@ const ProjectCard = React.memo(function ProjectCard({
       {onTimesheet && (
         <button
           type="button"
-          className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 text-xs font-semibold text-foreground"
+          className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 text-xs font-semibold text-foreground"
           onClick={() => onTimesheet(project)}
         >
           <Calendar className="h-4 w-4" />

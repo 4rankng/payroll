@@ -65,6 +65,8 @@ interface DataTableProps<TData, TValue> {
   mobileBreakpoint?: "sm" | "md" | "lg";
   primaryColumns?: string[]; // Columns to always show on mobile
   caption?: string; // WCAG accessibility
+  /** Page controls (search, filters) rendered in the same row as the Cột menu */
+  toolbar?: React.ReactNode;
   className?: string;
   onRowClick?: (row: TData) => void;
   getRowClassName?: (row: TData) => string; // Custom row styling
@@ -239,6 +241,7 @@ export function DataTable<TData, TValue>({
   density = "comfortable",
   stickyFirstColumn = false,
   columnVisibilityKey,
+  toolbar,
 }: DataTableProps<TData, TValue>) {
   const sorting = externalSorting ?? [];
   const isDense = density === "dense";
@@ -302,37 +305,40 @@ export function DataTable<TData, TValue>({
       data-slot="data-table"
       className={cn(embedded ? "flex flex-col" : "space-y-3", className)}
     >
-      {columnVisibilityKey && (
-        <div className="flex items-center justify-end">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-2 text-xs"
-                aria-label="Chọn cột hiển thị"
-              >
-                <Columns3 className="h-4 w-4" />
-                Cột
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
-              {table
-                .getAllLeafColumns()
-                .filter((col) => col.getCanHide() && col.id !== "actions")
-                .map((col) => (
-                  <DropdownMenuCheckboxItem
-                    key={col.id}
-                    checked={col.getIsVisible()}
-                    onCheckedChange={(value) => col.toggleVisibility(!!value)}
-                    onSelect={(e) => e.preventDefault()}
-                    className="text-xs"
-                  >
-                    {typeof col.columnDef.header === "string" ? col.columnDef.header : col.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+      {(toolbar || columnVisibilityKey) && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{toolbar}</div>
+          {columnVisibilityKey && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-2 text-xs"
+                  aria-label="Chọn cột hiển thị"
+                >
+                  <Columns3 className="h-4 w-4" />
+                  Cột
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="max-h-72 overflow-y-auto">
+                {table
+                  .getAllLeafColumns()
+                  .filter((col) => col.getCanHide() && col.id !== "actions")
+                  .map((col) => (
+                    <DropdownMenuCheckboxItem
+                      key={col.id}
+                      checked={col.getIsVisible()}
+                      onCheckedChange={(value) => col.toggleVisibility(!!value)}
+                      onSelect={(e) => e.preventDefault()}
+                      className="text-xs"
+                    >
+                      {typeof col.columnDef.header === "string" ? col.columnDef.header : col.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       )}
       <div className={cn("hidden", breakpointClass)}>
@@ -347,7 +353,7 @@ export function DataTable<TData, TValue>({
         >
           <Table className="w-full">
               {caption && <caption className="sr-only">{caption}</caption>}
-              <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10">
+              <TableHeader className="sticky top-0 bg-card/95 backdrop-blur-sm z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id} className="border-b hover:bg-transparent">
                     {headerGroup.headers.map((header, headerIndex) => {
@@ -364,7 +370,7 @@ export function DataTable<TData, TValue>({
                             isDense && "h-9 text-[11px] uppercase tracking-wide font-semibold",
                             headerPadding,
                             isFirstColumn &&
-                              "sticky left-0 z-20 bg-background shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)]"
+                              "sticky left-0 z-20 bg-card shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)]"
                           )}
                           style={getColumnSizingStyles(header.column)}
                         >

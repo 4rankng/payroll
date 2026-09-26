@@ -163,7 +163,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   if (override) {
     return (
       <nav
-        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-background/95 backdrop-blur-xl lg:hidden"
+        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-card/95 backdrop-blur-xl lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex min-h-[64px] items-center px-4">{override.content}</div>
@@ -174,7 +174,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   return (
     <>
       <nav
-        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-background/95 backdrop-blur-xl lg:hidden"
+        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-card/95 backdrop-blur-xl lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Điều hướng chính"
       >

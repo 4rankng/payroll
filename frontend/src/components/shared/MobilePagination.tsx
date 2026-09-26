@@ -43,7 +43,7 @@ export const MobilePagination = memo(function MobilePagination({
         <button
           onClick={() => onPageChange(Math.max(1, pagination.page - 1))}
           disabled={pagination.page <= 1}
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background disabled:opacity-40 touch-manipulation active:bg-muted"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card disabled:opacity-40 touch-manipulation active:bg-muted"
           aria-label="Trang trước"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -54,7 +54,7 @@ export const MobilePagination = memo(function MobilePagination({
         <button
           onClick={() => onPageChange(Math.min(pagination.totalPages, pagination.page + 1))}
           disabled={pagination.page >= pagination.totalPages}
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-background disabled:opacity-40 touch-manipulation active:bg-muted"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card disabled:opacity-40 touch-manipulation active:bg-muted"
           aria-label="Trang tiếp"
         >
           <ChevronRight className="h-4 w-4" />

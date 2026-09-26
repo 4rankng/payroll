@@ -112,7 +112,7 @@ export function PartnerTimesheetActions({
               onClick={handlers[action.handler]}
               className="h-auto min-h-[68px] justify-start gap-3 whitespace-normal rounded-xl px-3 py-2.5 text-left"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-background text-muted-foreground">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card text-muted-foreground">
                 <Icon className="h-4 w-4" aria-hidden="true" />
               </span>
               <span className="min-w-0">

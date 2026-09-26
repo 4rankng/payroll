@@ -188,7 +188,7 @@ export function UserMultiSelector({
         <Button
           variant="outline"
           className={cn(
-            'min-h-11 w-full justify-between rounded-md border border-input bg-background px-3 py-2 text-left',
+            'min-h-11 w-full justify-between rounded-md border border-input bg-card px-3 py-2 text-left',
             className
           )}
           disabled={disabled}

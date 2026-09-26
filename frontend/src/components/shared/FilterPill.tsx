@@ -37,7 +37,7 @@ export const FilterPill = React.memo(function FilterPill({
           'group inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-0 text-sm font-medium whitespace-nowrap sm:min-h-9 sm:px-2.5',
           'border transition-colors duration-100 select-none outline-none',
           'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-          !isActive && 'border-border/60 bg-background text-muted-foreground hover:border-border hover:text-foreground hover:bg-accent/40',
+          !isActive && 'border-border/60 bg-card text-muted-foreground hover:border-border hover:text-foreground hover:bg-accent/40',
           isActive && 'border-primary/30 bg-primary/8 text-primary hover:bg-primary/12',
           className,
         )}

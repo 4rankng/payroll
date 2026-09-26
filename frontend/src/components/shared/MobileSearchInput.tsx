@@ -33,7 +33,7 @@ export const MobileSearchInput = React.memo(function MobileSearchInput({
         value={localValue}
         onChange={handleChange}
         aria-label={placeholder}
-        className="h-11 rounded-lg border-border bg-background pl-9 pr-11 sm:pl-9 sm:pr-11"
+        className="h-11 rounded-lg border-border bg-card pl-9 pr-11 sm:pl-9 sm:pr-11"
       />
       {localValue && (
         <button

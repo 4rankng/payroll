@@ -357,8 +357,8 @@ function TimesheetEntrySheetContainer({
 // Default fallback for unknown or unauthorized modals
 function DefaultModalFallback({ modalId, error, onClose }: { modalId: string; error?: string; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-      <div className="bg-background rounded-xl p-6 shadow-sm max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-card/80 backdrop-blur-sm">
+      <div className="bg-card rounded-xl p-6 shadow-sm max-w-md">
         <h3 className="typography-title-large text-destructive mb-2">
           {error || 'Modal không tồn tại'}
         </h3>

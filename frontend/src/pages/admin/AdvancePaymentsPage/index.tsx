@@ -433,94 +433,13 @@ const AdvancePaymentsPage = () => {
             </ActionBar>
           </div>
 
-          {/* Filter row */}
+          {/* Tab label row; search/filter live in the table toolbar now */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-300 bg-white px-3 py-3 sm:px-5">
             <p className="text-sm font-semibold text-slate-800">
               {activeTab === "requests" && "Yêu cầu UL"}
               {activeTab === "employees" && "DS nhân viên"}
               {activeTab === "attendances" && "Điểm danh"}
             </p>
-            <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
-            {activeTab === "requests" && (
-              <>
-                <SearchBar
-                  searchTerm={page.searchInput}
-                  onSearchChange={page.handleSearch}
-                  placeholder="Tên hoặc CCCD..."
-                  className="h-9 w-full min-w-[220px] sm:w-64"
-                />
-                <StatusFilterBar
-                  value={(page.filters.status as AdvancePaymentRequestStatus) || "all"}
-                  onChange={page.handleStatusChange}
-                  counts={page.statusCounts}
-                />
-              </>
-            )}
-
-            {activeTab === "employees" && (
-              <>
-                <SearchBar
-                  searchTerm={page.flexPaySearchInput}
-                  onSearchChange={page.handleFlexPaySearch}
-                  placeholder="Tên hoặc CCCD..."
-                  className="h-9 w-full min-w-[220px] sm:w-64"
-                />
-                <Select
-                  value={page.selectedViewMonth ?? ""}
-                  onValueChange={(v) => page.setSelectedViewMonth(v || undefined)}
-                >
-                  <SelectTrigger className="h-9 w-auto min-w-36 shrink-0 text-sm">
-                    <Calendar className="mr-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                    <SelectValue placeholder="Tháng" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {page.availableMonths.length === 0 ? (
-                      <SelectItem value="none" disabled>
-                        Chưa có dữ liệu
-                      </SelectItem>
-                    ) : (
-                      page.availableMonths.map((m) => (
-                        <SelectItem key={m.forMonth} value={m.forMonth} className="text-sm">
-                          {formatMonthDisplay(m.forMonth)}{!isAdvPartner && ` (${m.employeeCount})`}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </>
-            )}
-
-            {activeTab === "attendances" && (
-              <>
-                <Select
-                  value={attendancePage.filters.status || "all"}
-                  onValueChange={attendancePage.handleStatusChange}
-                >
-                  <SelectTrigger className="h-9 w-auto min-w-36 shrink-0 text-sm bg-white">
-                    <SelectValue placeholder="Trạng thái" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                    <SelectItem value="checked_in">Đang làm</SelectItem>
-                    <SelectItem value="completed">Hoàn thành</SelectItem>
-                    <SelectItem value="orphaned">Thiếu check-out</SelectItem>
-                    <SelectItem value="rejected">Đã từ chối</SelectItem>
-                  </SelectContent>
-                </Select>
-                {!isAdvPartner && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="min-h-9 shrink-0 gap-1.5"
-                    onClick={() => setIsCreateCheckInOpen(true)}
-                  >
-                    <UserRoundCheck data-icon="inline-start" />
-                    Tạo check-in
-                  </Button>
-                )}
-              </>
-            )}
-            </div>
           </div>
 
           {/* Table */}
@@ -531,6 +450,21 @@ const AdvancePaymentsPage = () => {
               mobileFields={requestMobileFields}
               embedded
               columnVisibilityKey="adv-payments:requests"
+              toolbar={
+                <>
+                  <SearchBar
+                    searchTerm={page.searchInput}
+                    onSearchChange={page.handleSearch}
+                    placeholder="Tên hoặc CCCD..."
+                    className="h-9 w-full min-w-[220px] sm:w-64"
+                  />
+                  <StatusFilterBar
+                    value={(page.filters.status as AdvancePaymentRequestStatus) || "all"}
+                    onChange={page.handleStatusChange}
+                    counts={page.statusCounts}
+                  />
+                </>
+              }
               rowTitle={(row: AdvancePaymentListItem) => (
                 <div className="text-[15px] font-semibold text-slate-800">{row.employeeName}</div>
               )}
@@ -555,6 +489,38 @@ const AdvancePaymentsPage = () => {
               mobileFields={flexPayMobileFields}
               embedded
               columnVisibilityKey="adv-payments:employees"
+              toolbar={
+                <>
+                  <SearchBar
+                    searchTerm={page.flexPaySearchInput}
+                    onSearchChange={page.handleFlexPaySearch}
+                    placeholder="Tên hoặc CCCD..."
+                    className="h-9 w-full min-w-[220px] sm:w-64"
+                  />
+                  <Select
+                    value={page.selectedViewMonth ?? ""}
+                    onValueChange={(v) => page.setSelectedViewMonth(v || undefined)}
+                  >
+                    <SelectTrigger className="h-9 w-auto min-w-36 shrink-0 text-sm">
+                      <Calendar className="mr-1 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <SelectValue placeholder="Tháng" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {page.availableMonths.length === 0 ? (
+                        <SelectItem value="none" disabled>
+                          Chưa có dữ liệu
+                        </SelectItem>
+                      ) : (
+                        page.availableMonths.map((m) => (
+                          <SelectItem key={m.forMonth} value={m.forMonth} className="text-sm">
+                            {formatMonthDisplay(m.forMonth)}{!isAdvPartner && ` (${m.employeeCount})`}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                </>
+              }
               rowTitle={(row: FlexPayEmployeeListItem) => (
                 <div className="text-[15px] font-semibold text-slate-800">{row.fullname}</div>
               )}
@@ -582,6 +548,36 @@ const AdvancePaymentsPage = () => {
               mobileFields={attendanceMobileFields}
               embedded
               columnVisibilityKey="adv-payments:attendances"
+              toolbar={
+                <>
+                  <Select
+                    value={attendancePage.filters.status || "all"}
+                    onValueChange={attendancePage.handleStatusChange}
+                  >
+                    <SelectTrigger className="h-9 w-auto min-w-36 shrink-0 text-sm bg-white">
+                      <SelectValue placeholder="Trạng thái" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                      <SelectItem value="checked_in">Đang làm</SelectItem>
+                      <SelectItem value="completed">Hoàn thành</SelectItem>
+                      <SelectItem value="orphaned">Thiếu check-out</SelectItem>
+                      <SelectItem value="rejected">Đã từ chối</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {!isAdvPartner && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="min-h-9 shrink-0 gap-1.5"
+                      onClick={() => setIsCreateCheckInOpen(true)}
+                    >
+                      <UserRoundCheck data-icon="inline-start" />
+                      Tạo check-in
+                    </Button>
+                  )}
+                </>
+              }
               rowTitle={(row: AdminAttendanceResponse) => (
                 <div className="text-[15px] font-semibold text-slate-800">{row.employee_name}</div>
               )}

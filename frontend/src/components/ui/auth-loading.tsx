@@ -2,7 +2,7 @@ import { Loader2 } from "lucide-react";
 
 export function AuthLoadingScreen() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex items-center justify-center min-h-screen bg-card">
       <div className="flex flex-col items-center gap-4">
         <div className="relative">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />

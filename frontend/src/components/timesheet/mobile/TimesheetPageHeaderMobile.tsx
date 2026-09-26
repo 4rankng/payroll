@@ -94,7 +94,7 @@ export function TimesheetPageHeaderMobile({
 
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="h-11 w-11 shrink-0 rounded-xl border-border bg-background shadow-none touch-manipulation" aria-label="Thêm tùy chọn">
+                <Button variant="outline" size="icon" className="h-11 w-11 shrink-0 rounded-xl border-border bg-card shadow-none touch-manipulation" aria-label="Thêm tùy chọn">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </SheetTrigger>

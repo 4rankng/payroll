@@ -25,7 +25,7 @@ export function LoanTypeSelector({ loanType, onChange }: LoanTypeSelectorProps) 
     <div className="space-y-2">
       <Label className="typography-label-medium">Loại khoản vay *</Label>
       <div
-        className="flex w-full flex-col overflow-hidden rounded-xl border border-border bg-background/80 sm:flex-row"
+        className="flex w-full flex-col overflow-hidden rounded-xl border border-border bg-card/80 sm:flex-row"
         role="group"
         aria-label="Chọn loại khoản vay"
       >
@@ -37,7 +37,7 @@ export function LoanTypeSelector({ loanType, onChange }: LoanTypeSelectorProps) 
           className={`flex-1 min-h-[44px] rounded-none font-medium transition-colors ${
             loanType === 'bullet_loan'
               ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'bg-background text-muted-foreground hover:text-foreground'
+              : 'bg-card text-muted-foreground hover:text-foreground'
           }`}
         >
           Lãi trước gốc sau
@@ -50,7 +50,7 @@ export function LoanTypeSelector({ loanType, onChange }: LoanTypeSelectorProps) 
           className={`flex-1 min-h-[44px] rounded-none font-medium transition-colors border-t border-border sm:border-t-0 sm:border-l ${
             loanType === 'amortization'
               ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'bg-background text-muted-foreground hover:text-foreground'
+              : 'bg-card text-muted-foreground hover:text-foreground'
           }`}
         >
           Dư nợ giảm dần
@@ -63,7 +63,7 @@ export function LoanTypeSelector({ loanType, onChange }: LoanTypeSelectorProps) 
           className={`flex-1 min-h-[44px] rounded-none font-medium transition-colors border-t border-border sm:border-t-0 sm:border-l ${
             loanType === 'custom_schedule'
               ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'bg-background text-muted-foreground hover:text-foreground'
+              : 'bg-card text-muted-foreground hover:text-foreground'
           }`}
         >
           Tự thiết lập

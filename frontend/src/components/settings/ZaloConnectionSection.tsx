@@ -116,7 +116,7 @@ const SetupStep = ({ step, label, complete, active }: SetupStepProps) => (
         !complete && active && "border-primary bg-primary/10 text-primary",
         !complete &&
           !active &&
-          "border-border bg-background text-muted-foreground",
+          "border-border bg-card text-muted-foreground",
       )}
       aria-hidden="true"
     >
@@ -599,7 +599,7 @@ export const ZaloConnectionSection = () => {
         title="Dịch vụ sử dụng kết nối"
         description="Chọn nghiệp vụ được phép gửi qua kênh ZNS. Hai dịch vụ hoạt động độc lập trên cùng một kết nối."
       >
-        <div className="overflow-hidden rounded-lg border bg-background">
+        <div className="overflow-hidden rounded-lg border bg-card">
           <label
             htmlFor="zalo-enabled"
             className={cn(

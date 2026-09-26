@@ -126,7 +126,7 @@ export function ExportEmployeesModal({
           <button
             onClick={handleClose}
             disabled={isExporting}
-            className="h-8 px-3 rounded-md text-xs font-medium border border-border bg-background text-foreground hover:bg-muted transition-colors"
+            className="h-8 px-3 rounded-md text-xs font-medium border border-border bg-card text-foreground hover:bg-muted transition-colors"
           >
             Đóng
           </button>

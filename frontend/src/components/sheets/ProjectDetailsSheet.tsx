@@ -334,7 +334,7 @@ function ProjectDetailsSheet({
         >
           {/* Sticky pill tab bar — breaks out of template's content padding, re-pads.
               'info' value kept for the overview tab so URL deep-links remain stable. */}
-          <div className="-mx-4 sm:-mx-6 sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b px-4 sm:px-6 pb-2 pt-0.5">
+          <div className="-mx-4 sm:-mx-6 sticky top-0 z-10 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border-b px-4 sm:px-6 pb-2 pt-0.5">
             <TabsList className="bg-transparent p-0 h-auto w-full inline-flex gap-1 overflow-x-auto">
               <TabsTrigger
                 value="overview"

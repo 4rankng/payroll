@@ -94,7 +94,7 @@ export function UserSelector({
 
   if (isLoading) {
     return (
-      <div className="flex h-10 w-full items-center justify-center rounded-md border border-input bg-background px-3 py-2">
+      <div className="flex h-10 w-full items-center justify-center rounded-md border border-input bg-card px-3 py-2">
         <Loader2 className="h-4 w-4 animate-spin" />
         <span className="ml-2 typography-body-medium text-muted-foreground">
           Đang tải...
@@ -130,7 +130,7 @@ export function UserSelector({
         </SelectValue>
       </SelectTrigger>
       <SelectContent onScroll={handleScroll}>
-        <div className="p-2 border-b sticky top-0 bg-background z-10">
+        <div className="p-2 border-b sticky top-0 bg-card z-10">
           <div className="relative">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input

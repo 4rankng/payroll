@@ -81,7 +81,7 @@ export const HourInputField = memo(
           onKeyDown={handleNumericInputKeyDown}
           className={cn(
             "w-14 h-9 text-center text-base tabular-nums rounded-lg transition-all duration-150",
-            "border bg-background",
+            "border bg-card",
             inputColor,
             "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
             disabled && "cursor-not-allowed",

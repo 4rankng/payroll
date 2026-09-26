@@ -150,7 +150,7 @@ export function SlideSheetTemplate({
         {footer && (
           <div
             className={cn(
-              'flex-shrink-0 px-4 sm:px-6 py-2.5 border-t bg-background',
+              'flex-shrink-0 px-4 sm:px-6 py-2.5 border-t bg-card',
               isMobile && 'pb-[max(10px,calc(10px+env(safe-area-inset-bottom)))]'
             )}
           >

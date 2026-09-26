@@ -39,7 +39,7 @@ const Tag = memo(function Tag({ email, onRemove, primary }: { email: string; onR
       primary ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border',
     )}>
       <span className="max-w-[180px] break-all leading-snug sm:truncate">{email}</span>
-      <button type="button" onClick={onRemove} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-background/70 hover:opacity-80" aria-label={`Xóa ${email}`}>
+      <button type="button" onClick={onRemove} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-card/70 hover:opacity-80" aria-label={`Xóa ${email}`}>
         <X className="h-3 w-3" />
       </button>
     </span>

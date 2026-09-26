@@ -317,7 +317,7 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
                   next[index] = { ...cta, type: e.target.value as AdBannerCTA['type'] };
                   setCtas(next);
                 }}
-                className="h-11 rounded-md border bg-background px-3 text-sm sm:h-9"
+                className="h-11 rounded-md border bg-card px-3 text-sm sm:h-9"
               >
                 {ctaTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -376,7 +376,7 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
               onChange={(e) =>
                 setTargetProjectIds(e.target.value === '' ? [] : [Number(e.target.value)])
               }
-              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+              className="h-11 w-full rounded-md border border-input bg-card px-3 text-sm"
             >
               <option value="">Tất cả dự án</option>
               {projects.map((project) => (
@@ -421,7 +421,7 @@ export const AdBannerComposer = ({ initial, forceFreshWindow = false, onDone }: 
                     'min-h-11 min-w-0 rounded-md px-1.5 text-xs font-medium transition-colors sm:min-h-8 sm:px-3 sm:text-sm',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     preset === option.value
-                      ? 'bg-background text-foreground shadow-sm'
+                      ? 'bg-card text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                 >

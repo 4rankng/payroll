@@ -105,7 +105,7 @@ export const SearchableDropdown = ({
         'inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2.5 py-0 text-xs font-medium outline-none transition-colors duration-100 select-none',
         isMobile ? 'h-11 min-h-11' : 'h-7',
         'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
-        !isActive && 'border-border/60 bg-background text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground',
+        !isActive && 'border-border/60 bg-card text-muted-foreground hover:border-border hover:bg-accent/40 hover:text-foreground',
         isActive && 'border-primary/30 bg-primary/8 text-primary hover:bg-primary/12',
         className,
       )}
@@ -191,7 +191,7 @@ export const SearchableDropdown = ({
             role="region"
             aria-label={mobileTitle ?? placeholder}
             onKeyDown={handleMobilePickerKeyDown}
-            className="fixed inset-x-0 bottom-0 z-[60] flex h-[85dvh] max-h-[42rem] min-h-0 flex-col overflow-hidden rounded-t-2xl border bg-background"
+            className="fixed inset-x-0 bottom-0 z-[60] flex h-[85dvh] max-h-[42rem] min-h-0 flex-col overflow-hidden rounded-t-2xl border bg-card"
           >
             <div className="flex h-14 shrink-0 items-center gap-2 border-b px-2">
               <button

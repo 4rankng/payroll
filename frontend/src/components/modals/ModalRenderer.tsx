@@ -16,8 +16,8 @@ interface ModalRendererProps {
 
 function ModalSkeleton() {
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-      <div className="fixed inset-y-0 right-0 h-full w-full border-l bg-background shadow-sm sm:max-w-sm">
+    <div className="fixed inset-0 z-50 bg-card/80 backdrop-blur-sm">
+      <div className="fixed inset-y-0 right-0 h-full w-full border-l bg-card shadow-sm sm:max-w-sm">
         <div className="flex flex-col h-full">
           <div className="p-6 border-b">
             <Skeleton className="h-6 w-48 mb-2" />
@@ -96,8 +96,8 @@ function ModalLoader({ modalId, params }: { modalId: string; params: Record<stri
 
   if (error) {
     return (
-      <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-        <div className="fixed inset-y-0 right-0 h-full w-full border-l bg-background shadow-sm sm:max-w-sm">
+      <div className="fixed inset-0 z-50 bg-card/80 backdrop-blur-sm">
+        <div className="fixed inset-y-0 right-0 h-full w-full border-l bg-card shadow-sm sm:max-w-sm">
           <div className="flex items-center justify-center h-full p-6">
             <div className="text-center space-y-4">
               <div className="text-red-600 text-lg font-medium">Lỗi tải modal</div>

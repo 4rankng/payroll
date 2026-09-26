@@ -346,7 +346,7 @@ function RemaindersTable({ remainders }: { remainders: SettlementSimulationResul
   return (
     <div className="border rounded-lg overflow-hidden max-h-72 overflow-y-auto">
       <Table>
-        <TableHeader className="sticky top-0 bg-background">
+        <TableHeader className="sticky top-0 bg-card">
           <TableRow>
             <TableHead>Nhân viên</TableHead>
             <TableHead>Dự án</TableHead>

@@ -212,7 +212,7 @@ export const DashboardWidget: React.FC<DashboardWidgetProps> = ({
       
       <CardContent className="relative">
         {isLoading || refreshing ? (
-          <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center">
+          <div className="absolute inset-0 bg-card/50 backdrop-blur-sm z-10 flex items-center justify-center">
             <RefreshCw className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : null}

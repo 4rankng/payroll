@@ -66,7 +66,7 @@ export const FeeScheduleLivePreview = ({ tiers, minFeeVnd }: Props) => {
           value={customAmount}
           onChange={(e) => setCustomAmount(Number(e.target.value) || 0)}
         />
-        <div className="rounded-md bg-background border p-3 space-y-1.5 text-sm">
+        <div className="rounded-md bg-card border p-3 space-y-1.5 text-sm">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Phí</span>
             <span className="font-medium">{formatCurrency(preview.fee)}</span>

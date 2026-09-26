@@ -160,7 +160,7 @@ export function InfiniteList<T>({
         <div
           className={cn(
             "absolute top-0 left-0 right-0 flex items-center justify-center transition-all",
-            "bg-background/80 backdrop-blur-sm",
+            "bg-card/80 backdrop-blur-sm",
             pullDistance > 0 ? "opacity-100" : "opacity-0"
           )}
           style={{

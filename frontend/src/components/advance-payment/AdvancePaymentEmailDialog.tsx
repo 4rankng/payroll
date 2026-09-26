@@ -58,7 +58,7 @@ const Tag = memo(function Tag({ email, onRemove, primary }: { email: string; onR
       primary ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border',
     )}>
       <span className="max-w-[180px] break-all leading-snug sm:truncate">{email}</span>
-      <button type="button" onClick={onRemove} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-background/70 hover:opacity-80" aria-label={`Xóa ${email}`}>
+      <button type="button" onClick={onRemove} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-card/70 hover:opacity-80" aria-label={`Xóa ${email}`}>
         <X className="h-3 w-3" />
       </button>
     </span>
@@ -247,7 +247,7 @@ export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog
                     'min-h-11 px-3 rounded-xl text-sm font-medium border transition-colors',
                     selectedMonth === month.value
                       ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background text-foreground border-border hover:bg-muted',
+                      : 'bg-card text-foreground border-border hover:bg-muted',
                   )}
                 >
                   {month.label}

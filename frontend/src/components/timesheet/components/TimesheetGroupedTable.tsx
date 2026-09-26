@@ -208,7 +208,7 @@ const GroupRow = memo(function GroupRow({
             </TableCell>
             {/* [4] total hours */}
             <TableCell className="border-l border-border/30 px-3 py-2.5 text-right">
-              <span className="inline-flex h-7 min-w-14 items-center justify-end rounded-md bg-background/80 px-2 typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
+              <span className="inline-flex h-7 min-w-14 items-center justify-end rounded-md bg-card/80 px-2 typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
                 {formatTimesheetHours(group.totalHours)}h
               </span>
             </TableCell>
@@ -412,7 +412,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
       onClick={onClick}
       className={cn(
         "cursor-pointer transition-colors hover:bg-primary/[0.045]",
-        entryIdx % 2 === 0 ? "bg-background" : "bg-slate-50/55",
+        entryIdx % 2 === 0 ? "bg-card" : "bg-slate-50/55",
         entryIdx === 0 && !startsAfterProjectHeader ? "border-t border-dashed border-border/50" : "border-t border-border/20",
       )}
     >
