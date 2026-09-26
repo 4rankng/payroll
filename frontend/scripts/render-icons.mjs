@@ -1,5 +1,5 @@
 // Renders the PWA icon set from public/logo-square.png (the brand logo).
-// Sizes follow the manifest + index.html links; the maskable variant keeps the
+// Sizes follow the manifest + index.html links.
 // logo inside the 80% safe zone on the logo's own black background.
 // favicon.ico is written as a PNG-in-ICO (32px) — valid for all modern
 // browsers. Run: node scripts/render-icons.mjs
