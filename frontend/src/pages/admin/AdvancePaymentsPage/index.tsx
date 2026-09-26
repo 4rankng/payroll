@@ -23,14 +23,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Wallet, Calendar, Users, Banknote, UserRoundCheck } from "lucide-react";
+import { Wallet, Calendar, Users, Banknote, UserRoundCheck, EllipsisVertical, Download, FileDown, ArrowRightLeft, ScanFace, History, type LucideIcon } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { StatusFilterBar } from "@/components/advance-payment/StatusFilterBar";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { formatMonthDisplay } from "@/utils/advancePaymentHelpers";
 import { useExportAdvancePayments } from "@/hooks/api/useAdvancePayments";
 import { useAdvancePaymentsPage } from "@/hooks/advance-payment/useAdvancePaymentsPage";
 import { useAdminAttendancePage } from "@/hooks/advance-payment/useAdminAttendancePage";
-import { ImportAction, ExportListAction, ExportBatchAction, UploadResultAction, CheckInAction, HistoryAction } from "@/components/advance-payment/actions";
+import { ImportAction } from "@/components/advance-payment/actions";
 import { ImportPayrollDialog } from "@/components/advance-payment/ImportPayrollDialog";
 import { AdvancePaymentResultUploadDialog } from "@/components/advance-payment/AdvancePaymentResultUploadDialog";
 import { FlexibleEmployeeListUploadDialog } from "@/components/advance-payment/FlexibleEmployeeListUploadDialog";
@@ -407,37 +413,73 @@ const AdvancePaymentsPage = () => {
               onTabChange={(id) => setActiveTab(id as ActiveTab)}
             />
 
-            {/* Single toolbar row: title left, actions right */}
-            <div className="flex flex-wrap items-center justify-between gap-3 py-3">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-semibold text-slate-800">
-                  {activeTab === "requests" && "Yêu cầu ứng lương"}
-                  {activeTab === "employees" && "Danh sách nhân viên ứng lương"}
-                  {activeTab === "attendances" && "Điểm danh"}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <ImportAction onClick={() => setIsImportSheetOpen(true)} />
-                {page.handleExportFlexPayEmployees && (
-                  <ExportListAction
-                    onClick={page.handleExportFlexPayEmployees}
-                    isLoading={page.exportFlexPayMutation.isPending}
-                  />
-                )}
-                {!isAdvPartner && (
-                  <ExportBatchAction
-                    onClick={() => exportBatchMutation.mutate(undefined)}
-                    isLoading={exportBatchMutation.isPending}
-                  />
-                )}
-                {!isAdvPartner && (
-                  <UploadResultAction onClick={() => setIsUploadResultDialogOpen(true)} />
-                )}
-                <CheckInAction onClick={() => navigate("/admin/advance-payments/check-in-settings")} />
-                {!isAdvPartner && (
-                  <HistoryAction onClick={() => setIsHistorySheetOpen(true)} />
-                )}
-              </div>
+            {/* Actions row: primary CTA + everything else in the ⋯ overflow */}
+            <div className="flex items-center justify-end gap-2 py-3">
+              <ImportAction onClick={() => setIsImportSheetOpen(true)} />
+              {(() => {
+                const overflowItems = [
+                  page.handleExportFlexPayEmployees && {
+                    key: "export-list",
+                    label: "Xuất danh sách",
+                    icon: Download,
+                    onClick: () => page.handleExportFlexPayEmployees?.(),
+                    disabled: page.exportFlexPayMutation.isPending,
+                  },
+                  !isAdvPartner && {
+                    key: "export-batch",
+                    label: "Chuyển lô",
+                    icon: FileDown,
+                    onClick: () => exportBatchMutation.mutate(undefined),
+                    disabled: exportBatchMutation.isPending,
+                  },
+                  !isAdvPartner && {
+                    key: "upload-result",
+                    label: "Nhập kết quả",
+                    icon: ArrowRightLeft,
+                    onClick: () => setIsUploadResultDialogOpen(true),
+                  },
+                  {
+                    key: "check-in",
+                    label: "Điểm danh",
+                    icon: ScanFace,
+                    onClick: () => navigate("/admin/advance-payments/check-in-settings"),
+                  },
+                  !isAdvPartner && {
+                    key: "history",
+                    label: "Lịch sử file",
+                    icon: History,
+                    onClick: () => setIsHistorySheetOpen(true),
+                  },
+                ].filter(Boolean) as Array<{ key: string; label: string; icon: LucideIcon; onClick: () => void; disabled?: boolean }>;
+                if (overflowItems.length === 0) return null;
+                return (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-label="Thao tác khác"
+                        title="Thao tác khác"
+                        className="h-9 w-9 p-0"
+                      >
+                        <EllipsisVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      {overflowItems.map((item) => (
+                        <DropdownMenuItem
+                          key={item.key}
+                          onClick={item.onClick}
+                          disabled={item.disabled}
+                        >
+                          <item.icon className="mr-2 h-4 w-4" />
+                          {item.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              })()}
             </div>
           </div>
 
