@@ -361,3 +361,23 @@ func adBannerClickAccountKeyGetter(c *gin.Context) string {
 	// and rejects); namespaced so it never joins the shared per-IP counter.
 	return "adclick-ip:" + c.ClientIP()
 }
+
+// CreateIntegrationAPIRateLimit caps the chatbot integration endpoints per API
+// key (the caller is a machine, so per-IP would lump unrelated chatbots behind
+// one NAT together). Falls back to a namespaced IP bucket when no key id is in
+// context, so it never joins the shared per-IP API counter.
+func CreateIntegrationAPIRateLimit(redisURL string) gin.HandlerFunc {
+	return createRateLimiterWithKey(
+		RateLimitConfig{Rate: "60-H", RedisURL: redisURL},
+		integrationAPIKeyKeyGetter,
+	)
+}
+
+func integrationAPIKeyKeyGetter(c *gin.Context) string {
+	if v, ok := c.Get(constants.CtxAPIKeyID); ok {
+		if id, ok := v.(uint); ok && id != 0 {
+			return "integ-key:" + strconv.FormatUint(uint64(id), 10)
+		}
+	}
+	return "integ-ip:" + c.ClientIP()
+}

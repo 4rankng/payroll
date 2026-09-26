@@ -27,6 +27,7 @@ type Repositories struct {
 	Settlement                domain.SettlementRepository
 	Notification              domain.NotificationRepository
 	Settings                  domain.SettingsRepository
+	APIKey                    domain.APIKeyRepository
 	Asset                     domain.AssetRepository
 	BulkTransferFile          domain.BulkTransferFileRepository
 	Lender                    domain.LenderRepository
@@ -73,6 +74,7 @@ func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositorie
 		Settlement:                persistence.NewSettlementRepository(db.DB),
 		Notification:              persistence.NewNotificationRepository(db),
 		Settings:                  persistence.NewSettingsRepository(db),
+		APIKey:                    persistence.NewAPIKeyRepository(db),
 		Asset:                     persistence.NewAssetRepository(db, eventBus),
 		BulkTransferFile:          persistence.NewBulkTransferFileRepository(db.DB, transactionCodeRepo),
 		Lender:                    persistence.NewLenderRepository(db),

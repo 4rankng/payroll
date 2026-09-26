@@ -7,6 +7,7 @@ import (
 	bootstrapInfra "api-server/internal/app/bootstrap/infrastructure"
 	bootstrapRepos "api-server/internal/app/bootstrap/repositories"
 	bootstrapServices "api-server/internal/app/bootstrap/services"
+	"api-server/internal/app/services/apikey"
 	"api-server/internal/app/services/auth"
 	"api-server/internal/app/services/cleanup"
 	dbExportSvc "api-server/internal/app/services/db_export"
@@ -36,6 +37,7 @@ import (
 	attendanceHandlers "api-server/internal/transport/http/handlers/attendance"
 	disbursementHandlers "api-server/internal/transport/http/handlers/disbursement"
 	employeeHandlers "api-server/internal/transport/http/handlers/employee"
+	integrationHandlers "api-server/internal/transport/http/handlers/integration"
 	pushHandlers "api-server/internal/transport/http/handlers/push"
 	timesheetHandlers "api-server/internal/transport/http/handlers/timesheet"
 	"api-server/internal/transport/http/middleware"
@@ -70,6 +72,9 @@ type Handlers struct {
 	ProjectEmployee      *handlers.ProjectEmployeeHandler
 	AdminClock           *adminHandlers.ClockHandler
 	AdminZalo            *adminHandlers.ZaloHandler
+	APIKey               *adminHandlers.APIKeyHandler
+	IntegrationReset     *integrationHandlers.PasswordResetHandler
+	IntegrationLookup    *integrationHandlers.EmployeeLookupHandler
 	AdminAttendance      *adminHandlers.AttendanceHandler
 	Bank                 *handlers.BankHandler
 	Timesheet            *handlers.TimesheetHandler
@@ -120,6 +125,8 @@ type Middleware struct {
 	APIRateLimit              gin.HandlerFunc
 	StrictRateLimit           gin.HandlerFunc
 	AdBannerClickRateLimit    gin.HandlerFunc
+	IntegrationRateLimit      gin.HandlerFunc // per-api-key cap for /integration/*
+	APIKeyAuth                *middleware.APIKeyAuthMiddleware
 	TenantSemaphore           *middleware.TenantSemaphoreMiddleware
 	APIMetrics                gin.HandlerFunc
 }
@@ -192,7 +199,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 	}
 
 	h := initHandlers(services, repos, infra.DB, infra.Redis, infra.Logger, version, eventBus, cfg, asynqClient, clk, walletBulkSvc)
-	middlewares := initMiddleware(services.Auth, services.Authorization, services.ProjectPermission, services.EmployeePermission, repos.APIMetric, cfg)
+	middlewares := initMiddleware(services.Auth, services.Authorization, services.ProjectPermission, services.EmployeePermission, services.APIKey, repos.APIMetric, cfg, infra.Logger)
 	loanRepaymentReminderService := notification.NewLoanRepaymentReminderService(
 		repos.LoanRepaymentSchedule,
 		repos.User,
@@ -484,6 +491,9 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		ProviderTransactions: adminHandlers.NewWalletPaymentStatsHandler(services.WalletPaymentStats, logger),
 		AdminClock:           adminHandlers.NewClockHandler(clk, cfg.App.Env),
 		AdminZalo:            adminHandlers.NewZaloHandler(services.ZaloConnect),
+		APIKey:               adminHandlers.NewAPIKeyHandler(services.APIKey),
+		IntegrationReset:     integrationHandlers.NewPasswordResetHandler(services.Integration),
+		IntegrationLookup:    integrationHandlers.NewEmployeeLookupHandler(services.Integration),
 		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
 		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, services.WalletDemandForecast, clk),
 		WalletBulkTransfer:   newWalletBulkTransferHandler(walletBulkSvc, logger),
@@ -493,7 +503,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 	}
 }
 
-func initMiddleware(authService *auth.AuthService, authorizationService *auth.AuthorizationService, projectPermissionService *project.ProjectPermissionService, employeePermissionService *employee.EmployeePermissionService, apiMetricRepo domain.APIMetricRepository, cfg *config.Config) *Middleware {
+func initMiddleware(authService *auth.AuthService, authorizationService *auth.AuthorizationService, projectPermissionService *project.ProjectPermissionService, employeePermissionService *employee.EmployeePermissionService, apiKeyService *apikey.Service, apiMetricRepo domain.APIMetricRepository, cfg *config.Config, logger *slog.Logger) *Middleware {
 	tenantLimit := 10
 	if cfg.TenantConcurrencyLimit > 0 {
 		tenantLimit = cfg.TenantConcurrencyLimit
@@ -516,6 +526,8 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 		APIRateLimit:              middleware.CreateAPIRateLimit(cfg.Redis.Addr),
 		StrictRateLimit:           middleware.CreateStrictRateLimit(cfg.Redis.Addr),
 		AdBannerClickRateLimit:    middleware.CreateAdBannerClickRateLimit(cfg.Redis.Addr),
+		IntegrationRateLimit:      middleware.CreateIntegrationAPIRateLimit(cfg.Redis.Addr),
+		APIKeyAuth:                middleware.NewAPIKeyAuthMiddleware(apiKeyService, logger),
 		TenantSemaphore:           middleware.NewTenantSemaphoreMiddleware(tenantLimit),
 		APIMetrics:                middleware.APIMetrics(apiMetricRepo),
 	}

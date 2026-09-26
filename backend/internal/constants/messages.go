@@ -392,6 +392,23 @@ const (
 	MsgZaloResetMobileRequiredVN = "Vui lòng nhập số điện thoại."
 	MsgZaloResetResendTooSoonVN  = "Vui lòng đợi một chút trước khi yêu cầu gửi lại mã."
 
+	// Integration API (machine-key authenticated chatbot channel).
+	MsgAPIKeyMissingVN                = "Thiếu API key. Vui lòng gửi header X-API-Key."
+	MsgAPIKeyInvalidVN                = "API key không hợp lệ hoặc đã bị thu hồi."
+	MsgAPIKeyCreatedVN                = "Đã tạo API key. Hãy sao chép và lưu lại ngay — khoá chỉ hiển thị một lần."
+	MsgAPIKeyRevokedVN                = "Đã thu hồi API key."
+	MsgAPIKeyNotFoundVN               = "Không tìm thấy API key."
+	MsgIntegrationPhoneInvalidVN      = "Số điện thoại không hợp lệ."
+	MsgIntegrationAccountNotFoundVN   = "Không tìm thấy tài khoản với số điện thoại này."
+	MsgIntegrationOTPSentVN           = "Mã đặt lại mật khẩu đã được gửi qua Zalo."
+	MsgIntegrationOTPDisabledVN       = "Tính năng gửi OTP qua Zalo đang tắt. Vui lòng liên hệ quản trị viên."
+	MsgIntegrationOTPSendFailedVN     = "Không gửi được mã OTP. Vui lòng thử lại hoặc liên hệ quản trị viên."
+	MsgIntegrationOTPVerifiedVN       = "Mã xác thực hợp lệ."
+	MsgIntegrationResetTokenInvalidVN = "Phiên đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."
+	MsgIntegrationResetSuccessVN      = "Đặt lại mật khẩu thành công."
+	MsgIntegrationEmployeeFoundVN     = "Tìm thấy nhân viên."
+	MsgIntegrationEmployeeNotFoundVN  = "Không tìm thấy nhân viên với số điện thoại này."
+
 	// Bank Messages - Vietnamese
 	MsgInvalidBankIDVN             = "ID ngân hàng không hợp lệ"
 	MsgBankNotFoundVN              = "Không tìm thấy ngân hàng"

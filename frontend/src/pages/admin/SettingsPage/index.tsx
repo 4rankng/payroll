@@ -24,6 +24,7 @@ import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
 import { SendNotificationComposer } from '@/components/settings/SendNotificationComposer';
 import { ZaloConnectionSection } from '@/components/settings/ZaloConnectionSection';
 import { AdBannerSection } from '@/components/settings/AdBannerSection';
+import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
 
 const SettingsPage = () => {
   const form = useSettingsForm();
@@ -136,6 +137,10 @@ const SettingsPage = () => {
 
         <TabsContent value={SETTINGS_TABS.ads} className="mt-0">
           <AdBannerSection />
+        </TabsContent>
+
+        <TabsContent value={SETTINGS_TABS.apiKeys} className="mt-0">
+          <ApiKeysSection />
         </TabsContent>
       </Tabs>
     </AdminPageCanvas>

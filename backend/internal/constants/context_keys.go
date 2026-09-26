@@ -4,6 +4,11 @@ package constants
 const (
 	CtxUserID   = "user_id"
 	CtxUserRole = "user_role"
+
+	// CtxAPIKeyID / CtxAPIKeyName carry the authenticated machine API key
+	// identity for integration routes (no JWT user exists on those requests).
+	CtxAPIKeyID   = "api_key_id"
+	CtxAPIKeyName = "api_key_name"
 )
 
 // System User ID - used for automated/system operations

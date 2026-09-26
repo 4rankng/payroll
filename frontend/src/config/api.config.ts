@@ -337,6 +337,11 @@ export const API_ENDPOINTS = {
     test: '/admin/zalo/test',
   },
 
+  apiKeys: {
+    base: '/admin/api-keys',
+    byId: (id: number) => `/admin/api-keys/${id}`,
+  },
+
   // Health Check
   health: {
     base: '../healthz',

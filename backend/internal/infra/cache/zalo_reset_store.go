@@ -18,6 +18,13 @@ import (
 // Matches the ZALO_RESET_CODE_TTL default (10m).
 const DefaultZaloResetCodeTTL = 10 * time.Minute
 
+// DefaultZaloResetVerifiedTTL is how long a verified reset token stays usable.
+const DefaultZaloResetVerifiedTTL = 5 * time.Minute
+
+// ErrZaloResetVerifiedNotFound is returned when a verified reset token is
+// absent, expired, or already consumed.
+var ErrZaloResetVerifiedNotFound = errors.New("zalo reset: verified token not found or expired")
+
 // ErrZaloResetSessionNotFound is returned when a session id is absent, expired,
 // or already consumed.
 var ErrZaloResetSessionNotFound = errors.New("zalo reset session not found or expired")
@@ -67,17 +74,28 @@ return uid
 //     which Consume rejects as not-found (a real user ID is always ≥ 1).
 //   - Consume: atomic compare-code-then-delete. Wrong code survives for retry.
 type ZaloResetStore struct {
-	client *redis.Client
-	ttl    time.Duration
+	client      *redis.Client
+	ttl         time.Duration
+	verifiedTTL time.Duration
 }
 
 // NewZaloResetStore constructs a store. ttl defaults to DefaultZaloResetCodeTTL.
+// verifiedTTL (the lifetime of a verified reset token) defaults to
+// DefaultZaloResetVerifiedTTL.
 func NewZaloResetStore(client *redis.Client, ttl time.Duration) *ZaloResetStore {
 	if ttl <= 0 {
 		ttl = DefaultZaloResetCodeTTL
 	}
-	return &ZaloResetStore{client: client, ttl: ttl}
+	return &ZaloResetStore{
+		client:      client,
+		ttl:         ttl,
+		verifiedTTL: DefaultZaloResetVerifiedTTL,
+	}
 }
+
+// TTL returns the configured OTP-session lifetime, so callers can report
+// expires_in without re-reading config.
+func (s *ZaloResetStore) TTL() time.Duration { return s.ttl }
 
 // Create generates a fresh session id, stores "<userID>:<codeHashHex>" under
 // zreset:<sha256(sessionID)> with TTL, and returns the opaque session id.
@@ -156,6 +174,45 @@ func (s *ZaloResetStore) Delete(ctx context.Context, sessionID string) error {
 func zaloSessionKey(sessionID string) string {
 	sum := sha256.Sum256([]byte(sessionID))
 	return "zreset:" + hex.EncodeToString(sum[:])
+}
+
+// CreateVerified mints a single-use token bound to userID after the OTP was
+// verified. The token is stored under zreset-ok:<sha256(token)> with
+// verifiedTTL and is consumed exactly once by ConsumeVerified.
+func (s *ZaloResetStore) CreateVerified(ctx context.Context, userID uint) (string, error) {
+	token, err := newZaloOpaqueID()
+	if err != nil {
+		return "", fmt.Errorf("zalo reset: generate verified token: %w", err)
+	}
+	val := strconv.FormatUint(uint64(userID), 10)
+	if err := s.client.Set(ctx, zaloVerifiedKey(token), val, s.verifiedTTL).Err(); err != nil {
+		return "", fmt.Errorf("zalo reset: write verified token: %w", err)
+	}
+	return token, nil
+}
+
+// ConsumeVerified atomically fetches and deletes a verified reset token
+// (Redis GETDEL — single use). Returns the bound userID. A missing, expired, or
+// already-consumed token returns ErrZaloResetVerifiedNotFound. A Redis outage
+// returns ErrZaloResetStoreUnavailable.
+func (s *ZaloResetStore) ConsumeVerified(ctx context.Context, token string) (uint, error) {
+	val, err := s.client.GetDel(ctx, zaloVerifiedKey(token)).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return 0, ErrZaloResetVerifiedNotFound
+		}
+		return 0, fmt.Errorf("%w: %v", ErrZaloResetStoreUnavailable, err)
+	}
+	uid, err := strconv.ParseUint(val, 10, 64)
+	if err != nil || uid == 0 {
+		return 0, ErrZaloResetVerifiedNotFound
+	}
+	return uint(uid), nil
+}
+
+func zaloVerifiedKey(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return "zreset-ok:" + hex.EncodeToString(sum[:])
 }
 
 // newZaloOpaqueID returns a 256-bit base64url id (≈43 chars, no padding).

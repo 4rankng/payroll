@@ -10,6 +10,7 @@ import (
 	"api-server/internal/app/services"
 	"api-server/internal/app/services/ad_banner"
 	"api-server/internal/app/services/advance_payment"
+	"api-server/internal/app/services/apikey"
 	"api-server/internal/app/services/asset"
 	"api-server/internal/app/services/attendance"
 	"api-server/internal/app/services/auth"
@@ -20,6 +21,7 @@ import (
 	"api-server/internal/app/services/employee"
 	"api-server/internal/app/services/flex_pay"
 	infraServices "api-server/internal/app/services/infrastructure"
+	"api-server/internal/app/services/integration"
 	"api-server/internal/app/services/ledger"
 	"api-server/internal/app/services/loan"
 	"api-server/internal/app/services/notification"
@@ -66,6 +68,8 @@ type Services struct {
 	EmailPasswordReset                *passwordreset.Service         // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
 	ZaloPasswordReset                 *zaloreset.Service             // Employee mobile-channel OTP reset (Phase 2)
 	ZaloConnect                       *zaloconnect.Service           // Admin-managed OA connection + runtime toggle (Phase 4)
+	APIKey                            *apikey.Service                // Machine API keys for the chatbot integration API
+	Integration                       *integration.Service           // Chatbot password-reset + employee lookup (API-key auth)
 	FlexPayZNS                        *zaloconnect.FlexPayZNSService // ZNS notifications for FlexPay salary notifications
 	FlexPaySalaryDelivery             *zaloconnect.SalaryNotificationDeliveryService
 	Auth                              *auth.AuthService
@@ -680,6 +684,15 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		cfg.Zalo.TemplateID, cfg.Zalo.CodeTTL, zaloConnectSvc, eventBus, clk, logger,
 	)
 
+	// Machine API keys + the chatbot integration service. The integration
+	// service reuses the same Zalo store, sender, and enabled-checker as the
+	// self-service reset, but reports outcomes explicitly to the caller.
+	apiKeyService := apikey.NewService(repos.APIKey, clk)
+	integrationService := integration.NewService(
+		zaloResetStore, repos.User, repos.Employee, userService, zaloSender,
+		cfg.Zalo.TemplateID, zaloConnectSvc, eventBus, clk, logger,
+	)
+
 	// FlexPay ZNS service for employee salary notifications
 	flexPayZNSService := zaloconnect.NewFlexPayZNSService(
 		zaloProvider,
@@ -714,6 +727,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		EmailPasswordReset:                emailPasswordResetService,
 		ZaloPasswordReset:                 zaloResetService,
 		ZaloConnect:                       zaloConnectSvc,
+		APIKey:                            apiKeyService,
+		Integration:                       integrationService,
 		FlexPayZNS:                        flexPayZNSService,
 		FlexPaySalaryDelivery:             flexPaySalaryDelivery,
 		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, cfg.Google.ClientID, nonceStore, captchaService, logger),

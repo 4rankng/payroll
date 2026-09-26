@@ -1125,3 +1125,38 @@ type TransactionWithLedgerResponse struct {
 	Transaction   TransactionResponse   `json:"transaction"`
 	LedgerEntries []LedgerEntryResponse `json:"ledger_entries"`
 }
+
+// --- Integration API (chatbot API-key channel) ---
+
+type CreateAPIKeyRequest struct {
+	Name string `json:"name"`
+}
+
+type CreateAPIKeyResponse struct {
+	ID        uint   `json:"id"`
+	Name      string `json:"name"`
+	Key       string `json:"key"`
+	KeyPrefix string `json:"key_prefix"`
+}
+
+type APIKeyListItem struct {
+	ID        uint    `json:"id"`
+	Name      string  `json:"name"`
+	KeyPrefix string  `json:"key_prefix"`
+	RevokedAt *string `json:"revoked_at"`
+}
+
+type IntegrationOTPRequest struct {
+	Phone string `json:"phone"`
+}
+
+type IntegrationOTPResponse struct {
+	Found             bool    `json:"found"`
+	OTPSent           bool    `json:"otp_sent"`
+	SessionID         string  `json:"session_id"`
+	ExpiresIn         int     `json:"expires_in"`
+	OTPLength         int     `json:"otp_length"`
+	EmployeeName      string  `json:"employee_name"`
+	FailureReason     *string `json:"failure_reason"`
+	DeliveryErrorCode int     `json:"delivery_error_code"`
+}
