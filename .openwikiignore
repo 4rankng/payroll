@@ -55,8 +55,6 @@ redis_data/
 # === Other AI tooling (parallel knowledge graphs) ===
 .codegraph/
 graphify-out/
-.ua/
-.understand-anything/
 .kiro
 .claude/
 .crush/

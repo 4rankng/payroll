@@ -86,17 +86,6 @@ Rules:
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 
-## Understand-Anything Knowledge Base
-
-This project has an Understand-Anything knowledge graph at `.ua/knowledge-graph.json` (live, LLM-generated; powers the interactive dashboard, `/understand-chat`, `/understand-diff`, `/understand-domain`, and `/understand-onboard`). It is per-developer and gitignored — never commit `.ua/` or `.understand-anything/`.
-
-Rules:
-- **Keep the KB current after every task that changes code.** When you finish a code change (feature, fix, refactor), run `/understand` so it does an incremental update against the new commit. `autoUpdate: true` is set in `.ua/config.json`. Do this as a standard completion step, alongside `make api-test` — a stale graph misleads every future session.
-- For "how does X flow / where is Y implemented" questions, prefer `/understand-chat` over raw grep once the graph exists.
-- Before non-trivial changes, run `/understand-diff` for impact analysis against the existing graph.
-- For the initial build or a corrupt/stale graph, run `/understand --full` (full rebuild — slow, token-heavy; use sparingly on this ~2500-file repo).
-- The dashboard is launched on demand via `/understand-dashboard`; it is not auto-started.
-
 ## Imported Claude Cowork project instructions
 
 <!-- OPENWIKI:START -->
