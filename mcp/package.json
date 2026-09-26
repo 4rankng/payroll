@@ -1,0 +1,15 @@
+{
+  "name": "payroll-integration-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for the Payroll integration API: employee lookup and Zalo-ZNS password reset (X-API-Key authenticated)",
+  "type": "module",
+  "main": "server.mjs",
+  "bin": { "payroll-integration-mcp": "server.mjs" },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  }
+}
