@@ -1,14 +1,14 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { VariantProps, cva } from "class-variance-authority"
-import { PanelLeft, Menu } from "lucide-react"
+import { PanelLeft, X } from "lucide-react"
 
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Sheet, SheetClose, SheetContent } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -182,6 +182,7 @@ const Sidebar = React.forwardRef<
       collapsible = "offcanvas",
       className,
       children,
+      "aria-label": ariaLabel,
       ...props
     },
     ref
@@ -210,7 +211,12 @@ const Sidebar = React.forwardRef<
             title="Điều hướng"
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+            // `!` keeps the sidebar surface on the drawer: the admin/partner
+            // dialog rules (`html.*-route-active [role="dialog"]`) force the
+            // popover surface onto every portaled dialog, and the nav drawer is
+            // a dialog too. Without this the drawer paints white over its
+            // white-on-emerald nav text.
+            className="w-[--sidebar-width] !bg-sidebar p-0 !text-sidebar-foreground"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -218,7 +224,22 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
-            <div className="flex h-full w-full flex-col">{children}</div>
+            {/* Dismiss control: the scrim and Escape also close the drawer, but
+                a drawer that only closes on an outside tap is undiscoverable. */}
+            <SheetClose
+              aria-label="Đóng điều hướng"
+              className="absolute right-1.5 z-10 flex h-11 w-11 items-center justify-center rounded-xl text-sidebar-foreground/70 transition-colors hover:bg-card/10 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+              style={{ top: "max(0.25rem, env(safe-area-inset-top, 0px))" }}
+            >
+              <X className="h-5 w-5" />
+            </SheetClose>
+            <div
+              role="navigation"
+              aria-label={ariaLabel}
+              className="flex h-full w-full flex-col"
+            >
+              {children}
+            </div>
           </SheetContent>
         </Sheet>
       )
@@ -260,6 +281,8 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
+            role="navigation"
+            aria-label={ariaLabel}
             className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
           >
             {children}
@@ -273,10 +296,9 @@ Sidebar.displayName = "Sidebar"
 
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
-  React.ComponentProps<typeof Button>
->(({ className, onClick, ...props }, ref) => {
+  React.ComponentProps<typeof Button> & { icon?: React.ReactNode }
+>(({ className, onClick, icon, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
-  const isMobile = useIsMobile()
 
   return (
     <Button
@@ -284,24 +306,15 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn(
-        isMobile 
-          ? "h-11 w-11 rounded-xl bg-primary/10 hover:bg-primary/20 active:scale-95 touch-manipulation transition-all duration-200 ease-out shadow-sm border border-primary/20" 
-          : "h-7 w-7", 
-        className
-      )}
+      className={cn("h-7 w-7", className)}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
-{isMobile ? (
-        <Menu className="h-5 w-5 text-primary" />
-      ) : (
-        <PanelLeft />
-      )}
-      <span className="sr-only">Toggle Sidebar</span>
+      {icon ?? <PanelLeft className="h-4 w-4" />}
+      <span className="sr-only">Ẩn/hiện điều hướng</span>
     </Button>
   )
 })
@@ -317,10 +330,10 @@ const SidebarRail = React.forwardRef<
     <button
       ref={ref}
       data-sidebar="rail"
-      aria-label="Toggle Sidebar"
+      aria-label="Ẩn/hiện điều hướng"
       tabIndex={-1}
       onClick={toggleSidebar}
-      title="Toggle Sidebar"
+      title="Ẩn/hiện điều hướng"
       className={cn(
         "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex",
         "[[data-side=left]_&]:cursor-w-resize [[data-side=right]_&]:cursor-e-resize",

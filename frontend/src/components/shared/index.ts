@@ -54,6 +54,7 @@ export { InfoSection, InfoRow, InfoGrid, InfoCell, ActionBar } from './InfoPanel
 export { MobileSearchInput } from './MobileSearchInput';
 
 export { PageHeader } from './PageHeader';
+export { SidebarToggle } from './SidebarToggle';
 
 export { QuickActionBar } from './QuickActionBar';
 

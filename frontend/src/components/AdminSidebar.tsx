@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/tooltip";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserProfileSheet } from "@/components/sheets/UserProfileSheet";
+import { SidebarToggle } from "@/components/shared/SidebarToggle";
 import { useAuth } from "@/contexts";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { MODAL_IDS } from "@/constants/modalRegistry";
@@ -396,18 +397,27 @@ const AdminSidebar = () => {
     <>
       <Sidebar
         collapsible="icon"
+        aria-label="Điều hướng chính"
         className="admin-sidebar-surface border-r border-white/[0.06] bg-[hsl(var(--sidebar-background))]"
       >
         {/* Header — logo */}
         <SidebarHeader className="p-0 shrink-0 border-b border-white/[0.06]">
-          <div className="admin-sidebar-logo flex h-14 items-center justify-center">
+          <div
+            className={cn(
+              "admin-sidebar-logo flex h-14 items-center",
+              isCollapsed ? "justify-center px-1" : "justify-between gap-2 px-3"
+            )}
+          >
             {isCollapsed ? (
-              <img src="/logo-square.png" alt="TingTing" className="h-7 w-7 object-contain" />
+              <SidebarToggle />
             ) : (
-              <div className="flex items-center gap-2.5" aria-label="TingTing">
-                <img src="/logo-square.png" alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
-                <img src="/tingting-white.png" alt="TingTing" className="h-6 w-auto object-contain" />
-              </div>
+              <>
+                <div className="flex min-w-0 items-center gap-2.5" aria-label="TingTing">
+                  <img src="/logo-square.png" alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
+                  <img src="/tingting-white.png" alt="TingTing" className="h-6 w-auto object-contain" />
+                </div>
+                <SidebarToggle />
+              </>
             )}
           </div>
         </SidebarHeader>

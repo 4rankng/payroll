@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/tooltip";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserProfileSheet } from "@/components/sheets/UserProfileSheet";
+import { SidebarToggle } from "@/components/shared/SidebarToggle";
 import { useAuth } from "@/contexts";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { MODAL_IDS } from "@/constants/modalRegistry";
@@ -147,16 +148,21 @@ const PartnerSidebar = () => {
     <>
       <Sidebar
         collapsible="icon"
+        aria-label="Điều hướng chính"
         className="partner-sidebar-surface border-r border-white/[0.06] bg-[hsl(var(--sidebar-background))]"
       >
         {/* Header — logo */}
         <SidebarHeader className="p-0 shrink-0 border-b border-white/[0.06]">
-          <div className="flex items-center justify-center h-14">
-            {isCollapsed ? (
-              <img src="/logo-square.png" alt="TingTing" className="h-7 w-7 object-contain" />
-            ) : (
+          <div
+            className={cn(
+              "flex h-14 items-center",
+              isCollapsed ? "justify-center px-1" : "justify-between gap-2 px-3"
+            )}
+          >
+            {!isCollapsed && (
               <img src="/tingting-white.png" alt="TingTing" className="h-7 object-contain" />
             )}
+            <SidebarToggle />
           </div>
         </SidebarHeader>
 
