@@ -38,7 +38,6 @@ import { AdvPartnerHeroStrip } from "@/components/advance-payment/AdvPartnerHero
 import { AdvPartnerStatusOverview } from "@/components/advance-payment/AdvPartnerStatusOverview";
 import { TreasuryFeePanel } from "@/components/advance-payment/TreasuryFeePanel";
 import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
-import { WalletDemandCard } from "@/components/wallet/WalletDemandCard";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
 import { AttendanceMapDialog } from "@/components/attendance/AttendanceMapDialog";
@@ -63,7 +62,6 @@ import {
 } from "@/utils/attendanceReviewState";
 import type { PayrollReportEmailParams } from "@/components/timesheet/PayrollReportEmailDialog";
 import { useAuth } from "@/contexts";
-import { useWalletDemandForecast } from "@/hooks/api/useWalletDemandForecast";
 
 type AdminTab = "requests" | "attendances";
 
@@ -211,10 +209,6 @@ const AdvancePaymentsPageMobile = () => {
   const creditQuotaMutation = useCreditAttendanceQuota();
   const exportBatchMutation = useExportAdvancePayments();
   const sendEmailMutation = useSendPayrollReportEmail();
-
-  // Demand forecast (advisory) — admin only. adv_partner has no wallet context;
-  // gating the query prevents a 403 storm on this shared mobile component.
-  const { data: demandForecast } = useWalletDemandForecast(!isAdvPartner);
 
   const summaryData = page.summary?.data;
 
@@ -428,11 +422,6 @@ const AdvancePaymentsPageMobile = () => {
               compact
               isLoading={page.summaryLoading}
             />
-            {/* Only when actionable — a satisfied wallet just repeats the
-                balance card rendered above this section. */}
-            {!isAdvPartner && (demandForecast?.prediction?.shortfall ?? 0) > 0 && (
-              <WalletDemandCard compact data={demandForecast} className="p-3.5" />
-            )}
           </div>
         </section>
       </div>

@@ -4,7 +4,6 @@ import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
-import { WalletDemandCard } from "@/components/wallet/WalletDemandCard";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import {
   AlertDialog,
@@ -73,7 +72,6 @@ import { AdvPartnerMetricsStrip } from "@/components/advance-payment/AdvPartnerM
 import { TreasuryFeePanel } from "@/components/advance-payment/TreasuryFeePanel";
 import { TabBarWithBadges } from "@/components/shared/TabBarWithBadges";
 import { useAuth } from "@/contexts";
-import { useWalletDemandForecast } from "@/hooks/api/useWalletDemandForecast";
 import { useIsMobile } from "@/hooks/useBreakpoint";
 import { useMobilePageAnimations } from "@/hooks/useMobilePageAnimations";
 import { cn } from "@/lib/utils";
@@ -112,14 +110,6 @@ const AdvancePaymentsPage = () => {
   const page = useAdvancePaymentsPage({ employeesTabActive: activeTab === "employees" });
   const attendancePage = useAdminAttendancePage({ active: activeTab === "attendances" });
   const exportBatchMutation = useExportAdvancePayments();
-
-  // Demand forecast (advisory) — admin only. adv_partner has no wallet context;
-  // gating the query prevents a 403 storm on the shared mobile component.
-  const { data: demandForecast } = useWalletDemandForecast(!isAdvPartner);
-  // The demand panel only earns a band slot when it carries an actionable
-  // warning — a satisfied wallet would just re-display the Ví tiền balance
-  // that Panel 1 already shows.
-  const needsTopUp = (demandForecast?.prediction?.shortfall ?? 0) > 0;
 
   const summaryData = page.summary?.data;
 
@@ -310,9 +300,7 @@ const AdvancePaymentsPage = () => {
             "treasury-grid grid",
             isAdvPartner
               ? "grid-cols-1 lg:grid-cols-[1fr_300px]"
-              : needsTopUp
-                ? "grid-cols-1 lg:grid-cols-4"
-                : "grid-cols-1 lg:grid-cols-3",
+              : "grid-cols-1 lg:grid-cols-3",
           )}>
 
             {/* Panel A: Wallet — admins only (desktop only; mobile shows it above) */}
@@ -341,11 +329,6 @@ const AdvancePaymentsPage = () => {
               isLoading={page.summaryLoading}
               compact={!isAdvPartner}
             />
-
-            {/* Panel D: Wallet top-up warning — admins, only when actionable */}
-            {!isAdvPartner && needsTopUp && (
-              <WalletDemandCard data={demandForecast} compact className="p-3.5" />
-            )}
           </div>
         </section>
 

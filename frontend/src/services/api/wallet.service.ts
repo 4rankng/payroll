@@ -13,7 +13,6 @@ import type {
   ReconciliationJob,
   SyncBalanceResponse,
   AdjustBalanceRequest,
-  WalletDemandForecastResponse,
 } from '../../types/api/wallet.types';
 
 const WALLET_BASE_PATH = '/wallet';
@@ -22,13 +21,6 @@ export const walletService = {
   // ── Balance ──────────────────────────────────────────────────────────────
   async getBalance(): Promise<WalletBalance> {
     const r = await apiClient.get<WalletBalance>(`${WALLET_BASE_PATH}/balance`);
-    return r.data!;
-  },
-
-  async getDemandForecast(): Promise<WalletDemandForecastResponse> {
-    const r = await apiClient.get<WalletDemandForecastResponse>(
-      `${WALLET_BASE_PATH}/demand-forecast`,
-    );
     return r.data!;
   },
 
