@@ -178,40 +178,11 @@ type AdvancePaymentRequestRepository interface {
 	// CountByStatusInWindow returns request counts grouped by status for rows created
 	// within [since, until). Used by the health dashboard throughput tiles.
 	CountByStatusInWindow(ctx context.Context, since, until time.Time) (map[AdvancePaymentRequestStatus]int64, error)
-	// GetCohortByMonths returns cohort rows (one per for_month × cycle-day × status)
-	// for the given for_months, scoped to flexible-schedule project assignments.
-	// Used by the wallet demand-forecast chart and prediction. cycle_day is 1-indexed
-	// from the period start (day 20 of for_month); the persistence layer derives it in
-	// Asia/Ho_Chi_Minh so prod UTC created_at values resolve to the correct local day.
-	GetCohortByMonths(ctx context.Context, forMonths []string) ([]CohortRow, error)
-	// GetCycleForecastState returns the current uploaded advance capacity and the
-	// gross amount already consuming it. The capacity is a ceiling for projected
-	// future demand, never a substitute for demand from actual requests.
-	GetCycleForecastState(ctx context.Context, forMonth string) (*AdvancePaymentCycleForecastState, error)
 	// GetCompletedDisbursedTotal returns the total already disbursed for one
 	// salary period: SUM(request_amount) over COMPLETED requests joined to
 	// advance_payments by for_month — the same figure the admin summary's
 	// "Giải ngân kỳ này" tile shows.
 	GetCompletedDisbursedTotal(ctx context.Context, forMonth string) (int64, error)
-}
-
-// CohortRow is one cell of the advance-payment request cohort matrix: the request
-// count and total net employee-requested amount (request_amount - fee) for a
-// given period (for_month), cycle-day, and status. It is demand from actual
-// advance_payment_requests, not quota/max_adv_amount.
-type CohortRow struct {
-	ForMonth     string `gorm:"column:for_month"`
-	CycleDay     int    `gorm:"column:cycle_day"`
-	Status       string `gorm:"column:status"`
-	RequestCount int64  `gorm:"column:request_count"`
-	TotalAmount  int64  `gorm:"column:total_amount"`
-}
-
-// AdvancePaymentCycleForecastState is the authoritative in-progress cycle state
-// used to bound a pace-adjusted wallet forecast.
-type AdvancePaymentCycleForecastState struct {
-	MaxAdvanceAmount  uint64 `gorm:"column:max_advance_amount"`
-	UsedRequestAmount uint64 `gorm:"column:used_request_amount"`
 }
 
 type AdvancePaymentStatsSummary struct {

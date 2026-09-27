@@ -31,7 +31,6 @@ type Config struct {
 	Captcha        CaptchaConfig
 	PasswordReset  PasswordResetConfig
 	Zalo           ZaloConfig
-	WalletForecast WalletForecastConfig
 	CashForecast   CashForecastConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
@@ -208,34 +207,6 @@ type DisbursementConfig struct {
 func (d DisbursementConfig) EmployeeDisbursementEnabled() bool {
 	return (d.Ninepay.Enabled && d.Ninepay.EnabledForEmployee) ||
 		(d.Onepay.Enabled && d.Onepay.EnabledForEmployee)
-}
-
-// WalletForecastConfig governs the advisory wallet demand-forecast newsvendor
-// knob. The forecast is DISPLAY ONLY (must not feed SyncBalance/CreateTopup);
-// these values only shape the recommended balance shown on the Wallet page.
-//
-// Service-level resolution (in precedence order):
-//   - ServiceLevel > 0 → use it directly as the target quantile p*.
-//   - else if CostUnder+CostOver > 0 → p* = CostUnder/(CostUnder+CostOver).
-//   - else → 0.95.
-//
-// All fields optional; defaults give p*=0.95, a 5000-draw Monte Carlo, a 6-month
-// cohort lookback, 2-day lead-window metadata, and no extra safety stock.
-type WalletForecastConfig struct {
-	ServiceLevel      float64 // env WALLET_FORECAST_SERVICE_LEVEL, default 0.95
-	CostUnder         float64 // env WALLET_FORECAST_COST_UNDER (Cu), default 0
-	CostOver          float64 // env WALLET_FORECAST_COST_OVER (Co), default 0
-	NSim              int     // env WALLET_FORECAST_N_SIM, default 5000
-	HistoryMonths     int     // env WALLET_FORECAST_HISTORY_MONTHS, default 6
-	LeadDays          int     // response metadata; env WALLET_FORECAST_LEAD_DAYS, default 2
-	UncertaintyFactor float64 // env WALLET_FORECAST_UNCERTAINTY_FACTOR, default 0
-	// PaceScaleCap bounds how far the current cycle's pace may upscale the
-	// historical remaining-cycle distribution during conditioning. The tail
-	// spread is historical evidence — multiplying the worst observed tail by a
-	// large pace ratio (outlier cycles produce 5-8x) compounds two safety
-	// margins. env WALLET_FORECAST_PACE_SCALE_CAP, default 2. Down-scaling is
-	// never capped.
-	PaceScaleCap float64
 }
 
 // CashForecastConfig governs the advisory timesheet cash-readiness forecast on
@@ -484,16 +455,6 @@ func Load() (*Config, error) {
 			CodeTTL:    parseDuration(getEnv("CAPTCHA_CODE_TTL", "5m")),
 			CodeLength: parseInt(getEnv("CAPTCHA_CODE_LENGTH", "5")),
 		},
-		WalletForecast: WalletForecastConfig{
-			ServiceLevel:      parseFloat(getEnv("WALLET_FORECAST_SERVICE_LEVEL", "0.95")),
-			CostUnder:         parseFloat(getEnv("WALLET_FORECAST_COST_UNDER", "0")),
-			CostOver:          parseFloat(getEnv("WALLET_FORECAST_COST_OVER", "0")),
-			NSim:              parseInt(getEnv("WALLET_FORECAST_N_SIM", "5000")),
-			HistoryMonths:     parseInt(getEnv("WALLET_FORECAST_HISTORY_MONTHS", "6")),
-			LeadDays:          parseInt(getEnv("WALLET_FORECAST_LEAD_DAYS", "2")),
-			UncertaintyFactor: parseFloat(getEnv("WALLET_FORECAST_UNCERTAINTY_FACTOR", "0")),
-			PaceScaleCap:      parseFloat(getEnv("WALLET_FORECAST_PACE_SCALE_CAP", "2")),
-		},
 		CashForecast: CashForecastConfig{
 			ServiceLevel:              parseFloat(getEnv("CASH_FORECAST_SERVICE_LEVEL", "0.95")),
 			NSim:                      parseInt(getEnv("CASH_FORECAST_N_SIM", "5000")),
@@ -691,33 +652,6 @@ func (c *Config) validate() error {
 			"config: ENABLE_NINEPAY_FOR_BULK_TRANSFER and ENABLE_ONEPAY_FOR_BULK_TRANSFER are both true; " +
 				"exactly one provider may handle bulk transfers — " +
 				"set one to false",
-		)
-	}
-
-	// Wallet forecast service-level: an explicit quantile must be a valid
-	// probability; costs must be non-negative. When ServiceLevel==0 and both
-	// costs are 0, the reader falls back to the 0.95 default (not an error).
-	if c.WalletForecast.ServiceLevel > 0 && c.WalletForecast.ServiceLevel > 1 {
-		return fmt.Errorf(
-			"config: WALLET_FORECAST_SERVICE_LEVEL must be in (0, 1], got %v",
-			c.WalletForecast.ServiceLevel,
-		)
-	}
-	if c.WalletForecast.CostUnder < 0 || c.WalletForecast.CostOver < 0 {
-		return fmt.Errorf(
-			"config: WALLET_FORECAST_COST_UNDER / _COST_OVER must be non-negative",
-		)
-	}
-	if c.WalletForecast.LeadDays < 0 {
-		return fmt.Errorf(
-			"config: WALLET_FORECAST_LEAD_DAYS must be non-negative, got %d",
-			c.WalletForecast.LeadDays,
-		)
-	}
-	if c.WalletForecast.UncertaintyFactor < 0 || c.WalletForecast.UncertaintyFactor > 1 {
-		return fmt.Errorf(
-			"config: WALLET_FORECAST_UNCERTAINTY_FACTOR must be in [0, 1], got %v",
-			c.WalletForecast.UncertaintyFactor,
 		)
 	}
 

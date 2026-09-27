@@ -119,26 +119,16 @@ FlexPay lifecycle, fee calculation, import/export, reconciliation, settlement, f
 |--------|------|---------|
 | POST | `/request` | Create advance payment request |
 | POST | `/:id/cancel` | Cancel request |
-| GET | `/demand-forecast` | Wallet demand forecast |
 
 ### Wallet (`/api/v1/wallet`)
 
-Balance sync/adjust, topups, payments, demand forecast, reconciliation.
+Balance sync/adjust, topups, payments, reconciliation.
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/balance` | Get wallet balance |
 | POST | `/balance/sync` | Sync balance from provider |
 | POST | `/payments/:id/resolve` | Resolve a pending payment |
-| GET | `/demand-forecast` | Wallet demand forecast |
-
-During an active flexible-pay cycle, `GET /demand-forecast` conditions the
-remaining-cycle distribution on requests already observed and payments already
-completed. The uploaded `max_adv_amount` total is used only as a ceiling on
-future projected requests; unused employee entitlement is not treated as
-guaranteed demand. `PENDING` and `APPROVED` obligations remain additive,
-including carryover from older cycles. The response is advisory-only and cannot
-initiate a wallet top-up or disbursement.
 
 ### Disbursement (`/api/v1/`)
 

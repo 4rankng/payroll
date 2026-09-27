@@ -4,19 +4,13 @@ import (
 	"math"
 	"math/rand/v2"
 	"sort"
-	"time"
-
-	"api-server/internal/domain"
-	"api-server/internal/pkg/clock"
 )
 
-// This file holds the PURE, I/O-free math for the wallet demand-forecast:
-// cycle-day derivation, cohort pivoting, the projected-total forecast, and the
-// completion rate. Keeping it free of repository/wallet/clock-now dependencies
-// makes the forecast logic trivially unit-testable.
-//
-// Period model: the advance-payment period for forMonth M runs from day 20 of M
-// through day 8 (= clock.RequestCutoffDay) of M+1. Cycle day 1 = day 20 of M.
+// This file holds the PURE, I/O-free statistical engine behind the
+// cash-readiness forecast (TimesheetAccrualProvider.ProjectAccrual): cohort
+// series, the newsvendor/Monte-Carlo demand distributions, and the growth
+// EWMA. Keeping it free of repository/wallet/clock-now dependencies makes the
+// forecast logic trivially unit-testable.
 
 // cohortSeries is the per-period pivot of raw cohort rows: daily and cumulative
 // net employee-requested amounts (request_amount - fee), plus completed/grand
@@ -29,8 +23,6 @@ type cohortSeries struct {
 	maxCycleDay    int
 	dailyAmount    map[int]int64
 	cumulative     map[int]int64
-	completedTotal int64
-	payableTotal   int64
 	grandTotal     int64
 }
 
@@ -44,211 +36,6 @@ func (s cohortSeries) cumulativeAt(day int) int64 {
 		day = s.maxCycleDay
 	}
 	return s.cumulative[day]
-}
-
-// daysInMonth returns the calendar day count for (year, month).
-func daysInMonth(year int, month time.Month) int {
-	return time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC).Day()
-}
-
-// maxCycleDay returns the last cycle-day index for the period that begins on
-// day 20 of forMonth: (daysInMonth(forMonth) - 20 + 1) + RequestCutoffDay.
-// 30-day June → 20; 31-day July → 21; 28-day Feb → 18; 29-day Feb → 19.
-func maxCycleDay(forMonth string) int {
-	m, err := clock.ParseMonth(forMonth)
-	if err != nil {
-		return 0
-	}
-	return (daysInMonth(m.Year(), m.Month()) - clock.PeriodCycleStartDay + 1) + clock.RequestCutoffDay
-}
-
-// forecastHorizonCycleDay returns the cycle day covered by the configured lead
-// window. It is retained as response metadata; the remaining-cycle wallet target
-// is not limited by this horizon.
-func forecastHorizonCycleDay(now time.Time, forMonth string, leadDays int) int {
-	if leadDays < 0 {
-		leadDays = 0
-	}
-	start, end, ok := periodWindow(forMonth)
-	if !ok {
-		return 0
-	}
-	today := dateOnly(now.In(clock.DefaultLocation))
-	leadEnd := today.AddDate(0, 0, leadDays)
-	if leadEnd.Before(start) || today.After(end) {
-		return 0
-	}
-	if leadEnd.After(end) {
-		return maxCycleDay(forMonth)
-	}
-	return cycleDayFor(leadEnd, forMonth)
-}
-
-func periodWindow(forMonth string) (time.Time, time.Time, bool) {
-	m, err := clock.ParseMonth(forMonth)
-	if err != nil {
-		return time.Time{}, time.Time{}, false
-	}
-	start := time.Date(m.Year(), m.Month(), clock.PeriodCycleStartDay, 0, 0, 0, 0, clock.DefaultLocation)
-	return start, start.AddDate(0, 0, maxCycleDay(forMonth)-1), true
-}
-
-func dateOnly(t time.Time) time.Time {
-	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, clock.DefaultLocation)
-}
-
-// cycleDayFor returns the 1-indexed cycle day of t within the period that begins
-// on day 20 of forMonth. Day 20 of forMonth -> 1; day 8 of the next month ->
-// maxCycleDay. Returns 0 when t falls outside the [day-20, day-8] window.
-func cycleDayFor(t time.Time, forMonth string) int {
-	m, err := clock.ParseMonth(forMonth)
-	if err != nil {
-		return 0
-	}
-	year, month := m.Year(), m.Month()
-
-	// Same calendar month as forMonth: days 20..end.
-	if t.Year() == year && t.Month() == month && t.Day() >= clock.PeriodCycleStartDay {
-		return t.Day() - clock.PeriodCycleStartDay + 1
-	}
-	// Next calendar month: days 1..RequestCutoffDay.
-	nextMonth := time.Date(year, month, 1, 0, 0, 0, 0, clock.DefaultLocation).AddDate(0, 1, 0)
-	if t.Year() == nextMonth.Year() && t.Month() == nextMonth.Month() && t.Day() >= 1 && t.Day() <= clock.RequestCutoffDay {
-		return (daysInMonth(year, month) - clock.PeriodCycleStartDay + 1) + t.Day()
-	}
-	return 0
-}
-
-// pivotCohort builds the per-period series from raw cohort rows, dropping rows
-// outside [1, maxCycleDay] (locked-gap stragglers / out-of-window noise) and
-// rows tagged with a different forMonth. Excluding locked-gap stragglers is
-// intended product behavior (confirmed 2026-09-17): requests created after the
-// cutoff (days 9-19) are ignored by the forecast history — do not "fix" them
-// into the cohort.
-// rows tagged with a different forMonth.
-func pivotCohort(rows []domain.CohortRow, forMonth string, isCurrent bool) cohortSeries {
-	maxDay := maxCycleDay(forMonth)
-	s := cohortSeries{
-		forMonth:    forMonth,
-		isCurrent:   isCurrent,
-		maxCycleDay: maxDay,
-		dailyAmount: make(map[int]int64),
-	}
-	for _, r := range rows {
-		if r.ForMonth != forMonth {
-			continue
-		}
-		if r.CycleDay < 1 || r.CycleDay > maxDay {
-			continue
-		}
-		s.dailyAmount[r.CycleDay] += r.TotalAmount
-		s.grandTotal += r.TotalAmount
-		if r.Status == string(domain.AdvancePaymentStatusCompleted) {
-			s.completedTotal += r.TotalAmount
-		}
-		if r.Status == string(domain.AdvancePaymentStatusPending) ||
-			r.Status == string(domain.AdvancePaymentStatusApproved) {
-			s.payableTotal += r.TotalAmount
-		}
-	}
-	s.cumulative = make(map[int]int64, maxDay)
-	var run int64
-	for d := 1; d <= maxDay; d++ {
-		run += s.dailyAmount[d]
-		s.cumulative[d] = run
-	}
-	return s
-}
-
-// forecastProjectedTotal estimates the total request volume the current period
-// will reach, based on how far along historical periods were at todayCycleDay.
-//
-//   - cohort-median: ≥2 historical periods with a valid (0,1] ratio at
-//     todayCycleDay (and todayCycleDay ≥ 5) → median(actualSoFar / ratio_h).
-//   - avg-final: otherwise, if any historical period has a final total → mean.
-//   - no-history: no usable historical data → actualSoFar.
-//
-// Returns (projected, method, basisPeriods, confidence).
-func forecastProjectedTotal(actualSoFar int64, historical []cohortSeries, todayCycleDay int) (projected int64, method string, basis int, confidence string) {
-	var scales []float64
-	for _, h := range historical {
-		final := h.grandTotal
-		if final <= 0 {
-			continue
-		}
-		cumThrough := h.cumulativeAt(todayCycleDay)
-		if cumThrough <= 0 {
-			continue
-		}
-		r := float64(cumThrough) / float64(final)
-		if r >= paceScaleFloor && r <= 1 {
-			scales = append(scales, r)
-		}
-	}
-
-	if todayCycleDay >= 5 && len(scales) >= 2 {
-		projections := make([]float64, len(scales))
-		for i, sc := range scales {
-			projections[i] = float64(actualSoFar) / sc
-		}
-		sort.Float64s(projections)
-		var median float64
-		n := len(projections)
-		if n%2 == 1 {
-			median = projections[n/2]
-		} else {
-			median = (projections[n/2-1] + projections[n/2]) / 2
-		}
-		return int64(math.Round(median)), "cohort-median", len(scales), "high"
-	}
-
-	var sumFinal int64
-	var nFinal int
-	for _, h := range historical {
-		if h.grandTotal > 0 {
-			sumFinal += h.grandTotal
-			nFinal++
-		}
-	}
-	if nFinal > 0 {
-		confidence := "medium"
-		if nFinal < 2 {
-			confidence = "low" // single basis period
-		}
-		return sumFinal / int64(nFinal), "avg-final", nFinal, confidence
-	}
-	return actualSoFar, "no-history", 0, "low"
-}
-
-// paceScaleFloor is the minimum fraction of a historical period's final total
-// that must be observable at todayCycleDay for that period to contribute a
-// pace ratio. A period with less than this observed has effectively not
-// started (batch-driven cycles dump their volume days later); inverting a
-// near-zero ratio projects an absurd multiple of actual demand — e.g. a
-// 0.5%-by-day-6 period turned 209M of observed payout into a 44B projection,
-// pinned the forecast to the wallet ceiling, and surfaced "Cần nạp thêm
-// 1.5 tỷ". Such periods are dropped; the remaining scales decide.
-const paceScaleFloor = 0.02
-
-// completionRate is Σ COMPLETED amount / Σ all amount over historical periods,
-// clamped to [0,1]. Returns 0 when there is no historical volume.
-func completionRate(historical []cohortSeries) float64 {
-	var completed, all int64
-	for _, h := range historical {
-		completed += h.completedTotal
-		all += h.grandTotal
-	}
-	if all <= 0 {
-		return 0
-	}
-	r := float64(completed) / float64(all)
-	if r < 0 {
-		return 0
-	}
-	if r > 1 {
-		return 1
-	}
-	return r
 }
 
 // --- Newsvendor / tail-risk engine ---------------------------------------
@@ -463,43 +250,6 @@ func forecastDemandDistributionBetween(
 			r = 0
 		}
 		rem = append(rem, r)
-	}
-	return forecastDemandDistributionFromRemaining(historical, rem, nSim, rngSeed, pf)
-}
-
-// forecastRemainingCycleDistribution keeps the unobserved part of the current
-// cycle day in the forecast without counting demand already seen today twice.
-// Future cycle days are always included in full.
-func forecastRemainingCycleDistribution(
-	historical []cohortSeries,
-	todayCycleDay int,
-	throughCycleDay int,
-	observedToday int64,
-	nSim int,
-	rngSeed int64,
-	paidFrac float64,
-) demandDistribution {
-	pf := clampF(paidFrac, 0, 1)
-	var rem []float64
-	for _, h := range historical {
-		if h.grandTotal <= 0 {
-			continue
-		}
-
-		futureAmount := int64(0)
-		if throughCycleDay > todayCycleDay {
-			endAmount := h.cumulativeAt(throughCycleDay)
-			if throughCycleDay > h.maxCycleDay {
-				endAmount = h.grandTotal
-			}
-			futureAmount = endAmount - h.cumulativeAt(todayCycleDay)
-		}
-
-		sameDayResidual := int64(0)
-		if todayCycleDay >= 1 && todayCycleDay <= throughCycleDay {
-			sameDayResidual = max(int64(0), h.dailyAmount[todayCycleDay]-observedToday)
-		}
-		rem = append(rem, float64(max(int64(0), futureAmount)+sameDayResidual))
 	}
 	return forecastDemandDistributionFromRemaining(historical, rem, nSim, rngSeed, pf)
 }
@@ -829,16 +579,6 @@ func confidenceLabel(dist demandDistribution) string {
 		}
 		return "high"
 	}
-}
-
-// forecastSeed derives a deterministic seed from the period and cycle day so the
-// same request returns stable numbers within a day (no UI flicker on refetch).
-func forecastSeed(forMonth string, todayCycleDay int) int64 {
-	m, err := clock.ParseMonth(forMonth)
-	if err != nil {
-		return int64(todayCycleDay)
-	}
-	return int64(m.Year())*10000 + int64(m.Month())*100 + int64(todayCycleDay)
 }
 
 // meanF returns the arithmetic mean of xs (0 if empty).

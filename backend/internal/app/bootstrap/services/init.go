@@ -130,7 +130,6 @@ type Services struct {
 	ProviderTransactions              *disbursement.WalletPaymentService
 	WalletPaymentStats                *disbursement.StatsService
 	Wallet                            wallet.WalletService
-	WalletDemandForecast              *services.WalletDemandForecastService
 	CashReadiness                     *services.CashReadinessForecastService
 	NinepayCloser                     io.Closer
 	NinePayBulkTransfer               *bulktransfer.NinePayBulkTransferService
@@ -552,7 +551,6 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	}
 
 	walletService := services.NewWalletService(repos.WalletTopup, repos.WalletPayment, disbursementRegistry)
-	walletDemandForecastService := services.NewWalletDemandForecastService(repos.AdvancePaymentRequest, repos.AdvancePayment, walletService, clk, cfg.WalletForecast)
 	cashReadinessService := services.NewCashReadinessForecastService(
 		repos.Timesheet,
 		walletService,
@@ -790,7 +788,6 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		WalletPaymentStats:                walletPaymentStats,
 		NinepayCloser:                     ninepayCloser,
 		Wallet:                            walletService,
-		WalletDemandForecast:              walletDemandForecastService,
 		CashReadiness:                     cashReadinessService,
 		NinePayBulkTransfer:               autoBulkTransferSvc,
 		AutoBulkTransfer:                  asAutoBulkTransfer(autoBulkTransferSvc),

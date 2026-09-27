@@ -495,7 +495,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		IntegrationReset:     integrationHandlers.NewPasswordResetHandler(services.Integration),
 		IntegrationLookup:    integrationHandlers.NewEmployeeLookupHandler(services.Integration),
 		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
-		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, services.WalletDemandForecast, clk),
+		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, clk),
 		WalletBulkTransfer:   newWalletBulkTransferHandler(walletBulkSvc, logger),
 		AdvPartnerUser:       advPartnerHandlers.NewUserHandler(services.Employee, services.ProjectEmployee, services.User),
 		BCCImport:            timesheetHandlers.NewBCCImportHandler(services.BCCImport, repos.Asset, fileStorage, services.ProjectPermission, services.Audit),
