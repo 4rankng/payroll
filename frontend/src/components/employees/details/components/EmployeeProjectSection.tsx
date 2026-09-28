@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Building, Link, Unlink, Plus, Calendar, Clock, AlertCircle, X, Pencil, Check } from "lucide-react";
+import { Building, Link, Unlink, Plus, Calendar, Clock, Repeat, AlertCircle, X, Pencil, Check } from "lucide-react";
 import { useProjectModals } from "@/hooks/useModalNavigation";
 import { getEmployeeProjects, getEmployeeProjectCount } from "@/types/api/employee.types";
 import type { ProjectEmployeeAssignment } from "@/types/api/project-employee.types";
@@ -88,7 +88,7 @@ function ProjectPaymentScheduleControl({
       {
         value: 'flexible' as const,
         label: VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule.flexible,
-        icon: Clock
+        icon: Repeat
       }
     ],
     []

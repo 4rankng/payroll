@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { useIsMobile } from '@/hooks/useBreakpoint';
-import { Users, UserPlus, Building2, Link, Plus, CheckCircle2, X, Calendar, Clock } from "lucide-react";
+import { Users, UserPlus, Building2, Link, Plus, CheckCircle2, X, Calendar, Clock, Repeat } from "lucide-react";
 import { Project } from "@/types/api/project.types";
 import { useEmployees } from "@/hooks/api/useEmployees";
 import {
@@ -48,7 +48,7 @@ export function AddEmployeesToProject({
   // recorded timesheet (else 1st of current month). A "today" default rejected
   // same-month BCC uploads covering earlier days.
   const [startDate, setStartDate] = useState<string>('');
-  const [paymentSchedule, setPaymentSchedule] = useState<'weekly' | 'monthly'>('weekly');
+  const [paymentSchedule, setPaymentSchedule] = useState<'weekly' | 'monthly' | 'flexible'>('weekly');
   const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<number>>(new Set());
   const [employeePositions, setEmployeePositions] = useState<Map<number, string>>(new Map());
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -458,7 +458,7 @@ export function AddEmployeesToProject({
               </Label>
               <Select
                 value={paymentSchedule}
-                onValueChange={(value) => setPaymentSchedule(value as 'weekly' | 'monthly')}
+                onValueChange={(value) => setPaymentSchedule(value as 'weekly' | 'monthly' | 'flexible')}
               >
                 <SelectTrigger className="h-11">
                   <SelectValue />
@@ -474,6 +474,12 @@ export function AddEmployeesToProject({
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       Trả lương hàng tháng
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="flexible">
+                    <div className="flex items-center gap-2">
+                      <Repeat className="h-4 w-4" />
+                      Trả lương linh động
                     </div>
                   </SelectItem>
                 </SelectContent>

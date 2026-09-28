@@ -14,7 +14,7 @@ type AssignmentChange = {
   position?: string;
   start_date?: string;
   end_date?: string;
-  payment_schedule?: 'weekly' | 'monthly';
+  payment_schedule?: 'weekly' | 'monthly' | 'flexible';
   assignmentId?: number;
 };
 

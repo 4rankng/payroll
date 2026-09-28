@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, AlertCircle, X } from 'lucide-react';
+import { Calendar, Clock, Repeat, AlertCircle, X } from 'lucide-react';
 import { ProjectEmployeeAssignment } from '@/types/api/project-employee.types';
 import { useChangePaymentSchedule, useCancelScheduleChange } from '@/hooks/api/useProjectEmployees';
 import { VIETNAMESE_ASSIGNMENT_LABELS } from '@/types/api/project-employee.types';
@@ -156,7 +156,7 @@ export function PaymentScheduleToggle({ assignment, disabled }: PaymentScheduleT
                   </SelectItem>
                   <SelectItem value="flexible">
                     <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
+                      <Repeat className="h-4 w-4" />
                       {getScheduleLabel('flexible')}
                     </div>
                   </SelectItem>

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ProjectSelector } from "@/components/ui/project-selector";
-import { Calendar, Plus, Clock } from "lucide-react";
+import { Calendar, Plus, Clock, Repeat } from "lucide-react";
 import { Employee, getEmployeeProjects } from "@/types/api/employee.types";
 import { Project } from "@/types/api/project.types";
 import { AssignEmployeeData } from "@/types/api/project.types";
@@ -326,10 +326,10 @@ function ProjectAssignmentSheet({
                   value={formData.payment_schedule}
                   onValueChange={(value) => {
                     if (value) {
-                      setFormData(prev => ({ ...prev, payment_schedule: value as 'weekly' | 'monthly' }));
+                      setFormData(prev => ({ ...prev, payment_schedule: value as 'weekly' | 'monthly' | 'flexible' }));
                     }
                   }}
-                  className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2"
+                  className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-3"
                   aria-label="Chọn chu kỳ trả lương"
                 >
                   <ToggleGroupItem
@@ -355,6 +355,18 @@ function ProjectAssignmentSheet({
                   >
                     <Calendar className="h-4 w-4" />
                     {VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule.monthly}
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="flexible"
+                    aria-label={VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule.flexible}
+                    className={cn(
+                      "min-h-11 justify-start gap-2 typography-body-small",
+                      "data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary data-[state=on]:border-2 data-[state=on]:font-medium",
+                      "data-[state=off]:bg-muted/30 data-[state=off]:text-muted-foreground data-[state=off]:border data-[state=off]:border-border"
+                    )}
+                  >
+                    <Repeat className="h-4 w-4" />
+                    {VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule.flexible}
                   </ToggleGroupItem>
                 </ToggleGroup>
               </div>
