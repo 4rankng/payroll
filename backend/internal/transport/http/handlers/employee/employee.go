@@ -81,6 +81,10 @@ func buildProjectInfoFromAssignment(assignment domain.ProjectEmployee) dto.Emplo
 		ScheduleEffectiveFrom:  formatOptionalDate(assignment.ScheduleEffectiveFrom),
 		IsFlexible:             assignment.Project.IsFlexible,
 		CheckInEnabled:         assignment.CheckInEnabled,
+		// Deferred activation: without these the client cannot distinguish
+		// "off" from "turns on 01/10" and renders the toggle as plain off.
+		PendingCheckInEnabled: assignment.PendingCheckInEnabled,
+		CheckInEffectiveFrom:  formatOptionalDate(assignment.CheckInEffectiveFrom),
 	}
 }
 
@@ -300,6 +304,11 @@ func (h *Handler) buildDetailedEmployeeResponse(ctx context.Context, emp *domain
 				ScheduleEffectiveFrom:  formatOptionalDate(assignment.ScheduleEffectiveFrom),
 				IsFlexible:             assignment.Project.IsFlexible,
 				CheckInEnabled:         assignment.CheckInEnabled,
+				// Same deferred-activation fields as buildProjectInfoFromAssignment:
+				// the employee detail sheet reads this list, and without them a
+				// pending enable renders as a plain "off" toggle.
+				PendingCheckInEnabled: assignment.PendingCheckInEnabled,
+				CheckInEffectiveFrom:  formatOptionalDate(assignment.CheckInEffectiveFrom),
 			}
 			if assignment.Project.ID > 0 {
 				p.Name = assignment.Project.Name
