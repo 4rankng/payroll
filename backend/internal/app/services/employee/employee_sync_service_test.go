@@ -382,6 +382,14 @@ func (m *MockEmployeeRepository) UpdateColumns(ctx context.Context, id uint, col
 	return args.Error(0)
 }
 
+func (m *MockEmployeeRepository) GetPaidWithoutMobile(ctx context.Context, from, to time.Time) ([]*domain.EmployeePaidActivity, error) {
+	args := m.Called(ctx, from, to)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*domain.EmployeePaidActivity), args.Error(1)
+}
+
 // MockEventBus is a mock for EventBus
 type MockEventBus struct {
 	mock.Mock

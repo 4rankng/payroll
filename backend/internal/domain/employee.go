@@ -212,6 +212,10 @@ type EmployeeRepository interface {
 	// UpdateColumns performs a targeted update of specific columns for an employee.
 	// Used by import flows to update bank info or user_id without a full Save.
 	UpdateColumns(ctx context.Context, id uint, columns map[string]any) error
+	// GetPaidWithoutMobile returns one row per employee who received salary
+	// (paid timesheets) or a completed FlexPay advance within [from, to] but
+	// has no mobile number on file. Used by the admin data-quality export.
+	GetPaidWithoutMobile(ctx context.Context, from, to time.Time) ([]*EmployeePaidActivity, error)
 }
 
 // EmployeeFilters represents filtering options for employee queries

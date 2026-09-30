@@ -503,6 +503,7 @@ const (
 	MsgFailedToWriteExcelDataVN    = "Không thể ghi dữ liệu Excel"
 	MsgFailedToAutoSizeColumnsVN   = "Không thể tự động điều chỉnh cột"
 	MsgFailedToCreateExcelBufferVN = "Không thể tạo file Excel"
+	MsgExportAdminOnlyVN           = "Chức năng này chỉ dành cho quản trị viên"
 
 	// General Data Retrieval Messages - Vietnamese
 	MsgFailedToRetrieveDataVN      = "Không thể lấy dữ liệu"

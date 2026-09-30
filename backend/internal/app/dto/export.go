@@ -189,6 +189,13 @@ func (r *PayrollReportRequest) GetParsedDates() (time.Time, time.Time, error) {
 	return fromDate, toDate, nil
 }
 
+// ExportEmployeesPaidWithoutMobileRequest represents the request to export
+// employees who received salary or a completed FlexPay advance in the last N
+// months but have no mobile number on file.
+type ExportEmployeesPaidWithoutMobileRequest struct {
+	Months int `json:"months" binding:"required,min=1,max=24"`
+}
+
 // PayrollReportByProjectRequest represents the request for exporting payroll report by project
 type PayrollReportByProjectRequest struct {
 	AtDate     string `form:"atDate" time_format:"2006-01-02"`

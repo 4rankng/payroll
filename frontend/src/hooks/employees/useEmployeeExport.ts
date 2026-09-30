@@ -23,8 +23,21 @@ export const useEmployeeExport = () => {
     }
   };
 
+  const exportPaidWithoutMobile = async (months: number) => {
+    setIsExporting(true);
+
+    try {
+      await employeeService.exportPaidWithoutMobile(months);
+    } catch (error) {
+      showErrorNotification(error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return {
     exportEmployees,
+    exportPaidWithoutMobile,
     isExporting
   };
 };

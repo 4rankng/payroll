@@ -22,6 +22,7 @@ import { Employee, EmployeeFilters } from "@/types/api/employee.types";
 import { useEmployeeExport } from "@/hooks/employees/useEmployeeExport";
 import { useAssignableProjects } from "@/hooks/api/useProjects";
 import { ExportEmployeesModal } from "@/components/modals/ExportEmployeesModal";
+import { ExportPaidNoMobileModal } from "@/components/modals/ExportPaidNoMobileModal";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { useTableSorting } from "@/utils/sorting";
@@ -59,9 +60,10 @@ const EmployeesPage = () => {
     updateFilters,
     clearFilters,
   });
-  const { exportEmployees, isExporting } = useEmployeeExport();
+  const { exportEmployees, exportPaidWithoutMobile, isExporting } = useEmployeeExport();
   const { data: projectsData } = useAssignableProjects();
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [paidNoMobileModalOpen, setPaidNoMobileModalOpen] = useState(false);
 
   const { openEmployeeDetails, openAddEmployee } = useEmployeeModals();
 
@@ -103,6 +105,10 @@ const EmployeesPage = () => {
   const handleExportConfirm = useCallback((projectIds?: number[]) => {
     exportEmployees(projectIds);
   }, [exportEmployees]);
+
+  const handleExportPaidNoMobile = useCallback((months: number) => {
+    exportPaidWithoutMobile(months);
+  }, [exportPaidWithoutMobile]);
 
   const projectsForExport = useMemo(() =>
     projectsData?.data?.map((p) => ({
@@ -185,6 +191,7 @@ const EmployeesPage = () => {
             totalEmployees={pagination.totalRecords}
             onAddEmployeeClick={() => openAddEmployee()}
             onExportClick={handleExportEmployees}
+            onExportNoMobileClick={() => setPaidNoMobileModalOpen(true)}
             onSearchFocus={handleSearchFocus}
             isExporting={isExporting}
           />
@@ -267,6 +274,13 @@ const EmployeesPage = () => {
         onClose={() => setExportModalOpen(false)}
         onExport={handleExportConfirm}
         projects={projectsForExport}
+        isExporting={isExporting}
+      />
+
+      <ExportPaidNoMobileModal
+        open={paidNoMobileModalOpen}
+        onClose={() => setPaidNoMobileModalOpen(false)}
+        onExport={handleExportPaidNoMobile}
         isExporting={isExporting}
       />
     </div>

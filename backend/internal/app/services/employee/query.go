@@ -33,6 +33,13 @@ func (s *EmployeeService) CountEmployeesWithMissingBankDetails(ctx context.Conte
 	return s.EmployeeRepo.CountEmployeesWithMissingBankDetails(ctx, filters)
 }
 
+// ListEmployeesPaidWithoutMobile returns employees who received salary (paid
+// timesheets) or a completed FlexPay advance within [from, to] but have no
+// mobile number on file. Read-only pass-through to the repository read model.
+func (s *EmployeeService) ListEmployeesPaidWithoutMobile(ctx context.Context, from, to time.Time) ([]*domain.EmployeePaidActivity, error) {
+	return s.EmployeeRepo.GetPaidWithoutMobile(ctx, from, to)
+}
+
 // ChangeEmployeePassword changes the password for an employee's user account
 // RBAC: ADMIN can change any employee password
 // RBAC: PARTNER can change passwords for employees they have access to:

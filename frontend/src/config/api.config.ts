@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
     missingBankDetails: '/employees/missing-bank-details',
     search: '/employees/search',
     export: '/employees/export',
+    exportPaidWithoutMobile: '/employees/export-paid-without-mobile',
     exportDetail: (id: number) => `/employees/${id}/export`,
     import: '/employees/import',
     importStatus: (id: string) => `/employees/import/${id}/status`,
