@@ -15,7 +15,7 @@ import { useProjects, useProjectEmployeesSimple } from '@/hooks/api/useProjects'
 import { useEmployees } from '@/hooks/api/useEmployees';
 import { useTimesheetModals } from '@/hooks/useModalNavigation';
 import { buildTimesheetStatusFilters, TimesheetStatusFilter } from '@/utils/timesheetFilterHelpers';
-import { getSalaryUploadPeriodMonth } from '@/utils/advancePaymentHelpers';
+import { getWeeklyPayrollDefaultMonth } from '@/utils/weekPeriodHelpers';
 
 interface TimesheetManagementConfig {
   userRole?: 'admin' | 'partner';
@@ -26,13 +26,13 @@ interface TimesheetManagementConfig {
 export function useTimesheetManagement(config: TimesheetManagementConfig = {}) {
   const { userRole = 'admin', useYearToDate = false, extraFilters } = config;
   const [searchTerm, setSearchTerm] = useState('');
-  // Default to the ACTIVE PAYROLL PERIOD, not the calendar month. The cycle
-  // runs from the 20th to the 19th (parity with clock.AdvanceMonthFromTime), so
-  // on the 1st-19th the active period is still the previous calendar month —
-  // and that is the month holding the work actually done and awaiting approval.
-  // Defaulting to the calendar month opened the screen on an empty window on
-  // the first days of every month.
-  const [selectedMonth, setSelectedMonth] = useState(() => getSalaryUploadPeriodMonth());
+  // Default to the month the WEEKLY payroll screen should open on, not the
+  // calendar month. Weekly batches are imported a week at a time (weeks of
+  // 1-7, 8-14, 15-21, 22-28) and approved after the fact, so on the 1st-3rd the
+  // unapproved batch is still the previous month's 22-28 week; from the 4th the
+  // current month is live. Defaulting to the calendar month opened the screen
+  // on an empty window for the first days of every month.
+  const [selectedMonth, setSelectedMonth] = useState(() => getWeeklyPayrollDefaultMonth());
   const [selectedProject, setSelectedProject] = useState('all');
   const [selectedEmployee, setSelectedEmployee] = useState('all');
   const [statusFilter, setStatusFilter] = useState<TimesheetStatusFilter>('all');
@@ -283,7 +283,7 @@ export function useTimesheetManagement(config: TimesheetManagementConfig = {}) {
   }, [selectedProject, projectEmployeesData]);
 
   // The period the screen opens on; "clear filters" returns here.
-  const currentMonth = useMemo(() => getSalaryUploadPeriodMonth(), []);
+  const currentMonth = useMemo(() => getWeeklyPayrollDefaultMonth(), []);
 
   const hasFilters = searchTerm !== '' || selectedMonth !== currentMonth || selectedProject !== 'all' || selectedEmployee !== 'all' || statusFilter !== 'all';
 

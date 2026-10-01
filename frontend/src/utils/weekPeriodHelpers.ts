@@ -241,3 +241,26 @@ export function getCustomDateRanges(currentDate: Date = new Date()): CustomDateR
 
   return [];
 }
+
+/**
+ * The month the weekly payroll screens open on.
+ *
+ * Weekly timesheets arrive a week at a time (weeks of 1-7, 8-14, 15-21,
+ * 22-28) and are approved after the fact, so in the first days of a new month
+ * the unapproved batch is still the previous month's 22-28 week. Defaulting to
+ * the calendar month opened the screen on an empty window with that batch
+ * sitting right there — on 2026-10-01 the tiles read zero while 1,573 timesheets
+ * dated 2026-09-22..28 were pending.
+ *
+ * From the 4th the current month is the live one and is the right default.
+ *
+ * This is the WEEKLY rule. It is deliberately not the FlexPay advance period,
+ * which rolls on the 20th: the two subsystems use "period" for different things
+ * and borrowing one calendar from the other shows the wrong month.
+ */
+export function getWeeklyPayrollDefaultMonth(currentDate: Date = new Date()): string {
+  const year = currentDate.getFullYear();
+  const monthIndex = currentDate.getMonth();
+  const resolved = currentDate.getDate() <= 3 ? new Date(year, monthIndex - 1, 1) : new Date(year, monthIndex, 1);
+  return `${resolved.getFullYear()}-${String(resolved.getMonth() + 1).padStart(2, '0')}`;
+}

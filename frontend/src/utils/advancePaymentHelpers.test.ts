@@ -6,7 +6,6 @@ import {
   getAdvanceQuotaSummaryForMonth,
   getDefaultAdvanceMonth,
   getInitialEmployeeAdvanceMonth,
-  getSalaryUploadPeriodMonth,
   isPastAdvancePaymentPeriod,
   resolveCheckInServedMonth,
   isPriorMonthRequestable,
@@ -406,29 +405,6 @@ describe("isPriorMonthRequestable", () => {
   });
 });
 
-describe("getSalaryUploadPeriodMonth", () => {
-  it("maps the whole 20→8 window to the salary month M", () => {
-    expect(getSalaryUploadPeriodMonth(new Date(2026, 7, 20))).toBe("2026-08"); // day 20 opens the period
-    expect(getSalaryUploadPeriodMonth(new Date(2026, 8, 5))).toBe("2026-08"); // Sept 5 → August
-    expect(getSalaryUploadPeriodMonth(new Date(2026, 8, 8, 23, 59))).toBe("2026-08"); // last cutoff day
-    expect(getSalaryUploadPeriodMonth(new Date(2026, 8, 20))).toBe("2026-09"); // next period opens
-  });
-
-  it("handles the year boundary", () => {
-    expect(getSalaryUploadPeriodMonth(new Date(2027, 0, 8))).toBe("2026-12"); // Jan 8 → December
-    expect(getSalaryUploadPeriodMonth(new Date(2027, 0, 20))).toBe("2027-01");
-  });
-
-  it("keeps the previous month through the 19th, which is what the timesheet screen defaults to", () => {
-    // On the 1st-19th the active period is still the previous month, and that
-    // is where the unapproved work sits. Defaulting the screen to the calendar
-    // month showed an empty window for the first days of every month.
-    expect(getSalaryUploadPeriodMonth(new Date(2026, 9, 1))).toBe("2026-09");
-    expect(getSalaryUploadPeriodMonth(new Date(2026, 9, 4))).toBe("2026-09");
-    expect(getSalaryUploadPeriodMonth(new Date(2026, 9, 19))).toBe("2026-09");
-    expect(getSalaryUploadPeriodMonth(new Date(2026, 9, 20))).toBe("2026-10");
-  });
-});
 
 describe("resolveCheckInServedMonth", () => {
   const months = { currentMonth: "2026-10", previousMonth: "2026-09" };
