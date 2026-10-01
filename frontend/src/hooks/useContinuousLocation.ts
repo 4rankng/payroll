@@ -56,6 +56,13 @@ export interface UseContinuousLocationResult {
    *  threshold, regardless of geofence status. The server remains the
    *  geofence authority. */
   awaitAccurateSample: (timeoutMs?: number) => Promise<LocationSample>;
+  /** True when a permission denial arrived AFTER the worker pressed a recovery
+   *  CTA ("Tôi đã bật vị trí" / "Thử lại"). iOS Safari caches the per-page
+   *  geolocation decision and does not re-read it from Settings, so no further
+   *  in-page retry can succeed — only a page reload re-queries the OS. */
+  requiresPageReload: boolean;
+  /** Reload the document so the browser re-reads the OS-level location grant. */
+  reload: () => void;
   /** Clear state and restart the watch (recovery CTA, or after OS settings change). */
   retry: () => void;
 }
@@ -116,6 +123,10 @@ export function useContinuousLocation({
   const [, setSampleFreshnessEpoch] = useState(0);
   // Bump to force a clean watch restart (retry, or visibility return).
   const [restartEpoch, setRestartEpoch] = useState(0);
+  // True once a permission denial arrives AFTER the worker pressed a recovery
+  // CTA. iOS Safari caches the per-page geolocation decision and never re-reads
+  // it from Settings, so no further in-page retry can clear it — only a reload.
+  const [requiresPageReload, setRequiresPageReload] = useState(false);
   const [visible, setVisible] = useState(
     typeof document === "undefined" ? true : document.visibilityState !== "hidden"
   );
@@ -130,6 +141,7 @@ export function useContinuousLocation({
   const retainSampleOnWatchStopRef = useRef(false);
   const pendingAwaitersRef = useRef<Set<PendingAwaiter>>(new Set());
   const pendingFreshSampleAwaitersRef = useRef<Set<PendingAwaiter>>(new Set());
+  const userRecoveryAttemptedRef = useRef(false);
   sampleRef.current = sample;
   progressRef.current = progress;
   fatalErrorRef.current = fatalError;
@@ -169,7 +181,13 @@ export function useContinuousLocation({
       setPermissionState(nextPermissionState);
       if (nextPermissionState === "granted") {
         setHasRequestedPermission(true);
-      } else if (nextPermissionState === "denied") {
+      } else if (nextPermissionState === "denied" && !userRecoveryAttemptedRef.current) {
+        // iOS Safari serves the permission state captured at page load and does
+        // not re-read it after the worker changes Location in Settings, so a
+        // "denied" here can be hours stale. Honouring it would tear down the
+        // watch the worker just asked for on retry, making the recovery CTA a
+        // silent no-op. After an explicit user action the watch is the authority:
+        // it either delivers a fix or reports a real denial.
         const deniedError = createPermissionDeniedError();
         fatalErrorRef.current = deniedError;
         setFatalError(deniedError);
@@ -264,6 +282,7 @@ export function useContinuousLocation({
         const next = p.bestFreshSample ?? null;
         setPermissionState("granted");
         setHasRequestedPermission(true);
+        setRequiresPageReload(false);
         sampleRef.current = next;
         setSample(next);
         if (next && next.accuracy <= requiredAccuracyMeters) {
@@ -291,6 +310,7 @@ export function useContinuousLocation({
           setFatalError(geoError);
           setPermissionState("denied");
           setHasRequestedPermission(false);
+          setRequiresPageReload(userRecoveryAttemptedRef.current);
           isWatchingRef.current = false;
           setIsWatching(false);
           handle.unsubscribe();
@@ -429,7 +449,12 @@ export function useContinuousLocation({
     setWatchPausedForAccuracy(false);
     setProgress(null);
     setSample(null);
-    setHasRequestedPermission(false);
+    // Keep the acquisition gate open: the worker is explicitly telling us they
+    // enabled location, so the watch must re-probe the OS. Clearing this back to
+    // false (as it used to) made retry() a no-op whenever the browser reported
+    // "denied" — a guaranteed dead end on iOS after a Settings change.
+    setHasRequestedPermission(true);
+    userRecoveryAttemptedRef.current = true;
     setRestartEpoch((n) => n + 1);
   }, [rejectAwaiters]);
 
@@ -438,8 +463,14 @@ export function useContinuousLocation({
     fatalErrorRef.current = null;
     setFatalError(null);
     setHasRequestedPermission(true);
-    setWatchPausedForAccuracy(false);
+    // Not a "recovery" attempt: the first denial after the initial grant prompt
+    // still has a Settings explanation. Only a denial that survives an explicit
+    // "I have turned it on" retry escalates to a page reload.
     setRestartEpoch((n) => n + 1);
+  }, []);
+
+  const reload = useCallback(() => {
+    window.location.reload();
   }, []);
 
   return {
@@ -450,9 +481,11 @@ export function useContinuousLocation({
     permissionState,
     needsPermission,
     fatalError,
+    requiresPageReload,
     requestPermission,
     awaitSubmitReady,
     awaitAccurateSample,
+    reload,
     retry,
   };
 }

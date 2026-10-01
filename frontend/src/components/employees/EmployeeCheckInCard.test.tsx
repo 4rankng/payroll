@@ -525,6 +525,72 @@ describe("EmployeeCheckInCard geofence guidance", () => {
     );
     expect(requestPermission).toHaveBeenCalledOnce();
   });
+
+  it("offers a retry that re-probes GPS after a first permission denial", () => {
+    const retry = vi.fn();
+    locationMock.mockReturnValue({
+      sample: null,
+      progress: null,
+      isSubmitReady: false,
+      isWatching: false,
+      needsPermission: false,
+      fatalError: { code: 1, message: "Quyền truy cập vị trí đang bị chặn" },
+      requiresPageReload: false,
+      awaitSubmitReady: vi.fn(),
+      awaitAccurateSample: vi.fn(),
+      requestPermission: vi.fn(),
+      reload: vi.fn(),
+      retry,
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EmployeeCheckInCard
+          checkInTarget={{ project_id: 58, project_name: "LGD", radius_meters: 150, gates: [{ name: "Cổng D", lat: 20.8679818, lng: 106.5711738 }] }}
+          onAdvanceRequest={vi.fn()}
+        />
+      </QueryClientProvider>
+    );
+
+    const dock = within(screen.getByRole("toolbar", { name: "Hành động nhân viên" }));
+    fireEvent.click(dock.getByRole("button", { name: "Đã bật vị trí" }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it("offers a page reload once a denial survives the retry, because iOS keeps the stale per-page decision", () => {
+    const reload = vi.fn();
+    const retry = vi.fn();
+    locationMock.mockReturnValue({
+      sample: null,
+      progress: null,
+      isSubmitReady: false,
+      isWatching: false,
+      needsPermission: false,
+      fatalError: { code: 1, message: "Quyền truy cập vị trí đang bị chặn" },
+      requiresPageReload: true,
+      awaitSubmitReady: vi.fn(),
+      awaitAccurateSample: vi.fn(),
+      requestPermission: vi.fn(),
+      reload,
+      retry,
+    });
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EmployeeCheckInCard
+          checkInTarget={{ project_id: 58, project_name: "LGD", radius_meters: 150, gates: [{ name: "Cổng D", lat: 20.8679818, lng: 106.5711738 }] }}
+          onAdvanceRequest={vi.fn()}
+        />
+      </QueryClientProvider>
+    );
+
+    const dock = within(screen.getByRole("toolbar", { name: "Hành động nhân viên" }));
+    fireEvent.click(dock.getByRole("button", { name: "Tải lại trang" }));
+    expect(reload).toHaveBeenCalledOnce();
+    expect(retry).not.toHaveBeenCalled();
+  });
 });
 
 describe("EmployeeCheckInCard pending activation", () => {

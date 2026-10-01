@@ -321,7 +321,7 @@ export function getLocationPermissionIssue(error: unknown): LocationPermissionIs
       type: "denied",
       title: "Cho phép truy cập vị trí",
       description:
-        "Bấm Thử lại và chọn Cho phép. Nếu trình duyệt vẫn chặn, mở Cài đặt vị trí và bật Vị trí chính xác.",
+        "Bấm Thử lại và chọn Cho phép. Nếu trình duyệt vẫn chặn, mở Cài đặt > Safari > Websites > Vị trí, chọn Trong khi dùng ứng dụng và bật Vị trí chính xác, rồi Tải lại trang.",
       canRetry: true,
       requiresSettings: true,
     };

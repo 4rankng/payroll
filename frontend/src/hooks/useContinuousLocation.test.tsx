@@ -12,8 +12,10 @@ type WatchCb = (pos: GeolocationPosition) => void;
 type ErrCb = (err: GeolocationPositionError) => void;
 
 interface GeolocationStub {
+  emitError: (code: number) => void;
   emitFix: (lat: number, lng: number, accuracy: number, ts?: number) => void;
   watchPosition: ReturnType<typeof vi.fn>;
+  setPermissionState: (state: LocationPermissionState) => void;
   clearWatch: ReturnType<typeof vi.fn>;
 }
 
@@ -44,9 +46,11 @@ function makePosition(lat: number, lng: number, accuracy: number, timestamp = Da
 
 function installGeolocationStub(permissionState: LocationPermissionState = "granted"): GeolocationStub {
   let watchCb: WatchCb | null = null;
+  let watchErrCb: ErrCb | null = null;
+  let currentPermissionState = permissionState;
   const watchPosition = vi.fn((success: WatchCb, error: ErrCb) => {
     watchCb = success;
-    void error;
+    watchErrCb = error;
     return 11;
   });
   const clearWatch = vi.fn();
@@ -57,13 +61,18 @@ function installGeolocationStub(permissionState: LocationPermissionState = "gran
   });
   Object.defineProperty(navigator, "permissions", {
     configurable: true,
-    value: { query: vi.fn().mockResolvedValue({ state: permissionState }) },
+    value: { query: vi.fn(async () => ({ state: currentPermissionState })) },
   });
 
   return {
     watchPosition,
     clearWatch,
     emitFix: (lat, lng, accuracy, ts) => watchCb?.(makePosition(lat, lng, accuracy, ts)),
+    emitError: (code) =>
+      watchErrCb?.({ code, message: `geolocation error ${code}` } as GeolocationPositionError),
+    setPermissionState: (state) => {
+      currentPermissionState = state;
+    },
   };
 }
 
@@ -134,6 +143,112 @@ describe("useContinuousLocation", () => {
     await waitFor(() => expect(result.current.permissionState).toBe("denied"));
     expect(result.current.fatalError?.code).toBe(1);
     expect(stub.watchPosition).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it("restarts the GPS watch on retry even when the browser still reports a denied permission", async () => {
+    // iOS Safari serves the geolocation permission state captured at page load
+    // and never re-reads it from Settings. A worker who enables Location in
+    // iOS Settings therefore leaves the page believing it is still denied, and
+    // the recovery CTA must still re-probe the OS instead of silently doing
+    // nothing.
+    stub = installGeolocationStub("prompt");
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+    await waitFor(() => expect(result.current.needsPermission).toBe(true));
+
+    act(() => {
+      result.current.requestPermission();
+    });
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      stub.emitError(1);
+    });
+    await waitFor(() => expect(result.current.fatalError?.code).toBe(1));
+
+    // Settings now allow location, but the query still answers "denied".
+    stub.setPermissionState("denied");
+
+    act(() => {
+      result.current.retry();
+    });
+
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(result.current.isWatching).toBe(true));
+
+    unmount();
+  });
+
+  it("requires a page reload when a denial survives the worker's recovery tap", async () => {
+    // The first denial has an explanation (the worker can still fix Settings).
+    // A second denial after "I have turned location on" cannot be cleared
+    // in-page on iOS, so the card must offer a reload instead of another retry
+    // button that would quietly do nothing.
+    stub = installGeolocationStub("prompt");
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+    await waitFor(() => expect(result.current.needsPermission).toBe(true));
+
+    act(() => {
+      result.current.requestPermission();
+    });
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      stub.emitError(1);
+    });
+    await waitFor(() => expect(result.current.fatalError?.code).toBe(1));
+    expect(result.current.requiresPageReload).toBe(false);
+
+    act(() => {
+      result.current.retry();
+    });
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(2));
+    await act(async () => {
+      stub.emitError(1);
+    });
+
+    await waitFor(() => expect(result.current.requiresPageReload).toBe(true));
+
+    unmount();
+  });
+
+  it("clears the reload requirement once a fix arrives", async () => {
+    stub = installGeolocationStub("prompt");
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+    await waitFor(() => expect(result.current.needsPermission).toBe(true));
+
+    act(() => {
+      result.current.requestPermission();
+    });
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      stub.emitError(1);
+    });
+    await waitFor(() => expect(result.current.fatalError?.code).toBe(1));
+
+    act(() => {
+      result.current.retry();
+    });
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(2));
+    await act(async () => {
+      stub.emitError(1);
+    });
+    await waitFor(() => expect(result.current.requiresPageReload).toBe(true));
+
+    act(() => {
+      result.current.retry();
+    });
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(3));
+    await act(async () => {
+      stub.emitFix(target.gates[0].lat, target.gates[0].lng, 15);
+    });
+
+    await waitFor(() => expect(result.current.requiresPageReload).toBe(false));
 
     unmount();
   });

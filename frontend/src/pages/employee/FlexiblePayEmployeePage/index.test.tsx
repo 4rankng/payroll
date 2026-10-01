@@ -68,7 +68,7 @@ vi.mock("@/components/employees/EmployeeMobileShell", () => ({ EmployeeMobileShe
 vi.mock("@/components/employees/EmployeeMonthNavigator", () => ({ EmployeeMonthNavigator: ({ month }: { month: { value: string } }) => <output aria-label="Tháng đang xem">{month.value}</output> }));
 vi.mock("@/components/advance-payment/AdvancePaymentRequestForm", () => ({ AdvancePaymentRequestForm: ({ viewMonth, isPastMonth }: { viewMonth: string; isPastMonth: boolean }) => <output aria-label="Hạn mức đang xem">{`${viewMonth}:${isPastMonth}`}</output> }));
 vi.mock("@/components/employees/EmployeeBankInfoCard", () => ({ EmployeeBankInfoCard: () => null }));
-vi.mock("@/components/employees/EmployeeAdBanner", () => ({ EmployeeAdBanner: () => null }));
+vi.mock("@/components/employees/EmployeeAdBanner", () => ({ EmployeeAdBanner: () => <div data-testid="employee-ad-banner" /> }));
 vi.mock("@/components/employees/EmployeeCheckInCard", () => ({ EmployeeCheckInCard: () => null }));
 vi.mock("@/components/employees/EmployeeAttendanceHistoryCard", () => ({ EmployeeAttendanceHistoryCard: () => null }));
 vi.mock("@/components/employees/ChangePasswordSheet", () => ({ ChangePasswordSheet: () => null }));
@@ -179,5 +179,36 @@ describe("FlexiblePayEmployeePage", () => {
 
     expect(screen.getByLabelText("Tháng đang xem")).toHaveTextContent("2026-08");
     expect(screen.getByLabelText("Đường dẫn tháng")).toHaveTextContent("");
+  });
+
+  it("shows the ad banner to employees without self check-in", async () => {
+    render(
+      <MemoryRouter initialEntries={["/employee"]}>
+        <FlexiblePayEmployeePage />
+      </MemoryRouter>,
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(screen.getByTestId("employee-ad-banner")).toBeInTheDocument();
+  });
+
+  it("hides the ad banner from self check-in employees", async () => {
+    // Self check-in employees live in the check-in feed; ad campaigns are not
+    // run against them.
+    profileQuery.data = { fullname: "Đỗ Văn Hùng", check_in_enabled: true };
+    checkInInfoQueryState = { data: { data: { forMonth: "2026-07" } } };
+
+    render(
+      <MemoryRouter initialEntries={["/employee"]}>
+        <FlexiblePayEmployeePage />
+      </MemoryRouter>,
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(screen.queryByTestId("employee-ad-banner")).not.toBeInTheDocument();
   });
 });

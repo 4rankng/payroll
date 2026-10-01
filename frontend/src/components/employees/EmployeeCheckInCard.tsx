@@ -974,10 +974,12 @@ export function EmployeeCheckInCard({
     dockActionDisabled = false;
     handleDockAttendanceAction = location.requestPermission;
   } else if (locationEnabled && location.fatalError) {
+    // A denial that survived a recovery tap cannot be cleared in-page on iOS —
+    // offer the reload instead of a retry button that would silently do nothing.
     dockAction = "attention";
-    dockActionLabel = "Đã bật vị trí";
+    dockActionLabel = location.requiresPageReload ? "Tải lại trang" : "Đã bật vị trí";
     dockActionDisabled = false;
-    handleDockAttendanceAction = location.retry;
+    handleDockAttendanceAction = location.requiresPageReload ? location.reload : location.retry;
   } else if (attendance?.status === "checked_in") {
     dockAction = checkoutCoolingDown || isLocating ? "loading" : "check_out";
     dockActionLabel = checkoutCoolingDown
@@ -1571,14 +1573,26 @@ export function EmployeeCheckInCard({
               </div>
               {attendanceReference}
               {locationMapDisclosure}
-              <Button
-                size="lg"
-                variant="outline"
-                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl border-red-300 bg-white font-semibold text-red-950 hover:bg-red-100 lg:inline-flex"
-                onClick={location.retry}
-              >
-                Tôi đã bật vị trí
-              </Button>
+              {location.requiresPageReload ? (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl border-red-300 bg-white font-semibold text-red-950 hover:bg-red-100 lg:inline-flex"
+                  onClick={location.reload}
+                >
+                  <RotateCcw className="mr-2 h-5 w-5" aria-hidden="true" />
+                  Tải lại trang
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl border-red-300 bg-white font-semibold text-red-950 hover:bg-red-100 lg:inline-flex"
+                  onClick={location.retry}
+                >
+                  Tôi đã bật vị trí
+                </Button>
+              )}
             </div>
           ) : (
               <div className="rounded-2xl border border-slate-300 bg-white p-3">
