@@ -115,6 +115,10 @@ export interface ProjectEmployeeListParams {
 
 export type CheckInConfigurationStatus = "all" | "enabled" | "active" | "inactive" | "pending";
 
+// Which month a self check-in enable starts on. The start day is always the
+// 1st; picking the current month activates the service right away.
+export type CheckInStartMonth = "this_month" | "next_month";
+
 export interface CheckInConfigurationParams {
   status: CheckInConfigurationStatus;
   month?: string;
@@ -127,6 +131,8 @@ export interface CheckInConfigurationEmployee {
   assignment_id: number;
   project_id: number;
   employee_id: number;
+  employee_mobile: string;
+  check_in_start_date?: string | null;
   employee_name: string;
   employee_cccd: string;
   employee_code: string;

@@ -382,6 +382,7 @@ func newCheckInConfigurationTestRepository(t *testing.T) (*ProjectEmployeeReposi
 			check_in_enabled BOOLEAN NOT NULL DEFAULT 0,
 			pending_check_in_enabled BOOLEAN,
 			check_in_effective_from DATETIME,
+			check_in_start_date DATETIME,
 			created_at DATETIME NOT NULL,
 			deleted_at DATETIME
 		);
@@ -390,6 +391,12 @@ func newCheckInConfigurationTestRepository(t *testing.T) (*ProjectEmployeeReposi
 			project_id INTEGER NOT NULL,
 			employee_id INTEGER NOT NULL,
 			check_in_time DATETIME NOT NULL
+		);
+		CREATE TABLE employees (
+			id INTEGER PRIMARY KEY,
+			fullname TEXT NOT NULL,
+			mobile TEXT,
+			deleted_at DATETIME
 		);
 	`).Error)
 
@@ -415,6 +422,15 @@ func seedCheckInConfigurationTestData(t *testing.T, db *gorm.DB) {
 			(4, 7, 104, 'Phạm Duy Khang', '001201000104', 'NV-104', '2026-01-01', NULL, 0, 1, '2026-01-01 00:00:00'),
 			(5, 7, 105, 'Vũ Gia Hân', '001201000105', 'NV-105', '2026-01-01', '2026-07-31', 1, NULL, '2026-01-01 00:00:00'),
 			(6, 8, 106, 'Đỗ Hải Nam', '001201000106', 'NV-106', '2026-01-01', NULL, 1, NULL, '2026-01-01 00:00:00')
+	`).Error)
+	require.NoError(t, db.Exec(`
+		INSERT INTO employees (id, fullname, mobile, deleted_at) VALUES
+			(101, 'Nguyễn Hoàng An', '0366178061', NULL),
+			(102, 'Trần Bình Minh', '0987654321', NULL),
+			(103, 'Lê Chi Lan', NULL, NULL),
+			(104, 'Phạm Duy Khang', '0900000004', NULL),
+			(105, 'Vũ Gia Hân', '0900000005', NULL),
+			(106, 'Đỗ Hải Nam', '0900000006', NULL)
 	`).Error)
 	require.NoError(t, db.Exec(`
 		INSERT INTO attendances (id, project_id, employee_id, check_in_time) VALUES
@@ -454,6 +470,59 @@ func TestProjectEmployeeRepository_GetCheckInConfigurationClassifiesCurrentMonth
 	require.Equal(t, uint(102), result.Employees[1].EmployeeID)
 	require.Zero(t, result.Employees[1].AttendanceCount)
 	require.Nil(t, result.Employees[1].LastCheckInAt)
+}
+
+// The roster export needs the employee's mobile (which lives on employees, not
+// on the denormalized assignment row) and the day the service started. A
+// pending row has no recorded start date yet, so it falls back to the
+// scheduled one — that is the day the admin picked.
+func TestProjectEmployeeRepository_GetCheckInConfigurationReturnsMobileAndStartDate(t *testing.T) {
+	repo, db := newCheckInConfigurationTestRepository(t)
+	seedCheckInConfigurationTestData(t, db)
+	require.NoError(t, db.Exec(`
+		UPDATE project_employees
+		SET check_in_start_date = '2026-08-01', check_in_effective_from = NULL
+		WHERE id = 1;
+		UPDATE project_employees SET check_in_effective_from = '2026-09-01' WHERE id = 4;
+	`).Error)
+
+	enabled, err := repo.GetCheckInConfiguration(context.Background(), domain.CheckInConfigurationQuery{
+		ProjectID:  7,
+		MonthStart: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		MonthEnd:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+		AsOfDate:   time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC),
+		Status:     domain.CheckInConfigurationStatusEnabled,
+		Limit:      50,
+	})
+	require.NoError(t, err)
+	require.Len(t, enabled.Employees, 2)
+
+	byID := make(map[uint]domain.CheckInConfigurationEmployee, len(enabled.Employees))
+	for _, employee := range enabled.Employees {
+		byID[employee.EmployeeID] = employee
+	}
+	require.Equal(t, "0366178061", byID[101].EmployeeMobile)
+	require.NotNil(t, byID[101].CheckInStartDate)
+	require.Equal(t, "2026-08-01", byID[101].CheckInStartDate.Format("2006-01-02"))
+	require.Equal(t, "0987654321", byID[102].EmployeeMobile)
+	// Enabled without a recorded start date stays unknown rather than
+	// borrowing the attendance date.
+	require.Nil(t, byID[102].CheckInStartDate)
+
+	pending, err := repo.GetCheckInConfiguration(context.Background(), domain.CheckInConfigurationQuery{
+		ProjectID:  7,
+		MonthStart: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		MonthEnd:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+		AsOfDate:   time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC),
+		Status:     domain.CheckInConfigurationStatusPending,
+		Limit:      50,
+	})
+	require.NoError(t, err)
+	require.Len(t, pending.Employees, 1)
+	require.Equal(t, uint(104), pending.Employees[0].EmployeeID)
+	require.Equal(t, "0900000004", pending.Employees[0].EmployeeMobile)
+	require.NotNil(t, pending.Employees[0].CheckInStartDate)
+	require.Equal(t, "2026-09-01", pending.Employees[0].CheckInStartDate.Format("2006-01-02"))
 }
 
 func TestProjectEmployeeRepository_GetCheckInConfigurationUsesSelectedMonthForUsageData(t *testing.T) {

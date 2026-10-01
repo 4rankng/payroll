@@ -19,8 +19,18 @@ import (
 
 // ExportEmployeesPaidWithoutMobile exports employees who received salary (paid
 // timesheets) or a completed FlexPay advance in the last N months but have no
-// mobile number on file. Payment recency is the activity proxy: the last-paid
-// columns let the admin judge how recently each unreachable employee was paid.
+// mobile number on file.
+//
+// The workbook follows the layout the admin already works with in the shared
+// "thiếu số điện thoại" sheet: STT, Họ và tên, CCCD, Lần trả lương cuối, Dự án,
+// Mobile. The Mobile column is intentionally blank — collecting the missing
+// numbers is the point of the export, so the column is there to be filled in
+// and pasted back.
+//
+// "Lần trả lương cuối" is the later of the last salary payment and the last
+// FlexPay advance (last_activity_at), so an employee paid only through FlexPay
+// still shows when they were last paid instead of a blank cell.
+//
 // Admin-only — no partner/accountant Casbin policy exists for this route.
 func (h *Handler) ExportEmployeesPaidWithoutMobile(c *gin.Context) {
 	defer func() {
@@ -71,15 +81,9 @@ func (h *Handler) ExportEmployeesPaidWithoutMobile(c *gin.Context) {
 		"STT",
 		"Họ và tên",
 		"CCCD",
-		"Trạng thái",
-		"Tổng lương đã nhận (VND)",
-		"Số đợt trả lương",
 		"Lần trả lương cuối",
-		"Tổng tạm ứng đã nhận (VND)",
-		"Số lần tạm ứng",
-		"Lần tạm ứng cuối",
-		"Hoạt động gần nhất",
 		"Dự án",
+		"Mobile",
 	}
 
 	if err := excelService.WriteHeaders(f, "Employees", headers); err != nil {
@@ -93,15 +97,9 @@ func (h *Handler) ExportEmployeesPaidWithoutMobile(c *gin.Context) {
 			i + 1,
 			a.Fullname,
 			a.CCCD,
-			statusLabel(a.IsWorking),
-			a.SalaryTotal,
-			a.SalaryCount,
-			excelService.FormatDate(a.LastSalaryPaidAt),
-			a.AdvanceTotal,
-			a.AdvanceCount,
-			excelService.FormatDate(a.LastAdvancePaidAt),
 			excelService.FormatDate(a.LastActivityAt),
 			a.Projects,
+			"",
 		})
 	}
 
@@ -141,13 +139,4 @@ func (h *Handler) ExportEmployeesPaidWithoutMobile(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer)
-}
-
-// statusLabel maps the working-assignment check to its Vietnamese label,
-// matching the labels used on the admin Employees page.
-func statusLabel(isWorking bool) string {
-	if isWorking {
-		return "Đang làm việc"
-	}
-	return "Chưa phân công"
 }

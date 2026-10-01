@@ -7,6 +7,8 @@ import CheckInSettingsPage from "./CheckInSettingsPage";
 
 const {
   useCheckInConfigurableProjectsMock,
+  exportCheckInEmployeesMock,
+  toggleMutateMock,
   useInfiniteCheckInConfigurationMock,
   disableInactiveMutateMock,
   disablePendingMutateMock,
@@ -17,8 +19,9 @@ const {
   disableInactiveMutateMock: vi.fn(),
   disablePendingMutateMock: vi.fn(),
   fetchNextPageMock: vi.fn(),
+  toggleMutateMock: vi.fn(),
+  exportCheckInEmployeesMock: vi.fn(),
 }));
-
 vi.mock("@/hooks/api/useProjectEmployees", () => ({
   useCheckInConfigurableProjects: (...args: unknown[]) =>
     useCheckInConfigurableProjectsMock(...args),
@@ -34,7 +37,11 @@ vi.mock("@/hooks/api/useProjectEmployees", () => ({
   }),
   useToggleCheckInEnabled: () => ({
     isPending: false,
-    mutate: vi.fn(),
+    mutate: toggleMutateMock,
+  }),
+  useExportCheckInEmployees: () => ({
+    exportCheckInEmployees: exportCheckInEmployeesMock,
+    isExporting: false,
   }),
 }));
 
@@ -86,6 +93,9 @@ describe("CheckInSettingsPage", () => {
 
   beforeEach(() => {
     fetchNextPageMock.mockClear();
+    toggleMutateMock.mockClear();
+    exportCheckInEmployeesMock.mockReset();
+    exportCheckInEmployeesMock.mockResolvedValue(undefined);
     class IntersectionObserverMock implements IntersectionObserver {
       readonly root = null;
       readonly rootMargin = "0px";
@@ -401,5 +411,117 @@ describe("CheckInSettingsPage", () => {
     expect(screen.queryByText("Không có dự án linh động")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks which month the service starts on before enabling", async () => {
+    useInfiniteCheckInConfigurationMock.mockReturnValue({
+      data: {
+        pages: [
+          {
+            ...configuration,
+            employees: [
+              {
+                ...configuration.employees[0],
+                check_in_enabled: false,
+                pending_check_in_enable: false,
+              },
+            ],
+          },
+        ],
+        pageParams: [1],
+      },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      refetch: vi.fn(),
+      fetchNextPage: fetchNextPageMock,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    });
+    renderPage();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Bật điểm danh cho Nguyễn Hoàng An" }),
+    );
+
+    // Nothing is sent until a month is chosen: an enable must never pick a
+    // start date implicitly.
+    expect(toggleMutateMock).not.toHaveBeenCalled();
+    expect(await screen.findByText("Bật tự chấm công")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText(/Tháng này/));
+    fireEvent.click(screen.getByRole("button", { name: /^Xác nhận từ/ }));
+
+    expect(toggleMutateMock).toHaveBeenCalledWith(
+      {
+        projectId: 7,
+        employeeId: 101,
+        enabled: true,
+        startMonth: "this_month",
+      },
+      expect.anything(),
+    );
+  });
+
+  it("moves a queued activation to the other month", async () => {
+    useInfiniteCheckInConfigurationMock.mockReturnValue({
+      data: {
+        pages: [
+          {
+            ...configuration,
+            employees: [
+              {
+                ...configuration.employees[0],
+                check_in_enabled: false,
+                pending_check_in_enable: true,
+                check_in_effective_from: "2026-11-01",
+              },
+            ],
+          },
+        ],
+        pageParams: [1],
+      },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      refetch: vi.fn(),
+      fetchNextPage: fetchNextPageMock,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    });
+    renderPage();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Hủy chờ điểm danh cho Nguyễn Hoàng An" }),
+    );
+
+    expect(await screen.findByText("Đổi tháng kích hoạt")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/Tháng này/));
+    fireEvent.click(screen.getByRole("button", { name: "Xác nhận đổi tháng" }));
+
+    expect(toggleMutateMock).toHaveBeenCalledWith(
+      {
+        projectId: 7,
+        employeeId: 101,
+        enabled: true,
+        startMonth: "this_month",
+      },
+      expect.anything(),
+    );
+  });
+
+  it("exports the roster with the filters currently on screen", async () => {
+    renderPage();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Xuất danh sách tự chấm công ra Excel" }),
+    );
+
+    await waitFor(() => {
+      expect(exportCheckInEmployeesMock).toHaveBeenCalledWith(7, {
+        status: "enabled",
+        month: format(startOfMonth(new Date()), "yyyy-MM"),
+      });
+    });
   });
 });

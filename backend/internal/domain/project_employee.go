@@ -49,6 +49,12 @@ type ProjectEmployee struct {
 	// the next month. NULL pending fields = no pending change.
 	PendingCheckInEnabled *bool      `json:"pending_check_in_enabled,omitempty" gorm:"type:tinyint(1);comment:'Pending check-in enable awaiting activation'"`
 	CheckInEffectiveFrom  *time.Time `json:"check_in_effective_from,omitempty" gorm:"type:date;comment:'Date when the pending check-in enable becomes effective'"`
+	// CheckInStartDate records the day-1 date the self check-in service became
+	// active for this assignment. Unlike CheckInEffectiveFrom — which only
+	// exists while an enable is waiting and is cleared on activation — this
+	// column persists, so the admin roster export can report the start day of
+	// every employee currently under self check-in.
+	CheckInStartDate *time.Time `json:"check_in_start_date,omitempty" gorm:"type:date;comment:'Day the self check-in service started'"`
 
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
 	CreatedBy uint           `json:"created_by" gorm:"not null;type:bigint unsigned"`
@@ -147,6 +153,12 @@ type CheckInConfigurationEmployee struct {
 	EmployeeName         string     `json:"employee_name"`
 	EmployeeCCCD         string     `json:"employee_cccd"`
 	EmployeeCode         string     `json:"employee_code"`
+	// EmployeeMobile is read from the employees table; project_employees only
+	// carries the denormalized name/CCCD/code.
+	EmployeeMobile string `json:"employee_mobile"`
+	// CheckInStartDate is the day the service starts: the recorded start date
+	// once active, otherwise the scheduled one while an enable is pending.
+	CheckInStartDate *time.Time `json:"check_in_start_date,omitempty"`
 	CheckInEnabled       bool       `json:"check_in_enabled"`
 	PendingCheckInEnable bool       `json:"pending_check_in_enable"`
 	CheckInEffectiveFrom *time.Time `json:"check_in_effective_from,omitempty"`
@@ -512,14 +524,49 @@ func (pe *ProjectEmployee) CancelPendingScheduleChange() error {
 
 // Deferred check-in activation methods (mirror the schedule-pending pattern).
 
+// CheckInStartMonth is the admin's choice of which month a self check-in
+// enable starts on. The start day is always the 1st, so the choice is only
+// about the month.
+type CheckInStartMonth string
+
+const (
+	CheckInStartMonthThisMonth CheckInStartMonth = "this_month"
+	CheckInStartMonthNextMonth CheckInStartMonth = "next_month"
+)
+
+// ParseCheckInStartMonth validates an admin-supplied start-month choice. An
+// empty value keeps the established behavior (defer to the next month) so
+// callers that predate the choice keep working unchanged.
+func ParseCheckInStartMonth(value string) (CheckInStartMonth, error) {
+	switch CheckInStartMonth(strings.TrimSpace(value)) {
+	case "":
+		return CheckInStartMonthNextMonth, nil
+	case CheckInStartMonthThisMonth:
+		return CheckInStartMonthThisMonth, nil
+	case CheckInStartMonthNextMonth:
+		return CheckInStartMonthNextMonth, nil
+	default:
+		return "", NewValidationError("Tháng kích hoạt tự chấm công không hợp lệ")
+	}
+}
+
+// EffectiveFrom returns the activation date for the choice: always day 1 of
+// the selected month. "this month" therefore resolves to a date that has
+// already arrived, which callers read as "activate now, starting from the 1st".
+func (m CheckInStartMonth) EffectiveFrom(now time.Time) time.Time {
+	if m == CheckInStartMonthThisMonth {
+		return time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	}
+	return time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, now.Location())
+}
+
 // HasPendingCheckInEnable returns true if a check-in enable is awaiting activation
 func (pe *ProjectEmployee) HasPendingCheckInEnable() bool {
 	return pe.PendingCheckInEnabled != nil && *pe.PendingCheckInEnabled && pe.CheckInEffectiveFrom != nil
 }
 
 // RequestCheckInEnable records a deferred check-in enable: activation happens
-// on day 1 of the month AFTER the effective date's request time (strict next
-// month — enabling on the 1st still defers to the following month).
+// on the effective date (day 1 of the month the admin selected).
 func (pe *ProjectEmployee) RequestCheckInEnable(effectiveDate time.Time) error {
 	if !pe.IsCurrentlyAssigned() {
 		return NewValidationError("Chỉ có thể bật chấm công cho nhân viên đang làm việc")
@@ -540,6 +587,32 @@ func (pe *ProjectEmployee) RequestCheckInEnable(effectiveDate time.Time) error {
 	return nil
 }
 
+// ReschedulePendingCheckInEnable moves an already-pending enable to a new
+// effective date so an admin who picked the wrong month can correct it before
+// activation. Returns whether the stored date actually changed.
+func (pe *ProjectEmployee) ReschedulePendingCheckInEnable(effectiveDate time.Time) (bool, error) {
+	if !pe.HasPendingCheckInEnable() {
+		return false, NewValidationError("Không có yêu cầu bật chấm công nào đang chờ kích hoạt")
+	}
+
+	if pe.CheckInEffectiveFrom != nil && pe.CheckInEffectiveFrom.Equal(effectiveDate) {
+		return false, nil
+	}
+
+	pe.CheckInEffectiveFrom = &effectiveDate
+	return true, nil
+}
+
+// ActivateCheckIn turns the self check-in service on and records the day the
+// service starts from. It clears the pending columns so a row is never both
+// active and waiting.
+func (pe *ProjectEmployee) ActivateCheckIn(startDate time.Time) {
+	pe.CheckInEnabled = true
+	pe.CheckInStartDate = &startDate
+	pe.PendingCheckInEnabled = nil
+	pe.CheckInEffectiveFrom = nil
+}
+
 // ApplyPendingCheckIn activates the pending check-in enable if the effective
 // date has arrived. Returns true when the row changed.
 func (pe *ProjectEmployee) ApplyPendingCheckIn() bool {
@@ -551,9 +624,7 @@ func (pe *ProjectEmployee) ApplyPendingCheckIn() bool {
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 	if !pe.CheckInEffectiveFrom.After(startOfToday) {
-		pe.CheckInEnabled = true
-		pe.PendingCheckInEnabled = nil
-		pe.CheckInEffectiveFrom = nil
+		pe.ActivateCheckIn(*pe.CheckInEffectiveFrom)
 		return true
 	}
 

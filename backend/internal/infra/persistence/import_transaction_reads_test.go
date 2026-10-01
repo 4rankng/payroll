@@ -21,7 +21,7 @@ func TestImportAssignmentReadsSeeUncommittedRows(t *testing.T) {
 		start_date DATETIME, last_date DATETIME, payment_schedule TEXT,
 		pending_payment_schedule TEXT, schedule_effective_from DATETIME,
 		check_in_enabled BOOLEAN, advance_request_enabled BOOLEAN,
-		pending_check_in_enabled BOOLEAN, check_in_effective_from DATETIME,
+		pending_check_in_enabled BOOLEAN, check_in_effective_from DATETIME, check_in_start_date DATETIME,
 		created_by INTEGER, created_at DATETIME, updated_at DATETIME, deleted_at DATETIME);
 	CREATE TABLE projects (id INTEGER PRIMARY KEY, deleted_at DATETIME);
 	CREATE TABLE employees (id INTEGER PRIMARY KEY, fullname TEXT, deleted_at DATETIME);

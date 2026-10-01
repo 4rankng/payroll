@@ -173,9 +173,13 @@ type UpdatePaymentScheduleRequest struct {
 // CancelPaymentScheduleChangeRequest can be empty (just a confirmation)
 type CancelPaymentScheduleChangeRequest struct{}
 
-// ToggleCheckInEnabledRequest represents the request to toggle check-in for an employee
+// ToggleCheckInEnabledRequest represents the request to toggle check-in for an employee.
+// StartMonth is the admin's choice of which month the service starts on
+// ("this_month" | "next_month"); the start day is always the 1st. Empty keeps
+// the established next-month behavior.
 type ToggleCheckInEnabledRequest struct {
-	CheckInEnabled bool `json:"check_in_enabled"`
+	CheckInEnabled bool   `json:"check_in_enabled"`
+	StartMonth     string `json:"start_month"`
 }
 
 // ToggleAdvanceRequestEnabledRequest represents the request to toggle the per-employee advance payment kill switch.
@@ -189,6 +193,7 @@ type ToggleAdvanceRequestEnabledRequest struct {
 type BulkToggleCheckInEnabledRequest struct {
 	EmployeeIDs    []uint `json:"employee_ids" binding:"required,min=1"`
 	CheckInEnabled bool   `json:"check_in_enabled"`
+	StartMonth     string `json:"start_month"`
 }
 
 type CheckInConfigurationEmployeeResponse struct {
@@ -203,6 +208,10 @@ type CheckInConfigurationEmployeeResponse struct {
 	CheckInEffectiveFrom *time.Time `json:"check_in_effective_from,omitempty"`
 	AttendanceCount      int64      `json:"attendance_count"`
 	LastCheckInAt        *string    `json:"last_check_in_at,omitempty"`
+	// EmployeeMobile is read from the employees table; CheckInStartDate is the
+	// day the service starts (recorded once active, scheduled while pending).
+	EmployeeMobile   string     `json:"employee_mobile"`
+	CheckInStartDate *time.Time `json:"check_in_start_date,omitempty"`
 }
 
 type CheckInConfigurationSummaryResponse struct {

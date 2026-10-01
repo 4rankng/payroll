@@ -20,6 +20,7 @@ func setupProjectRoutes(protected *gin.RouterGroup, container *Container) {
 		projects.POST("/:id/employees/remove", container.Handlers.ProjectEmployee.RemoveEmployeesFromProject)
 		projects.GET("/:id/employees", container.Handlers.ProjectEmployee.ListProjectEmployees)
 		projects.GET("/:id/employees/checkin-configuration", container.Handlers.ProjectEmployee.GetCheckInConfiguration)
+		projects.GET("/:id/employees/checkin-configuration/export", container.Handlers.ProjectEmployee.ExportCheckInConfiguration)
 		projects.PATCH("/:id/employees/:employeeId/checkin-enabled", container.Handlers.ProjectEmployee.ToggleCheckInEnabled)
 		projects.PATCH("/:id/employees/:employeeId/advance-request-enabled", container.Handlers.ProjectEmployee.ToggleAdvanceRequestEnabled)
 		projects.PATCH("/:id/employees/checkin-enabled/bulk", container.Handlers.ProjectEmployee.BulkToggleCheckInEnabled)

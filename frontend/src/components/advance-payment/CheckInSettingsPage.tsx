@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
+  Download,
   Loader2,
   PowerOff,
   ScanFace,
@@ -25,11 +26,13 @@ import { SearchBar } from "@/components/shared/SearchBar";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CheckInEmployeeCard } from "@/components/advance-payment/CheckInEmployeeCard";
 import { CheckInMonthSelector } from "@/components/advance-payment/CheckInMonthSelector";
+import { CheckInStartMonthDialog } from "@/components/advance-payment/CheckInStartMonthDialog";
 import {
   useCheckInConfigurableProjects,
   useInfiniteCheckInConfiguration,
   useDisableInactiveCheckInEmployees,
   useDisablePendingCheckInEmployees,
+  useExportCheckInEmployees,
   useToggleCheckInEnabled,
 } from "@/hooks/api/useProjectEmployees";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
@@ -37,6 +40,7 @@ import { cn } from "@/lib/utils";
 import type {
   CheckInConfigurationEmployee,
   CheckInConfigurationStatus,
+  CheckInStartMonth,
 } from "@/types/api/project-employee.types";
 import {
   buildCheckInStatusFilters,
@@ -62,6 +66,13 @@ export default function CheckInSettingsPage() {
   const [pendingEmployeeId, setPendingEmployeeId] = useState<number | null>(null);
   const [bulkAction, setBulkAction] = useState<BulkAction>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  // Enabling (and moving an already-queued enable) always goes through the
+  // start-month choice, so the day-1 activation is never implicit.
+  const [startMonthTarget, setStartMonthTarget] = useState<{
+    employeeId: number;
+    employeeName: string;
+    isReschedule: boolean;
+  } | null>(null);
 
   const projectsQuery = useCheckInConfigurableProjects();
   const flexibleProjects = useMemo(
@@ -95,6 +106,7 @@ export default function CheckInSettingsPage() {
   const toggleMutation = useToggleCheckInEnabled();
   const disableInactiveMutation = useDisableInactiveCheckInEmployees();
   const disablePendingMutation = useDisablePendingCheckInEmployees();
+  const { exportCheckInEmployees, isExporting } = useExportCheckInEmployees();
 
   const configuration = configurationQuery.data?.pages[0];
   const summary = configuration?.summary;
@@ -123,6 +135,58 @@ export default function CheckInSettingsPage() {
     threshold: 0.1,
   });
 
+  const handleStartMonthConfirm = (startMonth: CheckInStartMonth) => {
+    if (!selectedProjectId || !startMonthTarget) return;
+    setActionError(null);
+    setPendingEmployeeId(startMonthTarget.employeeId);
+    toggleMutation.mutate(
+      {
+        projectId: selectedProjectId,
+        employeeId: startMonthTarget.employeeId,
+        // A pending row is already an enable request: re-sending "enable" with
+        // the other month is what moves its activation.
+        enabled: true,
+        startMonth,
+      },
+      {
+        onSuccess: () => setStartMonthTarget(null),
+        onError: (error: unknown) => {
+          const apiError = error as {
+            response?: { data?: { message?: string } };
+            message?: string;
+          };
+          setActionError(
+            apiError.response?.data?.message ||
+              apiError.message ||
+              "Không thể cập nhật điểm danh. Vui lòng thử lại.",
+          );
+        },
+        onSettled: () => setPendingEmployeeId(null),
+      },
+    );
+  };
+
+  const handleExport = () => {
+    if (!selectedProjectId || isExporting) return;
+    const trimmedSearch = search.trim();
+    setActionError(null);
+    void exportCheckInEmployees(selectedProjectId, {
+      status,
+      month: selectedMonth,
+      ...(trimmedSearch ? { search: trimmedSearch } : {}),
+    }).catch((error: unknown) => {
+      const apiError = error as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      setActionError(
+        apiError.response?.data?.message ||
+          apiError.message ||
+          "Không thể xuất danh sách. Vui lòng thử lại.",
+      );
+    });
+  };
+
   const handleStatusChange = (value: CheckInConfigurationStatus) => {
     setStatus(value);
     setActionError(null);
@@ -141,26 +205,35 @@ export default function CheckInSettingsPage() {
 
   const handleToggleEmployee = (employee: CheckInConfigurationEmployee) => {
     if (!selectedProjectId || isMutating) return;
-    const enabled = !(employee.check_in_enabled || employee.pending_check_in_enable);
     setActionError(null);
-    setPendingEmployeeId(employee.employee_id);
-    toggleMutation.mutate(
-      { projectId: selectedProjectId, employeeId: employee.employee_id, enabled },
-      {
-        onError: (error: unknown) => {
-          const apiError = error as {
-            response?: { data?: { message?: string } };
-            message?: string;
-          };
-          setActionError(
-            apiError.response?.data?.message ||
-              apiError.message ||
-              "Không thể cập nhật điểm danh. Vui lòng thử lại.",
-          );
+    if (employee.check_in_enabled) {
+      setPendingEmployeeId(employee.employee_id);
+      toggleMutation.mutate(
+        { projectId: selectedProjectId, employeeId: employee.employee_id, enabled: false },
+        {
+          onError: (error: unknown) => {
+            const apiError = error as {
+              response?: { data?: { message?: string } };
+              message?: string;
+            };
+            setActionError(
+              apiError.response?.data?.message ||
+                apiError.message ||
+                "Không thể cập nhật điểm danh. Vui lòng thử lại.",
+            );
+          },
+          onSettled: () => setPendingEmployeeId(null),
         },
-        onSettled: () => setPendingEmployeeId(null),
-      },
-    );
+      );
+      return;
+    }
+    // Off (or queued for a month the admin may want to change) → ask which
+    // month the service starts on.
+    setStartMonthTarget({
+      employeeId: employee.employee_id,
+      employeeName: employee.employee_name,
+      isReschedule: Boolean(employee.pending_check_in_enable),
+    });
   };
 
   const handleBulkAction = () => {
@@ -338,6 +411,22 @@ export default function CheckInSettingsPage() {
                   </span>
                   kết quả
                 </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-11 min-h-11 gap-1.5 px-3 text-sm sm:h-9 sm:min-h-0"
+                  disabled={isExporting || (configuration?.pagination.totalRecords ?? 0) === 0}
+                  onClick={handleExport}
+                  aria-label="Xuất danh sách tự chấm công ra Excel"
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Download className="h-4 w-4" aria-hidden />
+                  )}
+                  Xuất Excel
+                </Button>
                 {isCurrentMonth && status === "inactive" && (summary?.inactive ?? 0) > 0 ? (
                   <Button
                     type="button"
@@ -495,6 +584,15 @@ export default function CheckInSettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <CheckInStartMonthDialog
+        open={startMonthTarget !== null}
+        onOpenChange={(open) => !open && setStartMonthTarget(null)}
+        employeeName={startMonthTarget?.employeeName ?? ""}
+        isReschedule={startMonthTarget?.isReschedule ?? false}
+        isSubmitting={toggleMutation.isPending}
+        onConfirm={handleStartMonthConfirm}
+      />
     </main>
   );
 }

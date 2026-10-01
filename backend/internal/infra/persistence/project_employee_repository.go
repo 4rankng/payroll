@@ -140,6 +140,11 @@ func (r *ProjectEmployeeRepository) checkInConfigurationBaseQuery(
 	return r.getDB(ctx).
 		Table("project_employees").
 		Joins("LEFT JOIN (?) AS month_attendance ON month_attendance.project_id = project_employees.project_id AND month_attendance.employee_id = project_employees.employee_id", monthAttendance).
+		// Mobile lives on employees (project_employees keeps only the
+		// denormalized name/CCCD/code). The join is 1:1 on the primary key and
+		// drops soft-deleted employees, so it never changes row counts for the
+		// summary aggregate below.
+		Joins("LEFT JOIN employees ON employees.id = project_employees.employee_id AND employees.deleted_at IS NULL").
 		Where("project_employees.project_id = ?", query.ProjectID).
 		Where("project_employees.deleted_at IS NULL").
 		Where("project_employees.start_date <= ?", query.AsOfDate).
@@ -207,6 +212,8 @@ func (r *ProjectEmployeeRepository) GetCheckInConfiguration(
 			project_employees.project_id,
 			project_employees.employee_id,
 			project_employees.employee_name,
+			project_employees.check_in_start_date,
+			COALESCE(employees.mobile, '') AS employee_mobile,
 			project_employees.employee_cccd,
 			project_employees.employee_code,
 			project_employees.check_in_enabled,
@@ -225,6 +232,15 @@ func (r *ProjectEmployeeRepository) GetCheckInConfiguration(
 	}
 	if err := listQuery.Scan(&employees).Error; err != nil {
 		return nil, err
+	}
+
+	// A pending enable has no recorded start date yet, so the day the admin
+	// picked is the start day the roster must show. Resolved here rather than
+	// with SQL COALESCE so each column keeps its own DATE type on the scan.
+	for i := range employees {
+		if employees[i].CheckInStartDate == nil {
+			employees[i].CheckInStartDate = employees[i].CheckInEffectiveFrom
+		}
 	}
 
 	return &domain.CheckInConfigurationResult{

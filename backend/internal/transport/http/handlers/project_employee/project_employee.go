@@ -2,6 +2,7 @@ package project_employee
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -505,6 +506,8 @@ func (h *Handler) GetCheckInConfiguration(c *gin.Context) {
 			CheckInEnabled:       employee.CheckInEnabled,
 			PendingCheckInEnable: employee.PendingCheckInEnable,
 			CheckInEffectiveFrom: employee.CheckInEffectiveFrom,
+			EmployeeMobile:       employee.EmployeeMobile,
+			CheckInStartDate:     employee.CheckInStartDate,
 			AttendanceCount:      employee.AttendanceCount,
 			LastCheckInAt:        employee.LastCheckInAt,
 		})
@@ -725,7 +728,13 @@ func (h *Handler) ToggleCheckInEnabled(c *gin.Context) {
 		return
 	}
 
-	if err := h.projectEmployeeService.ToggleCheckInEnabled(c.Request.Context(), uint(projectID), uint(employeeID), req.CheckInEnabled, uid); err != nil {
+	startMonth, err := domain.ParseCheckInStartMonth(req.StartMonth)
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.projectEmployeeService.ToggleCheckInEnabled(c.Request.Context(), uint(projectID), uint(employeeID), req.CheckInEnabled, startMonth, uid); err != nil {
 		if domainErr, ok := err.(*domain.DomainError); ok {
 			response.BadRequest(c, domainErr.Message)
 			return
@@ -812,7 +821,13 @@ func (h *Handler) BulkToggleCheckInEnabled(c *gin.Context) {
 		return
 	}
 
-	if err := h.projectEmployeeService.BulkToggleCheckInEnabled(c.Request.Context(), uint(projectID), req.EmployeeIDs, req.CheckInEnabled, uid); err != nil {
+	startMonth, err := domain.ParseCheckInStartMonth(req.StartMonth)
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if err := h.projectEmployeeService.BulkToggleCheckInEnabled(c.Request.Context(), uint(projectID), req.EmployeeIDs, req.CheckInEnabled, startMonth, uid); err != nil {
 		if domainErr, ok := err.(*domain.DomainError); ok {
 			response.BadRequest(c, domainErr.Message)
 			return
@@ -955,4 +970,67 @@ func (h *Handler) CancelPendingCheckInEnable(c *gin.Context) {
 	}
 
 	response.Success(c, nil, "Đã hủy yêu cầu bật chấm công đang chờ kích hoạt")
+}
+
+// ExportCheckInConfiguration handles
+// GET /api/v1/projects/:id/employees/checkin-configuration/export
+// It applies the same status/search/month filters as the on-screen list, so
+// the workbook holds the whole group the admin is looking at rather than the
+// page currently loaded.
+func (h *Handler) ExportCheckInConfiguration(c *gin.Context) {
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
+		return
+	}
+	if !h.requireCheckInConfigurationAccess(c, uint(projectID)) {
+		return
+	}
+
+	status := domain.CheckInConfigurationStatus(c.DefaultQuery("status", string(domain.CheckInConfigurationStatusEnabled)))
+	switch status {
+	case domain.CheckInConfigurationStatusAll,
+		domain.CheckInConfigurationStatusEnabled,
+		domain.CheckInConfigurationStatusActive,
+		domain.CheckInConfigurationStatusInactive,
+		domain.CheckInConfigurationStatusPending:
+	default:
+		response.BadRequest(c, "Trạng thái điểm danh không hợp lệ")
+		return
+	}
+	selectedMonth, err := resolveCheckInConfigurationMonth(c.Query("month"), h.clock.Now())
+	if err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	file, err := h.projectEmployeeService.ExportCheckInEmployees(
+		c.Request.Context(),
+		uint(projectID),
+		status,
+		c.Query("search"),
+		selectedMonth,
+	)
+	if err != nil {
+		if domain.IsValidationError(err) {
+			response.BadRequest(c, err.Error())
+			return
+		}
+		h.logger.ErrorContext(c.Request.Context(), "Failed to export check-in configuration",
+			"project_id", projectID,
+			"error", err,
+		)
+		response.InternalServerError(c, "Không thể xuất danh sách tự chấm công")
+		return
+	}
+
+	defer func() { _ = file.Close() }()
+
+	filename := fmt.Sprintf("danh_sach_tu_cham_cong_%d_%s.xlsx", projectID, selectedMonth.Format("2006-01"))
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+
+	if _, err := file.WriteTo(c.Writer); err != nil {
+		h.logger.ErrorContext(c.Request.Context(), "Failed to write check-in export workbook", "error", err)
+	}
 }

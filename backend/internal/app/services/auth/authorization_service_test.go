@@ -179,6 +179,7 @@ func TestAdvPartnerRole_AllowList(t *testing.T) {
 		// Check-in configuration workspace (project scope is enforced by handlers)
 		{"/api/v1/projects/checkin-configurable", "GET"},
 		{"/api/v1/projects/7/employees/checkin-configuration", "GET"},
+		{"/api/v1/projects/7/employees/checkin-configuration/export", "GET"},
 		{"/api/v1/projects/7/employees/101/checkin-enabled", "PATCH"},
 		{"/api/v1/projects/7/employees/checkin-enabled/disable-inactive", "PATCH"},
 		{"/api/v1/projects/7/employees/checkin-enabled/disable-pending", "PATCH"},

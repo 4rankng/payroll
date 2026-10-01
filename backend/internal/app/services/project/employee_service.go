@@ -958,11 +958,15 @@ func (s *ProjectEmployeeService) ApplyPendingScheduleChanges(ctx context.Context
 }
 
 // ToggleCheckInEnabled toggles the check-in enabled status for an employee in a project.
-// Enabling is DEFERRED: it activates on day 1 of the next month (strict — enabling
-// on the 1st still defers to the following month). Disabling stays instant and
-// zeroes out quota for the current month onward; disabling a pending (not yet
-// active) enable just cancels the pending request without touching quota.
-func (s *ProjectEmployeeService) ToggleCheckInEnabled(ctx context.Context, projectID, employeeID uint, enabled bool, updatedBy uint) error {
+// Enabling is DEFERRED to day 1 of the month the admin picked via startMonth
+// ("this_month" or "next_month"). Picking the current month resolves to a day
+// that has already arrived, so the service activates immediately and records
+// the start date as the 1st. An already-pending enable is rescheduled instead
+// of being rejected, so an admin can move it to the other month. Disabling
+// stays instant and zeroes out quota for the current month onward; disabling a
+// pending (not yet active) enable just cancels the pending request without
+// touching quota.
+func (s *ProjectEmployeeService) ToggleCheckInEnabled(ctx context.Context, projectID, employeeID uint, enabled bool, startMonth domain.CheckInStartMonth, updatedBy uint) error {
 	// Require an active payrate before enabling check-in — without it attendance
 	// records cannot be priced and timesheets would fail to process.
 	if enabled {
@@ -982,11 +986,15 @@ func (s *ProjectEmployeeService) ToggleCheckInEnabled(ctx context.Context, proje
 		}
 
 		if enabled {
-			if assignment.CheckInEnabled || assignment.HasPendingCheckInEnable() {
-				return nil // Already active or already pending — no change needed
+			if assignment.CheckInEnabled {
+				return nil // Already active — no change needed
 			}
-			if err := assignment.RequestCheckInEnable(firstDayOfNextMonth(clock.Now())); err != nil {
+			changed, err := s.applyCheckInEnable(assignment, startMonth.EffectiveFrom(clock.Now()))
+			if err != nil {
 				return err
+			}
+			if !changed {
+				return nil
 			}
 		} else {
 			if assignment.HasPendingCheckInEnable() {
@@ -1054,11 +1062,39 @@ func (s *ProjectEmployeeService) ToggleAdvanceRequestEnabled(ctx context.Context
 	})
 }
 
+// applyCheckInEnable records an enable that starts on effectiveDate (always a
+// day 1) and reports whether the row needs persisting. A pending enable is
+// rescheduled instead of rejected, which is how an admin moves a queued
+// activation from next month back to this month. When effectiveDate has
+// already arrived — the "this month" choice, or a reschedule to a month that
+// began earlier — the row activates right away rather than waiting for the
+// nightly pending sweep, and the start date is recorded as that day 1.
+func (s *ProjectEmployeeService) applyCheckInEnable(assignment *domain.ProjectEmployee, effectiveDate time.Time) (bool, error) {
+	if assignment.HasPendingCheckInEnable() {
+		changed, err := assignment.ReschedulePendingCheckInEnable(effectiveDate)
+		if err != nil {
+			return false, err
+		}
+		if !changed {
+			return false, nil
+		}
+	} else if err := assignment.RequestCheckInEnable(effectiveDate); err != nil {
+		return false, err
+	}
+
+	now := clock.Now()
+	if !effectiveDate.After(time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())) {
+		assignment.ActivateCheckIn(effectiveDate)
+	}
+
+	return true, nil
+}
+
 // BulkToggleCheckInEnabled toggles the check-in enabled status for multiple employees in a project.
 // The toggle logic is inlined within a single transaction to avoid nested transactions and ensure atomicity.
-// Enabling is deferred to day 1 of the next month (same rule as the single toggle);
-// disabling cancels any pending enable first (no quota zeroing for never-active rows).
-func (s *ProjectEmployeeService) BulkToggleCheckInEnabled(ctx context.Context, projectID uint, employeeIDs []uint, enabled bool, updatedBy uint) error {
+// Enabling uses the same start-month rule as the single toggle; disabling
+// cancels any pending enable first (no quota zeroing for never-active rows).
+func (s *ProjectEmployeeService) BulkToggleCheckInEnabled(ctx context.Context, projectID uint, employeeIDs []uint, enabled bool, startMonth domain.CheckInStartMonth, updatedBy uint) error {
 	// Require an active payrate before enabling check-in — without it attendance
 	// records cannot be priced and timesheets would fail to process.
 	if enabled {
@@ -1080,11 +1116,15 @@ func (s *ProjectEmployeeService) BulkToggleCheckInEnabled(ctx context.Context, p
 			}
 
 			if enabled {
-				if assignment.CheckInEnabled || assignment.HasPendingCheckInEnable() {
+				if assignment.CheckInEnabled {
 					continue
 				}
-				if err := assignment.RequestCheckInEnable(firstDayOfNextMonth(clock.Now())); err != nil {
+				changed, err := s.applyCheckInEnable(assignment, startMonth.EffectiveFrom(clock.Now()))
+				if err != nil {
 					return err
+				}
+				if !changed {
+					continue
 				}
 			} else {
 				if assignment.HasPendingCheckInEnable() {

@@ -1,5 +1,6 @@
 import { apiClient, buildQueryString } from './client';
 import { API_ENDPOINTS } from '@/config/api.config';
+import { extractFilenameFromHeaders, triggerBlobDownload } from '@/utils/file-download';
 import type {
   ProjectEmployeeAssignment,
   ProjectEmployeeListResponse,
@@ -20,6 +21,7 @@ import type {
   DisableInactiveCheckInEmployeesResponse,
   DisablePendingCheckInEmployeesResponse,
   CheckInConfigurableProject,
+  CheckInStartMonth,
 } from '@/types/api/project-employee.types';
 
 /**
@@ -309,16 +311,19 @@ export class ProjectEmployeeService {
   }
 
   /**
-   * Toggle check-in enabled status for a specific employee in a project
+   * Toggle check-in enabled status for a specific employee in a project.
+   * Enabling defers to day 1 of `startMonth`; re-enabling a pending row
+   * moves its activation to the other month.
    */
   async toggleCheckInEnabled(
     projectId: number,
     employeeId: number,
-    enabled: boolean
+    enabled: boolean,
+    startMonth?: CheckInStartMonth,
   ): Promise<{ status: "success"; message: string }> {
     const response = await apiClient.patch<{ status: "success"; message: string }>(
       `/projects/${projectId}/employees/${employeeId}/checkin-enabled`,
-      { check_in_enabled: enabled }
+      { check_in_enabled: enabled, ...(startMonth ? { start_month: startMonth } : {}) },
     );
     return response.data!;
   }
@@ -341,16 +346,22 @@ export class ProjectEmployeeService {
   }
 
   /**
-   * Bulk toggle check-in enabled status for multiple employees in a project
+   * Bulk toggle check-in enabled status for multiple employees in a project.
+   * `startMonth` applies the same day-1 rule as the single toggle.
    */
   async bulkToggleCheckInEnabled(
     projectId: number,
     employeeIds: number[],
-    enabled: boolean
+    enabled: boolean,
+    startMonth?: CheckInStartMonth,
   ): Promise<{ status: "success"; message: string }> {
     const response = await apiClient.patch<{ status: "success"; message: string }>(
       `/projects/${projectId}/employees/checkin-enabled/bulk`,
-      { employee_ids: employeeIds, check_in_enabled: enabled }
+      {
+        employee_ids: employeeIds,
+        check_in_enabled: enabled,
+        ...(startMonth ? { start_month: startMonth } : {}),
+      },
     );
     return response.data!;
   }
@@ -364,6 +375,28 @@ export class ProjectEmployeeService {
       `/projects/${projectId}/employees/checkin-configuration${queryString}`,
     );
     return response.data!;
+  }
+
+  /**
+   * Download the self check-in roster (full name, CCCD, mobile, start date)
+   * for the same filters the configuration screen is showing.
+   */
+  async exportCheckInEmployees(
+    projectId: number,
+    params: Omit<CheckInConfigurationParams, "page" | "pageSize">,
+  ): Promise<void> {
+    const queryString = buildQueryString(params);
+    const response = await apiClient['client'].get(
+      `/projects/${projectId}/employees/checkin-configuration/export${queryString}`,
+      { responseType: 'blob' },
+    );
+
+    const filename = extractFilenameFromHeaders(response.headers) ||
+      `danh_sach_tu_cham_cong_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    triggerBlobDownload(blob, filename);
   }
 
   async disableInactiveCheckInEmployees(

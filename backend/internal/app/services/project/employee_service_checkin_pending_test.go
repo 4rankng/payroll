@@ -185,7 +185,7 @@ func TestToggleCheckInEnableWritesPendingWithNextMonthEffective(t *testing.T) {
 	repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
 	svc := newCheckinPendingService(repo, &checkinPendingAdvanceRepo{})
 
-	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, 1); err != nil {
+	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("toggle enable: %v", err)
 	}
 
@@ -207,7 +207,7 @@ func TestToggleCheckInEnableOnDay1StillDefersToNextMonth(t *testing.T) {
 	repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
 	svc := newCheckinPendingService(repo, &checkinPendingAdvanceRepo{})
 
-	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, 1); err != nil {
+	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("toggle enable: %v", err)
 	}
 
@@ -224,10 +224,10 @@ func TestToggleCheckInDisableWhilePendingCancelsWithoutZeroing(t *testing.T) {
 	repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
 	svc := newCheckinPendingService(repo, advanceRepo)
 
-	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, 1); err != nil {
+	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("enable: %v", err)
 	}
-	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, false, 1); err != nil {
+	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, false, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("disable: %v", err)
 	}
 
@@ -248,7 +248,7 @@ func TestToggleCheckInDisableActiveStillZeroesQuota(t *testing.T) {
 	repo := &checkinPendingAssignmentRepo{assignment: a}
 	svc := newCheckinPendingService(repo, advanceRepo)
 
-	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, false, 1); err != nil {
+	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, false, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("disable: %v", err)
 	}
 
@@ -373,11 +373,11 @@ func TestToggleCheckInDuplicateEnableIsNoop(t *testing.T) {
 	repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
 	svc := newCheckinPendingService(repo, &checkinPendingAdvanceRepo{})
 
-	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, 1); err != nil {
+	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("first enable: %v", err)
 	}
 	savesAfterFirst := len(repo.saved)
-	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, 1); err != nil {
+	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("second enable: %v", err)
 	}
 	if len(repo.saved) != savesAfterFirst {
@@ -389,7 +389,7 @@ func TestToggleCheckInDuplicateEnableIsNoop(t *testing.T) {
 	active.CheckInEnabled = true
 	repo2 := &checkinPendingAssignmentRepo{assignment: active}
 	svc2 := newCheckinPendingService(repo2, &checkinPendingAdvanceRepo{})
-	if err := svc2.ToggleCheckInEnabled(context.Background(), 5, 99, true, 1); err != nil {
+	if err := svc2.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("enable on active: %v", err)
 	}
 	if len(repo2.saved) != 0 {
@@ -404,7 +404,7 @@ func TestBulkToggleCheckInPendingPaths(t *testing.T) {
 	svc := newCheckinPendingService(repo, advanceRepo)
 
 	// Bulk enable → pending
-	if err := svc.BulkToggleCheckInEnabled(context.Background(), 5, []uint{99}, true, 1); err != nil {
+	if err := svc.BulkToggleCheckInEnabled(context.Background(), 5, []uint{99}, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("bulk enable: %v", err)
 	}
 	if !repo.assignment.HasPendingCheckInEnable() {
@@ -412,7 +412,7 @@ func TestBulkToggleCheckInPendingPaths(t *testing.T) {
 	}
 
 	// Bulk disable while pending → cancel, no zeroing
-	if err := svc.BulkToggleCheckInEnabled(context.Background(), 5, []uint{99}, false, 1); err != nil {
+	if err := svc.BulkToggleCheckInEnabled(context.Background(), 5, []uint{99}, false, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("bulk disable: %v", err)
 	}
 	if repo.assignment.HasPendingCheckInEnable() || repo.assignment.CheckInEnabled {
@@ -424,7 +424,7 @@ func TestBulkToggleCheckInPendingPaths(t *testing.T) {
 
 	// Bulk enable then bulk disable after activation → zeroing fires
 	repo.assignment.CheckInEnabled = true
-	if err := svc.BulkToggleCheckInEnabled(context.Background(), 5, []uint{99}, false, 1); err != nil {
+	if err := svc.BulkToggleCheckInEnabled(context.Background(), 5, []uint{99}, false, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("bulk disable active: %v", err)
 	}
 	if len(advanceRepo.zeroedMonths) != 1 {
@@ -437,7 +437,7 @@ func TestCancelPendingCheckInEnableService(t *testing.T) {
 	repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
 	svc := newCheckinPendingService(repo, &checkinPendingAdvanceRepo{})
 
-	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, 1); err != nil {
+	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
 		t.Fatalf("enable: %v", err)
 	}
 	if err := svc.CancelPendingCheckInEnable(context.Background(), 1, 1); err != nil {
@@ -485,7 +485,7 @@ func TestToggleCheckInEnableRequiresPayrate(t *testing.T) {
 		nil, nil, nil, nil, nil,
 	)
 
-	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, 1); err == nil {
+	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthNextMonth, 1); err == nil {
 		t.Fatal("enable without project payrate must be rejected")
 	}
 }

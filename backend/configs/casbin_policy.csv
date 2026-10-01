@@ -121,6 +121,7 @@ p, adv_partner, /api/v1/employees/*, GET, allow
 # per-project read/modify access for every route carrying a project id.
 p, adv_partner, /api/v1/projects/checkin-configurable, GET, allow
 p, adv_partner, /api/v1/projects/:id/employees/checkin-configuration, GET, allow
+p, adv_partner, /api/v1/projects/:id/employees/checkin-configuration/export, GET, allow
 p, adv_partner, /api/v1/projects/:id/employees/:employeeId/checkin-enabled, PATCH, allow
 p, adv_partner, /api/v1/projects/:id/employees/checkin-enabled/disable-inactive, PATCH, allow
 p, adv_partner, /api/v1/projects/:id/employees/checkin-enabled/disable-pending, PATCH, allow

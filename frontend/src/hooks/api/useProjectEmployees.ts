@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectEmployeeService } from '@/services/api/project-employee.service';
 import { showSuccessNotification } from '@/utils/error-handler';
@@ -27,7 +28,16 @@ import type {
   CancelScheduleChangeResponse,
   PendingScheduleChangesResponse,
   CheckInConfigurationParams,
+  CheckInStartMonth,
 } from '@/types/api/project-employee.types';
+
+// An enable is never blind about when it lands: the chosen month decides both
+// the day the service starts and whether it is live now.
+function checkInEnableMessage(startMonth?: CheckInStartMonth): string {
+  return startMonth === 'this_month'
+    ? 'Đã bật điểm danh từ đầu tháng này'
+    : 'Đã đăng ký bật điểm danh từ ngày 1 tháng sau';
+}
 
 // ========== PROJECT EMPLOYEE QUERIES ==========
 
@@ -92,6 +102,29 @@ export function useInfiniteCheckInConfiguration(
     ),
     enabled,
   });
+}
+
+/**
+ * Download the self check-in roster for a project. The export applies the same
+ * status/search/month filters as the configuration screen, so the workbook
+ * holds the whole filtered group rather than the loaded page.
+ */
+export function useExportCheckInEmployees() {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportCheckInEmployees = async (
+    projectId: number,
+    params: Omit<CheckInConfigurationParams, 'page' | 'pageSize'>,
+  ) => {
+    setIsExporting(true);
+    try {
+      await projectEmployeeService.exportCheckInEmployees(projectId, params);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  return { exportCheckInEmployees, isExporting };
 }
 
 export function useEmployeeProjects(
@@ -478,15 +511,18 @@ export function useToggleCheckInEnabled() {
       projectId,
       employeeId,
       enabled,
+      startMonth,
     }: {
       projectId: number;
       employeeId: number;
       enabled: boolean;
+      startMonth?: CheckInStartMonth;
     }) =>
       projectEmployeeService.toggleCheckInEnabled(
         projectId,
         employeeId,
-        enabled
+        enabled,
+        startMonth
       ),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -502,7 +538,7 @@ export function useToggleCheckInEnabled() {
       });
       showSuccessNotification(
         variables.enabled
-          ? "Đã bật điểm danh cho nhân viên"
+          ? checkInEnableMessage(variables.startMonth)
           : "Đã tắt điểm danh cho nhân viên"
       );
     },
@@ -546,15 +582,18 @@ export function useBulkToggleCheckInEnabled() {
       projectId,
       employeeIds,
       enabled,
+      startMonth,
     }: {
       projectId: number;
       employeeIds: number[];
       enabled: boolean;
+      startMonth?: CheckInStartMonth;
     }) =>
       projectEmployeeService.bulkToggleCheckInEnabled(
         projectId,
         employeeIds,
-        enabled
+        enabled,
+        startMonth
       ),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

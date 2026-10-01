@@ -70,6 +70,8 @@ cd backend && go run cmd/migrate/main.go up
 | 067 | `attendances` | Flexible project check-in/out (geofence) |
 | 079 | `attendance_failed_attempts` | GPS attendance failure tracking |
 | 085 | `settlement_uploads` | Settlement file upload tracking |
+| 114 | `wallet_balance_alert_states` | Single-row wallet low-balance alert crossing marker |
+| 115 | `project_employees` | `check_in_start_date`: day the self check-in service started, backfilled from each enabled employee's earliest attendance |
 
 ### Notable Migration Events
 

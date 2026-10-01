@@ -98,7 +98,7 @@ Frontend has both `yarn.lock` (used by Docker build) and `pnpm-lock.yaml` (used 
 
 ## Database Migrations
 
-103 SQL migration files in `backend/migrations/` (`.up.sql` naming; the latest is migration 103).
+115 SQL migration files in `backend/migrations/` (`.up.sql` naming; the latest is migration 115, `115_add_project_employees_check_in_start_date`). Migration 115 must be applied before deploying the backend that reads `project_employees.check_in_start_date`; it is idempotent and safe to re-run.
 
 ### Applying Migrations to Demo/Prod
 

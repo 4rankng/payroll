@@ -123,3 +123,121 @@ func TestCancelPendingCheckInEnable(t *testing.T) {
 		t.Error("cancel must clear pending without enabling")
 	}
 }
+
+func TestParseCheckInStartMonth(t *testing.T) {
+	tests := []struct {
+		value   string
+		want    CheckInStartMonth
+		wantErr bool
+	}{
+		{value: "this_month", want: CheckInStartMonthThisMonth},
+		{value: "next_month", want: CheckInStartMonthNextMonth},
+		{value: " next_month ", want: CheckInStartMonthNextMonth},
+		{value: "", want: CheckInStartMonthNextMonth},
+		{value: "2026-10", wantErr: true},
+		{value: "next", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		got, err := ParseCheckInStartMonth(tt.value)
+		if tt.wantErr {
+			if err == nil {
+				t.Errorf("ParseCheckInStartMonth(%q) = %q, want a validation error", tt.value, got)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("ParseCheckInStartMonth(%q): %v", tt.value, err)
+			continue
+		}
+		if got != tt.want {
+			t.Errorf("ParseCheckInStartMonth(%q) = %q, want %q", tt.value, got, tt.want)
+		}
+	}
+}
+
+func TestCheckInStartMonthEffectiveFromIsAlwaysDayOne(t *testing.T) {
+	// Mid-month: this month is already in the past, next month is ahead.
+	now := vnTime(2026, 10, 15)
+	thisMonth := CheckInStartMonthThisMonth.EffectiveFrom(now)
+	if want := startOfVNDay(2026, 10, 1); !thisMonth.Equal(want) {
+		t.Errorf("this_month effective = %v, want %v", thisMonth, want)
+	}
+	nextMonth := CheckInStartMonthNextMonth.EffectiveFrom(now)
+	if want := startOfVNDay(2026, 11, 1); !nextMonth.Equal(want) {
+		t.Errorf("next_month effective = %v, want %v", nextMonth, want)
+	}
+
+	// Month rollover in December must not roll into January of the wrong year.
+	december := CheckInStartMonthNextMonth.EffectiveFrom(vnTime(2026, 12, 31))
+	if want := startOfVNDay(2027, 1, 1); !december.Equal(want) {
+		t.Errorf("December next_month effective = %v, want %v", december, want)
+	}
+}
+
+func TestActivateCheckInRecordsStartDateAndClearsPending(t *testing.T) {
+	pe := activeAssignment()
+	if err := pe.RequestCheckInEnable(startOfVNDay(2026, 9, 1)); err != nil {
+		t.Fatalf("request: %v", err)
+	}
+
+	pe.ActivateCheckIn(startOfVNDay(2026, 9, 1))
+
+	if !pe.CheckInEnabled {
+		t.Error("ActivateCheckIn must turn the service on")
+	}
+	if pe.HasPendingCheckInEnable() {
+		t.Error("ActivateCheckIn must clear the pending request")
+	}
+	if pe.CheckInStartDate == nil || !pe.CheckInStartDate.Equal(startOfVNDay(2026, 9, 1)) {
+		t.Errorf("CheckInStartDate = %v, want the activation day (2026-09-01)", pe.CheckInStartDate)
+	}
+}
+
+func TestReschedulePendingCheckInEnableMovesPendingToChosenMonth(t *testing.T) {
+	pe := activeAssignment()
+	if err := pe.RequestCheckInEnable(startOfVNDay(2026, 9, 1)); err != nil {
+		t.Fatalf("request: %v", err)
+	}
+
+	changed, err := pe.ReschedulePendingCheckInEnable(startOfVNDay(2026, 8, 1))
+	if err != nil {
+		t.Fatalf("reschedule: %v", err)
+	}
+	if !changed {
+		t.Error("moving to a different month must report a change")
+	}
+	if !pe.HasPendingCheckInEnable() {
+		t.Fatal("reschedule must keep the enable pending")
+	}
+	if !pe.CheckInEffectiveFrom.Equal(startOfVNDay(2026, 8, 1)) {
+		t.Errorf("effective = %v, want 2026-08-01", pe.CheckInEffectiveFrom)
+	}
+
+	// Same month again is a no-op so the caller skips the write.
+	changed, err = pe.ReschedulePendingCheckInEnable(startOfVNDay(2026, 8, 1))
+	if err != nil {
+		t.Fatalf("reschedule same month: %v", err)
+	}
+	if changed {
+		t.Error("rescheduling to the same month must report no change")
+	}
+
+	// A rescheduled month that has already begun applies right away.
+	if !pe.ApplyPendingCheckIn() {
+		t.Fatal("a past effective date must apply")
+	}
+	if !pe.CheckInEnabled || pe.HasPendingCheckInEnable() {
+		t.Errorf("expected immediate activation, got enabled=%v pending=%v", pe.CheckInEnabled, pe.HasPendingCheckInEnable())
+	}
+	if pe.CheckInStartDate == nil || !pe.CheckInStartDate.Equal(startOfVNDay(2026, 8, 1)) {
+		t.Errorf("CheckInStartDate = %v, want 2026-08-01", pe.CheckInStartDate)
+	}
+}
+
+func TestReschedulePendingCheckInEnableRejectsNonPendingRow(t *testing.T) {
+	pe := activeAssignment()
+	if _, err := pe.ReschedulePendingCheckInEnable(startOfVNDay(2026, 8, 1)); err == nil {
+		t.Error("rescheduling a row with nothing pending must fail")
+	}
+}

@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
+import { CheckInStartMonthDialog } from "@/components/advance-payment/CheckInStartMonthDialog";
 import { ProjectEmployeeAssignment } from "@/types/api/project-employee.types";
 import {
   useCancelPendingCheckInEnable,
@@ -24,12 +26,19 @@ export function CheckInToggle({ assignment, disabled }: CheckInToggleProps) {
   const toggleMutation = useToggleCheckInEnabled();
   const cancelMutation = useCancelPendingCheckInEnable();
   const isPending = !assignment.check_in_enabled && !!assignment.pending_check_in_enabled;
+  // Enabling — and moving an enable that is already queued for a month —
+  // both need the admin to pick the start month, so both open the same dialog.
+  const [startMonthOpen, setStartMonthOpen] = useState(false);
 
   const handleToggle = (checked: boolean) => {
+    if (checked) {
+      setStartMonthOpen(true);
+      return;
+    }
     toggleMutation.mutate({
       projectId: assignment.project_id,
       employeeId: assignment.employee_id,
-      enabled: checked,
+      enabled: false,
     });
   };
 
@@ -39,6 +48,27 @@ export function CheckInToggle({ assignment, disabled }: CheckInToggleProps) {
       employeeId: assignment.employee_id,
     });
   };
+
+  const dialog = (
+    <CheckInStartMonthDialog
+      open={startMonthOpen}
+      onOpenChange={setStartMonthOpen}
+      employeeName={assignment.employee_name}
+      isReschedule={isPending}
+      isSubmitting={toggleMutation.isPending}
+      onConfirm={(startMonth) => {
+        toggleMutation.mutate(
+          {
+            projectId: assignment.project_id,
+            employeeId: assignment.employee_id,
+            enabled: true,
+            startMonth,
+          },
+          { onSuccess: () => setStartMonthOpen(false) },
+        );
+      }}
+    />
+  );
 
   if (isPending) {
     const effectiveLabel = formatEffectiveDate(assignment.check_in_effective_from);
@@ -50,11 +80,20 @@ export function CheckInToggle({ assignment, disabled }: CheckInToggleProps) {
         <button
           type="button"
           className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+          onClick={() => setStartMonthOpen(true)}
+          disabled={disabled || toggleMutation.isPending}
+        >
+          Đổi tháng
+        </button>
+        <button
+          type="button"
+          className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground disabled:opacity-50"
           onClick={handleCancelPending}
           disabled={disabled || cancelMutation.isPending}
         >
           Hủy
         </button>
+        {dialog}
       </div>
     );
   }
@@ -69,6 +108,7 @@ export function CheckInToggle({ assignment, disabled }: CheckInToggleProps) {
       <span className="text-xs text-muted-foreground whitespace-nowrap">
         {assignment.check_in_enabled ? "Bật" : "Tắt"}
       </span>
+      {dialog}
     </div>
   );
 }
