@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AttendanceReference, EmployeeCheckInCard } from "./EmployeeCheckInCard";
 import type { CheckInTarget } from "@/types/api/auth.types";
 import type { LocationSample } from "@/utils/geolocation";
@@ -526,6 +526,111 @@ describe("EmployeeCheckInCard geofence guidance", () => {
     expect(requestPermission).toHaveBeenCalledOnce();
   });
 
+
+  describe("check-in window states", () => {
+    // A worker who arrives after the window closes must not be told the shift is
+    // still upcoming. The production incident: at 22:09 on a 20:00 night shift
+    // (check-in 19:00-21:00) the card read "Chưa đến giờ vào làm" — the exact
+    // opposite of the truth — so nobody knew the check-in had already been missed.
+    const SHIFT_START = "2026-07-12T20:00:00+07:00";
+    const WINDOW_START = "2026-07-12T19:00:00+07:00";
+    const WINDOW_END = "2026-07-12T21:00:00+07:00";
+
+    const renderAt = (isoNow: string, locationOverride?: Record<string, unknown>) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(isoNow));
+      locationMock.mockReturnValue({
+        ...locationOverride,
+        sample: null,
+        progress: null,
+        isSubmitReady: false,
+        isWatching: false,
+        needsPermission: false,
+        fatalError: null,
+        awaitSubmitReady: vi.fn(),
+        awaitAccurateSample: vi.fn(),
+        requestPermission: vi.fn(),
+        reload: vi.fn(),
+        retry: vi.fn(),
+        ...locationOverride,
+      });
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      return render(
+        <QueryClientProvider client={queryClient}>
+          <EmployeeCheckInCard
+            checkInTarget={{
+              project_id: 58,
+              project_name: "LGD",
+              radius_meters: 150,
+              gates: [{ name: "Cổng D", lat: 20.8679818, lng: 106.5711738 }],
+            }}
+            shiftStart={SHIFT_START}
+            shiftEnd="2026-07-13T06:00:00+07:00"
+            checkInWindowStart={WINDOW_START}
+            checkInWindowEnd={WINDOW_END}
+            checkOutWindowStart="2026-07-13T05:00:00+07:00"
+            checkOutWindowEnd="2026-07-13T10:00:00+07:00"
+            onAdvanceRequest={vi.fn()}
+          />
+        </QueryClientProvider>
+      );
+    };
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("says the shift is still upcoming before the window opens", () => {
+      renderAt("2026-07-12T18:30:00+07:00");
+
+      expect(screen.getByText("Chưa đến giờ vào làm")).toBeInTheDocument();
+      expect(screen.getByText("Ca làm tiếp theo")).toBeInTheDocument();
+      expect(screen.queryByText("Đã quá giờ vào làm")).not.toBeInTheDocument();
+    });
+
+    it("reports a missed check-in once the window has closed", () => {
+      renderAt("2026-07-12T22:09:00+07:00");
+
+      expect(screen.getByText("Đã quá giờ vào làm")).toBeInTheDocument();
+      expect(screen.queryByText("Chưa đến giờ vào làm")).not.toBeInTheDocument();
+      // The worker has no in-app way to reopen the window, so the copy must
+      // route them to a human instead of implying they should wait.
+      expect(
+        screen.getByText(/Bạn đã qua giờ vào làm của ca này/)
+      ).toBeInTheDocument();
+    });
+
+    it("labels the dock as passed rather than upcoming after the window closes", () => {
+      renderAt("2026-07-12T22:09:00+07:00");
+
+      const dock = within(screen.getByRole("toolbar", { name: "Hành động nhân viên" }));
+      expect(dock.getByRole("button", { name: "Đã quá giờ" })).toBeDisabled();
+      expect(dock.queryByRole("button", { name: "Chưa đến giờ" })).not.toBeInTheDocument();
+    });
+
+    it("does not offer a page reload once the check-in window has closed", () => {
+      // Regression: the dock used to answer a closed check-in window with
+      // "Tải lại trang", because the location states were evaluated first. A
+      // reload cannot reopen a window the server has already closed, so the
+      // worker was bounced between two screens that both blocked them.
+      renderAt("2026-07-12T22:09:00+07:00", {
+        needsPermission: false,
+        fatalError: { code: 1, message: "Quyền truy cập vị trí đang bị chặn" },
+        requiresPageReload: true,
+      });
+
+      const dock = within(screen.getByRole("toolbar", { name: "Hành động nhân viên" }));
+      expect(dock.getByRole("button", { name: "Đã quá giờ" })).toBeDisabled();
+      expect(dock.queryByRole("button", { name: "Tải lại trang" })).not.toBeInTheDocument();
+    });
+
+    it("keeps the check-in button offered inside the window", () => {
+      renderAt("2026-07-12T20:17:00+07:00");
+
+      expect(screen.queryByText("Chưa đến giờ vào làm")).not.toBeInTheDocument();
+      expect(screen.queryByText("Đã quá giờ vào làm")).not.toBeInTheDocument();
+    });
+  });
 
   it("offers a reload, not a retry, on a permission denial", () => {
     // A denial is terminal in-page: no browser re-prompts, and iOS keeps the

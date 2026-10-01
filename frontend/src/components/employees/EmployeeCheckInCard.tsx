@@ -758,14 +758,37 @@ export function EmployeeCheckInCard({
   // to check in to a 20:00 Vietnam shift at 20:17 Vietnam time. The previous
   // implementation parsed HH:mm strings and compared getHours() (device-local),
   // which mis-gated anyone whose device timezone was not Asia/Ho_Chi_Minh.
-  const withinWindow = useMemo(() => {
+  //
+  // The bounds are STRICTLY exclusive to mirror the server, which accepts
+  // check-in only in (T-1h, T+1h) — validateCheckInWindow / checkInFitsShift,
+  // backend/internal/app/services/attendance/attendance_shift.go:44-46. The
+  // inclusive `>=`/`<=` used to sit one boundary away from the rule the server
+  // actually enforces.
+  const windowBounds = useMemo(() => {
     const startMs = parseEpochMs(checkInWindowStart);
     const endMs = parseEpochMs(checkInWindowEnd);
-    if (startMs === null || endMs === null) return true; // no shift configured
+    if (startMs === null || endMs === null) return null; // no shift configured
+    return { startMs, endMs };
+  }, [checkInWindowStart, checkInWindowEnd]);
+
+  const withinWindow = useMemo(() => {
+    if (!windowBounds) return true;
     const now = nowTick.current;
-    return now >= startMs && now <= endMs;
+    return now > windowBounds.startMs && now < windowBounds.endMs;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkInWindowStart, checkInWindowEnd, nowTick.current]);
+  }, [windowBounds, nowTick.current]);
+
+  // The window has closed for good. Tracked separately from `withinWindow`
+  // because "not open yet" and "no longer open" need opposite guidance: the
+  // first tells the worker to wait, the second must not — telling someone who
+  // arrived an hour late that it is "not yet time" is what stranded a worker at
+  // 22:03 on a shift whose window closed at 21:00, and there is no employee-side
+  // remediation for a missed check-in, so the honest instruction is to escalate.
+  const windowPassed = useMemo(() => {
+    if (!windowBounds) return false;
+    return nowTick.current >= windowBounds.endMs;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [windowBounds, nowTick.current]);
 
   // Seconds until the check-in window opens, for the outside-window hint
   // countdown. Recomputed on the minute tick (minute precision is sufficient;
@@ -773,13 +796,12 @@ export function EmployeeCheckInCard({
   // from the absolute window-start epoch so it is correct regardless of device
   // timezone.
   const secondsUntilWindow = useMemo(() => {
-    const startMs = parseEpochMs(checkInWindowStart);
-    if (startMs === null || withinWindow) return null;
+    if (!windowBounds || withinWindow) return null;
     const now = nowTick.current;
-    if (startMs <= now) return null; // window already passed
-    return Math.round((startMs - now) / 1000);
+    if (windowBounds.startMs <= now) return null; // window already opened or closed
+    return Math.round((windowBounds.startMs - now) / 1000);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkInWindowStart, withinWindow, nowTick.current]);
+  }, [windowBounds, withinWindow, nowTick.current]);
 
   // Became-ready pop: fire a one-shot CSS class when transitioning to ready.
   // All hooks below run on every render (before the isLoading early return) to
@@ -969,7 +991,17 @@ export function EmployeeCheckInCard({
   let dockActionDisabled = true;
   let handleDockAttendanceAction: (() => void) | undefined;
 
-  if (locationEnabled && location.needsPermission) {
+  // A closed check-in window is terminal for the shift. Nothing on the location
+  // side can reopen it, so it has to outrank the location states below — a
+  // worker who missed the window was shown "Tải lại trang" in the dock while
+  // the card above said "Chưa đến giờ vào làm", and reloading only lands back on
+  // the same dead end. GPS only matters for check-in while the window is open,
+  // and for check-out once the worker is checked in (handled below).
+  const awaitingCheckIn = !attendance || canStartCorrectShift;
+
+  if (locationEnabled && awaitingCheckIn && windowPassed) {
+    dockActionLabel = "Đã quá giờ";
+  } else if (locationEnabled && location.needsPermission) {
     dockAction = "attention";
     dockActionLabel = "Cho phép vị trí";
     dockActionDisabled = false;
@@ -994,7 +1026,9 @@ export function EmployeeCheckInCard({
     handleDockAttendanceAction = () => handleAction("check_out");
   } else if (!attendance || canStartCorrectShift) {
     if (!withinWindow) {
-      dockActionLabel = "Chưa đến giờ";
+      // Never claim a closed window is still upcoming — that reads as "wait"
+      // and leaves a worker who arrived late with no idea they already missed it.
+      dockActionLabel = windowPassed ? "Đã quá giờ" : "Chưa đến giờ";
     } else if (geofenceInstruction) {
       dockAction = "check_in";
       dockActionLabel = checkInGuidance.status === "inaccurate" ? "Tiến gần tâm" : "Đến gần cổng";
@@ -1424,13 +1458,26 @@ export function EmployeeCheckInCard({
                   <Clock className="h-6 w-6" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="employee-type-label-caps font-bold tracking-[0.14em] text-amber-700">Ca làm tiếp theo</p>
-                  <p className="employee-type-card-title mt-1 font-bold text-slate-950">Chưa đến giờ vào làm</p>
+                  <p className="employee-type-label-caps font-bold tracking-[0.14em] text-amber-700">
+                    {windowPassed ? "Ca làm hôm nay" : "Ca làm tiếp theo"}
+                  </p>
+                  <p className="employee-type-card-title mt-1 font-bold text-slate-950">
+                    {windowPassed ? "Đã quá giờ vào làm" : "Chưa đến giờ vào làm"}
+                  </p>
                   <p className="employee-type-body-sm mt-1.5 leading-6 text-slate-600">
                     {shiftStart
                       ? `Ca làm việc bắt đầu lúc ${safeFormatTime(shiftStart)}. Giờ chấm công từ ${safeFormatTime(checkInWindowStart)} đến ${safeFormatTime(checkInWindowEnd)}.`
                       : "Chưa có ca làm việc được cấu hình."}
                   </p>
+                  {windowPassed ? (
+                    // The check-in window is closed and nothing in the app can
+                    // reopen it — only an admin can enter a check-in for the
+                    // shift. Say so, instead of leaving the worker staring at a
+                    // "not yet" screen with no way forward.
+                    <p className="employee-type-body-sm mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-800">
+                      Bạn đã qua giờ vào làm của ca này. Vui lòng liên hệ quản lý để được ghi nhận.
+                    </p>
+                  ) : null}
                   {secondsUntilWindow != null && (
                     <p className="employee-type-body-sm mt-2 inline-flex rounded-full border border-amber-200 bg-white px-3 py-1 font-semibold text-amber-800">
                       {(() => {
