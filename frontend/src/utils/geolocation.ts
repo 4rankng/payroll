@@ -100,6 +100,42 @@ export async function getLocationPermissionState(): Promise<LocationPermissionSt
   }
 }
 
+// On every iOS browser (all of them are WebKit) the Permissions API reports
+// "prompt" for geolocation on a fresh page load, no matter what the employee
+// already allowed — WebKit only answers "granted"/"denied" once THIS document
+// has itself called a geolocation method (WebKit Bug 275268). Gating the GPS
+// watch on that answer therefore re-asks an employee who granted access days
+// ago, on every single page load. No silent probe exists: a geolocation call is
+// itself the permission request, so the only trustworthy evidence of a grant is
+// a real fix arriving. Remember that proof per origin so later visits warm the
+// watch straight away instead of asking again.
+const LOCATION_GRANT_STORAGE_KEY = "payroll:location-granted";
+
+export function hasRememberedLocationGrant(): boolean {
+  try {
+    return window.localStorage.getItem(LOCATION_GRANT_STORAGE_KEY) === "1";
+  } catch {
+    // Private mode / storage disabled — treat as unknown and let the watch decide.
+    return false;
+  }
+}
+
+export function rememberLocationGrant(): void {
+  try {
+    window.localStorage.setItem(LOCATION_GRANT_STORAGE_KEY, "1");
+  } catch {
+    // Non-fatal: the in-page state still gates this session's watch.
+  }
+}
+
+export function forgetLocationGrant(): void {
+  try {
+    window.localStorage.removeItem(LOCATION_GRANT_STORAGE_KEY);
+  } catch {
+    // Non-fatal.
+  }
+}
+
 function getAccuracyStatus(
   accuracy: number | undefined,
   options: Pick<LocationAcquisitionOptions, "excellentAccuracyMeters" | "requiredAccuracyMeters">
@@ -320,8 +356,13 @@ export function getLocationPermissionIssue(error: unknown): LocationPermissionIs
     return {
       type: "denied",
       title: "Cho phép truy cập vị trí",
+      // Both iOS layers gate a fix, and a denial reports the same code for
+      // either one: the browser's app-level Location switch, and the per-site
+      // decision the web layer keeps for this origin. They are independent, so
+      // the guidance has to cover both — and it must not name one browser,
+      // because the same app runs in Chrome and Safari on those phones.
       description:
-        "Bấm Thử lại và chọn Cho phép. Nếu trình duyệt vẫn chặn, mở Cài đặt > Safari > Websites > Vị trí, chọn Trong khi dùng ứng dụng và bật Vị trí chính xác, rồi Tải lại trang.",
+        "Bấm Thử lại và chọn Cho phép. Nếu trình duyệt vẫn chặn, mở Cài đặt > Quyền riêng tư > Vị trí, chọn trình duyệt đang dùng và bật Vị trí chính xác; sau đó mở Cài đặt > Quyền của trang web > Vị trí trong chính trình duyệt đó, chọn Cho phép, rồi Tải lại trang.",
       canRetry: true,
       requiresSettings: true,
     };

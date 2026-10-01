@@ -6,9 +6,12 @@ import {
   EMPLOYEE_ATTENDANCE_REQUIRED_ACCURACY_METERS,
   createGeolocationError,
   createInaccurateGeolocationError,
+  forgetLocationGrant,
   getLocationPermissionState,
+  hasRememberedLocationGrant,
   isSampleFresh,
   watchContinuousLocation,
+  rememberLocationGrant,
   type ContinuousLocationHandle,
   type LocationAcquisitionProgress,
   type LocationPermissionState,
@@ -122,7 +125,15 @@ export function useContinuousLocation({
   const [fatalError, setFatalError] = useState<UseContinuousLocationResult["fatalError"]>(null);
   const [isWatching, setIsWatching] = useState(false);
   const [permissionState, setPermissionState] = useState<LocationPermissionState>("unknown");
-  const [hasRequestedPermission, setHasRequestedPermission] = useState(false);
+  // Seeded from a previous real fix rather than from the Permissions API: on iOS
+  // that API answers "prompt" on every fresh page load even for an employee who
+  // granted access long ago (WebKit Bug 275268), so gating on it re-asks on
+  // every visit. A stored grant only exists because a fix actually arrived, and
+  // the watch below is still the authority — a revoked permission surfaces as a
+  // real denial there, which clears the stored grant again.
+  const [hasRequestedPermission, setHasRequestedPermission] = useState(() =>
+    hasRememberedLocationGrant()
+  );
   const [watchPausedForAccuracy, setWatchPausedForAccuracy] = useState(false);
   const [, setSampleFreshnessEpoch] = useState(0);
   // Bump to force a clean watch restart (retry, or visibility return).
@@ -199,6 +210,10 @@ export function useContinuousLocation({
         fatalErrorRef.current = deniedError;
         setFatalError(deniedError);
         setHasRequestedPermission(false);
+        // A stored grant only survives while the permission does, so a real
+        // "denied" from the browser retires it instead of leaving the next load
+        // to skip the prompt and collide with this denial again.
+        forgetLocationGrant();
       }
     });
     return () => {
@@ -287,6 +302,10 @@ export function useContinuousLocation({
         progressRef.current = p;
         setProgress(p);
         const next = p.bestFreshSample ?? null;
+        // A delivered fix is the only trustworthy proof of a grant on iOS, where
+        // the Permissions API cannot answer. Persist it so the next page load
+        // warms the watch instead of asking again.
+        rememberLocationGrant();
         setPermissionState("granted");
         setHasRequestedPermission(true);
         sampleRef.current = next;
@@ -316,6 +335,10 @@ export function useContinuousLocation({
           setFatalError(geoError);
           setPermissionState("denied");
           setHasRequestedPermission(false);
+          // The permission is gone for real, so the stored proof of a grant is
+          // stale — drop it, otherwise the next load would skip the prompt and
+          // walk straight back into this denial.
+          forgetLocationGrant();
           isWatchingRef.current = false;
           setIsWatching(false);
           handle.unsubscribe();

@@ -98,6 +98,20 @@ pnpm dev            # Starts Vite on :5173
 
 Check that the backend is running on `:8080` (API proxy target). Check `frontend/.env` for correct `VITE_API_URL`.
 
+### iOS: employee granted location but the app still asks "Cho phép vị trí"
+
+**Symptom:** On iPhone (any browser), Settings shows the browser's Location switch ON and Precise Location ON, but the attendance card still shows "Cho phép vị trí" and no GPS watch starts.
+
+**Cause:** `navigator.permissions.query({name:'geolocation'})` is **not** a usable signal on iOS. Every iOS browser is WebKit, and WebKit answers `"prompt"` on a fresh page load no matter what the employee allowed — it only reveals `granted`/`denied` once *this* document has itself called `getCurrentPosition`/`watchPosition` (WebKit Bug 275268, still open). So the answer means "this page has not asked yet", not "you have no permission". There is no silent probe to work around it: a geolocation call *is* the permission request.
+
+**Fix:** `useContinuousLocation` therefore remembers a grant per origin in `localStorage` (`payroll:location-granted`), written only when a real fix arrives, and seeds its permission gate from that. A real `PERMISSION_DENIED` retires the flag, so a revoked permission falls back to asking again instead of looping. Do not gate the GPS watch on the Permissions API answer alone.
+
+**Two independent layers, both required:**
+1. **App level** — iOS Settings > Privacy & Security > Location Services > *the browser* > While Using the App (+ Precise Location).
+2. **Per-site** — the web layer's own decision for `tingting.vip`, managed inside that browser. A per-site denial shadows a correct app-level grant and reports the *same* `GeolocationPositionError.code` 1, so the two cannot be told apart from JS. After two denials the per-site decision auto-denies with no UI, and on Chrome iOS there is no documented control to clear it.
+
+**On-device diagnosis:** record `error.code` from a real `watchPosition` attempt. `1` = denied at one of the two layers; `3` (timeout) = permission fine but no fix.
+
 ## Testing Issues
 
 ### Test data pollution

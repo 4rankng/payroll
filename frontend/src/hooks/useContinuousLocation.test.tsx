@@ -80,6 +80,7 @@ describe("useContinuousLocation", () => {
   let stub: GeolocationStub;
 
   beforeEach(() => {
+    window.localStorage.clear();
     stub = installGeolocationStub();
   });
 
@@ -214,6 +215,67 @@ describe("useContinuousLocation", () => {
 
     await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(result.current.isWatching).toBe(true));
+
+    unmount();
+  });
+
+  it("stops re-asking for a permission the employee already granted on an earlier visit", async () => {
+    // WebKit (every browser on iOS) answers "prompt" for geolocation on a fresh
+    // page load regardless of what was allowed before — it only reveals the real
+    // answer once THIS document has called a geolocation method. Gating on that
+    // answer made the app ask an already-granted employee on every visit, which
+    // is the "I allowed it but the app still says no" report.
+    stub = installGeolocationStub("prompt");
+    window.localStorage.setItem("payroll:location-granted", "1");
+
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
+    expect(result.current.needsPermission).toBe(false);
+    expect(result.current.fatalError).toBeNull();
+
+    unmount();
+  });
+
+  it("remembers a delivered fix so the next page load skips the permission prompt", async () => {
+    stub = installGeolocationStub("prompt");
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+    await waitFor(() => expect(result.current.needsPermission).toBe(true));
+
+    act(() => {
+      result.current.requestPermission();
+    });
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      stub.emitFix(target.gates[0].lat, target.gates[0].lng, 25);
+    });
+
+    expect(window.localStorage.getItem("payroll:location-granted")).toBe("1");
+
+    unmount();
+  });
+
+  it("retires the remembered grant when the watch reports a real denial", async () => {
+    // A stored grant must not survive the permission actually being revoked:
+    // keeping it would make every later load skip the prompt and collide with
+    // the same denial, with no way back to asking.
+    stub = installGeolocationStub("prompt");
+    window.localStorage.setItem("payroll:location-granted", "1");
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      stub.emitError(1);
+    });
+
+    await waitFor(() => expect(result.current.fatalError?.code).toBe(1));
+    expect(window.localStorage.getItem("payroll:location-granted")).toBeNull();
 
     unmount();
   });

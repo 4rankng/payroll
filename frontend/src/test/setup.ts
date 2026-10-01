@@ -32,3 +32,26 @@ Object.defineProperty(window, 'ResizeObserver', {
   writable: true,
   value: ResizeObserverStub,
 });
+
+// jsdom ships no working `window.localStorage` (it is a bare object with no
+// getItem/setItem), so any code touching storage throws or silently no-ops
+// under test. Back it with an in-memory Storage so persistence-dependent
+// behaviour is exercised instead of accidentally taking a failure path.
+// A Map (not an object) because Storage keys are dynamic and `key()` must
+// answer by insertion order.
+const memoryStorage = new Map<string, string>();
+const storageStub: Storage = {
+  get length() {
+    return memoryStorage.size;
+  },
+  clear: () => memoryStorage.clear(),
+  getItem: (key) => memoryStorage.get(key) ?? null,
+  key: (index) => Array.from(memoryStorage.keys())[index] ?? null,
+  removeItem: (key) => void memoryStorage.delete(key),
+  setItem: (key, value) => void memoryStorage.set(key, String(value)),
+};
+Object.defineProperty(window, 'localStorage', {
+  configurable: true,
+  writable: true,
+  value: storageStub,
+});
