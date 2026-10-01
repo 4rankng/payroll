@@ -418,6 +418,16 @@ describe("getSalaryUploadPeriodMonth", () => {
     expect(getSalaryUploadPeriodMonth(new Date(2027, 0, 8))).toBe("2026-12"); // Jan 8 → December
     expect(getSalaryUploadPeriodMonth(new Date(2027, 0, 20))).toBe("2027-01");
   });
+
+  it("keeps the previous month through the 19th, which is what the timesheet screen defaults to", () => {
+    // On the 1st-19th the active period is still the previous month, and that
+    // is where the unapproved work sits. Defaulting the screen to the calendar
+    // month showed an empty window for the first days of every month.
+    expect(getSalaryUploadPeriodMonth(new Date(2026, 9, 1))).toBe("2026-09");
+    expect(getSalaryUploadPeriodMonth(new Date(2026, 9, 4))).toBe("2026-09");
+    expect(getSalaryUploadPeriodMonth(new Date(2026, 9, 19))).toBe("2026-09");
+    expect(getSalaryUploadPeriodMonth(new Date(2026, 9, 20))).toBe("2026-10");
+  });
 });
 
 describe("resolveCheckInServedMonth", () => {

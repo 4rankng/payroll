@@ -15,6 +15,7 @@ import { useProjects, useProjectEmployeesSimple } from '@/hooks/api/useProjects'
 import { useEmployees } from '@/hooks/api/useEmployees';
 import { useTimesheetModals } from '@/hooks/useModalNavigation';
 import { buildTimesheetStatusFilters, TimesheetStatusFilter } from '@/utils/timesheetFilterHelpers';
+import { getSalaryUploadPeriodMonth } from '@/utils/advancePaymentHelpers';
 
 interface TimesheetManagementConfig {
   userRole?: 'admin' | 'partner';
@@ -25,10 +26,13 @@ interface TimesheetManagementConfig {
 export function useTimesheetManagement(config: TimesheetManagementConfig = {}) {
   const { userRole = 'admin', useYearToDate = false, extraFilters } = config;
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-  });
+  // Default to the ACTIVE PAYROLL PERIOD, not the calendar month. The cycle
+  // runs from the 20th to the 19th (parity with clock.AdvanceMonthFromTime), so
+  // on the 1st-19th the active period is still the previous calendar month —
+  // and that is the month holding the work actually done and awaiting approval.
+  // Defaulting to the calendar month opened the screen on an empty window on
+  // the first days of every month.
+  const [selectedMonth, setSelectedMonth] = useState(() => getSalaryUploadPeriodMonth());
   const [selectedProject, setSelectedProject] = useState('all');
   const [selectedEmployee, setSelectedEmployee] = useState('all');
   const [statusFilter, setStatusFilter] = useState<TimesheetStatusFilter>('all');
@@ -278,11 +282,8 @@ export function useTimesheetManagement(config: TimesheetManagementConfig = {}) {
     return [];
   }, [selectedProject, projectEmployeesData]);
 
-  // Get current month for comparison
-  const currentMonth = useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  }, []);
+  // The period the screen opens on; "clear filters" returns here.
+  const currentMonth = useMemo(() => getSalaryUploadPeriodMonth(), []);
 
   const hasFilters = searchTerm !== '' || selectedMonth !== currentMonth || selectedProject !== 'all' || selectedEmployee !== 'all' || statusFilter !== 'all';
 
