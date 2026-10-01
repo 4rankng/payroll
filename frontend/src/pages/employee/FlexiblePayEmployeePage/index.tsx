@@ -35,9 +35,9 @@ import { NotificationSheet } from "@/components/notifications/NotificationSheet"
 import {
   formatPayrollMonthRange,
   getInitialEmployeeAdvanceMonth,
-  getInitialHybridAdvanceMonth,
   isPastAdvancePaymentPeriod,
   isPriorMonthRequestable,
+  resolveCheckInServedMonth,
 } from "@/utils/advancePaymentHelpers";
 import { getEmployeeAccountHolder, hasEmployeeBankInfo } from "@/utils/employeePortal/mobileHome";
 import type { AdvancePaymentHistoryItem } from "@/types/api/advance-payment.types";
@@ -99,9 +99,21 @@ const FlexiblePayEmployeePage = () => {
     return `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}`;
   }, []);
   // Hybrid: checkin-enabled AND viewing the prior month while its tail is open.
-  const isCheckIn = isCheckInEnabled && selectedMonth === currentCalMonth;
-  const regularInfoQuery = useAdvancePaymentInfo({ enabled: !isCheckInEnabled || !isCheckIn });
+  //
+  // Which surface owns a month is the BACKEND's call, not ours: during the
+  // days 1-8 tail the self check-in flow serves the PREVIOUS month (and the
+  // regular flow refuses a check-in period), so recomputing the calendar here
+  // would route the request to a surface that rejects it. The check-in info
+  // response names the period it serves, so match against that.
   const checkInInfoQuery = useCheckInAdvanceInfo({ enabled: isCheckInEnabled });
+  const checkInServesMonth = resolveCheckInServedMonth({
+    servedMonth: checkInInfoQuery.data?.data?.forMonth,
+    currentMonth: currentCalMonth,
+    previousMonth: prevCalMonth,
+    today: new Date(),
+  });
+  const isCheckIn = isCheckInEnabled && checkInServesMonth === selectedMonth;
+  const regularInfoQuery = useAdvancePaymentInfo({ enabled: !isCheckInEnabled || !isCheckIn });
   const {
     data: infoResponse,
     isLoading: infoLoading,
@@ -120,8 +132,8 @@ const FlexiblePayEmployeePage = () => {
   const calculateFeeMutation = useCalculateFee();
   const regularRequestMutation = useRequestAdvancePayment();
   const checkInRequestMutation = useRequestCheckInAdvance();
-  // Month decides the endpoint: current month → checkin flow, prior month
-  // during the tail → regular flow. Both mutations share the same payload.
+  // Month decides the endpoint, and the surface that owns the month is the one
+  // whose served period matched. Both mutations share the same payload.
   const requestMutation = isCheckIn ? checkInRequestMutation : regularRequestMutation;
   // After a submit, refetch whichever surface owns the requested month.
   const refetchOwnedInfo = isCheckIn ? checkInInfoQuery.refetch : regularInfoQuery.refetch;
@@ -132,17 +144,18 @@ const FlexiblePayEmployeePage = () => {
   const history = historyResponse?.data ?? EMPTY_HISTORY;
   const historyTotal = historyResponse?.pagination?.totalRecords ?? history.length;
 
-  // A non-check-in employee can request against the previous payroll month
-  // through the cutoff. The API's forMonth is authoritative; only use it for
-  // the initial view so explicit URL and navigator selections stay intact.
-  // Hybrid (checkin-enabled) employees open on the prior month when its tail
-  // is open with unused quota, otherwise on the current checkin month.
+  // Which month the app opens on. A non-check-in employee can request against
+  // the previous payroll month through the cutoff, and the API's forMonth is
+  // authoritative for that case. A check-in employee opens on the period their
+  // own surface serves: during the 1-8 tail that is the PREVIOUS month, which
+  // is also the only period the regular flow will not refuse, so the prior-month
+  // heuristic below would be actively wrong for them.
   useEffect(() => {
     if (profileLoading || !profile || infoLoading || !info || initialMonthResolvedRef.current) return;
 
     let initialMonth: string | undefined;
     if (isCheckInEnabled) {
-      initialMonth = getInitialHybridAdvanceMonth(new Date(), currentCalMonth, prevCalMonth, regularInfoQuery.data?.data);
+      initialMonth = checkInServesMonth;
     } else {
       initialMonth = getInitialEmployeeAdvanceMonth(info?.forMonth, false, hasExplicitMonth);
     }
@@ -159,6 +172,7 @@ const FlexiblePayEmployeePage = () => {
     profileLoading,
     profile,
     regularInfoQuery.data,
+    checkInServesMonth,
     currentCalMonth,
     prevCalMonth,
     selectedMonth,

@@ -24,6 +24,11 @@ const activeJulyInfo = {
   }],
 };
 
+// The self check-in surface names the period it serves. During the days 1-8
+// tail that is the PREVIOUS month, and the regular flow refuses that period, so
+// which month the backend reports is what decides the routing.
+let checkInInfoQueryState: { data?: { data: { forMonth: string } } | undefined } = { data: undefined };
+
 const profileQuery = {
   data: { fullname: "Đỗ Văn Hùng", check_in_enabled: false } as { fullname: string; check_in_enabled: boolean } | undefined,
   isLoading: false,
@@ -45,7 +50,7 @@ vi.mock("@/hooks/api/useAdvancePayments", () => ({
     isError: false,
     refetch: vi.fn(),
   }),
-  useCheckInAdvanceInfo: () => ({ data: undefined, isLoading: false, isError: false, refetch: vi.fn() }),
+  useCheckInAdvanceInfo: () => checkInInfoQueryState,
   useAdvancePaymentHistory: () => ({
     data: { data: [], pagination: { totalRecords: 0 } },
     isLoading: false,
@@ -79,6 +84,7 @@ function LocationProbe() {
 describe("FlexiblePayEmployeePage", () => {
   beforeEach(() => {
     profileQuery.data = { fullname: "Đỗ Văn Hùng", check_in_enabled: false };
+    checkInInfoQueryState = { data: undefined };
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-08-05T12:00:00+07:00"));
   });
@@ -117,8 +123,32 @@ describe("FlexiblePayEmployeePage", () => {
     expect(screen.getByLabelText("Đường dẫn tháng")).toHaveTextContent("?month=2026-07");
   });
 
-  it("does not override the calendar month for a check-in employee", async () => {
+  it("opens on the month the check-in surface serves during the 1-8 tail", async () => {
+    // 2026-08-05: the check-in flow serves JULY (the regular flow refuses a
+    // check-in period), so July is the only month the app can actually request
+    // against. The check-in response names the period; the UI must follow it
+    // instead of recomputing the calendar and dead-ending on the regular flow.
     profileQuery.data = { fullname: "Đỗ Văn Hùng", check_in_enabled: true };
+    checkInInfoQueryState = { data: { data: { forMonth: "2026-07" } } };
+
+    render(
+      <MemoryRouter initialEntries={["/employee"]}>
+        <FlexiblePayEmployeePage />
+        <LocationProbe />
+      </MemoryRouter>,
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(screen.getByLabelText("Tháng đang xem")).toHaveTextContent("2026-07");
+  });
+
+  it("keeps the calendar month once the check-in surface serves it", async () => {
+    // From day 10 the check-in flow serves the CURRENT month, which is the
+    // month the app opens on — the response confirms rather than redirects.
+    profileQuery.data = { fullname: "Đỗ Văn Hùng", check_in_enabled: true };
+    checkInInfoQueryState = { data: { data: { forMonth: "2026-08" } } };
 
     render(
       <MemoryRouter initialEntries={["/employee"]}>

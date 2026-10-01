@@ -6,9 +6,9 @@ import {
   getAdvanceQuotaSummaryForMonth,
   getDefaultAdvanceMonth,
   getInitialEmployeeAdvanceMonth,
-  getInitialHybridAdvanceMonth,
   getSalaryUploadPeriodMonth,
   isPastAdvancePaymentPeriod,
+  resolveCheckInServedMonth,
   isPriorMonthRequestable,
 } from "./advancePaymentHelpers";
 import type {
@@ -406,44 +406,6 @@ describe("isPriorMonthRequestable", () => {
   });
 });
 
-describe("getInitialHybridAdvanceMonth", () => {
-  it("opens on the prior month while its tail is open with unused quota", () => {
-    const info = {
-      forMonth: "2026-08",
-      quotas: [
-        { forMonth: "2026-07", maxAdvanceAmount: 3_000_000, remainingAmount: 1_000_000 },
-      ],
-    } as never;
-    expect(
-      getInitialHybridAdvanceMonth(new Date(2026, 7, 5), "2026-08", "2026-07", info),
-    ).toBe("2026-07");
-  });
-
-  it("opens on the current month after day 9", () => {
-    const info = {
-      forMonth: "2026-08",
-      quotas: [
-        { forMonth: "2026-07", maxAdvanceAmount: 3_000_000, remainingAmount: 1_000_000 },
-      ],
-    } as never;
-    expect(
-      getInitialHybridAdvanceMonth(new Date(2026, 7, 10), "2026-08", "2026-07", info),
-    ).toBe("2026-08");
-  });
-
-  it("opens on the current month when prev quota is exhausted", () => {
-    const info = {
-      forMonth: "2026-08",
-      quotas: [
-        { forMonth: "2026-07", maxAdvanceAmount: 3_000_000, remainingAmount: 0 },
-      ],
-    } as never;
-    expect(
-      getInitialHybridAdvanceMonth(new Date(2026, 7, 5), "2026-08", "2026-07", info),
-    ).toBe("2026-08");
-  });
-});
-
 describe("getSalaryUploadPeriodMonth", () => {
   it("maps the whole 20→8 window to the salary month M", () => {
     expect(getSalaryUploadPeriodMonth(new Date(2026, 7, 20))).toBe("2026-08"); // day 20 opens the period
@@ -455,5 +417,58 @@ describe("getSalaryUploadPeriodMonth", () => {
   it("handles the year boundary", () => {
     expect(getSalaryUploadPeriodMonth(new Date(2027, 0, 8))).toBe("2026-12"); // Jan 8 → December
     expect(getSalaryUploadPeriodMonth(new Date(2027, 0, 20))).toBe("2027-01");
+  });
+});
+
+describe("resolveCheckInServedMonth", () => {
+  const months = { currentMonth: "2026-10", previousMonth: "2026-09" };
+
+  it("follows the server during the days 1-8 tail", () => {
+    // The tail is exactly when the check-in flow serves the PREVIOUS month
+    // while the regular flow refuses the period, so this is the case that used
+    // to dead-end: the app had no surface that would accept the request.
+    expect(
+      resolveCheckInServedMonth({
+        servedMonth: "2026-09",
+        today: new Date(2026, 9, 1),
+        ...months,
+      }),
+    ).toBe("2026-09");
+  });
+
+  it("follows the server from day 10", () => {
+    expect(
+      resolveCheckInServedMonth({
+        servedMonth: "2026-10",
+        today: new Date(2026, 9, 15),
+        ...months,
+      }),
+    ).toBe("2026-10");
+  });
+
+  it("never lets a stale response pin the wrong month", () => {
+    // A response from before a rollover still wins over the calendar: the
+    // backend re-fetches on focus, and a wrong surface is worse than a
+    // one-render-old month.
+    expect(
+      resolveCheckInServedMonth({
+        servedMonth: "2026-11",
+        today: new Date(2026, 10, 1),
+        currentMonth: "2026-11",
+        previousMonth: "2026-10",
+      }),
+    ).toBe("2026-11");
+  });
+
+  it("falls back to the calendar only before the response arrives", () => {
+    expect(
+      resolveCheckInServedMonth({ today: new Date(2026, 9, 1), ...months }),
+    ).toBe("2026-09");
+    expect(
+      resolveCheckInServedMonth({ today: new Date(2026, 9, 9), ...months }),
+    ).toBe("2026-10");
+    expect(
+      resolveCheckInServedMonth({ today: new Date(2026, 9, 20), ...months }),
+    ).toBe("2026-10");
   });
 });

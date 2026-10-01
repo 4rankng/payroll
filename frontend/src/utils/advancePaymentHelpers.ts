@@ -371,27 +371,6 @@ export function getInitialEmployeeAdvanceMonth(
   return activeMonth;
 }
 
-/**
- * Initial month for a hybrid (self-check-in enabled) employee: the current
- * calendar month (checkin surface) unless the prior-month tail is still open
- * AND carries unused quota and no view was explicitly chosen — then open on
- * the prior month so the requestable tail is visible.
- */
-export function getInitialHybridAdvanceMonth(
-  now: Date,
-  currentCalMonth: string,
-  prevCalMonth: string,
-  regularInfo: AdvancePaymentInfo | undefined,
-): string {
-  if (isPriorMonthRequestable(now, prevCalMonth, regularInfo)) {
-    const quotas = Array.isArray(regularInfo?.quotas) ? regularInfo.quotas : [];
-    const prevQuota = quotas.find((q) => q.forMonth === prevCalMonth);
-    if (prevQuota && (prevQuota.remainingAmount ?? prevQuota.maxAdvanceAmount) > 0) {
-      return prevCalMonth;
-    }
-  }
-  return currentCalMonth;
-}
 
 /**
  * Day-of-month from which a freshly-created advance request lands in the
@@ -508,4 +487,26 @@ export function getFeeBreakdown(amount: number): {
     appliedFee: Math.max(minFee, percentageFee),
     isUsingMinFee,
   };
+}
+
+/**
+ * The salary period the self check-in advance surface serves right now.
+ *
+ * The backend owns this rule, and the UI must not restate it: during the
+ * days 1-8 tail the check-in flow serves the PREVIOUS month (the regular flow
+ * refuses a check-in period outright), and from day 10 it serves the current
+ * month, with day 9 locked. So the response's own `forMonth` wins whenever it
+ * has arrived; the calendar below is only the pre-response fallback so the
+ * first paint does not flash the wrong surface.
+ */
+export function resolveCheckInServedMonth(input: {
+  servedMonth?: string | null;
+  currentMonth: string;
+  previousMonth: string;
+  today: Date;
+}): string {
+  if (input.servedMonth) return input.servedMonth;
+  return input.today.getDate() <= ADVANCE_REQUEST_CUTOFF_DAY
+    ? input.previousMonth
+    : input.currentMonth;
 }
