@@ -115,18 +115,18 @@ func TestResolveUploadDate_FallsBackToBusinessClockWhenAssetTimestampMissing(t *
 
 func TestShouldNotifyFlexPayZNS_OnlyForRequestableFlexibleEmployees(t *testing.T) {
 	eligible := &domain.ProjectEmployee{PaymentSchedule: string(domain.PaymentScheduleFlexible)}
-	selfCheckIn := &domain.ProjectEmployee{PaymentSchedule: string(domain.PaymentScheduleFlexible), CheckInEnabled: true}
 	weekly := &domain.ProjectEmployee{PaymentSchedule: string(domain.PaymentScheduleWeekly)}
 
 	tests := []struct {
-		name       string
-		amount     uint64
-		mobile     string
-		assignment *domain.ProjectEmployee
-		want       bool
+		name            string
+		amount          uint64
+		mobile          string
+		assignment      *domain.ProjectEmployee
+		isCheckInPeriod bool
+		want            bool
 	}{
 		{name: "eligible flexible employee", amount: 1_000_000, mobile: "0366178061", assignment: eligible, want: true},
-		{name: "self check-in employee", amount: 1_000_000, mobile: "0366178061", assignment: selfCheckIn},
+		{name: "check-in period", amount: 1_000_000, mobile: "0366178061", assignment: eligible, isCheckInPeriod: true},
 		{name: "non-flexible employee", amount: 1_000_000, mobile: "0366178061", assignment: weekly},
 		{name: "missing mobile", amount: 1_000_000, assignment: eligible},
 		{name: "zero amount", mobile: "0366178061", assignment: eligible},
@@ -135,7 +135,8 @@ func TestShouldNotifyFlexPayZNS_OnlyForRequestableFlexibleEmployees(t *testing.T
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := shouldNotifyFlexPayZNS(tt.amount, tt.mobile, tt.assignment); got != tt.want {
+			got := shouldNotifyFlexPayZNS(tt.amount, tt.mobile, tt.assignment, tt.isCheckInPeriod)
+			if got != tt.want {
 				t.Fatalf("shouldNotifyFlexPayZNS() = %v, want %v", got, tt.want)
 			}
 		})
@@ -285,6 +286,15 @@ func (f *flexpayImportProjectEmployeeRepo) GetActiveAssignmentByProjectAndEmploy
 type flexpayImportAdvanceRepo struct {
 	domain.AdvancePaymentRepository
 	upserted []*domain.AdvancePayment
+	// byEmployeeMonth seeds the periods the import must consult before
+	// deciding whether an employee is a check-in period.
+	byEmployeeMonth map[string][]*domain.AdvancePayment
+	reads           int
+}
+
+func (f *flexpayImportAdvanceRepo) GetByEmployeeAndMonth(_ context.Context, employeeID uint64, forMonth string) ([]*domain.AdvancePayment, error) {
+	f.reads++
+	return f.byEmployeeMonth[fmt.Sprintf("%d:%s", employeeID, forMonth)], nil
 }
 
 func (f *flexpayImportAdvanceRepo) BatchUpsert(_ context.Context, aps []*domain.AdvancePayment) error {

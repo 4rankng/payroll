@@ -270,7 +270,8 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 		if forMonth != prevCalMonth {
 			return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
 		}
-	} else if !isRequestMonthAllowed(now, forMonth) {
+	}
+	if !eligibility.hasCheckInEnabled && !isRequestMonthAllowed(now, forMonth) {
 		return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
 	}
 
@@ -284,6 +285,26 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 			return nil, domain.NewValidationError(constants.MsgAdvanceRequestCutoffVN)
 		}
 		return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
+	}
+
+	// A period funded by both the workbook and check-in earnings would let the
+	// employee withdraw against the sum of two independent sources. Refuse
+	// rather than pick a winner: the amounts are money the employee may already
+	// have been paid against, so only the admin can resolve it.
+	if mixed := periodConflicts(advPayments); mixed != nil {
+		return nil, domain.NewValidationError(fmt.Sprintf(
+			constants.MsgAdvancePeriodMixedSourcesVN, FormatMonthDisplay(forMonth),
+		))
+	}
+
+	// A check-in period is served by the self-check-in flow only, so one period
+	// never has two request paths. The regular endpoint already assumes a
+	// single project per employee (it attaches to the first quota row and the
+	// budget check sums across projects), so the test is the whole period.
+	if periodHasCheckInEarnings(advPayments) {
+		return nil, domain.NewValidationError(fmt.Sprintf(
+			constants.MsgAdvancePeriodCheckInOnlyVN, FormatMonthDisplay(forMonth),
+		))
 	}
 
 	// Use first advance payment record (assuming one project per employee for now)

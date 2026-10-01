@@ -52,6 +52,13 @@ func (f *checkinPendingAssignmentRepo) Update(_ context.Context, a *domain.Proje
 type checkinPendingAdvanceRepo struct {
 	domain.AdvancePaymentRepository
 	zeroedMonths []string
+	// rows seeds the per-employee quota periods the check-in enable consults
+	// before allowing a start month.
+	rows []*domain.AdvancePayment
+}
+
+func (f *checkinPendingAdvanceRepo) GetByEmployeeAndMonth(_ context.Context, _ uint64, _ string) ([]*domain.AdvancePayment, error) {
+	return f.rows, nil
 }
 
 func (f *checkinPendingAdvanceRepo) ZeroOutQuota(_ context.Context, _, _ uint, month string) error {

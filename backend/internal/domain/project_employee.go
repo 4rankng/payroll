@@ -64,7 +64,36 @@ type ProjectEmployee struct {
 	// Relationships
 	Project  Project  `json:"project" gorm:"foreignKey:ProjectID;references:ID"`
 	Employee Employee `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
-	Creator  User     `json:"creator" gorm:"foreignKey:CreatedBy;references:ID"`
+
+	Creator User `json:"creator" gorm:"foreignKey:CreatedBy;references:ID"`
+}
+
+// IsCheckInPeriod reports whether self check-in was in use during any part of
+// the salary period forMonth ("YYYY-MM"), which is what makes the period a
+// check-in period rather than a workbook period.
+//
+// The recorded start day decides it: a period that begins before the employee
+// started self check-in is still a workbook period, so importing a workbook for
+// it must not be skipped. An assignment with no recorded start day (enabled
+// before the column existed, with no attendance to recover it from) counts as
+// covering every period — the start day is unknown, and the safe reading is
+// that the service may already have been in use.
+func (pe *ProjectEmployee) IsCheckInPeriod(forMonth string) (bool, error) {
+	if !pe.CheckInEnabled {
+		return false, nil
+	}
+	if pe.CheckInStartDate == nil {
+		return true, nil
+	}
+
+	periodStart, err := time.Parse("2006-01", forMonth)
+	if err != nil {
+		return false, NewValidationError("Định dạng tháng không hợp lệ (YYYY-MM)")
+	}
+	// The period ends the day before the next month begins; comparing against
+	// that boundary makes a start day late in the month still count.
+	periodEnd := periodStart.AddDate(0, 1, 0)
+	return !pe.CheckInStartDate.After(periodEnd), nil
 }
 
 // ProjectEmployeeRepository defines the interface for project employee persistence operations
@@ -147,18 +176,18 @@ type CheckInConfigurationQuery struct {
 }
 
 type CheckInConfigurationEmployee struct {
-	AssignmentID         uint       `json:"assignment_id"`
-	ProjectID            uint       `json:"project_id"`
-	EmployeeID           uint       `json:"employee_id"`
-	EmployeeName         string     `json:"employee_name"`
-	EmployeeCCCD         string     `json:"employee_cccd"`
-	EmployeeCode         string     `json:"employee_code"`
+	AssignmentID uint   `json:"assignment_id"`
+	ProjectID    uint   `json:"project_id"`
+	EmployeeID   uint   `json:"employee_id"`
+	EmployeeName string `json:"employee_name"`
+	EmployeeCCCD string `json:"employee_cccd"`
+	EmployeeCode string `json:"employee_code"`
 	// EmployeeMobile is read from the employees table; project_employees only
 	// carries the denormalized name/CCCD/code.
 	EmployeeMobile string `json:"employee_mobile"`
 	// CheckInStartDate is the day the service starts: the recorded start date
 	// once active, otherwise the scheduled one while an enable is pending.
-	CheckInStartDate *time.Time `json:"check_in_start_date,omitempty"`
+	CheckInStartDate     *time.Time `json:"check_in_start_date,omitempty"`
 	CheckInEnabled       bool       `json:"check_in_enabled"`
 	PendingCheckInEnable bool       `json:"pending_check_in_enable"`
 	CheckInEffectiveFrom *time.Time `json:"check_in_effective_from,omitempty"`

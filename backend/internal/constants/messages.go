@@ -744,6 +744,13 @@ const (
 	MsgAdvanceCutoffTitleVN         = "Kỳ ứng lương %s kết thúc"
 	MsgAdvanceCutoffWaitingUploadVN = "Xin chờ bảng lương %s để tiếp tục"
 
+	// Advance-payment source exclusivity. A salary period may be funded by the
+	// admin workbook OR by self check-in/out, never both, so the employee-facing
+	// refusals below point at the single correct surface.
+	MsgAdvancePeriodMixedSourcesVN  = "Kỳ lương %s đang có dữ liệu từ cả bảng lương và tự chấm công. Vui lòng liên hệ quản lý để được xử lý."
+	MsgAdvancePeriodCheckInOnlyVN  = "Kỳ lương %s được tính bằng tự chấm công. Vui lòng xin ứng lương tại mục Tự chấm công."
+	MsgCheckInEnableUploadConflictVN = "Tháng %s đã có hạn mức ứng lương từ bảng lương. Vui lòng chọn tháng sau để bật tự chấm công từ tháng này."
+
 	// Auth Business Errors - Vietnamese
 	MsgCCCDUsedByAnotherAccountVN  = "Số CCCD này đã được sử dụng bởi tài khoản khác"
 	MsgPhoneUsedByAnotherAccountVN = "Số điện thoại này đã được sử dụng bởi tài khoản khác"

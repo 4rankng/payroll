@@ -158,11 +158,15 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 	var employeeZNSData []dto.EmployeeZNSData
 	employeeZNSIndex := make(map[string]int)
 
+	// A period may be funded by the workbook OR by self check-in, never both.
+	// The per-employee answer is memoized because a workbook lists one row per
+	// employee and the same person can appear on several sheets.
+	checkInPeriods := newCheckInPeriodIndex(ctx, s.config.AdvancePaymentRepo, s.logger, forMonth)
+
 	for _, sheetName := range importSheets {
 		rows := rowsBySheet[sheetName]
 
 		// Detect column layout by sniffing first data rows.
-		// Old: E(4)=Phone(digits), ..., I(8)=Bank, J(9)=Amount
 		// New: E(4)=Branch(text), F(5)=Phone, ..., J(9)=Bank, K(10)=Amount
 		offset := detectColumnOffset(rows)
 		s.logger.Info("detected column format", "sheet", sheetName, "has_branch_column", offset == 1)
@@ -269,7 +273,11 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 				result.AssignmentsSkipped++
 			}
 
-			if shouldNotifyFlexPayZNS(hanMuc, mobile, assignment) {
+			// Resolved once and reused: the notification cohort must match the
+			// quota cohort exactly.
+			isCheckInPeriod := checkInPeriods.isCheckInPeriod(ctx, assignment, employee.ID)
+
+			if shouldNotifyFlexPayZNS(hanMuc, mobile, assignment, isCheckInPeriod) {
 				// The card's "Hạn cuối" must match the ENFORCED request window:
 				// requests for payroll month M are accepted through
 				// RequestCutoffDay of month M+1 (inclusive) — not the end of
@@ -301,8 +309,12 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 				// (advance_payments.salary → configured max_adv_amount). Exclude them from
 				// the admin FlexPay import so BatchUpsert never overwrites their
 				// salary-derived quota. This is a SEPARATE flow (AC5).
-				if assignment.CheckInEnabled {
-					s.logger.Info("skip flexpay advance import for check-in-enabled employee",
+				//
+				// The test is the PERIOD, not the flag as it stands today: a period
+				// the employee spent on self check-in must not also receive a
+				// workbook quota, whichever side of the enable happened first.
+				if isCheckInPeriod {
+					s.logger.Info("skip flexpay advance import for check-in period",
 						"project_id", project.ID, "employee_id", employee.ID, "for_month", forMonth)
 				} else {
 					assetIDCopy := assetID
@@ -374,12 +386,13 @@ func (s *Service) ImportFlexPayFile(ctx context.Context, file *excelize.File, fo
 }
 
 // shouldNotifyFlexPayZNS keeps the notification recipient cohort identical to
-// the import path that creates requestable FlexPay quota. Self-check-in
-// employees earn quota from attendance and must not receive this upload notice.
-func shouldNotifyFlexPayZNS(amount uint64, mobile string, assignment *domain.ProjectEmployee) bool {
+// the import path that creates requestable FlexPay quota. A period the employee
+// spent on self check-in earns no requestable quota from this upload and must
+// not receive the upload notice either.
+func shouldNotifyFlexPayZNS(amount uint64, mobile string, assignment *domain.ProjectEmployee, isCheckInPeriod bool) bool {
 	return amount > 0 && mobile != "" && assignment != nil &&
 		assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) &&
-		!assignment.CheckInEnabled
+		!isCheckInPeriod
 }
 
 func resolveUploadDate(uploadedAt time.Time) string {

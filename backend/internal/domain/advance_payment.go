@@ -37,6 +37,32 @@ type AdvancePayment struct {
 	Employee Employee `json:"employee" gorm:"foreignKey:EmployeeID;references:ID"`
 }
 
+// Quota provenance. A period's advanceable amount may only ever come from ONE
+// pipeline: the admin workbook upload (bảng công) or self check-in/out
+// earnings. Both write into this same row, so a row that carries both
+// signatures is a period that would let an employee withdraw against the sum
+// of two independent sources. The two writers stamp different fields, which is
+// what makes the conflict detectable without extra bookkeeping.
+
+// HasUploadQuota reports whether the admin workbook contributed to this period.
+// BatchUpsert stamps last_applied_asset_id on every row it writes; the
+// check-in credit path never sets it.
+func (ap *AdvancePayment) HasUploadQuota() bool {
+	return ap.LastAppliedAssetID != nil
+}
+
+// HasCheckInEarnings reports whether check-in/out earnings were banked into
+// this period. AccumulateSalary is the only writer of salary, and the upload
+// path leaves it at zero.
+func (ap *AdvancePayment) HasCheckInEarnings() bool {
+	return ap.Salary > 0
+}
+
+// HasMixedSources reports whether this period was funded by both pipelines.
+func (ap *AdvancePayment) HasMixedSources() bool {
+	return ap.HasUploadQuota() && ap.HasCheckInEarnings()
+}
+
 // TableName returns the table name for AdvancePayment
 func (AdvancePayment) TableName() string {
 	return "advance_payments"

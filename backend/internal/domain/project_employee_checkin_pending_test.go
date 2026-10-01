@@ -241,3 +241,65 @@ func TestReschedulePendingCheckInEnableRejectsNonPendingRow(t *testing.T) {
 		t.Error("rescheduling a row with nothing pending must fail")
 	}
 }
+
+// The workbook import decides per PERIOD whether an employee is a check-in
+// period, so a start day late in the month must not retroactively make earlier
+// months check-in periods.
+func TestIsCheckInPeriodUsesTheRecordedStartDay(t *testing.T) {
+	pe := activeAssignment()
+	pe.CheckInEnabled = true
+	pe.CheckInStartDate = startOfVNDayPtr(2026, 9, 15)
+
+	september, err := pe.IsCheckInPeriod("2026-09")
+	if err != nil {
+		t.Fatalf("IsCheckInPeriod(2026-09): %v", err)
+	}
+	if !september {
+		t.Error("the month the employee started check-in is a check-in period")
+	}
+
+	august, err := pe.IsCheckInPeriod("2026-08")
+	if err != nil {
+		t.Fatalf("IsCheckInPeriod(2026-08): %v", err)
+	}
+	if august {
+		t.Error("a month before the start day is still a workbook period")
+	}
+
+	if _, err := pe.IsCheckInPeriod("2026-13"); err == nil {
+		t.Error("an unparseable period must be reported, not silently treated as check-in")
+	}
+}
+
+// An employee enabled before the start-day column existed has no recorded
+// start; refusing the workbook is the safe reading, since the service may
+// already have been in use.
+func TestIsCheckInPeriodWithoutStartDateCoversEveryPeriod(t *testing.T) {
+	pe := activeAssignment()
+	pe.CheckInEnabled = true
+	pe.CheckInStartDate = nil
+
+	for _, month := range []string{"2026-01", "2026-09", "2026-12"} {
+		got, err := pe.IsCheckInPeriod(month)
+		if err != nil {
+			t.Fatalf("IsCheckInPeriod(%s): %v", month, err)
+		}
+		if !got {
+			t.Errorf("period %s must be treated as check-in when the start day is unknown", month)
+		}
+	}
+
+	pe.CheckInEnabled = false
+	got, err := pe.IsCheckInPeriod("2026-09")
+	if err != nil {
+		t.Fatalf("IsCheckInPeriod: %v", err)
+	}
+	if got {
+		t.Error("an assignment that is not check-in enabled is never a check-in period")
+	}
+}
+
+func startOfVNDayPtr(year int, month time.Month, day int) *time.Time {
+	d := startOfVNDay(year, month, day)
+	return &d
+}

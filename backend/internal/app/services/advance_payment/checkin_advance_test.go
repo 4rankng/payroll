@@ -7,9 +7,11 @@ import (
 	"api-server/internal/domain"
 )
 
-// TestIsCheckInRequestWindowOpen covers the self-check-in advance request window:
-// current calendar-month salary period, open from day 10 through month end; prior
-// periods locked after month rollover. Financial correctness depends on this.
+// TestIsCheckInRequestWindowOpen covers the self-check-in advance request
+// window. A check-in period must have exactly ONE request path, so the flow
+// mirrors the regular endpoint's calendar: the previous month during the
+// days 1-8 tail, the current month from day 10, and nothing at all on day 9.
+// Financial correctness depends on this.
 func TestIsCheckInRequestWindowOpen(t *testing.T) {
 	loc := time.FixedZone("ICT", 7*3600) // Asia/Ho_Chi_Minh = UTC+7, no tz DB needed
 	cases := []struct {
@@ -18,15 +20,18 @@ func TestIsCheckInRequestWindowOpen(t *testing.T) {
 		forMonth string
 		want     bool
 	}{
+		{"day 1 requesting april tail - open", time.Date(2026, 5, 1, 0, 0, 0, 0, loc), "2026-04", true},
+		{"day 8 requesting april tail - open", time.Date(2026, 5, 8, 23, 59, 0, 0, loc), "2026-04", true},
 		{"day 5 same month - locked", time.Date(2026, 5, 5, 12, 0, 0, 0, loc), "2026-05", false},
+		{"day 9 gap day - locked", time.Date(2026, 5, 9, 23, 59, 0, 0, loc), "2026-04", false},
 		{"day 9 same month - locked", time.Date(2026, 5, 9, 23, 59, 0, 0, loc), "2026-05", false},
 		{"day 10 same month - open", time.Date(2026, 5, 10, 0, 1, 0, 0, loc), "2026-05", true},
 		{"day 15 same month - open", time.Date(2026, 5, 15, 9, 0, 0, 0, loc), "2026-05", true},
 		{"day 31 same month - open", time.Date(2026, 5, 31, 23, 59, 0, 0, loc), "2026-05", true},
-		{"jun 1 requesting may - prior period locked", time.Date(2026, 6, 1, 0, 0, 0, 0, loc), "2026-05", false},
 		{"jun 15 requesting jun - open", time.Date(2026, 6, 15, 12, 0, 0, 0, loc), "2026-06", true},
 		{"jun 5 requesting jun - before day 10", time.Date(2026, 6, 5, 12, 0, 0, 0, loc), "2026-06", false},
 		{"may 15 requesting jun - future month", time.Date(2026, 5, 15, 12, 0, 0, 0, loc), "2026-06", false},
+		{"jun 15 requesting may - period already rolled", time.Date(2026, 6, 15, 12, 0, 0, 0, loc), "2026-05", false},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

@@ -70,15 +70,31 @@ type CheckInAdvanceInfo struct {
 	ProviderMaxTransferAmount uint64
 }
 
-// isCheckInRequestWindowOpen reports whether a self-check-in employee may request
-// an advance for forMonth at time now. The window is the current calendar-month
-// salary period, open from SelfCheckInAdvanceWindowOpenDay through month end.
-// Prior periods are always locked (cannot request after month rollover).
-func isCheckInRequestWindowOpen(now time.Time, forMonth string) bool {
-	if forMonth != now.Format("2006-01") {
-		return false
+// checkInRequestPeriod returns the salary period a self-check-in employee may
+// request at time now, and whether that period's window is open.
+//
+//   - days 1-8 (the previous period's tail): the PREVIOUS month, open — the
+//     same tail the regular endpoint serves, so a check-in period keeps exactly
+//     one request path whichever side of the month we are on.
+//   - day 9: locked, matching the regular flow's gap day.
+//   - days 10+: the CURRENT month, open from SelfCheckInAdvanceWindowOpenDay
+//     through month end.
+//
+// Prior months are always locked: a period cannot be requested after it rolls
+// past its window.
+func checkInRequestPeriod(now time.Time) (forMonth string, open bool) {
+	currentCalMonth := now.Format("2006-01")
+	if IsBeforeCutoff(now) {
+		return now.AddDate(0, -1, 0).Format("2006-01"), true
 	}
-	return now.Day() >= SelfCheckInAdvanceWindowOpenDay
+	return currentCalMonth, now.Day() >= SelfCheckInAdvanceWindowOpenDay
+}
+
+// isCheckInRequestWindowOpen reports whether a self-check-in employee may
+// request an advance for forMonth at time now.
+func isCheckInRequestWindowOpen(now time.Time, forMonth string) bool {
+	period, open := checkInRequestPeriod(now)
+	return open && forMonth == period
 }
 
 // GetCheckInAdvanceInfo returns the self-check-in advance summary for an employee.
@@ -89,10 +105,13 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 	}
 
 	now := clock.Now()
-	currentCalMonth := now.Format("2006-01")
+	// The screen must describe the period the employee can actually request
+	// right now: the previous month during the days 1-8 tail, the current month
+	// from day 10, nothing in between.
+	servedMonth, windowOpen := checkInRequestPeriod(now)
 
 	info := &CheckInAdvanceInfo{
-		ForMonth:      currentCalMonth,
+		ForMonth:      servedMonth,
 		WindowOpenDay: SelfCheckInAdvanceWindowOpenDay,
 		Disclaimer:    CheckInAdvanceDisclaimerVN,
 		HasFlexible:   eligibility.hasFlexible,
@@ -117,23 +136,23 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 		return info, nil
 	}
 
-	// Salary (100% earned) + advanceable cap for the current calendar-month salary
-	// period, summed across projects in a single query.
-	salary, maxAdv, err := s.config.AdvancePaymentRepo.SumSalaryAndMaxAdvByEmployeeMonth(ctx, employeeID, currentCalMonth)
+	// Salary (100% earned) + advanceable cap for the served salary period,
+	// summed across projects in a single query.
+	salary, maxAdv, err := s.config.AdvancePaymentRepo.SumSalaryAndMaxAdvByEmployeeMonth(ctx, employeeID, servedMonth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get salary and max advance")
 	}
 	// Earnings still inside the configured credit window this month — displayed
 	// separately; not part of the advanceable cap.
-	pendingEarnings, err := s.config.AdvancePaymentRepo.SumPendingEarningsByEmployeeMonth(ctx, employeeID, currentCalMonth)
+	pendingEarnings, err := s.config.AdvancePaymentRepo.SumPendingEarningsByEmployeeMonth(ctx, employeeID, servedMonth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get pending earnings")
 	}
-	completed, err := s.config.AdvancePaymentRequestRepo.SumCompletedByEmployeeMonth(ctx, employeeID, currentCalMonth)
+	completed, err := s.config.AdvancePaymentRequestRepo.SumCompletedByEmployeeMonth(ctx, employeeID, servedMonth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get completed amount")
 	}
-	pending, err := s.config.AdvancePaymentRequestRepo.SumPendingByEmployeeMonth(ctx, employeeID, currentCalMonth)
+	pending, err := s.config.AdvancePaymentRequestRepo.SumPendingByEmployeeMonth(ctx, employeeID, servedMonth)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get pending amount")
 	}
@@ -147,7 +166,7 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 		info.RemainingAmount = uint64(rem)
 	}
 
-	if !isCheckInRequestWindowOpen(now, currentCalMonth) {
+	if !windowOpen {
 		info.CanRequest = false
 		info.CanRequestTitle = "Chưa đến kỳ xin ứng"
 		info.CanRequestReason = fmt.Sprintf("Bạn có thể xin ứng lương từ ngày %d đến cuối tháng.", SelfCheckInAdvanceWindowOpenDay)
@@ -186,8 +205,9 @@ func (s *Service) GetCheckInAdvanceInfoByUserID(ctx context.Context, userID uint
 }
 
 // CreateCheckInAdvanceRequest creates an advance request under the self-check-in flow.
-// Calendar-month window (open day 10, prior periods locked); budget is checked
-// atomically by CreateWithBudgetCheck against the stored configured max_adv_amount; fee via
+// The window is the served period from checkInRequestPeriod (previous month on
+// days 1-8, current month from day 10); the budget is checked atomically by
+// CreateWithBudgetCheck against the stored configured max_adv_amount; fee via
 // the flexible-pay schedule (unchanged).
 func (s *Service) CreateCheckInAdvanceRequest(ctx context.Context, employeeID uint64, requestAmount uint64, forMonth string) (*domain.AdvancePaymentRequest, error) {
 	if requestAmount < minCheckInAdvanceRequest {
@@ -207,11 +227,13 @@ func (s *Service) CreateCheckInAdvanceRequest(ctx context.Context, employeeID ui
 
 	now := clock.Now()
 	if forMonth == "" {
-		forMonth = now.Format("2006-01")
+		forMonth, _ = checkInRequestPeriod(now)
 	}
 	if !isCheckInRequestWindowOpen(now, forMonth) {
 		return nil, domain.NewValidationError(fmt.Sprintf(
-			"Chỉ được xin ứng lương từ ngày %d đến cuối tháng của kỳ lương hiện tại.",
+			"Bạn có thể xin ứng lương cho kỳ %s: từ ngày 1 đến ngày %d của tháng sau, hoặc từ ngày %d đến cuối tháng của kỳ hiện tại.",
+			FormatMonthDisplay(now.AddDate(0, -1, 0).Format("2006-01")),
+			clock.RequestCutoffDay,
 			SelfCheckInAdvanceWindowOpenDay,
 		))
 	}
@@ -222,6 +244,15 @@ func (s *Service) CreateCheckInAdvanceRequest(ctx context.Context, employeeID ui
 	}
 	if len(advPayments) == 0 {
 		return nil, domain.NewValidationError("Chưa có tiền công trong kỳ này. Vui lòng chấm công trước khi xin ứng.")
+	}
+
+	// A period carrying both the workbook amount and check-in earnings would let
+	// the employee withdraw against the sum of two independent sources. Refuse
+	// rather than pick a winner — only the admin can resolve which one stands.
+	if periodConflicts(advPayments) != nil {
+		return nil, domain.NewValidationError(fmt.Sprintf(
+			constants.MsgAdvancePeriodMixedSourcesVN, FormatMonthDisplay(forMonth),
+		))
 	}
 	// The budget check (CreateWithBudgetCheck) SUMs max_adv_amount across ALL of the
 	// employee's projects for the month, so the request's adv_pay_id just needs a valid

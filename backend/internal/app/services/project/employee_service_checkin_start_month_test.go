@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -129,3 +130,41 @@ func TestBulkToggleCheckInThisMonthAppliesToWholeSelection(t *testing.T) {
 		}
 	}
 }
+
+// The start month must not already be funded by the admin workbook: enabling
+// self check-in there would give the employee the workbook amount AND their own
+// check-in earnings for the same period.
+func TestToggleCheckInEnableRefusesMonthWithWorkbookQuota(t *testing.T) {
+	setFakeClock(t, time.Date(2026, 8, 20, 10, 0, 0, 0, clock.DefaultLocation))
+	repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
+	advanceRepo := &checkinPendingAdvanceRepo{rows: []*domain.AdvancePayment{{
+		ProjectID: 5, EmployeeID: 99, ForMonth: "2026-08",
+		MaxAdvAmount: 2_000_000, LastAppliedAssetID: uintPtr(55),
+	}}}
+	svc := newCheckinPendingService(repo, advanceRepo)
+
+	err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthThisMonth, 1)
+	if err == nil {
+		t.Fatal("enabling for a month that already has a workbook quota must be refused")
+	}
+	if !strings.Contains(err.Error(), "bảng lương") {
+		t.Errorf("error should name the workbook as the reason, got %v", err)
+	}
+	if repo.assignment.CheckInEnabled || repo.assignment.HasPendingCheckInEnable() {
+		t.Error("a refused enable must leave the assignment untouched")
+	}
+	if len(repo.saved) != 0 {
+		t.Errorf("a refused enable must not write, got %d writes", len(repo.saved))
+	}
+
+	// The next month is free of workbook quota, so the same enable is allowed.
+	advanceRepo.rows = nil
+	if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
+		t.Fatalf("next-month enable: %v", err)
+	}
+	if !repo.assignment.HasPendingCheckInEnable() {
+		t.Error("next-month enable must be queued")
+	}
+}
+
+func uintPtr(v uint) *uint { return &v }

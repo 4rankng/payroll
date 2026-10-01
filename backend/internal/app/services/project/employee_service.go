@@ -989,7 +989,7 @@ func (s *ProjectEmployeeService) ToggleCheckInEnabled(ctx context.Context, proje
 			if assignment.CheckInEnabled {
 				return nil // Already active — no change needed
 			}
-			changed, err := s.applyCheckInEnable(assignment, startMonth.EffectiveFrom(clock.Now()))
+			changed, err := s.applyCheckInEnable(txCtx, assignment, startMonth.EffectiveFrom(clock.Now()))
 			if err != nil {
 				return err
 			}
@@ -1069,7 +1069,13 @@ func (s *ProjectEmployeeService) ToggleAdvanceRequestEnabled(ctx context.Context
 // already arrived — the "this month" choice, or a reschedule to a month that
 // began earlier — the row activates right away rather than waiting for the
 // nightly pending sweep, and the start date is recorded as that day 1.
-func (s *ProjectEmployeeService) applyCheckInEnable(assignment *domain.ProjectEmployee, effectiveDate time.Time) (bool, error) {
+//
+// The start month must not already be funded by the admin workbook, or the
+// employee would hold two independent sources for the same period.
+func (s *ProjectEmployeeService) applyCheckInEnable(ctx context.Context, assignment *domain.ProjectEmployee, effectiveDate time.Time) (bool, error) {
+	if err := s.ensureNoUploadQuotaForPeriod(ctx, assignment.ProjectID, assignment.EmployeeID, effectiveDate); err != nil {
+		return false, err
+	}
 	if assignment.HasPendingCheckInEnable() {
 		changed, err := assignment.ReschedulePendingCheckInEnable(effectiveDate)
 		if err != nil {
@@ -1088,6 +1094,27 @@ func (s *ProjectEmployeeService) applyCheckInEnable(assignment *domain.ProjectEm
 	}
 
 	return true, nil
+}
+
+// ensureNoUploadQuotaForPeriod refuses an enable whose start month already
+// carries an admin-workbook quota. That period is funded by the upload, so
+// starting self check-in in it would make the employee eligible for two
+// sources at once: the workbook amount and their own check-in earnings. The
+// admin picks the next month instead, and the import then skips them.
+func (s *ProjectEmployeeService) ensureNoUploadQuotaForPeriod(ctx context.Context, projectID, employeeID uint, period time.Time) error {
+	forMonth := period.Format("2006-01")
+	rows, err := s.advancePaymentRepo.GetByEmployeeAndMonth(ctx, uint64(employeeID), forMonth)
+	if err != nil {
+		return fmt.Errorf("failed to check existing advance quota for %s: %w", forMonth, err)
+	}
+	for _, row := range rows {
+		if row.ProjectID == projectID && row.HasUploadQuota() {
+			return domain.NewValidationError(fmt.Sprintf(
+				constants.MsgCheckInEnableUploadConflictVN, clock.FormatMonthDisplay(forMonth),
+			))
+		}
+	}
+	return nil
 }
 
 // BulkToggleCheckInEnabled toggles the check-in enabled status for multiple employees in a project.
@@ -1119,7 +1146,7 @@ func (s *ProjectEmployeeService) BulkToggleCheckInEnabled(ctx context.Context, p
 				if assignment.CheckInEnabled {
 					continue
 				}
-				changed, err := s.applyCheckInEnable(assignment, startMonth.EffectiveFrom(clock.Now()))
+				changed, err := s.applyCheckInEnable(txCtx, assignment, startMonth.EffectiveFrom(clock.Now()))
 				if err != nil {
 					return err
 				}
