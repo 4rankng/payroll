@@ -147,6 +147,43 @@ describe("useContinuousLocation", () => {
     unmount();
   });
 
+  it("requires a page reload from the first permission denial, not only after a retry", async () => {
+    // A PERMISSION_DENIED means the decision is already made — no browser
+    // re-prompts, and iOS Safari keeps the per-page answer for the document's
+    // lifetime. So the reload CTA must appear on the FIRST denial. Offering a
+    // retry first is what stranded workers on a button that did nothing.
+    stub = installGeolocationStub("prompt");
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+    await waitFor(() => expect(result.current.needsPermission).toBe(true));
+
+    act(() => {
+      result.current.requestPermission();
+    });
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      stub.emitError(1);
+    });
+
+    await waitFor(() => expect(result.current.fatalError?.code).toBe(1));
+    expect(result.current.requiresPageReload).toBe(true);
+
+    unmount();
+  });
+
+  it("requires a page reload when the permission query itself reports denied", async () => {
+    stub = installGeolocationStub("denied");
+    const { result, unmount } = renderHook(() =>
+      useContinuousLocation({ target, enabled: true })
+    );
+
+    await waitFor(() => expect(result.current.fatalError?.code).toBe(1));
+    expect(result.current.requiresPageReload).toBe(true);
+
+    unmount();
+  });
+
   it("restarts the GPS watch on retry even when the browser still reports a denied permission", async () => {
     // iOS Safari serves the geolocation permission state captured at page load
     // and never re-reads it from Settings. A worker who enables Location in
@@ -177,40 +214,6 @@ describe("useContinuousLocation", () => {
 
     await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(result.current.isWatching).toBe(true));
-
-    unmount();
-  });
-
-  it("requires a page reload when a denial survives the worker's recovery tap", async () => {
-    // The first denial has an explanation (the worker can still fix Settings).
-    // A second denial after "I have turned location on" cannot be cleared
-    // in-page on iOS, so the card must offer a reload instead of another retry
-    // button that would quietly do nothing.
-    stub = installGeolocationStub("prompt");
-    const { result, unmount } = renderHook(() =>
-      useContinuousLocation({ target, enabled: true })
-    );
-    await waitFor(() => expect(result.current.needsPermission).toBe(true));
-
-    act(() => {
-      result.current.requestPermission();
-    });
-    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
-    await act(async () => {
-      stub.emitError(1);
-    });
-    await waitFor(() => expect(result.current.fatalError?.code).toBe(1));
-    expect(result.current.requiresPageReload).toBe(false);
-
-    act(() => {
-      result.current.retry();
-    });
-    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(2));
-    await act(async () => {
-      stub.emitError(1);
-    });
-
-    await waitFor(() => expect(result.current.requiresPageReload).toBe(true));
 
     unmount();
   });

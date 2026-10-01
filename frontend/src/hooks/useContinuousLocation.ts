@@ -56,10 +56,14 @@ export interface UseContinuousLocationResult {
    *  threshold, regardless of geofence status. The server remains the
    *  geofence authority. */
   awaitAccurateSample: (timeoutMs?: number) => Promise<LocationSample>;
-  /** True when a permission denial arrived AFTER the worker pressed a recovery
-   *  CTA ("Tôi đã bật vị trí" / "Thử lại"). iOS Safari caches the per-page
-   *  geolocation decision and does not re-read it from Settings, so no further
-   *  in-page retry can succeed — only a page reload re-queries the OS. */
+  /** True once the browser has definitively denied location for this page.
+   *
+   *  A PERMISSION_DENIED (code 1) means the decision is already made: no
+   *  browser re-prompts after a denial, and iOS Safari additionally caches the
+   *  per-page answer for the lifetime of the document. So an in-page retry can
+   *  never recover — the only way to re-read the OS grant is a reload. Derived
+   *  from `fatalError` rather than tracked separately, because a separate flag
+   *  could desync and strand the worker on a button that does nothing. */
   requiresPageReload: boolean;
   /** Reload the document so the browser re-reads the OS-level location grant. */
   reload: () => void;
@@ -123,10 +127,6 @@ export function useContinuousLocation({
   const [, setSampleFreshnessEpoch] = useState(0);
   // Bump to force a clean watch restart (retry, or visibility return).
   const [restartEpoch, setRestartEpoch] = useState(0);
-  // True once a permission denial arrives AFTER the worker pressed a recovery
-  // CTA. iOS Safari caches the per-page geolocation decision and never re-reads
-  // it from Settings, so no further in-page retry can clear it — only a reload.
-  const [requiresPageReload, setRequiresPageReload] = useState(false);
   const [visible, setVisible] = useState(
     typeof document === "undefined" ? true : document.visibilityState !== "hidden"
   );
@@ -141,7 +141,14 @@ export function useContinuousLocation({
   const retainSampleOnWatchStopRef = useRef(false);
   const pendingAwaitersRef = useRef<Set<PendingAwaiter>>(new Set());
   const pendingFreshSampleAwaitersRef = useRef<Set<PendingAwaiter>>(new Set());
+  // True once the worker has pressed a recovery CTA, so a stale Permissions API
+  // answer cannot tear down the watch they just asked for.
   const userRecoveryAttemptedRef = useRef(false);
+  // Every fatalError this hook raises is a permission denial, and a denial is
+  // terminal in-page. Derive the reload requirement from it so the two can never
+  // disagree — the separate flag this replaced could lag a denial behind, which
+  // left the worker tapping a no-op retry instead of the reload that works.
+  const requiresPageReload = fatalError !== null;
   sampleRef.current = sample;
   progressRef.current = progress;
   fatalErrorRef.current = fatalError;
@@ -282,7 +289,6 @@ export function useContinuousLocation({
         const next = p.bestFreshSample ?? null;
         setPermissionState("granted");
         setHasRequestedPermission(true);
-        setRequiresPageReload(false);
         sampleRef.current = next;
         setSample(next);
         if (next && next.accuracy <= requiredAccuracyMeters) {
@@ -310,7 +316,6 @@ export function useContinuousLocation({
           setFatalError(geoError);
           setPermissionState("denied");
           setHasRequestedPermission(false);
-          setRequiresPageReload(userRecoveryAttemptedRef.current);
           isWatchingRef.current = false;
           setIsWatching(false);
           handle.unsubscribe();

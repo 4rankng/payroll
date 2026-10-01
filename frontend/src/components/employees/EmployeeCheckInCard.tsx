@@ -899,7 +899,8 @@ export function EmployeeCheckInCard({
   // need to track the last-tapped action separately (doing so defaulted it to
   // "check_in" and could mislabel the recovery CTA on a fresh check_out).
   const actionType = attendance?.status === "checked_in" ? "check_out" : "check_in";
-  const locationRecoveryText = "Thử lại";
+  // A denial cannot be retried in-page, so the CTA must not promise a retry.
+  const locationRecoveryText = locationIssue?.type === "denied" ? "Tải lại" : "Thử lại";
   // Geofence failures already expand and scroll to the checkpoint map. Keeping
   // a second "Ngoài khu vực / Thử lại" banner above it duplicates the same
   // guidance, so reserve this recovery panel for device/GPS permission issues.
@@ -974,12 +975,14 @@ export function EmployeeCheckInCard({
     dockActionDisabled = false;
     handleDockAttendanceAction = location.requestPermission;
   } else if (locationEnabled && location.fatalError) {
-    // A denial that survived a recovery tap cannot be cleared in-page on iOS —
-    // offer the reload instead of a retry button that would silently do nothing.
+    // A browser permission denial is decided: nothing re-prompts in-page, and
+    // iOS Safari keeps the per-page answer for the document's lifetime. So the
+    // only action that can work is a reload, which re-reads the OS grant. A
+    // retry here is a no-op that leaves the worker stuck on the same banner.
     dockAction = "attention";
-    dockActionLabel = location.requiresPageReload ? "Tải lại trang" : "Đã bật vị trí";
+    dockActionLabel = "Tải lại trang";
     dockActionDisabled = false;
-    handleDockAttendanceAction = location.requiresPageReload ? location.reload : location.retry;
+    handleDockAttendanceAction = location.reload;
   } else if (attendance?.status === "checked_in") {
     dockAction = checkoutCoolingDown || isLocating ? "loading" : "check_out";
     dockActionLabel = checkoutCoolingDown
@@ -1246,9 +1249,16 @@ export function EmployeeCheckInCard({
                   className="employee-type-action h-11 shrink-0 gap-2 rounded-lg border-amber-300 bg-white px-3 font-semibold text-amber-950 hover:bg-amber-100"
                   disabled={isPending}
                   onClick={() => {
-                    // Restart the watch (re-arms GPS, re-prompts permission if the
-                    // failure was a denial) before re-attempting, so "Thử lại"
-                    // recovers from a dead watch and not just transient errors.
+                    // A permission denial is terminal in-page: re-attempting it
+                    // would just write another failed-attempt row and leave the
+                    // same banner up. Reload so the browser re-reads the OS
+                    // grant the worker just enabled in Settings.
+                    if (locationIssue.type === "denied") {
+                      location.reload();
+                      return;
+                    }
+                    // Restart the watch (re-arms GPS) before re-attempting, so
+                    // "Thử lại" recovers from a dead watch, not just transient errors.
                     location.retry();
                     setLocationIssue(null);
                     handleAction(actionType);
@@ -1573,26 +1583,15 @@ export function EmployeeCheckInCard({
               </div>
               {attendanceReference}
               {locationMapDisclosure}
-              {location.requiresPageReload ? (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl border-red-300 bg-white font-semibold text-red-950 hover:bg-red-100 lg:inline-flex"
-                  onClick={location.reload}
-                >
-                  <RotateCcw className="mr-2 h-5 w-5" aria-hidden="true" />
-                  Tải lại trang
-                </Button>
-              ) : (
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl border-red-300 bg-white font-semibold text-red-950 hover:bg-red-100 lg:inline-flex"
-                  onClick={location.retry}
-                >
-                  Tôi đã bật vị trí
-                </Button>
-              )}
+              <Button
+                size="lg"
+                variant="outline"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl border-red-300 bg-white font-semibold text-red-950 hover:bg-red-100 lg:inline-flex"
+                onClick={location.reload}
+              >
+                <RotateCcw className="mr-2 h-5 w-5" aria-hidden="true" />
+                Tải lại trang
+              </Button>
             </div>
           ) : (
               <div className="rounded-2xl border border-slate-300 bg-white p-3">

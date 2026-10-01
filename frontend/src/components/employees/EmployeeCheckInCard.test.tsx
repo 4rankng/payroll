@@ -526,39 +526,12 @@ describe("EmployeeCheckInCard geofence guidance", () => {
     expect(requestPermission).toHaveBeenCalledOnce();
   });
 
-  it("offers a retry that re-probes GPS after a first permission denial", () => {
-    const retry = vi.fn();
-    locationMock.mockReturnValue({
-      sample: null,
-      progress: null,
-      isSubmitReady: false,
-      isWatching: false,
-      needsPermission: false,
-      fatalError: { code: 1, message: "Quyền truy cập vị trí đang bị chặn" },
-      requiresPageReload: false,
-      awaitSubmitReady: vi.fn(),
-      awaitAccurateSample: vi.fn(),
-      requestPermission: vi.fn(),
-      reload: vi.fn(),
-      retry,
-    });
 
-    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(
-      <QueryClientProvider client={queryClient}>
-        <EmployeeCheckInCard
-          checkInTarget={{ project_id: 58, project_name: "LGD", radius_meters: 150, gates: [{ name: "Cổng D", lat: 20.8679818, lng: 106.5711738 }] }}
-          onAdvanceRequest={vi.fn()}
-        />
-      </QueryClientProvider>
-    );
-
-    const dock = within(screen.getByRole("toolbar", { name: "Hành động nhân viên" }));
-    fireEvent.click(dock.getByRole("button", { name: "Đã bật vị trí" }));
-    expect(retry).toHaveBeenCalledOnce();
-  });
-
-  it("offers a page reload once a denial survives the retry, because iOS keeps the stale per-page decision", () => {
+  it("offers a reload, not a retry, on a permission denial", () => {
+    // A denial is terminal in-page: no browser re-prompts, and iOS keeps the
+    // per-page answer for the document's lifetime. A retry here is a no-op that
+    // leaves the worker stuck on the same banner, so the dock must go straight
+    // to the action that actually re-reads the OS grant.
     const reload = vi.fn();
     const retry = vi.fn();
     locationMock.mockReturnValue({
@@ -587,6 +560,7 @@ describe("EmployeeCheckInCard geofence guidance", () => {
     );
 
     const dock = within(screen.getByRole("toolbar", { name: "Hành động nhân viên" }));
+    expect(dock.queryByRole("button", { name: "Đã bật vị trí" })).not.toBeInTheDocument();
     fireEvent.click(dock.getByRole("button", { name: "Tải lại trang" }));
     expect(reload).toHaveBeenCalledOnce();
     expect(retry).not.toHaveBeenCalled();
