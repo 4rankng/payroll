@@ -255,7 +255,7 @@ const FlexiblePayEmployeePage = () => {
   const handleLogout = () => {
     logout();
     localStorage.removeItem("userRole");
-    toast({ title: "Đăng xuất thành công", description: "Hẹn gặp lại bạn!" });
+    toast({ title: "Đăng xuất thành công" });
     navigate("/login");
   };
 

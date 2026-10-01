@@ -300,7 +300,7 @@ export function ChangePasswordSheet({
               Đổi mật khẩu
             </SheetTitle>
             <SheetDescription className="employee-type-body-sm text-[var(--employee-text-secondary)]">
-              Cập nhật mật khẩu để giữ tài khoản an toàn.
+              Mật khẩu mới sẽ dùng cho lần đăng nhập sau.
             </SheetDescription>
           </SheetHeader>
           <div className="mt-4 min-h-0 overflow-y-auto" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}>
@@ -318,7 +318,7 @@ export function ChangePasswordSheet({
           <DialogTitle className="employee-type-card-title text-white">
             Đổi mật khẩu
           </DialogTitle>
-          <DialogDescription className="employee-type-body-sm text-white/80">Cập nhật mật khẩu để giữ tài khoản an toàn.</DialogDescription>
+          <DialogDescription className="employee-type-body-sm text-white/80">Mật khẩu mới sẽ dùng cho lần đăng nhập sau.</DialogDescription>
         </DialogHeader>
         <div className="min-h-0 overflow-y-auto">{formContent}</div>
       </DialogContent>

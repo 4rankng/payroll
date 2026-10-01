@@ -596,7 +596,7 @@ describe("EmployeeCheckInCard geofence guidance", () => {
       // The worker has no in-app way to reopen the window, so the copy must
       // route them to a human instead of implying they should wait.
       expect(
-        screen.getByText(/Bạn đã qua giờ vào làm của ca này/)
+        screen.getByText(/Liên hệ quản lý để được ghi nhận giờ vào làm/)
       ).toBeInTheDocument();
     });
 

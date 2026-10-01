@@ -131,7 +131,7 @@ const EmployeePage = () => {
   const handleLogout = () => {
     logout();
     localStorage.removeItem("userRole");
-    toast({ title: "Đăng xuất thành công", description: "Hẹn gặp lại bạn!" });
+    toast({ title: "Đăng xuất thành công" });
     navigate("/login");
   };
 
@@ -153,10 +153,6 @@ const EmployeePage = () => {
   if (isInitialLoading) {
     return (
       <EmployeeMobileShell chrome="skeleton" contentClassName="max-w-lg space-y-4">
-        <div className="employee-surface-card px-4 py-3">
-          <p className="employee-type-label-caps text-[var(--employee-accent)]">Đang tải hồ sơ</p>
-          <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Chuẩn bị bảng công và thông tin thanh toán của bạn.</p>
-        </div>
         <div className="grid grid-cols-2 gap-3">
           {[1, 2, 3, 4].map((index) => <Skeleton key={index} className="h-20 w-full rounded-xl" />)}
         </div>

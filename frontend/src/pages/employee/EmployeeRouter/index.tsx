@@ -46,7 +46,7 @@ const EmployeeRouter = () => {
               Chưa tải được hồ sơ
             </h1>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Không lấy được thông tin nhân viên. Kiểm tra kết nối hoặc thử tải lại trang.
+              Kiểm tra kết nối rồi thử lại.
             </p>
             <Button
               type="button"

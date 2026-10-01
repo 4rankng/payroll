@@ -46,9 +46,6 @@ export function AdvancePaymentConfirmSheet({
           <SheetTitle className="employee-type-hero-title text-slate-950">
             Xác nhận yêu cầu ứng lương
           </SheetTitle>
-          <p className="employee-type-body text-slate-500">
-            Kiểm tra kỹ thông tin trước khi gửi giao dịch.
-          </p>
         </SheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5">

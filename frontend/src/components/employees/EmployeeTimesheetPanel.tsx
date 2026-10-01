@@ -91,7 +91,7 @@ export function EmployeeTimesheetPanel({
           </span>
           <p className="employee-type-card-title mt-3 text-base-content">Chưa có bảng công</p>
           <p className="employee-type-body-sm mx-auto mt-1 max-w-[18rem] text-base-content">
-            Bảng công của bạn sẽ xuất hiện tại đây sau khi được ghi nhận.
+            Bảng công sẽ xuất hiện khi có ca làm được ghi nhận.
           </p>
         </div>
       ) : (

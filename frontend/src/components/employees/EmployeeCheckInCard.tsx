@@ -850,7 +850,7 @@ export function EmployeeCheckInCard({
               Dịch vụ tự chấm công sẽ kích hoạt từ {effectiveLabel}
             </p>
             <p className="employee-type-body-sm text-[var(--employee-text-secondary)]">
-              Khi dịch vụ kích hoạt, bạn có thể chấm công và tan ca tại đây.
+              Vào làm và tan ca sẽ dùng được tại đây.
             </p>
           </div>
         </div>
@@ -1475,7 +1475,7 @@ export function EmployeeCheckInCard({
                     // shift. Say so, instead of leaving the worker staring at a
                     // "not yet" screen with no way forward.
                     <p className="employee-type-body-sm mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-800">
-                      Bạn đã qua giờ vào làm của ca này. Vui lòng liên hệ quản lý để được ghi nhận.
+                      Liên hệ quản lý để được ghi nhận giờ vào làm.
                     </p>
                   ) : null}
                   {secondsUntilWindow != null && (
@@ -1566,7 +1566,7 @@ export function EmployeeCheckInCard({
                   <div className="min-w-0 flex-1">
                     <p className="employee-type-card-title font-semibold text-slate-950">Cho phép sử dụng vị trí</p>
                     <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
-                      Để chấm công chính xác, hãy cho phép ứng dụng sử dụng GPS của thiết bị.
+                      Ứng dụng cần GPS để xác nhận vị trí chấm công.
                     </p>
                   </div>
                 </div>
