@@ -43,6 +43,7 @@ type Repositories struct {
 	WalletTopup               wallet.WalletTopupRepository
 	WalletPayment             wallet.WalletPaymentRepository
 	WalletIPN                 wallet.WalletIPNRepository
+	WalletBalanceAlertState   wallet.BalanceAlertStateRepository
 	Attendance                domain.AttendanceRepository
 	AttendanceFailedAttempt   domain.AttendanceFailedAttemptRepository
 	SettlementUpload          domain.SettlementUploadRepository
@@ -105,6 +106,7 @@ func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositorie
 	repos.WalletTopup = persistence.NewWalletTopupRepository(sqlDB)
 	repos.WalletPayment = persistence.NewWalletPaymentRepository(sqlDB)
 	repos.WalletIPN = persistence.NewWalletIPNRepository(db)
+	repos.WalletBalanceAlertState = persistence.NewWalletBalanceAlertStateRepository(sqlDB)
 
 	repos.Timesheet = persistence.NewTimesheetRepository(db, repos.ProjectEmployee)
 

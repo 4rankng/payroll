@@ -22,6 +22,7 @@ const (
 	NotificationTypeTimesheetPaid                NotificationType = "timesheet_paid"
 	NotificationTypeAdvancePaymentStatusChanged  NotificationType = "advance_payment_status_changed"
 	NotificationTypeAdvancePaymentReport         NotificationType = "advance_payment_report"
+	NotificationTypeWalletBalanceLow             NotificationType = "wallet_balance_low"
 	NotificationTypeCustom                       NotificationType = "custom"
 )
 

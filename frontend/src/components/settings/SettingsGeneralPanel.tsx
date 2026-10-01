@@ -1,4 +1,4 @@
-import { type LucideIcon, Building2, Landmark, Percent } from 'lucide-react';
+import { type LucideIcon, Building2, Landmark, Percent, Wallet } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 
 import { SettingCard } from '@/components/settings/SettingCard';
@@ -219,6 +219,39 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
         step={1}
         wholeNumber
         suffix="giờ"
+      />
+    </SettingsSection>
+
+    <SettingsSection
+      icon={Wallet}
+      title="Cảnh báo số dư ví tiền"
+      description="Thông báo đẩy đến mọi quản trị viên khi số dư ví tiền chạm ngưỡng, mỗi lần chạm ngưỡng một lần."
+    >
+      <SettingCard
+        title="Ngưỡng cảnh báo số dư ví tiền"
+        description="Khi số dư ví tiền xuống dưới ngưỡng này, hệ thống gửi thông báo đẩy đến toàn bộ quản trị viên. Mỗi lần giảm chạm ngưỡng chỉ nhận một thông báo."
+        value={form.walletBalanceAlertThresholdVnd}
+        originalValue={form.originalWalletBalanceAlertThresholdVnd}
+        onChange={form.setWalletBalanceAlertThresholdVnd}
+        onSave={form.handleSaveWalletBalanceAlertThresholdVnd}
+        onReset={() =>
+          form.setWalletBalanceAlertThresholdVnd(form.originalWalletBalanceAlertThresholdVnd)
+        }
+        isDirty={form.walletBalanceAlertThresholdVnd !== form.originalWalletBalanceAlertThresholdVnd}
+        isSaving={form.isSaving}
+        displayMode="currency-slider"
+        min="1000000"
+        max="1000000000"
+        sliderPresets={[
+          '10000000',
+          '50000000',
+          '100000000',
+          '200000000',
+          '500000000',
+        ]}
+        errorMessage={form.walletBalanceAlertThresholdSaveError}
+        unavailableMessage={form.walletBalanceAlertThresholdUnavailableMessage}
+        onRetry={form.retryLoading}
       />
     </SettingsSection>
 

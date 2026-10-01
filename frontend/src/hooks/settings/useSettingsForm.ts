@@ -6,6 +6,7 @@ const SETTINGS_KEYS = {
   MONTHLY_PAYMENT_PERCENTAGE: 'monthly_payment_percentage',
   PARTNER_COMPANY: 'partner_company',
   BULK_TRANSFER_WORKBOOK_LIMIT_VND: 'bulk_transfer_workbook_limit_vnd',
+  WALLET_BALANCE_ALERT_THRESHOLD_VND: 'wallet_balance_alert_threshold_vnd',
   SELF_CHECK_IN_ADVANCE_PERCENTAGE: 'self_check_in_advance_percentage',
   SELF_CHECK_IN_ADVANCE_HOLD_HOURS: 'self_check_in_advance_hold_hours',
   TRANSFER_BANK_HOLDER: 'transfer_bank_account_holder',
@@ -36,6 +37,10 @@ export interface SettingsFormState {
   originalBulkTransferWorkbookLimitVnd: string;
   bulkTransferWorkbookLimitSaveError: string | null;
   bulkTransferWorkbookLimitUnavailableMessage: string | null;
+  walletBalanceAlertThresholdVnd: string;
+  originalWalletBalanceAlertThresholdVnd: string;
+  walletBalanceAlertThresholdSaveError: string | null;
+  walletBalanceAlertThresholdUnavailableMessage: string | null;
   selfCheckInAdvancePercentage: string;
   originalSelfCheckInAdvancePercentage: string;
   selfCheckInAdvanceHoldHours: string;
@@ -63,6 +68,7 @@ export interface SettingsFormState {
   setMonthlyPaymentPercentage: (v: string) => void;
   setPartnerCompany: (v: string) => void;
   setBulkTransferWorkbookLimitVnd: (v: string) => void;
+  setWalletBalanceAlertThresholdVnd: (v: string) => void;
   setSelfCheckInAdvancePercentage: (v: string) => void;
   setSelfCheckInAdvanceHoldHours: (v: string) => void;
   setTransferBankHolder: (v: string) => void;
@@ -77,6 +83,7 @@ export interface SettingsFormState {
   handleSaveMonthlyPayment: () => void;
   handleSavePartnerCompany: () => void;
   handleSaveBulkTransferWorkbookLimitVnd: () => Promise<void>;
+  handleSaveWalletBalanceAlertThresholdVnd: () => Promise<void>;
   handleSaveSelfCheckInAdvancePercentage: () => void;
   handleSaveSelfCheckInAdvanceHoldHours: () => void;
   handleSaveTransferBank: () => void;
@@ -97,6 +104,7 @@ export function useSettingsForm(): SettingsFormState {
     SETTINGS_KEYS.MONTHLY_PAYMENT_PERCENTAGE,
     SETTINGS_KEYS.PARTNER_COMPANY,
     SETTINGS_KEYS.BULK_TRANSFER_WORKBOOK_LIMIT_VND,
+    SETTINGS_KEYS.WALLET_BALANCE_ALERT_THRESHOLD_VND,
     SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_PERCENTAGE,
     SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_HOLD_HOURS,
     SETTINGS_KEYS.TRANSFER_BANK_HOLDER,
@@ -120,6 +128,8 @@ export function useSettingsForm(): SettingsFormState {
   const [originalPartnerCompany, setOriginalPartnerCompany] = useState('');
   const [bulkTransferWorkbookLimitVnd, setBulkTransferWorkbookLimitVndState] = useState('');
   const [originalBulkTransferWorkbookLimitVnd, setOriginalBulkTransferWorkbookLimitVnd] = useState('');
+  const [walletBalanceAlertThresholdVnd, setWalletBalanceAlertThresholdVndState] = useState('');
+  const [originalWalletBalanceAlertThresholdVnd, setOriginalWalletBalanceAlertThresholdVnd] = useState('');
   const [selfCheckInAdvancePercentage, setSelfCheckInAdvancePercentage] = useState('');
   const [originalSelfCheckInAdvancePercentage, setOriginalSelfCheckInAdvancePercentage] = useState('');
   const [selfCheckInAdvanceHoldHours, setSelfCheckInAdvanceHoldHours] = useState('');
@@ -142,6 +152,8 @@ export function useSettingsForm(): SettingsFormState {
   const [originalFlexPayTransferBankVisible, setOriginalFlexPayTransferBankVisible] = useState(true);
   const [bulkTransferWorkbookLimitSaveError, setBulkTransferWorkbookLimitSaveError] =
     useState<string | null>(null);
+  const [walletBalanceAlertThresholdSaveError, setWalletBalanceAlertThresholdSaveError] =
+    useState<string | null>(null);
 
   useEffect(() => {
     if (settings && Array.isArray(settings)) {
@@ -150,6 +162,9 @@ export function useSettingsForm(): SettingsFormState {
       const partnerCompanySetting = settings.find((s) => s?.key === SETTINGS_KEYS.PARTNER_COMPANY);
       const bulkTransferWorkbookLimitSetting = settings.find(
         (s) => s?.key === SETTINGS_KEYS.BULK_TRANSFER_WORKBOOK_LIMIT_VND,
+      );
+      const walletBalanceAlertThresholdSetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.WALLET_BALANCE_ALERT_THRESHOLD_VND,
       );
       const selfCheckInAdvancePercentageSetting = settings.find(
         (s) => s?.key === SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_PERCENTAGE,
@@ -199,6 +214,10 @@ export function useSettingsForm(): SettingsFormState {
       if (bulkTransferWorkbookLimitSetting?.value != null) {
         setBulkTransferWorkbookLimitVndState(bulkTransferWorkbookLimitSetting.value);
         setOriginalBulkTransferWorkbookLimitVnd(bulkTransferWorkbookLimitSetting.value);
+      }
+      if (walletBalanceAlertThresholdSetting?.value != null) {
+        setWalletBalanceAlertThresholdVndState(walletBalanceAlertThresholdSetting.value);
+        setOriginalWalletBalanceAlertThresholdVnd(walletBalanceAlertThresholdSetting.value);
       }
       if (selfCheckInAdvancePercentageSetting?.value != null) {
         setSelfCheckInAdvancePercentage(selfCheckInAdvancePercentageSetting.value);
@@ -257,6 +276,9 @@ export function useSettingsForm(): SettingsFormState {
   const bulkTransferWorkbookLimitSetting = settings?.find(
     (setting) => setting?.key === SETTINGS_KEYS.BULK_TRANSFER_WORKBOOK_LIMIT_VND,
   );
+  const walletBalanceAlertThresholdSetting = settings?.find(
+    (setting) => setting?.key === SETTINGS_KEYS.WALLET_BALANCE_ALERT_THRESHOLD_VND,
+  );
   const loadError = isSettingsError
     ? 'Không thể tải cài đặt. Vui lòng thử lại.'
     : null;
@@ -265,10 +287,20 @@ export function useSettingsForm(): SettingsFormState {
     (!isLoading && !bulkTransferWorkbookLimitSetting
       ? 'Không tìm thấy cài đặt giới hạn file Chuyển lô. Vui lòng thử tải lại.'
       : null);
+  const walletBalanceAlertThresholdUnavailableMessage =
+    loadError ??
+    (!isLoading && !walletBalanceAlertThresholdSetting
+      ? 'Không tìm thấy cài đặt ngưỡng cảnh báo số dư ví tiền. Vui lòng thử tải lại.'
+      : null);
 
   const setBulkTransferWorkbookLimitVnd = (value: string) => {
     setBulkTransferWorkbookLimitSaveError(null);
     setBulkTransferWorkbookLimitVndState(value);
+  };
+
+  const setWalletBalanceAlertThresholdVnd = (value: string) => {
+    setWalletBalanceAlertThresholdSaveError(null);
+    setWalletBalanceAlertThresholdVndState(value);
   };
 
   const handleSaveWeeklyPayment = () => {
@@ -342,6 +374,23 @@ export function useSettingsForm(): SettingsFormState {
     }
   };
 
+  const handleSaveWalletBalanceAlertThresholdVnd = async () => {
+    if (!walletBalanceAlertThresholdSetting) return;
+
+    setWalletBalanceAlertThresholdSaveError(null);
+    try {
+      await updateMutation.mutateAsync({
+        id: walletBalanceAlertThresholdSetting.id,
+        data: { value: walletBalanceAlertThresholdVnd },
+      });
+      setOriginalWalletBalanceAlertThresholdVnd(walletBalanceAlertThresholdVnd);
+    } catch {
+      setWalletBalanceAlertThresholdSaveError(
+        'Không thể lưu ngưỡng cảnh báo số dư ví tiền. Kiểm tra giá trị và thử lại.',
+      );
+    }
+  };
+
   // Upserts one string setting. The row may not exist yet on an environment
   // where the key was never seeded, so a miss creates it.
   const upsertStringSetting = (key: string, value: string, onSaved: () => void) => {
@@ -410,6 +459,10 @@ export function useSettingsForm(): SettingsFormState {
     originalBulkTransferWorkbookLimitVnd,
     bulkTransferWorkbookLimitSaveError,
     bulkTransferWorkbookLimitUnavailableMessage,
+    walletBalanceAlertThresholdVnd,
+    originalWalletBalanceAlertThresholdVnd,
+    walletBalanceAlertThresholdSaveError,
+    walletBalanceAlertThresholdUnavailableMessage,
     selfCheckInAdvancePercentage,
     originalSelfCheckInAdvancePercentage,
     selfCheckInAdvanceHoldHours,
@@ -439,6 +492,7 @@ export function useSettingsForm(): SettingsFormState {
     setMonthlyPaymentPercentage,
     setPartnerCompany,
     setBulkTransferWorkbookLimitVnd,
+    setWalletBalanceAlertThresholdVnd,
     setSelfCheckInAdvancePercentage,
     setSelfCheckInAdvanceHoldHours,
     setTransferBankHolder,
@@ -453,6 +507,7 @@ export function useSettingsForm(): SettingsFormState {
     handleSaveMonthlyPayment,
     handleSavePartnerCompany,
     handleSaveBulkTransferWorkbookLimitVnd,
+    handleSaveWalletBalanceAlertThresholdVnd,
     handleSaveSelfCheckInAdvancePercentage,
     handleSaveSelfCheckInAdvanceHoldHours,
     handleSaveTransferBank,

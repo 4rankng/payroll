@@ -37,6 +37,7 @@ func registerSchedulerJobs(
 	loanRepaymentReminderService *notification.LoanRepaymentReminderService,
 	zaloConnectService *zaloconnect.Service,
 	aggregateRecomputeService *project.AggregateRecomputeService,
+	walletBalanceAlertService *notification.WalletBalanceAlertService,
 	logger *slog.Logger,
 ) {
 	// Helper for template rendering
@@ -425,6 +426,23 @@ func registerSchedulerJobs(
 			}
 			logger.Info("Project financial aggregates reconciled",
 				"recomputed", result.Recomputed)
+		},
+	})
+
+	// 14. Wallet low-balance alert - every 5 minutes, same cadence as the
+	// provider balance sync. Notifies all admins once per downward crossing
+	// of the configured threshold (wallet_balance_alert_threshold_vnd); the
+	// persisted crossing marker re-arms after recovery so restarts never
+	// resend while the balance stays low.
+	s.AddJob(scheduler.Job{
+		Name:    "wallet_balance_alert",
+		Cron:    "*/5 * * * *",
+		Enabled: true,
+		Handler: func() {
+			ctx := context.Background()
+			if _, err := walletBalanceAlertService.Check(ctx); err != nil {
+				logger.Error("Wallet balance alert check failed", "error", err)
+			}
 		},
 	})
 }

@@ -22,6 +22,7 @@ const (
 	SettingKeyBulkTransferWorkbookLimit = "bulk_transfer_workbook_limit_vnd"
 	SettingKeySelfCheckInAdvancePercent = "self_check_in_advance_percentage"
 	SettingKeySelfCheckInAdvanceHold    = "self_check_in_advance_hold_hours"
+	SettingKeyWalletBalanceAlert        = "wallet_balance_alert_threshold_vnd"
 	SettingKeyTransferBankHolder        = "transfer_bank_account_holder"
 	SettingKeyTransferBankNumber        = "transfer_bank_account_number"
 	SettingKeyTransferBankName          = "transfer_bank_name"
@@ -65,7 +66,13 @@ const (
 	MinBulkTransferWorkbookLimit      = int64(100_000_000)
 	MaxBulkTransferWorkbookLimit      = int64(500_000_000)
 	MaxSelfCheckInAdvanceHoldHours    = uint64(720)
-	CacheTTL                          = constants.SettingsCacheTTL // Use centralized cache TTL
+
+	// Bounds for the wallet low-balance alert threshold. The alert fires once
+	// per downward crossing of this value; defaults to 50 million VND.
+	DefaultWalletBalanceAlertThreshold = int64(50_000_000)
+	MinWalletBalanceAlertThreshold     = int64(1_000_000)
+	MaxWalletBalanceAlertThreshold     = int64(1_000_000_000)
+	CacheTTL                           = constants.SettingsCacheTTL // Use centralized cache TTL
 
 	// Defaults for the beneficiary bank printed on payroll statements.
 	DefaultTransferBankHolder = "CONG TY TNHH MTV GPPM TING TING"
@@ -181,6 +188,58 @@ func parseBulkTransferWorkbookLimit(setting *domain.Settings) (int64, error) {
 	value, err := strconv.ParseInt(raw, 10, 64)
 	if err != nil || value < MinBulkTransferWorkbookLimit || value > MaxBulkTransferWorkbookLimit {
 		return 0, domain.NewValidationError("giới hạn tổng tiền file Chuyển lô phải từ 100.000.000 đ đến 500.000.000 đ")
+	}
+	return value, nil
+}
+
+// GetWalletBalanceAlertThreshold returns the wallet balance under which every
+// administrator is warned to top up. Reads bypass the local and Redis cache
+// layers so a completed Admin update governs the very next evaluation.
+// Missing or invalid persisted data falls back to the default.
+func (s *SettingsConfigService) GetWalletBalanceAlertThreshold(ctx context.Context) int64 {
+	if s.settingsService == nil {
+		return DefaultWalletBalanceAlertThreshold
+	}
+
+	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, SettingKeyWalletBalanceAlert)
+	if err != nil {
+		observability.GetLogger().Warn(
+			"failed to get wallet balance alert threshold setting, using default",
+			"key", SettingKeyWalletBalanceAlert,
+			"error", err,
+		)
+		return DefaultWalletBalanceAlertThreshold
+	}
+
+	value, err := parseWalletBalanceAlertThreshold(setting)
+	if err != nil {
+		observability.GetLogger().Warn(
+			"invalid wallet balance alert threshold setting, using default",
+			"key", SettingKeyWalletBalanceAlert,
+			"error", err,
+		)
+		return DefaultWalletBalanceAlertThreshold
+	}
+	return value
+}
+
+func parseWalletBalanceAlertThreshold(setting *domain.Settings) (int64, error) {
+	if setting == nil || setting.Value == nil {
+		return 0, domain.NewValidationError("ngưỡng cảnh báo số dư ví tiền không được để trống")
+	}
+	if setting.ValueType != domain.ValueTypeNumber {
+		return 0, domain.NewValidationError("ngưỡng cảnh báo số dư ví tiền phải là số")
+	}
+
+	raw := *setting.Value
+	if raw == "" || strings.TrimSpace(raw) != raw || raw[0] == '0' || strings.IndexFunc(raw, func(r rune) bool {
+		return r < '0' || r > '9'
+	}) >= 0 {
+		return 0, domain.NewValidationError("ngưỡng cảnh báo số dư ví tiền phải là số nguyên")
+	}
+	value, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || value < MinWalletBalanceAlertThreshold || value > MaxWalletBalanceAlertThreshold {
+		return 0, domain.NewValidationError("ngưỡng cảnh báo số dư ví tiền phải từ 1.000.000 đ đến 1.000.000.000 đ")
 	}
 	return value, nil
 }

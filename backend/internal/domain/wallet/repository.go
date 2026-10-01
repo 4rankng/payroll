@@ -44,3 +44,11 @@ type WalletIPNRepository interface {
 	UpdateProcessingResult(ctx context.Context, id uint64, status string, walletPaymentID *uint64, processingError string) error
 	ListByInvoiceNo(ctx context.Context, invoiceNo string) ([]*WalletIPN, error)
 }
+
+// BalanceAlertStateRepository reads and writes the single-row low-balance
+// alert state. Get returns the zero state (never evaluated, counts as
+// "above") when the row does not exist yet.
+type BalanceAlertStateRepository interface {
+	Get(ctx context.Context) (*BalanceAlertState, error)
+	Save(ctx context.Context, state *BalanceAlertState) error
+}

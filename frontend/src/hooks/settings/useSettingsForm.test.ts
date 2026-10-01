@@ -62,6 +62,12 @@ const mocks = vi.hoisted(() => ({
       value: 'Ngân hàng Quân đội (MB)',
       value_type: 'string',
     },
+    {
+      id: 15,
+      key: 'wallet_balance_alert_threshold_vnd',
+      value: '50000000',
+      value_type: 'number',
+    },
   ],
 }));
 
