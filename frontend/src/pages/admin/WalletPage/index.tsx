@@ -57,7 +57,7 @@ export default function WalletPage() {
           className="gap-1.5 h-9"
         >
           <Upload className="h-3.5 w-3.5" />
-          Xuất CSV
+          Chuyển lô
         </Button>
         <Button
           size="sm"
