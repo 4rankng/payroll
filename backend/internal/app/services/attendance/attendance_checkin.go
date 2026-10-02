@@ -166,51 +166,51 @@ func (s *AttendanceService) completeLegacyApprovedOpenAttendance(ctx context.Con
 // checkout window: the employee, not the administrator, must still checkout
 // from the configured geofence to complete the shift.
 func (s *AttendanceService) AdminCheckInShifts(ctx context.Context, employeeID, projectID uint, day time.Time) ([]AdminCheckInShift, error) {
-	_, shifts, err := s.adminCheckInShifts(ctx, employeeID, projectID, day)
+	_, _, shifts, err := s.adminCheckInShifts(ctx, employeeID, projectID, day)
 	return shifts, err
 }
 
-func (s *AttendanceService) adminCheckInShifts(ctx context.Context, employeeID, projectID uint, day time.Time) (*domain.ProjectEmployee, []AdminCheckInShift, error) {
+func (s *AttendanceService) adminCheckInShifts(ctx context.Context, employeeID, projectID uint, day time.Time) (*domain.ProjectEmployee, *domain.Payrate, []AdminCheckInShift, error) {
 	now := s.clock.Now()
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	day = time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, now.Location())
 	if !day.Equal(today) {
-		return nil, nil, domain.NewValidationError("Chỉ có thể tạo check-in cho hôm nay để nhân viên tự tan ca.")
+		return nil, nil, nil, domain.NewValidationError("Chỉ có thể tạo check-in cho hôm nay để nhân viên tự tan ca.")
 	}
 
 	project, err := s.projectRepo.GetByID(ctx, projectID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load project for admin check-in: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to load project for admin check-in: %w", err)
 	}
 	if project == nil {
-		return nil, nil, domain.NewNotFoundError("Không tìm thấy dự án")
+		return nil, nil, nil, domain.NewNotFoundError("Không tìm thấy dự án")
 	}
 	if !project.IsFlexible {
-		return nil, nil, domain.NewValidationError("Dự án không hỗ trợ chấm công linh hoạt")
+		return nil, nil, nil, domain.NewValidationError("Dự án không hỗ trợ chấm công linh hoạt")
 	}
 
 	assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(ctx, projectID, employeeID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	if assignment == nil || !assignment.CheckInEnabled {
-		return nil, nil, domain.NewValidationError("Nhân viên chưa được cấp quyền chấm công tại dự án này.")
+		return nil, nil, nil, domain.NewValidationError("Nhân viên chưa được cấp quyền chấm công tại dự án này.")
 	}
 
 	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, day)
 	if err != nil {
 		if !domain.IsNotFoundError(err) {
-			return nil, nil, fmt.Errorf("failed to load payrate for admin check-in: %w", err)
+			return nil, nil, nil, fmt.Errorf("failed to load payrate for admin check-in: %w", err)
 		}
 		payrate = nil
 	}
 	if payrate == nil {
-		return nil, nil, domain.NewValidationError("Chưa có cấu hình mức lương hiệu lực cho ngày chấm công này.")
+		return nil, nil, nil, domain.NewValidationError("Chưa có cấu hình mức lương hiệu lực cho ngày chấm công này.")
 	}
 
 	flattened, err := payrate.Payrate.Flatten()
 	if err != nil {
-		return nil, nil, domain.NewValidationError("Cấu hình ca làm việc không hợp lệ. Vui lòng kiểm tra mức lương dự án.")
+		return nil, nil, nil, domain.NewValidationError("Cấu hình ca làm việc không hợp lệ. Vui lòng kiểm tra mức lương dự án.")
 	}
 	position, _, parsed := resolveShifts(flattened, assignment.Position, day.Add(12*time.Hour))
 	options := make([]AdminCheckInShift, 0, len(parsed))
@@ -231,15 +231,21 @@ func (s *AttendanceService) adminCheckInShifts(ctx context.Context, employeeID, 
 		options[i].Index = i
 	}
 	if len(options) == 0 {
-		return nil, nil, domain.NewValidationError("Chưa cấu hình ca làm việc cho vị trí này. Vui lòng kiểm tra mức lương dự án.")
+		return nil, nil, nil, domain.NewValidationError("Chưa cấu hình ca làm việc cho vị trí này. Vui lòng kiểm tra mức lương dự án.")
 	}
-	return assignment, options, nil
+	return assignment, payrate, options, nil
 }
 
-// AdminCreateCheckIn records only a check-in at the selected configured shift
-// start. It deliberately does not write checkout GPS, earning, or quota: the
-// employee must use the normal checkout flow to finish the shift.
-func (s *AttendanceService) AdminCreateCheckIn(ctx context.Context, employeeID, projectID uint, day time.Time, shiftIndex int) (*domain.Attendance, error) {
+// AdminCreateCheckIn records an admin-entered attendance for today. With
+// withCheckout=false it records only the check-in at the selected configured
+// shift start — checkout GPS, earning, and quota stay empty because the
+// employee must use the normal checkout flow to finish the shift. With
+// withCheckout=true the selected shift must already be over: the record is
+// created complete (checkout at the configured shift end, earning from the
+// payrate, quota credit scheduled after the configured hold), serving the
+// "employee worked but never used the app" case that the self-checkout design
+// cannot serve once the checkout window has closed.
+func (s *AttendanceService) AdminCreateCheckIn(ctx context.Context, employeeID, projectID uint, day time.Time, shiftIndex int, withCheckout bool) (*domain.Attendance, error) {
 	var created *domain.Attendance
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		now := s.clock.Now()
@@ -248,7 +254,7 @@ func (s *AttendanceService) AdminCreateCheckIn(ctx context.Context, employeeID, 
 			return err
 		}
 
-		_, shifts, err := s.adminCheckInShifts(txCtx, employeeID, projectID, day)
+		assignment, payrate, shifts, err := s.adminCheckInShifts(txCtx, employeeID, projectID, day)
 		if err != nil {
 			return err
 		}
@@ -259,7 +265,11 @@ func (s *AttendanceService) AdminCreateCheckIn(ctx context.Context, employeeID, 
 		if shift.Start.After(now) {
 			return domain.NewValidationError("Chỉ có thể tạo check-in cho ca đã bắt đầu.")
 		}
-		if now.After(shift.End.Add(checkOutUpperGrace)) {
+		if withCheckout {
+			if now.Before(shift.End) {
+				return domain.NewValidationError("Ca làm chưa kết thúc; hãy tạo check-in thường và để nhân viên tự tan ca.")
+			}
+		} else if now.After(shift.End.Add(checkOutUpperGrace)) {
 			return domain.NewValidationError("Ca làm đã quá giờ tan ca; không thể tạo check-in để nhân viên tự tan ca.")
 		}
 
@@ -278,19 +288,50 @@ func (s *AttendanceService) AdminCreateCheckIn(ctx context.Context, employeeID, 
 			CheckInTime: shift.Start,
 			CheckInGate: "admin",
 		}
+		var quotaCreditEligibleAt *time.Time
+		if withCheckout {
+			earning, reason, err := s.calculateEarningAmount(payrate, assignment.Position, shift.Start, shift.End)
+			if err != nil {
+				return domain.NewValidationError("Cấu hình mức lương chưa hợp lệ, chưa thể ghi lương ca này.")
+			}
+			if earning <= 0 {
+				if reason == "" {
+					reason = "Không thể tính lương cho ca này. Vui lòng kiểm tra cấu hình ca làm việc."
+				}
+				return domain.NewValidationError(reason)
+			}
+			checkOutTime := shift.End
+			adminGate := "admin"
+			attendance.CheckOutTime = &checkOutTime
+			attendance.CheckOutGate = &adminGate
+			attendance.EarningAmount = &earning
+			eligibleAt := now.Add(s.selfCheckInAdvanceHoldDuration(txCtx))
+			quotaCreditEligibleAt = &eligibleAt
+			attendance.QuotaCreditEligibleAt = quotaCreditEligibleAt
+		}
 		if err := s.attendanceRepo.Create(txCtx, attendance); err != nil {
 			return err
 		}
 		if s.taskEnqueuer != nil {
 			attendanceID := attendance.ID
-			deadline := shift.End.Add(checkOutUpperGrace)
 			enqueuer := s.taskEnqueuer
-			domain.RegisterAfterCommit(txCtx, func() {
-				if err := enqueuer.EnqueueAutoRejectCheckout(attendanceID, deadline); err != nil {
-					observability.GetLogger().Warn("failed to enqueue auto-reject for admin check-in",
-						"attendance_id", attendanceID, "error", err)
-				}
-			})
+			if withCheckout {
+				fireAt := *quotaCreditEligibleAt
+				domain.RegisterAfterCommit(txCtx, func() {
+					if err := enqueuer.EnqueueCreditQuota(attendanceID, fireAt); err != nil {
+						observability.GetLogger().Warn("failed to enqueue quota credit for admin check-in",
+							"attendance_id", attendanceID, "error", err)
+					}
+				})
+			} else {
+				deadline := shift.End.Add(checkOutUpperGrace)
+				domain.RegisterAfterCommit(txCtx, func() {
+					if err := enqueuer.EnqueueAutoRejectCheckout(attendanceID, deadline); err != nil {
+						observability.GetLogger().Warn("failed to enqueue auto-reject for admin check-in",
+							"attendance_id", attendanceID, "error", err)
+					}
+				})
+			}
 		}
 		created = attendance
 		return nil

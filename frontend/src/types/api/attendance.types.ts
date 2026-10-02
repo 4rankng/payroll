@@ -57,6 +57,8 @@ export interface AdminCreateCheckInData {
   project_id: number;
   date: string;
   shift_index: number;
+  /** true = the selected shift is over; create the completed record (check-in + check-out + earning). */
+  with_checkout?: boolean;
 }
 
 export interface AttendanceFilters {

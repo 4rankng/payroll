@@ -261,8 +261,9 @@ func (h *AttendanceHandler) ListCreateCheckInShifts(c *gin.Context) {
 	response.Success(c, dto.AdminListShiftsResponse{Position: position, Shifts: responseShifts}, "Lấy ca làm việc thành công")
 }
 
-// CreateCheckIn records an admin-entered check-in only. It intentionally leaves
-// checkout/earning empty so the employee must finish the shift normally.
+// CreateCheckIn records an admin-entered attendance. Without with_checkout it
+// leaves checkout/earning empty so the employee must finish the shift normally;
+// with with_checkout it creates the completed record for a shift already over.
 func (h *AttendanceHandler) CreateCheckIn(c *gin.Context) {
 	var req dto.AdminCreateCheckInRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -275,12 +276,16 @@ func (h *AttendanceHandler) CreateCheckIn(c *gin.Context) {
 		return
 	}
 
-	att, err := h.attendanceService.AdminCreateCheckIn(c.Request.Context(), req.EmployeeID, req.ProjectID, date, req.ShiftIndex)
+	att, err := h.attendanceService.AdminCreateCheckIn(c.Request.Context(), req.EmployeeID, req.ProjectID, date, req.ShiftIndex, req.WithCheckout)
 	if err != nil {
 		response.HandleDomainError(c, err)
 		return
 	}
-	response.Success(c, mapAdminAttendanceResponse(att, h.clk.Now()), "Đã tạo check-in; nhân viên cần tự tan ca để hoàn tất ca làm")
+	message := "Đã tạo check-in; nhân viên cần tự tan ca để hoàn tất ca làm"
+	if req.WithCheckout {
+		message = "Đã tạo bản ghi check-in và check-out cho ca làm việc"
+	}
+	response.Success(c, mapAdminAttendanceResponse(att, h.clk.Now()), message)
 }
 
 func mapAdminAttendanceResponse(att *domain.Attendance, now time.Time) dto.AdminAttendanceResponse {

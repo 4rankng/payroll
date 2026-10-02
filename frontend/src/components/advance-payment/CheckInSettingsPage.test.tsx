@@ -45,6 +45,24 @@ vi.mock("@/hooks/api/useProjectEmployees", () => ({
   }),
 }));
 
+const {
+  adminAttendancesMock,
+  adminCheckInShiftsMock,
+  adminCreateCheckInMock,
+  adminApproveAttendanceMock,
+} = vi.hoisted(() => ({
+  adminAttendancesMock: vi.fn(),
+  adminCheckInShiftsMock: vi.fn(),
+  adminCreateCheckInMock: vi.fn(),
+  adminApproveAttendanceMock: vi.fn(),
+}));
+vi.mock("@/hooks/api/useAdminAttendance", () => ({
+  useAdminAttendances: (...args: unknown[]) => adminAttendancesMock(...args),
+  useAdminCheckInShifts: (...args: unknown[]) => adminCheckInShiftsMock(...args),
+  useAdminCreateCheckIn: () => ({ isPending: false, mutate: adminCreateCheckInMock }),
+  useApproveAttendance: () => ({ isPending: false, mutate: adminApproveAttendanceMock }),
+}));
+
 const configuration = {
   employees: [
     {
@@ -126,6 +144,8 @@ describe("CheckInSettingsPage", () => {
       hasNextPage: true,
       isFetchingNextPage: false,
     });
+    adminAttendancesMock.mockReturnValue({ data: undefined, isLoading: false, error: null });
+    adminCheckInShiftsMock.mockReturnValue({ data: undefined, isLoading: false, error: null });
   });
 
   it("replaces manual refresh with an accessible month selector", async () => {
@@ -523,5 +543,45 @@ describe("CheckInSettingsPage", () => {
         month: format(startOfMonth(new Date()), "yyyy-MM"),
       });
     });
+  });
+
+  it("offers to mark attendance for a self check-in employee on the current month", async () => {
+    renderPage();
+
+    const card = await screen.findByRole("listitem");
+    const markButton = within(card).getByRole("button", { name: "Điểm danh hộ Nguyễn Hoàng An" });
+    fireEvent.click(markButton);
+
+    expect(await screen.findByText("Điểm danh hộ nhân viên")).toBeInTheDocument();
+  });
+
+  it("hides marking for a self check-in-disabled employee", async () => {
+    useInfiniteCheckInConfigurationMock.mockReturnValue({
+      data: {
+        pages: [{
+          ...configuration,
+          employees: [{ ...configuration.employees[0], check_in_enabled: false }],
+        }],
+        pageParams: [1],
+      },
+      isLoading: false,
+      isFetching: false,
+      isError: false,
+      refetch: vi.fn(),
+      fetchNextPage: fetchNextPageMock,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+    });
+    renderPage();
+
+    const card = await screen.findByRole("listitem");
+    expect(within(card).queryByRole("button", { name: "Điểm danh hộ Nguyễn Hoàng An" })).not.toBeInTheDocument();
+  });
+
+  it("hides marking on the adv partner view", async () => {
+    renderPage("/adv-partner/advance-payments/check-in-settings");
+
+    const card = await screen.findByRole("listitem");
+    expect(within(card).queryByRole("button", { name: /Điểm danh hộ/ })).not.toBeInTheDocument();
   });
 });

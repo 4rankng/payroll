@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CheckInEmployeeCard } from "@/components/advance-payment/CheckInEmployeeCard";
+import { CheckInMarkAttendanceDialog } from "@/components/advance-payment/CheckInMarkAttendanceDialog";
 import { CheckInMonthSelector } from "@/components/advance-payment/CheckInMonthSelector";
 import { CheckInStartMonthDialog } from "@/components/advance-payment/CheckInStartMonthDialog";
 import {
@@ -55,15 +56,19 @@ type BulkAction = "inactive" | "pending" | null;
 export default function CheckInSettingsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const returnPath = location.pathname.startsWith("/adv-partner/")
-    ? "/adv-partner/advance-payments"
-    : "/admin/advance-payments";
+  // adv_partner shares this page but has no /admin/attendances permission
+  // (Casbin), so attendance marking is only rendered on the admin view.
+  const isAdminView = !location.pathname.startsWith("/adv-partner/");
+  const returnPath = isAdminView
+    ? "/admin/advance-payments"
+    : "/adv-partner/advance-payments";
 
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [status, setStatus] = useState<CheckInConfigurationStatus>("enabled");
   const [search, setSearch] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(getCurrentCheckInMonthValue);
   const [pendingEmployeeId, setPendingEmployeeId] = useState<number | null>(null);
+  const [markTarget, setMarkTarget] = useState<{ employeeId: number; employeeName: string } | null>(null);
   const [bulkAction, setBulkAction] = useState<BulkAction>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   // Enabling (and moving an already-queued enable) always goes through the
@@ -190,6 +195,11 @@ export default function CheckInSettingsPage() {
   const handleStatusChange = (value: CheckInConfigurationStatus) => {
     setStatus(value);
     setActionError(null);
+  };
+
+  const setMarkTargetFromEmployee = (employee: CheckInConfigurationEmployee) => {
+    setActionError(null);
+    setMarkTarget({ employeeId: employee.employee_id, employeeName: employee.employee_name });
   };
 
   const handleProjectChange = (value: string) => {
@@ -505,7 +515,9 @@ export default function CheckInSettingsPage() {
                     employee={employee}
                     disabled={isMutating}
                     pending={pendingEmployeeId === employee.employee_id}
+                    canMark={isAdminView && isCurrentMonth && employee.check_in_enabled && !employee.pending_check_in_enable}
                     onToggle={handleToggleEmployee}
+                    onMark={setMarkTargetFromEmployee}
                   />
                 ))}
               </div>
@@ -593,6 +605,18 @@ export default function CheckInSettingsPage() {
         isSubmitting={toggleMutation.isPending}
         onConfirm={handleStartMonthConfirm}
       />
+
+      {isAdminView ? (
+        <CheckInMarkAttendanceDialog
+          open={markTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) setMarkTarget(null);
+          }}
+          employee={markTarget ? { id: markTarget.employeeId, name: markTarget.employeeName } : null}
+          projectId={selectedProjectId}
+          projectName={selectedProject?.name}
+        />
+      ) : null}
     </main>
   );
 }

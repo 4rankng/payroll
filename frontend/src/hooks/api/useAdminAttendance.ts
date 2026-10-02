@@ -63,8 +63,9 @@ function invalidateAttendanceLists(queryClient: ReturnType<typeof useQueryClient
   queryClient.invalidateQueries({ queryKey: ADMIN_ATTENDANCE_QUERY_KEYS.all });
 }
 
-/** useApproveAttendance — admin approves a disputed attendance; backend recomputes earning. */
-export function useApproveAttendance() {
+/** useApproveAttendance — admin approves a disputed attendance; backend recomputes earning.
+ * successMessage lets a caller phrase the same approve act in its own vocabulary. */
+export function useApproveAttendance(options?: { successMessage?: string }) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, note }: { id: number; note?: string }) =>
@@ -72,7 +73,7 @@ export function useApproveAttendance() {
     onSuccess: (updated: AdminAttendanceResponse) => {
       queryClient.setQueryData(ADMIN_ATTENDANCE_QUERY_KEYS.detail(updated.id), { data: updated });
       invalidateAttendanceLists(queryClient);
-      toast.success("Đã duyệt chấm công");
+      toast.success(options?.successMessage ?? "Đã duyệt chấm công");
     },
   });
 }
@@ -105,14 +106,20 @@ export function useCreditAttendanceQuota() {
   });
 }
 
-/** useAdminCreateCheckIn — records only the check-in; checkout remains employee-owned. */
+/** useAdminCreateCheckIn — without with_checkout records only the check-in
+ * (checkout remains employee-owned); with with_checkout creates the completed
+ * check-in + check-out record for a shift already over. */
 export function useAdminCreateCheckIn() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload: AdminCreateCheckInData) => attendanceService.adminCreateCheckIn(payload),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       invalidateAttendanceLists(queryClient);
-      toast.success("Đã tạo check-in. Nhân viên cần tự tan ca để hoàn tất ca làm.");
+      toast.success(
+        variables.with_checkout
+          ? "Đã tạo bản ghi check-in và check-out cho ca làm việc."
+          : "Đã tạo check-in. Nhân viên cần tự tan ca để hoàn tất ca làm.",
+      );
     },
   });
 }

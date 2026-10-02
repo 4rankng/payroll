@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock3, Loader2, Power, PowerOff } from "lucide-react";
+import { CheckCircle2, Clock3, Loader2, LogIn, Power, PowerOff } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,14 +17,18 @@ interface CheckInEmployeeCardProps {
   employee: CheckInConfigurationEmployee;
   disabled: boolean;
   pending: boolean;
+  canMark: boolean;
   onToggle: (employee: CheckInConfigurationEmployee) => void;
+  onMark: (employee: CheckInConfigurationEmployee) => void;
 }
 
 export function CheckInEmployeeCard({
   employee,
   disabled,
   pending,
+  canMark,
   onToggle,
+  onMark,
 }: CheckInEmployeeCardProps) {
   const state = getCheckInEmployeeState(employee);
   const presentation = employeeStatePresentation[state];
@@ -56,18 +60,33 @@ export function CheckInEmployeeCard({
             <StatusIcon className="h-3.5 w-3.5" aria-hidden />
             {presentation.label}
           </Badge>
-          <Button
-            type="button"
-            variant={isEnabledOrPending ? "outline" : "default"}
-            size="sm"
-            className="h-11 min-h-11 min-w-11 shrink-0 px-3 sm:h-8 sm:min-h-0 sm:px-2.5"
-            disabled={disabled}
-            onClick={() => onToggle(employee)}
-            aria-label={`${actionLabel} điểm danh cho ${employee.employee_name}`}
-          >
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-            {actionLabel}
-          </Button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            {canMark ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-11 min-h-11 shrink-0 px-3 sm:h-8 sm:min-h-0 sm:px-2.5"
+                onClick={() => onMark(employee)}
+                aria-label={`Điểm danh hộ ${employee.employee_name}`}
+              >
+                <LogIn className="h-4 w-4" aria-hidden />
+                Điểm danh
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant={isEnabledOrPending ? "outline" : "default"}
+              size="sm"
+              className="h-11 min-h-11 min-w-11 shrink-0 px-3 sm:h-8 sm:min-h-0 sm:px-2.5"
+              disabled={disabled}
+              onClick={() => onToggle(employee)}
+              aria-label={`${actionLabel} điểm danh cho ${employee.employee_name}`}
+            >
+              {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+              {actionLabel}
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -55,16 +55,20 @@ type AdminReviewAttendanceRequest struct {
 
 // AdminCreateCheckInRequest is the body for POST /admin/attendances (create).
 // The admin picks a date, employee, project, and which configured shift to
-// anchor the check-in to. The server fills CheckInTime = the chosen shift's
+// anchor the record to. The server fills CheckInTime = the chosen shift's
 // configured start and schedules the auto-reject task; the employee must still
-// do a real GPS checkout to earn. ShiftIndex is the 0-based index into the
+// do a real GPS checkout to earn. With with_checkout=true the selected shift
+// must already be over and the record is created complete — checkout at the
+// configured shift end and earning from the payrate — for an employee who
+// worked but never used the app. ShiftIndex is the 0-based index into the
 // shifts list returned by GET /admin/attendances/shifts for the same
 // employee+project+date.
 type AdminCreateCheckInRequest struct {
-	EmployeeID uint   `json:"employee_id" binding:"required"`
-	ProjectID  uint   `json:"project_id" binding:"required"`
-	Date       string `json:"date" binding:"required"` // YYYY-MM-DD
-	ShiftIndex int    `json:"shift_index" binding:"min=0"`
+	EmployeeID   uint   `json:"employee_id" binding:"required"`
+	ProjectID    uint   `json:"project_id" binding:"required"`
+	Date         string `json:"date" binding:"required"` // YYYY-MM-DD
+	ShiftIndex   int    `json:"shift_index" binding:"min=0"`
+	WithCheckout bool   `json:"with_checkout"`
 }
 
 // ShiftOption is one selectable shift returned by GET /admin/attendances/shifts.

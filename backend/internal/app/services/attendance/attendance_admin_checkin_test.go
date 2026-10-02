@@ -31,7 +31,7 @@ func TestAdminCreateCheckInCreatesOnlyTheCheckIn(t *testing.T) {
 	repo := &fakeAttendanceRepo{}
 	svc := newAdminCheckInService(repo, now)
 
-	attendance, err := svc.AdminCreateCheckIn(context.Background(), 123, 55, now, 0)
+	attendance, err := svc.AdminCreateCheckIn(context.Background(), 123, 55, now, 0, false)
 	if err != nil {
 		t.Fatalf("AdminCreateCheckIn returned error: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestAdminCreateCheckInRejectsNonFlexibleProject(t *testing.T) {
 	svc := newAdminCheckInService(repo, now)
 	svc.projectRepo = &fakeProjectRepo{p: &domain.Project{ID: 55, IsFlexible: false}}
 
-	_, err := svc.AdminCreateCheckIn(context.Background(), 123, 55, now, 0)
+	_, err := svc.AdminCreateCheckIn(context.Background(), 123, 55, now, 0, false)
 	if err == nil || !domain.IsValidationError(err) {
 		t.Fatalf("AdminCreateCheckIn error = %v, want flexible-project validation error", err)
 	}
@@ -102,5 +102,106 @@ func TestCheckInClosesLegacyApprovedOpenAttendanceBeforeCreatingNewShift(t *test
 	}
 	if legacy.CheckOutGate == nil || *legacy.CheckOutGate != "admin" {
 		t.Fatalf("legacy checkout gate = %v, want admin", legacy.CheckOutGate)
+	}
+}
+
+func newAdminCheckInEnqueuerService(repo *fakeAttendanceRepo, now time.Time, enqueuer *fakeTaskEnqueuer) *AttendanceService {
+	svc := newAdminCheckInService(repo, now)
+	svc.taskEnqueuer = enqueuer
+	return svc
+}
+
+func TestAdminCreateCheckInOutCreatesCompletedRecord(t *testing.T) {
+	loc := clock.DefaultLocation
+	// 19:00 — the 08:00-17:00 shift ended 2 hours ago.
+	now := time.Date(2026, 8, 5, 19, 0, 0, 0, loc)
+	repo := &fakeAttendanceRepo{}
+	enqueuer := &fakeTaskEnqueuer{done: make(chan struct{}, 1)}
+	svc := newAdminCheckInEnqueuerService(repo, now, enqueuer)
+
+	attendance, err := svc.AdminCreateCheckIn(context.Background(), 123, 55, now, 0, true)
+	if err != nil {
+		t.Fatalf("AdminCreateCheckIn(with_checkout) returned error: %v", err)
+	}
+	// The after-commit callback fires the enqueue in a goroutine, so wait on
+	// the done signal before asserting on the recorded calls.
+	<-enqueuer.done
+	wantIn := time.Date(2026, 8, 5, 8, 0, 0, 0, loc)
+	wantOut := time.Date(2026, 8, 5, 17, 0, 0, 0, loc)
+	if !attendance.CheckInTime.Equal(wantIn) || attendance.CheckOutTime == nil || !attendance.CheckOutTime.Equal(wantOut) {
+		t.Fatalf("record times = %v -> %v, want %v -> %v", attendance.CheckInTime, attendance.CheckOutTime, wantIn, wantOut)
+	}
+	if attendance.CheckInGate != "admin" || attendance.CheckOutGate == nil || *attendance.CheckOutGate != "admin" {
+		t.Fatalf("gates = %q / %v, want admin/admin", attendance.CheckInGate, attendance.CheckOutGate)
+	}
+	if attendance.EarningAmount == nil || *attendance.EarningAmount != 300000 {
+		t.Fatalf("earning = %v, want the configured 300000", attendance.EarningAmount)
+	}
+	if attendance.QuotaCreditEligibleAt == nil || !attendance.QuotaCreditEligibleAt.Equal(now.Add(domain.QuotaCreditHoldDuration)) {
+		t.Fatalf("quota_credit_eligible_at = %v, want now + default hold", attendance.QuotaCreditEligibleAt)
+	}
+	if attendance.QuotaCreditedAt != nil {
+		t.Fatalf("quota must stay uncredited until the scheduled task, got %v", attendance.QuotaCreditedAt)
+	}
+	creditCalls := enqueuer.creditSnapshot()
+	if len(creditCalls) != 1 {
+		t.Fatalf("credit task calls = %d, want exactly 1", len(creditCalls))
+	}
+	if !creditCalls[0].at.Equal(now.Add(domain.QuotaCreditHoldDuration)) {
+		t.Fatalf("credit task fires at %v, want %v", creditCalls[0].at, now.Add(domain.QuotaCreditHoldDuration))
+	}
+	if calls := enqueuer.snapshot(); len(calls) != 0 {
+		t.Fatalf("completed record must not schedule the auto-reject task, got %+v", calls)
+	}
+}
+
+func TestAdminCreateCheckInOutRejectsRunningShift(t *testing.T) {
+	loc := clock.DefaultLocation
+	// 10:15 — the 08:00-17:00 shift is still running; a checkout would be in the future.
+	now := time.Date(2026, 8, 5, 10, 15, 0, 0, loc)
+	repo := &fakeAttendanceRepo{}
+	svc := newAdminCheckInService(repo, now)
+
+	_, err := svc.AdminCreateCheckIn(context.Background(), 123, 55, now, 0, true)
+	if err == nil || !domain.IsValidationError(err) {
+		t.Fatalf("AdminCreateCheckIn(with_checkout) error = %v, want running-shift validation error", err)
+	}
+	if repo.created != nil {
+		t.Fatalf("no record may be created, got %+v", repo.created)
+	}
+}
+
+func TestAdminCreateCheckInOutAllowedAfterGraceWindow(t *testing.T) {
+	loc := clock.DefaultLocation
+	// 23:30 — far past shift end (17:00) plus the 4h checkout grace; only a
+	// complete record is possible this late, which is exactly the point.
+	now := time.Date(2026, 8, 5, 23, 30, 0, 0, loc)
+	repo := &fakeAttendanceRepo{}
+	svc := newAdminCheckInService(repo, now)
+
+	attendance, err := svc.AdminCreateCheckIn(context.Background(), 123, 55, now, 0, true)
+	if err != nil {
+		t.Fatalf("AdminCreateCheckIn(with_checkout) after grace returned error: %v", err)
+	}
+	if attendance.CheckOutTime == nil {
+		t.Fatal("expected a completed record with a checkout time")
+	}
+}
+
+func TestAdminCreateCheckInOutRejectsUnearnableShift(t *testing.T) {
+	loc := clock.DefaultLocation
+	now := time.Date(2026, 8, 5, 19, 0, 0, 0, loc)
+	repo := &fakeAttendanceRepo{}
+	svc := newAdminCheckInService(repo, now)
+	svc.payrateRepo = &fakePayrateRepo{pr: &domain.Payrate{
+		Payrate: domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-17:00":0}}}`),
+	}}
+
+	_, err := svc.AdminCreateCheckIn(context.Background(), 123, 55, now, 0, true)
+	if err == nil || !domain.IsValidationError(err) {
+		t.Fatalf("AdminCreateCheckIn(with_checkout) error = %v, want zero-earning validation error", err)
+	}
+	if repo.created != nil {
+		t.Fatalf("no record may be created for an unearnable shift, got %+v", repo.created)
 	}
 }
