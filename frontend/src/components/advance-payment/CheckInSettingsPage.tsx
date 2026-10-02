@@ -295,7 +295,7 @@ export default function CheckInSettingsPage() {
               Quay lại
             </Button>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
                 <ScanFace className="h-5 w-5" aria-hidden />
               </div>
               <div className="min-w-0">
@@ -363,7 +363,7 @@ export default function CheckInSettingsPage() {
           <div
             role="tablist"
             aria-label="Lọc trạng thái điểm danh"
-            className="flex gap-1.5 overflow-x-auto border-b border-border pb-3"
+            className="flex w-fit max-w-full gap-1 overflow-x-auto rounded-lg bg-muted p-1"
           >
             {statusFilters.map((filter) => (
               <button
@@ -373,15 +373,20 @@ export default function CheckInSettingsPage() {
                 aria-selected={status === filter.value}
                 onClick={() => handleStatusChange(filter.value)}
                 className={cn(
-                  "flex h-11 shrink-0 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9",
+                  "flex h-11 shrink-0 items-center gap-2 rounded-md border border-transparent px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:h-9",
                   status === filter.value
-                    ? "border-primary bg-primary/5 text-foreground"
-                    : "border-transparent text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-foreground",
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <span>{filter.label}</span>
                 {filter.count !== undefined ? (
-                  <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs tabular-nums text-foreground">
+                  <span
+                    className={cn(
+                      "rounded-md px-1.5 py-0.5 text-xs tabular-nums text-foreground",
+                      status === filter.value ? "bg-muted" : "bg-background/70",
+                    )}
+                  >
                     {filter.count}
                   </span>
                 ) : null}
@@ -390,7 +395,7 @@ export default function CheckInSettingsPage() {
           </div>
 
           <section className="space-y-3" aria-label="Danh sách cấu hình điểm danh">
-            <div className="flex flex-col gap-3 border-b border-border pb-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex flex-col gap-3 rounded-xl border bg-background p-3 shadow-xs lg:flex-row lg:items-end lg:justify-between">
               <div className="min-w-0 flex-1 space-y-1 lg:max-w-md">
                 <label htmlFor="check-in-employee-search" className="text-xs font-medium text-muted-foreground">
                   Tìm kiếm nhân viên

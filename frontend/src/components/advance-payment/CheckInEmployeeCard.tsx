@@ -43,7 +43,7 @@ export function CheckInEmployeeCard({
   return (
     <Card
       role="listitem"
-      className="flex min-h-[8.5rem] flex-col overflow-hidden shadow-none transition-colors hover:border-primary/35"
+      className="flex min-h-[8.5rem] flex-col overflow-hidden rounded-xl shadow-xs transition-all hover:border-primary/40 hover:shadow-sm"
     >
       <div className="min-w-0 space-y-2 border-b border-border/70 p-3 pb-2.5">
         <div className="min-w-0">

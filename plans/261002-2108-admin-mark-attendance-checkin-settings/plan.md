@@ -1,5 +1,9 @@
 # Admin marks attendance (điểm danh / tan ca) for self check-in employees + Cấu hình điểm danh page overhaul
 
+Status: phases 1–3 implemented; verification green (go build/vet/race, tsc, eslint, vitest 24/24,
+`make api-test` sweep run — failure triage in the session report). Feature work committed by the
+parallel session as 87273c35; the page overhaul restyle is uncommitted in the worktree.
+
 ## Outcome
 
 Admin can, from the **Cấu hình điểm danh** page (`CheckInSettingsPage`), mark a self check-in
