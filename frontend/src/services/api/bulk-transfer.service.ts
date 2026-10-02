@@ -1,7 +1,7 @@
 import { apiClient, buildQueryString } from './client';
 import { API_ENDPOINTS } from '@/config/api.config';
 import { formatDateForAPI } from '@/utils/formatters';
-import { extractFilenameFromHeaders } from '@/utils/file-download';
+import { extractFilenameFromHeaders, triggerBlobDownload } from '@/utils/file-download';
 import type {
   SettlementSimulationRequest,
   SettlementSimulationResult,
@@ -129,6 +129,22 @@ export interface MarkExternallyPaidRequest {
 export interface MarkExternallyPaidResponse {
   marked_count: number;
 }
+
+export interface BulkTransferKQResult {
+  /** Filename the generated KQ workbook was downloaded under. */
+  filename: string;
+  /** Number of transfer lines written into the KQ workbook. */
+  totalCount: number;
+  /** Total VND across those lines. */
+  totalAmount: number;
+}
+
+/** readNumericHeader reads an axios response header as a number, defaulting to 0. */
+const readNumericHeader = (headers: unknown, name: string): number => {
+  const bag = headers as Record<string, unknown> | undefined;
+  const parsed = Number(bag?.[name] ?? bag?.[name.toLowerCase()]);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 class BulkTransferService {
   /**
@@ -382,6 +398,35 @@ class BulkTransferService {
       link.parentNode.removeChild(link);
     }
     window.URL.revokeObjectURL(downloadUrl);
+  }
+
+  /**
+   * "Tạo KQ CK" — convert an outbound chuyển-lô workbook (the file handed to
+   * the bank) into the "Kết quả chuyển khoản" workbook this system accepts
+   * back through importBulkTransferResult. Downloads the result and returns
+   * the metadata the server reported in X- headers.
+   */
+  async generateBulkTransferKQ(file: File): Promise<BulkTransferKQResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient['client'].post(
+      API_ENDPOINTS.payrolls.generateBulkTransferKQ,
+      formData,
+      { responseType: 'blob' }
+    );
+
+    const filename = extractFilenameFromHeaders(response.headers) || 'KQ_CK.xlsx';
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    triggerBlobDownload(blob, filename);
+
+    return {
+      filename,
+      totalCount: readNumericHeader(response.headers, 'x-total-count'),
+      totalAmount: readNumericHeader(response.headers, 'x-transfer-amount'),
+    };
   }
 
   async getAutoBulkTransferConfig(): Promise<AutoBulkTransferConfig> {

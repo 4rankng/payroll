@@ -190,6 +190,12 @@ func (s *PayrollService) ProcessBulkTransferResult(ctx context.Context, fileHead
 	return s.bulkTransferService.ProcessBulkTransferResult(ctx, fileHeader, processedBy)
 }
 
+// GenerateBulkTransferKQ converts an uploaded outbound "chuyển lô" file into
+// the bank result workbook accepted by ProcessBulkTransferResult.
+func (s *PayrollService) GenerateBulkTransferKQ(ctx context.Context, fileHeader *multipart.FileHeader) (*bulktransfer.KQResultFile, error) {
+	return s.bulkTransferService.GenerateBulkTransferKQ(ctx, fileHeader)
+}
+
 // GetBulkTransferUploadHistories retrieves all bulk transfer upload histories with pagination
 func (s *PayrollService) GetBulkTransferUploadHistories(ctx context.Context, req *dto.ListBulkTransferHistoriesRequest) (*dto.ListBulkTransferHistoriesResponse, error) {
 	return s.bulkTransferService.GetBulkTransferUploadHistories(ctx, req)

@@ -46,6 +46,7 @@ type Service struct {
 	exportService       *ExportService
 	notificationService *NotificationService
 	fileHistoryService  *FileHistoryService
+	kqGenerator         *KQResultGenerator
 	resultProcessor     *ResultProcessor
 	assetRepo           domain.AssetRepository
 
@@ -250,6 +251,7 @@ func NewService(cfg *Config) *Service {
 		periodCalculator:    periodCalculator,
 		rowParser:           rowParser,
 		exportService:       exportService,
+		kqGenerator:         NewKQResultGenerator(cfg.ExcelConverter, nil),
 		notificationService: notificationService,
 		fileHistoryService:  fileHistoryService,
 		resultProcessor:     resultProcessor,
@@ -263,6 +265,15 @@ func NewService(cfg *Config) *Service {
 // ExportBulkTransfer delegates to the export service
 func (s *Service) ExportBulkTransfer(ctx context.Context, req *dto.ExportBulkTransferRequest) (*dto.ExportBulkTransferResponse, error) {
 	return s.exportService.Export(ctx, req)
+}
+
+// GenerateBulkTransferKQ converts an uploaded outbound "chuyển lô" file into
+// the bank result workbook the result importer accepts.
+func (s *Service) GenerateBulkTransferKQ(
+	ctx context.Context,
+	fileHeader *multipart.FileHeader,
+) (*KQResultFile, error) {
+	return s.kqGenerator.GenerateFromTransferListing(ctx, fileHeader)
 }
 
 // ProcessBulkTransferResult delegates to the result processor

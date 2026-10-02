@@ -1,7 +1,6 @@
 package wallet_bulk
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,35 +9,16 @@ import (
 
 	"api-server/internal/domain"
 	domaintx "api-server/internal/domain/transactions"
-
-	"github.com/xuri/excelize/v2"
+	"api-server/internal/pkg/excelkit"
 )
 
-// KQ sheet/column layout (matches the reference KQ Chuyen Tien.xlsx).
-// Sheet `data`, rows 1-4 header, row 5+ data, 9 columns A-I.
 const (
-	kqSheetName       = "data"
-	kqTitleRow        = 1
-	kqRefRow          = 2
-	kqDateRow         = 3
-	kqHeaderRow       = 4
-	kqFirstDataRow    = 5
+	// kqSheetName aliases the shared KQ result layout so package tests can
+	// address the generated sheet.
+	kqSheetName       = excelkit.KQSheetName
 	vficInvoicePrefix = "VFIC"
 	ftPendingMessage  = "Đang chờ FT"
 )
-
-// kqHeaders is the row-4 header set.
-var kqHeaders = []string{
-	"STT",
-	"Số tài khoản",
-	"Tên người thụ hưởng",
-	"Ngân hàng thụ hưởng",
-	"Số tiền",
-	"Nội dung",
-	"Phí",
-	"Trạng thái",
-	"FT / Ghi chú",
-}
 
 // KQExcelGenerator produces the "KQ Chuyen Tien" .xlsx for a finished batch.
 //
@@ -63,6 +43,9 @@ func NewKQExcelGenerator(clockFn func() time.Time) *KQExcelGenerator {
 
 // Generate builds the .xlsx for the given batch + wallet_payments rows.
 // Rows are already ordered by bulk_transfer_order ASC by the caller.
+//
+// The workbook layout itself lives in excelkit (WriteKQWorkbook) — this
+// function only maps wallet_payments onto the shared row shape.
 func (g *KQExcelGenerator) Generate(
 	ctx context.Context,
 	batch *domain.BulkTransferBatch,
@@ -74,38 +57,8 @@ func (g *KQExcelGenerator) Generate(
 		return nil, fmt.Errorf("build display name map: %w", err)
 	}
 
-	f := excelize.NewFile()
-	defer func() { _ = f.Close() }()
-
-	// Rename default Sheet1 → data.
-	if err := f.SetSheetName("Sheet1", kqSheetName); err != nil {
-		return nil, fmt.Errorf("rename sheet: %w", err)
-	}
-
-	// Title block (rows 1-3).
-	now := g.clock()
-	if err := setCell(f, "A1", fmt.Sprintf("Kết quả chuyển tiền - %s", batch.Filename)); err != nil {
-		return nil, err
-	}
-	if err := setCell(f, "A2", fmt.Sprintf("Mã lô: WB%d", batch.ID)); err != nil {
-		return nil, err
-	}
-	if err := setCell(f, "A3", fmt.Sprintf("Ngày: %s", now.Format("02/01/2006 15:04:05"))); err != nil {
-		return nil, err
-	}
-
-	// Header row 4.
-	for i, h := range kqHeaders {
-		col := columnLetter(i)
-		cell := fmt.Sprintf("%s%d", col, kqHeaderRow)
-		if err := setCell(f, cell, h); err != nil {
-			return nil, err
-		}
-	}
-
-	// Data rows starting at row 5.
-	for idx, row := range rows {
-		excelRow := kqFirstDataRow + idx
+	kqRows := make([]excelkit.KQRow, 0, len(rows))
+	for _, row := range rows {
 		order := 0
 		if row.BulkTransferOrder != nil {
 			order = int(*row.BulkTransferOrder)
@@ -116,53 +69,25 @@ func (g *KQExcelGenerator) Generate(
 			displayName = row.RecipientBank
 		}
 
-		cells := []struct {
-			col string
-			val any
-		}{
-			{"A", order},
-			{"B", row.RecipientAccountNo},
-			{"C", row.RecipientName},
-			{"D", displayName},
-			{"E", row.RequestedAmount},
-			{"F", descriptionOr(row.Description, row.RequestID)},
-			{"G", row.Fee},
-			{"H", statusToVietnamese(row.Status)},
-			{"I", invoiceOrPending(row)},
-		}
-		for _, c := range cells {
-			cell := fmt.Sprintf("%s%d", c.col, excelRow)
-			if err := setCell(f, cell, c.val); err != nil {
-				return nil, err
-			}
-		}
+		kqRows = append(kqRows, excelkit.KQRow{
+			Order:          order,
+			AccountNumber:  row.RecipientAccountNo,
+			AccountName:    row.RecipientName,
+			BankName:       displayName,
+			Amount:         row.RequestedAmount,
+			TransactionRef: descriptionOr(row.Description, row.RequestID),
+			Fee:            row.Fee,
+			Status:         statusToVietnamese(row.Status),
+			Reference:      invoiceOrPending(row),
+		})
 	}
 
-	// Column widths.
-	widths := map[string]float64{
-		"A": 6, "B": 22, "C": 28, "D": 36, "E": 18,
-		"F": 40, "G": 12, "H": 16, "I": 28,
-	}
-	for col, w := range widths {
-		if err := f.SetColWidth(kqSheetName, col, col, w); err != nil {
-			return nil, fmt.Errorf("set col width %s: %w", col, err)
-		}
-	}
-
-	// Sheet dimension.
-	lastRow := kqFirstDataRow + len(rows) - 1
-	if lastRow < kqHeaderRow {
-		lastRow = kqHeaderRow
-	}
-	if err := f.SetSheetDimension(kqSheetName, fmt.Sprintf("A1:I%d", lastRow)); err != nil {
-		return nil, fmt.Errorf("set sheet dimension: %w", err)
-	}
-
-	var buf bytes.Buffer
-	if err := f.Write(&buf); err != nil {
-		return nil, fmt.Errorf("write xlsx: %w", err)
-	}
-	return buf.Bytes(), nil
+	now := g.clock()
+	return excelkit.WriteKQWorkbook(excelkit.KQTitle{
+		Title:    fmt.Sprintf("Kết quả chuyển tiền - %s", batch.Filename),
+		Ref:      fmt.Sprintf("Mã lô: WB%d", batch.ID),
+		DateLine: excelkit.KQDateLine(now),
+	}, kqRows)
 }
 
 // buildDisplayNameMap unmarshals batch.data JSON → []BulkTransferRow and
@@ -235,22 +160,6 @@ func descriptionOr(desc *string, fallback string) string {
 		return *desc
 	}
 	return fallback
-}
-
-// columnLetter converts 0-indexed column → A, B, ..., I.
-func columnLetter(idx int) string {
-	if idx < 0 || idx > 25 {
-		return "?"
-	}
-	return string(rune('A' + idx))
-}
-
-// setCell writes a value to a cell on kqSheetName.
-func setCell(f *excelize.File, cell string, val any) error {
-	if err := f.SetCellValue(kqSheetName, cell, val); err != nil {
-		return fmt.Errorf("set cell %s: %w", cell, err)
-	}
-	return nil
 }
 
 // FilenameForKQ builds the download filename per spec.

@@ -41,6 +41,25 @@ export const useImportBulkTransferResult = () => {
 };
 
 /**
+ * Hook to generate a "Kết quả chuyển khoản" workbook from an uploaded
+ * chuyển-lô file ("Tạo KQ CK"). The generated file downloads directly; the
+ * admin then uploads it through the normal result-import dialog.
+ */
+export const useGenerateBulkTransferKQ = () => {
+
+  return useMutation({
+    mutationFn: (file: File) =>
+      bulkTransferService.generateBulkTransferKQ(file),
+    onSuccess: (result) => {
+      showSuccessNotification(
+        `Đã tạo ${result.filename} với ${result.totalCount} giao dịch. Tải file về và nhập lại qua "Nhập KQ chuyển lô".`
+      );
+    },
+    // Error handling is now done globally in React Query - will display response.message from backend
+  });
+};
+
+/**
  * Hook to import settlement result from payroll report
  */
 export const useUploadSettlementResult = () => {

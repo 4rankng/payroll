@@ -361,6 +361,47 @@ func (h *PayrollHandler) ImportBulkTransferResult(c *gin.Context) {
 	}, message)
 }
 
+// GenerateBulkTransferKQ converts an uploaded outbound "chuyển lô" workbook
+// (the MBank manual template or the OnePay eMB_BulkPayment file) into the
+// "Kết quả chuyển khoản" workbook that ImportBulkTransferResult accepts, so
+// an admin who paid a batch outside the app can settle it in the system
+// without hand-building the result file.
+//
+// Admin-only. Returns the .xlsx as a blob with metadata in X- headers:
+//   - X-Total-Count: number of transfer lines written
+//   - X-Transfer-Amount: total VND across those lines
+func (h *PayrollHandler) GenerateBulkTransferKQ(c *gin.Context) {
+	if !isAdmin(c) {
+		response.Forbidden(c, constants.MsgForbiddenVN)
+		return
+	}
+
+	header, ok := uploadguard.Validate(c, false)
+	if !ok {
+		return
+	}
+
+	result, err := h.payrollService.GenerateBulkTransferKQ(c.Request.Context(), header)
+	if err != nil {
+		h.logger.Error("GenerateBulkTransferKQ error", "error", err, "file", header.Filename)
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	contentType := "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	contentDisposition := mime.FormatMediaType("attachment", map[string]string{"filename": result.Filename})
+
+	c.Header("Content-Type", contentType)
+	c.Header("Content-Disposition", contentDisposition)
+	c.Header("Content-Length", strconv.Itoa(len(result.ExcelBytes)))
+	c.Header("Cache-Control", "no-store")
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Header("X-Total-Count", strconv.Itoa(result.TotalCount))
+	c.Header("X-Transfer-Amount", strconv.FormatInt(result.TotalAmount, 10))
+
+	c.Data(http.StatusOK, contentType, result.ExcelBytes)
+}
+
 // GetBulkTransferUploadHistories retrieves all bulk transfer upload histories with pagination
 func (h *PayrollHandler) GetBulkTransferUploadHistories(c *gin.Context) {
 	var req dto.ListBulkTransferHistoriesRequest

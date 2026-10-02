@@ -171,6 +171,11 @@ export const API_ENDPOINTS = {
     exportOnePayBulk: '/payrolls/export-onepay-bulk',
     simulateSettlement: '/payrolls/simulate-settlement',
     importBulkTransferResult: '/payrolls/bulk-transfer-result',
+    /**
+     * "Tạo KQ CK" — converts an uploaded outbound chuyển-lô workbook into the
+     * bank result workbook that importBulkTransferResult accepts.
+     */
+    generateBulkTransferKQ: '/payrolls/bulk-transfer-result/kq',
     bulkTransferUploadHistories: '/payrolls/bulk-transfer-upload-histories',
     bulkTransferUploadHistoryById: (id: number) => `/payrolls/bulk-transfer-upload-histories/${id}`,
     bulkTransferUploadHistoryExportPdf: (id: number) => `/payrolls/bulk-transfer-upload-histories/${id}/export-pdf`,

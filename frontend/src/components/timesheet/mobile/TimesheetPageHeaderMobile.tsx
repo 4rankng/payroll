@@ -13,6 +13,8 @@ interface TimesheetPageHeaderMobileProps {
   onBulkTransferExport?: () => void;
   onOnePayExport?: () => void;
   onBulkTransferResultUpload?: () => void;
+  /** Admin-only "Tạo KQ CK" — build a bank result file from a chuyển-lô file. */
+  onBulkTransferKQ?: () => void;
   onBulkTransferHistory?: () => void;
   onBulkApprove?: () => void;
   /** Admin-only "Bỏ duyệt hết" — reset all approved timesheets to pending. */
@@ -39,6 +41,7 @@ export function TimesheetPageHeaderMobile({
   onBulkTransferExport,
   onOnePayExport,
   onBulkTransferResultUpload,
+  onBulkTransferKQ,
   onBulkTransferHistory,
   onBulkApprove,
   onResetAll,
@@ -170,6 +173,18 @@ export function TimesheetPageHeaderMobile({
                       <span className="text-sm font-medium">Nhập KQ chuyển lô</span>
                     </Button>
                   </>
+                )}
+
+                {/* Bank result file generation */}
+                {onBulkTransferKQ && (
+                  <Button
+                    variant="ghost"
+                    className="w-full min-h-11 justify-start h-auto px-2 py-3"
+                    onClick={() => { onBulkTransferKQ(); close(); }}
+                  >
+                    <FileDown className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium">Tạo KQ CK</span>
+                  </Button>
                 )}
 
                 {/* Actions */}

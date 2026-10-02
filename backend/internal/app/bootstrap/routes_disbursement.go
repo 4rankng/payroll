@@ -110,6 +110,7 @@ func setupPayrollRoutes(protected *gin.RouterGroup, container *Container) {
 		payrolls.POST("/auto-bulk-transfer", container.Handlers.Payroll.InitiateAutoBulkTransfer)
 		payrolls.GET("/auto-bulk-transfer/:batch_id/status", container.Handlers.Payroll.GetAutoBulkTransferStatus)
 		payrolls.POST("/bulk-transfer-result", container.Handlers.Payroll.ImportBulkTransferResult)
+		payrolls.POST("/bulk-transfer-result/kq", container.Handlers.Payroll.GenerateBulkTransferKQ)
 		payrolls.GET("/pending-uploads", container.Handlers.Payroll.GetPendingUploads)
 		payrolls.GET("/bulk-transfer-upload-histories", container.Handlers.Payroll.GetBulkTransferUploadHistories)
 		payrolls.GET("/bulk-transfer-upload-histories/:id", container.Handlers.Payroll.GetBulkTransferUploadHistoryByID)

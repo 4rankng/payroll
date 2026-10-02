@@ -2,7 +2,7 @@ import { parseTimesheetStatusFilter } from "@/utils/timesheetFilterHelpers";
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, FileSpreadsheet, Banknote, Trash2, Undo2 } from 'lucide-react';
+import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, FileSpreadsheet, Banknote, Trash2, Undo2, FileDown } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { MissingBankDetailsSection } from '@/components/employees/MissingBankDetailsSection';
 import { TimesheetDisplaySection } from '@/components/timesheet/TimesheetDisplaySection';
@@ -10,6 +10,7 @@ import { ChuyenLoDialog } from '@/components/timesheet/ChuyenLoDialog';
 import { BulkTransferExportDialog } from '@/components/timesheet/BulkTransferExportDialog';
 import { TimesheetsExportDialog, TimesheetsExportParams } from '@/components/timesheet/TimesheetsExportDialog';
 import { BulkTransferResultUploadDialog } from '@/components/timesheet/BulkTransferResultUploadDialog';
+import { BulkTransferKQDialog } from '@/components/timesheet/BulkTransferKQDialog';
 import { BulkTransferHistoryDialog } from '@/components/transaction/BulkTransferHistoryDialog';
 import { UploadHistorySheet } from '@/components/timesheet/UploadHistorySheet';
 import { BCCUploadModal } from '@/components/timesheet/BCCUploadModal';
@@ -38,6 +39,7 @@ const TimesheetPage = () => {
   const [bulkApproveDialogOpen, setBulkApproveDialogOpen] = useState(false);
   const [resetAllDialogOpen, setResetAllDialogOpen] = useState(false);
   const [bulkTransferResultDialogOpen, setBulkTransferResultDialogOpen] = useState(false);
+  const [bulkTransferKQDialogOpen, setBulkTransferKQDialogOpen] = useState(false);
   const [bulkTransferHistoryDialogOpen, setBulkTransferHistoryDialogOpen] = useState(false);
   const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
   const [selectedHistoryFilename, setSelectedHistoryFilename] = useState<string>('');
@@ -335,6 +337,10 @@ const TimesheetPage = () => {
                 <FileUp className="w-4 h-4 mr-2" />
                 Nhập KQ chuyển lô
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setBulkTransferKQDialogOpen(true)}>
+                <FileDown className="w-4 h-4 mr-2" />
+                Tạo KQ CK
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               {/* Group 2: Import / Upload */}
               <DropdownMenuItem onClick={() => setBccUploadOpen(true)}>
@@ -475,6 +481,12 @@ const TimesheetPage = () => {
       <BulkTransferResultUploadDialog
         open={bulkTransferResultDialogOpen}
         onOpenChange={setBulkTransferResultDialogOpen}
+      />
+
+      {/* Tạo KQ CK — convert a chuyển-lô file into a bank result file */}
+      <BulkTransferKQDialog
+        open={bulkTransferKQDialogOpen}
+        onOpenChange={setBulkTransferKQDialogOpen}
       />
 
       {/* Bulk Transfer History List Dialog */}

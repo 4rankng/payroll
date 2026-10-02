@@ -66,21 +66,23 @@ func (s *TransactionCodeStrategy) ParseRows(ctx context.Context, rows [][]string
 	// Start from row 5 (index 4)
 	for i := 4; i < len(rows); i++ {
 		row := rows[i]
-		if len(row) < 9 { // Need columns A-I
-			continue
-		}
 
 		// A=STT, B=account no, C=account name, D=bank name, E=amount
 		// F=transaction code, G=skip, H=status, I=bank ref or error
-		sttStr := strings.TrimSpace(row[0])          // Column A
-		accountNumber := strings.TrimSpace(row[1])   // Column B
-		accountName := strings.TrimSpace(row[2])     // Column C
-		bankName := strings.TrimSpace(row[3])        // Column D
-		amountStr := strings.TrimSpace(row[4])       // Column E
-		transactionCode := strings.TrimSpace(row[5]) // Column F
+		//
+		// Reads are guarded per column rather than gated on len(row) >= 9:
+		// excelize trims trailing empty cells, so a line whose FT / note
+		// column is blank comes back one cell short and would otherwise be
+		// dropped silently.
+		sttStr := statementCell(row, 0)          // Column A
+		accountNumber := statementCell(row, 1)   // Column B
+		accountName := statementCell(row, 2)     // Column C
+		bankName := statementCell(row, 3)        // Column D
+		amountStr := statementCell(row, 4)       // Column E
+		transactionCode := statementCell(row, 5) // Column F
 		// row[6] is skipped (Column G)
-		statusStr := strings.TrimSpace(row[7])      // Column H
-		bankRefOrError := strings.TrimSpace(row[8]) // Column I
+		statusStr := statementCell(row, 7)      // Column H
+		bankRefOrError := statementCell(row, 8) // Column I
 
 		// Skip empty rows
 		if accountNumber == "" && transactionCode == "" {

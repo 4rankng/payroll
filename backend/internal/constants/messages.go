@@ -468,6 +468,9 @@ const (
 	MsgBulkTransferFileAlreadyProcessedVN = "Tệp đã được xử lý trước đó. Tìm thấy %d bản ghi sổ cái hiện có."
 	MsgOrphanTransferFilesDeletedVN       = "Đã xóa %d file chuyển khoản không có kết quả thành công"
 	MsgNoOrphanTransferFilesVN            = "Không tìm thấy file chuyển khoản không có kết quả"
+	MsgTransferListingHeaderNotFoundVN    = "File chuyển lô không hợp lệ: không tìm thấy dòng tiêu đề cột (số tài khoản, tên người thụ hưởng, số tiền, nội dung chuyển khoản)"
+	MsgTransferListingNoRowsVN            = "File chuyển lô không có dòng giao dịch nào để tạo KQ"
+	MsgFailedToGenerateKQVN               = "Không thể tạo file kết quả chuyển khoản"
 
 	// Payrate Update Restriction Messages - Vietnamese
 	MsgCannotUpdatePayrateWithTimesheetsVN = "Không thể cập nhật cấu hình mức lương khi đã có bảng chấm công. Chỉ có thể cập nhật ngày kết thúc về hôm nay hoặc sau đó."
@@ -747,8 +750,8 @@ const (
 	// Advance-payment source exclusivity. A salary period may be funded by the
 	// admin workbook OR by self check-in/out, never both, so the employee-facing
 	// refusals below point at the single correct surface.
-	MsgAdvancePeriodMixedSourcesVN  = "Kỳ lương %s đang có dữ liệu từ cả bảng lương và tự chấm công. Vui lòng liên hệ quản lý để được xử lý."
-	MsgAdvancePeriodCheckInOnlyVN  = "Kỳ lương %s được tính bằng tự chấm công. Vui lòng xin ứng lương tại mục Tự chấm công."
+	MsgAdvancePeriodMixedSourcesVN   = "Kỳ lương %s đang có dữ liệu từ cả bảng lương và tự chấm công. Vui lòng liên hệ quản lý để được xử lý."
+	MsgAdvancePeriodCheckInOnlyVN    = "Kỳ lương %s được tính bằng tự chấm công. Vui lòng xin ứng lương tại mục Tự chấm công."
 	MsgCheckInEnableUploadConflictVN = "Tháng %s đã có hạn mức ứng lương từ bảng lương. Vui lòng chọn tháng sau để bật tự chấm công từ tháng này."
 
 	// Auth Business Errors - Vietnamese

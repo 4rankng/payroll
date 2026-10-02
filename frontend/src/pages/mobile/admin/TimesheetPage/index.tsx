@@ -16,6 +16,7 @@ import {
   TimesheetsExportParams,
 } from "@/components/timesheet/TimesheetsExportDialog";
 import { BulkTransferResultUploadDialog } from "@/components/timesheet/BulkTransferResultUploadDialog";
+import { BulkTransferKQDialog } from "@/components/timesheet/BulkTransferKQDialog";
 import { UploadHistorySheet } from "@/components/timesheet/UploadHistorySheet";
 import { BCCUploadModal } from "@/components/timesheet/BCCUploadModal";
 import { RejectUnpaidTimesheetsDialog } from "@/components/timesheet/RejectUnpaidTimesheetsDialog";
@@ -56,6 +57,8 @@ const TimesheetPageMobile = () => {
   const [approvedTimesheetsDialogOpen, setApprovedTimesheetsDialogOpen] =
     useState(false);
   const [bulkTransferResultDialogOpen, setBulkTransferResultDialogOpen] =
+    useState(false);
+  const [bulkTransferKQDialogOpen, setBulkTransferKQDialogOpen] =
     useState(false);
   const [bulkTransferHistoryDialogOpen, setBulkTransferHistoryDialogOpen] =
     useState(false);
@@ -392,6 +395,7 @@ const TimesheetPageMobile = () => {
         onBulkTransferExport={() => setBulkTransferDialogOpen(true)}
         onOnePayExport={() => setOnePayDialogOpen(true)}
         onBulkTransferResultUpload={() => setBulkTransferResultDialogOpen(true)}
+        onBulkTransferKQ={() => setBulkTransferKQDialogOpen(true)}
         onBulkTransferHistory={handleBulkTransferHistory}
         onBulkApprove={handleBulkApprove}
         onResetAll={handleResetAll}
@@ -465,6 +469,10 @@ const TimesheetPageMobile = () => {
       <BulkTransferResultUploadDialog
         open={bulkTransferResultDialogOpen}
         onOpenChange={setBulkTransferResultDialogOpen}
+      />
+      <BulkTransferKQDialog
+        open={bulkTransferKQDialogOpen}
+        onOpenChange={setBulkTransferKQDialogOpen}
       />
       <BulkTransferHistoryDialog
         open={bulkTransferHistoryDialogOpen && selectedHistoryId === null}
