@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import {
+  ADVANCE_REQUEST_WINDOW_OPEN_DAY,
   formatMonthShort,
   formatPayrollMonthRange,
   getAdvanceQuotaSummary,
@@ -155,6 +156,18 @@ export function AdvancePaymentRequestForm({
   const awaitingPayroll =
     !isSelfCheckInFlow && !isPastMonth && quotaSummary.maxAdvanceAmount <= 0;
   const quotaExhausted = quotaSummary.maxAdvanceAmount > 0 && selectedQuotaRemaining <= 0;
+  // Before window-open day the next check-in period is not requestable yet,
+  // so an exhausted prior month must point at the opening date instead of a
+  // dead-end "choose the current period".
+  const exhaustedNextWindowLine = useMemo(() => {
+    if (!isSelfCheckInFlow || !quotaExhausted) return null;
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    if (now.getDate() < ADVANCE_REQUEST_WINDOW_OPEN_DAY) {
+      return `Kỳ ứng lương tháng ${formatMonthShort(currentMonth)} sẽ mở vào ngày ${ADVANCE_REQUEST_WINDOW_OPEN_DAY}/${now.getMonth() + 1}.`;
+    }
+    return `Kỳ tháng ${formatMonthShort(currentMonth)} đang mở — chọn kỳ hiện tại để ứng tiếp.`;
+  }, [isSelfCheckInFlow, quotaExhausted]);
   const showQuotaProgress = quotaSummary.maxAdvanceAmount > 0;
 
   const status = useMemo<PeriodStatus>(() => {
@@ -209,7 +222,7 @@ export function AdvancePaymentRequestForm({
         amount: 0,
         amountClassName: "text-slate-500",
         amountLabel: "Đã dùng hết hạn mức",
-        helperLine: null,
+        helperLine: exhaustedNextWindowLine,
         actionEnabled: false,
         actionLabel: "Ứng lương",
       };
@@ -249,6 +262,7 @@ export function AdvancePaymentRequestForm({
     isPastMonth,
     isViewingActionableMonth,
     quotaExhausted,
+    exhaustedNextWindowLine,
     selectedQuotaRemaining,
     viewedMonthLabel,
   ]);

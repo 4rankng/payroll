@@ -6,6 +6,14 @@ import { toast } from '@/components/ui/sonner';
 import { getErrorMessage } from '@/utils/error-handler';
 import { extractFilenameFromHeaders, triggerBlobDownload } from '@/utils/file-download';
 
+// iOS Safari can leave a GET stalled forever on a reused keep-alive
+// connection without firing onerror/ontimeout (axios#6898 family), which
+// stranded the employee app on an eternal loading state. Abort JSON reads
+// client-side so the promise always settles; writes, blob downloads, and
+// callers that pass their own signal are untouched.
+const GET_STALL_ABORT_MS = 20_000;
+type StallAbortConfig = AxiosRequestConfig & { stallAbortTimer?: ReturnType<typeof setTimeout> };
+
 // API Response types
 export interface ApiResponse<T = unknown> {
   status: 'success' | 'error';
@@ -99,6 +107,14 @@ class ApiClient {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+        const method = (config.method ?? 'get').toUpperCase();
+        const isJsonRead = method === 'GET' && (config.responseType ?? 'json') === 'json';
+        if (isJsonRead && !config.signal && typeof AbortController !== 'undefined') {
+          const stallController = new AbortController();
+          const cfg = config as InternalAxiosRequestConfig & { stallAbortTimer?: ReturnType<typeof setTimeout> };
+          cfg.stallAbortTimer = setTimeout(() => stallController.abort(), GET_STALL_ABORT_MS);
+          config.signal = stallController.signal;
+        }
         return config;
       },
       (error) => {
@@ -112,6 +128,7 @@ class ApiClient {
     // Response interceptor
     this.client.interceptors.response.use(
       (response) => {
+        clearTimeout((response.config as StallAbortConfig).stallAbortTimer);
         // Successful response
         return response;
       },
@@ -120,6 +137,7 @@ class ApiClient {
           _retry?: boolean;
           _retryCount?: number;
         };
+        clearTimeout((originalRequest as StallAbortConfig).stallAbortTimer);
 
         // Initialize retry count
         if (!originalRequest._retryCount) {

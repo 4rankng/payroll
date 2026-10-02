@@ -135,14 +135,19 @@ describe("useContinuousLocation", () => {
     unmount();
   });
 
-  it("explains a previously denied permission without starting a GPS watch", async () => {
+  it("shows the permission CTA when the page-load query reports denied, without starting a GPS watch", async () => {
+    // iOS Safari serves the permission state captured at page load, so a
+    // "denied" here can be a stale snapshot. The CTA starts a real watch,
+    // which either delivers a fix or reports the authoritative denial.
     stub = installGeolocationStub("denied");
     const { result, unmount } = renderHook(() =>
       useContinuousLocation({ target, enabled: true })
     );
 
     await waitFor(() => expect(result.current.permissionState).toBe("denied"));
-    expect(result.current.fatalError?.code).toBe(1);
+    expect(result.current.fatalError).toBeNull();
+    expect(result.current.requiresPageReload).toBe(false);
+    expect(result.current.needsPermission).toBe(true);
     expect(stub.watchPosition).not.toHaveBeenCalled();
 
     unmount();
@@ -173,14 +178,21 @@ describe("useContinuousLocation", () => {
     unmount();
   });
 
-  it("requires a page reload when the permission query itself reports denied", async () => {
+  it("starts the GPS watch from the CTA even when the page-load query reports denied", async () => {
+    // A page-load "denied" is the stale snapshot (WebKit Bug 275268); the
+    // authoritative answer comes from an actual watch, so the CTA must not
+    // be blocked by it.
     stub = installGeolocationStub("denied");
     const { result, unmount } = renderHook(() =>
       useContinuousLocation({ target, enabled: true })
     );
+    await waitFor(() => expect(result.current.needsPermission).toBe(true));
+    expect(result.current.fatalError).toBeNull();
 
-    await waitFor(() => expect(result.current.fatalError?.code).toBe(1));
-    expect(result.current.requiresPageReload).toBe(true);
+    act(() => {
+      result.current.requestPermission();
+    });
+    await waitFor(() => expect(stub.watchPosition).toHaveBeenCalledTimes(1));
 
     unmount();
   });

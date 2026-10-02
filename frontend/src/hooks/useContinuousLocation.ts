@@ -77,13 +77,6 @@ export interface UseContinuousLocationResult {
 const DEFAULT_SUBMIT_TIMEOUT_MS = 30000;
 const PERMISSION_DENIED = 1;
 
-function createPermissionDeniedError(): Pick<GeolocationPositionError, "code" | "message"> {
-  return createGeolocationError(
-    PERMISSION_DENIED,
-    "Quyền truy cập vị trí đang bị chặn"
-  );
-}
-
 /**
  * Marks a submit-wait as cancelled (watch paused/restarted, component going
  * away, or retry). The card treats this as a SILENT no-op: no recovery banner,
@@ -182,11 +175,16 @@ export function useContinuousLocation({
     fatalError === null;
   isSubmitReadyRef.current = isSubmitReady;
   const canAcquireLocation = permissionState === "granted" || hasRequestedPermission;
+  // iOS answers "denied" from a stale page-load snapshot even after the worker
+  // re-enables Location in Settings; the CTA starts a real watch, which either
+  // delivers a fix or reports the authoritative denial.
   const needsPermission =
     !fatalError &&
     !isWatching &&
     !hasRequestedPermission &&
-    (permissionState === "prompt" || permissionState === "unknown");
+    (permissionState === "prompt" ||
+      permissionState === "unknown" ||
+      permissionState === "denied");
 
   // Do not trigger the browser's permission prompt merely because the employee
   // opened the attendance card. A browser permission that was already granted
@@ -199,22 +197,10 @@ export function useContinuousLocation({
       setPermissionState(nextPermissionState);
       if (nextPermissionState === "granted") {
         setHasRequestedPermission(true);
-      } else if (nextPermissionState === "denied" && !userRecoveryAttemptedRef.current) {
-        // iOS Safari serves the permission state captured at page load and does
-        // not re-read it after the worker changes Location in Settings, so a
-        // "denied" here can be hours stale. Honouring it would tear down the
-        // watch the worker just asked for on retry, making the recovery CTA a
-        // silent no-op. After an explicit user action the watch is the authority:
-        // it either delivers a fix or reports a real denial.
-        const deniedError = createPermissionDeniedError();
-        fatalErrorRef.current = deniedError;
-        setFatalError(deniedError);
-        setHasRequestedPermission(false);
-        // A stored grant only survives while the permission does, so a real
-        // "denied" from the browser retires it instead of leaving the next load
-        // to skip the prompt and collide with this denial again.
-        forgetLocationGrant();
       }
+      // A "denied" here is the stale page-load snapshot (WebKit Bug 275268):
+      // the running watch is the authority — a real denial surfaces via
+      // onError, which retires the stored grant.
     });
     return () => {
       cancelled = true;

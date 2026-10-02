@@ -339,10 +339,15 @@ const FlexiblePayEmployeePage = () => {
               key={`${formKey}-${month.value}`}
               info={info}
               viewMonth={month.value}
+              // The check-in surface serves exactly the requestable period;
+              // closed/exhausted derives from its own quota, not the regular
+              // flow this view never fetched.
               isPastMonth={
-                isCheckInEnabled && selectedMonth === prevCalMonth
-                  ? !isPriorMonthRequestable(new Date(), prevCalMonth, regularInfoQuery.data?.data)
-                  : isPastAdvancePaymentPeriod(month.value, info.forMonth)
+                isCheckIn
+                  ? false
+                  : isCheckInEnabled && selectedMonth === prevCalMonth
+                    ? !isPriorMonthRequestable(new Date(), prevCalMonth, regularInfoQuery.data?.data)
+                    : isPastAdvancePaymentPeriod(month.value, info.forMonth)
               }
               isSelfCheckInFlow={isCheckIn}
               history={history}

@@ -19,7 +19,9 @@ export function useTodayAttendance() {
       const data = await attendanceService.getToday();
       return data;
     },
-    retry: false,
+    // One automatic retry rides a fresh connection, which clears the iOS
+    // stale-keep-alive stall.
+    retry: 1,
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
