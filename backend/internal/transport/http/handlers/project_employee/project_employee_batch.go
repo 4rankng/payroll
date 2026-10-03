@@ -22,7 +22,7 @@ func (h *Handler) AssignEmployee(c *gin.Context) {
 		"path", c.Request.URL.Path,
 	)
 
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		h.logger.WarnContext(c.Request.Context(), "Invalid project ID format",
 			"project_id", c.Param("id"),
@@ -250,7 +250,7 @@ func (h *Handler) RemoveEmployeesFromProject(c *gin.Context) {
 		"path", c.Request.URL.Path,
 	)
 
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		h.logger.WarnContext(c.Request.Context(), "Invalid project ID format",
 			"project_id", c.Param("id"),
@@ -374,7 +374,7 @@ func (h *Handler) UpdateProjectEmployee(c *gin.Context) {
 		"path", c.Request.URL.Path,
 	)
 
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		h.logger.WarnContext(c.Request.Context(), "Invalid project ID format",
 			"project_id", c.Param("id"),

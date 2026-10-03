@@ -27,7 +27,7 @@ func (r *ExportEmployeesRequest) ParseProjectIDs() error {
 		if idStr == "" {
 			continue
 		}
-		id, err := strconv.ParseUint(idStr, 10, 32)
+		id, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil {
 			return fmt.Errorf("invalid project_id: %s", idStr)
 		}
@@ -62,7 +62,7 @@ func (r *ExportTimesheetsRequest) ParseProjectIDs() error {
 		if idStr == "" {
 			continue
 		}
-		id, err := strconv.ParseUint(idStr, 10, 32)
+		id, err := strconv.ParseUint(idStr, 10, 64)
 		if err != nil {
 			return fmt.Errorf("invalid project_id: %s", idStr)
 		}
@@ -221,7 +221,7 @@ func (r *PayrollReportByProjectRequest) GetParsedProjectIDs() ([]uint, error) {
 		if p == "" {
 			continue
 		}
-		id, err := strconv.ParseUint(p, 10, 32)
+		id, err := strconv.ParseUint(p, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("invalid project ID: %s", p)
 		}

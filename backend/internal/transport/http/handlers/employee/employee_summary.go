@@ -80,7 +80,7 @@ func (h *Handler) GetEmployeesSummary(c *gin.Context) {
 // @Router /employees/{id}/summary [get]
 func (h *Handler) GetEmployeeSummary(c *gin.Context) {
 	// 1. Validate ID parameter
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidEmployeeIDVN)
 		return

@@ -25,7 +25,7 @@ func (v *RequestValidator) ValidateIDParam(c *gin.Context, paramName string) (ui
 		return 0, domain.NewValidationError(constants.MsgInvalidRequestBodyVN)
 	}
 
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		switch paramName {
 		case "id":

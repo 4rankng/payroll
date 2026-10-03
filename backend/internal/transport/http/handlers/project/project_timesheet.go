@@ -33,7 +33,7 @@ import (
 // @Router /projects/{id}/timesheets [get]
 func (h *Handler) ListProjectTimesheets(c *gin.Context) {
 	// Validate project ID
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
 		return

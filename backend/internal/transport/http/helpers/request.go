@@ -124,7 +124,7 @@ func BindURI(c *gin.Context, req interface{}) bool {
 //		return
 //	}
 func ParseIDParam(c *gin.Context, paramName string, errMsg string) (uint, bool) {
-	id, err := strconv.ParseUint(c.Param(paramName), 10, 32)
+	id, err := strconv.ParseUint(c.Param(paramName), 10, 64)
 	if err != nil {
 		response.BadRequest(c, errMsg)
 		return 0, false

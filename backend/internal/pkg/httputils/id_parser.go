@@ -10,8 +10,9 @@ import (
 const (
 	// DefaultIDBase is the base used for parsing IDs (10 = decimal)
 	DefaultIDBase = 10
-	// IDBitSize is the bit size for parsing IDs (32 = uint32)
-	IDBitSize = 32
+	// IDBitSize is the bit size for parsing IDs (64 = uint64, matching the
+	// BIGINT UNSIGNED columns and the test fixture ID band beyond uint32)
+	IDBitSize = 64
 )
 
 // ParseIDParam parses a uint ID parameter from the gin context

@@ -81,7 +81,7 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		response.BadRequest(c, "project_id là bắt buộc")
 		return
 	}
-	projectID64, err := strconv.ParseUint(projectIDStr, 10, 32)
+	projectID64, err := strconv.ParseUint(projectIDStr, 10, 64)
 	if err != nil || projectID64 == 0 {
 		response.BadRequest(c, "project_id không hợp lệ")
 		return
@@ -353,7 +353,7 @@ func (h *BCCImportHandler) DownloadPartnerImport(c *gin.Context) {
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 func parseBCCImportID(c *gin.Context) (uint, bool) {
-	v, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	v, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil || v == 0 {
 		response.BadRequest(c, "ID không hợp lệ")
 		return 0, false

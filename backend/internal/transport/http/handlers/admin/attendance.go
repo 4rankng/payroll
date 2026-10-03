@@ -51,13 +51,13 @@ func (h *AttendanceHandler) List(c *gin.Context) {
 	filters.Offset = pg.Offset
 
 	if empIDStr := c.Query("employee_id"); empIDStr != "" {
-		if empID, err := strconv.ParseUint(empIDStr, 10, 32); err == nil {
+		if empID, err := strconv.ParseUint(empIDStr, 10, 64); err == nil {
 			id := uint(empID)
 			filters.EmployeeID = &id
 		}
 	}
 	if projIDStr := c.Query("project_id"); projIDStr != "" {
-		if projID, err := strconv.ParseUint(projIDStr, 10, 32); err == nil {
+		if projID, err := strconv.ParseUint(projIDStr, 10, 64); err == nil {
 			id := uint(projID)
 			filters.ProjectID = &id
 		}
@@ -375,7 +375,7 @@ func (h *AttendanceHandler) AdminListFailedAttempts(c *gin.Context) {
 		filters.ReasonCategory = &cat
 	}
 	if empIDStr := c.Query("employee_id"); empIDStr != "" {
-		if empID, err := strconv.ParseUint(empIDStr, 10, 32); err == nil {
+		if empID, err := strconv.ParseUint(empIDStr, 10, 64); err == nil {
 			id := uint(empID)
 			filters.EmployeeID = &id
 		}

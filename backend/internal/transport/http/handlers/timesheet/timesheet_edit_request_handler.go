@@ -303,7 +303,7 @@ func (h *EditRequestHandler) getUserContext(c *gin.Context) (userID uint, userRo
 }
 
 func (h *EditRequestHandler) validateTimesheetID(c *gin.Context) (uint, bool) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidTimesheetIDVN)
 		return 0, false
@@ -312,7 +312,7 @@ func (h *EditRequestHandler) validateTimesheetID(c *gin.Context) (uint, bool) {
 }
 
 func (h *EditRequestHandler) validateEditRequestID(c *gin.Context) (uint, bool) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "ID yêu cầu chỉnh sửa không hợp lệ")
 		return 0, false

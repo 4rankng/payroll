@@ -506,7 +506,7 @@ func (h *TransactionHandler) parseTransactionFilters(c *gin.Context) domain.Tran
 
 	// CreatedBy filter
 	if createdByStr := c.Query("created_by"); createdByStr != "" {
-		if createdBy, err := strconv.ParseUint(createdByStr, 10, 32); err == nil {
+		if createdBy, err := strconv.ParseUint(createdByStr, 10, 64); err == nil {
 			uid := uint(createdBy)
 			filters.CreatedBy = &uid
 		}

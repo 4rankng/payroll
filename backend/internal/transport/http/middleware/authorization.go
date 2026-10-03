@@ -200,7 +200,7 @@ func extractTimesheetID(path string) *uint {
 	parts := strings.Split(path, "/")
 	for i, part := range parts {
 		if part == "timesheets" && i+1 < len(parts) {
-			if id, err := strconv.ParseUint(parts[i+1], 10, 32); err == nil {
+			if id, err := strconv.ParseUint(parts[i+1], 10, 64); err == nil {
 				timesheetID := uint(id)
 				return &timesheetID
 			}
@@ -214,7 +214,7 @@ func (m *AuthorizationMiddleware) extractProjectID(path string) *uint {
 	parts := strings.Split(path, "/")
 	for i, part := range parts {
 		if part == "projects" && i+1 < len(parts) {
-			if id, err := strconv.ParseUint(parts[i+1], 10, 32); err == nil {
+			if id, err := strconv.ParseUint(parts[i+1], 10, 64); err == nil {
 				projectID := uint(id)
 				return &projectID
 			}
@@ -240,7 +240,7 @@ func (m *AuthorizationMiddleware) extractEmployeeID(path string) *uint {
 	parts := strings.Split(path, "/")
 	for i, part := range parts {
 		if part == "employees" && i+1 < len(parts) {
-			if id, err := strconv.ParseUint(parts[i+1], 10, 32); err == nil {
+			if id, err := strconv.ParseUint(parts[i+1], 10, 64); err == nil {
 				employeeID := uint(id)
 				return &employeeID
 			}

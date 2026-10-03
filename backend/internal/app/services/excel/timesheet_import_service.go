@@ -90,7 +90,7 @@ func parseProjectIDFromHeader(headerRow []string) (uint, error) {
 		return 0, fmt.Errorf("project ID not found in header: %s", headerText)
 	}
 
-	projectID, err := strconv.ParseUint(matches[1], 10, 32)
+	projectID, err := strconv.ParseUint(matches[1], 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("invalid project ID: %w", err)
 	}
@@ -184,7 +184,7 @@ func parseEmployeeIDFromHeader(headerText string) (uint, error) {
 		return 0, fmt.Errorf("employee ID not found in header: %s", headerText)
 	}
 
-	employeeID, err := strconv.ParseUint(matches[1], 10, 32)
+	employeeID, err := strconv.ParseUint(matches[1], 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("invalid employee ID: %w", err)
 	}

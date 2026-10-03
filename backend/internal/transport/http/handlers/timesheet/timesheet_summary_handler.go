@@ -36,14 +36,14 @@ func (h *Handler) GetSummary(c *gin.Context) {
 
 	// 3. Parse optional filters
 	if projectID := c.Query("project_id"); projectID != "" {
-		if id, err := strconv.ParseUint(projectID, 10, 32); err == nil {
+		if id, err := strconv.ParseUint(projectID, 10, 64); err == nil {
 			uid := uint(id)
 			filters.ProjectIDs = []uint{uid}
 		}
 	}
 
 	if employeeID := c.Query("employee_id"); employeeID != "" {
-		if id, err := strconv.ParseUint(employeeID, 10, 32); err == nil {
+		if id, err := strconv.ParseUint(employeeID, 10, 64); err == nil {
 			uid := uint(id)
 			filters.EmployeeID = &uid
 		}

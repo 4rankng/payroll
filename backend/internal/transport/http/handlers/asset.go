@@ -74,7 +74,7 @@ func (h *AssetHandler) UploadAsset(c *gin.Context) {
 }
 
 func (h *AssetHandler) GetAsset(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgAssetIDMustBeValidNumberVN)
 		return
@@ -189,7 +189,7 @@ func (h *AssetHandler) ListAssets(c *gin.Context) {
 
 // DownloadAsset serves the actual file for download
 func (h *AssetHandler) DownloadAsset(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgAssetIDMustBeValidNumberVN)
 		return

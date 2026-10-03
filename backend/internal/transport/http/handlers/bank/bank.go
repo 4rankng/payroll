@@ -109,7 +109,7 @@ func (h *Handler) CreateBank(c *gin.Context) {
 // @Router /banks/{id} [get]
 func (h *Handler) GetBank(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidBankIDVN)
 		return
@@ -147,7 +147,7 @@ func (h *Handler) GetBank(c *gin.Context) {
 // @Router /banks/{id} [put]
 func (h *Handler) UpdateBank(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidBankIDVN)
 		return
@@ -221,7 +221,7 @@ func (h *Handler) UpdateBank(c *gin.Context) {
 // @Router /banks/{id} [delete]
 func (h *Handler) DeleteBank(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidBankIDVN)
 		return

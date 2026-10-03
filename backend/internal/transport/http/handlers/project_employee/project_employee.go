@@ -175,7 +175,7 @@ func (h *Handler) ListCheckInConfigurableProjects(c *gin.Context) {
 }
 
 func (h *Handler) ListProjectEmployees(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "Project ID must be a valid number")
 		return
@@ -441,7 +441,7 @@ func (h *Handler) ListProjectEmployees(c *gin.Context) {
 }
 
 func (h *Handler) GetCheckInConfiguration(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
 		return
@@ -534,7 +534,7 @@ func (h *Handler) GetCheckInConfiguration(c *gin.Context) {
 
 // RequestPaymentScheduleChange handles POST /api/v1/project-employees/:id/payment-schedule
 func (h *Handler) RequestPaymentScheduleChange(c *gin.Context) {
-	assignmentID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	assignmentID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
@@ -646,7 +646,7 @@ func (h *Handler) GetPendingScheduleChanges(c *gin.Context) {
 
 // CancelPaymentScheduleChange handles DELETE /api/v1/project-employees/:id/payment-schedule
 func (h *Handler) CancelPaymentScheduleChange(c *gin.Context) {
-	assignmentID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	assignmentID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
@@ -696,7 +696,7 @@ func stringPtr(s string) *string {
 
 // ToggleCheckInEnabled handles PATCH /api/v1/projects/:id/employees/:employeeId/checkin-enabled
 func (h *Handler) ToggleCheckInEnabled(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
@@ -705,7 +705,7 @@ func (h *Handler) ToggleCheckInEnabled(c *gin.Context) {
 		return
 	}
 
-	employeeID, err := strconv.ParseUint(c.Param("employeeId"), 10, 32)
+	employeeID, err := strconv.ParseUint(c.Param("employeeId"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
@@ -748,7 +748,7 @@ func (h *Handler) ToggleCheckInEnabled(c *gin.Context) {
 
 // ToggleAdvanceRequestEnabled handles PATCH /api/v1/projects/:id/employees/:employeeId/advance-request-enabled
 func (h *Handler) ToggleAdvanceRequestEnabled(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
@@ -757,7 +757,7 @@ func (h *Handler) ToggleAdvanceRequestEnabled(c *gin.Context) {
 		return
 	}
 
-	employeeID, err := strconv.ParseUint(c.Param("employeeId"), 10, 32)
+	employeeID, err := strconv.ParseUint(c.Param("employeeId"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
@@ -798,7 +798,7 @@ func (h *Handler) ToggleAdvanceRequestEnabled(c *gin.Context) {
 
 // BulkToggleCheckInEnabled handles PATCH /api/v1/projects/:id/employees/checkin-enabled/bulk
 func (h *Handler) BulkToggleCheckInEnabled(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
@@ -840,7 +840,7 @@ func (h *Handler) BulkToggleCheckInEnabled(c *gin.Context) {
 }
 
 func (h *Handler) DisableInactiveCheckInEmployees(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
 		return
@@ -881,7 +881,7 @@ func (h *Handler) DisableInactiveCheckInEmployees(c *gin.Context) {
 }
 
 func (h *Handler) DisablePendingCheckInEmployees(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
 		return
@@ -923,13 +923,13 @@ func (h *Handler) DisablePendingCheckInEmployees(c *gin.Context) {
 
 // CancelPendingCheckInEnable handles DELETE /api/v1/projects/:id/employees/:employeeId/checkin-enabled
 func (h *Handler) CancelPendingCheckInEnable(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
 	}
 
-	employeeID, err := strconv.ParseUint(c.Param("employeeId"), 10, 32)
+	employeeID, err := strconv.ParseUint(c.Param("employeeId"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidIDFormatVN)
 		return
@@ -978,7 +978,7 @@ func (h *Handler) CancelPendingCheckInEnable(c *gin.Context) {
 // the workbook holds the whole group the admin is looking at rather than the
 // page currently loaded.
 func (h *Handler) ExportCheckInConfiguration(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
 		return

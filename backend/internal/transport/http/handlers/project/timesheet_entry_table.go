@@ -35,7 +35,7 @@ var _ = timesheet.TimesheetService{}
 // @Router /projects/{id}/timesheet-entry-table [get]
 func (h *Handler) GetTimesheetEntryTable(c *gin.Context) {
 	// Validate project ID
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
 		return
@@ -89,7 +89,7 @@ func (h *Handler) GetTimesheetEntryTable(c *gin.Context) {
 		employeeIDStrings := strings.Split(params.EmployeeIDs, ",")
 		for _, idStr := range employeeIDStrings {
 			if idStr = strings.TrimSpace(idStr); idStr != "" {
-				if id, err := strconv.ParseUint(idStr, 10, 32); err == nil {
+				if id, err := strconv.ParseUint(idStr, 10, 64); err == nil {
 					employeeIDs = append(employeeIDs, uint(id))
 				}
 			}

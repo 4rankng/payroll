@@ -290,7 +290,7 @@ func (h *Handler) CreateLoan(c *gin.Context) {
 // GetLoan retrieves a loan by ID
 func (h *Handler) GetLoan(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidLoanIDVN)
 		return
@@ -335,7 +335,7 @@ func (h *Handler) ListLoans(c *gin.Context) {
 
 	// Filter by lender_id
 	if lenderIDStr := c.Query("lender_id"); lenderIDStr != "" {
-		lenderID, err := strconv.ParseUint(lenderIDStr, 10, 32)
+		lenderID, err := strconv.ParseUint(lenderIDStr, 10, 64)
 		if err == nil {
 			lenderIDUint := uint(lenderID)
 			filters.LenderID = &lenderIDUint
@@ -377,7 +377,7 @@ func (h *Handler) ListLoans(c *gin.Context) {
 // DisburseLoan disburses a loan
 func (h *Handler) DisburseLoan(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidLoanIDVN)
 		return
@@ -439,7 +439,7 @@ func (h *Handler) DisburseLoan(c *gin.Context) {
 // RepayPrincipal makes a principal repayment
 func (h *Handler) RepayPrincipal(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidLoanIDVN)
 		return
@@ -505,7 +505,7 @@ func (h *Handler) RepayPrincipal(c *gin.Context) {
 // GetSchedule retrieves the payment schedule for a loan
 func (h *Handler) GetSchedule(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidLoanIDVN)
 		return
@@ -539,7 +539,7 @@ func (h *Handler) GetSchedule(c *gin.Context) {
 // UpdateLoan updates loan metadata
 func (h *Handler) UpdateLoan(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidLoanIDVN)
 		return
@@ -581,7 +581,7 @@ func (h *Handler) UpdateLoan(c *gin.Context) {
 // DeleteLoan deletes a loan that has not yet been disbursed
 func (h *Handler) DeleteLoan(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidLoanIDVN)
 		return
@@ -674,7 +674,7 @@ func (h *Handler) CreateCustomScheduleLoan(c *gin.Context) {
 // ProcessScheduledPayment processes a scheduled payment
 func (h *Handler) ProcessScheduledPayment(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidLoanIDVN)
 		return

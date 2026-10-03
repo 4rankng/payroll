@@ -294,7 +294,7 @@ func (h *Handler) DeleteTimesheet(c *gin.Context) {
 func (h *Handler) GetTimesheetsByProjectAndDate(c *gin.Context) {
 	// Get project ID from path parameter
 	projectIDStr := c.Param("id")
-	projectID, err := strconv.ParseUint(projectIDStr, 10, 32)
+	projectID, err := strconv.ParseUint(projectIDStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
 		return

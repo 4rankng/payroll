@@ -82,7 +82,7 @@ func (h *Handler) CreateLender(c *gin.Context) {
 // GetLender retrieves a lender by ID
 func (h *Handler) GetLender(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidLenderIDVN)
 		return
@@ -161,7 +161,7 @@ func (h *Handler) ListLenders(c *gin.Context) {
 // UpdateLender updates an existing lender
 func (h *Handler) UpdateLender(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidLenderIDVN)
 		return
@@ -221,7 +221,7 @@ func (h *Handler) UpdateLender(c *gin.Context) {
 // DeleteLender soft deletes a lender
 func (h *Handler) DeleteLender(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidLenderIDVN)
 		return

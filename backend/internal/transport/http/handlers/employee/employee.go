@@ -660,7 +660,7 @@ func (h *Handler) GetEmployeeTimesheetSummary(c *gin.Context) {
 
 	// Parse optional filters
 	if projectID := c.Query("project_id"); projectID != "" {
-		if pID, err := strconv.ParseUint(projectID, 10, 32); err == nil {
+		if pID, err := strconv.ParseUint(projectID, 10, 64); err == nil {
 			uid := uint(pID)
 			filters.ProjectIDs = []uint{uid}
 		} else {

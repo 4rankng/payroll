@@ -36,7 +36,7 @@ import (
 // @Security ApiKeyAuth
 // @Router /employees/{id}/timesheet [get]
 func (h *Handler) GetEmployeeTimesheet(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidEmployeeIDVN)
 		return
@@ -118,7 +118,7 @@ func (h *Handler) GetEmployeeTimesheet(c *gin.Context) {
 
 	// Handle project_id filtering
 	if projectID := c.Query("project_id"); projectID != "" {
-		if projectIDParsed, err := strconv.ParseUint(projectID, 10, 32); err == nil {
+		if projectIDParsed, err := strconv.ParseUint(projectID, 10, 64); err == nil {
 			projectIDUint := uint(projectIDParsed)
 			filters.ProjectIDs = []uint{projectIDUint}
 		} else {

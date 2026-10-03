@@ -175,7 +175,7 @@ func (p *SettlementExcelParser) getInternalSheetData(f *excelize.File) (string, 
 			continue
 		}
 
-		id, err := strconv.ParseUint(cellValue, 10, 32)
+		id, err := strconv.ParseUint(cellValue, 10, 64)
 		if err != nil {
 			return "", nil, domain.NewValidationError(
 				fmt.Sprintf("cell A%d chứa giá trị không hợp lệ '%s': phải là số nguyên",

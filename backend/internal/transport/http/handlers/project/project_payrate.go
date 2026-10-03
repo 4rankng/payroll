@@ -19,7 +19,7 @@ import (
 
 // ListProjectPayrates gets payrates for a specific project
 func (h *Handler) ListProjectPayrates(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
 		return
@@ -140,7 +140,7 @@ func (h *Handler) ListProjectPayrates(c *gin.Context) {
 func (h *Handler) CreateProjectPayrate(c *gin.Context) {
 	logger := observability.GetLogger()
 
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		logger.Error("Invalid project ID parameter",
 			"project_id_param", c.Param("id"),
@@ -351,7 +351,7 @@ func (h *Handler) CreateProjectPayrate(c *gin.Context) {
 
 // GetCurrentProjectPayrate gets the currently active or nearest upcoming payrate for a project
 func (h *Handler) GetCurrentProjectPayrate(c *gin.Context) {
-	projectID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	projectID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidProjectIDVN)
 		return

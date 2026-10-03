@@ -107,7 +107,7 @@ func (h *Handler) getUserContext(c *gin.Context) (userID uint, userRole string, 
 
 // validateTimesheetID validates and parses timesheet ID from URL parameter
 func (h *Handler) validateTimesheetID(c *gin.Context) (uint, bool) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidTimesheetIDVN)
 		return 0, false
@@ -194,7 +194,7 @@ func (h *Handler) extractQueryParams(c *gin.Context) map[string]interface{} {
 	if projectIDs := c.QueryArray("project_ids"); len(projectIDs) > 0 {
 		var ids []uint
 		for _, idStr := range projectIDs {
-			if id, err := strconv.ParseUint(idStr, 10, 32); err == nil {
+			if id, err := strconv.ParseUint(idStr, 10, 64); err == nil {
 				ids = append(ids, uint(id))
 			}
 		}
@@ -204,7 +204,7 @@ func (h *Handler) extractQueryParams(c *gin.Context) map[string]interface{} {
 	}
 
 	if employeeID := c.Query("employee_id"); employeeID != "" {
-		if id, err := strconv.ParseUint(employeeID, 10, 32); err == nil {
+		if id, err := strconv.ParseUint(employeeID, 10, 64); err == nil {
 			uid := uint(id)
 			params["employeeID"] = &uid
 		}
@@ -239,7 +239,7 @@ func (h *Handler) extractQueryParams(c *gin.Context) map[string]interface{} {
 	}
 
 	if requestEditID := firstNonEmpty(c.Query("request_edit_id"), c.Query("requestEditId")); requestEditID != "" {
-		if id, err := strconv.ParseUint(requestEditID, 10, 32); err == nil {
+		if id, err := strconv.ParseUint(requestEditID, 10, 64); err == nil {
 			rid := uint(id)
 			params["requestEditID"] = &rid
 		}

@@ -206,7 +206,7 @@ func (h *NotificationHandler) MarkAsRead(c *gin.Context) {
 
 	// Parse notification ID
 	idParam := c.Param("id")
-	notificationID, err := strconv.ParseUint(idParam, 10, 32)
+	notificationID, err := strconv.ParseUint(idParam, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidNotificationIDVN)
 		return

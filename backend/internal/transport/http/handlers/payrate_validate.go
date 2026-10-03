@@ -97,7 +97,7 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 
 	var existingPayrate *domain.Payrate
 	if isUpdate {
-		id, err := strconv.ParseUint(idParam, 10, 32)
+		id, err := strconv.ParseUint(idParam, 10, 64)
 		if err != nil {
 			response.BadRequest(c, constants.MsgInvalidPayrateIDVN)
 			return
@@ -130,7 +130,7 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 	}
 	if projectID == 0 {
 		if pid := c.Query("project_id"); pid != "" {
-			if id, err := strconv.ParseUint(pid, 10, 32); err == nil {
+			if id, err := strconv.ParseUint(pid, 10, 64); err == nil {
 				projectID = uint(id)
 			}
 		}

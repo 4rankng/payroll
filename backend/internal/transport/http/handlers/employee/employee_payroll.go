@@ -36,7 +36,7 @@ import (
 // @Router /employees/{id}/payroll [get]
 func (h *Handler) GetEmployeePayroll(c *gin.Context) {
 	// 1. Validate ID parameter
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidEmployeeIDVN)
 		return

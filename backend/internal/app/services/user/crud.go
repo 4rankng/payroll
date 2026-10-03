@@ -439,7 +439,7 @@ func (s *UserService) parseIDs(idsStr string) []uint {
 			continue
 		}
 
-		id, err := strconv.ParseUint(part, 10, 32)
+		id, err := strconv.ParseUint(part, 10, 64)
 		if err != nil {
 			s.logger.Warn("Invalid ID in IDs filter, skipping", "id", part, "error", err)
 			continue

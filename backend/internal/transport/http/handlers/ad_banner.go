@@ -56,7 +56,7 @@ func (h *AdBannerHandler) RecordClick(c *gin.Context) {
 		return
 	}
 
-	bannerID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	bannerID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "id không hợp lệ")
 		return
@@ -113,7 +113,7 @@ func (h *AdBannerHandler) Create(c *gin.Context) {
 // Update replaces a campaign's content and window. The updated_at bump is the
 // new campaign version: employees see the sheet once more.
 func (h *AdBannerHandler) Update(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "id không hợp lệ")
 		return
@@ -138,7 +138,7 @@ func (h *AdBannerHandler) Update(c *gin.Context) {
 
 // Delete soft-deletes a campaign.
 func (h *AdBannerHandler) Delete(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "id không hợp lệ")
 		return

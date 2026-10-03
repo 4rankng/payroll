@@ -267,7 +267,7 @@ func (h *Handler) ListEmployees(c *gin.Context) {
 	}
 
 	if projectID := c.Query("projectId"); projectID != "" {
-		if id, err := strconv.ParseUint(projectID, 10, 32); err == nil {
+		if id, err := strconv.ParseUint(projectID, 10, 64); err == nil {
 			uid := uint(id)
 			filters.ProjectID = &uid
 		}

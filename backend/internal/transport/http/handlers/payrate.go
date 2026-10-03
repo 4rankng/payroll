@@ -184,7 +184,7 @@ func (h *PayrateHandler) CreatePayrate(c *gin.Context) {
 }
 
 func (h *PayrateHandler) GetPayrate(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidPayrateIDVN)
 		return
@@ -265,7 +265,7 @@ func (h *PayrateHandler) ListPayrates(c *gin.Context) {
 	filters.Offset = (page - 1) * pageSize
 
 	if projectID := c.Query("project_id"); projectID != "" {
-		if id, err := strconv.ParseUint(projectID, 10, 32); err == nil {
+		if id, err := strconv.ParseUint(projectID, 10, 64); err == nil {
 			uid := uint(id)
 			filters.ProjectID = &uid
 		}
@@ -365,7 +365,7 @@ func (h *PayrateHandler) ListPayrates(c *gin.Context) {
 
 // UpdatePayrate updates an existing payrate
 func (h *PayrateHandler) UpdatePayrate(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidPayrateIDVN)
 		return
@@ -531,7 +531,7 @@ func (h *PayrateHandler) UpdatePayrate(c *gin.Context) {
 
 // DeletePayrate marks a payrate as inactive (soft delete)
 func (h *PayrateHandler) DeletePayrate(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidPayrateIDVN)
 		return

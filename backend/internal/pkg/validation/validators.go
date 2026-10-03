@@ -45,7 +45,7 @@ func ParseUint(str string) (uint, error) {
 		return 0, ErrEmptyValue
 	}
 
-	val, err := strconv.ParseUint(str, 10, 32)
+	val, err := strconv.ParseUint(str, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("%w: %s", ErrInvalidID, str)
 	}

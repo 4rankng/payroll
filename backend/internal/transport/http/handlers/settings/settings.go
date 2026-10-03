@@ -95,7 +95,7 @@ func (h *Handler) CreateSetting(c *gin.Context) {
 // @Router /admin/settings/{id} [get]
 func (h *Handler) GetSetting(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidSettingIDVN)
 		return
@@ -166,7 +166,7 @@ func (h *Handler) GetSettingByKey(c *gin.Context) {
 // @Router /admin/settings/{id} [put]
 func (h *Handler) UpdateSetting(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidSettingIDVN)
 		return
@@ -236,7 +236,7 @@ func (h *Handler) UpdateSetting(c *gin.Context) {
 // @Router /admin/settings/{id} [delete]
 func (h *Handler) DeleteSetting(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
 		response.BadRequest(c, constants.MsgInvalidSettingIDVN)
 		return

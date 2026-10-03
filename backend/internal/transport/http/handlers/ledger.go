@@ -147,7 +147,7 @@ func parseLedgerFilters(c *gin.Context) domain.LedgerFilters {
 		}
 	}
 	if createdBy := c.Query("created_by"); createdBy != "" {
-		if id, err := strconv.ParseUint(createdBy, 10, 32); err == nil {
+		if id, err := strconv.ParseUint(createdBy, 10, 64); err == nil {
 			uid := uint(id)
 			filters.CreatedBy = &uid
 		}
