@@ -27,7 +27,6 @@ vi.mock("@/hooks/api/useAttendance", () => {
     useTodayAttendance: () => attendanceQueryMock,
     useCheckIn: mutation,
     useCheckOut: mutation,
-    useCancelCurrentAttendance: mutation,
     useLogAttendanceDeviceAttempt: mutation,
   };
 });
@@ -315,6 +314,10 @@ describe("EmployeeCheckInCard geofence guidance", () => {
 
     expect(screen.queryByRole("heading", { name: "Chưa tải được trạng thái chấm công" })).not.toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Tan ca" }).some((button) => !button.hasAttribute("disabled"))).toBe(true);
+    // The employee-facing cancel-shift self-service was removed; a checked-in
+    // worker must only ever see the checkout action.
+    expect(screen.queryByRole("button", { name: "Hủy ca" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Hủy ca đang làm?")).not.toBeInTheDocument();
   });
 
   it("shows inward guidance and opens the map for an inside-but-uncertain fix", async () => {

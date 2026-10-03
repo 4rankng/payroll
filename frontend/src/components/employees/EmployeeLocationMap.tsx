@@ -14,6 +14,7 @@ import { formatDistanceMeters } from "@/utils/geoDistance";
 import {
   buildGatePointFeatureCollection,
   buildGeofenceFeatureCollection,
+  buildRouteDots,
   buildRouteFeature,
   EMPLOYEE_MAP_STYLE,
   getEmployeeMapViewport,
@@ -21,6 +22,9 @@ import {
 } from "./employee-location-map-model";
 
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
+
+/** Cadence of the route-dot reveal sequence: one dot lights up per tick. */
+const ROUTE_DOT_TICK_MS = 260;
 
 interface EmployeeLocationMapProps {
   target: CheckInTarget;
@@ -50,6 +54,16 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
     [guidance.nearestGate, sample, shouldShowRoute]
   );
   const nearestGateName = displayGate?.name || "Cổng chấm công";
+  const distanceMeters = guidance.distanceMeters ?? null;
+  const showOverBy = guidance.status === "outside";
+  const distanceTone =
+    guidance.status === "inside"
+      ? "text-emerald-600"
+      : guidance.status === "outside"
+        ? "text-amber-700"
+        : guidance.status === "inaccurate"
+          ? "text-amber-600"
+          : "text-slate-400";
   const hasRoute = Boolean(routeFeature);
   const isAtGate = Boolean(
     sample && guidance.nearestGate && guidance.distanceMeters != null && guidance.distanceMeters <= 1
@@ -92,9 +106,19 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
               {nearestGateName}
             </span>
           </div>
-          <span className="shrink-0 whitespace-nowrap font-semibold text-slate-500">
-            Bán kính <span>{formatDistanceMeters(target.radius_meters)}</span>
-          </span>
+          <div className="shrink-0 text-right">
+            <span className={`block font-semibold tabular-nums ${distanceTone}`}>
+              {distanceMeters != null ? `Cách ${formatDistanceMeters(distanceMeters)}` : "—"}
+            </span>
+            {showOverBy && guidance.overByMeters ? (
+              <span className="block text-xs font-semibold text-amber-600">
+                vượt {formatDistanceMeters(guidance.overByMeters)}
+              </span>
+            ) : null}
+            <span className="block shrink-0 whitespace-nowrap font-semibold text-slate-500">
+              Bán kính <span>{formatDistanceMeters(target.radius_meters)}</span>
+            </span>
+          </div>
         </li>
       </ul>
       {canRenderMap ? (
@@ -147,6 +171,11 @@ function EmployeeMapCanvas({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  // Reveal phase of the route-dot sequence (how many dots are currently lit).
+  // Kept in a ref and re-applied when markers are recreated on each GPS fix,
+  // so the one-by-one draw rejoins the running sequence instead of restarting.
+  const routePhaseRef = useRef(0);
+  const routeDotsRef = useRef<HTMLElement[]>([]);
   const onMapFailedRef = useRef(onMapFailed);
   const fittedConfigRef = useRef<string | null>(null);
   const initialViewportRef = useRef(viewport);
@@ -292,22 +321,74 @@ function EmployeeMapCanvas({
 
     if (routeFeature && sample && guidance.nearestGate) {
       const element = document.createElement("span");
-      element.className = "checkpoint-direction-arrow-marker grid h-8 w-8 place-items-center";
+      element.className = "checkpoint-direction-arrow-marker relative grid h-8 w-8 place-items-center";
       element.setAttribute("aria-hidden", "true");
       const arrow = document.createElement("span");
       arrow.className = "checkpoint-direction-arrow text-sky-700";
       arrow.style.transform = `rotate(${getBearingDegrees(sample, guidance.nearestGate)}deg)`;
       arrow.textContent = "▲";
       element.appendChild(arrow);
+      const routeDistance = document.createElement("span");
+      routeDistance.className =
+        "checkpoint-route-distance pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border border-sky-200 bg-white/95 px-1.5 py-0.5 text-xs font-semibold leading-4 text-sky-900 shadow-sm backdrop-blur";
+      routeDistance.dataset.routeDistance = "true";
+      routeDistance.textContent = formatDistanceMeters(routeFeature.properties.distanceMeters);
+      element.appendChild(routeDistance);
       nextMarkers.push(
         new maplibregl.Marker({ element, anchor: "center" })
           .setLngLat([(sample.lng + guidance.nearestGate.lng) / 2, (sample.lat + guidance.nearestGate.lat) / 2])
           .addTo(map)
       );
+
+      // Animated dot line: dots are drawn one by one from the user toward the
+      // checkpoint, hold, then reset. The current phase is applied on creation
+      // so the GPS-driven marker rebuild joins the running sequence instead of
+      // flashing back to an empty line.
+      const showAllDots = prefersReducedMotion();
+      const dotPositions = buildRouteDots(sample, guidance.nearestGate, true);
+      const dotElements: HTMLElement[] = [];
+      dotPositions.forEach((position, index) => {
+        const dot = document.createElement("span");
+        dot.className = `checkpoint-route-dot${
+          showAllDots || index < routePhaseRef.current ? " is-visible" : ""
+        }`;
+        dot.dataset.routeDot = String(index);
+        dot.setAttribute("aria-hidden", "true");
+        dotElements.push(dot);
+        nextMarkers.push(
+          new maplibregl.Marker({ element: dot, anchor: "center" })
+            .setLngLat([position.lng, position.lat])
+            .addTo(map)
+        );
+      });
+      routeDotsRef.current = dotElements;
+    } else {
+      routeDotsRef.current = [];
     }
 
     markersRef.current = nextMarkers;
   }, [guidance.nearestGate, guidance.status, mapLoaded, routeFeature, sample, target.gates]);
+
+  // Sequential reveal of the route dots: advance a phase index on a fixed tick
+  // and toggle visibility classes directly on the marker elements (no React
+  // state, so GPS sample churn never resets the sequence). Reduced motion gets
+  // a fully drawn static line — handled at marker creation instead.
+  useEffect(() => {
+    if (!mapLoaded || prefersReducedMotion()) return;
+    const HOLD_TICKS = 8;
+    const timer = window.setInterval(() => {
+      const dots = routeDotsRef.current;
+      if (!dots.length) {
+        routePhaseRef.current = 0;
+        return;
+      }
+      routePhaseRef.current = (routePhaseRef.current + 1) % (dots.length + HOLD_TICKS + 1);
+      dots.forEach((dot, index) => {
+        dot.classList.toggle("is-visible", index < routePhaseRef.current);
+      });
+    }, ROUTE_DOT_TICK_MS);
+    return () => window.clearInterval(timer);
+  }, [mapLoaded]);
 
   return (
     <div

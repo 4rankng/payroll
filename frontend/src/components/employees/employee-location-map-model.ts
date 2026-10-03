@@ -198,6 +198,34 @@ export function buildRouteFeature(
   };
 }
 
+/** One dot per ~40 m of route, clamped so a short route still reads as a dotted
+ *  line and a long one never turns into marker soup. */
+export function routeDotCount(distanceMeters: number): number {
+  if (!Number.isFinite(distanceMeters) || distanceMeters <= 0) return 0;
+  return Math.min(10, Math.max(3, Math.round(distanceMeters / 40)));
+}
+
+/** Dots inset from both endpoints so they never sit under the user or gate marker. */
+export function buildRouteDots(
+  sample: LocationSample | null | undefined,
+  nearestGate: GeofenceGate | null | undefined,
+  shouldShowRoute: boolean
+): Array<{ lat: number; lng: number }> {
+  if (!shouldShowRoute || !sample || !nearestGate) return [];
+  if (!isValidCoordinate(sample) || !isValidGate(nearestGate)) return [];
+
+  const count = routeDotCount(distanceMetersBetween(sample, nearestGate));
+  const dots: Array<{ lat: number; lng: number }> = [];
+  for (let i = 0; i < count; i += 1) {
+    const t = (i + 1) / (count + 1);
+    dots.push({
+      lat: sample.lat + (nearestGate.lat - sample.lat) * t,
+      lng: sample.lng + (nearestGate.lng - sample.lng) * t,
+    });
+  }
+  return dots;
+}
+
 export function buildGatePointFeatureCollection(
   target: CheckInTarget,
   nearestGate?: GeofenceGate

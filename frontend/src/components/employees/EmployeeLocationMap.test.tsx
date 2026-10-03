@@ -550,4 +550,52 @@ describe("EmployeeLocationMap", () => {
     expect(screen.getByText("Không tải được bản đồ.")).toBeInTheDocument();
     expect(screen.queryByTestId("map")).not.toBeInTheDocument();
   });
+
+  it("shows the distance to the nearest checkpoint in the summary and on the route", async () => {
+    const sample = { lat: 10.7765, lng: 106.7009, accuracy: 35, timestamp: Date.now() };
+    render(<EmployeeLocationMap target={target} sample={sample} />);
+
+    await screen.findAllByTestId("source");
+
+    expect(screen.getByText(/^Cách /)).toBeInTheDocument();
+    expect(screen.getByText("150 m")).toBeInTheDocument();
+    const badge = document.querySelector("[data-route-distance]");
+    expect(badge).toBeInTheDocument();
+    expect(badge?.textContent).toMatch(/\d/);
+  });
+
+  it("draws the route as dots revealed one by one toward the checkpoint", async () => {
+    const sample = { lat: 10.7765, lng: 106.7009, accuracy: 35, timestamp: Date.now() };
+    render(<EmployeeLocationMap target={target} sample={sample} />);
+
+    await screen.findAllByTestId("source");
+    const dots = await waitFor(() => {
+      const found = document.querySelectorAll("[data-route-dot]");
+      expect(found.length).toBeGreaterThan(0);
+      return found;
+    });
+
+    // Test setup reports prefers-reduced-motion, so every dot renders already
+    // revealed instead of animating — the static fallback for reduced motion.
+    for (const dot of dots) {
+      expect(dot.className).toContain("checkpoint-route-dot");
+      expect(dot.className).toContain("is-visible");
+    }
+
+    // Dots are inset from both endpoints so they never cover the user/gate markers.
+    const userPosition = document.querySelector("[data-user-location='true']")?.parentElement;
+    expect(userPosition).toBeInTheDocument();
+    for (const dot of dots) {
+      expect(dot.parentElement?.dataset.position).toBeTruthy();
+    }
+  });
+
+  it("omits route dots when the sample is too far to draw a trustworthy route", async () => {
+    const farSample = { lat: 20.82, lng: 106.69, accuracy: 35, timestamp: Date.now() };
+    render(<EmployeeLocationMap target={singleGateTarget} sample={farSample} />);
+
+    await screen.findAllByTestId("source");
+    expect(document.querySelectorAll("[data-route-dot]")).toHaveLength(0);
+    expect(document.querySelector("[data-route-distance]")).not.toBeInTheDocument();
+  });
 });

@@ -17,7 +17,6 @@ import {
   useTodayAttendance,
   useCheckIn,
   useCheckOut,
-  useCancelCurrentAttendance,
   useLogAttendanceDeviceAttempt,
 } from "@/hooks/api/useAttendance";
 import { getErrorMessage } from "@/utils/error-handler";
@@ -396,7 +395,6 @@ export function EmployeeCheckInCard({
   const { data: attendanceResponse, isLoading, isError: attendanceError, isFetching: attendanceFetching, refetch: refetchAttendance } = useTodayAttendance();
   const checkInMutation = useCheckIn();
   const checkOutMutation = useCheckOut();
-  const cancelCurrentAttendanceMutation = useCancelCurrentAttendance();
   const logDeviceAttemptMutation = useLogAttendanceDeviceAttempt();
   const queryClient = useQueryClient();
   const [isLocating, setIsLocating] = useState(false);
@@ -404,7 +402,6 @@ export function EmployeeCheckInCard({
   const [timingGuidance, setTimingGuidance] = useState<TimingErrorGuidance | null>(null);
   const [noSalaryReason, setNoSalaryReason] = useState<string | null>(null);
   const [showNoSalaryConfirm, setShowNoSalaryConfirm] = useState(false);
-  const [showCancelShiftConfirm, setShowCancelShiftConfirm] = useState(false);
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [attendanceConfirmation, setAttendanceConfirmation] = useState<{ action: "check_in" | "check_out"; time: string } | null>(null);
   const [showWindowOpen, setShowWindowOpen] = useState(false);
@@ -716,20 +713,6 @@ export function EmployeeCheckInCard({
     }
   };
 
-  const handleCancelCurrentShift = async () => {
-    if (submittingRef.current) return;
-    submittingRef.current = true;
-    try {
-      await cancelCurrentAttendanceMutation.mutateAsync();
-      setShowCancelShiftConfirm(false);
-      setLocationIssue(null);
-    } catch {
-      // Error toast is handled by useCancelCurrentAttendance.
-    } finally {
-      submittingRef.current = false;
-    }
-  };
-
   // --- Check-in readiness gate (GPS + geofence + timing) ---
   // Combines three signals: GPS stability (useContinuousLocation.isSubmitReady),
   // geofence position (from guidance), and the shift timing window (from the
@@ -807,7 +790,7 @@ export function EmployeeCheckInCard({
   // All hooks below run on every render (before the isLoading early return) to
   // satisfy the Rules of Hooks; isPending is derived from mutation/loading flags
   // that are all available pre-return.
-  const isPending = checkInMutation.isPending || checkOutMutation.isPending || cancelCurrentAttendanceMutation.isPending || isLocating;
+  const isPending = checkInMutation.isPending || checkOutMutation.isPending || isLocating;
   const [showReadyPop, setShowReadyPop] = useState(false);
   const prevReadyRef = useRef(false);
   useEffect(() => {
@@ -1178,53 +1161,6 @@ export function EmployeeCheckInCard({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AlertDialog open={showCancelShiftConfirm} onOpenChange={setShowCancelShiftConfirm}>
-        <AlertDialogContent className="max-w-[calc(100vw-32px)] sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="employee-type-hero-title">
-              Hủy ca đang làm?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Dùng khi bạn đã vào nhầm ca và muốn vào làm lại đúng ca.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="space-y-3 px-5 py-4">
-            <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-950">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
-              <div>
-                <p className="employee-type-strong">Ca này sẽ không tính lương</p>
-                <p className="mt-1 text-sm font-medium leading-5 text-red-800">
-                  Hệ thống sẽ ghi nhận ca đã hủy và mở lại nút Vào làm.
-                </p>
-              </div>
-            </div>
-          </div>
-          <AlertDialogFooter className="grid grid-cols-2 gap-3 px-5 pb-5 pt-3">
-            <AlertDialogCancel
-              disabled={isPending}
-              className="employee-type-action mt-0 h-12 w-full rounded-lg"
-            >
-              Quay lại
-            </AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={isPending}
-              className="employee-type-action h-12 w-full rounded-lg"
-              onClick={(event) => {
-                event.preventDefault();
-                handleCancelCurrentShift();
-              }}
-            >
-              {cancelCurrentAttendanceMutation.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <AlertCircle className="mr-2 h-4 w-4" />
-              )}
-              Hủy ca
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       {isLocating ? (
         <div className="mb-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sky-950">
           <div className="flex items-center gap-3">
@@ -1388,34 +1324,19 @@ export function EmployeeCheckInCard({
             </div>
           {attendanceReference}
           {locationMapDisclosure}
-          <div className="mt-4 grid grid-cols-1 gap-2 lg:grid-cols-[0.8fr_1.2fr]">
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              className="employee-type-action h-12 justify-start rounded-xl border border-transparent bg-transparent font-semibold text-[#B42318] hover:bg-[#FEF3F2] hover:text-[#B42318] lg:justify-center"
-              disabled={isPending}
-              onClick={() => setShowCancelShiftConfirm(true)}
-            >
-              <AlertCircle className="mr-2 h-5 w-5 shrink-0" />
-              Hủy ca
-            </Button>
-            <Button
-              size="lg"
-              className="employee-type-action hidden h-12 rounded-xl bg-[#07883F] font-semibold text-white hover:bg-[#067647] lg:inline-flex"
-              disabled={isPending || checkoutCoolingDown}
-              onClick={() => handleAction("check_out")}
-            >
-              {isPending && !cancelCurrentAttendanceMutation.isPending ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              ) : checkoutCoolingDown ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              ) : (
-                <DoorOpen className="w-5 h-5 mr-2" />
-              )}
-              {checkoutCoolingDown ? "Đang chờ GPS..." : isLocating ? "Đang lấy vị trí..." : "Tan ca"}
-            </Button>
-          </div>
+          <Button
+            size="lg"
+            className="employee-type-action mt-4 hidden h-12 w-full rounded-xl bg-[#07883F] font-semibold text-white hover:bg-[#067647] lg:inline-flex"
+            disabled={isPending || checkoutCoolingDown}
+            onClick={() => handleAction("check_out")}
+          >
+            {isPending || checkoutCoolingDown ? (
+              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            ) : (
+              <DoorOpen className="w-5 h-5 mr-2" />
+            )}
+            {checkoutCoolingDown ? "Đang chờ GPS..." : isLocating ? "Đang lấy vị trí..." : "Tan ca"}
+          </Button>
         </div>
       ) : attendance?.status === "orphaned" ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-3">
