@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
@@ -81,4 +82,13 @@ func FormatWeeklyPaymentFeeSummary(entry WeeklyPaymentFeeScheduleEntry) string {
 	s := fmt.Sprintf("%g", entry.Percentage)
 	s = strings.ReplaceAll(s, ".", ",")
 	return s + "%"
+}
+
+// FormatWeeklyPaymentFeePercentage renders a fee fraction (0.018 = 1.8%)
+// in Vietnamese percent style: "1,8%". The intermediate rounding is required:
+// %g is shortest-round-trip and 0.018*100 evaluates to
+// 1.7999999999999998 in float64, which would print without it.
+func FormatWeeklyPaymentFeePercentage(fraction float64) string {
+	pct := math.Round(fraction*1e6) / 1e4 // percent scale, 4-decimal safety
+	return FormatWeeklyPaymentFeeSummary(WeeklyPaymentFeeScheduleEntry{Percentage: pct})
 }

@@ -25,6 +25,7 @@ func TestRenderPayrollTemplateUsesResponsiveFinancialLayout(t *testing.T) {
 		"15/08/2026",
 		"2.069.229.050 đ",
 		"41.384.581 đ",
+		"2%",
 		"2.110.613.631 đ",
 		appconfig.DefaultTransferBankInfo(),
 	)
@@ -44,6 +45,7 @@ func TestRenderPayrollTemplateUsesResponsiveFinancialLayout(t *testing.T) {
 		{name: "protected monetary values", want: `white-space:nowrap`},
 		{name: "rendered total paid", want: `2.069.229.050 đ`},
 		{name: "rendered fee", want: `41.384.581 đ`},
+		{name: "rendered fee percent in label", want: `Phí dịch vụ (2%)`},
 		{name: "rendered total collect", want: `2.110.613.631 đ`},
 		{name: "rendered due date", want: `15/08/2026`},
 		{name: "beneficiary", want: `CONG TY TNHH MTV GPPM TING TING`},
@@ -95,6 +97,9 @@ func TestPayrollTemplateStaysAlignedAfterProviderBranding(t *testing.T) {
 	deliveredHTML := captured.Message.HTMLBody
 	if strings.Count(deliveredHTML, "tingting.vip/email-banner.jpg") != 1 {
 		t.Fatal("expected exactly one canonical banner in delivered payroll email")
+	}
+	if !strings.Contains(deliveredHTML, "Phí dịch vụ (2%)") {
+		t.Fatal("expected delivered fee label to carry the default 2% fee")
 	}
 	if !strings.Contains(deliveredHTML, `<table role="presentation" width="640"`) {
 		t.Fatal("expected delivered document to retain the provider's 640px layout contract")

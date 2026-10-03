@@ -56,3 +56,21 @@ func TestFormatWeeklyPaymentFeeSummary(t *testing.T) {
 		t.Fatalf("2 formatted as %q, want \"2%%\"", got)
 	}
 }
+
+func TestFormatWeeklyPaymentFeePercentage(t *testing.T) {
+	cases := []struct {
+		fraction float64
+		want     string
+	}{
+		// 0.018*100 is 1.7999999999999998 in float64; the formatter must
+		// round it back before printing.
+		{0.02, "2%"},
+		{0.018, "1,8%"},
+		{0.013, "1,3%"},
+	}
+	for _, tt := range cases {
+		if got := FormatWeeklyPaymentFeePercentage(tt.fraction); got != tt.want {
+			t.Fatalf("FormatWeeklyPaymentFeePercentage(%v) = %q, want %q", tt.fraction, got, tt.want)
+		}
+	}
+}

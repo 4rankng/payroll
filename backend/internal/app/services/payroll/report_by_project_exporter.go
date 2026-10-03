@@ -587,6 +587,11 @@ func (e *PayrollReportByProjectExporter) updateSummarySheet(
 		return err
 	}
 
+	// D3: fee label carrying the configured percentage
+	if err := writeFeeLabelCell(f, summarySheet, "D3", summary.FeePercentage); err != nil {
+		return err
+	}
+
 	// E3: fee amount with Vietnamese currency format
 	if err := f.SetCellValue(summarySheet, "E3", summary.FeeAmount); err != nil {
 		return err

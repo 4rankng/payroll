@@ -604,7 +604,8 @@ func (s *EmailService) buildPayrollReportMessage(ctx context.Context, payload *d
 	totalCollect := utils.FormatNumber(totalWithFee) + " đ"
 
 	bankInfo := s.resolveBankInfo(ctx)
-	htmlBody, err := renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect, bankInfo)
+	feePercent := domain.FormatWeeklyPaymentFeePercentage(feePercentValue)
+	htmlBody, err := renderPayrollTemplate(dueDate, totalPaid, feeAmount, feePercent, totalCollect, bankInfo)
 	if err != nil {
 		return nil, domain.NewInternalError(constants.MsgFailedToRenderPayrollEmailTemplateVN, err)
 	}
@@ -785,7 +786,7 @@ func (s *EmailService) resolveBankInfo(ctx context.Context) appconfig.TransferBa
 	return s.bankSettings.GetTransferBankInfo(ctx)
 }
 
-func renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect string, bankInfo appconfig.TransferBankInfo) (string, error) {
+func renderPayrollTemplate(dueDate, totalPaid, feeAmount, feePercent, totalCollect string, bankInfo appconfig.TransferBankInfo) (string, error) {
 	content, err := os.ReadFile(pkgConstants.PayrollEmailTemplatePath)
 	if err != nil {
 		return "", err
@@ -801,6 +802,7 @@ func renderPayrollTemplate(dueDate, totalPaid, feeAmount, totalCollect string, b
 		"DueDate":      dueDate,
 		"TotalPaid":    totalPaid,
 		"FeeAmount":    feeAmount,
+		"FeePercent":   feePercent,
 		"TotalCollect": totalCollect,
 		"BankHolder":   bankInfo.Holder,
 		"BankNumber":   bankInfo.Number,

@@ -10,6 +10,7 @@ import (
 
 	appconfig "api-server/internal/app/services/config"
 	"api-server/internal/app/services/excel"
+	"api-server/internal/domain"
 	domainServices "api-server/internal/domain/services"
 	"api-server/internal/infra/observability"
 	pkgConstants "api-server/internal/pkg/constants"
@@ -219,6 +220,9 @@ func (e *PayrollReportExporter) GenerateExcel(ctx context.Context, fromDate, toD
 
 	feePercentage := e.settingsConfigService.GetWeeklyPaymentFeePercentage(ctx)
 	feeAmount := int64(float64(totalAmount) * feePercentage)
+	if err := writeFeeLabelCell(f, sheetName, "D4", feePercentage); err != nil {
+		return nil, nil, fmt.Errorf("failed to set D4 fee label: %w", err)
+	}
 	if err := f.SetCellValue(sheetName, "E4", feeAmount); err != nil {
 		return nil, nil, fmt.Errorf("failed to set E4 advance cash fee: %w", err)
 	}
@@ -305,6 +309,17 @@ func (e *PayrollReportExporter) resolveBankInfo(ctx context.Context) appconfig.T
 		return appconfig.DefaultTransferBankInfo()
 	}
 	return e.settingsConfigService.GetTransferBankInfo(ctx)
+}
+
+// writeFeeLabelCell overwrites the static "Phí Dịch Vụ" label cell so it
+// carries the configured weekly-payment fee percentage (e.g. "Phí Dịch Vụ
+// (1,8%)"). Plain SetCellValue preserves the cell's template style.
+func writeFeeLabelCell(f *excelize.File, sheetName, cell string, feeFraction float64) error {
+	label := fmt.Sprintf("Phí Dịch Vụ (%s)", domain.FormatWeeklyPaymentFeePercentage(feeFraction))
+	if err := f.SetCellValue(sheetName, cell, label); err != nil {
+		return fmt.Errorf("failed to set fee label %s: %w", cell, err)
+	}
+	return nil
 }
 
 // writeBankInfoCells writes the beneficiary holder, account number, and bank

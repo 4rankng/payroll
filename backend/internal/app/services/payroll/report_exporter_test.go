@@ -162,6 +162,7 @@ func TestGenerateExcelWritesConfiguredBankInfo(t *testing.T) {
 		"E9":  "CONG TY TNHH MTV GPPM TING TING",
 		"E10": "271866699",
 		"E11": "Ngân hàng Quân đội (MB)",
+		"D4":  "Phí Dịch Vụ (2%)",
 	} {
 		got, err := f.GetCellValue(sheet, cell)
 		if err != nil {
@@ -170,5 +171,49 @@ func TestGenerateExcelWritesConfiguredBankInfo(t *testing.T) {
 		if got != want {
 			t.Errorf("%s = %q, want %q", cell, got, want)
 		}
+	}
+}
+
+func TestGenerateExcelWritesFeeLabelWithConfiguredPercentage(t *testing.T) {
+	if _, err := os.Stat(pkgConstants.PayrollReportTemplatePath); err != nil {
+		// Resolve template relative to the backend root for tests launched
+		// from outside the module directory.
+		_, thisFile, _, _ := runtime.Caller(0)
+		backendRoot := filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(filepath.Dir(thisFile)))))
+		origWd, wdErr := os.Getwd()
+		if err := os.Chdir(backendRoot); err != nil {
+			t.Skipf("cannot chdir to backend root: %v", err)
+		}
+		t.Cleanup(func() {
+			if wdErr == nil {
+				_ = os.Chdir(origWd)
+			}
+		})
+	}
+	provider := &fakeSettingsConfigProvider{bulkPercent: 0.7, feePercent: 0.018}
+	exporter := NewPayrollReportExporter(provider)
+
+	fromDate := time.Date(2026, time.October, 7, 0, 0, 0, 0, time.UTC)
+	toDate := time.Date(2026, time.October, 13, 0, 0, 0, 0, time.UTC)
+	data := &PayrollReportExcelData{Rows: [][]interface{}{{1, "07/10/2026", "Nguyen Van B", "012345678902", "Dự án B", int64(2_000_000)}}}
+
+	excelBytes, _, err := exporter.GenerateExcel(context.Background(), fromDate, toDate, data)
+	if err != nil {
+		t.Fatalf("generate excel: %v", err)
+	}
+
+	f, err := excelize.OpenReader(bytes.NewReader(excelBytes))
+	if err != nil {
+		t.Fatalf("open generated excel: %v", err)
+	}
+	defer func() { _ = f.Close() }()
+
+	sheet := f.GetSheetList()[0]
+	got, err := f.GetCellValue(sheet, "D4")
+	if err != nil {
+		t.Fatalf("read D4: %v", err)
+	}
+	if want := "Phí Dịch Vụ (1,8%)"; got != want {
+		t.Errorf("D4 = %q, want %q", got, want)
 	}
 }
