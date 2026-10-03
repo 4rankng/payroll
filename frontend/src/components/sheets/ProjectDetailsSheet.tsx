@@ -134,6 +134,8 @@ function ProjectDetailsSheet({
     ? listEmployeeCount
     : (project?.employee_assignments?.total_employees || 0);
 
+  const hasAssignedEmployees = activeEmployeesCount > 0;
+
   // Memoize stats configuration to prevent recreating on every render
   const statsConfig = useMemo(() => [
     {
@@ -413,12 +415,17 @@ function ProjectDetailsSheet({
                 <div className="flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-destructive">Xóa dự án</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Hành động này không thể hoàn tác</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {hasAssignedEmployees
+                        ? "Dự án đang có nhân viên được giao — kết thúc phân công của tất cả nhân viên trước khi xóa"
+                        : "Hành động này không thể hoàn tác"}
+                    </p>
                   </div>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => setIsDeleteModalOpen(true)}
+                    disabled={hasAssignedEmployees}
                     className="min-h-11 shrink-0"
                   >
                     <Trash2 className="h-3.5 w-3.5 mr-1.5" />
@@ -576,7 +583,7 @@ function ProjectDetailsSheet({
 
             {canDeleteProject && (
               <p className="text-sm text-muted-foreground">
-                Việc xóa sẽ bị từ chối nếu có bảng công đã duyệt.
+                Việc xóa sẽ bị từ chối nếu còn nhân viên được giao hoặc có bảng công đã duyệt.
               </p>
             )}
           </div>

@@ -1,11 +1,9 @@
 package seed
 
 import (
-	"api-server/internal/pkg/clock"
 	"context"
 	"fmt"
 	mathrand "math/rand/v2"
-	"time"
 
 	"api-server/internal/domain"
 	"api-server/internal/infra/persistence"
@@ -52,33 +50,6 @@ func (s *Seeder) seedProjects(ctx context.Context, db *gorm.DB) error {
 			status = domain.ProjectStatusRunning
 		}
 
-		// Generate realistic start and end dates based on project status
-		var startDate, endDate time.Time
-		now := clock.Now()
-
-		switch status {
-		case domain.ProjectStatusDraft:
-			// Future projects
-			startDate = now.AddDate(0, mathrand.IntN(6)+1, mathrand.IntN(30))
-			endDate = startDate.AddDate(0, projectProfile.ExpectedDuration, 0)
-		case domain.ProjectStatusRunning:
-			// Currently running projects
-			monthsRunning := mathrand.IntN(projectProfile.ExpectedDuration)
-			startDate = now.AddDate(0, -monthsRunning, -mathrand.IntN(30))
-			remainingMonths := projectProfile.ExpectedDuration - monthsRunning
-			endDate = now.AddDate(0, remainingMonths, mathrand.IntN(30))
-		case domain.ProjectStatusCompleted:
-			// Completed projects
-			endDate = now.AddDate(0, -mathrand.IntN(12)-1, -mathrand.IntN(30))
-			startDate = endDate.AddDate(0, -projectProfile.ExpectedDuration, 0)
-		case domain.ProjectStatusCancelled:
-			// Cancelled projects (started but didn't finish)
-			cancelMonthsAgo := mathrand.IntN(8) + 1
-			endDate = now.AddDate(0, -cancelMonthsAgo, -mathrand.IntN(30))
-			monthsBeforeCancel := mathrand.IntN(projectProfile.ExpectedDuration/2) + 1
-			startDate = endDate.AddDate(0, -monthsBeforeCancel, 0)
-		}
-
 		// Calculate realistic financial amounts based on project scope
 		var totalPayout, pendingPayable, pendingReceivable, totalReceived float64
 
@@ -112,8 +83,6 @@ func (s *Seeder) seedProjects(ctx context.Context, db *gorm.DB) error {
 			ClientName:           projectProfile.ClientName,
 			Name:                 projectProfile.Name,
 			Code:                 projectProfile.Code,
-			StartDate:            &startDate,
-			EndDate:              &endDate,
 			ProjectStatus:        status,
 			TotalPayoutVND:       totalPayout,
 			PendingPayableVND:    pendingPayable,

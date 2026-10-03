@@ -25,8 +25,6 @@ type CreateProjectRequest struct {
 	Name        string  `json:"name" binding:"required"`
 	Code        string  `json:"code,omitempty"`
 	Description string  `json:"description,omitempty"`
-	StartDate   *string `json:"start_date,omitempty"`
-	EndDate     *string `json:"end_date,omitempty"`
 	Status      *string `json:"status,omitempty" binding:"omitempty,oneof=draft active"`
 	// Salary period configuration (monthly exports)
 	SalaryPeriodFrom *int `json:"salary_period_from,omitempty"`
@@ -46,8 +44,6 @@ type UpdateProjectRequest struct {
 	Name             *string `json:"name,omitempty"`
 	Code             *string `json:"code,omitempty"`
 	Description      *string `json:"description,omitempty"`
-	StartDate        *string `json:"start_date,omitempty"`
-	EndDate          *string `json:"end_date,omitempty"`
 	Status           *string `json:"status,omitempty" binding:"omitempty,oneof=draft active completed cancelled inactive"`
 	SalaryPeriodFrom *int    `json:"salary_period_from,omitempty"`
 	SalaryPeriodTo   *int    `json:"salary_period_to,omitempty"`
@@ -65,8 +61,6 @@ type ProjectResponse struct {
 	Name                       string                `json:"name"`
 	Code                       string                `json:"code"`
 	Description                string                `json:"description"`
-	StartDate                  *string               `json:"start_date"`
-	EndDate                    *string               `json:"end_date"`
 	SalaryPeriodFrom           int                   `json:"salary_period_from"`
 	SalaryPeriodTo             int                   `json:"salary_period_to"`
 	OffDays                    int                   `json:"off_days"`
@@ -169,8 +163,6 @@ type ProjectDetailedResponse struct {
 	Name                 string                `json:"name"`
 	Code                 string                `json:"code"`
 	Description          string                `json:"description"`
-	StartDate            *string               `json:"start_date"`
-	EndDate              *string               `json:"end_date"`
 	SalaryPeriodFrom     int                   `json:"salary_period_from"`
 	SalaryPeriodTo       int                   `json:"salary_period_to"`
 	OffDays              int                   `json:"off_days"`

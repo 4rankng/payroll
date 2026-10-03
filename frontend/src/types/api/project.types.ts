@@ -40,8 +40,10 @@ export interface Project {
   code: string;
   description?: string;
   client_name: string;
-  start_date: string;
-  end_date: string | null;
+  /** @deprecated backend no longer returns these */
+  start_date?: string;
+  /** @deprecated backend no longer returns these */
+  end_date?: string | null;
   employee_count: number;
   weekly_salary_employee_count: number;
   monthly_salary_employee_count: number;
@@ -90,8 +92,10 @@ export interface CreateProjectData {
   description?: string;
   client_name: string;
   code?: string;
-  start_date: string;
-  end_date: string;
+  /** @deprecated backend no longer returns these */
+  start_date?: string;
+  /** @deprecated backend no longer returns these */
+  end_date?: string;
   status?: "draft" | "active" | "paused" | "completed" | "cancelled";
   is_weekly?: boolean;
   is_monthly?: boolean;
@@ -108,7 +112,9 @@ export interface UpdateProjectData {
   contact_person?: string;
   priority?: "high" | "medium" | "low";
   project_type?: string;
+  /** @deprecated backend no longer returns these */
   start_date?: string;
+  /** @deprecated backend no longer returns these */
   end_date?: string;
   status?: "draft" | "active" | "completed" | "cancelled";
   is_weekly?: boolean;
@@ -233,8 +239,10 @@ export interface ProjectFormData {
   description?: string;
   client_name: string;
   code?: string;
-  start_date: string;
-  end_date: string;
+  /** @deprecated backend no longer returns these */
+  start_date?: string;
+  /** @deprecated backend no longer returns these */
+  end_date?: string;
   manager?: string;
   budget?: number;
   priority?: "high" | "medium" | "low";

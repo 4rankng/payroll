@@ -3,7 +3,6 @@ import { Calendar, Users } from 'lucide-react';
 import type { Project } from '@/types/api/project.types';
 import { Badge } from '@/components/ui/badge';
 import { ProjectStatusBadge } from '@/components/projects/ProjectStatusBadge';
-import { formatDate } from '@/utils/formatters';
 import { EmptyState } from '@/components/shared/EmptyState';
 
 interface ProjectMobileListProps {
@@ -11,11 +10,6 @@ interface ProjectMobileListProps {
   onRowClick?: (project: Project) => void;
   onTimesheet?: (project: Project) => void;
   emptyState?: React.ReactNode;
-}
-
-function formatDateShort(dateStr: string | null | undefined): string {
-  if (!dateStr) return '—';
-  return formatDate(dateStr);
 }
 
 const ProjectCard = React.memo(function ProjectCard({
@@ -45,7 +39,7 @@ const ProjectCard = React.memo(function ProjectCard({
           <ProjectStatusBadge status={project.status} className="shrink-0 text-xs h-5 px-1.5" />
         </div>
 
-        {/* Line 2: code · dates · employee badges */}
+        {/* Line 2: code · employee badges */}
         <div className="flex min-w-0 flex-wrap items-center gap-1.5 mt-0.5">
           {project.code && (
             <>
@@ -53,12 +47,6 @@ const ProjectCard = React.memo(function ProjectCard({
               <span className="text-gray-300 shrink-0">·</span>
             </>
           )}
-          <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
-          <span className="min-w-0 break-words text-xs text-muted-foreground">
-            {formatDateShort(project.start_date)}
-            {project.end_date ? ` – ${formatDateShort(project.end_date)}` : ''}
-          </span>
-          <span className="text-gray-300 shrink-0">·</span>
           <Users className="h-3 w-3 text-muted-foreground shrink-0" />
           <Badge className="font-semibold bg-emerald-50 text-emerald-700 border-emerald-200 border text-xs h-4 px-1 shrink-0">
             {project.employee_count || 0}

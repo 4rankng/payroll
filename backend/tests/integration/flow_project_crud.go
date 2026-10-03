@@ -1,12 +1,21 @@
 package main
 
 import (
-	"api-server/internal/pkg/clock"
+	"encoding/json"
 	"fmt"
 	"strings"
+
+	"api-server/internal/pkg/clock"
 )
 
 const flowProject = "ProjectCRUD"
+
+// projectDateFields captures the removed project date fields; API responses
+// must no longer carry them.
+type projectDateFields struct {
+	StartDate *string `json:"start_date"`
+	EndDate   *string `json:"end_date"`
+}
 
 func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, cfg *TestConfig) {
 	reporter.PrintSection("FLOW: Project CRUD")
@@ -25,7 +34,8 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 			Code:       prefix,
 		}
 		var resp ProjectResponse
-		if _, err := admin.PostInto("/api/v1/projects", body, &resp); err != nil {
+		apiResp, err := admin.PostInto("/api/v1/projects", body, &resp)
+		if err != nil {
 			return fmt.Errorf("create project: %w", err)
 		}
 		testProjectID = resp.ID
@@ -33,7 +43,17 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		if err := AssertGreaterThan("id", uint(0), resp.ID); err != nil {
 			return err
 		}
-		return AssertEqual("code", prefix, resp.Code)
+		if err := AssertEqual("code", prefix, resp.Code); err != nil {
+			return err
+		}
+		var dates projectDateFields
+		if err := json.Unmarshal(apiResp.Data, &dates); err != nil {
+			return fmt.Errorf("decode created project payload: %w", err)
+		}
+		if dates.StartDate != nil || dates.EndDate != nil {
+			return fmt.Errorf("created project must not expose start_date/end_date, got %v/%v", dates.StartDate, dates.EndDate)
+		}
+		return nil
 	})
 
 	defer func() {
@@ -644,17 +664,50 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		return nil
 	})
 
-	// --- Delete ---
+	// --- Delete (blocked while employees are assigned, allowed after) ---
 
-	reporter.RunTest(flowProject, "Delete test project", func() error {
-		if testProjectID == 0 {
-			return fmt.Errorf("no test project ID")
+	reporter.RunTest(flowProject, "Delete blocked while employee assigned", func() error {
+		if testProjectID == 0 || len(data.Employees) == 0 {
+			return fmt.Errorf("missing test project or employees")
+		}
+		emp := data.Employees[0]
+		req := []map[string]any{
+			{
+				"employee_id":      emp.ID,
+				"position":         "Nhân viên test",
+				"payment_schedule": "weekly",
+			},
+		}
+		if _, _, err := admin.Post(fmt.Sprintf("/api/v1/projects/%d/employees", testProjectID), req); err != nil {
+			return fmt.Errorf("assign employee for delete guard: %w", err)
+		}
+		apiErr, statusCode, err := admin.DeleteExpectError(fmt.Sprintf("/api/v1/projects/%d", testProjectID))
+		if err != nil {
+			return fmt.Errorf("delete expect error: %w", err)
+		}
+		if err := AssertGreaterOrEqual("status", 400, statusCode); err != nil {
+			return err
+		}
+		fmt.Printf("    Correctly blocked delete with assigned employee (HTTP %d)\n", statusCode)
+		return AssertContains("delete error message", apiErr.Message, "Không thể xóa dự án đang có nhân viên được giao")
+	})
+
+	reporter.RunTest(flowProject, "Delete succeeds after removing the employee", func() error {
+		if testProjectID == 0 || len(data.Employees) == 0 {
+			return fmt.Errorf("missing test project or employees")
+		}
+		emp := data.Employees[0]
+		body := map[string]any{
+			"employee_ids": []uint{emp.ID},
+		}
+		if _, _, err := admin.Post(fmt.Sprintf("/api/v1/projects/%d/employees/remove", testProjectID), body); err != nil {
+			return fmt.Errorf("remove employee before delete: %w", err)
 		}
 		if _, _, err := admin.Delete(fmt.Sprintf("/api/v1/projects/%d", testProjectID)); err != nil {
-			return fmt.Errorf("delete project: %w", err)
+			return fmt.Errorf("delete project after unassigning: %w", err)
 		}
 		testProjectID = 0
-		fmt.Printf("    Test project deleted\n")
+		fmt.Printf("    Test project deleted after employee removed\n")
 		return nil
 	})
 

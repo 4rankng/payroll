@@ -42,12 +42,6 @@ func CompareProjects(original, updated *Project) map[string]FieldChange {
 	if original.Description != updated.Description {
 		changes["description"] = FieldChange{Before: original.Description, After: updated.Description}
 	}
-	if !equalTimePtr(original.StartDate, updated.StartDate) {
-		changes["start_date"] = FieldChange{Before: timePtrToStr(original.StartDate), After: timePtrToStr(updated.StartDate)}
-	}
-	if !equalTimePtr(original.EndDate, updated.EndDate) {
-		changes["end_date"] = FieldChange{Before: timePtrToStr(original.EndDate), After: timePtrToStr(updated.EndDate)}
-	}
 	if original.ProjectStatus != updated.ProjectStatus {
 		changes["project_status"] = FieldChange{Before: string(original.ProjectStatus), After: string(updated.ProjectStatus)}
 	}

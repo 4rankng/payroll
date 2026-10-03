@@ -2,8 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { getStatusColor } from "@/utils/projectHelpers";
 import { getVietnameseProjectStatus } from "@/utils/vietnamese";
 import type { Project } from "@/types/api/project.types";
-import { Building2, CalendarRange } from "lucide-react";
-import { format } from "date-fns";
+import { Building2 } from "lucide-react";
 
 interface ProjectHeaderProps {
   project: Project;
@@ -13,11 +12,6 @@ interface ProjectHeaderProps {
 export function ProjectHeader({ project, showName = true }: ProjectHeaderProps) {
   const statusLabel = getVietnameseProjectStatus(project.status as 'draft' | 'active' | 'paused' | 'completed' | 'cancelled');
   const statusColor = getStatusColor(project.status);
-
-  // Compact date range — "dd/MM/yyyy → dd/MM/yyyy" or "dd/MM/yyyy → ..."
-  const startDate = project.start_date ? format(new Date(project.start_date), 'dd/MM/yyyy') : null;
-  const endDate = project.end_date ? format(new Date(project.end_date), 'dd/MM/yyyy') : null;
-  const dateRange = startDate ? `${startDate}${endDate ? ` → ${endDate}` : ''}` : null;
 
   return (
     <div className="flex items-start justify-between gap-3 w-full">
@@ -41,15 +35,6 @@ export function ProjectHeader({ project, showName = true }: ProjectHeaderProps) 
             <Building2 className="h-3 w-3 shrink-0 opacity-70" />
             <span className="truncate">{project.client_name || 'Chưa có khách hàng'}</span>
           </span>
-          {dateRange && (
-            <>
-              <span className="text-muted-foreground">·</span>
-              <span className="inline-flex items-center gap-1 min-w-0">
-                <CalendarRange className="h-3 w-3 shrink-0 opacity-70" />
-                <span className="truncate">{dateRange}</span>
-              </span>
-            </>
-          )}
         </div>
       </div>
     </div>

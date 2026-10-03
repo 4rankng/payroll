@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
-	"time"
 
 	"api-server/internal/constants"
 	"api-server/internal/domain"
@@ -400,14 +399,12 @@ func (s *ProjectService) generateProjectListCacheKey(filters domain.ProjectFilte
 	return key
 }
 
-// AutoActivateProjects finds all draft projects whose start date has arrived and activates them
+// AutoActivateProjects activates all draft projects. Projects are no longer
+// bounded by dates, so every remaining draft is promoted to active.
 func (s *ProjectService) AutoActivateProjects(ctx context.Context) error {
-	s.logger.Info("Starting auto-activation of projects based on start date")
+	s.logger.Info("Starting auto-activation of draft projects")
 
-	// Get all draft projects with start dates today or in the past
-	today := timeutil.StartOfDay(clock.NowUTC())
-
-	draftProjects, err := s.ProjectRepo.GetPendingActivatedProjects(ctx, today)
+	draftProjects, err := s.ProjectRepo.GetPendingActivatedProjects(ctx)
 	if err != nil {
 		s.logger.Error("Failed to get draft projects for auto-activation", "error", err)
 		return fmt.Errorf("failed to get draft projects: %w", err)
@@ -415,105 +412,40 @@ func (s *ProjectService) AutoActivateProjects(ctx context.Context) error {
 
 	activatedCount := 0
 	for _, project := range draftProjects {
-		// Check if project has a start date and it's today or in the past
-		if project.StartDate != nil && !project.StartDate.After(today) {
-			// Check if transition is allowed
-			if !project.CanTransitionTo(domain.ProjectStatusRunning) {
-				s.logger.Warn("Cannot transition project to active status",
-					"project_id", project.ID,
-					"current_status", project.ProjectStatus)
-				continue
-			}
-
-			// Update project status to active
-			originalStatus := project.ProjectStatus
-			project.ProjectStatus = domain.ProjectStatusRunning
-
-			if err := s.ProjectRepo.Update(ctx, project); err != nil {
-				s.logger.Error("Failed to auto-activate project",
-					"project_id", project.ID,
-					"project_name", project.Name,
-					"start_date", project.StartDate.Format("2006-01-02"),
-					"error", err)
-				continue
-			}
-
-			activatedCount++
-
-			s.logger.Info("Auto-activated project",
+		// Check if transition is allowed
+		if !project.CanTransitionTo(domain.ProjectStatusRunning) {
+			s.logger.Warn("Cannot transition project to active status",
 				"project_id", project.ID,
-				"project_name", project.Name,
-				"start_date", project.StartDate.Format("2006-01-02"),
-				"previous_status", originalStatus,
-				"new_status", project.ProjectStatus)
-
-			// Publish ProjectUpdatedEvent for auto-activation
-			event := domain.NewProjectUpdatedEvent(ctx, project, 0, "System", nil)
-			if err := s.events.Publish(ctx, event); err != nil {
-				s.logger.Warn("Failed to publish ProjectUpdated event for auto-activation",
-					"projectID", project.ID,
-					"error", err)
-			}
+				"current_status", project.ProjectStatus)
+			continue
 		}
-	}
 
-	return nil
-}
+		// Update project status to active
+		originalStatus := project.ProjectStatus
+		project.ProjectStatus = domain.ProjectStatusRunning
 
-// AutoCompleteProjects finds all draft or active projects whose end date has arrived and completes them
-func (s *ProjectService) AutoCompleteProjects(ctx context.Context) error {
-	s.logger.Info("Starting auto-completion of projects based on end date")
-
-	// Get all draft or active projects with end dates today or in the past
-	today := timeutil.StartOfDay(clock.NowUTC())
-
-	projects, err := s.ProjectRepo.GetPendingCompletedProjects(ctx, today)
-	if err != nil {
-		s.logger.Error("Failed to get projects for auto-completion", "error", err)
-		return fmt.Errorf("failed to get projects for completion: %w", err)
-	}
-
-	completedCount := 0
-	for _, project := range projects {
-		// Check if project has an end date and it's today or in the past
-		if project.EndDate != nil && !project.EndDate.After(today) {
-			// Check if transition is allowed
-			if !project.CanTransitionTo(domain.ProjectStatusCompleted) {
-				s.logger.Warn("Cannot transition project to completed status",
-					"project_id", project.ID,
-					"current_status", project.ProjectStatus)
-				continue
-			}
-
-			// Update project status to completed
-			originalStatus := project.ProjectStatus
-			project.ProjectStatus = domain.ProjectStatusCompleted
-
-			if err := s.ProjectRepo.Update(ctx, project); err != nil {
-				s.logger.Error("Failed to auto-complete project",
-					"project_id", project.ID,
-					"project_name", project.Name,
-					"end_date", project.EndDate.Format("2006-01-02"),
-					"error", err)
-				continue
-			}
-
-			completedCount++
-
-			s.logger.Info("Auto-completed project",
+		if err := s.ProjectRepo.Update(ctx, project); err != nil {
+			s.logger.Error("Failed to auto-activate project",
 				"project_id", project.ID,
 				"project_name", project.Name,
-				"end_date", project.EndDate.Format("2006-01-02"),
-				"previous_status", originalStatus,
-				"new_status", project.ProjectStatus)
+				"error", err)
+			continue
+		}
 
-			// Publish ProjectUpdatedEvent for auto-completion
-			event := domain.NewProjectUpdatedEvent(ctx, project, 0, "System", nil)
-			if err := s.events.Publish(ctx, event); err != nil {
-				s.logger.Warn("Failed to publish ProjectUpdated event for auto-completion",
-					"projectID", project.ID,
-					"error", err)
-			}
+		activatedCount++
+
+		s.logger.Info("Auto-activated project",
+			"project_id", project.ID,
+			"project_name", project.Name,
+			"previous_status", originalStatus,
+			"new_status", project.ProjectStatus)
+
+		// Publish ProjectUpdatedEvent for auto-activation
+		event := domain.NewProjectUpdatedEvent(ctx, project, 0, "System", nil)
+		if err := s.events.Publish(ctx, event); err != nil {
+			s.logger.Warn("Failed to publish ProjectUpdated event for auto-activation",
+				"projectID", project.ID,
+				"error", err)
 		}
 	}
 
@@ -616,12 +548,7 @@ func (s *ProjectService) autoTerminateEmployees(ctx context.Context, project *do
 	}
 
 	// Determine termination date
-	var terminationDate time.Time
-	if project.EndDate != nil {
-		terminationDate = *project.EndDate
-	} else {
-		terminationDate = timeutil.StartOfDay(clock.NowUTC())
-	}
+	terminationDate := timeutil.StartOfDay(clock.NowUTC())
 
 	// Collect IDs of active assignments
 	assignmentIDs := make([]uint, 0, len(activeAssignments))
@@ -665,7 +592,8 @@ func (s *ProjectService) autoTerminateEmployees(ctx context.Context, project *do
 }
 
 // validateProjectCanBeDeleted checks if a project can be safely deleted
-// Projects cannot be deleted if they have approved timesheets
+// Projects cannot be deleted if they have approved timesheets or currently
+// assigned employees
 func (s *ProjectService) validateProjectCanBeDeleted(ctx context.Context, projectID uint) error {
 	// Check if project has any approved timesheets
 	filters := domain.TimesheetFilters{
@@ -682,6 +610,20 @@ func (s *ProjectService) validateProjectCanBeDeleted(ctx context.Context, projec
 
 	if len(timesheets) > 0 {
 		return domain.NewValidationError(constants.MsgCannotDeleteProjectWithApprovedTimesheetsVN)
+	}
+
+	// Check for currently assigned employees. GetActiveAssignments also returns
+	// assignments whose last_date is today or later, so post-filter for the
+	// open-ended ones (last_date IS NULL) — the same set the UI counts.
+	assignments, err := s.ProjectEmployeeRepo.GetActiveAssignments(ctx, projectID)
+	if err != nil {
+		s.logger.Error("Failed to check for assigned employees", "project_id", projectID, "error", err)
+		return domain.NewInternalError(constants.MsgFailedToValidateProjectDeletionVN, err)
+	}
+	for _, a := range assignments {
+		if a.LastDate == nil {
+			return domain.NewValidationError(constants.MsgCannotDeleteProjectWithAssignedEmployeesVN)
+		}
 	}
 
 	return nil

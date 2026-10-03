@@ -23,15 +23,6 @@ import (
 	"api-server/internal/pkg/timeutil"
 )
 
-// Helper function to convert time.Time pointer to string pointer
-func timeToStringPtr(t *time.Time) *string {
-	if t == nil {
-		return nil
-	}
-	str := t.Format(timeutil.DateFormat)
-	return &str
-}
-
 func validateSalaryPeriodDay(field string, value *int) error {
 	if value == nil {
 		return nil
@@ -82,8 +73,6 @@ func projectWithEmployeeCountToResponse(project *domain.ProjectWithEmployeeCount
 		ClientName:                 project.ClientName,
 		Name:                       project.Name,
 		Code:                       project.Code,
-		StartDate:                  timeToStringPtr(project.StartDate),
-		EndDate:                    timeToStringPtr(project.EndDate),
 		SalaryPeriodFrom:           project.SalaryPeriodFrom,
 		SalaryPeriodTo:             project.SalaryPeriodTo,
 		OffDays:                    project.OffDays,
@@ -108,8 +97,6 @@ func projectToResponse(project *domain.Project) dto.ProjectResponse {
 		ClientName:                 project.ClientName,
 		Name:                       project.Name,
 		Code:                       project.Code,
-		StartDate:                  timeToStringPtr(project.StartDate),
-		EndDate:                    timeToStringPtr(project.EndDate),
 		SalaryPeriodFrom:           project.SalaryPeriodFrom,
 		SalaryPeriodTo:             project.SalaryPeriodTo,
 		OffDays:                    project.OffDays,
@@ -166,8 +153,6 @@ func (h *Handler) buildDetailedProjectResponse(ctx context.Context, project *dom
 		ClientName:           project.ClientName,
 		Name:                 project.Name,
 		Code:                 project.Code,
-		StartDate:            timeToStringPtr(project.StartDate),
-		EndDate:              timeToStringPtr(project.EndDate),
 		SalaryPeriodFrom:     project.SalaryPeriodFrom,
 		SalaryPeriodTo:       project.SalaryPeriodTo,
 		OffDays:              project.OffDays,
@@ -402,32 +387,6 @@ func (h *Handler) CreateProject(c *gin.Context) {
 		return
 	}
 
-	// Parse dates if provided
-	var startDate, endDate *time.Time
-
-	// Set start_date to today if not provided
-	if req.StartDate != nil && *req.StartDate != "" {
-		parsedDate, err := time.Parse(timeutil.DateFormat, *req.StartDate)
-		if err != nil {
-			response.BadRequest(c, constants.MsgInvalidStartDateFormatVN)
-			return
-		}
-		startDate = &parsedDate
-	} else {
-		// Default to today if start_date not provided
-		today := timeutil.StartOfDay(h.clock.NowUTC())
-		startDate = &today
-	}
-
-	if req.EndDate != nil && *req.EndDate != "" {
-		parsedDate, err := time.Parse(timeutil.DateFormat, *req.EndDate)
-		if err != nil {
-			response.BadRequest(c, constants.MsgInvalidEndDateFormatVN)
-			return
-		}
-		endDate = &parsedDate
-	}
-
 	// Policy: partners may set the salary period on CreateProject (relaxed from
 	// admin-only on 2026-06-10). UpdateProject still gates salary-period changes
 	// to admins; if a partner PATCH sends a salary-period field, the whole
@@ -452,8 +411,6 @@ func (h *Handler) CreateProject(c *gin.Context) {
 		ClientName:       req.ClientName,
 		Name:             req.Name,
 		Code:             req.Code,
-		StartDate:        startDate,
-		EndDate:          endDate,
 		SalaryPeriodFrom: domain.NormalizeSalaryPeriodDay(req.SalaryPeriodFrom),
 		SalaryPeriodTo:   domain.NormalizeSalaryPeriodDay(req.SalaryPeriodTo),
 		ProjectStatus:    projectStatus,
@@ -609,7 +566,7 @@ func (h *Handler) ListProjects(c *gin.Context) {
 		// Validate sortBy field to prevent SQL injection
 		allowedSortFields := []string{
 			"created_at", "updated_at", "name", "client_name", "code",
-			"start_date", "end_date", "status",
+			"status",
 		}
 		validSortBy := false
 		for _, field := range allowedSortFields {
@@ -642,7 +599,7 @@ func (h *Handler) ListProjects(c *gin.Context) {
 	}
 
 	if createdBy := c.Query("created_by"); createdBy != "" {
-		if id, err := strconv.ParseUint(createdBy, 10, 32); err == nil {
+		if id, err := strconv.ParseUint(createdBy, 10, 64); err == nil {
 			uid := uint(id)
 			filters.CreatedBy = &uid
 		}
@@ -784,30 +741,6 @@ func (h *Handler) UpdateProject(c *gin.Context) {
 	if req.Description != nil {
 		project.Description = *req.Description
 	}
-	if req.StartDate != nil {
-		if *req.StartDate == "" {
-			project.StartDate = nil
-		} else {
-			parsedDate, err := time.Parse(timeutil.DateFormat, *req.StartDate)
-			if err != nil {
-				response.BadRequest(c, constants.MsgInvalidStartDateFormatVN)
-				return
-			}
-			project.StartDate = &parsedDate
-		}
-	}
-	if req.EndDate != nil {
-		if *req.EndDate == "" {
-			project.EndDate = nil
-		} else {
-			parsedDate, err := time.Parse(timeutil.DateFormat, *req.EndDate)
-			if err != nil {
-				response.BadRequest(c, constants.MsgInvalidEndDateFormatVN)
-				return
-			}
-			project.EndDate = &parsedDate
-		}
-	}
 	if req.Status != nil {
 		project.ProjectStatus = domain.ProjectStatus(*req.Status)
 	}
@@ -941,7 +874,7 @@ func (h *Handler) DeleteProject(c *gin.Context) {
 
 // ActivateProjects manually triggers project activation for eligible draft projects
 // @Summary Activate eligible projects
-// @Description Manually trigger activation of draft projects whose start date has arrived or passed
+// @Description Manually trigger activation of all draft projects
 // @Tags projects
 // @Accept json
 // @Produce json

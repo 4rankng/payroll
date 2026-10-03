@@ -1,11 +1,10 @@
 import { useMemo } from "react";
 import { Project } from "@/types/api/project.types";
-import { Info, Clock, Wallet, CalendarOff } from "lucide-react";
+import { Info, FileText, Wallet, CalendarOff } from "lucide-react";
 import { useUsersByIds } from "@/hooks/api/useUsers";
 import { getUserFullName } from "@/utils/userHelpers";
 import { authManager } from "@/lib/auth";
 import { isOffDay } from "@/components/projects/OffDaysPicker";
-import { formatDate } from "@/utils/formatters";
 
 const DAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
@@ -22,11 +21,6 @@ function SectionLabel({ icon: Icon, children }: { icon: React.ComponentType<{ cl
 interface ProjectInfoTabProps {
   project: Project;
 }
-
-const formatDateForDisplay = (dateString: string | null | undefined): string => {
-  if (!dateString) return "-";
-  return formatDate(dateString);
-};
 
 function Field({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
@@ -66,20 +60,15 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
         </div>
       </section>
 
-      {/* Time */}
-      <section>
-        <SectionLabel icon={Clock}>Thời gian</SectionLabel>
-        <div className="bg-muted/30 rounded-xl px-3 py-1">
-          <Field label="Ngày bắt đầu" value={formatDateForDisplay(project.start_date)} />
-          <Field label="Ngày kết thúc" value={formatDateForDisplay(project.end_date)} />
-          {project.description && (
-            <div className="py-1.5 border-t border-border/50">
-              <p className="text-xs text-muted-foreground mb-0.5">Mô tả</p>
-              <p className="text-xs leading-relaxed">{project.description}</p>
-            </div>
-          )}
-        </div>
-      </section>
+      {/* Description */}
+      {project.description && (
+        <section>
+          <SectionLabel icon={FileText}>Mô tả</SectionLabel>
+          <div className="bg-muted/30 rounded-xl px-3 py-2">
+            <p className="text-xs leading-relaxed">{project.description}</p>
+          </div>
+        </section>
+      )}
 
       {/* Salary Period + Off Days side by side on sm+, stacked on mobile */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">

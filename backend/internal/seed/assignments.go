@@ -74,15 +74,12 @@ func (s *Seeder) seedProjectEmployees(ctx context.Context, db *gorm.DB) error {
 		for i := 0; i < teamSize && i < len(availableEmployees); i++ {
 			employee := availableEmployees[i]
 
-			// Determine start date based on project timeline
+			// Determine start date - employees joined around two months ago,
+			// with some variation
 			startDate := clock.Now().AddDate(0, -2, 0)
-			if project.StartDate != nil {
-				startDate = *project.StartDate
-				// Add some variation - employees might join slightly after project start
-				if mathrand.Float64() < 0.3 { // 30% chance of joining after project start
-					variation := mathrand.IntN(30) // up to 30 days later
-					startDate = startDate.AddDate(0, 0, variation)
-				}
+			if mathrand.Float64() < 0.3 { // 30% chance of joining later
+				variation := mathrand.IntN(30) // up to 30 days later
+				startDate = startDate.AddDate(0, 0, variation)
 			}
 
 			// Select position using weighted distribution
@@ -101,13 +98,11 @@ func (s *Seeder) seedProjectEmployees(ctx context.Context, db *gorm.DB) error {
 
 			// For completed or cancelled projects, some employees might have end dates
 			if project.ProjectStatus == domain.ProjectStatusCompleted || project.ProjectStatus == domain.ProjectStatusCancelled {
-				if mathrand.Float64() < 0.2 { // 20% chance employee left before project end
-					daysBeforeEnd := mathrand.IntN(60) + 1 // 1-60 days before project end
-					if project.EndDate != nil {
-						lastDate := project.EndDate.AddDate(0, 0, -daysBeforeEnd)
-						if lastDate.After(startDate) {
-							projectEmployee.LastDate = &lastDate
-						}
+				if mathrand.Float64() < 0.2 { // 20% chance employee left before now
+					daysBeforeNow := mathrand.IntN(60) + 1 // 1-60 days back from today
+					lastDate := clock.Now().AddDate(0, 0, -daysBeforeNow)
+					if lastDate.After(startDate) {
+						projectEmployee.LastDate = &lastDate
 					}
 				}
 			}

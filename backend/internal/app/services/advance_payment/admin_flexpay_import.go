@@ -418,14 +418,11 @@ func (s *Service) getOrCreateProject(ctx context.Context, code string, createdBy
 		return nil, false, err
 	}
 
-	now := clock.NowUTC()
-	startDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 	project = &domain.Project{
 		Code:          code,
 		Name:          code,
 		ClientName:    code,
 		ProjectStatus: domain.ProjectStatusRunning,
-		StartDate:     &startDate,
 		CreatedBy:     createdBy,
 	}
 

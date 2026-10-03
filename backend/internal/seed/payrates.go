@@ -75,13 +75,6 @@ func (s *Seeder) seedPayrates(ctx context.Context, db *gorm.DB) error {
 
 			// Set effective date
 			fromDate := clock.Now().AddDate(0, -6, 0)
-			if project.StartDate != nil {
-				fromDate = *project.StartDate
-				// Don't set dates too far in the past
-				if project.StartDate.Before(clock.Now().AddDate(-2, 0, 0)) {
-					fromDate = clock.Now().AddDate(-2, 0, 0)
-				}
-			}
 
 			payrate := &domain.Payrate{
 				ProjectID: project.ID,
@@ -102,9 +95,6 @@ func (s *Seeder) seedPayrates(ctx context.Context, db *gorm.DB) error {
 			payrateJSON, _ := json.Marshal(baseRates)
 
 			fromDate := clock.Now().AddDate(0, -6, 0)
-			if project.StartDate != nil {
-				fromDate = *project.StartDate
-			}
 
 			payrate := &domain.Payrate{
 				ProjectID: project.ID,

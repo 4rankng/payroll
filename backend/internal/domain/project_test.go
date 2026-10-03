@@ -3,7 +3,6 @@ package domain
 import (
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -19,26 +18,6 @@ func TestProject_ValidateName(t *testing.T) {
 	// Test empty name
 	p.Name = ""
 	err = p.ValidateName()
-	assert.Error(t, err)
-}
-
-func TestProject_ValidateDates(t *testing.T) {
-	startDate := time.Now().AddDate(0, 0, 1) // tomorrow
-	endDate := time.Now().AddDate(0, 1, 1)   // next month
-	p := &Project{
-		StartDate: &startDate,
-		EndDate:   &endDate,
-	}
-
-	err := p.ValidateDates()
-	assert.NoError(t, err)
-
-	// Test start date after end date
-	startDate = time.Now().AddDate(0, 1, 1) // next month
-	endDate = time.Now().AddDate(0, 0, 1)   // tomorrow
-	p.StartDate = &startDate
-	p.EndDate = &endDate
-	err = p.ValidateDates()
 	assert.Error(t, err)
 }
 
@@ -196,15 +175,10 @@ func TestProject_GetProfitMargin(t *testing.T) {
 }
 
 func TestProject_IsValid(t *testing.T) {
-	startDate := time.Now()
-	endDate := startDate.AddDate(0, 1, 0)
-
 	// Test valid project
 	p := &Project{
 		Name:          "Test Project",
 		ProjectStatus: ProjectStatusRunning,
-		StartDate:     &startDate,
-		EndDate:       &endDate,
 	}
 	err := p.IsValid()
 	assert.NoError(t, err)

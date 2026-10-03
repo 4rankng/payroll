@@ -177,7 +177,8 @@ function AddProjectSheetContainer({
         try {
           await payRateService.createProjectPayRate(createdProject.id, {
             rates: payrates,
-            effective_from: projectData.start_date,
+            // Backend parses YYYY-MM-DD (timeutil.DateFormat)
+            effective_from: new Date().toISOString().split('T')[0],
             // No end date - payrate is indefinite unless manually updated
           });
 

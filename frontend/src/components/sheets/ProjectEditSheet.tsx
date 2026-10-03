@@ -13,7 +13,6 @@ import { ProjectStatus } from "@/components/projects/ProjectStatusBadge";
 import { getVietnameseProjectStatus } from "@/utils/vietnamese";
 import { OffDaysPicker } from "@/components/projects/OffDaysPicker";
 import { authManager } from "@/lib/auth";
-import { formatDateForAPI } from "@/utils/formatters";
 
 interface ProjectEditSheetProps {
   project: Project | null;
@@ -27,8 +26,6 @@ interface ProjectFormData {
   code: string;
   description: string;
   client_name: string;
-  start_date: string;
-  end_date: string;
   status: ProjectStatus;
   is_weekly: boolean;
   is_monthly: boolean;
@@ -36,12 +33,6 @@ interface ProjectFormData {
   salary_period_to: number | null;
   off_days: number;
 }
-
-// Helper function to format date for input[type="date"]
-const formatDateForInput = (dateString: string | null | undefined): string => {
-  if (!dateString) return "";
-  return formatDateForAPI(dateString);
-};
 
 function ProjectEditSheet({
   project,
@@ -57,8 +48,6 @@ function ProjectEditSheet({
     code: "",
     description: "",
     client_name: "",
-    start_date: "",
-    end_date: "",
     status: "draft",
     is_weekly: true,
     is_monthly: false,
@@ -69,7 +58,7 @@ function ProjectEditSheet({
   const [hasChanges, setHasChanges] = useState(false);
   const [errors, setErrors] = useState<Partial<ProjectFormData>>({});
 
-  // Memoize original data with optimized date formatting
+  // Memoize original data
   const originalData = useMemo(() => {
     if (!project) return null;
     return {
@@ -77,8 +66,6 @@ function ProjectEditSheet({
       code: project.code || "",
       description: project.description || "",
       client_name: project.client_name || "",
-      start_date: formatDateForInput(project.start_date),
-      end_date: formatDateForInput(project.end_date),
       status: (project.status as ProjectStatus) || "draft",
       is_weekly: project.is_weekly ?? true,
       is_monthly: project.is_monthly ?? false,
@@ -133,12 +120,6 @@ function ProjectEditSheet({
       newErrors.description = "Mô tả không được vượt quá 1000 ký tự";
     }
 
-    if (formData.start_date && formData.end_date) {
-      if (new Date(formData.start_date) > new Date(formData.end_date)) {
-        newErrors.end_date = "Ngày kết thúc phải sau ngày bắt đầu";
-      }
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -168,8 +149,6 @@ function ProjectEditSheet({
         code: formData.code,
         description: formData.description,
         client_name: formData.client_name,
-        start_date: formData.start_date || undefined,
-        end_date: formData.end_date || undefined,
         is_weekly: formData.is_weekly,
         is_monthly: formData.is_monthly,
         salary_period_from: formData.salary_period_from,
@@ -306,22 +285,9 @@ function ProjectEditSheet({
           </div>
         </div>
 
-        {/* Row 2: left = dates+salary+offdays, right = description — stacks on mobile */}
+        {/* Row 2: left = salary+offdays, right = description — stacks on mobile */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-3">
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label htmlFor="start_date" className="text-xs text-muted-foreground">Ngày bắt đầu</Label>
-                <Input id="start_date" type="date" value={formData.start_date} onChange={(e) => handleInputChange('start_date', e.target.value)} className="h-11 text-sm" />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="end_date" className="text-xs text-muted-foreground">Ngày kết thúc</Label>
-                <Input id="end_date" type="date" value={formData.end_date} onChange={(e) => handleInputChange('end_date', e.target.value)} className={`h-11 text-sm ${errors.end_date ? "border-red-500" : ""}`} />
-                {errors.end_date && <p className="text-xs text-red-600">{errors.end_date}</p>}
-              </div>
-            </div>
-
             {/* Salary period */}
             <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Kỳ lương tháng</Label>

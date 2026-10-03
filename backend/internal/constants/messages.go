@@ -697,6 +697,7 @@ const (
 	MsgUserWithUsernameExistsVN                    = "Người dùng với tên đăng nhập này đã tồn tại"
 	MsgUserNotFoundVN2                             = "Không tìm thấy người dùng"
 	MsgCannotDeleteProjectWithApprovedTimesheetsVN = "Không thể xóa dự án có bảng chấm công đã phê duyệt"
+	MsgCannotDeleteProjectWithAssignedEmployeesVN  = "Không thể xóa dự án đang có nhân viên được giao"
 	MsgCannotEndAssignmentBeforeTimesheetDatesVN   = "Không thể kết thúc phân công trước ngày chấm công hiện có"
 	MsgCannotGrantAccessToEmployeeCreatorVN        = "Không thể cấp quyền truy cập cho người tạo nhân viên"
 	MsgOnlyEmployeeCreatorOrAdminCanGrantAccessVN  = "Chỉ người tạo nhân viên hoặc quản trị viên mới có thể cấp quyền truy cập"

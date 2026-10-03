@@ -39,16 +39,14 @@ const (
 
 // Project represents a client project in the domain
 type Project struct {
-	ID               uint       `json:"id" gorm:"primarykey;type:bigint unsigned"`
-	ClientName       string     `json:"client_name" gorm:"type:varchar(255);comment:'e.g. Nha may san xuat hoa my pham VERICO'"`
-	Name             string     `json:"name" gorm:"type:varchar(255);not null;comment:'e.g. San xuat xa phong'"`
-	Code             string     `json:"code" gorm:"type:varchar(255);uniqueIndex;comment:'Initials of client_name and YYMM of created_at date or manually input by users'"`
-	Description      string     `json:"description" gorm:"type:text;comment:'Rich text format supported'"`
-	StartDate        *time.Time `json:"start_date" gorm:"type:date"`
-	EndDate          *time.Time `json:"end_date" gorm:"type:date"`
-	SalaryPeriodFrom int        `json:"salary_period_from,omitempty" gorm:"column:salary_period_from;type:int;comment:'Day of previous month payroll period starts (0 or NULL = 1st)'"`                               // 0-28
-	SalaryPeriodTo   int        `json:"salary_period_to,omitempty" gorm:"column:salary_period_to;type:int;comment:'Day of current month payroll period ends (0 or NULL = last day)'"`                                 // 0-28
-	OffDays          int        `json:"off_days" gorm:"column:off_days;type:tinyint unsigned;not null;default:0;comment:'Bitmask of weekly off days: bit0=Sun,bit1=Mon,...,bit6=Sat. Default 0 = no fixed off days'"` // bitmask
+	ID               uint   `json:"id" gorm:"primarykey;type:bigint unsigned"`
+	ClientName       string `json:"client_name" gorm:"type:varchar(255);comment:'e.g. Nha may san xuat hoa my pham VERICO'"`
+	Name             string `json:"name" gorm:"type:varchar(255);not null;comment:'e.g. San xuat xa phong'"`
+	Code             string `json:"code" gorm:"type:varchar(255);uniqueIndex;comment:'Initials of client_name and YYMM of created_at date or manually input by users'"`
+	Description      string `json:"description" gorm:"type:text;comment:'Rich text format supported'"`
+	SalaryPeriodFrom int    `json:"salary_period_from,omitempty" gorm:"column:salary_period_from;type:int;comment:'Day of previous month payroll period starts (0 or NULL = 1st)'"`                               // 0-28
+	SalaryPeriodTo   int    `json:"salary_period_to,omitempty" gorm:"column:salary_period_to;type:int;comment:'Day of current month payroll period ends (0 or NULL = last day)'"`                                 // 0-28
+	OffDays          int    `json:"off_days" gorm:"column:off_days;type:tinyint unsigned;not null;default:0;comment:'Bitmask of weekly off days: bit0=Sun,bit1=Mon,...,bit6=Sat. Default 0 = no fixed off days'"` // bitmask
 
 	// Denormalised financial totals, scoped to this project's non-deleted timesheets.
 	// They are derived data: no create/update request field writes them and they are
@@ -123,8 +121,7 @@ type ProjectRepository interface {
 	GetStatusCounts(ctx context.Context) (map[string]int, error)
 	GetStatusCountsForCreator(ctx context.Context, createdBy uint) (map[string]int, error)
 	SearchProjects(ctx context.Context, search string, limit int) ([]*Project, error)
-	GetPendingActivatedProjects(ctx context.Context, date time.Time) ([]*Project, error)
-	GetPendingCompletedProjects(ctx context.Context, date time.Time) ([]*Project, error)
+	GetPendingActivatedProjects(ctx context.Context) ([]*Project, error)
 	CodeExistsIncludingDeleted(ctx context.Context, code string) bool
 	GetProjectFinancialAggregate(ctx context.Context, projectID uint) (*ProjectFinancialAggregate, error)
 	UpdateProjectFinancialAggregate(ctx context.Context, projectID uint, aggregate ProjectFinancialAggregate, updatedAt time.Time) error
@@ -233,16 +230,6 @@ func (p *Project) ValidateName() error {
 	return nil
 }
 
-// ValidateDates validates start and end dates
-func (p *Project) ValidateDates() error {
-	if p.StartDate != nil && p.EndDate != nil {
-		if p.EndDate.Before(*p.StartDate) {
-			return NewValidationError("end date must be after start date")
-		}
-	}
-	return nil
-}
-
 // ValidateStatus validates the project status
 func (p *Project) ValidateStatus() error {
 	validStatuses := map[ProjectStatus]bool{
@@ -262,9 +249,6 @@ func (p *Project) ValidateStatus() error {
 // IsValid validates the entire project entity
 func (p *Project) IsValid() error {
 	if err := p.ValidateName(); err != nil {
-		return err
-	}
-	if err := p.ValidateDates(); err != nil {
 		return err
 	}
 	if err := p.ValidateStatus(); err != nil {

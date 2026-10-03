@@ -849,28 +849,13 @@ func (r *ProjectRepository) SearchProjects(ctx context.Context, search string, l
 	return projects, err
 }
 
-// GetPendingActivatedProjects returns draft projects that should be activated (start_date <= given date)
-func (r *ProjectRepository) GetPendingActivatedProjects(ctx context.Context, date time.Time) ([]*domain.Project, error) {
+// GetPendingActivatedProjects returns draft projects pending activation
+func (r *ProjectRepository) GetPendingActivatedProjects(ctx context.Context) ([]*domain.Project, error) {
 	var projects []*domain.Project
 
 	err := r.DB.WithContext(ctx).
 		Preload("Creator").
-		Where("project_status = ? AND start_date IS NOT NULL AND start_date <= ?",
-			domain.ProjectStatusDraft, date).
-		Limit(common.DefaultMaxResults).
-		Find(&projects).Error
-
-	return projects, err
-}
-
-// GetPendingCompletedProjects returns draft or active projects that should be completed (end_date <= given date)
-func (r *ProjectRepository) GetPendingCompletedProjects(ctx context.Context, date time.Time) ([]*domain.Project, error) {
-	var projects []*domain.Project
-
-	err := r.DB.WithContext(ctx).
-		Preload("Creator").
-		Where("project_status IN (?, ?) AND end_date IS NOT NULL AND end_date <= ?",
-			domain.ProjectStatusDraft, domain.ProjectStatusRunning, date).
+		Where("project_status = ?", domain.ProjectStatusDraft).
 		Limit(common.DefaultMaxResults).
 		Find(&projects).Error
 

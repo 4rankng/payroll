@@ -1,7 +1,6 @@
 package employee
 
 import (
-	"api-server/internal/pkg/clock"
 	"context"
 	"fmt"
 	"log/slog"
@@ -286,14 +285,11 @@ func (s *ImportService) getOrCreateProject(ctx context.Context, code string, cre
 	}
 
 	// Create new project
-	now := clock.NowUTC()
-	startDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 	project = &domain.Project{
 		Code:          code,
 		Name:          code,
 		ClientName:    code,
 		ProjectStatus: domain.ProjectStatusRunning,
-		StartDate:     &startDate,
 		CreatedBy:     createdBy,
 	}
 

@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
-import { Plus, Calendar, FileText, AlertTriangle, DollarSign, Trash2 } from "lucide-react";
+import { Plus, FileText, AlertTriangle, DollarSign, Trash2 } from "lucide-react";
 import { CreateProjectData } from "@/types/api/project.types";
 import { PayrateMatrixEditor } from "@/components/payrates/components/PayrateMatrixEditor";
 import { PayrateStructure } from "@/components/payrates/types";
@@ -45,18 +45,10 @@ export function AddProjectSheet({
 }: AddProjectSheetProps) {
   const [isSaving, setIsSaving] = useState(false);
 
-  // Get today's date in YYYY-MM-DD format
-  const todayDate = useMemo(() => {
-    const today = new Date();
-    return today.toISOString().split('T')[0];
-  }, []);
-
   const [formData, setFormData] = useState<CreateProjectData>({
     name: "",
     client_name: "",
     code: "",
-    start_date: todayDate,
-    end_date: "",
     is_weekly: true,
     is_monthly: false,
     salary_period_from: null,
@@ -96,8 +88,6 @@ export function AddProjectSheet({
         name: "",
         client_name: "",
         code: "",
-        start_date: todayDate,
-        end_date: "",
         is_weekly: true,
         is_monthly: false,
         salary_period_from: null,
@@ -107,7 +97,7 @@ export function AddProjectSheet({
       setPayrates({});
       setErrors({});
     }
-  }, [isOpen, todayDate]);
+  }, [isOpen]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -119,16 +109,6 @@ export function AddProjectSheet({
     if (!formData.client_name.trim()) {
       newErrors.client_name = "Tên khách hàng là bắt buộc";
     }
-
-    // Date validation - only validate end_date if it's provided
-    if (formData.start_date && formData.end_date && formData.end_date.trim()) {
-      const startDate = new Date(formData.start_date);
-      const endDate = new Date(formData.end_date);
-      if (endDate <= startDate) {
-        newErrors.end_date = "Ngày kết thúc phải sau ngày bắt đầu";
-      }
-    }
-
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -147,21 +127,11 @@ export function AddProjectSheet({
     setIsSaving(true);
 
     try {
-      // Determine status based on start date
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
-      const startDate = new Date(formData.start_date);
-      startDate.setHours(0, 0, 0, 0);
-
-      const status: 'draft' | 'active' = startDate <= today ? 'active' : 'draft';
-
       // Clean up the data before submitting - remove empty strings and undefined values
       const cleanedData: CreateProjectData = {
         name: formData.name.trim(),
         client_name: formData.client_name.trim(),
-        start_date: formData.start_date.trim(),
-        end_date: formData.end_date.trim() || "", // Keep empty string for optional field
-        status,
+        status: 'active',
         is_weekly: formData.is_weekly,
         is_monthly: formData.is_monthly,
         salary_period_from: formData.salary_period_from,
@@ -250,7 +220,7 @@ export function AddProjectSheet({
       }
     >
       <div className="space-y-6">
-        {/* Two-column layout for basic info and timeline */}
+        {/* Two-column layout for basic info and salary settings */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 pb-0">
           {/* Left Column - Basic Information */}
           <div className="space-y-6">
@@ -324,62 +294,8 @@ export function AddProjectSheet({
             </div>
           </div>
 
-          {/* Right Column - Timeline */}
+          {/* Right Column - Salary settings */}
           <div className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b">
-                <Calendar className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-semibold">Thời gian dự án</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_date" className="text-sm font-medium">
-                      Ngày bắt đầu
-                    </Label>
-                    <Input
-                      id="start_date"
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) => handleInputChange('start_date', e.target.value)}
-                      className={`transition-colors ${errors.start_date ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                      disabled={isSaving}
-                    />
-                    {errors.start_date && (
-                      <p className="text-xs text-red-600 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        {errors.start_date}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="end_date" className="text-sm font-medium">
-                      Ngày kết thúc
-                    </Label>
-                    <Input
-                      id="end_date"
-                      type="date"
-                      value={formData.end_date}
-                      onChange={(e) => handleInputChange('end_date', e.target.value)}
-                      className={`transition-colors ${errors.end_date ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                      disabled={isSaving}
-                    />
-                    {errors.end_date && (
-                      <p className="text-xs text-red-600 flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3" />
-                        {errors.end_date}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Ngày kết thúc là tùy chọn
-                </p>
-              </div>
-            </div>
-
             <div className="pt-2">
               <SalaryPeriodFields
                 salaryPeriodFrom={formData.salary_period_from}
