@@ -1,4 +1,4 @@
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw05 } from "@untitledui/icons";
 import { cn } from "@/lib/utils";
 
 interface EmployeeDataErrorProps {
@@ -20,7 +20,7 @@ export function EmployeeDataError({ title, onRetry, isRetrying = false, classNam
         disabled={isRetrying}
         className="employee-type-action mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--employee-border-strong)] px-4 text-[var(--employee-accent)] transition-colors hover:bg-[var(--employee-accent-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] focus-visible:ring-offset-2 disabled:opacity-60"
       >
-        <RefreshCw className={cn("h-4 w-4", isRetrying && "animate-spin")} aria-hidden="true" />
+        <RefreshCw05 className={cn("h-4 w-4", isRetrying && "animate-spin motion-reduce:animate-none")} aria-hidden="true" />
         {isRetrying ? "Đang tải lại…" : "Tải lại"}
       </button>
     </div>

@@ -77,8 +77,13 @@ export function EmployeeMobileShell({
     if (chrome === "skeleton") {
       return (
         <div
-          className="overflow-hidden rounded-b-[32px] bg-gradient-to-br from-emerald-500 to-emerald-700"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
+          className="overflow-hidden rounded-b-[32px]"
+          style={{
+            // Same anchored ramp as EmployeeCanopy — bright mint (#10b981)
+            // reads as a consumer app, not payroll (see the canopy note).
+            background: "linear-gradient(168deg, #0a7a41 0%, #08783e 42%, #065c32 78%, #054d2a 100%)",
+            paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)",
+          }}
           aria-label="Đang tải thông tin nhân viên"
         >
           <div className="mx-auto flex max-w-lg items-center justify-between px-5 pb-5">

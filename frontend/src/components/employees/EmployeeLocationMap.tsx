@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
-import { Navigation } from "lucide-react";
+import { NavigationPointer01 } from "@untitledui/icons";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { Button } from "@/components/ui/button";
 import type { CheckInTarget } from "@/types/api/auth.types";
@@ -58,12 +58,12 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
   const showOverBy = guidance.status === "outside";
   const distanceTone =
     guidance.status === "inside"
-      ? "text-emerald-600"
+      ? "text-fg-success-primary"
       : guidance.status === "outside"
-        ? "text-amber-700"
+        ? "text-fg-warning-primary"
         : guidance.status === "inaccurate"
-          ? "text-amber-600"
-          : "text-slate-400";
+          ? "text-fg-warning-primary"
+          : "text-fg-quaternary";
   const hasRoute = Boolean(routeFeature);
   const isAtGate = Boolean(
     sample && guidance.nearestGate && guidance.distanceMeters != null && guidance.distanceMeters <= 1
@@ -77,19 +77,19 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
       role="group"
       aria-label={mapAriaLabel(guidance, hasRoute, isAtGate, nearestGateName)}
     >
-      <ul className="employee-type-body-sm divide-y divide-slate-200 border-y border-slate-300 bg-white text-slate-700">
+      <ul className="employee-type-body-sm divide-y divide-[var(--employee-border)] border-y border-[var(--employee-border-strong)] bg-[var(--employee-surface)] text-fg-secondary">
         <li className="flex items-center justify-between gap-3 px-3 py-2.5">
-          <span className="min-w-0 break-words font-semibold text-slate-950">
+          <span className="min-w-0 break-words font-semibold text-[var(--employee-text)]">
             {statusTitle(guidance)}
           </span>
           <span
             className={`badge employee-type-pill inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 ${
               sample?.accuracy != null && sample.accuracy < 50
-                ? "gps-accuracy-confirmed border-emerald-100 bg-emerald-50/80 text-emerald-700"
-                : "border-sky-100 bg-sky-50/80 text-sky-700"
+                ? "gps-accuracy-confirmed border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)]/80 text-[var(--employee-accent)]"
+                : "border-[var(--employee-info-border)] bg-[var(--employee-info-soft)]/80 text-[var(--employee-info)]"
             }`}
           >
-            <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
+            <NavigationPointer01 className="h-3.5 w-3.5" aria-hidden="true" />
             {sample?.accuracy != null ? (
               <>GPS ±{Math.round(sample.accuracy)}m</>
             ) : (
@@ -99,10 +99,10 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
         </li>
         <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2.5">
           <div className="min-w-0">
-            <span className="employee-type-label-caps block text-slate-500">
+            <span className="employee-type-label-caps block text-fg-tertiary">
               Điểm gần nhất
             </span>
-            <span className="mt-0.5 block break-words font-semibold text-slate-700">
+            <span className="mt-0.5 block break-words font-semibold text-fg-secondary">
               {nearestGateName}
             </span>
           </div>
@@ -111,18 +111,18 @@ export function EmployeeLocationMap({ target, sample }: EmployeeLocationMapProps
               {distanceMeters != null ? `Cách ${formatDistanceMeters(distanceMeters)}` : "—"}
             </span>
             {showOverBy && guidance.overByMeters ? (
-              <span className="block text-xs font-semibold text-amber-600">
+              <span className="block text-xs font-semibold text-fg-warning-primary">
                 vượt {formatDistanceMeters(guidance.overByMeters)}
               </span>
             ) : null}
-            <span className="block shrink-0 whitespace-nowrap font-semibold text-slate-500">
+            <span className="block shrink-0 whitespace-nowrap font-semibold text-fg-tertiary">
               Bán kính <span>{formatDistanceMeters(target.radius_meters)}</span>
             </span>
           </div>
         </li>
       </ul>
       {canRenderMap ? (
-        <div className="relative h-80 w-full bg-slate-100 sm:h-96">
+        <div className="relative h-80 w-full bg-[var(--employee-page)] sm:h-96">
           <EmployeeMapCanvas
             gateData={gateData}
             geofenceData={geofenceData}
@@ -482,14 +482,14 @@ function removeLayerAndSource(map: maplibregl.Map, layerIds: string[], sourceId:
 
 function MapFallback({ onRetry }: { onRetry?: () => void }) {
   return (
-    <div className="employee-type-body-sm flex min-h-12 items-center justify-between gap-3 bg-slate-50 px-3 py-2 text-slate-600">
+    <div className="employee-type-body-sm flex min-h-12 items-center justify-between gap-3 bg-[var(--employee-surface-muted)] px-3 py-2 text-fg-secondary">
       <span>Không tải được bản đồ.</span>
       {onRetry ? (
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="shrink-0 bg-white text-sky-700"
+          className="shrink-0 bg-[var(--employee-surface)] text-[var(--employee-info)]"
           onClick={onRetry}
         >
           Thử tải lại bản đồ

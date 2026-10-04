@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Check, Circle, ClipboardList, LoaderCircle } from "lucide-react";
+import { CheckDone01, Circle, Clipboard, RefreshCw05 } from "@untitledui/icons";
 import type { AggregatedDay } from "@/utils/employeePortal/timesheetGrouping";
 import type { EmployeeMonth } from "@/hooks/useEmployeeMonth";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,7 @@ const paymentStatusStyles = {
   full: {
     rail: "bg-[var(--employee-accent)]",
     text: "text-[var(--employee-accent)]",
-    icon: Check,
+    icon: CheckDone01,
     label: "Đã trả đủ",
   },
   partial: {
@@ -67,7 +67,7 @@ export function EmployeeTimesheetPanel({
 
       <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-3">
         <h2 id="employee-timesheets-title" className="employee-type-card-title flex items-center gap-2 text-[var(--employee-text)]">
-          <ClipboardList className="h-4 w-4 text-[var(--employee-accent)]" strokeWidth={2} aria-hidden="true" />
+          <Clipboard className="h-4 w-4 text-[var(--employee-accent)]" strokeWidth={2} aria-hidden="true" />
           Bảng công
         </h2>
         {!isError && days.length > 0 && (
@@ -79,18 +79,18 @@ export function EmployeeTimesheetPanel({
 
       {isLoading ? (
         <div className="space-y-2" aria-label="Đang tải bảng công">
-          {[1, 2, 3].map((item) => <div key={item} className="h-16 animate-pulse rounded-[14px] bg-base-200" />)}
+          {[1, 2, 3].map((item) => <div key={item} className="h-16 animate-pulse rounded-[14px] bg-[var(--employee-page)]" />)}
         </div>
       ) : isError ? (
         <EmployeeDataError title="Chưa tải được bảng công" onRetry={onRetry} isRetrying={isRetrying} />
       ) : days.length === 0 ? (
         <div className="relative isolate overflow-hidden rounded-[var(--employee-radius-card)] border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-5 py-7 text-center">
           <div className="absolute inset-0 -z-10 opacity-70 [background-image:radial-gradient(#b7e4ca_1px,transparent_1px)] [background-size:14px_14px]" />
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] bg-base-100 text-[var(--employee-accent)] ring-1 ring-inset ring-[var(--employee-accent-border)]">
-            <ClipboardList className="h-6 w-6" aria-hidden="true" />
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] bg-[var(--employee-surface)] text-[var(--employee-accent)] ring-1 ring-inset ring-[var(--employee-accent-border)]">
+            <Clipboard className="h-6 w-6" aria-hidden="true" />
           </span>
-          <p className="employee-type-card-title mt-3 text-base-content">Chưa có bảng công</p>
-          <p className="employee-type-body-sm mx-auto mt-1 max-w-[18rem] text-base-content">
+          <p className="employee-type-card-title mt-3 text-[var(--employee-text)]">Chưa có bảng công</p>
+          <p className="employee-type-body-sm mx-auto mt-1 max-w-[18rem] text-[var(--employee-text-secondary)]">
             Bảng công sẽ xuất hiện khi có ca làm được ghi nhận.
           </p>
         </div>
@@ -142,8 +142,8 @@ export function EmployeeTimesheetPanel({
       )}
 
       {!isError && isFetchingNextPage && (
-        <div className="flex items-center justify-center gap-2 py-4 text-sm text-base-content">
-          <LoaderCircle className="h-4 w-4 animate-spin text-[var(--employee-accent)]" aria-hidden="true" />
+        <div className="flex items-center justify-center gap-2 py-4 text-sm text-[var(--employee-text)]">
+          <RefreshCw05 className="h-4 w-4 animate-spin motion-reduce:animate-none text-[var(--employee-accent)]" aria-hidden="true" />
           Đang tải thêm...
         </div>
       )}

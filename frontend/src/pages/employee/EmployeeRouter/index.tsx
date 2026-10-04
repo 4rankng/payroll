@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import EmployeePage from "@/pages/employee/EmployeePage";
 import FlexiblePayEmployeePage from "@/pages/employee/FlexiblePayEmployeePage";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw05 } from "@untitledui/icons";
 import { EmployeeMobileShell } from "@/components/employees/EmployeeMobileShell";
 import { cn } from "@/lib/utils";
 
@@ -39,13 +39,13 @@ const EmployeeRouter = () => {
       <SectionErrorBoundary sectionName="trang nhân viên">
         <EmployeeMobileShell chrome="error" contentClassName="max-w-md">
           <div className="flex min-h-[calc(100dvh-9rem)] flex-col items-center justify-center text-center" role="alert">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 ring-1 ring-amber-200/70">
-              <AlertCircle className="h-8 w-8" />
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--employee-warning-soft)] text-fg-warning-primary ring-1 ring-[var(--employee-warning-border)]/70">
+              <AlertCircle className="h-8 w-8" aria-hidden="true" />
             </div>
-            <h1 className="employee-type-section-title text-slate-900">
+            <h1 className="employee-type-section-title text-[var(--employee-text)]">
               Chưa tải được hồ sơ
             </h1>
-            <p className="mt-2 text-sm leading-6 text-slate-500">
+            <p className="mt-2 text-sm leading-6 text-fg-tertiary">
               Kiểm tra kết nối rồi thử lại.
             </p>
             <Button
@@ -54,7 +54,7 @@ const EmployeeRouter = () => {
               onClick={handleRetry}
               disabled={isFetching}
             >
-              <RefreshCw className={cn("h-4 w-4", isFetching && "animate-spin")} />
+              <RefreshCw05 className={cn("h-4 w-4", isFetching && "animate-spin motion-reduce:animate-none")} aria-hidden="true" />
               {isFetching ? "Đang tải lại…" : "Tải lại"}
             </Button>
           </div>

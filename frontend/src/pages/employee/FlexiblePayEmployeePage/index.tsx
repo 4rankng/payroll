@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw05 } from "@untitledui/icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -275,11 +275,11 @@ const FlexiblePayEmployeePage = () => {
   if (isInitialLoading) {
     return (
       <EmployeeMobileShell chrome="skeleton" contentClassName="max-w-lg space-y-4">
-        <Skeleton className="h-14 w-full rounded-2xl border border-slate-300 bg-white" />
-        <Skeleton className="h-64 w-full rounded-2xl border border-slate-300 bg-white" />
+        <Skeleton className="h-14 w-full rounded-2xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)]" />
+        <Skeleton className="h-64 w-full rounded-2xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)]" />
         <div className="space-y-3">
           <Skeleton className="h-6 w-40 rounded-xl" />
-          <Skeleton className="h-36 w-full rounded-2xl border border-slate-300 bg-white" />
+          <Skeleton className="h-36 w-full rounded-2xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)]" />
         </div>
       </EmployeeMobileShell>
     );
@@ -316,20 +316,20 @@ const FlexiblePayEmployeePage = () => {
         {infoError ? (
           <section
             id="employee-advance-request"
-            className="scroll-mt-24 rounded-2xl border border-slate-300 bg-white px-5 py-6 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.03)] lg:col-start-1 lg:row-start-1"
+            className="scroll-mt-24 rounded-2xl border border-[var(--employee-border)] bg-[var(--employee-surface)] px-5 py-6 text-center shadow-[var(--employee-shadow)] lg:col-start-1 lg:row-start-1"
             role="alert"
           >
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-400">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--employee-error-soft)] text-utility-error-400">
               <AlertCircle className="h-6 w-6" aria-hidden="true" />
             </div>
-            <h2 className="mt-3 text-[1rem] font-semibold text-slate-700">Chưa tải được hạn mức ứng lương</h2>
-            <p className="mt-1 text-[0.8125rem] text-slate-500">Kiểm tra kết nối rồi thử lại.</p>
+            <h2 className="mt-3 text-[1rem] font-semibold text-fg-secondary">Chưa tải được hạn mức ứng lương</h2>
+            <p className="mt-1 text-[0.8125rem] text-fg-tertiary">Kiểm tra kết nối rồi thử lại.</p>
             <button
               type="button"
               onClick={() => { void refetchInfo(); }}
-              className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-[0.875rem] font-semibold text-slate-600 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+              className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] px-5 text-[0.875rem] font-semibold text-fg-secondary transition-all duration-150 hover:border-[var(--employee-accent-border)] hover:bg-[var(--employee-accent-soft)] hover:text-[var(--employee-accent)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]"
             >
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              <RefreshCw05 className="h-4 w-4" aria-hidden="true" />
               Tải lại
             </button>
           </section>

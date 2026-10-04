@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ChevronRight, Megaphone, X } from 'lucide-react';
+import { Announcement01, ChevronRight, XClose } from '@untitledui/icons';
 
 import { useEmployeeAdBanner, useRecordAdBannerClick } from '@/hooks/api/useEmployeeAdBanner';
 import { useIsMobile } from '@/hooks/useBreakpoint';
@@ -115,12 +115,12 @@ export const EmployeeAdBanner = () => {
             onClick={() => persistStage('hidden')}
             className="absolute right-1 top-1 flex h-11 w-11 items-center justify-center rounded-full text-[var(--employee-text-muted)] transition-colors hover:bg-[var(--employee-surface-muted)] hover:text-[var(--employee-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]"
           >
-            <X className="h-4 w-4" aria-hidden="true" />
+            <XClose className="h-4 w-4" aria-hidden="true" />
           </button>
 
           <div className="px-4 py-3.5">
             <div className="flex items-center gap-1.5 pr-8">
-              <Megaphone className="h-3.5 w-3.5 text-[var(--employee-accent)]" aria-hidden="true" />
+              <Announcement01 className="h-3.5 w-3.5 text-[var(--employee-accent)]" aria-hidden="true" />
               <span className="employee-type-label-caps text-[var(--employee-accent)]">
                 Quảng cáo
               </span>

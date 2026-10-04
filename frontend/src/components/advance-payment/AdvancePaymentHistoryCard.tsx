@@ -2,14 +2,14 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
-  Ban,
   CheckCircle,
   ChevronDown,
   Clock,
-  ReceiptText,
-  RefreshCw,
+  Receipt,
+  RefreshCw05,
+  SlashCircle01,
   XCircle,
-} from "lucide-react";
+} from "@untitledui/icons";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AdvancePaymentHistoryItem } from "@/types/api/advance-payment.types";
 import { getVietnameseAdvancePaymentStatus } from "@/utils/advancePaymentHelpers";
@@ -40,7 +40,7 @@ const STATUS_CONFIG = {
     text: "text-[var(--employee-error)]",
   },
   CANCELLED: {
-    icon: Ban,
+    icon: SlashCircle01,
     rail: "bg-[var(--employee-border-strong)]",
     text: "text-[var(--employee-text-secondary)]",
   },
@@ -127,7 +127,7 @@ function CancelPendingAction({
           type="button"
           onClick={handleDismissCancel}
           disabled={isCancelling}
-          className="h-12 rounded-xl px-4 text-[0.875rem] font-medium text-slate-500 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:opacity-50"
+          className="h-12 rounded-xl px-4 text-[0.875rem] font-medium text-fg-tertiary transition-colors hover:bg-[var(--employee-surface-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:opacity-50"
         >
           Không
         </button>
@@ -136,7 +136,7 @@ function CancelPendingAction({
           onClick={() => void handleCancelClick()}
           disabled={isCancelling}
           aria-busy={isCancelling}
-          className="h-12 rounded-xl bg-red-50 px-5 text-[0.875rem] font-semibold text-red-600 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-60"
+          className="h-12 rounded-xl bg-[var(--employee-error-soft)] px-5 text-[0.875rem] font-semibold text-[var(--employee-error)] transition-colors hover:bg-utility-error-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:opacity-60"
         >
           {isCancelling ? "Đang hủy…" : "Xác nhận"}
         </button>
@@ -151,7 +151,7 @@ function CancelPendingAction({
       onClick={() => void handleCancelClick()}
       disabled={isCancelling}
       aria-busy={isCancelling}
-      className="flex h-12 w-full items-center justify-center rounded-xl border border-red-200 bg-white text-[0.875rem] font-semibold text-red-600 transition-all duration-150 hover:border-red-300 hover:bg-red-50 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-60"
+      className="flex h-12 w-full items-center justify-center rounded-xl border border-utility-error-200 bg-[var(--employee-surface)] text-[0.875rem] font-semibold text-[var(--employee-error)] transition-all duration-150 hover:border-utility-error-300 hover:bg-[var(--employee-error-soft)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:opacity-60"
     >
       {isCancelling ? "Đang hủy…" : "Hủy yêu cầu"}
     </button>
@@ -222,6 +222,7 @@ function HistoryItem({
             )}
             aria-hidden="true"
           />
+
           <span className="sr-only">
             {isOpen ? "Thu gọn chi tiết" : "Xem phí và chi tiết"}
           </span>
@@ -333,22 +334,22 @@ export function AdvancePaymentHistoryCard({
         </div>
       ) : isError ? (
         <div className="px-5 py-10 text-center" role="alert">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-400">
-            <RefreshCw className="h-6 w-6" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--employee-error-soft)] text-utility-error-400">
+            <RefreshCw05 className="h-6 w-6" aria-hidden="true" />
           </div>
-          <p className="mt-4 text-[1rem] font-semibold text-slate-700">
+          <p className="mt-4 text-[1rem] font-semibold text-fg-secondary">
             Chưa tải được lịch sử
           </p>
-          <p className="mt-1 text-[0.8125rem] text-slate-500">
+          <p className="mt-1 text-[0.8125rem] text-fg-tertiary">
             Kiểm tra kết nối rồi thử lại.
           </p>
           {onRetry && (
             <button
               type="button"
               onClick={onRetry}
-              className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-[0.875rem] font-semibold text-slate-600 transition-all duration-150 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 active:scale-95"
+              className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] px-5 text-[0.875rem] font-semibold text-fg-secondary transition-all duration-150 hover:border-[var(--employee-accent-border)] hover:bg-[var(--employee-accent-soft)] hover:text-[var(--employee-accent)] active:scale-95"
             >
-              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              <RefreshCw05 className="h-4 w-4" aria-hidden="true" />
               Tải lại
             </button>
           )}
@@ -356,7 +357,7 @@ export function AdvancePaymentHistoryCard({
       ) : history.length === 0 ? (
         <div className="flex min-h-44 flex-col items-center justify-center bg-[var(--employee-accent-soft)] px-5 py-8 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-[var(--employee-surface)] text-[var(--employee-accent)] ring-1 ring-inset ring-[var(--employee-accent-border)]">
-            <ReceiptText className="h-6 w-6" aria-hidden="true" />
+            <Receipt className="h-6 w-6" aria-hidden="true" />
           </div>
           <p className="employee-type-card-title mt-3 text-[var(--employee-text)]">
             Chưa có yêu cầu ứng lương

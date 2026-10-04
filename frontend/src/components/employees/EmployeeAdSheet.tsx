@@ -1,4 +1,4 @@
-import { Check, ExternalLink, Megaphone, Phone, X } from 'lucide-react';
+import { Announcement01, CheckDone01, LinkExternal01, PhoneCall01, XClose } from '@untitledui/icons';
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/useBreakpoint';
@@ -11,16 +11,16 @@ const ZALO_ICON_SRC = '/employee/zalo-icon.webp';
 /**
  * Icon per CTA type — shared by the compact card and the sheet so both
  * surfaces render the same marks. Zalo uses its logo image; everything else
- * stays on lucide line icons.
+ * stays on @untitledui/icons line icons.
  */
 export const AdCTAIcon = ({ type, className }: { type: AdBannerCTAType; className: string }) => {
   if (type === 'phone') {
-    return <Phone className={className} aria-hidden="true" />;
+    return <PhoneCall01 className={className} aria-hidden="true" />;
   }
   if (type === 'zalo') {
     return <img src={ZALO_ICON_SRC} alt="" aria-hidden="true" className={className} />;
   }
-  return <ExternalLink className={className} aria-hidden="true" />;
+  return <LinkExternal01 className={className} aria-hidden="true" />;
 };
 
 interface AdContentProps {
@@ -59,12 +59,12 @@ export const EmployeeAdContent = ({
           onClick={onDismiss}
           className="absolute right-1.5 top-1.5 flex h-11 w-11 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         >
-          <X className="h-4 w-4" aria-hidden="true" />
+          <XClose className="h-4 w-4" aria-hidden="true" />
         </button>
       )}
 
       <div className="flex items-start gap-2.5">
-        <Megaphone aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-white/80" />
+        <Announcement01 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-white/80" />
         <h2 className="employee-type-strong leading-snug text-white">{banner.title}</h2>
       </div>
     </header>
@@ -85,7 +85,7 @@ export const EmployeeAdContent = ({
                 aria-hidden="true"
                 className="mt-px flex h-[1.125rem] w-[1.125rem] shrink-0 items-center justify-center rounded-full bg-[var(--employee-accent)] text-white"
               >
-                <Check className="h-3 w-3" strokeWidth={3} />
+                <CheckDone01 className="h-3 w-3" strokeWidth={3} />
               </span>
               <span className="leading-snug">{bullet}</span>
             </li>

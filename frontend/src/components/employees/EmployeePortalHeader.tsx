@@ -1,4 +1,4 @@
-import { Bell, LogOut, Settings } from "lucide-react";
+import { Bell01, LogOut01, Settings01 } from "@untitledui/icons";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -29,15 +29,15 @@ export function EmployeePortalHeader({
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--employee-border)] bg-[var(--employee-surface)]">
       <div
-        className="ct-navbar mx-auto min-h-0 max-w-6xl gap-3 px-4 pb-3 sm:px-5 lg:px-8"
+        className="mx-auto flex min-h-0 max-w-6xl items-center justify-between gap-3 px-4 pb-3 sm:px-5 lg:px-8"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 0.75rem)" }}
       >
-        <div className="ct-navbar-start min-w-0 flex-1 gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] p-1 transition-colors hover:border-[var(--employee-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-12 sm:w-12"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] p-1 transition-colors hover:border-[var(--employee-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] focus-visible:ring-offset-2 sm:h-12 sm:w-12"
                 aria-label="Menu tài khoản"
               >
                 <img
@@ -51,42 +51,42 @@ export function EmployeePortalHeader({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className="w-48 rounded-xl border-base-300 shadow-none"
+              className="w-48 rounded-xl"
               data-employee-ui=""
               data-theme="employee"
             >
-              <DropdownMenuItem onClick={onChangePassword} className="gap-2.5 rounded-lg py-2.5">
-                <Settings className="h-4 w-4 text-base-content" />
-                <span className="type-body">Đổi mật khẩu</span>
+              <DropdownMenuItem onClick={onChangePassword} className="min-h-11 gap-2.5 rounded-lg py-2.5">
+                <Settings01 className="h-4 w-4 text-fg-tertiary" aria-hidden="true" />
+                <span className="employee-type-action">Đổi mật khẩu</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onLogout} className="gap-2.5 rounded-lg py-2.5 text-error">
-                <LogOut className="h-4 w-4" />
-                <span className="type-body">Đăng xuất</span>
+              <DropdownMenuItem onClick={onLogout} className="min-h-11 gap-2.5 rounded-lg py-2.5 text-[var(--employee-error)] focus:text-[var(--employee-error)]">
+                <LogOut01 className="h-4 w-4" aria-hidden="true" />
+                <span className="employee-type-action">Đăng xuất</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="min-w-0">
             <div className="flex min-w-0 items-baseline gap-2">
-              <h1 className="employee-type-header-name truncate text-base-content" title={employeeName}>
+              <h1 className="employee-type-header-name truncate text-[var(--employee-text)]" title={employeeName}>
                 {employeeName || "bạn"}
               </h1>
-              <span className="hidden h-1 w-1 shrink-0 rounded-full bg-secondary sm:block" aria-hidden="true" />
+              <span className="hidden h-1 w-1 shrink-0 rounded-full bg-utility-gray-300 sm:block" aria-hidden="true" />
               <p className="employee-type-header-date hidden truncate capitalize text-[var(--employee-text-secondary)] tabular-nums sm:block">{todayLabel}</p>
             </div>
             <p className="employee-type-header-date mt-0.5 truncate capitalize text-[var(--employee-text-secondary)] tabular-nums sm:hidden">{todayLabel}</p>
           </div>
         </div>
-        <div className="ct-navbar-end w-auto shrink-0 gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            className="ct-btn ct-btn-ghost ct-btn-circle ct-indicator employee-icon-button"
+            className="employee-icon-button relative !rounded-full"
             onClick={onNotificationClick}
             aria-label="Thông báo"
           >
-            <Bell className="h-5 w-5" strokeWidth={2.1} />
+            <Bell01 className="h-5 w-5" strokeWidth={2.1} aria-hidden="true" />
             {unreadCount != null && unreadCount > 0 && (
-              <span className="ct-indicator-item ct-badge ct-badge-error ct-badge-sm employee-type-notification-badge employee-notification-pop min-w-[18px] px-1 text-error-content ring-2 ring-base-100">
+              <span className="employee-type-notification-badge employee-notification-pop absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[var(--employee-error)] px-1 text-white ring-2 ring-[var(--employee-surface)]">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}

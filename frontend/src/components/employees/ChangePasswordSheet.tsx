@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, Circle, Eye, EyeOff } from "lucide-react";
+import { CheckCircle, Circle, Eye, EyeOff } from "@untitledui/icons";
 import {
   Sheet,
   SheetContent,
@@ -245,7 +245,7 @@ export function ChangePasswordSheet({
                     }`}
                   >
                     {met ? (
-                      <CheckCircle2
+                      <CheckCircle
                         className="h-4 w-4 shrink-0"
                         aria-hidden="true"
                       />

@@ -1,16 +1,16 @@
 import { useId, useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
-  AlertTriangle,
+  AlertCircle,
   Calendar,
-  CheckCircle2,
+  CheckCircle,
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  CircleX,
-  Clock3,
-  History,
-} from "lucide-react";
+  Clock,
+  ClockRewind,
+  XCircle,
+} from "@untitledui/icons";
 import { useAttendanceHistory } from "@/hooks/api/useAttendance";
 import type { AttendanceRecord } from "@/services/attendance";
 import {
@@ -40,7 +40,7 @@ interface EmployeeAttendanceHistoryCardProps {
   fromDate: string;
   /** `yyyy-MM-dd` — last day of the month to show (drives the attendance query). */
   toDate: string;
-  /** Period label shown in the header (e.g. "07/2026"). */
+  /** Period label shown in the header icon chip. */
   monthLabel: string;
   /**
    * Configured self-check-in advance percentage (e.g. 70). When provided, each
@@ -59,9 +59,9 @@ function HistoryIssueChips({ details }: { details: AttendanceIssueDetail[] }) {
   return (
     <div className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(5rem,1fr))] gap-2">
       {details.map((detail) => (
-        <div key={detail.label} className="rounded-lg border border-amber-200 bg-white px-2.5 py-2">
-          <p className="employee-type-label-caps whitespace-nowrap text-[#667085]">{detail.label}</p>
-          <p className="employee-type-inline-amount mt-1 text-[#101828]">{detail.value}</p>
+        <div key={detail.label} className="rounded-lg border border-[var(--employee-warning-border)] bg-[var(--employee-surface)] px-2.5 py-2">
+          <p className="employee-type-label-caps whitespace-nowrap text-fg-tertiary">{detail.label}</p>
+          <p className="employee-type-inline-amount mt-1 text-[var(--employee-text)]">{detail.value}</p>
         </div>
       ))}
     </div>
@@ -70,10 +70,10 @@ function HistoryIssueChips({ details }: { details: AttendanceIssueDetail[] }) {
 
 function AttendanceStatusPill({ status }: { status: AttendanceRecord["status"] }) {
   const config = {
-    completed: { className: "bg-[#ECFDF3] text-[#067647]", label: "Hoàn thành", icon: CheckCircle2 },
-    rejected: { className: "bg-[#FFFAEB] text-[#B54708]", label: "Đã từ chối", icon: AlertTriangle },
-    orphaned: { className: "bg-[#FEF3F2] text-[#B42318]", label: "Thiếu tan ca", icon: CircleX },
-    checked_in: { className: "bg-[#EFF8FF] text-[#175CD3]", label: "Đang làm", icon: Clock3 },
+    completed: { className: "bg-success_subtle text-fg-success-primary", label: "Hoàn thành", icon: CheckCircle },
+    rejected: { className: "bg-warning_subtle text-fg-warning-primary", label: "Đã từ chối", icon: AlertCircle },
+    orphaned: { className: "bg-error_subtle text-fg-error-primary", label: "Thiếu tan ca", icon: XCircle },
+    checked_in: { className: "bg-[var(--employee-info-soft)] text-[var(--employee-info)]", label: "Đang làm", icon: Clock },
   }[status];
   const Icon = config.icon;
 
@@ -110,9 +110,9 @@ function AttendanceHistoryRow({ attendance, advancePercentage }: { attendance: A
     <article className="px-4 py-4 sm:px-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="employee-type-card-title text-[#101828]">Ngày {formatDate(attendance.date)}</p>
-          <p className="employee-type-body-sm mt-1 flex items-center gap-1.5 text-[#667085] tabular-nums">
-            <Clock3 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <p className="employee-type-card-title text-[var(--employee-text)]">Ngày {formatDate(attendance.date)}</p>
+          <p className="employee-type-body-sm mt-1 flex items-center gap-1.5 text-fg-tertiary tabular-nums">
+            <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>{formatTime(attendance.check_in_time)} — {formatTime(attendance.check_out_time)}</span>
           </p>
         </div>
@@ -122,56 +122,56 @@ function AttendanceHistoryRow({ attendance, advancePercentage }: { attendance: A
       {showAdvanceable && advanceableAmount !== null ? (
         <dl
           data-testid="attendance-earnings-summary"
-          className="mt-3 grid grid-cols-2 gap-x-3 border-t border-[#EAECF0] pt-3"
+          className="mt-3 grid grid-cols-2 gap-x-3 border-t border-utility-gray-200 pt-3"
         >
-          <div className="min-w-0 border-r border-[#EAECF0] pr-3">
-            <dt className="employee-type-label text-[#667085]">Tiền công</dt>
-            <dd className="employee-type-inline-amount mt-1 text-[#101828] tabular-nums">
+          <div className="min-w-0 border-r border-utility-gray-200 pr-3">
+            <dt className="employee-type-label text-fg-tertiary">Tiền công</dt>
+            <dd className="employee-type-inline-amount mt-1 text-[var(--employee-text)] tabular-nums">
               {attendance.earning_amount?.toLocaleString("vi-VN")}
               <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
             </dd>
           </div>
           <div className="min-w-0 text-right">
-            <dt className="employee-type-label text-[#667085]">Được ứng ({advancePercentage}%)</dt>
-            <dd className="employee-type-inline-amount mt-1 text-[#067647] tabular-nums">
+            <dt className="employee-type-label text-fg-tertiary">Được ứng ({advancePercentage}%)</dt>
+            <dd className="employee-type-inline-amount mt-1 text-fg-success-primary tabular-nums">
               +{advanceableAmount.toLocaleString("vi-VN")}
               <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
             </dd>
           </div>
         </dl>
       ) : (
-        <div className="mt-3 flex items-center justify-between gap-3 border-t border-[#EAECF0] pt-3">
-          <span className="employee-type-label text-[#667085]">Tiền công</span>
+        <div className="mt-3 flex items-center justify-between gap-3 border-t border-utility-gray-200 pt-3">
+          <span className="employee-type-label text-fg-tertiary">Tiền công</span>
           {salaryRecorded ? (
-            <span className="employee-type-inline-amount text-[#101828] tabular-nums">
+            <span className="employee-type-inline-amount text-[var(--employee-text)] tabular-nums">
               {attendance.earning_amount?.toLocaleString("vi-VN")}
               <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
             </span>
           ) : (
-            <span className={cn("employee-type-body-sm font-semibold", salaryMissing ? "text-[#B54708]" : "text-[#475467]")}>{salaryMissing ? "Chưa ghi lương" : "Chưa có"}</span>
+            <span className={cn("employee-type-body-sm font-semibold", salaryMissing ? "text-fg-warning-primary" : "text-fg-secondary")}>{salaryMissing ? "Chưa ghi lương" : "Chưa có"}</span>
           )}
         </div>
       )}
 
       {needsDetail && (
-        <div className="mt-3 border-t border-[#EAECF0] pt-2">
+        <div className="mt-3 border-t border-utility-gray-200 pt-2">
           <button
             type="button"
             aria-expanded={isDetailOpen}
             aria-controls={detailId}
             onClick={() => setIsDetailOpen((current) => !current)}
-            className="employee-type-action flex min-h-11 w-full items-center justify-between rounded-lg px-1 text-left text-[#B54708] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B54708] focus-visible:ring-offset-2"
+            className="employee-type-action flex min-h-11 w-full items-center justify-between rounded-lg px-1 text-fg-warning-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] focus-visible:ring-offset-2"
           >
             <span className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+              <AlertCircle className="h-4 w-4" aria-hidden="true" />
               Xem lý do
             </span>
             <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isDetailOpen && "rotate-180")} />
           </button>
           {isDetailOpen && (
-            <div id={detailId} className="rounded-lg bg-[#FFFAEB] px-3 py-3 text-[#7A2E0E]">
+            <div id={detailId} className="rounded-lg bg-warning_subtle px-3 py-3 text-[#93370d]">
               <p className="employee-type-strong">{issue.title}</p>
-              <p className="employee-type-body-sm mt-1 text-[#B54708]">{issue.description}</p>
+              <p className="employee-type-body-sm mt-1 text-fg-warning-primary">{issue.description}</p>
               <HistoryIssueChips details={issue.details} />
             </div>
           )}
@@ -216,7 +216,7 @@ export function EmployeeAttendanceHistoryCard({
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
-            <History className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden="true" />
+            <ClockRewind className="h-[18px] w-[18px]" strokeWidth={2.25} aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <h2 id="employee-attendance-title" className="employee-type-card-title text-[var(--employee-text)]">Chấm công</h2>
@@ -241,20 +241,20 @@ export function EmployeeAttendanceHistoryCard({
           className="mx-4 mb-4"
         />
       ) : history.length === 0 ? (
-        <div className="mx-4 mb-4 rounded-xl border border-dashed border-[#D0D5DD] px-4 py-7 text-center text-[#475467]">
-          <Calendar className="mx-auto mb-2 h-8 w-8 text-[#667085]" aria-hidden="true" />
+        <div className="mx-4 mb-4 rounded-xl border border-dashed border-utility-gray-300 px-4 py-7 text-center text-fg-secondary">
+          <Calendar className="mx-auto mb-2 h-8 w-8 text-fg-tertiary" aria-hidden="true" />
           <p className="employee-type-card-title">Chưa có ca làm trong tháng {monthLabel}</p>
           <p className="employee-type-body-sm mt-1">Chọn tháng khác để xem lịch sử trước đó.</p>
         </div>
       ) : (
-        <div id={panelId} className="divide-y divide-[#EAECF0] border-y border-[#EAECF0]">
+        <div id={panelId} className="divide-y divide-utility-gray-200 border-y border-utility-gray-200">
           {visibleHistory.map((attendance) => <AttendanceHistoryRow key={attendance.id} attendance={attendance} advancePercentage={advancePercentage} />)}
         </div>
       )}
 
       {!isError && hasMoreHistory && (
         <div className="px-4 py-3 sm:px-5">
-          <button type="button" aria-expanded={isFullHistoryOpen} aria-controls={panelId} onClick={() => setIsFullHistoryOpen((current) => !current)} className="employee-type-action flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-[#067647] transition-colors hover:bg-[#F0FDF4] focus-visible:ring-2 focus-visible:ring-[#07883F]">
+          <button type="button" aria-expanded={isFullHistoryOpen} aria-controls={panelId} onClick={() => setIsFullHistoryOpen((current) => !current)} className="employee-type-action flex min-h-11 w-full items-center justify-between rounded-lg px-3 text-fg-success-primary transition-colors hover:bg-success_subtle focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]">
             <span>{isFullHistoryOpen ? "Thu gọn lịch chấm công" : "Xem toàn bộ lịch chấm công"}</span>
             {isFullHistoryOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>

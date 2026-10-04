@@ -2,10 +2,10 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   AlertCircle,
   ArrowRight,
-  CheckCircle2,
-  Clock3,
-  Lock,
-} from "lucide-react";
+  CheckCircle,
+  Clock,
+  Lock01,
+} from "@untitledui/icons";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import {
   ADVANCE_REQUEST_WINDOW_OPEN_DAY,
@@ -175,10 +175,10 @@ export function AdvancePaymentRequestForm({
       return {
         variant: "closed",
         chipLabel: "Đã đóng",
-        chipClassName: "bg-slate-100 text-slate-600 border border-slate-300",
+        chipClassName: "bg-[var(--employee-page)] text-fg-secondary border border-[var(--employee-border-strong)]",
         chipIcon: "lock",
         amount: null,
-        amountClassName: "text-slate-500",
+        amountClassName: "text-fg-tertiary",
         amountLabel: `Kỳ ứng lương ${viewedMonthLabel} kết thúc`,
         helperLine: "Kỳ ứng lương này đã đóng, chọn kỳ hiện tại để tiếp tục.",
         actionEnabled: false,
@@ -189,10 +189,10 @@ export function AdvancePaymentRequestForm({
       return {
         variant: "no-bank",
         chipLabel: "Chưa mở",
-        chipClassName: "bg-amber-50 text-amber-700 border border-amber-200",
+        chipClassName: "bg-[var(--employee-warning-soft)] text-[var(--employee-warning)] border border-[var(--employee-warning-border)]",
         chipIcon: "clock",
         amount: null,
-        amountClassName: "text-slate-500",
+        amountClassName: "text-fg-tertiary",
         amountLabel: "Chưa có tài khoản nhận tiền",
         helperLine: "Liên hệ quản lý cập nhật thông tin ngân hàng để ứng lương.",
         actionEnabled: false,
@@ -203,10 +203,10 @@ export function AdvancePaymentRequestForm({
       return {
         variant: "upcoming",
         chipLabel: "Chưa mở",
-        chipClassName: "bg-amber-50 text-amber-700 border border-amber-200",
+        chipClassName: "bg-[var(--employee-warning-soft)] text-[var(--employee-warning)] border border-[var(--employee-warning-border)]",
         chipIcon: "clock",
         amount: null,
-        amountClassName: "text-slate-500",
+        amountClassName: "text-fg-tertiary",
         amountLabel: "Chưa có hạn mức",
         helperLine: `Chờ bảng lương tháng ${viewedMonthLabel}`,
         actionEnabled: false,
@@ -217,10 +217,10 @@ export function AdvancePaymentRequestForm({
       return {
         variant: "exhausted",
         chipLabel: "Đã dùng hết",
-        chipClassName: "bg-amber-50 text-amber-700 border border-amber-200",
+        chipClassName: "bg-[var(--employee-warning-soft)] text-[var(--employee-warning)] border border-[var(--employee-warning-border)]",
         chipIcon: "clock",
         amount: 0,
-        amountClassName: "text-slate-500",
+        amountClassName: "text-fg-tertiary",
         amountLabel: "Đã dùng hết hạn mức",
         helperLine: exhaustedNextWindowLine,
         actionEnabled: false,
@@ -231,10 +231,10 @@ export function AdvancePaymentRequestForm({
       return {
         variant: "server-blocked",
         chipLabel: "Chưa mở",
-        chipClassName: "bg-amber-50 text-amber-700 border border-amber-200",
+        chipClassName: "bg-[var(--employee-warning-soft)] text-[var(--employee-warning)] border border-[var(--employee-warning-border)]",
         chipIcon: "clock",
         amount: null,
-        amountClassName: "text-slate-500",
+        amountClassName: "text-fg-tertiary",
         amountLabel: info.canRequestTitle || "Chưa thể ứng lương",
         helperLine: info.canRequestReason || "Vui lòng quay lại trong kỳ ứng lương tiếp theo.",
         actionEnabled: false,
@@ -244,10 +244,10 @@ export function AdvancePaymentRequestForm({
     return {
       variant: "open",
       chipLabel: "Đang mở",
-      chipClassName: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+      chipClassName: "bg-[var(--employee-accent-soft)] text-[var(--employee-accent)] border border-[var(--employee-accent-border)]",
       chipIcon: "check",
       amount: selectedQuotaRemaining,
-      amountClassName: "text-slate-900",
+      amountClassName: "text-[var(--employee-text)]",
       amountLabel: "Có thể ứng",
       helperLine: null,
       actionEnabled: true,
@@ -356,15 +356,15 @@ export function AdvancePaymentRequestForm({
   const showFormControls = isOpen && !visibleConfirmation;
 
   const StatusIcon = status.chipIcon === "check"
-    ? CheckCircle2
+    ? CheckCircle
     : status.chipIcon === "lock"
-    ? Lock
-    : Clock3;
+    ? Lock01
+    : Clock;
 
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_4px_16px_rgba(0,0,0,0.03)]",
+        "overflow-hidden rounded-2xl border border-[var(--employee-border)] bg-[var(--employee-surface)] shadow-[var(--employee-shadow)]",
         className,
       )}
       style={style}
@@ -415,7 +415,7 @@ export function AdvancePaymentRequestForm({
               <AnimatedCurrency amount={status.amount} />
             )}
           </p>
-          <p className="mt-1.5 text-[0.75rem] font-medium text-slate-500">
+          <p className="mt-1.5 text-[0.75rem] font-medium text-fg-tertiary">
             {status.amountLabel}
           </p>
         </div>
@@ -425,13 +425,13 @@ export function AdvancePaymentRequestForm({
         {showQuotaProgress && (
           <div className="mt-4">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-[0.75rem] font-medium text-slate-500">Tiến độ hạn mức</span>
-              <span className="text-[0.75rem] font-semibold tabular-nums text-slate-600">
+              <span className="text-[0.75rem] font-medium text-fg-tertiary">Tiến độ hạn mức</span>
+              <span className="text-[0.75rem] font-semibold tabular-nums text-fg-secondary">
                 {progressValue}%
               </span>
             </div>
             <div
-              className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-200/70"
+              className="relative mt-1.5 h-1.5 overflow-hidden rounded-full bg-utility-gray-200"
               role="progressbar"
               aria-label="Hạn mức ứng lương đã sử dụng"
               aria-valuemin={0}
@@ -439,13 +439,13 @@ export function AdvancePaymentRequestForm({
               aria-valuenow={Math.round(progressValue)}
             >
               <div
-                className="absolute inset-y-0 left-0 rounded-full bg-emerald-500 transition-[width] duration-500 ease-out"
+                className="absolute inset-y-0 left-0 rounded-full bg-[var(--employee-accent)] transition-[width] duration-500 ease-out"
                 style={{ width: `${progressValue}%` }}
               />
             </div>
             <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-[0.75rem]">
-              <span className="text-slate-500">Đã dùng {formatCurrency(allowanceUsedAmount)}</span>
-              <span className="font-semibold tabular-nums text-slate-700">
+              <span className="text-fg-tertiary">Đã dùng {formatCurrency(allowanceUsedAmount)}</span>
+              <span className="font-semibold tabular-nums text-fg-secondary">
                 Hạn mức {formatCurrency(quotaSummary.maxAdvanceAmount)}
               </span>
             </div>
@@ -455,18 +455,18 @@ export function AdvancePaymentRequestForm({
         {/* Confirmation acknowledgement */}
         {visibleConfirmation && (
           <div
-            className="mt-4 flex items-start gap-3.5 rounded-xl border border-emerald-200 bg-emerald-50/50 px-4 py-4"
+            className="mt-4 flex items-start gap-3.5 rounded-xl border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)]/50 px-4 py-4"
             role="status"
             aria-live="polite"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-              <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--employee-accent-ring)] text-[var(--employee-accent)]">
+              <CheckCircle className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <p className="text-[0.9375rem] font-semibold text-slate-800">
+              <p className="text-[0.9375rem] font-semibold text-[var(--employee-text)]">
                 Yêu cầu đã gửi
               </p>
-              <p className="mt-0.5 text-[0.8125rem] text-slate-500">
+              <p className="mt-0.5 text-[0.8125rem] text-fg-tertiary">
                 {formatCurrency(visibleConfirmation.amount)} · Gửi ngày{" "}
                 {formatDate(visibleConfirmation.submittedAt)}
               </p>
@@ -482,7 +482,7 @@ export function AdvancePaymentRequestForm({
         <div className="px-4 pb-4 pt-4">
           <label
             htmlFor="advance-payment-amount"
-            className="block text-[0.8125rem] font-semibold text-slate-600"
+            className="block text-[0.8125rem] font-semibold text-fg-secondary"
           >
             Số tiền muốn ứng
           </label>
@@ -497,13 +497,13 @@ export function AdvancePaymentRequestForm({
               value={formatAmountInput(amount)}
               onChange={handleAmountChange}
               className={cn(
-                "h-14 w-full rounded-xl border bg-white px-4 pr-16 text-[1.125rem] font-semibold tabular-nums text-slate-900 placeholder:text-slate-300 transition-all duration-150",
+                "h-14 w-full rounded-xl border bg-[var(--employee-surface)] px-4 pr-16 text-[1.125rem] font-semibold tabular-nums text-[var(--employee-text)] placeholder:text-fg-disabled transition-all duration-150",
                 validationError
-                  ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-500/20"
-                  : "border-slate-300 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none",
+                  ? "border-utility-error-300 focus:border-utility-error-400 focus:ring-2 focus:ring-utility-error-500/20"
+                  : "border-[var(--employee-border-strong)] focus:border-[var(--employee-accent)] focus:ring-2 focus:ring-[var(--employee-accent-ring)] focus:outline-none",
               )}
             />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[0.875rem] font-medium text-slate-500">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[0.875rem] font-medium text-fg-tertiary">
               ₫
             </span>
           </div>
@@ -518,10 +518,10 @@ export function AdvancePaymentRequestForm({
                   aria-pressed={numericAmount === quickAmount.amount}
                   onClick={() => setAmountFromNumber(quickAmount.amount)}
                   className={cn(
-                    "h-11 rounded-xl text-[0.8125rem] font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 active:scale-95",
+                    "h-11 rounded-xl text-[0.8125rem] font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] focus-visible:ring-offset-2 active:scale-95",
                     numericAmount === quickAmount.amount
-                      ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/20"
-                      : "border border-slate-300 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-700",
+                      ? "bg-[var(--employee-accent)] text-white shadow-sm"
+                      : "border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] text-fg-secondary hover:border-[var(--employee-accent-border)] hover:bg-[var(--employee-accent-soft)]/50 hover:text-[var(--employee-accent)]",
                   )}
                 >
                   {quickAmount.label}
@@ -532,33 +532,33 @@ export function AdvancePaymentRequestForm({
 
           {/* Validation error */}
           {validationError && (
-            <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-[0.8125rem] text-red-600">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-utility-error-200 bg-[var(--employee-error-soft)] px-3.5 py-2.5 text-[0.8125rem] text-[var(--employee-error)]">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               {validationError}
             </div>
           )}
 
           {/* Fee preview */}
           {canShowFeePreview && feeError ? (
-            <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+            <div role="alert" className="mt-4 rounded-xl border border-utility-error-200 bg-[var(--employee-error-soft)] px-3.5 py-2.5 text-sm text-[var(--employee-error)]">
               <p>Không thể tính phí chuyển tiền. Vui lòng thử lại.</p>
               {onRetryFee && (
-                <button type="button" onClick={onRetryFee} className="mt-2 min-h-11 rounded-lg border border-red-300 bg-white px-3 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">
+                <button type="button" onClick={onRetryFee} className="mt-2 min-h-11 rounded-lg border border-utility-error-300 bg-[var(--employee-surface)] px-3 font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)]">
                   Tính lại phí
                 </button>
               )}
             </div>
           ) : canShowFeePreview && (
-            <div className="mt-4 grid grid-cols-2 divide-x divide-slate-300 rounded-xl border border-slate-300 bg-slate-50/50">
+            <div className="mt-4 grid grid-cols-2 divide-x divide-[var(--employee-border-strong)] rounded-xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface-muted)]">
               <div className="px-4 py-3">
-                <p className="text-[0.75rem] font-medium text-slate-600">Phí chuyển tiền</p>
-                <p className="mt-1 text-[1rem] font-semibold tabular-nums text-slate-600">
+                <p className="text-[0.75rem] font-medium text-fg-secondary">Phí chuyển tiền</p>
+                <p className="mt-1 text-[1rem] font-semibold tabular-nums text-fg-secondary">
                   {feeDetails ? formatCurrency(feeDetails.fee) : "Đang tính..."}
                 </p>
               </div>
               <div className="px-4 py-3 text-right">
-                <p className="text-[0.75rem] font-medium text-slate-600">Bạn thực nhận</p>
-                <p className="mt-1 text-[1rem] font-semibold tabular-nums text-emerald-700">
+                <p className="text-[0.75rem] font-medium text-fg-secondary">Bạn thực nhận</p>
+                <p className="mt-1 text-[1rem] font-semibold tabular-nums text-[var(--employee-accent)]">
                   {feeDetails ? formatCurrency(feeDetails.netAmount) : "Đang tính..."}
                 </p>
               </div>
@@ -574,7 +574,7 @@ export function AdvancePaymentRequestForm({
             <button
               type="button"
               onClick={onBankAction}
-              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-[0.9375rem] font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-xl hover:shadow-emerald-500/30 active:scale-[0.98]"
+              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--employee-accent)] text-[0.9375rem] font-semibold text-white shadow-[var(--employee-cta-shadow)] transition-all duration-200 hover:bg-[var(--employee-accent-strong)] active:scale-[0.98] focus-visible:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--employee-focus-ring)]"
             >
               Xem tài khoản nhận tiền
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -586,11 +586,11 @@ export function AdvancePaymentRequestForm({
               type="button"
               onClick={handleSubmit}
               disabled={!canSubmit}
-              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-[0.9375rem] font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all duration-200 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-xl hover:shadow-emerald-500/30 active:scale-[0.98] disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-500 disabled:shadow-none disabled:cursor-not-allowed disabled:hover:from-slate-200 disabled:hover:to-slate-200"
+              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl bg-[var(--employee-accent)] text-[0.9375rem] font-semibold text-white shadow-[var(--employee-cta-shadow)] transition-all duration-200 hover:bg-[var(--employee-accent-strong)] active:scale-[0.98] focus-visible:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--employee-focus-ring)] disabled:cursor-not-allowed disabled:bg-[var(--employee-border)] disabled:text-fg-tertiary disabled:shadow-none"
             >
               {isPending ? (
                 <>
-                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />
                   Đang gửi...
                 </>
               ) : (
@@ -606,30 +606,30 @@ export function AdvancePaymentRequestForm({
             <button
               type="button"
               disabled
-              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-300 bg-slate-50 text-[0.9375rem] font-semibold text-slate-500 cursor-not-allowed"
+              className="flex h-14 w-full items-center justify-center gap-2.5 rounded-xl border border-[var(--employee-border-strong)] bg-[var(--employee-page)] text-[0.9375rem] font-semibold text-fg-tertiary cursor-not-allowed"
             >
               {status.actionLabel}
-              <Lock className="h-4 w-4" aria-hidden="true" />
+              <Lock01 className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         ))}
 
       {/* Pending request indicator */}
       {!visibleConfirmation && latestPendingRequest && (
-        <div className="border-t border-slate-200 px-4 py-3.5" role="status">
+        <div className="border-t border-[var(--employee-border)] px-4 py-3.5" role="status">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
-              <Clock3 className="h-4 w-4" aria-hidden="true" />
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-warning-soft)] text-[var(--employee-warning)]">
+              <Clock className="h-4 w-4" aria-hidden="true" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[0.8125rem] font-semibold text-amber-700">Yêu cầu đang chờ xử lý</p>
+              <p className="text-[0.8125rem] font-semibold text-[var(--employee-warning)]">Yêu cầu đang chờ xử lý</p>
               {latestPendingDate && (
-                <p className="mt-0.5 text-[0.75rem] text-amber-700">
+                <p className="mt-0.5 text-[0.75rem] text-[var(--employee-warning)]">
                   Gửi ngày {latestPendingDate}
                 </p>
               )}
             </div>
-            <span className="shrink-0 text-[0.9375rem] font-bold tabular-nums text-amber-700">
+            <span className="shrink-0 text-[0.9375rem] font-bold tabular-nums text-[var(--employee-warning)]">
               {formatCurrency(latestPendingRequest.requestAmount)}
             </span>
           </div>
@@ -638,12 +638,12 @@ export function AdvancePaymentRequestForm({
 
       {/* Helper line */}
       {status.helperLine && !visibleConfirmation && (
-        <div className="border-t border-slate-200 px-4 py-3.5">
-          <div className="flex items-start gap-2.5 rounded-lg bg-slate-50 px-3.5 py-3 text-[0.8125rem] text-slate-500">
+        <div className="border-t border-[var(--employee-border)] px-4 py-3.5">
+          <div className="flex items-start gap-2.5 rounded-lg bg-[var(--employee-surface-muted)] px-3.5 py-3 text-[0.8125rem] text-fg-tertiary">
             {status.chipIcon === "lock" ? (
-              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+              <Lock01 className="mt-0.5 h-4 w-4 shrink-0 text-fg-tertiary" aria-hidden="true" />
             ) : (
-              <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+              <Clock className="mt-0.5 h-4 w-4 shrink-0 text-fg-tertiary" aria-hidden="true" />
             )}
             <p className="leading-relaxed">{status.helperLine}</p>
           </div>

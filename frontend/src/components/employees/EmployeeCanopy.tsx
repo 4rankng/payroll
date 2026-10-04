@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Bell, Eye, EyeOff, LogOut, Settings } from "lucide-react";
+import { Bell01, Eye, EyeOff, LogOut01, Settings01 } from "@untitledui/icons";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -97,7 +97,7 @@ export function EmployeeCanopy({
               aria-label="Thông báo"
               className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-white/90 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--employee-accent)]"
             >
-              <Bell className="h-[1.125rem] w-[1.125rem]" strokeWidth={2} aria-hidden="true" />
+              <Bell01 className="h-[1.125rem] w-[1.125rem]" strokeWidth={2} aria-hidden="true" />
               {unreadCount != null && unreadCount > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white px-1 text-[0.6875rem] font-bold leading-none text-[var(--employee-accent-strong)] ring-2 ring-[#065c32]">
                   {unreadCount > 9 ? "9+" : unreadCount}
@@ -122,17 +122,17 @@ export function EmployeeCanopy({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-52 rounded-2xl border border-slate-300 bg-white p-1.5 shadow-xl shadow-slate-900/10"
+                className="w-52 rounded-2xl p-1.5"
                 data-employee-ui=""
                 data-theme="employee"
               >
-                <DropdownMenuItem onClick={onChangePassword} className="min-h-11 gap-3 rounded-xl py-2.5 text-slate-700 focus:bg-slate-50 focus:text-slate-900">
-                  <Settings className="h-4 w-4 text-slate-500" />
+                <DropdownMenuItem onClick={onChangePassword} className="min-h-11 gap-3 rounded-xl py-2.5 text-fg-secondary">
+                  <Settings01 className="h-4 w-4 text-fg-tertiary" aria-hidden="true" />
                   <span className="employee-type-action">Đổi mật khẩu</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="my-1 bg-slate-100" />
-                <DropdownMenuItem onClick={onLogout} className="min-h-11 gap-3 rounded-xl py-2.5 text-red-600 focus:bg-red-50 focus:text-red-700">
-                  <LogOut className="h-4 w-4" />
+                <DropdownMenuSeparator className="my-1" />
+                <DropdownMenuItem onClick={onLogout} className="min-h-11 gap-3 rounded-xl py-2.5 text-[var(--employee-error)] focus:text-[var(--employee-error)]">
+                  <LogOut01 className="h-4 w-4" aria-hidden="true" />
                   <span className="employee-type-action">Đăng xuất</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -160,6 +160,7 @@ export function EmployeeCanopy({
                 ) : (
                   <EyeOff className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
                 )}
+
               </button>
             </div>
 

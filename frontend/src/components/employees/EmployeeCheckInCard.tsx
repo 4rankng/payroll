@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { AlertCircle, BadgeCheck, BriefcaseBusiness, CalendarClock, ChevronDown, Clock, DoorOpen, Loader2, MapPin, RefreshCw, RotateCcw, Settings, WalletCards } from "lucide-react";
+import { AlertCircle, Briefcase01, CheckVerified01, ChevronDown, Clock, ClockStopwatch, LogOut02, MarkerPin01, RefreshCw05, Settings01, Wallet01 } from "@untitledui/icons";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -115,14 +115,14 @@ function IssueDetailChips({ details, tone }: { details: AttendanceIssueDetail[];
 
   const toneClass =
     tone === "orange"
-      ? "border-orange-200 bg-white/80 text-orange-950"
-      : "border-amber-200 bg-white/80 text-amber-950";
+      ? "border-utility-warning-300 bg-[var(--employee-surface)]/80 text-[var(--employee-warning-strong)]"
+      : "border-[var(--employee-warning-border)] bg-[var(--employee-surface)]/80 text-[var(--employee-warning-strong)]";
 
   return (
     <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.18fr)] gap-2">
       {details.map((detail) => (
         <div key={detail.label} className={`rounded-lg border px-2.5 py-2 ${toneClass}`}>
-          <p className="employee-type-pill whitespace-nowrap uppercase text-slate-500">{detail.label}</p>
+          <p className="employee-type-pill whitespace-nowrap uppercase text-fg-tertiary">{detail.label}</p>
           <p className="employee-type-body mt-0.5 font-semibold">{detail.value}</p>
         </div>
       ))}
@@ -132,7 +132,7 @@ function IssueDetailChips({ details, tone }: { details: AttendanceIssueDetail[];
 
 function MapFallback() {
   return (
-    <div className="employee-type-body-sm rounded-xl border border-sky-200 bg-white px-3 py-3 font-medium text-slate-600">
+    <div className="employee-type-body-sm rounded-xl border border-[var(--employee-info-border)] bg-[var(--employee-surface)] px-3 py-3 font-medium text-fg-secondary">
       Đang tải bản đồ vị trí...
     </div>
   );
@@ -266,17 +266,17 @@ export function AttendanceReference({
     schedule.shift_name?.trim() || (index === 0 ? "Ca ngày" : "Ca đêm");
 
   return (
-    <section className="mt-6 space-y-6 border-t border-slate-300 pt-5" aria-label="Thông tin chấm công">
+    <section className="mt-6 space-y-6 border-t border-[var(--employee-border-strong)] pt-5" aria-label="Thông tin chấm công">
       {schedules.length > 0 ? (
         <div>
-          <h3 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-slate-950">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-              <CalendarClock className="h-5 w-5" aria-hidden="true" />
+          <h3 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-[var(--employee-text)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+              <ClockStopwatch className="h-5 w-5" aria-hidden="true" />
             </span>
             Ca làm việc
           </h3>
           {schedules.length > 1 ? (
-            <div className="mt-5 grid grid-cols-2 rounded-2xl border border-slate-300 bg-slate-100/80 p-1.5" role="tablist" aria-label="Chọn ca làm">
+            <div className="mt-5 grid grid-cols-2 rounded-2xl border border-[var(--employee-border-strong)] bg-[var(--employee-page)] p-1.5" role="tablist" aria-label="Chọn ca làm">
               {schedules.map((schedule, index) => (
                 <button
                   key={`${schedule.shift_start}-${schedule.shift_end}`}
@@ -286,7 +286,7 @@ export function AttendanceReference({
                   aria-controls={selectedShiftPanelId}
                   aria-selected={selectedShiftIndex === index}
                   onClick={() => setSelectedShiftIndex(index)}
-                  className={`employee-type-action min-h-12 rounded-xl font-semibold transition-colors duration-200 ${selectedShiftIndex === index ? "bg-emerald-600 text-white" : "text-slate-600 hover:bg-white hover:text-slate-950"}`}
+                  className={`employee-type-action min-h-12 rounded-xl font-semibold transition-colors duration-200 ${selectedShiftIndex === index ? "bg-[var(--employee-accent)] text-white" : "text-fg-secondary hover:bg-[var(--employee-surface)] hover:text-[var(--employee-text)]"}`}
                 >
                   {resolveShiftLabel(schedule, index)}
                 </button>
@@ -297,14 +297,14 @@ export function AttendanceReference({
             <div
               id={selectedShiftPanelId}
               aria-labelledby={selectedShiftTabId}
-              className="mt-5 overflow-hidden rounded-[22px] border border-slate-300 bg-white"
+              className="mt-5 overflow-hidden rounded-[22px] border border-[var(--employee-border-strong)] bg-[var(--employee-surface)]"
               role="tabpanel"
             >
               <div role="table" aria-label="Khung giờ ca làm">
-                <div role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] border-b border-slate-200 bg-slate-50/70 px-5 py-2.5">
+                <div role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] border-b border-[var(--employee-border)] bg-[var(--employee-surface-muted)]/70 px-5 py-2.5">
                   <span role="columnheader" aria-label="Loại giờ" />
-                  <span role="columnheader" className="employee-type-pill text-center uppercase text-slate-500">Từ</span>
-                  <span role="columnheader" className="employee-type-pill text-center uppercase text-slate-500">Đến</span>
+                  <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Từ</span>
+                  <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Đến</span>
                 </div>
                 {[
                   { label: "Ca làm", startIso: selectedSchedule.shift_start, endIso: selectedSchedule.shift_end },
@@ -314,10 +314,10 @@ export function AttendanceReference({
                   const start = safeFormatTime(row.startIso);
                   const end = safeFormatTime(row.endIso);
                   return (
-                    <div key={row.label} role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] items-center border-b border-slate-200 px-5 py-4 last:border-b-0">
-                      <span role="rowheader" className="employee-type-body font-semibold text-slate-700">{row.label}</span>
-                      <span role="cell" className="text-center text-lg font-bold tracking-tight text-slate-950">{start}</span>
-                      <span role="cell" className="text-center text-lg font-bold tracking-tight text-slate-950">{end}</span>
+                    <div key={row.label} role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] items-center border-b border-[var(--employee-border)] px-5 py-4 last:border-b-0">
+                      <span role="rowheader" className="employee-type-body font-semibold text-fg-secondary">{row.label}</span>
+                      <span role="cell" className="text-center text-lg font-bold tracking-tight text-[var(--employee-text)]">{start}</span>
+                      <span role="cell" className="text-center text-lg font-bold tracking-tight text-[var(--employee-text)]">{end}</span>
                     </div>
                   );
                 })}
@@ -328,9 +328,9 @@ export function AttendanceReference({
       ) : null}
       {gates.length > 0 ? (
         <div>
-          <h3 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-slate-950">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
-              <MapPin className="h-5 w-5" aria-hidden="true" />
+          <h3 className="flex items-center gap-2.5 text-xl font-bold tracking-tight text-[var(--employee-text)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+              <MarkerPin01 className="h-5 w-5" aria-hidden="true" />
             </span>
             {gates.length} điểm chấm công
           </h3>
@@ -338,7 +338,7 @@ export function AttendanceReference({
             {gates.slice(0, 2).map((gate, index) => (
               <li
                 key={`${gate.name}-${gate.lat}-${gate.lng}`}
-                className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-300 bg-white px-3 font-semibold leading-5 text-slate-900"
+                className="employee-type-body-sm flex h-14 items-center rounded-xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] px-3 font-semibold leading-5 text-[var(--employee-text)]"
               >
                 {gate.name || `Điểm chấm công ${index + 1}`}
               </li>
@@ -351,7 +351,7 @@ export function AttendanceReference({
                   aria-controls={additionalGatesId}
                   aria-expanded={showAdditionalGates}
                   onClick={() => setShowAdditionalGates((visible) => !visible)}
-                  className={`employee-type-action flex h-14 w-full items-center justify-center rounded-xl border px-3 text-center font-semibold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 ${showAdditionalGates ? "border-slate-300 bg-slate-100 text-slate-950" : "border-slate-300 bg-white text-slate-900 hover:border-slate-300"}`}
+                  className={`employee-type-action flex h-14 w-full items-center justify-center rounded-xl border px-3 text-center font-semibold transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--employee-focus-ring)] ${showAdditionalGates ? "border-[var(--employee-border-strong)] bg-[var(--employee-page)] text-[var(--employee-text)]" : "border-[var(--employee-border-strong)] bg-[var(--employee-surface)] text-[var(--employee-text)] hover:border-[var(--employee-border-strong)]"}`}
                 >
                   <strong className="text-xl leading-none">+{gates.length - 2}</strong>
                 </button>
@@ -363,7 +363,7 @@ export function AttendanceReference({
               {gates.slice(2).map((gate, index) => (
                 <li
                   key={`${gate.name}-${gate.lat}-${gate.lng}`}
-                  className="employee-type-body-sm flex h-14 items-center rounded-xl border border-slate-300 bg-white px-4 font-semibold leading-5 text-slate-900"
+                  className="employee-type-body-sm flex h-14 items-center rounded-xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] px-4 font-semibold leading-5 text-[var(--employee-text)]"
                 >
                   {gate.name || `Điểm chấm công ${index + 3}`}
                 </li>
@@ -826,11 +826,11 @@ export function EmployeeCheckInCard({
     return (
       <>
         <div
-          className={`rounded-2xl border border-slate-300 bg-white p-4 ${className ?? ""}`}
+          className={`rounded-2xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] p-4 ${className ?? ""}`}
           style={style}
         >
           <div className="flex flex-col items-center justify-center gap-3 py-6 text-center">
-            <CalendarClock className="h-8 w-8 text-[var(--employee-accent)]" aria-hidden="true" />
+            <ClockStopwatch className="h-8 w-8 text-[var(--employee-accent)]" aria-hidden="true" />
             <p className="employee-type-card-title text-[var(--employee-text)]">
               Dịch vụ tự chấm công sẽ kích hoạt từ {effectiveLabel}
             </p>
@@ -853,12 +853,12 @@ export function EmployeeCheckInCard({
     return (
       <>
         <div
-          className={`rounded-2xl border border-slate-300 bg-white p-4 ${className ?? ""}`}
+          className={`rounded-2xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] p-4 ${className ?? ""}`}
           style={style}
         >
           <div className="animate-pulse flex flex-col items-center justify-center space-y-4 h-32">
-            <div className="h-6 w-32 bg-gray-200 rounded"></div>
-            <div className="h-10 w-48 bg-gray-200 rounded-full"></div>
+            <div className="h-6 w-32 bg-utility-gray-200 rounded"></div>
+            <div className="h-10 w-48 bg-utility-gray-200 rounded-full"></div>
           </div>
         </div>
         <EmployeeAttendanceActionDock
@@ -887,7 +887,7 @@ export function EmployeeCheckInCard({
             disabled={attendanceFetching}
             onClick={() => { if (!attendanceFetching) void refetchAttendance(); }}
           >
-            <RefreshCw className={`h-4 w-4 ${attendanceFetching ? "animate-spin" : ""}`} aria-hidden="true" />
+            <RefreshCw05 className={`h-4 w-4 ${attendanceFetching ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden="true" />
             {attendanceFetching ? "Đang tải lại…" : "Tải lại chấm công"}
           </Button>
         </section>
@@ -928,17 +928,17 @@ export function EmployeeCheckInCard({
     </div>
   ) : null;
   const locationMapDisclosure = checkInTarget ? (
-    <div ref={locationMapRef} className="mt-2 scroll-mt-24 border-t border-slate-200 pt-1" tabIndex={-1}>
+    <div ref={locationMapRef} className="mt-2 scroll-mt-24 border-t border-[var(--employee-border)] pt-1" tabIndex={-1}>
       <Button
         type="button"
         variant="ghost"
-        className="employee-type-action h-11 w-full justify-between rounded-lg px-2 text-sky-700 hover:bg-sky-50 hover:text-sky-800"
+        className="employee-type-action h-11 w-full justify-between rounded-lg px-2 text-[var(--employee-info)] hover:bg-[var(--employee-info-soft)] hover:text-[var(--employee-info)]"
         aria-expanded={showLocationMap}
         aria-controls={locationMapRegionId}
         onClick={() => setShowLocationMap((isOpen) => !isOpen)}
       >
         <span className="inline-flex items-center gap-2">
-          <MapPin className="h-4 w-4" aria-hidden="true" />
+          <MarkerPin01 className="h-4 w-4" aria-hidden="true" />
           {showLocationMap ? "Ẩn bản đồ" : "Xem bản đồ"}
         </span>
         <ChevronDown
@@ -1042,14 +1042,14 @@ export function EmployeeCheckInCard({
   return (
     <div className={className} style={style}>
       {showWindowOpen ? (
-        <div className="attendance-window-open mb-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-emerald-950" role="status">
-          <Clock className="h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
+        <div className="attendance-window-open mb-3 flex items-center gap-2 rounded-xl border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-3 py-2.5 text-fg-brand-primary" role="status">
+          <Clock className="h-4 w-4 shrink-0 text-[var(--employee-accent)]" aria-hidden="true" />
           <span className="employee-type-body-sm font-semibold">Đã đến giờ chấm công</span>
         </div>
       ) : null}
       {attendanceConfirmation ? (
-        <div className="attendance-action-confirm mb-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-emerald-950" role="status">
-          <BadgeCheck className="h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
+        <div className="attendance-action-confirm mb-3 flex items-center gap-2 rounded-xl border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] px-3 py-2.5 text-fg-brand-primary" role="status">
+          <CheckVerified01 className="h-5 w-5 shrink-0 text-[var(--employee-accent)]" aria-hidden="true" />
           <span className="employee-type-body-sm font-semibold">
             {attendanceConfirmation.action === "check_in" ? "Đã vào làm" : "Đã tan ca"} lúc {attendanceConfirmation.time}
           </span>
@@ -1066,39 +1066,39 @@ export function EmployeeCheckInCard({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-3 px-5 py-4">
-            <div className="rounded-lg border border-employee-100 bg-employee-50/80 p-4">
-              <div className="flex items-center gap-2 text-employee-800">
-                <Clock className="h-5 w-5 shrink-0" />
+            <div className="rounded-lg border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)]/80 p-4">
+              <div className="flex items-center gap-2 text-fg-brand-primary">
+                <Clock className="h-5 w-5 shrink-0" aria-hidden="true" />
                 <p className="text-sm font-semibold leading-5">Giờ hợp lệ</p>
               </div>
               {noSalaryWindow ? (
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   {noSalaryWindow.checkInTime ? (
                     <div>
-                      <p className="text-xs font-medium leading-4 text-employee-700">Vào làm</p>
-                      <p className="employee-type-strong mt-1 text-slate-950">
+                      <p className="text-xs font-medium leading-4 text-[var(--employee-accent)]">Vào làm</p>
+                      <p className="employee-type-strong mt-1 text-[var(--employee-text)]">
                         {noSalaryWindow.checkInTime}
                       </p>
                     </div>
                   ) : null}
                   <div className={noSalaryWindow.checkInTime ? "" : "col-span-2"}>
-                    <p className="text-xs font-medium leading-4 text-employee-700">Tan ca</p>
-                    <p className="employee-type-strong mt-1 text-slate-950">
+                    <p className="text-xs font-medium leading-4 text-[var(--employee-accent)]">Tan ca</p>
+                    <p className="employee-type-strong mt-1 text-[var(--employee-text)]">
                       {noSalaryWindow.validStartTime} - {noSalaryWindow.validEndTime}
                     </p>
                   </div>
                 </div>
               ) : (
-                <p className="mt-2 text-sm font-medium leading-5 text-slate-800">
+                <p className="mt-2 text-sm font-medium leading-5 text-[var(--employee-text)]">
                   {noSalaryReason || "Thời gian tan ca không nằm trong khung giờ hợp lệ của ca này."}
                 </p>
               )}
             </div>
-            <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-950">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+            <div className="flex items-start gap-3 rounded-lg border border-utility-error-200 bg-[var(--employee-error-soft)] p-4 text-fg-error-primary">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-fg-error-secondary" aria-hidden="true" />
               <div>
                 <p className="employee-type-strong">Ca này sẽ không tính lương</p>
-                <p className="mt-1 text-sm font-medium leading-5 text-red-800">
+                <p className="mt-1 text-sm font-medium leading-5 text-fg-error-primary">
                   Chỉ tiếp tục nếu bạn muốn hủy ca hiện tại.
                 </p>
               </div>
@@ -1120,7 +1120,7 @@ export function EmployeeCheckInCard({
                 handleAction("check_out", { confirmNoSalary: true });
               }}
             >
-              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DoorOpen className="mr-2 h-4 w-4" />}
+              {isPending ? <RefreshCw05 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" /> : <LogOut02 className="mr-2 h-4 w-4" />}
               Hủy ca
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -1143,11 +1143,11 @@ export function EmployeeCheckInCard({
           </AlertDialogHeader>
           {timingGuidance?.windowStart && timingGuidance.windowEnd ? (
             <div className="px-5 py-4">
-              <div className="block rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 shadow-none">
-                <p className="employee-type-label-caps font-semibold text-warning">
+              <div className="block rounded-xl border border-[var(--employee-warning-border)] bg-[var(--employee-warning-soft)] p-4 text-[var(--employee-warning-strong)] shadow-none">
+                <p className="employee-type-label-caps font-semibold text-fg-warning-primary">
                   {timingGuidance.actionLabel}
                 </p>
-                <p className="employee-type-strong mt-1 text-slate-950">
+                <p className="employee-type-strong mt-1 text-[var(--employee-text)]">
                   {timingGuidance.windowStart} - {timingGuidance.windowEnd}
                 </p>
               </div>
@@ -1164,36 +1164,36 @@ export function EmployeeCheckInCard({
         </AlertDialogContent>
       </AlertDialog>
       {isLocating ? (
-        <div className="mb-3 rounded-xl border border-sky-200 bg-sky-50 p-3 text-sky-950">
+        <div className="mb-3 rounded-xl border border-[var(--employee-info-border)] bg-[var(--employee-info-soft)] p-3 text-[var(--employee-text)]">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-sky-700">
-              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-surface)] text-[var(--employee-info)]">
+              <RefreshCw05 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="employee-type-card-title font-semibold">Đang kiểm tra vị trí...</p>
-              <p className="employee-type-body-sm mt-0.5 font-medium text-sky-800">
+              <p className="employee-type-body-sm mt-0.5 font-medium text-[var(--employee-info)]">
                 {getLocationAcquisitionMessage(locationProgress, checkInGuidance)}
               </p>
             </div>
           </div>
           {locationProgress?.sampleCount ? (
             <div className="mt-2 grid grid-cols-3 gap-2">
-              <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
-                <p className="employee-type-label-caps font-semibold text-sky-700">Sai số</p>
-                <p className="employee-type-body mt-0.5 truncate font-semibold text-sky-950">
+              <div className="min-w-0 rounded-lg bg-[var(--employee-surface)]/80 px-2.5 py-2">
+                <p className="employee-type-label-caps font-semibold text-[var(--employee-info)]">Sai số</p>
+                <p className="employee-type-body mt-0.5 truncate font-semibold text-[var(--employee-text)]">
                   {formatAccuracy(locationProgress.bestAccuracy) || "--"}
                 </p>
               </div>
-              <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
-                <p className="employee-type-label-caps font-semibold text-sky-700">Cần</p>
-                <p className="employee-type-body mt-0.5 truncate font-semibold text-sky-950">
+              <div className="min-w-0 rounded-lg bg-[var(--employee-surface)]/80 px-2.5 py-2">
+                <p className="employee-type-label-caps font-semibold text-[var(--employee-info)]">Cần</p>
+                <p className="employee-type-body mt-0.5 truncate font-semibold text-[var(--employee-text)]">
                   {"≤"}
                   {formatAccuracy(locationProgress.requiredAccuracyMeters) || "50m"}
                 </p>
               </div>
-              <div className="min-w-0 rounded-lg bg-white/80 px-2.5 py-2">
-                <p className="employee-type-label-caps font-semibold text-sky-700">Lần đo</p>
-                <p className="employee-type-body mt-0.5 truncate font-semibold text-sky-950">
+              <div className="min-w-0 rounded-lg bg-[var(--employee-surface)]/80 px-2.5 py-2">
+                <p className="employee-type-label-caps font-semibold text-[var(--employee-info)]">Lần đo</p>
+                <p className="employee-type-body mt-0.5 truncate font-semibold text-[var(--employee-text)]">
                   {locationProgress.sampleCount}
                 </p>
               </div>
@@ -1202,15 +1202,15 @@ export function EmployeeCheckInCard({
         </div>
       ) : null}
       {showLocationRecovery ? (
-        <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-950">
+        <div className="mb-3 rounded-xl border border-[var(--employee-warning-border)] bg-[var(--employee-warning-soft)] p-3 text-[var(--employee-warning-strong)]">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-amber-700">
-              {locationIssue.requiresSettings ? <Settings className="h-5 w-5" /> : <MapPin className="h-5 w-5" />}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--employee-surface)] text-fg-warning-primary">
+              {locationIssue.requiresSettings ? <Settings01 className="h-5 w-5" aria-hidden="true" /> : <MarkerPin01 className="h-5 w-5" aria-hidden="true" />}
             </div>
             <div className="min-w-0 flex-1">
               <p className="employee-type-card-title truncate font-semibold">{locationIssue.title}</p>
               {showRecoveryDescription ? (
-                <p className="employee-type-body-sm mt-0.5 font-medium text-amber-800">{locationIssue.description}</p>
+                <p className="employee-type-body-sm mt-0.5 font-medium text-fg-warning-primary">{locationIssue.description}</p>
               ) : null}
             </div>
               {locationIssue.canRetry ? (
@@ -1218,7 +1218,7 @@ export function EmployeeCheckInCard({
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="employee-type-action h-11 shrink-0 gap-2 rounded-lg border-amber-300 bg-white px-3 font-semibold text-amber-950 hover:bg-amber-100"
+                  className="employee-type-action h-11 shrink-0 gap-2 rounded-lg border-utility-warning-300 bg-[var(--employee-surface)] px-3 font-semibold text-[var(--employee-warning-strong)] hover:bg-utility-warning-100"
                   disabled={isPending}
                   onClick={() => {
                     // A permission denial is terminal in-page: re-attempting it
@@ -1237,9 +1237,9 @@ export function EmployeeCheckInCard({
                   }}
                 >
                   {isPending ? (
-                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                    <RefreshCw05 className="h-4 w-4 shrink-0 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                   ) : (
-                    <RotateCcw className="h-4 w-4 shrink-0" />
+                    <RefreshCw05 className="h-4 w-4 shrink-0" aria-hidden="true" />
                   )}
                   <span>{isLocating ? "Đang..." : locationRecoveryText}</span>
                 </Button>
@@ -1248,14 +1248,14 @@ export function EmployeeCheckInCard({
         </div>
       ) : null}
       {attendance?.status === "completed" ? (
-        <div className="rounded-2xl border border-slate-300 bg-white p-3">
+        <div className="rounded-2xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] p-3">
           <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
-                <BadgeCheck className="h-5 w-5" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+                <CheckVerified01 className="h-5 w-5" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="employee-type-card-title font-semibold text-slate-950">Ca hôm nay đã xong</p>
-                <p className="employee-type-body-sm mt-0.5 font-semibold text-slate-600">
+                <p className="employee-type-card-title font-semibold text-[var(--employee-text)]">Ca hôm nay đã xong</p>
+                <p className="employee-type-body-sm mt-0.5 font-semibold text-fg-secondary">
                   {safeFormatTime(attendance.check_in_time)} — {safeFormatTime(attendance.check_out_time)}
                 </p>
               </div>
@@ -1263,17 +1263,17 @@ export function EmployeeCheckInCard({
           <div
             className={`mt-3 rounded-lg border px-3 py-2.5 ${
               salaryRecorded
-                ? "border-emerald-200 bg-emerald-50 text-emerald-950"
-                : "border-amber-200 bg-amber-50 text-amber-950"
+                ? "border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] text-fg-brand-primary"
+                : "border-[var(--employee-warning-border)] bg-[var(--employee-warning-soft)] text-[var(--employee-warning-strong)]"
             }`}
           >
             <div className="flex items-start gap-3">
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white ${
-                  salaryRecorded ? "text-emerald-700" : "text-amber-700"
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-surface)] ${
+                  salaryRecorded ? "text-[var(--employee-accent)]" : "text-fg-warning-primary"
                 }`}
               >
-                {salaryRecorded ? <WalletCards className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                {salaryRecorded ? <Wallet01 className="h-4 w-4" aria-hidden="true" /> : <AlertCircle className="h-4 w-4" aria-hidden="true" />}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="employee-type-body font-semibold">
@@ -1293,7 +1293,7 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-[var(--employee-accent)] font-semibold text-white hover:bg-[var(--employee-accent-strong)] lg:inline-flex"
                 style={{
                   boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30`,
                 }}
@@ -1301,9 +1301,9 @@ export function EmployeeCheckInCard({
                 onClick={() => handleAction("check_in")}
               >
                 {isPending ? (
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  <RefreshCw05 className="w-5 h-5 animate-spin mr-2 motion-reduce:animate-none" aria-hidden="true" />
                 ) : (
-                  <BriefcaseBusiness className="w-5 h-5 mr-2" />
+                  <Briefcase01 className="w-5 h-5 mr-2" aria-hidden="true" />
                 )}
                 {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
               </Button>
@@ -1311,15 +1311,15 @@ export function EmployeeCheckInCard({
           ) : null}
         </div>
       ) : attendance?.status === "checked_in" ? (
-        <div className="rounded-2xl border border-[#B7E5C7] bg-white p-4">
+        <div className="rounded-2xl border border-[var(--employee-accent-border)] bg-[var(--employee-surface)] p-4">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ECFDF3] text-[#067647]">
-                <BriefcaseBusiness className="h-5 w-5" aria-hidden="true" />
+              <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success_subtle text-fg-success-primary">
+                <Briefcase01 className="h-5 w-5" aria-hidden="true" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="employee-type-label-caps text-[#067647]">Đang trong ca</p>
-                <p className="employee-type-hero-title mt-1 text-[#101828]">Đang làm việc</p>
-                <p className="employee-type-body mt-1 text-[#475467]">
+                <p className="employee-type-label-caps text-fg-success-primary">Đang trong ca</p>
+                <p className="employee-type-hero-title mt-1 text-[var(--employee-text)]">Đang làm việc</p>
+                <p className="employee-type-body mt-1 text-fg-secondary">
                   {safeFormatTime(attendance.check_in_time)} — hiện tại · Tan ca để ghi nhận lương
                 </p>
               </div>
@@ -1328,43 +1328,43 @@ export function EmployeeCheckInCard({
           {locationMapDisclosure}
           <Button
             size="lg"
-            className="employee-type-action mt-4 hidden h-12 w-full rounded-xl bg-[#07883F] font-semibold text-white hover:bg-[#067647] lg:inline-flex"
+            className="employee-type-action mt-4 hidden h-12 w-full rounded-xl bg-[var(--employee-accent)] font-semibold text-white hover:bg-[var(--employee-accent-strong)] lg:inline-flex"
             disabled={isPending || checkoutCoolingDown}
             onClick={() => handleAction("check_out")}
           >
             {isPending || checkoutCoolingDown ? (
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              <RefreshCw05 className="w-5 h-5 animate-spin mr-2 motion-reduce:animate-none" aria-hidden="true" />
             ) : (
-              <DoorOpen className="w-5 h-5 mr-2" />
+              <LogOut02 className="w-5 h-5 mr-2" aria-hidden="true" />
             )}
             {checkoutCoolingDown ? "Đang chờ GPS..." : isLocating ? "Đang lấy vị trí..." : "Tan ca"}
           </Button>
         </div>
       ) : attendance?.status === "orphaned" ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-3">
+        <div className="rounded-2xl border border-utility-error-200 bg-[var(--employee-error-soft)] p-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-red-600">
-              <AlertCircle className="h-5 w-5" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-surface)] text-fg-error-secondary">
+              <AlertCircle className="h-5 w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <p className="employee-type-card-title font-semibold text-red-950">Ca cần kiểm tra</p>
-              <p className="employee-type-body-sm mt-0.5 font-medium text-red-700">
+              <p className="employee-type-card-title font-semibold text-fg-error-primary">Ca cần kiểm tra</p>
+              <p className="employee-type-body-sm mt-0.5 font-medium text-[var(--employee-error)]">
                 Bạn chưa bấm Tan ca cho ca trước. Hãy báo quản lý để kiểm tra lại lương.
               </p>
             </div>
           </div>
         </div>
       ) : attendance?.status === "rejected" ? (
-        <div className="rounded-2xl border border-orange-200 bg-orange-50 p-3">
+        <div className="rounded-2xl border border-utility-warning-200 bg-[var(--employee-warning-soft)] p-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-orange-700">
-              <AlertCircle className="h-5 w-5" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-surface)] text-fg-warning-primary">
+              <AlertCircle className="h-5 w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="employee-type-card-title font-semibold text-orange-950">
+              <p className="employee-type-card-title font-semibold text-[var(--employee-warning-strong)]">
                 {rejectedIssue.title === "Cần quản lý kiểm tra" ? "Ca đã bị từ chối" : rejectedIssue.title}
               </p>
-              <p className="employee-type-body-sm mt-0.5 font-medium text-orange-700">
+              <p className="employee-type-body-sm mt-0.5 font-medium text-fg-warning-primary">
                 {rejectedIssue.description}
               </p>
               <IssueDetailChips details={rejectedIssue.details} tone="orange" />
@@ -1375,19 +1375,19 @@ export function EmployeeCheckInCard({
         <div>
           {/* Outside-window hint: show shift time + countdown instead of the button */}
           {!withinWindow ? (
-            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-slate-300 bg-white p-5">
+            <div className="check-in-hint-fade overflow-hidden rounded-[28px] border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] p-5">
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-amber-200/80 bg-[#fff3ca] text-amber-700">
-                  <Clock className="h-6 w-6" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--employee-warning-border)] bg-[var(--employee-warning-soft)] text-fg-warning-primary">
+                  <Clock className="h-6 w-6" aria-hidden="true" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="employee-type-label-caps font-bold tracking-[0.14em] text-amber-700">
+                  <p className="employee-type-label-caps font-bold tracking-[0.14em] text-fg-warning-primary">
                     {windowPassed ? "Ca làm hôm nay" : "Ca làm tiếp theo"}
                   </p>
-                  <p className="employee-type-card-title mt-1 font-bold text-slate-950">
+                  <p className="employee-type-card-title mt-1 font-bold text-[var(--employee-text)]">
                     {windowPassed ? "Đã quá giờ vào làm" : "Chưa đến giờ vào làm"}
                   </p>
-                  <p className="employee-type-body-sm mt-1.5 leading-6 text-slate-600">
+                  <p className="employee-type-body-sm mt-1.5 leading-6 text-fg-secondary">
                     {shiftStart
                       ? `Ca làm việc bắt đầu lúc ${safeFormatTime(shiftStart)}. Giờ chấm công từ ${safeFormatTime(checkInWindowStart)} đến ${safeFormatTime(checkInWindowEnd)}.`
                       : "Chưa có ca làm việc được cấu hình."}
@@ -1397,12 +1397,12 @@ export function EmployeeCheckInCard({
                     // reopen it — only an admin can enter a check-in for the
                     // shift. Say so, instead of leaving the worker staring at a
                     // "not yet" screen with no way forward.
-                    <p className="employee-type-body-sm mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 font-semibold text-red-800">
+                    <p className="employee-type-body-sm mt-2 rounded-lg border border-utility-error-200 bg-[var(--employee-error-soft)] px-3 py-2 font-semibold text-[var(--employee-error)]">
                       Liên hệ quản lý để được ghi nhận giờ vào làm.
                     </p>
                   ) : null}
                   {secondsUntilWindow != null && (
-                    <p className="employee-type-body-sm mt-2 inline-flex rounded-full border border-amber-200 bg-white px-3 py-1 font-semibold text-amber-800">
+                    <p className="employee-type-body-sm mt-2 inline-flex rounded-full border border-[var(--employee-warning-border)] bg-[var(--employee-surface)] px-3 py-1 font-semibold text-[var(--employee-warning)]">
                       {(() => {
                         const m = Math.floor(secondsUntilWindow / 60);
                         const s = secondsUntilWindow % 60;
@@ -1421,44 +1421,44 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
             </div>
           ) : gpsReady ? (
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+              <div className="rounded-2xl border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] p-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-employee">
-                    <MapPin className="h-5 w-5" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-accent-ring)] text-[var(--employee-accent-strong)]">
+                    <MarkerPin01 className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="employee-type-card-title font-semibold text-slate-950">Sẵn sàng vào làm</p>
-                    <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">Vị trí đã xác định</p>
+                    <p className="employee-type-card-title font-semibold text-[var(--employee-text)]">Sẵn sàng vào làm</p>
+                    <p className="employee-type-body-sm mt-0.5 font-medium text-fg-brand-primary">Vị trí đã xác định</p>
                   </div>
                 </div>
               {attendanceReference}
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className={`employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex ${showReadyPop ? "check-in-ready-pop" : ""}`}
+                className={`employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-[var(--employee-accent)] font-semibold text-white hover:bg-[var(--employee-accent-strong)] lg:inline-flex ${showReadyPop ? "check-in-ready-pop" : ""}`}
                 style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}
               >
                 {isPending ? (
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  <RefreshCw05 className="w-5 h-5 animate-spin mr-2 motion-reduce:animate-none" aria-hidden="true" />
                 ) : (
-                  <BriefcaseBusiness className="w-5 h-5 mr-2" />
+                  <Briefcase01 className="w-5 h-5 mr-2" aria-hidden="true" />
                 )}
                 {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
               </Button>
             </div>
           ) : geofenceInstruction ? (
-              <div className="rounded-2xl border border-amber-200 bg-white p-3">
+              <div className="rounded-2xl border border-[var(--employee-warning-border)] bg-[var(--employee-surface)] p-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
-                    <MapPin className="h-5 w-5" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-warning-soft)] text-fg-warning-primary">
+                    <MarkerPin01 className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="employee-type-card-title font-semibold text-slate-950">
+                    <p className="employee-type-card-title font-semibold text-[var(--employee-text)]">
                       {checkInGuidance.status === "inaccurate" ? "Tiến gần tâm khu vực" : "Ngoài khu vực"}
                     </p>
-                    <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
+                    <p className="employee-type-body-sm mt-0.5 font-medium text-fg-secondary">
                       {geofenceInstruction}
                     </p>
                   </div>
@@ -1467,28 +1467,28 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-[var(--employee-accent)] font-semibold text-white hover:bg-[var(--employee-accent-strong)] lg:inline-flex"
                 style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}
               >
                 {isPending ? (
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <RefreshCw05 className="mr-2 h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 ) : (
-                  <MapPin className="mr-2 h-5 w-5" />
+                  <MarkerPin01 className="mr-2 h-5 w-5" aria-hidden="true" />
                 )}
                 {checkInGuidance.status === "inaccurate" ? "Tiến gần tâm rồi thử lại" : "Đến gần cổng rồi thử lại"}
               </Button>
             </div>
           ) : location.needsPermission ? (
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3" role="status">
+              <div className="rounded-2xl border border-[var(--employee-accent-border)] bg-[var(--employee-accent-soft)] p-3" role="status">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-employee">
-                    <MapPin className="h-5 w-5" aria-hidden="true" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-accent-ring)] text-[var(--employee-accent-strong)]">
+                    <MarkerPin01 className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="employee-type-card-title font-semibold text-slate-950">Cho phép sử dụng vị trí</p>
-                    <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
+                    <p className="employee-type-card-title font-semibold text-[var(--employee-text)]">Cho phép sử dụng vị trí</p>
+                    <p className="employee-type-body-sm mt-0.5 font-medium text-fg-brand-primary">
                       Ứng dụng cần GPS để xác nhận vị trí chấm công.
                     </p>
                   </div>
@@ -1497,29 +1497,29 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-[var(--employee-accent)] font-semibold text-white hover:bg-[var(--employee-accent-strong)] lg:inline-flex"
                 style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
                 onClick={location.requestPermission}
               >
-                <MapPin className="mr-2 h-5 w-5" aria-hidden="true" />
+                <MarkerPin01 className="mr-2 h-5 w-5" aria-hidden="true" />
                 Cho phép vị trí
               </Button>
             </div>
           ) : gpsAcquiring ? (
               <div
-                className="rounded-2xl border border-slate-300 bg-white p-3"
+                className="rounded-2xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] p-3"
                 role="status"
                 aria-live="polite"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-employee">
-                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+                    <RefreshCw05 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="employee-type-card-title font-semibold text-slate-950">
+                    <p className="employee-type-card-title font-semibold text-[var(--employee-text)]">
                       Đang làm nét GPS đến ≤50 m…
                     </p>
-                    <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
+                    <p className="employee-type-body-sm mt-0.5 font-medium text-fg-secondary">
                       {geofenceInstruction || (locationProgress?.bestAccuracy
                         ? `Sai số hiện ${formatAccuracy(locationProgress.bestAccuracy)}. Đang chờ tín hiệu ổn định hơn.`
                         : "Đang tìm GPS. Hãy đứng ngoài trời nếu cần.")}
@@ -1530,23 +1530,23 @@ export function EmployeeCheckInCard({
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action check-in-warming mt-2 hidden h-12 w-full rounded-xl bg-employee font-semibold text-white lg:inline-flex"
+                className="employee-type-action check-in-warming mt-2 hidden h-12 w-full rounded-xl bg-[var(--employee-accent)] font-semibold text-white lg:inline-flex"
                 style={{ boxShadow: `0 4px 12px ${EMPLOYEE_BRAND_COLOR}20` }}
                 disabled
               >
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                <RefreshCw05 className="w-5 h-5 animate-spin mr-2 motion-reduce:animate-none" aria-hidden="true" />
                 Đang lấy vị trí...
               </Button>
             </div>
           ) : location.fatalError ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-3" role="alert">
+            <div className="rounded-2xl border border-utility-error-200 bg-[var(--employee-error-soft)] p-3" role="alert">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-100 text-red-600">
-                  <MapPin className="h-5 w-5" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-utility-error-100 text-fg-error-secondary">
+                  <MarkerPin01 className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="employee-type-card-title font-semibold text-slate-950">{fatalLocationIssue?.title}</p>
-                  <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">
+                  <p className="employee-type-card-title font-semibold text-[var(--employee-text)]">{fatalLocationIssue?.title}</p>
+                  <p className="employee-type-body-sm mt-0.5 font-medium text-fg-secondary">
                     {fatalLocationIssue?.description}
                   </p>
                 </div>
@@ -1556,37 +1556,37 @@ export function EmployeeCheckInCard({
               <Button
                 size="lg"
                 variant="outline"
-                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl border-red-300 bg-white font-semibold text-red-950 hover:bg-red-100 lg:inline-flex"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl border-utility-error-300 bg-[var(--employee-surface)] font-semibold text-fg-error-primary hover:bg-utility-error-50 lg:inline-flex"
                 onClick={location.reload}
               >
-                <RotateCcw className="mr-2 h-5 w-5" aria-hidden="true" />
+                <RefreshCw05 className="mr-2 h-5 w-5" aria-hidden="true" />
                 Tải lại trang
               </Button>
             </div>
           ) : (
-              <div className="rounded-2xl border border-slate-300 bg-white p-3">
+              <div className="rounded-2xl border border-[var(--employee-border-strong)] bg-[var(--employee-surface)] p-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-employee">
-                    <MapPin className="h-5 w-5" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+                    <MarkerPin01 className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="employee-type-card-title font-semibold text-slate-950">Sẵn sàng vào làm</p>
-                    <p className="employee-type-body-sm mt-0.5 font-medium text-slate-600">Bấm Vào làm khi đã tới cổng</p>
+                    <p className="employee-type-card-title font-semibold text-[var(--employee-text)]">Sẵn sàng vào làm</p>
+                    <p className="employee-type-body-sm mt-0.5 font-medium text-fg-secondary">Bấm Vào làm khi đã tới cổng</p>
                   </div>
                 </div>
               {attendanceReference}
               {locationMapDisclosure}
               <Button
                 size="lg"
-                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-employee font-semibold text-white hover:bg-employee-600 lg:inline-flex"
+                className="employee-type-action mt-2 hidden min-h-11 h-12 w-full rounded-xl bg-[var(--employee-accent)] font-semibold text-white hover:bg-[var(--employee-accent-strong)] lg:inline-flex"
                 style={{ boxShadow: `0 10px 24px ${EMPLOYEE_BRAND_COLOR}30` }}
                 disabled={isPending}
                 onClick={() => handleAction("check_in")}
               >
                 {isPending ? (
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  <RefreshCw05 className="w-5 h-5 animate-spin mr-2 motion-reduce:animate-none" aria-hidden="true" />
                 ) : (
-                  <BriefcaseBusiness className="w-5 h-5 mr-2" />
+                  <Briefcase01 className="w-5 h-5 mr-2" aria-hidden="true" />
                 )}
                 {isLocating ? "Đang lấy vị trí..." : "Vào làm"}
               </Button>
