@@ -4,6 +4,9 @@ import { ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// UU PRO restyle (W7): divider on utility-gray-200, trigger typography on the
+// UU fg tokens, chevron in fg-tertiary. Radix engine stays (engine-keep
+// ruling — UU ships no accordion); animation hooks untouched.
 const Accordion = AccordionPrimitive.Root
 
 const AccordionItem = React.forwardRef<
@@ -12,7 +15,7 @@ const AccordionItem = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AccordionPrimitive.Item
     ref={ref}
-    className={cn("border-b", className)}
+    className={cn("border-b border-utility-gray-200", className)}
     {...props}
   />
 ))
@@ -36,12 +39,12 @@ const AccordionTrigger = React.forwardRef<
           event.currentTarget.click()
         }}
         className={cn(
-          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
+          "flex flex-1 items-center justify-between py-4 font-semibold text-fg-primary transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
           className
         )}
       >
         {children}
-        {!hideChevron && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />}
+        {!hideChevron && <ChevronDown className="h-4 w-4 shrink-0 text-fg-tertiary transition-transform duration-200" />}
       </div>
     </AccordionPrimitive.Trigger>
   </AccordionPrimitive.Header>
