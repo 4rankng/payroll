@@ -2,8 +2,10 @@ import { extendTailwindMerge } from "tailwind-merge";
 
 const twMerge = extendTailwindMerge({
     extend: {
-        theme: {
-            text: ["display-xs", "display-sm", "display-md", "display-lg", "display-xl", "display-2xl"],
+        classGroups: {
+            // text-display-* sizes (vendored UU typography) must merge as one
+            // font-size group, not conflict with text-color classes.
+            "font-size": [{ text: ["display-xs", "display-sm", "display-md", "display-lg", "display-xl", "display-2xl"] }],
         },
     },
 });

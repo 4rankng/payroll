@@ -50,7 +50,7 @@ export const BannerDualActionBrandFullWidth = ({
     secondaryAction,
     onDismiss,
     dismissLabel = "Đóng",
-    icon = Flag05,
+    icon = <Flag05 />,
     className,
 }: BannerDualActionBrandFullWidthProps) => {
     return (
