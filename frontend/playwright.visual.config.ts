@@ -13,7 +13,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './tests/e2e',
-  testMatch: '**/visual-baseline.spec.ts',
+  // visual-baseline always; auth.spec rides this config because the main
+  // config's 127.0.0.1:5173 origin is CORS-blocked by the backend (only
+  // localhost:3000 is whitelisted).
+  testMatch: '**/{visual-baseline,auth}.spec.ts',
   fullyParallel: false,
   workers: 1,
   retries: 0,

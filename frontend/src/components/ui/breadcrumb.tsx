@@ -4,6 +4,10 @@ import { ChevronRight, MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// UU PRO restyle (W8): list copy fg-tertiary, separators fg-quaternary,
+// current page fg-primary. Links carry the landed link treatment (W4 button
+// link variant: brand copy, hover underline + hover step) minus the
+// button-specific geometry.
 const Breadcrumb = React.forwardRef<
   HTMLElement,
   React.ComponentPropsWithoutRef<"nav"> & {
@@ -19,7 +23,7 @@ const BreadcrumbList = React.forwardRef<
   <ol
     ref={ref}
     className={cn(
-      "flex flex-wrap items-center gap-1.5 break-words typography-body-medium text-muted-foreground sm:gap-2.5",
+      "flex flex-wrap items-center gap-1.5 break-words typography-body-medium text-fg-tertiary sm:gap-2.5",
       className
     )}
     {...props}
@@ -50,7 +54,10 @@ const BreadcrumbLink = React.forwardRef<
   return (
     <Comp
       ref={ref}
-      className={cn("transition-colors hover:text-foreground", className)}
+      className={cn(
+        "transition-colors text-brand-secondary underline-offset-2 hover:underline hover:text-brand-secondary_hover",
+        className
+      )}
       {...props}
     />
   )
@@ -66,7 +73,7 @@ const BreadcrumbPage = React.forwardRef<
     role="link"
     aria-disabled="true"
     aria-current="page"
-    className={cn("font-normal text-foreground", className)}
+    className={cn("font-normal text-fg-primary", className)}
     {...props}
   />
 ))
@@ -80,7 +87,7 @@ const BreadcrumbSeparator = ({
   <li
     role="presentation"
     aria-hidden="true"
-    className={cn("[&>svg]:size-3.5", className)}
+    className={cn("[&>svg]:size-3.5 [&>svg]:text-fg-quaternary", className)}
     {...props}
   >
     {children ?? <ChevronRight />}

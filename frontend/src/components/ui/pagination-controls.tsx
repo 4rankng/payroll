@@ -45,9 +45,9 @@ export function PaginationControls({
       data-slot="pagination-controls"
       className={cn('admin-pagination flex flex-wrap items-center justify-between gap-3 py-2.5', className)}
     >
-      <p className="text-xs text-muted-foreground tabular-nums shrink-0 min-w-[68px]">
-        <span className="font-medium text-foreground/70">{from}–{to}</span>
-        <span className="mx-1 text-muted-foreground">/</span>
+      <p className="text-xs text-fg-tertiary tabular-nums shrink-0 min-w-[68px]">
+        <span className="font-medium text-fg-secondary">{from}–{to}</span>
+        <span className="mx-1 text-fg-quaternary">/</span>
         {totalRecords.toLocaleString('vi-VN')}
       </p>
 
@@ -56,7 +56,7 @@ export function PaginationControls({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-11 w-11 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/60 sm:h-9 sm:w-9"
+          className="h-11 w-11 shrink-0 sm:h-9 sm:w-9"
           onClick={() => onPageChange(1)}
           disabled={page <= 1}
           aria-label="Trang đầu"
@@ -67,7 +67,7 @@ export function PaginationControls({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-11 w-11 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/60 sm:h-9 sm:w-9"
+          className="h-11 w-11 shrink-0 sm:h-9 sm:w-9"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
           aria-label="Trang trước"
@@ -82,7 +82,7 @@ export function PaginationControls({
           p === '…' ? (
             <span
               key={`e${i}`}
-              className="hidden h-9 w-9 items-center justify-center text-xs text-muted-foreground select-none sm:flex"
+              className="hidden h-9 w-9 items-center justify-center text-xs text-fg-quaternary select-none sm:flex"
             >
               …
             </span>
@@ -96,10 +96,11 @@ export function PaginationControls({
               aria-current={p === page ? 'page' : undefined}
               className={cn(
                 'hidden h-9 w-9 rounded-lg text-xs font-medium transition-colors sm:block',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                // Landed button vocabulary (W4): UU brand outline focus ring.
+                'outline-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
                 p === page
-                  ? 'border border-border/80 bg-card text-foreground shadow-[0_1px_2px_0_rgb(15_23_42/0.06)] cursor-default'
-                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                  ? 'bg-brand-solid text-white shadow-xs-skeumorphic cursor-default'
+                  : 'text-tertiary hover:bg-secondary_hover hover:text-tertiary_hover'
               )}
             >
               {p}
@@ -111,7 +112,7 @@ export function PaginationControls({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-11 w-11 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/60 sm:h-9 sm:w-9"
+          className="h-11 w-11 shrink-0 sm:h-9 sm:w-9"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
           aria-label="Trang tiếp"
@@ -122,7 +123,7 @@ export function PaginationControls({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-11 w-11 shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/60 sm:h-9 sm:w-9"
+          className="h-11 w-11 shrink-0 sm:h-9 sm:w-9"
           onClick={() => onPageChange(totalPages)}
           disabled={page >= totalPages}
           aria-label="Trang cuối"
@@ -132,7 +133,7 @@ export function PaginationControls({
       </nav>
 
       <div className="flex items-center gap-1.5 shrink-0">
-        <span className="text-xs text-muted-foreground hidden sm:inline">Hiển thị</span>
+        <span className="text-xs text-fg-tertiary hidden sm:inline">Hiển thị</span>
         <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
           <SelectTrigger aria-label="Số dòng mỗi trang" className="h-11 w-16 text-xs px-2 sm:h-9">
             <SelectValue />

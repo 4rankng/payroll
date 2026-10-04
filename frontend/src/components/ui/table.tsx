@@ -2,6 +2,11 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// UU PRO restyle (W8): header copy on fg-tertiary, row borders and
+// hover/selected surfaces on the utility-gray ladder, footer on a solid
+// utility-gray-50 strip (was translucent bg-muted/50). The styled-HTML-table
+// contract is unchanged — UU's React Aria table is for new features only
+// (plan-of-record engine-keep ruling).
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
@@ -41,7 +46,7 @@ const TableFooter = React.forwardRef<
   <tfoot
     ref={ref}
     className={cn(
-      "border-t bg-muted/50 typography-label-medium [&>tr]:last:border-b-0",
+      "border-t border-utility-gray-200 bg-utility-gray-50 typography-label-medium [&>tr]:last:border-b-0",
       className
     )}
     {...props}
@@ -56,7 +61,7 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+      "border-b border-utility-gray-200 transition-colors hover:bg-utility-gray-50 data-[state=selected]:bg-utility-gray-100",
       className
     )}
     {...props}
@@ -71,7 +76,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-9 px-3 text-left align-middle text-xs font-semibold text-muted-foreground [&:has([role=checkbox])]:pr-0 whitespace-nowrap",
+      "h-9 px-3 text-left align-middle text-xs font-semibold text-fg-tertiary [&:has([role=checkbox])]:pr-0 whitespace-nowrap",
       className
     )}
     {...props}
@@ -97,7 +102,7 @@ const TableCaption = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <caption
     ref={ref}
-    className={cn("mt-4 typography-body-medium text-muted-foreground", className)}
+    className={cn("mt-4 typography-body-medium text-fg-tertiary", className)}
     {...props}
   />
 ))

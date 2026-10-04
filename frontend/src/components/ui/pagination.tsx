@@ -49,7 +49,9 @@ const PaginationLink = ({
     aria-current={isActive ? "page" : undefined}
     className={cn(
       buttonVariants({
-        variant: isActive ? "outline" : "ghost",
+        // UU PRO restyle (W8): active page = brand solid, rest = ghost with
+        // the utility-gray hover surface (W4 button vocabulary).
+        variant: isActive ? "default" : "ghost",
         size,
       }),
       className
@@ -97,7 +99,10 @@ const PaginationEllipsis = ({
 }: React.ComponentProps<"span">) => (
   <span
     aria-hidden
-    className={cn("flex h-9 w-9 items-center justify-center", className)}
+    className={cn(
+      "flex h-9 w-9 items-center justify-center text-fg-quaternary",
+      className
+    )}
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />
