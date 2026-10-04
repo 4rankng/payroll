@@ -82,7 +82,9 @@ const buttonVariants = cva(
 
         // App-specific; the W1 bridge has no blue family, so the Tailwind
         // palette stays until a utility-info ladder is added.
-        info: "bg-sky-600 text-white font-semibold hover:bg-sky-500 active:bg-sky-700 disabled:bg-disabled disabled:shadow-xs disabled:ring-disabled_subtle",
+        // info: 700-step sky so white copy clears the 4.5:1 WCAG gate
+        // (sky-600 measured 4.1:1 — mirrors the badge fix).
+        info: "bg-sky-700 text-white font-semibold hover:bg-sky-800 active:bg-sky-900 disabled:bg-disabled disabled:shadow-xs disabled:ring-disabled_subtle",
 
         // App-specific solid, patterned on UU primary with the warning family
         // (no UU equivalent color).

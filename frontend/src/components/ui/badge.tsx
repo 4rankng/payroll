@@ -30,11 +30,14 @@ const badgeVariants = cva(
           "bg-utility-success-50 text-utility-success-700 ring-utility-success-200",
         warning:
           "bg-utility-warning-50 text-utility-warning-700 ring-utility-warning-200",
-        info: "bg-sky-600 text-white hover:bg-sky-500",
-        admin: "bg-blue-600 text-white hover:bg-blue-700",
+        // info/admin/manager: solid role-identity chips kept, darkened to the
+        // 700 palette steps so white copy clears the repo's 4.5:1 WCAG gate
+        // (sky-600 was 4.1:1, teal-600 3.8:1, blue-600 borderline).
+        info: "bg-sky-700 text-white hover:bg-sky-800",
+        admin: "bg-blue-700 text-white hover:bg-blue-800",
         partner:
           "bg-brand-solid text-fg-white hover:bg-brand-solid_hover",
-        manager: "bg-teal-600 text-white hover:bg-teal-700",
+        manager: "bg-teal-700 text-white hover:bg-teal-800",
         role: "bg-utility-gray-600 text-fg-white hover:bg-utility-gray-700",
       },
     },

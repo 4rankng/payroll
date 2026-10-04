@@ -312,6 +312,19 @@ export default {
 						'600': '#039855',
 						'700': '#027a48',
 					},
+					// UU default blue ladder (info-family; W-final addition so UU
+					// blue accents have a bridge ladder instead of raw palette).
+					blue: {
+						'25': '#f5faff',
+						'50': '#eff8ff',
+						'100': '#d1e9ff',
+						'200': '#b2ddff',
+						'300': '#84caff',
+						'400': '#53b1fd',
+						'500': '#2e90fa',
+						'600': '#1570ef',
+						'700': '#175cd3',
+					},
 				},
 				'featured-icon-light-fg': {
 					brand: '#08783e',

@@ -12,10 +12,10 @@ describe('Badge contract', () => {
       outline: 'ring-utility-gray-300',
       success: 'bg-utility-success-50',
       warning: 'bg-utility-warning-50',
-      info: 'bg-sky-600',
-      admin: 'bg-blue-600',
+      info: 'bg-sky-700',
+      admin: 'bg-blue-700',
       partner: 'bg-brand-solid',
-      manager: 'bg-teal-600',
+      manager: 'bg-teal-700',
       role: 'bg-utility-gray-600',
     };
     for (const [variant, signature] of Object.entries(signatures)) {

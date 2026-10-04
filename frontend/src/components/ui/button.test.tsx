@@ -25,7 +25,7 @@ const SIGNATURE: Record<(typeof VARIANTS)[number], string> = {
   outline: 'border-border',
   ghost: 'text-tertiary',
   success: 'bg-success-solid',
-  info: 'bg-sky-600',
+  info: 'bg-sky-700',
   warning: 'bg-warning-solid',
   monochrome: 'bg-utility-gray-700',
   'monochrome-outline': 'text-utility-gray-700',
