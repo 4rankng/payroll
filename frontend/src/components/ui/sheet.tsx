@@ -7,6 +7,13 @@ import { cn } from "@/lib/utils"
 import { useDialogFocusReturn } from "@/hooks/useDialogFocusReturn"
 import { useIsMobile } from "@/hooks/useBreakpoint"
 
+// UU PRO restyle (W5): surface takes the W2 card recipe — bg-card +
+// utility-gray-200 border + shadow-lg elevation. Sheet is Radix-Dialog
+// based (no vaul in this file) and the engine stays untouched per the plan's
+// engine-keep list; side variants, focus-return and the mobile edge-to-edge
+// override are contractual and unchanged.
+
+
 const Sheet = SheetPrimitive.Root
 
 const SheetTrigger = SheetPrimitive.Trigger
@@ -31,7 +38,7 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
 const sheetVariants = cva(
-  "fixed z-50 flex flex-col bg-card shadow-sm transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
+  "fixed z-50 flex flex-col border border-utility-gray-200 bg-card shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
   {
     variants: {
       side: {

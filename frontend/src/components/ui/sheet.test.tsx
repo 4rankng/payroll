@@ -40,3 +40,10 @@ describe('responsive sheet width', () => {
     expect(screen.getByRole('dialog').style.left).toBe('');
   });
 });
+
+describe('sheet UU surface (W5)', () => {
+  it('renders the UU card surface with the utility-gray border and shadow-lg elevation', () => {
+    render(<Sheet open><SheetContent title="Chi tiết" /></Sheet>);
+    expect(screen.getByRole('dialog')).toHaveClass('bg-card', 'border-utility-gray-200', 'shadow-lg');
+  });
+});

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Dialog, DialogContent, DialogNavyHeader, DialogTrigger } from './dialog';
 import { useIsMobile } from '@/hooks/useBreakpoint';
@@ -41,5 +41,29 @@ describe('responsive dialog width', () => {
     render(<Dialog open><DialogContent title="Chuyển tiền" description="Nhập tài khoản" style={{ width: 580, maxWidth: 580 }} /></Dialog>);
     expect(screen.getByRole('dialog')).toHaveStyle({ width: '580px', maxWidth: '580px' });
     expect(screen.getByRole('dialog').style.left).toBe('');
+  });
+});
+
+describe('UU surface (W5)', () => {
+  it('renders the UU card surface with the utility-gray border and heavy elevation', () => {
+    render(<Dialog open><DialogContent title="Chuyển tiền" /></Dialog>);
+    expect(screen.getByRole('dialog')).toHaveClass('bg-card', 'border-utility-gray-200', 'shadow-2xl');
+  });
+
+  it('omits the default padding for contentPadding="none"', () => {
+    render(<Dialog open><DialogContent title="Chuyển tiền" contentPadding="none" /></Dialog>);
+    expect(screen.getByRole('dialog')).not.toHaveClass('p-4');
+  });
+
+  it('returns focus to the opener after the dialog closes', async () => {
+    render(
+      <Dialog>
+        <DialogTrigger>Mở</DialogTrigger>
+        <DialogContent title="Chuyển tiền" />
+      </Dialog>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Mở' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Đóng' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mở' })).toHaveFocus());
   });
 });

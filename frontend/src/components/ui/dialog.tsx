@@ -6,6 +6,14 @@ import { cn } from "@/lib/utils"
 import { useIsMobile } from '@/hooks/useBreakpoint'
 import { useDialogFocusReturn } from '@/hooks/useDialogFocusReturn'
 
+// UU PRO restyle (W5): surface keeps bg-card (own :root token — Radix portals
+// render outside [data-*-ui], so daisyUI-scoped vars would be undefined) and
+// the border migrates to the bridge's utility-gray-200 (W2 card recipe). The
+// header strips migrate emerald-950 → brand-section_subtle (near-black forest,
+// added in W1 for exactly this strip) and on-brand muted copy reads
+// tertiary_on-brand. Engine stays Radix (plan engine-keep list); mobile bottom
+// sheet, focus-return, sr-only fallbacks and the navy-header CSS-var overrides
+// are contractual and untouched.
 const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
@@ -50,7 +58,7 @@ const DialogContent = React.forwardRef<
       <DialogPrimitive.Content
         ref={ref}
         className={cn(
-          "fixed z-50 flex flex-col gap-4 overflow-hidden border bg-card shadow-2xl",
+          "fixed z-50 flex flex-col gap-4 overflow-hidden border border-utility-gray-200 bg-card shadow-2xl",
           contentPadding === 'default' && "p-4 sm:p-6",
           isMobile
             ? /* Mobile: bottom sheet */
@@ -98,7 +106,7 @@ const DialogNavyHeader = React.forwardRef<HTMLDivElement, DialogNavyHeaderProps>
   ({ title, description, action, className, children }, ref) => (
     <div
       ref={ref}
-      className={cn("bg-emerald-950 px-5 pt-5 pb-4 text-white flex-shrink-0", className)}
+      className={cn("bg-brand-section_subtle px-5 pt-5 pb-4 text-white flex-shrink-0", className)}
       style={{ '--foreground': '0 0% 100%', '--muted-foreground': '152 30% 78%' } as React.CSSProperties}
     >
       <div className="flex justify-between items-start gap-3">
@@ -109,7 +117,7 @@ const DialogNavyHeader = React.forwardRef<HTMLDivElement, DialogNavyHeaderProps>
           )}
         </div>
         {action && <div className="flex items-center flex-shrink-0 pt-0.5">{action}</div>}
-        <DialogPrimitive.Close className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-emerald-800 outline-none focus:ring-2 focus:ring-emerald-200/50">
+        <DialogPrimitive.Close className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20 outline-none focus:ring-2 focus:ring-white/30">
           <X className="w-4 h-4 text-white" />
           <span className="sr-only">Đóng</span>
         </DialogPrimitive.Close>
@@ -127,7 +135,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "-mx-4 -mt-4 flex min-h-14 flex-col space-y-1.5 rounded-t-2xl bg-emerald-950 px-4 pb-4 pr-16 pt-5 text-center text-white sm:-mx-6 sm:-mt-6 sm:px-6 sm:pr-20 sm:text-left",
+      "-mx-4 -mt-4 flex min-h-14 flex-col space-y-1.5 rounded-t-2xl bg-brand-section_subtle px-4 pb-4 pr-16 pt-5 text-center text-white sm:-mx-6 sm:-mt-6 sm:px-6 sm:pr-20 sm:text-left",
       className
     )}
     style={{
@@ -178,7 +186,7 @@ const DialogDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-emerald-200/75 mt-1", className)}
+    className={cn("text-sm text-tertiary_on-brand mt-1", className)}
     {...props}
   />
 ))
