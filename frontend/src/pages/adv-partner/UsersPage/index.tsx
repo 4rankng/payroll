@@ -1,14 +1,16 @@
 import { useState, useMemo } from "react";
 import {
-  Search,
-  ChevronRightIcon,
-  Building2,
-  CreditCard,
-  User,
-  Mail,
-  BadgeCheck,
-} from "lucide-react";
+  Building02,
+  CheckVerified01,
+  ChevronRight,
+  CreditCard01,
+  Mail01,
+  SearchLg,
+  User01,
+} from "@untitledui/icons";
 import { useFlexPayEmployeesInfinite } from "@/hooks/api/useAdvancePayments";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState as SharedEmptyState } from "@/components/shared/EmptyState";
@@ -17,6 +19,8 @@ import type { FlexPayEmployeeListItem } from "@/types/api/advance-payment.types"
 import EditAdvPartnerUserSheet from "./EditAdvPartnerUserSheet";
 
 // ─── Avatar helpers ───────────────────────────────────────────────────────────
+// Decorative per-person identity palette (not chrome) — kept verbatim so the
+// established directory look survives the token migration.
 
 const AVATAR_GRADIENTS = [
   "from-teal-500 to-cyan-600",
@@ -47,7 +51,7 @@ function getGradient(name: string): string {
 
 function RowSkeleton() {
   return (
-    <tr className="border-b border-border/30">
+    <tr className="border-b border-utility-gray-100">
       {Array.from({ length: 10 }).map((_, i) => (
         <td key={i} className="px-4 py-3.5">
           <Skeleton className="h-4 w-full rounded" />
@@ -59,7 +63,7 @@ function RowSkeleton() {
 
 function CardSkeleton() {
   return (
-    <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+    <div className="bg-card rounded-lg border border-utility-gray-200 overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-3.5">
         <Skeleton className="h-9 w-9 rounded-xl shrink-0" />
         <div className="flex-1 space-y-1.5">
@@ -68,7 +72,7 @@ function CardSkeleton() {
         </div>
         <Skeleton className="h-8 w-8 rounded-lg" />
       </div>
-      <div className="border-t border-border/40 bg-muted/20 px-4 py-2.5 flex gap-3">
+      <div className="border-t border-utility-gray-100 bg-utility-gray-25 px-4 py-2.5 flex gap-3">
         <Skeleton className="h-3 w-16" />
         <Skeleton className="h-3 w-24" />
         <Skeleton className="h-3 w-24" />
@@ -101,9 +105,9 @@ function ColHead({
   icon?: React.ElementType;
 }) {
   return (
-    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted/30 whitespace-nowrap">
+    <th className="px-4 py-3 text-left text-xs font-semibold text-fg-tertiary bg-utility-gray-50 whitespace-nowrap">
       <span className="inline-flex items-center gap-1.5">
-        {Icon && <Icon className="w-3 h-3 opacity-60" />}
+        {Icon && <Icon className="size-3.5 text-fg-quaternary" aria-hidden="true" />}
         {children}
       </span>
     </th>
@@ -128,7 +132,7 @@ function EmployeeCard({
       type="button"
       onClick={onEdit}
       aria-label={`Chỉnh sửa nhân viên ${emp.fullname}`}
-      className="w-full text-left bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden active:scale-[0.99] transition-transform cursor-pointer"
+      className="w-full text-left bg-card rounded-lg border border-utility-gray-200 shadow-xs overflow-hidden active:scale-[0.99] transition-transform cursor-pointer outline-brand focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
     >
       <div className="flex items-center gap-3 px-4 py-3.5">
         <div
@@ -142,44 +146,44 @@ function EmployeeCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="break-words font-semibold text-[14px] text-foreground leading-snug line-clamp-2">
+          <div className="break-words font-semibold text-[14px] text-fg-primary leading-snug line-clamp-2">
             {emp.fullname}
           </div>
           {emp.username ? (
-            <div className="break-all font-mono text-xs text-muted-foreground mt-0.5">
+            <div className="break-all font-mono text-xs text-fg-tertiary mt-0.5">
               @{emp.username}
             </div>
           ) : (
-            <div className="text-xs text-muted-foreground italic mt-0.5">
+            <div className="text-xs text-fg-tertiary italic mt-0.5">
               chưa có tài khoản
             </div>
           )}
         </div>
 
-        <ChevronRightIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+        <ChevronRight className="size-4 text-fg-quaternary shrink-0" aria-hidden="true" />
       </div>
 
       {/* Info strip — project · bank · account */}
-      <div className="border-t border-border/40 bg-muted/25 px-4 py-2 flex items-center gap-0 flex-wrap min-h-[34px]">
+      <div className="border-t border-utility-gray-100 bg-utility-gray-25 px-4 py-2 flex items-center gap-0 flex-wrap min-h-[34px]">
         {/* Project */}
-        <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 pr-2.5">
-          <Building2 className="w-3 h-3 shrink-0 text-emerald-700/80" />
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-fg-brand-secondary pr-2.5">
+          <Building02 className="size-3 shrink-0 text-fg-brand-secondary/80" aria-hidden="true" />
           {emp.project?.name || "—"}
         </span>
 
         {/* Bank */}
         {hasBank ? (
           <>
-            <span className="text-border mr-2.5" aria-hidden>·</span>
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 dark:text-blue-400 pr-2.5">
-              <CreditCard className="w-3 h-3 shrink-0 text-blue-600/80" />
+            <span className="text-utility-gray-300 mr-2.5" aria-hidden>·</span>
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-fg-secondary pr-2.5">
+              <CreditCard01 className="size-3 shrink-0 text-fg-quaternary" aria-hidden="true" />
               {emp.bank!.bankName}
             </span>
           </>
         ) : (
           <>
-            <span className="text-border mr-2.5" aria-hidden>·</span>
-            <span className="text-xs text-muted-foreground italic">
+            <span className="text-utility-gray-300 mr-2.5" aria-hidden>·</span>
+            <span className="text-xs text-fg-tertiary italic">
               Chưa có ngân hàng
             </span>
           </>
@@ -188,8 +192,8 @@ function EmployeeCard({
         {/* Account number */}
         {emp.bank?.accountNumber && (
           <>
-            <span className="text-border mr-2.5" aria-hidden>·</span>
-            <span className="break-all font-mono text-xs text-muted-foreground tabular-nums">
+            <span className="text-utility-gray-300 mr-2.5" aria-hidden>·</span>
+            <span className="break-all font-mono text-xs text-fg-tertiary tabular-nums">
               {emp.bank.accountNumber}
             </span>
           </>
@@ -236,15 +240,15 @@ const AdvPartnerUsersPage = () => {
           ))}
         </div>
 
-        <div className="hidden sm:block bg-card rounded-2xl border border-border/40 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-border/40">
-            <Skeleton className="h-9 w-72 rounded-[10px]" />
+        <div className="hidden sm:block bg-card rounded-lg border border-utility-gray-200 shadow-xs overflow-hidden">
+          <div className="px-4 py-3 border-b border-utility-gray-200">
+            <Skeleton className="h-9 w-72 rounded-lg" />
           </div>
           <table className="w-full">
             <thead>
               <tr>
                 {Array.from({ length: 10 }).map((_, i) => (
-                  <th key={i} className="px-4 py-3 bg-muted/30">
+                  <th key={i} className="px-4 py-3 bg-utility-gray-50">
                     <Skeleton className="h-3 w-16" />
                   </th>
                 ))}
@@ -269,15 +273,15 @@ const AdvPartnerUsersPage = () => {
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-[20px] sm:text-2xl font-bold tracking-tight text-foreground leading-tight">
+            <h1 className="font-display text-display-xs sm:text-display-sm font-semibold tracking-tight text-fg-primary leading-tight">
               Nhân viên
             </h1>
-            <p className="text-[13px] text-muted-foreground mt-0.5 leading-snug">
+            <p className="text-[13px] text-fg-tertiary mt-0.5 leading-snug">
               Thông tin, ngân hàng và dự án
             </p>
           </div>
           {employees.length > 0 && (
-            <div className="shrink-0 mt-0.5 px-2.5 py-1 rounded-lg bg-muted/60 text-[12px] font-semibold text-muted-foreground tabular-nums">
+            <div className="shrink-0 mt-0.5 px-2.5 py-1 rounded-lg bg-utility-gray-100 text-xs font-semibold text-fg-secondary tabular-nums">
               {employees.length}
             </div>
           )}
@@ -285,19 +289,19 @@ const AdvPartnerUsersPage = () => {
 
         {/* ── Search bar ──────────────────────────────────────────────────── */}
         <div className="relative w-full sm:max-w-[380px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <input
+          <SearchLg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-fg-quaternary pointer-events-none" aria-hidden="true" />
+          <Input
             type="search"
             aria-label="Tìm nhân viên theo tên hoặc CCCD"
             placeholder="Tìm theo tên, CCCD..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 h-11 rounded-xl border border-border/70 bg-card text-[13px] text-foreground placeholder:text-muted-foreground outline-none focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 transition-all shadow-sm"
+            className="pl-9"
           />
         </div>
 
         {isError && (
-          <div role="alert">
+          <div role="alert" className="motion-safe:animate-fade-in-up">
             <ErrorState
               message={isFetchNextPageError
                 ? "Không thể tải thêm nhân viên. Danh sách đã tải vẫn được giữ lại."
@@ -322,24 +326,26 @@ const AdvPartnerUsersPage = () => {
               ))}
 
               {!isError && hasNextPage && (
-                <button
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="min-h-11 w-full py-3 rounded-xl border border-border/50 bg-card text-[13px] font-medium text-muted-foreground hover:bg-muted/40 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                  className="w-full"
                 >
                   {isFetchingNextPage ? (
                     <>
-                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                      <span className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none rounded-full border-2 border-fg-primary border-t-transparent" aria-hidden="true" />
                       Đang tải...
                     </>
                   ) : (
                     "Tải thêm nhân viên"
                   )}
-                </button>
+                </Button>
               )}
 
               {!isError && employees.length > 0 && !hasNextPage && (
-                <p className="text-center text-xs text-muted-foreground pb-1">
+                <p className="text-center text-xs text-fg-tertiary pb-1">
                   {employees.length} nhân viên
                 </p>
               )}
@@ -348,23 +354,23 @@ const AdvPartnerUsersPage = () => {
         </div>
 
         {/* ── Desktop table ───────────────────────────────────────────────── */}
-        <div className="hidden sm:block bg-card rounded-2xl border border-border/40 shadow-sm overflow-hidden">
+        <div className="hidden sm:block bg-card rounded-lg border border-utility-gray-200 shadow-xs overflow-hidden">
           <div className="px-4 pt-3 pb-1">
-            <p className="text-xs text-muted-foreground">Nhấn vào hàng để xem chi tiết</p>
+            <p className="text-xs text-fg-tertiary">Nhấn vào hàng để xem chi tiết</p>
           </div>
-          <div role="region" aria-label="Danh sách nhân viên" tabIndex={0} className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <div role="region" aria-label="Danh sách nhân viên" tabIndex={0} className="overflow-x-auto outline-brand focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2">
             <table className="w-full min-w-[1040px] border-collapse text-[13px]">
               <thead>
                 <tr>
-                  <th className="w-10 px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted/30">
+                  <th className="w-10 px-4 py-3 text-left text-xs font-semibold text-fg-tertiary bg-utility-gray-50">
                     #
                   </th>
-                  <ColHead icon={User}>Nhân viên</ColHead>
-                  <ColHead icon={Mail}>Email</ColHead>
-                  <ColHead icon={Building2}>Dự án</ColHead>
-                  <ColHead icon={CreditCard}>Ngân hàng</ColHead>
-                  <ColHead icon={CreditCard}>Số tài khoản</ColHead>
-                  <ColHead icon={BadgeCheck}>CCCD</ColHead>
+                  <ColHead icon={User01}>Nhân viên</ColHead>
+                  <ColHead icon={Mail01}>Email</ColHead>
+                  <ColHead icon={Building02}>Dự án</ColHead>
+                  <ColHead icon={CreditCard01}>Ngân hàng</ColHead>
+                  <ColHead icon={CreditCard01}>Số tài khoản</ColHead>
+                  <ColHead icon={CheckVerified01}>CCCD</ColHead>
                 </tr>
               </thead>
               <tbody>
@@ -372,9 +378,9 @@ const AdvPartnerUsersPage = () => {
                   <tr
                     key={emp.employeeId}
                     onClick={() => setEditEmployee(emp)}
-                    className="border-b border-border/30 hover:bg-muted/25 transition-colors cursor-pointer group"
+                    className="border-b border-utility-gray-100 hover:bg-utility-gray-50 transition-colors cursor-pointer group"
                   >
-                    <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
+                    <td className="px-4 py-3.5 font-mono text-xs text-fg-tertiary">
                       {String(i + 1).padStart(2, "0")}
                     </td>
                     <td className="px-4 py-3.5 min-w-[220px]">
@@ -391,18 +397,18 @@ const AdvPartnerUsersPage = () => {
                         <div className="min-w-0">
                           <button
                             type="button"
-                            className="min-h-11 text-left font-semibold text-[13px] text-foreground leading-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-md"
+                            className="min-h-11 text-left font-semibold text-[13px] text-fg-primary leading-tight outline-brand focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 rounded-md"
                             onClick={(event) => { event.stopPropagation(); setEditEmployee(emp); }}
                             aria-label={`Chỉnh sửa nhân viên ${emp.fullname}`}
                           >
                             {emp.fullname}
                           </button>
                           {emp.username ? (
-                            <div className="font-mono text-xs text-muted-foreground">
+                            <div className="font-mono text-xs text-fg-tertiary">
                               @{emp.username}
                             </div>
                           ) : (
-                            <div className="text-xs text-muted-foreground italic">
+                            <div className="text-xs text-fg-tertiary italic">
                               chưa có tài khoản
                             </div>
                           )}
@@ -410,13 +416,13 @@ const AdvPartnerUsersPage = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3.5 min-w-[140px]">
-                      <div className="text-[12px] text-foreground/80 truncate">
+                      <div className="text-[12px] text-fg-secondary truncate">
                         {emp.email || "—"}
                       </div>
                     </td>
                     <td className="px-4 py-3.5 min-w-[180px]">
-                      <span className="inline-flex items-center gap-1.5 text-[12px] text-foreground/80 font-medium">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                      <span className="inline-flex items-center gap-1.5 text-[12px] text-fg-secondary font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-utility-brand-500 shrink-0" aria-hidden="true" />
                         {emp.project?.name || "—"}
                       </span>
                     </td>
@@ -425,8 +431,8 @@ const AdvPartnerUsersPage = () => {
                         className={cn(
                           "text-[12px]",
                           emp.bank
-                            ? "text-foreground/80"
-                            : "text-muted-foreground italic"
+                            ? "text-fg-secondary"
+                            : "text-fg-tertiary italic"
                         )}
                       >
                         {emp.bank?.bankName || "—"}
@@ -437,15 +443,15 @@ const AdvPartnerUsersPage = () => {
                         className={cn(
                           "font-mono text-[12px]",
                           emp.bank?.accountNumber
-                            ? "text-foreground/80"
-                            : "text-muted-foreground italic"
+                            ? "text-fg-secondary"
+                            : "text-fg-tertiary italic"
                         )}
                       >
                         {emp.bank?.accountNumber || "—"}
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className="font-mono text-[12px] text-foreground/80">
+                      <span className="font-mono text-[12px] text-fg-secondary">
                         {emp.cccd || "—"}
                       </span>
                     </td>
@@ -460,25 +466,25 @@ const AdvPartnerUsersPage = () => {
           )}
 
           {employees.length > 0 && !isError && (
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/30 bg-muted/10 px-4 py-3 text-sm text-muted-foreground">
-              <span>Đã tải <strong className="font-mono text-foreground">{employees.length}</strong> nhân viên</span>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-utility-gray-200 bg-utility-gray-25 px-4 py-3 text-sm text-fg-tertiary">
+              <span>Đã tải <strong className="font-mono text-fg-primary">{employees.length}</strong> nhân viên</span>
               {hasNextPage && (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => void fetchNextPage()}
                   disabled={isFetchingNextPage}
-                  className="min-h-11 rounded-lg border border-border bg-card px-4 font-medium hover:bg-muted disabled:opacity-50"
                 >
                   {isFetchingNextPage ? "Đang tải..." : "Tải thêm nhân viên"}
-                </button>
+                </Button>
               )}
             </div>
           )}
         </div>
 
         {isFetchingNextPage && (
-          <div className="hidden sm:flex items-center justify-center py-4 gap-2 text-sm text-muted-foreground">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+          <div className="hidden sm:flex items-center justify-center py-4 gap-2 text-sm text-fg-tertiary">
+            <span className="h-4 w-4 animate-spin motion-reduce:animate-none rounded-full border-2 border-fg-primary border-t-transparent" aria-hidden="true" />
             Đang tải thêm...
           </div>
         )}

@@ -24,7 +24,7 @@ import { useExportBulkTransfer, useExportPayrollReport } from '@/hooks/api/usePa
 import type { Timesheet } from '@/types/api/timesheet.types';
 import { formatCurrency, formatDateForAPI } from '@/utils/formatters';
 import { getAvailableWeekPeriods } from '@/utils/weekPeriodHelpers';
-import { CalendarCheck, FileDown, FileSpreadsheet, LogOut, Upload } from 'lucide-react';
+import { CalendarCheck01, FileDownload01, FileDownload02, LogOut01, Upload01 } from '@untitledui/icons';
 
 /**
  * Kế toán workspace — một trang duy nhất, không sidebar. Bốn việc:
@@ -42,16 +42,16 @@ export default function AccountantPage() {
 
   return (
     <div className="min-h-screen bg-card">
-      <header className="sticky top-0 z-10 border-b bg-card">
+      <header className="sticky top-0 z-10 border-b border-utility-gray-200 bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-5 text-foreground">Kế toán</p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="text-sm font-semibold leading-5 text-fg-primary">Kế toán</p>
+            <p className="truncate text-xs text-fg-tertiary">
               {user?.name || user?.username || ''}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}>
-            <LogOut className="mr-1.5 h-4 w-4" aria-hidden="true" />
+            <LogOut01 className="size-4" aria-hidden="true" />
             Đăng xuất
           </Button>
         </div>
@@ -61,19 +61,19 @@ export default function AccountantPage() {
         <Tabs defaultValue="duyet-cong" className="w-full">
           <TabsList className="mb-4 grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
             <TabsTrigger value="duyet-cong" className="gap-1.5 whitespace-normal text-center leading-snug">
-              <CalendarCheck className="h-4 w-4" aria-hidden="true" />
+              <CalendarCheck01 className="size-4" aria-hidden="true" />
               Duyệt công
             </TabsTrigger>
             <TabsTrigger value="xuat-chuyen-lo" className="gap-1.5 whitespace-normal text-center leading-snug">
-              <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
+              <FileDownload02 className="size-4" aria-hidden="true" />
               Xuất file chuyển lô
             </TabsTrigger>
             <TabsTrigger value="nhap-kq" className="gap-1.5 whitespace-normal text-center leading-snug">
-              <Upload className="h-4 w-4" aria-hidden="true" />
+              <Upload01 className="size-4" aria-hidden="true" />
               Nhập KQ chuyển lô
             </TabsTrigger>
             <TabsTrigger value="xuat-sao-ke" className="gap-1.5 whitespace-normal text-center leading-snug">
-              <FileDown className="h-4 w-4" aria-hidden="true" />
+              <FileDownload01 className="size-4" aria-hidden="true" />
               Xuất sao kê
             </TabsTrigger>
           </TabsList>
@@ -208,19 +208,19 @@ function ApproveTimesheetsTab() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="py-8 text-center text-sm text-fg-tertiary">
                   Đang tải…
                 </TableCell>
               </TableRow>
             ) : isError ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-sm text-destructive">
+                <TableCell colSpan={6} className="py-8 text-center text-sm text-fg-error-primary">
                   Không tải được danh sách chấm công. Vui lòng thử lại.
                 </TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="py-8 text-center text-sm text-fg-tertiary">
                   Không có chấm công chờ duyệt trong khoảng ngày đã chọn.
                 </TableCell>
               </TableRow>
@@ -237,8 +237,8 @@ function ApproveTimesheetsTab() {
                     </label>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm font-medium">{r.employeeName}</div>
-                    <div className="text-xs text-muted-foreground">{r.employeeCCCD || r.employeeCode}</div>
+                    <div className="text-sm font-medium text-fg-primary">{r.employeeName}</div>
+                    <div className="text-xs text-fg-tertiary">{r.employeeCCCD || r.employeeCode}</div>
                   </TableCell>
                   <TableCell className="text-sm">{r.projectName}</TableCell>
                   <TableCell className="text-sm">{r.date}</TableCell>
@@ -253,12 +253,12 @@ function ApproveTimesheetsTab() {
       </CardContent>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 sm:px-6">
         <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-fg-tertiary">
             Đã chọn {selected.size}/{rows.length}
             {selected.size > 0 && ` · ${formatCurrency(totalAmount)}`}
           </p>
           {hasHiddenRows && (
-            <p className="text-sm text-warning">
+            <p className="text-sm text-fg-warning-primary">
               Còn {totalRecords - rows.length} dòng chưa hiển thị — thu hẹp khoảng ngày để xem tiếp.
             </p>
           )}
@@ -282,11 +282,11 @@ function ExportBulkTransferTab() {
         <CardTitle className="text-base">Xuất file chuyển lô</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-start gap-3 py-6">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-fg-tertiary">
           Chọn tuần (hoặc tháng) và dự án, hệ thống tạo file Excel chuyển lô để nộp ngân hàng.
         </p>
         <Button onClick={() => setOpen(true)}>
-          <FileSpreadsheet className="mr-1.5 h-4 w-4" aria-hidden="true" />
+          <FileDownload02 className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Mở hộp thoại xuất file
         </Button>
       </CardContent>
@@ -310,11 +310,11 @@ function ImportResultTab() {
         <CardTitle className="text-base">Nhập KQ chuyển lô</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-start gap-3 py-6">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-fg-tertiary">
           Tải lên file kết quả ngân hàng trả về sau chuyển lô để cập nhật trạng thái thanh toán.
         </p>
         <Button onClick={() => setOpen(true)}>
-          <Upload className="mr-1.5 h-4 w-4" aria-hidden="true" />
+          <Upload01 className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Tải lên file kết quả
         </Button>
       </CardContent>
@@ -334,11 +334,11 @@ function ExportSaoKeTab() {
         <CardTitle className="text-base">Xuất sao kê thanh toán</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-start gap-3 py-6">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-fg-tertiary">
           Xuất sao kê thanh toán lương (file Excel) theo ngày đối chiếu.
         </p>
         <Button onClick={() => setOpen(true)}>
-          <FileDown className="mr-1.5 h-4 w-4" aria-hidden="true" />
+          <FileDownload01 className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Mở hộp thoại xuất sao kê
         </Button>
       </CardContent>

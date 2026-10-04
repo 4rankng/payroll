@@ -20,13 +20,13 @@ import { cn } from "@/lib/utils";
 import {
   Eye,
   EyeOff,
-  User,
-  CreditCard,
-  Building2,
-  Lock,
-  CheckCircle2,
-  X,
-} from "lucide-react";
+  User01,
+  CreditCard01,
+  Building02,
+  Lock01,
+  CheckCircle,
+  XClose,
+} from "@untitledui/icons";
 import type { Employee, CurrentProject } from "@/types/api/employee.types";
 import type { Bank } from "@/types/api/bank.types";
 import { QueryKeys } from "@/lib/queryKeys";
@@ -65,14 +65,14 @@ function Section({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <div className="h-6 w-6 rounded-md bg-muted flex items-center justify-center shrink-0">
-          <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+        <div className="h-6 w-6 rounded-lg bg-utility-gray-100 flex items-center justify-center shrink-0">
+          <Icon className="size-3.5 text-fg-tertiary" aria-hidden="true" />
         </div>
-        <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
+        <span className="text-xs font-semibold text-fg-secondary">
           {title}
         </span>
       </div>
-      <div className="rounded-xl border border-border/60 bg-muted/20 p-4 space-y-4">
+      <div className="rounded-lg border border-utility-gray-200 bg-utility-gray-25 p-4 space-y-4">
         {children}
       </div>
     </div>
@@ -92,11 +92,11 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-[12px] font-medium text-muted-foreground">
+      <Label htmlFor={id} className="text-[12px] font-medium text-fg-tertiary">
         {label}
       </Label>
       {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-xs text-fg-error-primary">{error}</p>}
     </div>
   );
 }
@@ -131,9 +131,9 @@ function Avatar({ name, username }: { name: string; username?: string }) {
         {initials || "?"}
       </div>
       <div className="min-w-0">
-        <div className="break-words font-bold text-[15px] leading-tight">{name}</div>
+        <div className="break-words font-bold text-[15px] leading-tight text-fg-primary">{name}</div>
         {username && (
-          <div className="break-all font-mono text-[12px] text-muted-foreground">
+          <div className="break-all font-mono text-[12px] text-fg-tertiary">
             @{username}
           </div>
         )}
@@ -146,13 +146,13 @@ function Avatar({ name, username }: { name: string; username?: string }) {
 
 function ProjectPill({ project }: { project: CurrentProject }) {
   return (
-    <div className="inline-flex min-w-0 flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[12px]">
-      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-      <span className="font-medium text-emerald-700 dark:text-emerald-400">
+    <div className="inline-flex min-w-0 flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-utility-brand-50 border border-utility-brand-200 text-[12px]">
+      <span className="w-1.5 h-1.5 rounded-full bg-utility-brand-500 shrink-0" aria-hidden="true" />
+      <span className="font-medium text-fg-brand-secondary">
         {project.name}
       </span>
       {project.code && (
-        <span className="text-emerald-700/60 dark:/60 font-mono">
+        <span className="text-fg-brand-secondary/70 font-mono">
           {project.code}
         </span>
       )}
@@ -313,10 +313,10 @@ export default function EditAdvPartnerUserSheet({
         className="w-full sm:w-[480px] md:w-[520px] p-0 flex flex-col h-full"
       >
         {/* Header */}
-        <SheetHeader className="px-5 py-4 border-b border-border/40 shrink-0 space-y-0">
+        <SheetHeader className="px-5 py-4 border-b border-utility-gray-200 shrink-0 space-y-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <SheetTitle className="text-left text-base font-bold leading-tight">
+              <SheetTitle className="text-left text-base font-bold leading-tight text-fg-primary">
                 Chỉnh sửa nhân viên
               </SheetTitle>
               <div className="mt-2.5">
@@ -329,9 +329,9 @@ export default function EditAdvPartnerUserSheet({
             <button
               onClick={onClose}
               aria-label="Đóng chỉnh sửa nhân viên"
-              className="w-11 h-11 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0 mt-0.5"
+              className="w-11 h-11 rounded-lg flex items-center justify-center text-fg-quaternary hover:text-fg-secondary hover:bg-utility-gray-100 outline-brand transition duration-100 ease-linear focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 shrink-0 mt-0.5"
             >
-              <X className="w-4 h-4" />
+              <XClose className="size-4" aria-hidden="true" />
             </button>
           </div>
         </SheetHeader>
@@ -342,8 +342,8 @@ export default function EditAdvPartnerUserSheet({
 
             {loading ? (
               <div className="space-y-4">
-                <Skeleton className="h-40 w-full rounded-xl" />
-                <Skeleton className="h-32 w-full rounded-xl" />
+                <Skeleton className="h-40 w-full rounded-lg" />
+                <Skeleton className="h-32 w-full rounded-lg" />
                 <Skeleton className="h-10 w-full rounded-lg" />
               </div>
             ) : loadError ? (
@@ -353,7 +353,7 @@ export default function EditAdvPartnerUserSheet({
             ) : (
               <>
                 {/* ── Personal info ──────────────────────────────────────── */}
-                <Section icon={User} title="Thông tin cá nhân">
+                <Section icon={User01} title="Thông tin cá nhân">
                   <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3">
                     <div className="min-[380px]:col-span-2">
                       <Field id="adv-partner-fullname" label="Họ và tên *" error={errors.fullname}>
@@ -365,10 +365,8 @@ export default function EditAdvPartnerUserSheet({
                             const formatted = formatVietnameseName(e.target.value);
                             if (formatted !== e.target.value) set("fullname", formatted);
                           }}
-                          className={cn(
-                            "h-11 text-sm",
-                            errors.fullname && "border-destructive focus-visible:ring-destructive/20"
-                          )}
+                          className="h-11 text-sm"
+                          aria-invalid={!!errors.fullname || undefined}
                         />
                       </Field>
                     </div>
@@ -378,11 +376,9 @@ export default function EditAdvPartnerUserSheet({
                         id="adv-partner-cccd"
                         value={form.cccd}
                         onChange={(e) => set("cccd", e.target.value)}
-                        className={cn(
-                          "h-11 text-sm font-mono tracking-wide",
-                          errors.cccd && "border-destructive focus-visible:ring-destructive/20"
-                        )}
+                        className="h-11 text-sm font-mono tracking-wide"
                         placeholder="012345678901"
+                        aria-invalid={!!errors.cccd || undefined}
                       />
                     </Field>
 
@@ -403,11 +399,9 @@ export default function EditAdvPartnerUserSheet({
                           id="adv-partner-email"
                           value={form.email}
                           onChange={(e) => set("email", e.target.value)}
-                          className={cn(
-                            "h-11 text-sm",
-                            errors.email && "border-destructive focus-visible:ring-destructive/20"
-                          )}
+                          className="h-11 text-sm"
                           placeholder="email@example.com"
+                          aria-invalid={!!errors.email || undefined}
                         />
                       </Field>
                     </div>
@@ -416,7 +410,7 @@ export default function EditAdvPartnerUserSheet({
                   {/* Username — read-only */}
                   {currentUsername && (
                     <Field label="Tên đăng nhập">
-                      <div className="h-9 px-3 flex items-center rounded-md border border-border/50 bg-muted/50 font-mono text-[13px] text-muted-foreground">
+                      <div className="h-9 px-3 flex items-center rounded-lg border border-utility-gray-200 bg-utility-gray-50 font-mono text-[13px] text-fg-tertiary">
                         @{currentUsername}
                       </div>
                     </Field>
@@ -424,7 +418,7 @@ export default function EditAdvPartnerUserSheet({
                 </Section>
 
                 {/* ── Bank info ──────────────────────────────────────────── */}
-                <Section icon={CreditCard} title="Thông tin ngân hàng">
+                <Section icon={CreditCard01} title="Thông tin ngân hàng">
                   <Field label="Ngân hàng">
                     <BankSelector
                       value={selectedBank}
@@ -461,7 +455,7 @@ export default function EditAdvPartnerUserSheet({
 
                 {/* ── Projects — read-only ───────────────────────────────── */}
                 {projects.length > 0 && (
-                  <Section icon={Building2} title="Dự án hiện tại">
+                  <Section icon={Building02} title="Dự án hiện tại">
                     <div className="flex flex-wrap gap-2">
                       {projects.map((p) => (
                         <ProjectPill key={p.project_id} project={p} />
@@ -478,11 +472,11 @@ export default function EditAdvPartnerUserSheet({
                 >
                   {savedInfo ? (
                     <span className="inline-flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4" /> Đã lưu
+                      <CheckCircle className="size-4" aria-hidden="true" /> Đã lưu
                     </span>
                   ) : isSaving ? (
                     <span className="inline-flex items-center gap-2">
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <span className="h-4 w-4 animate-spin motion-reduce:animate-none rounded-full border-2 border-white border-t-transparent" aria-hidden="true" />
                       Đang lưu...
                     </span>
                   ) : (
@@ -493,17 +487,17 @@ export default function EditAdvPartnerUserSheet({
                 {/* Divider */}
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border/40" />
+                    <div className="w-full border-t border-utility-gray-200" />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="px-3 bg-card text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                    <span className="px-3 bg-card text-xs text-fg-tertiary font-medium">
                       Bảo mật tài khoản
                     </span>
                   </div>
                 </div>
 
                 {/* ── Password change ────────────────────────────────────── */}
-                <Section icon={Lock} title="Đổi mật khẩu">
+                <Section icon={Lock01} title="Đổi mật khẩu">
                   <Field
                     id="adv-partner-password"
                     label="Mật khẩu mới"
@@ -523,22 +517,20 @@ export default function EditAdvPartnerUserSheet({
                               return next;
                             });
                         }}
-                        className={cn(
-                          "h-11 text-sm pr-10",
-                          errors.password && "border-destructive focus-visible:ring-destructive/20"
-                        )}
+                        className="h-11 text-sm pr-10"
                         placeholder="Tối thiểu 8 ký tự"
+                        aria-invalid={!!errors.password || undefined}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                        className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                        className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-fg-quaternary hover:text-fg-secondary outline-brand transition duration-100 ease-linear focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
                       >
                         {showPassword ? (
-                          <EyeOff className="w-4 h-4" />
+                          <EyeOff className="size-4" aria-hidden="true" />
                         ) : (
-                          <Eye className="w-4 h-4" />
+                          <Eye className="size-4" aria-hidden="true" />
                         )}
                       </button>
                     </div>
@@ -551,12 +543,12 @@ export default function EditAdvPartnerUserSheet({
                     disabled={isSaving || !password}
                   >
                     {savedPassword ? (
-                      <span className="inline-flex items-center gap-2 text-emerald-700">
-                        <CheckCircle2 className="w-4 h-4" /> Đã đổi mật khẩu
+                      <span className="inline-flex items-center gap-2 text-fg-success-primary">
+                        <CheckCircle className="size-4" aria-hidden="true" /> Đã đổi mật khẩu
                       </span>
                     ) : isSaving ? (
                       <span className="inline-flex items-center gap-2">
-                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-foreground border-t-transparent" />
+                        <span className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none rounded-full border-2 border-fg-primary border-t-transparent" aria-hidden="true" />
                         Đang đổi...
                       </span>
                     ) : (
