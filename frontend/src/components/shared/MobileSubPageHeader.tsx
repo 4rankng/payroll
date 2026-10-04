@@ -1,5 +1,5 @@
 import type { SVGProps } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@untitledui/icons';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -53,7 +53,7 @@ export const MobileSubPageHeader = ({
           onClick={onBack}
           aria-label="Quay lại"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
         </Button>
         <div className="hidden h-8 w-8 items-center justify-center rounded-lg border border-primary/10 bg-primary/[0.07] shrink-0 min-[420px]:flex">
           <Icon className="h-[18px] w-[18px] text-primary" strokeWidth={2} />

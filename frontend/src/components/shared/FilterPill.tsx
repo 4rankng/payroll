@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown } from '@untitledui/icons';
 import { cn } from '@/lib/utils';
 
 export interface FilterOption {
@@ -46,7 +46,7 @@ export const FilterPill = React.memo(function FilterPill({
         {icon && <span className="shrink-0 opacity-70">{icon}</span>}
         <span>{isActive ? activeLabel : placeholder}</span>
         <SelectPrimitive.Icon asChild>
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform duration-150" />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform duration-150" aria-hidden="true" />
         </SelectPrimitive.Icon>
       </SelectPrimitive.Trigger>
 
@@ -97,7 +97,7 @@ const FilterPillItem = React.memo(function FilterPillItem({
     >
       <span className="absolute left-2 flex h-4 w-4 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
-          <Check className="h-3.5 w-3.5" />
+          <Check className="h-3.5 w-3.5" aria-hidden="true" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{label}</SelectPrimitive.ItemText>

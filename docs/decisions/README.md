@@ -42,6 +42,8 @@ What other options existed? Why were they rejected?
 | [ADR-008](ADR-008-casbin-rbac-authorization.md) | Casbin RBAC with deny-override | Accepted |
 | [ADR-009](ADR-009-wallet-double-entry-ledger.md) | Wallet double-entry ledger with state machine | Accepted |
 | [ADR-010](ADR-010-statistical-forecast-over-ml.md) | Statistical baseline over ML for forecasting | Accepted |
+| [ADR-011](ADR-011-zalo-otp-password-reset.md) | Zalo OTP password reset flow | Accepted |
+| [ADR-012](ADR-012-untitled-ui-pro-frontend-migration.md) | Untitled UI PRO frontend migration (token bridge + vendored UU + compat layer) | Accepted |
 
 ## When to Write a New ADR
 

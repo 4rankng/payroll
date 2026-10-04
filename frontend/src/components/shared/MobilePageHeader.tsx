@@ -1,7 +1,7 @@
 // W13a follow-up (approved): icon slot widened from LucideIcon so both lucide
 // and @untitledui/icons components fit (UU's are plain FunctionComponents).
 import type { ComponentType, SVGProps } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from '@untitledui/icons';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -67,7 +67,7 @@ export const MobilePageHeader = ({
     >
       <div
         className={cn(
-          'ct-navbar min-h-0 p-0 flex items-center justify-between gap-3',
+          'w-full min-h-0 p-0 flex items-center justify-between gap-3',
           // Inline actions stay beside the title while both fit; on very
           // narrow phones (the title block cannot shrink past 10rem without
           // breaking words mid-token) they wrap onto their own row instead.
@@ -88,7 +88,7 @@ export const MobilePageHeader = ({
               onClick={back}
               aria-label="Quay lại"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             </Button>
           )}
           {Icon && (

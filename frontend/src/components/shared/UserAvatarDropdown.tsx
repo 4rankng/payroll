@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, UserCircle, Key } from 'lucide-react';
+import { Key01, LogOut01, UserCircle } from '@untitledui/icons';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -91,12 +91,12 @@ export const UserAvatarDropdown = ({ className }: UserAvatarDropdownProps) => {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={handleViewProfile}>
-          <UserCircle className="mr-2 h-4 w-4" />
+          <UserCircle className="mr-2 h-4 w-4" aria-hidden="true" />
           <span>Thông tin cá nhân</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={handleChangePassword}>
-          <Key className="mr-2 h-4 w-4" />
+          <Key01 className="mr-2 h-4 w-4" aria-hidden="true" />
           <span>Đổi mật khẩu</span>
         </DropdownMenuItem>
 
@@ -106,7 +106,7 @@ export const UserAvatarDropdown = ({ className }: UserAvatarDropdownProps) => {
           onClick={handleLogout}
           className="text-destructive focus:text-destructive"
         >
-          <LogOut className="mr-2 h-4 w-4" />
+          <LogOut01 className="mr-2 h-4 w-4" aria-hidden="true" />
           <span>Đăng xuất</span>
         </DropdownMenuItem>
         </DropdownMenuContent>

@@ -1,19 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ComponentType, type SVGProps } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  type LucideIcon,
-  ChevronUp,
   ChevronDown,
-  HelpCircle,
-  UserPlus,
-  Download,
+  ChevronUp,
+  Download01,
   FolderPlus,
-  Users,
+  HelpCircle,
+  Send01,
+  UserPlus01,
+  Users01,
   Zap,
-  Send,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts';
 import type { AppRole } from '@/lib/auth';
@@ -21,7 +20,7 @@ import type { AppRole } from '@/lib/auth';
 interface QuickAction {
   id: string;
   label: string;
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   action: () => void;
   variant?: 'default' | 'secondary' | 'outline';
   roles?: AppRole[];
@@ -135,12 +134,12 @@ export const QuickActionBar = ({
           >
             {isExpanded ? (
               <>
-                <ChevronDown className="w-3 h-3 mr-1" />
+                <ChevronDown className="w-3 h-3 mr-1" aria-hidden="true" />
                 Ẩn
               </>
             ) : (
               <>
-                <ChevronUp className="w-3 h-3 mr-1" />
+                <ChevronUp className="w-3 h-3 mr-1" aria-hidden="true" />
                 Thêm ({filteredActions.length - maxVisibleActions})
               </>
             )}
@@ -171,14 +170,14 @@ export function useQuickActions(pageType: 'employees' | 'projects' | 'timesheet'
         {
           id: 'add-employee',
           label: 'Thêm NV',
-          icon: UserPlus,
+          icon: UserPlus01,
           action: () => () => {},
           roles: ['admin', 'partner'] as const
         },
         {
           id: 'export-employees',
           label: 'Xuất Excel',
-          icon: Download,
+          icon: Download01,
           action: () => () => {},
           variant: 'secondary' as const,
           roles: ['admin', 'partner'] as const
@@ -198,7 +197,7 @@ export function useQuickActions(pageType: 'employees' | 'projects' | 'timesheet'
         {
           id: 'assign-employees',
           label: 'Phân công',
-          icon: Users,
+          icon: Users01,
           action: () => () => {},
           variant: 'secondary' as const,
           roles: ['admin', 'partner'] as const
@@ -217,7 +216,7 @@ export function useQuickActions(pageType: 'employees' | 'projects' | 'timesheet'
         {
           id: 'submit-timesheet',
           label: 'Nộp BC',
-          icon: Send,
+          icon: Send01,
           action: () => () => {},
           variant: 'secondary' as const,
           roles: ['partner'] as const

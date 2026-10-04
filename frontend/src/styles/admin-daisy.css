@@ -22,16 +22,6 @@
     transition: background-color 9999s ease-out;
   }
 
-  [data-admin-ui] .ct-menu li > *:not(ul, details, .ct-menu-title) {
-    border-radius: 1rem;
-  }
-
-  [data-admin-ui] .ct-menu li > *:not(ul, details, .ct-menu-title).ct-menu-active,
-  [data-admin-ui] .ct-menu li > *:not(ul, details, .ct-menu-title):active {
-    background-color: hsl(var(--sidebar-accent));
-    color: hsl(var(--sidebar-foreground));
-  }
-
   [data-admin-ui] [data-radix-popper-content-wrapper] {
     z-index: 80 !important;
   }

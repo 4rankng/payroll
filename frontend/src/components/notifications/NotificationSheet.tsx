@@ -136,23 +136,23 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
         >
           {/* Header */}
           <div
-            className={cn("px-4 pb-4 text-neutral-content", theme.headerBg)}
+            className={cn("px-4 pb-4 text-white", theme.headerBg)}
             style={{ paddingTop: headerPaddingTop }}
           >
             <div className="mb-3 flex items-center justify-between gap-2">
               <button
                 onClick={onClose}
-                className="inline-flex items-center justify-center rounded-full h-11 min-h-11 w-11 border-0 bg-transparent p-0 text-neutral-content transition-colors hover:bg-neutral-content/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-content/30"
+                className="inline-flex items-center justify-center rounded-full h-11 min-h-11 w-11 border-0 bg-transparent p-0 text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                 aria-label="Đóng"
               >
                 <ArrowLeft className="h-6 w-6" />
               </button>
-              <h2 className="min-w-0 flex-1 text-center text-base font-bold text-neutral-content">Thông báo</h2>
+              <h2 className="min-w-0 flex-1 text-center text-base font-bold text-white">Thông báo</h2>
               {activeView === 'unread' && unreadNotifications.length > 0 ? (
                 <button
                   onClick={() => markAllAsRead.mutate()}
                   disabled={markAllAsRead.isPending}
-                  className="inline-flex items-center justify-center gap-1.5 h-11 min-h-11 max-w-[6.75rem] shrink-0 rounded-md border-0 bg-transparent px-2 text-xs font-medium text-white transition-colors hover:bg-neutral-content/10 disabled:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-content/30"
+                  className="inline-flex items-center justify-center gap-1.5 h-11 min-h-11 max-w-[6.75rem] shrink-0 rounded-md border-0 bg-transparent px-2 text-xs font-medium text-white transition-colors hover:bg-white/10 disabled:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                   aria-label="Đánh dấu tất cả đã đọc"
                 >
                   {markAllAsRead.isPending
@@ -166,7 +166,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
             </div>
 
             {/* Tab switcher */}
-            <div role="tablist" aria-label="Lọc thông báo" className="ct-tabs ct-tabs-box grid grid-cols-2 gap-1 rounded-xl bg-neutral-content/10 p-1">
+            <div role="tablist" aria-label="Lọc thông báo" className="grid grid-cols-2 gap-1 rounded-xl bg-white/10 p-1">
               {([
                 { value: 'unread' as const, label: 'Chưa đọc', count: unreadCount },
                 { value: 'all'    as const, label: 'Tất cả',   count: null },
@@ -186,7 +186,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                   {tab.label}
                   {tab.count != null && tab.count > 0 && (
                     <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none ${
-                      activeView === tab.value ? theme.activeTabCount : 'bg-neutral-content/15 text-neutral-content'
+                      activeView === tab.value ? theme.activeTabCount : 'bg-white/15 text-white'
                     }`}>
                       {tab.count > 99 ? '99+' : tab.count}
                     </span>

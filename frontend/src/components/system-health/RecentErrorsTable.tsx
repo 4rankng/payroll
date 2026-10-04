@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Activity, ChevronDown, ChevronUp } from "lucide-react";
+import { Activity, ChevronDown, ChevronUp } from "@untitledui/icons";
 import { cn } from "@/lib/utils";
 import { useRecentErrors } from "@/hooks/api/useSystemHealth";
 import { useUsersByIds } from "@/hooks/api/useUsers";
@@ -34,7 +34,7 @@ export function RecentErrorsTable({ days = 1, defaultVisible = 10 }: Props) {
         <CardHeader className="pb-3 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-red-600 shrink-0" />
+              <Activity className="h-4 w-4 text-red-600 shrink-0" aria-hidden="true" />
               <CardTitle className="text-sm font-semibold">
                 Lỗi Gần Đây ({days === 1 ? "24h" : `${days}d`})
               </CardTitle>
@@ -45,7 +45,7 @@ export function RecentErrorsTable({ days = 1, defaultVisible = 10 }: Props) {
                   {data.length} lỗi
                 </Badge>
               )}
-              <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
+              <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} aria-hidden="true" />
             </div>
           </div>
         </CardHeader>
@@ -120,9 +120,9 @@ export function RecentErrorsTable({ days = 1, defaultVisible = 10 }: Props) {
                              hover:bg-muted/30"
                 >
                   {expanded ? (
-                    <><ChevronUp className="h-3 w-3" /> Thu gọn</>
+                    <><ChevronUp className="h-3 w-3" aria-hidden="true" /> Thu gọn</>
                   ) : (
-                    <><ChevronDown className="h-3 w-3" /> Xem thêm {data.length - defaultVisible} lỗi</>
+                    <><ChevronDown className="h-3 w-3" aria-hidden="true" /> Xem thêm {data.length - defaultVisible} lỗi</>
                   )}
                 </button>
               )}

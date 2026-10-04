@@ -58,6 +58,8 @@
 
 ### Design System
 
+> **⚠️ Authoritative system (2026-10-05):** the frontend is migrated to **Untitled UI PRO** — see [ADR-012](../docs/decisions/ADR-012-untitled-ui-pro-frontend-migration.md). The token bridge in `tailwind.config.ts` (UU v7 tokens: `brand-*`, `utility-*` ladders, `fg-*`, `error/warning/success-*` families) plus `src/styles/variables.css` (role-scoped `--*-route-active` overrides) are the source of truth. Vendored UU components live in `src/components/{base,foundations,marketing,auth}/`. New UI uses UU primitives + `@untitledui/icons` (shared icon slots: `ComponentType<SVGProps<SVGSVGElement>>`). The palette/type tables below are historical — where they conflict with the bridge, the bridge wins.
+
 **Color Palette (TingTing Emerald):**
 ```css
 /* Primary - TingTing Emerald */

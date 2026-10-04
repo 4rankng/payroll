@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Zap, Clock, X } from "lucide-react";
+import { Clock, Users01, X, Zap } from "@untitledui/icons";
 import { useOSUsers, useBrowserUsers } from "@/hooks/api/useSystemHealth";
 import type { BrowserPlatformUser } from "@/types/api/system-health.types";
 
@@ -56,11 +56,11 @@ function UserCard({ user, index }: { user: BrowserPlatformUser; index: number })
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
         <span className="min-w-0 break-all font-mono">{user.username}</span>
         <span className="flex shrink-0 items-center gap-1">
-          <Zap className="h-3 w-3" />
+          <Zap className="h-3 w-3" aria-hidden="true" />
           {user.actions.toLocaleString()}
         </span>
         <span className="flex min-w-0 items-center gap-1">
-          <Clock className="h-3 w-3" />
+          <Clock className="h-3 w-3" aria-hidden="true" />
           <span className="break-words">{formatTime(user.last_seen)}</span>
         </span>
       </div>
@@ -92,14 +92,14 @@ export function OSUsersSheet({ osFamily, days, onClose }: OSUsersSheetProps) {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <SheetTitle className="flex min-w-0 items-center gap-2">
-                <Users className="h-4 w-4 text-primary shrink-0" />
+                <Users01 className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
                 <span className="min-w-0 break-words">Người dùng · {osFamily}</span>
               </SheetTitle>
               <p className="mt-1 break-words text-sm text-muted-foreground">Tất cả phiên bản {osFamily}</p>
             </div>
             <SheetClose asChild>
               <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground" aria-label="Đóng">
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             </SheetClose>
           </div>
@@ -147,14 +147,14 @@ export function BrowserUsersSheet({ browserFamily, days, onClose }: BrowserUsers
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <SheetTitle className="flex min-w-0 items-center gap-2">
-                <Users className="h-4 w-4 text-primary shrink-0" />
+                <Users01 className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
                 <span className="min-w-0 break-words">Người dùng · {browserFamily}</span>
               </SheetTitle>
               <p className="mt-1 break-words text-sm text-muted-foreground">Tất cả phiên bản {browserFamily}</p>
             </div>
             <SheetClose asChild>
               <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground" aria-label="Đóng">
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             </SheetClose>
           </div>

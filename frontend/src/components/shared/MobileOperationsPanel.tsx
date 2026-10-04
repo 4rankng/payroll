@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 // W13a follow-up (approved): icon slots widened from LucideIcon so both lucide
 // and @untitledui/icons components fit (UU's are plain FunctionComponents).
 import type { ComponentType, SVGProps } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight } from '@untitledui/icons';
 import { cn } from '@/lib/utils';
 
 type MobileOperationTone = 'primary' | 'success' | 'warning' | 'danger' | 'neutral';

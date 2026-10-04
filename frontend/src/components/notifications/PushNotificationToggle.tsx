@@ -1,5 +1,6 @@
 import { Bell, BellOff, Loader2, Smartphone } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 interface PushNotificationToggleProps {
@@ -62,14 +63,14 @@ export const PushNotificationToggle = ({ className }: PushNotificationToggleProp
         'flex min-h-16 items-center gap-3 rounded-xl border p-3 transition-colors',
         isSubscribed
           ? 'border-success/20 bg-success/5'
-          : 'border-base-300 bg-base-100',
+          : 'border-border bg-card',
         isLoading && 'opacity-60',
         className
       )}
     >
       <div className={cn(
         'flex h-9 w-9 items-center justify-center rounded-full',
-        isSubscribed ? 'bg-success/10' : 'bg-base-200'
+        isSubscribed ? 'bg-success/10' : 'bg-muted'
       )}>
         {isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -80,18 +81,17 @@ export const PushNotificationToggle = ({ className }: PushNotificationToggleProp
         )}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={cn('text-sm font-semibold', isSubscribed ? 'text-success' : 'text-base-content')}>
+        <p className={cn('text-sm font-semibold', isSubscribed ? 'text-success' : 'text-foreground')}>
           Thông báo đẩy
         </p>
-        <p className="text-xs text-base-content">
+        <p className="text-xs text-foreground">
           {isSubscribed ? 'Đã bật — nhận thông báo ngay trên thiết bị' : 'Bật thông báo đẩy trên thiết bị'}
         </p>
       </div>
-      <input
-        type="checkbox"
-        className="ct-toggle ct-toggle-success shrink-0"
+      <Switch
+        className="shrink-0"
         checked={isSubscribed}
-        onChange={() => { void handleToggle(); }}
+        onCheckedChange={() => { void handleToggle(); }}
         disabled={isLoading}
         aria-label={isSubscribed ? 'Tắt thông báo đẩy' : 'Bật thông báo đẩy'}
       />

@@ -50,11 +50,11 @@ interface InfoRowProps {
 }
 
 const InfoRow = ({ icon, label, value }: InfoRowProps) => (
-  <li className="ct-list-row grid-cols-[2.5rem_minmax(0,1fr)] gap-2 px-0 py-3 first:pt-0 last:pb-0">
+  <li className="grid-cols-[2.5rem_minmax(0,1fr)] gap-2 px-0 py-3 first:pt-0 last:pb-0">
     <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
       {icon}
     </span>
-    <div className="ct-list-col-grow min-w-0">
+    <div className="min-w-0">
       <p className="employee-type-label text-[var(--employee-text-secondary)]">{label}</p>
       <p className="employee-type-body mt-0.5 break-all font-semibold text-[var(--employee-text)]">{value}</p>
     </div>
@@ -201,10 +201,10 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
         data-theme="congtruong"
         className="flex h-full w-full flex-col gap-0 bg-[var(--employee-page)] p-0 sm:max-w-md"
       >
-        <div className="ct-hero relative min-h-0 overflow-hidden bg-gradient-to-br from-employee-800 via-employee-700 to-employee-500 px-5 pb-6 pt-[max(1.5rem,env(safe-area-inset-top,0px))] text-white">
-          <div className="ct-hero-content w-full max-w-none justify-between p-0">
+        <div className="relative min-h-0 overflow-hidden bg-gradient-to-br from-employee-800 via-employee-700 to-employee-500 px-5 pb-6 pt-[max(1.5rem,env(safe-area-inset-top,0px))] text-white">
+          <div className="z-0 flex items-center gap-4 w-full max-w-none justify-between p-0">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="ct-avatar shrink-0">
+              <div className="relative inline-flex overflow-hidden shrink-0">
                 <div className="h-16 w-16 rounded-2xl ring-4 ring-white/20 ring-offset-2 ring-offset-employee-700">
                   <UserAvatar
                     email={displayUser.email}
@@ -217,7 +217,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
               <div className="min-w-0">
                 <p className="employee-type-label-caps text-white/70">Tài khoản của bạn</p>
                 <h2 className="employee-type-section-title mt-0.5 break-words text-white">{displayUser.name}</h2>
-                <span className="ct-badge ct-badge-sm mt-2 border-white/20 bg-white/15 px-2.5 text-white">
+                <span className="mt-2 inline-flex h-4 items-center justify-center rounded-full border border-white/20 bg-white/15 px-2.5 text-xs leading-4 text-white">
                   {getRoleText(displayUser.role)}
                 </span>
               </div>
@@ -332,7 +332,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                       <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">Thông tin dùng để liên lạc với bạn</p>
                     </div>
                   </div>
-                  <ul className="ct-list p-0">
+                  <ul className="p-0">
                     <InfoRow icon={<User2 className="h-4 w-4" />} label="Họ và tên" value={displayUser.name} />
                     <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={displayUser.email || 'Chưa cập nhật'} />
                   {completeUser?.cccd && (
@@ -352,7 +352,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                     <p className="employee-type-label-caps font-semibold text-[var(--employee-accent)]">Tài khoản</p>
                     <p className="employee-type-body-sm mt-0.5 text-[var(--employee-text-secondary)]">Trạng thái và hoạt động gần đây</p>
                   </div>
-                  <ul className="ct-list p-0">
+                  <ul className="p-0">
                   <InfoRow icon={<Calendar className="h-4 w-4" />} label="Ngày tạo" value={formatCreatedAt(displayUser.created_at)} />
                   <InfoRow icon={<Clock className="h-4 w-4" />} label="Đăng nhập cuối" value={formatLastLogin(displayUser.last_login)} />
                   </ul>

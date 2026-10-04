@@ -1,7 +1,8 @@
 // W13c: icon slot widened from lucide's LucideIcon (approved W13a pattern;
 // this slot was missed by the original 8-component sweep) so both lucide and
-// @untitledui/icons fit. The inline X close glyph keeps its lucide import.
-import { X, type LucideIcon } from 'lucide-react';
+// @untitledui/icons fit. W-final: the inline X close glyph moved to
+// @untitledui/icons, completing this file's lucide retirement.
+import { X } from '@untitledui/icons';
 import type { ComponentType, SVGProps } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -67,7 +68,7 @@ export const MobileSheetHeader = ({
         onClick={onClose}
         aria-label="Đóng"
       >
-        <X className="h-4 w-4" />
+        <X className="h-4 w-4" aria-hidden="true" />
       </Button>
     </div>
   );

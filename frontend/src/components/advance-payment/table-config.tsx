@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { AdvanceRequestToggle } from "@/components/advance-payment/AdvanceRequestToggle";
-import { Wallet, Users, ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, RotateCcw, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronSelectorVertical, DotsHorizontal, RefreshCw05, X } from "@untitledui/icons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { formatCurrency } from "@/utils/formatters";
 import { format, differenceInMinutes } from "date-fns";
@@ -169,7 +169,7 @@ export function getAdvancePaymentColumns(
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label={`Thao tác yêu cầu ứng lương của ${row.original.employeeName}`} className="h-9 w-9 shrink-0">
-                  <MoreHorizontal className="h-3.5 w-3.5" />
+                  <DotsHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
@@ -179,7 +179,7 @@ export function getAdvancePaymentColumns(
                     disabled={isRetrying}
                     className="text-blue-600 focus:text-blue-700"
                   >
-                    <RotateCcw className="mr-2 h-3.5 w-3.5" />
+                    <RefreshCw05 className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
                     {isRetrying ? "Đang gửi..." : "Thử lại"}
                   </DropdownMenuItem>
                 )}
@@ -188,7 +188,7 @@ export function getAdvancePaymentColumns(
                     onClick={() => ctx.onCancel(id)}
                     className="text-red-700 focus:text-red-800"
                   >
-                    <X className="mr-2 h-3.5 w-3.5" />
+                    <X className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
                     Hủy yêu cầu
                   </DropdownMenuItem>
                 )}
@@ -209,14 +209,14 @@ export interface SortContext {
 
 function SortHeader({ label, field, ctx }: { label: string; field: string; ctx: SortContext }) {
   const isActive = ctx.sortBy === field;
-  const Icon = isActive ? (ctx.sortOrder === "ASC" ? ArrowUp : ArrowDown) : ArrowUpDown;
+  const Icon = isActive ? (ctx.sortOrder === "ASC" ? ArrowUp : ArrowDown) : ChevronSelectorVertical;
   return (
     <button
       className="flex items-center gap-1 hover:text-foreground transition-colors"
       onClick={() => ctx.onSort(field)}
     >
       {label}
-      <Icon className={`h-3 w-3 ${isActive ? "text-foreground" : "text-muted-foreground"}`} />
+      <Icon className={`h-3 w-3 ${isActive ? "text-foreground" : "text-muted-foreground"}`} aria-hidden="true" />
     </button>
   );
 }
@@ -419,7 +419,7 @@ export const flexPayMobileFields: MobileField<FlexPayEmployeeListItem>[] = [
     label: "Hạn mức",
     priority: 1,
     render: (row) => (
-      <div className="text-[13px] font-medium text-slate-500">{formatCurrency(row.maxAdvanceAmount)}</div>
+      <div className="text-[13px] font-medium text-fg-tertiary">{formatCurrency(row.maxAdvanceAmount)}</div>
     ),
   },
   {

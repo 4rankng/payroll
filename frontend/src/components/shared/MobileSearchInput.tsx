@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Search, X } from 'lucide-react';
+import { SearchLg, X } from '@untitledui/icons';
 import { Input } from '@/components/ui/input';
 import { useDebouncedInput } from '@/hooks/useDebouncedInput';
 import { cn } from '@/lib/utils';
@@ -27,7 +27,7 @@ export const MobileSearchInput = React.memo(function MobileSearchInput({
 
   return (
     <div className={cn('relative flex-1', className)}>
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+      <SearchLg className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
       <Input
         placeholder={placeholder}
         value={localValue}
@@ -42,7 +42,7 @@ export const MobileSearchInput = React.memo(function MobileSearchInput({
           className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           aria-label="Xóa tìm kiếm"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4" aria-hidden="true" />
         </button>
       )}
     </div>

@@ -1,6 +1,6 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { MoreHorizontal, MapPin, Check, X, Zap } from "lucide-react";
+import { Check, DotsHorizontal, MarkerPin01, X, Zap } from "@untitledui/icons";
 import { formatCurrency } from "@/utils/formatters";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 import {
@@ -75,7 +75,7 @@ function StatusBadges({
     const review = REVIEW_BADGE_CONFIG.approved;
     return (
       <div className={cn("inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-xs font-semibold", review.className)}>
-        <Check className="h-2.5 w-2.5" />
+        <Check className="h-2.5 w-2.5" aria-hidden="true" />
         {reviewStatusLabel ?? review.label}
       </div>
     );
@@ -90,7 +90,7 @@ function StatusBadges({
       </div>
       {review && (
         <div className={cn("inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-semibold border", review.className)}>
-          <X className="h-2.5 w-2.5" />
+          <X className="h-2.5 w-2.5" aria-hidden="true" />
           {reviewStatusLabel ?? review.label}
         </div>
       )}
@@ -139,7 +139,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
         try {
           return (
             <div>
-              <div className="text-xs font-medium text-slate-700">{format(new Date(row.original.check_in_time), "HH:mm")}</div>
+              <div className="text-xs font-medium text-fg-secondary">{format(new Date(row.original.check_in_time), "HH:mm")}</div>
               <div className="text-xs text-muted-foreground truncate max-w-[120px]">{row.original.check_in_gate || "Chưa xác định"}</div>
             </div>
           );
@@ -157,7 +157,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
         try {
           return (
             <div>
-              <div className="text-xs font-medium text-slate-700">{format(new Date(row.original.check_out_time), "HH:mm")}</div>
+              <div className="text-xs font-medium text-fg-secondary">{format(new Date(row.original.check_out_time), "HH:mm")}</div>
               <div className="text-xs text-muted-foreground truncate max-w-[120px]">{row.original.check_out_gate || "Chưa xác định"}</div>
             </div>
           );
@@ -221,23 +221,23 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
                   className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <DotsHorizontal className="h-4 w-4" aria-hidden="true" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuItem onClick={() => actions.onViewMap(att)}>
-                  <MapPin className="mr-2 h-4 w-4" />
+                  <MarkerPin01 className="mr-2 h-4 w-4" aria-hidden="true" />
                   Xem bản đồ
                 </DropdownMenuItem>
                 {showApprove && (
                   <DropdownMenuItem onClick={() => actions.onApprove(att)}>
-                    <Check className="mr-2 h-4 w-4" />
+                    <Check className="mr-2 h-4 w-4" aria-hidden="true" />
                     {needsAttendanceApprovalRepair(att) ? "Duyệt lại" : "Duyệt"}
                   </DropdownMenuItem>
                 )}
                 {showCreditQuota && (
                   <DropdownMenuItem onClick={() => onCreditQuota(att)}>
-                    <Zap className="mr-2 h-4 w-4" />
+                    <Zap className="mr-2 h-4 w-4" aria-hidden="true" />
                     Cộng ngay
                   </DropdownMenuItem>
                 )}
@@ -246,7 +246,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
                     onClick={() => actions.onReject(att)}
                     className="text-rose-600 focus:text-rose-700"
                   >
-                    <X className="mr-2 h-4 w-4" />
+                    <X className="mr-2 h-4 w-4" aria-hidden="true" />
                     Từ chối
                   </DropdownMenuItem>
                 )}

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Search, X } from 'lucide-react';
+import { SearchLg, X } from '@untitledui/icons';
 import { cn } from '@/lib/utils';
 
 interface SearchBarProps {
@@ -70,7 +70,7 @@ export const SearchBar = React.memo(function SearchBar({
         className,
       )}
     >
-      <Search className="h-4 w-4 shrink-0 opacity-50" />
+      <SearchLg className="h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />
       <input
         id={inputId}
         type="text"
@@ -87,7 +87,7 @@ export const SearchBar = React.memo(function SearchBar({
           className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg opacity-50 transition-all hover:bg-muted hover:opacity-100 sm:-mr-1.5 sm:h-8 sm:w-8"
           aria-label="Xóa tìm kiếm"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
       )}
     </div>

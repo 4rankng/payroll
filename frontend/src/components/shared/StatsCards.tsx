@@ -1,11 +1,11 @@
-import { LucideIcon } from 'lucide-react';
+import type { ComponentType, SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
 
 interface StatCardData {
   title: string;
   value: string | number;
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   description?: string;
   change?: string;
   trend?: 'up' | 'down' | 'neutral';

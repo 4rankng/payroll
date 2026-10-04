@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from '@untitledui/icons';
 import { cn } from '@/lib/utils';
 
 export interface PaginationInfo {
@@ -46,7 +46,7 @@ export const MobilePagination = memo(function MobilePagination({
           className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card disabled:opacity-40 touch-manipulation active:bg-muted"
           aria-label="Trang trước"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
         </button>
         <span className="text-xs font-medium px-1 tabular-nums text-muted-foreground">
           {pagination.page}/{pagination.totalPages}
@@ -57,7 +57,7 @@ export const MobilePagination = memo(function MobilePagination({
           className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card disabled:opacity-40 touch-manipulation active:bg-muted"
           aria-label="Trang tiếp"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
     </div>

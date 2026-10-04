@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShieldAlert, Globe, Monitor, Clock, MapPin, X } from "lucide-react";
+import { Clock, Globe01, MarkerPin01, Monitor01, Shield03, X } from "@untitledui/icons";
 import { useFailedLoginsByIdentifier } from "@/hooks/api/useSystemHealth";
 import { cn } from "@/lib/utils";
 import type { FailedLoginAttempt } from "@/types/api/system-health.types";
@@ -57,7 +57,7 @@ function AttemptCard({ attempt, index }: { attempt: FailedLoginAttempt; index: n
           )}
         </div>
         <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-          <Clock className="h-3 w-3" />
+          <Clock className="h-3 w-3" aria-hidden="true" />
           {formatTime(attempt.created_at)}
         </div>
       </div>
@@ -66,7 +66,7 @@ function AttemptCard({ attempt, index }: { attempt: FailedLoginAttempt; index: n
       <div className="space-y-1.5 text-sm">
         {/* IP Address */}
         <div className="flex items-center gap-2">
-          <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <Globe01 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
           <span
             className={cn(
               "font-mono font-semibold",
@@ -80,7 +80,7 @@ function AttemptCard({ attempt, index }: { attempt: FailedLoginAttempt; index: n
         {/* Location (if resolved) */}
         {locationStr && (
           <div className="flex items-center gap-2">
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <MarkerPin01 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
             <span className="text-muted-foreground">{locationStr}</span>
           </div>
         )}
@@ -88,7 +88,7 @@ function AttemptCard({ attempt, index }: { attempt: FailedLoginAttempt; index: n
         {/* Browser + Platform */}
         {(attempt.browser || attempt.platform) && (
           <div className="flex items-center gap-2">
-            <Monitor className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <Monitor01 className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
             <span className="text-muted-foreground">
               {[attempt.browser, attempt.platform].filter(Boolean).join(" · ")}
             </span>
@@ -129,7 +129,7 @@ export function FailedLoginDetailDialog({ identifier, days, onClose }: FailedLog
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <SheetTitle className="flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
+                <Shield03 className="h-4 w-4 text-destructive shrink-0" aria-hidden="true" />
                 Chi tiết đăng nhập thất bại
               </SheetTitle>
               {identifier && (
@@ -145,7 +145,7 @@ export function FailedLoginDetailDialog({ identifier, days, onClose }: FailedLog
                 className="h-8 w-8 rounded-full shrink-0 text-muted-foreground hover:text-foreground"
                 aria-label="Đóng"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             </SheetClose>
           </div>

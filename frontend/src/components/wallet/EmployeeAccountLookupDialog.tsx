@@ -66,14 +66,14 @@ const OUTCOME_COPY: Record<
   name_mismatch: {
     title: "Tên chủ tài khoản không khớp",
     description: "Tên đã lưu khác với tên được nhà cung cấp xác nhận.",
-    className: "border-warning/40 bg-warning/10 text-warning-content",
+    className: "border-warning/40 bg-warning/10 text-fg-warning-primary",
     icon: TriangleAlert,
   },
   unverified: {
     title: "Chưa thể xác minh",
     description:
       "Nhà cung cấp chưa thể đưa ra kết quả xác nhận. Vui lòng thử lại sau.",
-    className: "border-info/30 bg-info/10 text-info-content",
+    className: "border-info/30 bg-info/10 text-utility-blue-700",
     icon: CircleHelp,
   },
 };

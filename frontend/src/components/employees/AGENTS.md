@@ -17,8 +17,6 @@ Components for employee CRUD, import, display, and status management. Includes t
 | `EmployeeStatusFilter.tsx` | Status filter dropdown (active/inactive) |
 | `EmployeePageHeader.tsx` | Page header with add/import actions |
 | `EmployeeMobileCard.tsx` | Mobile employee card layout |
-| `EmployeeSummaryCard.tsx` | Employee summary stats card |
-| `EmployeeSummaryCards.tsx` | Grid of summary statistic cards |
 | `EmployeeProjectsList.tsx` | List of projects assigned to an employee |
 | `EmployeePortalHeader.tsx` | Header for employee portal (employee role) |
 | `EmployeeAttendanceHistoryCard.tsx` | Attendance history card for employee detail |
@@ -26,7 +24,6 @@ Components for employee CRUD, import, display, and status management. Includes t
 | `EmployeeCheckInCard.tsx` | Check-in status card for flexible employees |
 | `EmployeeEmptyStates.tsx` | Empty state variants for employee views |
 | `MissingBankDetailsSection.tsx` | Warning section for employees without bank details |
-| `InfiniteScrollInfo.tsx` | Info component showing infinite scroll status |
 
 ## Subdirectories
 

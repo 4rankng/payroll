@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight } from "@untitledui/icons";
 import { cn } from "@/lib/utils";
 import { useErrorsByUser } from "@/hooks/api/useSystemHealth";
 import { useUsersByIds } from "@/hooks/api/useUsers";
@@ -94,8 +94,8 @@ export function UserInvestigateTable({ days = 14, limit = 10 }: Props) {
                     {/* Chevron */}
                     <span className="text-muted-foreground shrink-0">
                       {isExpanded
-                        ? <ChevronDown className="h-4 w-4" />
-                        : <ChevronRight className="h-4 w-4" />}
+                        ? <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                        : <ChevronRight className="h-4 w-4" aria-hidden="true" />}
                     </span>
 
                     {/* Name + meta */}

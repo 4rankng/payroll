@@ -118,14 +118,14 @@ describe('BankTransferHistoryPageContent', () => {
     expect(screen.queryByRole('button', { name: 'Chọn tháng 08 năm 2026' })).not.toBeInTheDocument();
   });
 
-  it('scopes daisyUI card behavior to the admin variant', () => {
+  it('scopes the admin card treatment to the admin variant', () => {
     const { container, rerender } = render(<BankTransferHistoryPageContent />);
 
     expect(container.querySelector('.admin-payment-history-workspace')).not.toBeInTheDocument();
 
     rerender(<BankTransferHistoryPageContent variant="admin" />);
 
-    expect(container.querySelector('.admin-payment-history-workspace')).toHaveClass('ct-card');
+    expect(container.querySelector('.admin-payment-history-workspace')).toHaveClass('rounded-2xl');
   });
 
   it('keeps touch-safe mobile filters while using compact desktop controls', () => {
@@ -149,7 +149,7 @@ describe('BankTransferHistoryPageContent', () => {
     expect(workspace).toHaveClass('overflow-hidden', 'bg-white', 'rounded-xl', 'xl:overflow-visible', 'xl:rounded-none');
     // Records are flat hairline rows of the workspace module at every
     // breakpoint — no nested per-record cards.
-    expect(records).toHaveClass('divide-y', 'divide-slate-300');
+    expect(records).toHaveClass('divide-y', 'divide-utility-gray-300');
     expect(records.className).not.toContain('space-y-');
     expect(records.className).not.toContain('gap-');
     expect(records.className).not.toContain('p-2');
@@ -164,7 +164,7 @@ describe('BankTransferHistoryPageContent', () => {
       'xl:sticky',
       'xl:top-0',
       'xl:z-10',
-      'xl:bg-slate-50/95',
+      'xl:bg-utility-gray-50/95',
       'xl:backdrop-blur',
     );
     // The identity badge shrinks from a card-style avatar to a table-style dot.
@@ -225,9 +225,9 @@ describe('BankTransferHistoryPageContent', () => {
     // the only seam — summary and expanded rows keep exactly one divider.
     expect(detailsBody).toHaveClass('group-open/record:border-t-0');
     // The expanded panel is a flat neutral surface, not a nested card or a green slab.
-    expect(panel).toHaveClass('bg-slate-50/80', 'border-t', 'border-slate-300');
-    expect(panel!.firstElementChild).toHaveClass('xl:grid', 'border-slate-300');
-    expect(panel!.querySelector('[role="list"]')).toHaveClass('divide-y', 'divide-slate-300');
+    expect(panel).toHaveClass('bg-utility-gray-50/80', 'border-t', 'border-utility-gray-300');
+    expect(panel!.firstElementChild).toHaveClass('xl:grid', 'border-utility-gray-300');
+    expect(panel!.querySelector('[role="list"]')).toHaveClass('divide-y', 'divide-utility-gray-300');
     // Emerald is reserved for the money value and the open-state chevron.
     expect(chevron).toHaveClass('group-open/record:text-emerald-700');
   });
@@ -288,7 +288,7 @@ describe('BankTransferHistoryPageContent', () => {
     const { container } = render(<BankTransferHistoryPageContent />);
 
     const skeleton = container.querySelector('[aria-label="Đang tải lịch sử trả lương"]');
-    expect(skeleton).toHaveClass('divide-y', 'divide-slate-300');
+    expect(skeleton).toHaveClass('divide-y', 'divide-utility-gray-300');
     // rounded-none is load-bearing: it overrides the Skeleton base rounded-md
     // so placeholder rows match the flat record rows they stand in for.
     const rows = Array.from(skeleton!.children);

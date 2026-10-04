@@ -1,11 +1,10 @@
-import { memo } from 'react';
-import { type LucideIcon } from 'lucide-react';
+import { memo, type ComponentType, type SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface ContextStripItem {
   label: string;
   value: string;
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   /** Tailwind bg class for icon badge, e.g. 'bg-blue-100' */
   iconBg?: string;
   /** Tailwind text class for icon color, e.g. 'text-blue-600' */

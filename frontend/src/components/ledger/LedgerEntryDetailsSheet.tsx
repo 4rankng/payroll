@@ -281,10 +281,10 @@ function LedgerEntryDetailsSheetComponent({
         ) : (
           <div className="space-y-3">
             <section
-              className="ct-card ct-card-border overflow-hidden border-border/80 bg-card text-card-foreground shadow-none"
+              className="rounded-2xl border overflow-hidden border-border/80 bg-card text-card-foreground shadow-none"
               aria-labelledby="ledger-entry-overview"
             >
-              <div className="ct-card-body gap-0 p-0">
+              <div className="flex flex-col gap-0 p-0">
                 <h2 id="ledger-entry-overview" className="sr-only">
                   Thông tin bút toán
                 </h2>
@@ -355,38 +355,38 @@ function LedgerEntryDetailsSheetComponent({
             </section>
 
             <section
-              className="ct-card ct-card-border overflow-hidden border-border/80 bg-card text-card-foreground shadow-none"
+              className="rounded-2xl border overflow-hidden border-border/80 bg-card text-card-foreground shadow-none"
               aria-labelledby="ledger-financial-info"
             >
-              <div className="ct-card-body gap-3 p-4">
+              <div className="flex flex-col gap-3 p-4">
                 <h2 id="ledger-financial-info" className="text-sm font-semibold text-foreground">
                   Thông tin tài chính
                 </h2>
                 <dl className="grid w-full grid-cols-2 overflow-hidden rounded-xl border border-border/70 bg-muted/20 min-[440px]:grid-cols-3">
-                  <div className="ct-stat min-w-0 border-r border-border/60 px-3 py-3">
-                    <dt className="ct-stat-title flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <div className="min-w-0 border-r border-border/60 px-3 py-3">
+                    <dt className="whitespace-nowrap flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span className="h-1.5 w-1.5 rounded-full bg-destructive" aria-hidden="true" />
                       Nợ
                     </dt>
-                    <dd className="ct-stat-value mt-1 whitespace-nowrap text-xs font-bold tabular-nums text-destructive min-[360px]:text-sm">
+                    <dd className="mt-1 whitespace-nowrap text-xs font-bold tabular-nums text-destructive min-[360px]:text-sm">
                       {ledgerService.formatCurrencyShort(entry.debit)}
                     </dd>
                   </div>
-                  <div className="ct-stat min-w-0 px-3 py-3 min-[440px]:border-r min-[440px]:border-border/60">
-                    <dt className="ct-stat-title flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <div className="min-w-0 px-3 py-3 min-[440px]:border-r min-[440px]:border-border/60">
+                    <dt className="whitespace-nowrap flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span className="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true" />
                       Có
                     </dt>
-                    <dd className="ct-stat-value mt-1 whitespace-nowrap text-xs font-bold tabular-nums text-success min-[360px]:text-sm">
+                    <dd className="mt-1 whitespace-nowrap text-xs font-bold tabular-nums text-success min-[360px]:text-sm">
                       {ledgerService.formatCurrencyShort(entry.credit)}
                     </dd>
                   </div>
-                  <div className="ct-stat col-span-2 min-w-0 border-t border-border/60 px-3 py-3 min-[440px]:col-span-1 min-[440px]:border-t-0">
-                    <dt className="ct-stat-title flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <div className="col-span-2 min-w-0 border-t border-border/60 px-3 py-3 min-[440px]:col-span-1 min-[440px]:border-t-0">
+                    <dt className="whitespace-nowrap flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span className="h-1.5 w-1.5 rounded-full bg-info" aria-hidden="true" />
                       Số dư
                     </dt>
-                    <dd className={`ct-stat-value mt-1 whitespace-nowrap text-xs font-bold tabular-nums min-[360px]:text-sm ${
+                    <dd className={`mt-1 whitespace-nowrap text-xs font-bold tabular-nums min-[360px]:text-sm ${
                       entry.balance >= 0 ? 'text-info' : 'text-destructive'
                     }`}>
                       {ledgerService.formatCurrencyShort(entry.balance)}
@@ -397,10 +397,10 @@ function LedgerEntryDetailsSheetComponent({
             </section>
 
             <section
-              className="ct-card ct-card-border border-border/80 bg-card text-card-foreground shadow-none"
+              className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-none"
               aria-labelledby="ledger-system-info"
             >
-              <div className="ct-card-body gap-3 p-4">
+              <div className="flex flex-col gap-3 p-4">
                 <h2 id="ledger-system-info" className="text-sm font-semibold text-foreground">
                   Thông tin hệ thống
                 </h2>

@@ -65,7 +65,7 @@ export function TimesheetPageHeaderMobile({
     : 'Theo dõi và duyệt bảng công';
 
   return (
-    <section className="ct-card overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_12px_32px_-28px_hsl(var(--foreground)/0.45)]">
+    <section className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[0_12px_32px_-28px_hsl(var(--foreground)/0.45)]">
       <MobilePageHeader
         title="Bảng công"
         subtitle={description}

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Zap, Clock, X } from "lucide-react";
+import { Clock, Users01, X, Zap } from "@untitledui/icons";
 import { useBrowserPlatformUsers } from "@/hooks/api/useSystemHealth";
 import type { BrowserPlatformUser } from "@/types/api/system-health.types";
 
@@ -59,11 +59,11 @@ function UserCard({ user, index }: { user: BrowserPlatformUser; index: number })
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="font-mono truncate">{user.username}</span>
         <span className="flex items-center gap-1 shrink-0">
-          <Zap className="h-3 w-3" />
+          <Zap className="h-3 w-3" aria-hidden="true" />
           {user.actions.toLocaleString()}
         </span>
         <span className="flex items-center gap-1 shrink-0">
-          <Clock className="h-3 w-3" />
+          <Clock className="h-3 w-3" aria-hidden="true" />
           {formatTime(user.last_seen)}
         </span>
       </div>
@@ -110,7 +110,7 @@ export function BrowserPlatformUsersSheet({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <SheetTitle className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary shrink-0" />
+                <Users01 className="h-4 w-4 text-primary shrink-0" aria-hidden="true" />
                 Người dùng theo thiết bị
               </SheetTitle>
               {browser && platform && (
@@ -126,7 +126,7 @@ export function BrowserPlatformUsersSheet({
                 className="h-8 w-8 rounded-full shrink-0 text-muted-foreground hover:text-foreground"
                 aria-label="Đóng"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" aria-hidden="true" />
               </Button>
             </SheetClose>
           </div>

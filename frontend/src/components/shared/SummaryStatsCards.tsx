@@ -1,11 +1,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { LucideIcon } from 'lucide-react';
+import type { ComponentType, SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface StatCardConfig {
   title: string;
   value: string | number;
-  icon?: LucideIcon | string;
+  icon?: ComponentType<SVGProps<SVGSVGElement>> | string;
   description?: string;
   change?: string;
   changePercentage?: number;

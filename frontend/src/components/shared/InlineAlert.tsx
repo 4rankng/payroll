@@ -1,12 +1,11 @@
-import { memo, type ReactNode } from 'react';
-import { type LucideIcon } from 'lucide-react';
+import { memo, type ComponentType, type ReactNode, type SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 
 export type AlertSeverity = 'info' | 'warning' | 'error' | 'success';
 
 export interface InlineAlertProps {
   severity: AlertSeverity;
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   message: string;
   action?: ReactNode;
   className?: string;

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
+import { ChevronDown, ChevronSelectorVertical, ChevronUp } from "@untitledui/icons";
 import { cn } from "@/lib/utils";
 import { useAPISummary } from "@/hooks/api/useSystemHealth";
 import { EndpointLabel } from "./EndpointLabel";
@@ -11,10 +11,10 @@ type SortKey = "endpoint" | "errorTotal" | "errorRate";
 type SortDir = "asc" | "desc";
 
 function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
-  if (col !== sortKey) return <ChevronsUpDown className="inline h-3 w-3 ml-0.5 opacity-40" />;
+  if (col !== sortKey) return <ChevronSelectorVertical className="inline h-3 w-3 ml-0.5 opacity-40" aria-hidden="true" />;
   return sortDir === "asc"
-    ? <ChevronUp className="inline h-3 w-3 ml-0.5" />
-    : <ChevronDown className="inline h-3 w-3 ml-0.5" />;
+    ? <ChevronUp className="inline h-3 w-3 ml-0.5" aria-hidden="true" />
+    : <ChevronDown className="inline h-3 w-3 ml-0.5" aria-hidden="true" />;
 }
 
 export function ErrorByEndpointTable() {
