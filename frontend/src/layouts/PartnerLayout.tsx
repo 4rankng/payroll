@@ -6,14 +6,14 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationFAB } from "@/components/notifications/NotificationFAB";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
-import { Briefcase, Users, Calendar, LayoutDashboard } from "lucide-react";
+import { Briefcase01, Calendar, Grid01, Users01 } from "@untitledui/icons";
 import type { NavGroup } from "@/components/MobileBottomNav";
 import { useAuth } from "@/contexts";
 
 const PARTNER_NAV_GROUPS: NavGroup[] = [
-  { title: "Tổng quan", icon: LayoutDashboard, path: "/partner/dashboard", end: true },
-  { title: "Dự án", icon: Briefcase, path: "/partner/projects" },
-  { title: "Nhân viên", icon: Users, path: "/partner/employees" },
+  { title: "Tổng quan", icon: Grid01, path: "/partner/dashboard", end: true },
+  { title: "Dự án", icon: Briefcase01, path: "/partner/projects" },
+  { title: "Nhân viên", icon: Users01, path: "/partner/employees" },
   { title: "Bảng công", icon: Calendar, path: "/partner/timesheet" },
 ];
 

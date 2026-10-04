@@ -18,20 +18,18 @@ import { useTableSorting } from "@/utils/sorting";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { Users, Plus, Download } from "lucide-react";
 import {
-  Users,
-  Plus,
-  Download,
-  Landmark,
-  CreditCard,
-  Phone,
+  Bank,
+  CheckCircle,
   Clock,
-  X,
-  UserRoundCheck,
-  Globe,
-  HandHeart,
-  Check,
-} from "lucide-react";
+  CreditCard01,
+  Globe01,
+  PhoneCall01,
+  UserCheck01,
+  UserPlus01,
+  XClose,
+} from "@untitledui/icons";
 import {
   Employee,
   getEmployeeProjects,
@@ -44,9 +42,9 @@ import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 
 const SCHEDULE_STYLES: Record<string, string> = {
-  weekly: "bg-info/10 text-teal-700 border-info/30",
+  weekly: "bg-info/10 text-info border-info/30",
   monthly: "bg-primary/10 text-primary border-primary/30",
-  flexible: "bg-success/10 text-emerald-700 border-success/30",
+  flexible: "bg-success/10 text-success border-success/30",
 };
 
 const SCHEDULE_LABELS: Record<string, string> = {
@@ -161,8 +159,8 @@ const EmployeesPage = () => {
                     </span>
                   </div>
                   {accessible ? (
-                    <span className="inline-flex items-center gap-1 shrink-0 text-xs font-semibold text-emerald-700 bg-success/10 border border-success/30 rounded-full px-2 py-0.5">
-                      <Check className="h-3 w-3" />
+                    <span className="inline-flex items-center gap-1 shrink-0 text-xs font-semibold text-success bg-success/10 border border-success/30 rounded-full px-2 py-0.5">
+                      <CheckCircle className="h-3 w-3" aria-hidden="true" />
                       Đang quản lý
                     </span>
                   ) : (
@@ -172,9 +170,9 @@ const EmployeesPage = () => {
                         handleClaim(employee);
                       }}
                       disabled={requestAccess.isPending}
-                      className="inline-flex items-center gap-1.5 shrink-0 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 shrink-0 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold text-primary-foreground outline-brand transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 disabled:opacity-50"
                     >
-                      <HandHeart className="h-3.5 w-3.5" />
+                      <UserPlus01 className="h-3.5 w-3.5" aria-hidden="true" />
                       Yêu cầu quản lý
                     </button>
                   )}
@@ -218,9 +216,9 @@ const EmployeesPage = () => {
                               e.stopPropagation();
                               navigate(`/partner/timesheet?employee=${employee.id}`);
                             }}
-                            className="inline-flex items-center gap-0.5 shrink-0 text-xs font-semibold text-amber-800 bg-warning/10 border border-warning/30 rounded px-1.5 py-0.5 hover:bg-warning/20 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-0.5 shrink-0 text-xs font-semibold text-warning bg-warning/10 border border-warning/30 rounded px-1.5 py-0.5 outline-brand hover:bg-warning/20 transition-colors cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
                           >
-                            <Clock className="h-2.5 w-2.5" />
+                            <Clock className="h-2.5 w-2.5" aria-hidden="true" />
                             {pendingCount}
                           </button>
                         </TooltipTrigger>
@@ -235,7 +233,7 @@ const EmployeesPage = () => {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="inline-flex items-center justify-center h-4 w-4 rounded bg-warning/10 border border-warning/30">
-                            <X className="h-2.5 w-2.5 text-warning" />
+                            <XClose className="h-2.5 w-2.5 text-warning" aria-hidden="true" />
                           </span>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="text-xs">
@@ -247,12 +245,12 @@ const EmployeesPage = () => {
                 </div>
                 <div className="flex items-center gap-2.5 text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <CreditCard className="h-3 w-3 shrink-0" />
+                    <CreditCard01 className="h-3 w-3 shrink-0" aria-hidden="true" />
                     <span className="typography-label-medium font-mono truncate">{employee.cccd}</span>
                   </div>
                   {employee.mobile && (
                     <div className="flex items-center gap-1">
-                      <Phone className="h-3 w-3 shrink-0" />
+                      <PhoneCall01 className="h-3 w-3 shrink-0" aria-hidden="true" />
                       <span className="typography-label-medium tabular-nums">{employee.mobile}</span>
                     </div>
                   )}
@@ -339,7 +337,7 @@ const EmployeesPage = () => {
             <div className="space-y-0.5 min-w-0">
               <div className="flex items-center gap-2">
                 <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/5 border border-primary/10 shrink-0">
-                  <Landmark className="h-2.5 w-2.5 text-primary" />
+                  <Bank className="h-2.5 w-2.5 text-primary" aria-hidden="true" />
                 </div>
                 <span className="typography-body-medium text-foreground/80 truncate" title={branch}>
                   {branch}
@@ -416,7 +414,7 @@ const EmployeesPage = () => {
             <p className="typography-body-medium font-semibold text-foreground truncate">{row.fullname}</p>
             <div className="flex items-center gap-2 text-muted-foreground">
               <div className="flex items-center gap-1">
-                <CreditCard className="h-3 w-3" />
+                <CreditCard01 className="h-3 w-3" aria-hidden="true" />
                 <span className="typography-label-medium font-mono">{row.cccd || "—"}</span>
               </div>
             </div>
@@ -437,7 +435,7 @@ const EmployeesPage = () => {
 
   if (isInitialLoad) {
     return (
-      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5 animate-fade-in">
+      <div className="p-4 lg:p-6 max-w-[1280px] mx-auto space-y-5">
         <div className="space-y-2">
           <Skeleton className="h-7 w-36" />
           <Skeleton className="h-4 w-64" />
@@ -471,9 +469,7 @@ const EmployeesPage = () => {
     <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_29rem)] px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-4">
 
-        <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] opacity-0 animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] md:p-6">
-          <div className="pointer-events-none absolute -right-14 -top-16 h-48 w-48 rounded-full border-[26px] border-primary/15" />
-          <div className="relative">
+        <div className="rounded-xl border border-input bg-card p-5 shadow-xs opacity-0 motion-safe:animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] md:p-6">
           <PageHeader
             title="Nhân viên dự án"
             description="Danh sách nhân viên trong các dự án được phân quyền"
@@ -494,11 +490,10 @@ const EmployeesPage = () => {
               },
             ]}
           />
-          </div>
         </div>
 
         <div className={cn(
-          "rounded-2xl border border-border/60 bg-card p-2 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)] opacity-0 animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:forwards]",
+          "rounded-xl border border-input bg-card p-2 shadow-xs opacity-0 motion-safe:animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:forwards]",
           poolView === "global" && "hidden",
         )}>
           <InlineStatStrip
@@ -551,31 +546,31 @@ const EmployeesPage = () => {
           />
         </div>
 
-        <div className="opacity-0 animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
-          <div className="flex items-center gap-2.5 flex-wrap rounded-2xl border border-border/60 bg-card px-3 py-3 shadow-[0_10px_24px_-22px_rgba(15,23,42,0.46)]">
-            <div className="inline-flex items-center rounded-xl border border-border/70 bg-muted/40 p-0.5">
+        <div className="opacity-0 motion-safe:animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
+          <div className="flex items-center gap-2.5 flex-wrap rounded-xl border border-input bg-card px-3 py-3 shadow-xs">
+            <div className="inline-flex items-center rounded-lg border border-border/70 bg-muted/40 p-0.5">
               <button
                 onClick={() => setPoolView("mine")}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-xs font-semibold transition-all",
+                  "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold outline-brand transition-all focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2",
                   poolView === "mine"
-                    ? "bg-card text-foreground shadow-sm"
+                    ? "bg-card text-foreground shadow-sm ring-1 ring-inset ring-border/60"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <UserRoundCheck className="h-3.5 w-3.5" />
+                <UserCheck01 className="h-3.5 w-3.5" aria-hidden="true" />
                 Nhân viên của tôi
               </button>
               <button
                 onClick={() => setPoolView("global")}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-xs font-semibold transition-all",
+                  "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold outline-brand transition-all focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2",
                   poolView === "global"
-                    ? "bg-card text-foreground shadow-sm"
+                    ? "bg-card text-foreground shadow-sm ring-1 ring-inset ring-border/60"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Globe className="h-3.5 w-3.5" />
+                <Globe01 className="h-3.5 w-3.5" aria-hidden="true" />
                 Tất cả NV
               </button>
             </div>
@@ -618,9 +613,9 @@ const EmployeesPage = () => {
             {hasFilters && (
               <button
                 onClick={clearAllFilters}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground outline-brand transition-colors hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
               >
-                <X className="h-3 w-3" />
+                <XClose className="h-3 w-3" aria-hidden="true" />
                 Xóa lọc
               </button>
             )}
@@ -628,8 +623,8 @@ const EmployeesPage = () => {
         </div>
 
         {poolView === "global" && (
-          <div className="flex items-center gap-2.5 rounded-2xl border border-info/25 bg-info/5 px-4 py-3">
-            <Globe className="h-4 w-4 shrink-0 text-info" />
+          <div className="flex items-center gap-2.5 rounded-xl border border-info/25 bg-info/5 px-4 py-3">
+            <Globe01 className="h-4 w-4 shrink-0 text-info" aria-hidden="true" />
             <p className="typography-body-medium text-foreground/80">
               Toàn bộ nhân viên trong hệ thống. Nhấn <strong>Yêu cầu quản lý</strong> để thêm nhân viên vào danh sách của bạn thay vì tạo mới trùng lặp.
             </p>
@@ -638,10 +633,10 @@ const EmployeesPage = () => {
 
         {poolView !== "global" && <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />}
 
-        <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[0_14px_32px_-25px_rgba(15,23,42,0.50)] opacity-0 animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+        <div className="overflow-hidden rounded-xl border border-input bg-card shadow-xs opacity-0 motion-safe:animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
           <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-4 py-3 sm:px-5">
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10 text-success"><UserRoundCheck className="h-3.5 w-3.5" /></span>
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10 text-success"><UserCheck01 className="h-3.5 w-3.5" aria-hidden="true" /></span>
               <div>
                 <p className="text-[12px] font-bold text-foreground">Danh sách nhân sự</p>
                 <p className="text-xs text-muted-foreground">Chọn một nhân viên để xem hồ sơ chi tiết</p>

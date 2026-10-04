@@ -31,16 +31,8 @@ import { useAssignableProjects } from "@/hooks/api/useProjects";
 import { useEmployeeExport } from "@/hooks/employees/useEmployeeExport";
 import { ExportEmployeesModal } from "@/components/modals/ExportEmployeesModal";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
-import {
-  Users,
-  UserCheck,
-  UserPlus,
-  UserX,
-  SlidersHorizontal,
-  Plus,
-  Download,
-  X,
-} from "lucide-react";
+import { Users } from "lucide-react";
+import { Download01, FilterLines, Plus, XClose } from "@untitledui/icons";
 import type { Employee } from "@/types/api/employee.types";
 
 // Generate last 12 months
@@ -120,17 +112,11 @@ const EmployeesPageMobile = () => {
         {
           label: "Tổng",
           value: employeesSummary.total_employees,
-          icon: Users,
-          color: "text-primary",
-          bg: "bg-primary/10",
           filter: null as "working" | "unassigned" | null,
         },
         {
           label: "Đang làm",
           value: employeesSummary.total_working_employees,
-          icon: UserCheck,
-          color: "text-success",
-          bg: "bg-success/10",
           filter: "working" as const,
         },
         {
@@ -138,17 +124,11 @@ const EmployeesPageMobile = () => {
           value:
             employeesSummary.total_employees -
             employeesSummary.total_working_employees,
-          icon: UserX,
-          color: "text-warning",
-          bg: "bg-warning/10",
           filter: "unassigned" as const,
         },
         {
           label: "Tháng này",
           value: employeesSummary.employees_hired_this_month,
-          icon: UserPlus,
-          color: "text-info",
-          bg: "bg-info/10",
           filter: null as "working" | "unassigned" | null,
         },
       ];
@@ -203,15 +183,15 @@ const EmployeesPageMobile = () => {
               onClick={() => setExportModalOpen(true)}
               disabled={isExporting}
             >
-              <Download className="h-4 w-4" />
+              <Download01 className="h-4 w-4" aria-hidden="true" />
               <span className="sr-only">{isExporting ? "Đang xuất" : "Xuất"}</span>
             </Button>
             <Button
               size="sm"
-              className="h-11 px-3 btn-partner-primary shrink-0 rounded-xl"
+              className="h-11 px-3 shrink-0 rounded-xl"
               onClick={() => openAddEmployee()}
             >
-              <Plus className="h-4 w-4 mr-1" />
+              <Plus className="h-4 w-4 mr-1" aria-hidden="true" />
               Thêm
             </Button>
           </div>
@@ -262,7 +242,7 @@ const EmployeesPageMobile = () => {
           onClick={() => setFilterSheetOpen(true)}
           aria-label="Bộ lọc"
         >
-          <SlidersHorizontal className="h-4 w-4" />
+          <FilterLines className="h-4 w-4" aria-hidden="true" />
           {activeFilterCount > 0 && (
             <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs text-white flex items-center justify-center font-bold">
               {activeFilterCount}
@@ -283,7 +263,7 @@ const EmployeesPageMobile = () => {
               className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 text-xs font-medium text-secondary-foreground"
             >
               {statusFilter === "working" ? "Đang làm việc" : "Chưa phân công"}
-              <X aria-hidden="true" className="h-3.5 w-3.5" />
+              <XClose aria-hidden="true" className="h-3.5 w-3.5" />
             </button>
           )}
           {month && (
@@ -294,7 +274,7 @@ const EmployeesPageMobile = () => {
               className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 text-xs font-medium text-secondary-foreground"
             >
               {monthOptions.find((m) => m.value === month)?.label ?? month}
-              <X aria-hidden="true" className="h-3.5 w-3.5" />
+              <XClose aria-hidden="true" className="h-3.5 w-3.5" />
             </button>
           )}
           {projectId && (
@@ -305,7 +285,7 @@ const EmployeesPageMobile = () => {
               className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 text-xs font-medium text-secondary-foreground"
             >
               {projects.find((p) => p.id === projectId)?.name ?? "Dự án"}
-              <X aria-hidden="true" className="h-3.5 w-3.5" />
+              <XClose aria-hidden="true" className="h-3.5 w-3.5" />
             </button>
           )}
           <button
@@ -478,7 +458,7 @@ const EmployeesPageMobile = () => {
                 Xóa bộ lọc
               </Button>
               <Button
-                className="flex-1 h-11 rounded-xl btn-partner-primary"
+                className="flex-1 h-11 rounded-xl"
                 onClick={() => setFilterSheetOpen(false)}
               >
                 Áp dụng

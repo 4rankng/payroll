@@ -1,23 +1,23 @@
 import { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import {
-  Briefcase,
-  Building2,
-  Clock3,
-  FolderKanban,
-  Plus,
-  Users,
-  Calendar,
   ArrowRight,
+  Building01,
+  Calendar,
+  CalendarDate,
+  CheckCircle,
   ChevronLeft,
   ChevronRight,
-  CalendarDays,
-  Pause,
-  CheckCircle2,
+  Clock,
+  File02,
+  FilterFunnel02,
+  FolderClosed,
+  PauseCircle,
+  Users01,
+  XClose,
   XCircle,
-  FileText,
-  FilterX,
-} from 'lucide-react';
+} from '@untitledui/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { SearchBar } from '@/components/shared/SearchBar';
@@ -36,31 +36,31 @@ type ProjectStatus = Project['status'];
 
 const STATUS_META: Record<
   ProjectStatus,
-  { label: string; pill: string; dot: string; icon: typeof Briefcase }
+  { label: string; pill: string; dot: string; icon: typeof CheckCircle }
 > = {
   active: {
     label: 'Đang hoạt động',
     pill: 'bg-success/10 text-success ring-1 ring-inset ring-success/30',
     dot: 'bg-success',
-    icon: CheckCircle2,
+    icon: CheckCircle,
   },
   draft: {
     label: 'Bản nháp',
     pill: 'bg-muted text-muted-foreground ring-1 ring-inset ring-border',
     dot: 'bg-muted-foreground',
-    icon: FileText,
+    icon: File02,
   },
   paused: {
     label: 'Tạm dừng',
     pill: 'bg-warning/10 text-warning ring-1 ring-inset ring-warning/30',
     dot: 'bg-warning',
-    icon: Pause,
+    icon: PauseCircle,
   },
   completed: {
     label: 'Hoàn thành',
     pill: 'bg-info/10 text-info ring-1 ring-inset ring-info/30',
     dot: 'bg-info',
-    icon: CheckCircle2,
+    icon: CheckCircle,
   },
   cancelled: {
     label: 'Đã hủy',
@@ -125,7 +125,7 @@ function SalaryPeriodChip({ project }: { project: Project }) {
   if (project.is_weekly) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-info/10 px-2 py-0.5 text-xs font-semibold text-info ring-1 ring-inset ring-info/30">
-        <CalendarDays className="h-3 w-3" />
+        <CalendarDate className="h-3 w-3" aria-hidden="true" />
         Lương tuần
       </span>
     );
@@ -137,7 +137,7 @@ function SalaryPeriodChip({ project }: { project: Project }) {
         : '';
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary ring-1 ring-inset ring-primary/30">
-        <Calendar className="h-3 w-3" />
+        <Calendar className="h-3 w-3" aria-hidden="true" />
         Lương tháng {period}
       </span>
     );
@@ -170,7 +170,7 @@ function ProjectCard({
         type="button"
         onClick={onOpen}
         aria-label={`Xem chi tiết dự án ${project.name}`}
-        className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+        className="absolute inset-0 z-10 rounded-2xl outline-brand focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
       />
       <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary via-primary/65 to-primary/30" />
       <div className="p-4 pl-5 md:p-5 md:pl-6">
@@ -180,7 +180,7 @@ function ProjectCard({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-bold', status.pill)}>
-                  <StatusIcon className="h-3 w-3" />
+                  <StatusIcon className="h-3 w-3" aria-hidden="true" />
                   {status.label}
                 </span>
                 {project.code && <span className="font-mono text-xs font-semibold tracking-wide text-muted-foreground">{project.code}</span>}
@@ -195,7 +195,7 @@ function ProjectCard({
 
         <div className="mt-4 border-y border-border/55 py-3">
           <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
-            <Building2 className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <Building01 className="h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
             <span className="truncate font-medium text-foreground/85">{project.client_name || 'Chưa cập nhật khách hàng'}</span>
           </div>
           {project.description && <p className="mt-2 line-clamp-1 text-xs text-muted-foreground">{project.description}</p>}
@@ -204,7 +204,7 @@ function ProjectCard({
         <div className="mt-3 flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Users className="h-3.5 w-3.5" />
+              <Users01 className="h-3.5 w-3.5" aria-hidden="true" />
               <span className="font-bold tabular-nums text-foreground">{project.employee_count}</span>
               nhân sự
             </span>
@@ -217,9 +217,9 @@ function ProjectCard({
               e.stopPropagation();
               onTimesheet();
             }}
-            className="relative z-20 inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 text-xs font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="relative z-20 inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-primary/8 px-2.5 text-xs font-bold text-primary outline-brand transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
           >
-            <CalendarDays className="h-3.5 w-3.5" />
+            <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
             Bảng công
           </button>
         </div>
@@ -275,9 +275,7 @@ const ProjectsPage = () => {
   return (
     <div className="min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.10),transparent_31rem)] px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-5">
-        <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-card p-5 shadow-[0_20px_54px_-42px_rgba(6,101,52,0.44)] md:p-6">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full border-[28px] border-primary/15" />
-          <div className="relative">
+        <div className="rounded-xl border border-input bg-card p-5 shadow-xs md:p-6">
           <PageHeader
             title="Dự án"
             description="Quản lý và theo dõi các dự án được phân quyền"
@@ -292,30 +290,29 @@ const ProjectsPage = () => {
           />
           <div className="mt-6 grid gap-2 sm:grid-cols-3">
             {[
-              { label: 'Tổng dự án', value: totalProjectCount, icon: FolderKanban, tone: 'text-muted-foreground bg-muted' },
-              { label: 'Đang hoạt động', value: activeCount, icon: CheckCircle2, tone: 'text-success bg-success/10' },
-              { label: 'Đang xem', value: visibleProjectCount, icon: Clock3, tone: 'text-warning bg-warning/10' },
+              { label: 'Tổng dự án', value: totalProjectCount, icon: FolderClosed, tone: 'text-muted-foreground bg-muted' },
+              { label: 'Đang hoạt động', value: activeCount, icon: CheckCircle, tone: 'text-success bg-success/10' },
+              { label: 'Đang xem', value: visibleProjectCount, icon: Clock, tone: 'text-warning bg-warning/10' },
             ].map((item) => (
-              <div key={item.label} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-muted/25 px-3.5 py-3">
+              <div key={item.label} className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/25 px-3.5 py-3">
                 <div className={cn('flex h-9 w-9 items-center justify-center rounded-xl', item.tone)}>
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className="h-4 w-4" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.09em] text-muted-foreground">{item.label}</p>
+                  <p className="text-xs font-semibold text-muted-foreground">{item.label}</p>
                   <p className="mt-0.5 text-xl font-bold tabular-nums text-foreground">{item.value.toLocaleString('vi-VN')}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
-        </div>
 
       {/* ── UNIFIED TOOLBAR ── */}
-      <div className="rounded-2xl border border-border/60 bg-card p-3 shadow-[0_8px_22px_-20px_rgba(15,23,42,0.40)]">
+      <div className="rounded-xl border border-input bg-card p-3 shadow-xs">
         <div className="flex items-center gap-2.5 flex-wrap">
           <div className="hidden items-center gap-2 border-r border-border pr-3 lg:flex">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><FolderKanban className="h-4 w-4" /></div>
-            <span className="text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">Lọc danh sách</span>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><FilterFunnel02 className="h-4 w-4" aria-hidden="true" /></div>
+            <span className="text-xs font-semibold text-muted-foreground">Lọc danh sách</span>
           </div>
 
           {/* Status filter (single-select, matches D3's FilterPill pattern) */}
@@ -344,9 +341,9 @@ const ProjectsPage = () => {
             <button
               type="button"
               onClick={filterControls.clearFilters}
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground outline-brand transition-colors hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
             >
-              <FilterX className="h-3.5 w-3.5" />
+              <XClose className="h-3.5 w-3.5" aria-hidden="true" />
               Xóa lọc
             </button>
           )}
@@ -357,7 +354,7 @@ const ProjectsPage = () => {
       {isLoading ? (
         <div className="space-y-2.5">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-[108px] w-full rounded-2xl bg-white/70" />
+            <Skeleton key={i} className="h-[108px] w-full rounded-xl bg-card" />
           ))}
         </div>
       ) : isError ? (
@@ -376,9 +373,9 @@ const ProjectsPage = () => {
           className="rounded-xl border border-dashed border-border/80 bg-card/78 px-6"
         />
       ) : (
-        <div className="animate-fade-in-up">
+        <div className="motion-safe:animate-fade-in-up">
           <div className="flex items-center gap-1.5 mb-2.5 px-1 text-xs text-muted-foreground">
-            <ArrowRight className="h-3 w-3" />
+            <ArrowRight className="h-3 w-3" aria-hidden="true" />
             <span>Nhấn vào dự án để xem chi tiết</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
@@ -419,13 +416,13 @@ const ProjectsPage = () => {
               onClick={() => filterControls.setPage(Math.max(1, currentPage - 1))}
               disabled={currentPage <= 1 || isFetching}
               className={cn(
-                'inline-flex items-center justify-center h-8 w-8 rounded-lg text-foreground/70 transition-all',
+                'inline-flex items-center justify-center h-8 w-8 rounded-lg text-foreground/70 outline-brand transition-all focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2',
                 'hover:bg-muted/60 hover:text-foreground',
                 'disabled:opacity-30 disabled:cursor-not-allowed',
               )}
               aria-label="Trang trước"
             >
-              <ChevronLeft className="h-3.5 w-3.5" />
+              <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -448,7 +445,7 @@ const ProjectsPage = () => {
                       aria-label={`Trang ${p}`}
                       aria-current={p === currentPage ? "page" : undefined}
                       className={cn(
-                        'min-w-8 h-8 px-2 rounded-lg text-[12px] font-semibold transition-all tabular-nums',
+                        'min-w-8 h-8 px-2 rounded-lg text-[12px] font-semibold outline-brand transition-all tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2',
                         p === currentPage
                           ? 'bg-foreground text-background shadow-sm'
                           : 'text-foreground/70 hover:bg-muted/60 hover:text-foreground',
@@ -465,13 +462,13 @@ const ProjectsPage = () => {
               onClick={() => filterControls.setPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage >= totalPages || isFetching}
               className={cn(
-                'inline-flex items-center justify-center h-8 w-8 rounded-lg text-foreground/70 transition-all',
+                'inline-flex items-center justify-center h-8 w-8 rounded-lg text-foreground/70 outline-brand transition-all focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2',
                 'hover:bg-muted/60 hover:text-foreground',
                 'disabled:opacity-30 disabled:cursor-not-allowed',
               )}
               aria-label="Trang sau"
             >
-              <ChevronRight className="h-3.5 w-3.5" />
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           </div>
         </div>

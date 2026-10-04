@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SortingState } from "@tanstack/react-table";
-import { ArrowLeft, FileSpreadsheet, History, Receipt } from "lucide-react";
+import { Receipt } from "lucide-react";
+import { ArrowLeft, Download01 } from "@untitledui/icons";
 import { Button } from "@/components/ui/button";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
@@ -120,11 +121,11 @@ const PaymentHistoryPage = () => {
               disabled={exportPaymentHistories.isPending}
               className="h-11 px-3 text-xs shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
+              <Download01 className="h-3.5 w-3.5 mr-1.5" aria-hidden="true" />
               Xuất
             </Button>
-            <Button variant="outline" size="icon" aria-label="Quay lại" className="h-11 w-11 rounded-xl border-slate-300 bg-white" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4" />
+            <Button variant="outline" size="icon" aria-label="Quay lại" className="h-11 w-11 rounded-xl border-input bg-card" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
           </>
         }

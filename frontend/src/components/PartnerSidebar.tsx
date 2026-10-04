@@ -1,17 +1,17 @@
 import React, { useState, useCallback } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
-  Briefcase,
-  Users,
+  Bell03,
+  Briefcase01,
   Calendar,
-  LogOut,
+  Grid01,
+  Key01,
+  LogOut01,
+  Receipt,
   UserCircle,
-  Key,
-  ChevronUp,
-  LayoutDashboard,
-  Bell,
-  ReceiptText,
-} from "lucide-react";
+  Users01,
+  ChevronSelectorVertical,
+} from "@untitledui/icons";
 import { cn } from "@/lib/utils";
 import { authManager } from "@/lib/auth";
 import {
@@ -48,11 +48,11 @@ import { useUnreadNotifications } from "@/hooks/api/useNotifications";
 
 
 const menuItems = [
-  { title: "Tổng quan", icon: LayoutDashboard, path: "/partner/dashboard", end: true },
-  { title: "Dự án", icon: Briefcase, path: "/partner/projects", end: false },
-  { title: "Nhân viên", icon: Users, path: "/partner/employees" },
+  { title: "Tổng quan", icon: Grid01, path: "/partner/dashboard", end: true },
+  { title: "Dự án", icon: Briefcase01, path: "/partner/projects", end: false },
+  { title: "Nhân viên", icon: Users01, path: "/partner/employees" },
   { title: "Bảng công", icon: Calendar, path: "/partner/timesheet", end: true },
-  { title: "Bút toán ngân hàng", icon: ReceiptText, path: "/partner/timesheet/payment-history" },
+  { title: "Bút toán ngân hàng", icon: Receipt, path: "/partner/timesheet/payment-history" },
 ];
 
 interface NavItemProps {
@@ -68,7 +68,12 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
     : location.pathname.startsWith(item.path);
 
   const inner = (
-    <NavLink to={item.path} end={item.end} className="block w-full" onClick={onNavigate}>
+    <NavLink
+      to={item.path}
+      end={item.end}
+      className="block w-full rounded-xl outline-white/70 transition duration-100 ease-linear focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
+      onClick={onNavigate}
+    >
       <div
         className={cn(
           "relative flex items-center gap-2.5 rounded-xl transition-all duration-200 cursor-pointer select-none",
@@ -86,6 +91,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
           <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-partner-accent rounded-r-full" />
         )}
         <item.icon
+          aria-hidden="true"
           className={cn(
             "shrink-0",
             isCollapsed ? "w-[17px] h-[17px]" : "w-4 h-4",
@@ -183,7 +189,8 @@ const PartnerSidebar = () => {
               <button
                 type="button"
                 className={cn(
-                  "relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer outline-none",
+                  "relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer",
+                  "outline-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2",
                   "bg-card/[0.04] border border-white/[0.06]",
                   "hover:bg-card/[0.08] hover:border-white/[0.1]",
                   isCollapsed ? "h-9 w-9 justify-center self-center" : "h-auto min-h-[40px] px-2.5 py-2 gap-2.5"
@@ -200,7 +207,7 @@ const PartnerSidebar = () => {
                       <span className="text-xs text-white/45 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
                       <span className="text-[12.5px] font-semibold truncate leading-tight text-white/90">{user.name}</span>
                     </div>
-                    <ChevronUp className="w-3.5 h-3.5 shrink-0 text-white/45" />
+                    <ChevronSelectorVertical className="w-3.5 h-3.5 shrink-0 text-white/45" aria-hidden="true" />
                   </>
                 )}
                 {unreadCount > 0 && (
@@ -234,20 +241,20 @@ const PartnerSidebar = () => {
                 </>
               )}
               <DropdownMenuItem onClick={() => setShowProfile(true)}>
-                <UserCircle className="mr-2 h-4 w-4" />
+                <UserCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                 Thông tin cá nhân
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => openModal(MODAL_IDS.CHANGE_PASSWORD)}>
-                <Key className="mr-2 h-4 w-4" />
+                <Key01 className="mr-2 h-4 w-4" aria-hidden="true" />
                 Đổi mật khẩu
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => openModal(MODAL_IDS.NOTIFICATION_SHEET)}>
-                <Bell className="mr-2 h-4 w-4" />
+                <Bell03 className="mr-2 h-4 w-4" aria-hidden="true" />
                 Thông báo
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
+                <LogOut01 className="mr-2 h-4 w-4" aria-hidden="true" />
                 Đăng xuất
               </DropdownMenuItem>
             </DropdownMenuContent>

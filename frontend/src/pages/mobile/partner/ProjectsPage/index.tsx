@@ -28,16 +28,14 @@ import { useProjectModals } from "@/hooks/useModalNavigation";
 import { usePartnerProjectSummary } from "@/hooks/partner/usePartnerProjectSummary";
 import { getVietnameseProjectStatus } from "@/utils/vietnamese";
 import { generateMonthOptions } from "@/utils/dateHelpers";
+import { Briefcase } from "lucide-react";
 import {
-  Briefcase,
-  CheckCircle,
-  Users,
-  Plus,
-  SlidersHorizontal,
-  X,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react";
+  FilterLines,
+  Plus,
+  XClose,
+} from "@untitledui/icons";
 import type { Project } from "@/types/api/project.types";
 
 const ITEMS_PER_PAGE = 20;
@@ -123,10 +121,10 @@ const ProjectsPageMobile = () => {
         actions={
           <Button
             size="sm"
-            className="h-11 px-4 btn-partner-primary shrink-0 rounded-xl"
+            className="h-11 px-4 shrink-0 rounded-xl"
             onClick={() => openCreateProject()}
           >
-            <Plus className="h-4 w-4 mr-1" />
+            <Plus className="h-4 w-4 mr-1" aria-hidden="true" />
             Thêm
           </Button>
         }
@@ -168,7 +166,7 @@ const ProjectsPageMobile = () => {
           onClick={() => setFilterSheetOpen(true)}
           aria-label="Bộ lọc"
         >
-          <SlidersHorizontal className="h-4 w-4" />
+          <FilterLines className="h-4 w-4" aria-hidden="true" />
           {activeFilterCount > 0 && (
             <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs text-white flex items-center justify-center font-bold">
               {activeFilterCount}
@@ -188,7 +186,7 @@ const ProjectsPageMobile = () => {
               aria-label={`Xóa lọc trạng thái ${currentStatusLabel}`}
             >
               {currentStatusLabel}
-              <X className="h-3 w-3" />
+              <XClose className="h-3 w-3" aria-hidden="true" />
             </button>
           )}
           {currentMonthLabel && (
@@ -199,7 +197,7 @@ const ProjectsPageMobile = () => {
               aria-label={`Xóa lọc tháng ${currentMonthLabel}`}
             >
               {currentMonthLabel}
-              <X className="h-3 w-3" />
+              <XClose className="h-3 w-3" aria-hidden="true" />
             </button>
           )}
           <button
@@ -249,7 +247,7 @@ const ProjectsPageMobile = () => {
               disabled={currentPage <= 1 || isFetching}
               aria-label="Trang dự án trước"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               <span className="sr-only min-[360px]:not-sr-only">Trước</span>
             </Button>
             <p className="text-center text-xs text-muted-foreground tabular-nums">
@@ -265,7 +263,7 @@ const ProjectsPageMobile = () => {
               aria-label="Trang dự án sau"
             >
               <span className="sr-only min-[360px]:not-sr-only">Sau</span>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         )}
@@ -351,7 +349,7 @@ const ProjectsPageMobile = () => {
                 Xóa bộ lọc
               </Button>
               <Button
-                className="flex-1 h-11 rounded-xl btn-partner-primary"
+                className="flex-1 h-11 rounded-xl"
                 onClick={() => setFilterSheetOpen(false)}
               >
                 Áp dụng

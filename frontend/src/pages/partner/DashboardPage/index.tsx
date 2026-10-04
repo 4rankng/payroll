@@ -1,14 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { format, startOfMonth } from 'date-fns';
-import {
-  Users,
-  UserCheck,
-  UserX,
-  Banknote,
-  CalendarDays,
-  Crown,
-  type LucideIcon,
-} from 'lucide-react';
+import { Users, UserCheck, UserX, Banknote, type LucideIcon } from 'lucide-react';
+import { Calendar, Trophy01, UserX01 } from '@untitledui/icons';
 import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -54,8 +47,9 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
           aria-pressed={value === opt.value}
           className={cn(
             'min-h-11 shrink-0 rounded-lg px-3 text-xs font-semibold transition-[background-color,color,box-shadow]',
+            'outline-brand focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2',
             value === opt.value
-              ? 'bg-card text-foreground shadow-sm ring-1 ring-border/60'
+              ? 'bg-card text-foreground shadow-sm ring-1 ring-inset ring-border/60'
               : 'text-muted-foreground hover:bg-card/70 hover:text-foreground',
           )}
         >
@@ -162,7 +156,7 @@ function LeaderRow({ item, rank }: { item: TopPaidEmployeeItem; rank: number }) 
           <span className="truncate text-[13px] font-semibold text-foreground">{item.employee_name}</span>
           {!item.is_active && (
             <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-xs font-semibold text-destructive shrink-0">
-              <UserX className="h-2.5 w-2.5" />
+              <UserX01 className="h-2.5 w-2.5" aria-hidden="true" />
               Nghỉ
             </span>
           )}
@@ -180,7 +174,7 @@ function StatRowSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-[140px] rounded-2xl border border-border/60 bg-card px-4 py-4 shadow-soft">
+        <div key={i} className="h-[140px] rounded-xl border border-input bg-card px-4 py-4 shadow-xs">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="mt-3 h-6 w-24" />
           <Skeleton className="mt-2 h-3 w-20" />
@@ -219,14 +213,14 @@ function BannerHeader({
   onMonthChange: (v: string) => void;
 }) {
   return (
-    <header className="rounded-2xl border border-border/60 bg-card px-5 py-4 shadow-soft sm:px-6 sm:py-5">
+    <header className="rounded-xl border border-input bg-card px-5 py-4 shadow-xs sm:px-6 sm:py-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
-            <CalendarDays className="h-4 w-4" />
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-brand-secondary">
+            <Calendar className="h-4 w-4" aria-hidden="true" />
             Kỳ báo cáo
           </div>
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-foreground sm:text-[2rem]">
+          <h1 className="font-display text-display-lg font-semibold tracking-tight text-fg-primary">
             Tổng quan
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -277,7 +271,7 @@ const PartnerDashboardPage = () => {
         {isLoading ? (
           <StatRowSkeleton />
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 animate-fade-in-up">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 motion-safe:animate-fade-in-up">
             <PartnerStat
               label="Tổng chi trả"
               value={formatVND(data?.total_paid_vnd ?? 0)}
@@ -326,14 +320,14 @@ const PartnerDashboardPage = () => {
           />
 
           {/* Leaderboard */}
-          <section className="rounded-2xl border border-border/60 bg-card p-5 shadow-soft">
+          <section className="rounded-xl border border-input bg-card p-5 shadow-xs">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div className="flex items-start gap-2.5">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning/10 text-warning">
-                  <Crown className="h-4 w-4" />
+                  <Trophy01 className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <div>
-                  <h2 className="text-base font-bold text-foreground">Top nhân viên được trả lương</h2>
+                  <h2 className="text-base font-semibold text-fg-primary">Top nhân viên được trả lương</h2>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     Xếp hạng theo tổng chi trả {periodLabel}
                   </p>

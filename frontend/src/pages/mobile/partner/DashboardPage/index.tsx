@@ -10,6 +10,7 @@ import {
   ClipboardList,
   History,
 } from 'lucide-react';
+import { UserCheck01, Users01, UserX01 } from '@untitledui/icons';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -36,7 +37,7 @@ const ALL_VALUE = 'all';
    ─────────────────────────────────────────────── */
 
 const RANK_STYLES: Record<number, { badge: string }> = {
-  1: { badge: 'bg-warning/10 text-amber-700 border-warning/30' },
+  1: { badge: 'bg-warning/10 text-warning border-warning/30' },
   2: { badge: 'bg-muted text-muted-foreground border-border' },
   3: { badge: 'bg-primary/10 text-primary border-primary/30' },
 };
@@ -65,12 +66,12 @@ function TopEmployeeRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid:
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-sm font-medium text-foreground break-words">{item.employee_name}</span>
           {item.is_active ? (
-            <Badge variant="outline" className="min-h-5 shrink-0 border-emerald-200 bg-emerald-50 px-1 py-0 text-xs text-emerald-800">
-              <UserCheck className="w-2.5 h-2.5 mr-0.5" />Đang làm
+            <Badge variant="outline" className="min-h-5 shrink-0 border-success/30 bg-success/10 px-1 py-0 text-xs text-success">
+              <UserCheck01 className="w-2.5 h-2.5 mr-0.5" aria-hidden="true" />Đang làm
             </Badge>
           ) : (
-            <Badge variant="outline" className="min-h-5 shrink-0 border-red-200 bg-red-50 px-1 py-0 text-xs text-red-800">
-              <UserX className="w-2.5 h-2.5 mr-0.5" />Nghỉ
+            <Badge variant="outline" className="min-h-5 shrink-0 border-destructive/30 bg-destructive/10 px-1 py-0 text-xs text-destructive">
+              <UserX01 className="w-2.5 h-2.5 mr-0.5" aria-hidden="true" />Nghỉ
             </Badge>
           )}
         </div>
@@ -253,7 +254,7 @@ const PartnerDashboardMobile = () => {
       <MobileSurface className="p-4">
         <div className="mb-3 flex items-center gap-2">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <Users className="h-4 w-4 text-primary" />
+            <Users01 className="h-4 w-4 text-primary" aria-hidden="true" />
           </div>
           <h2 className="text-sm font-semibold text-foreground">Chi trả theo nhân viên</h2>
           <span className="text-xs text-muted-foreground">— {periodLabel}</span>
