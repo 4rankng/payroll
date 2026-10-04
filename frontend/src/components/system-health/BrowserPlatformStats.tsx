@@ -1,5 +1,15 @@
 import React, { useState, useCallback } from "react";
-import { Monitor, Users, Zap, Smartphone, Globe, ChevronDown, ChevronUp } from "lucide-react";
+// W13c: lucide → verified @untitledui/icons (Smartphone → Monitor05,
+// nearest verified device glyph).
+import {
+  ChevronDown,
+  ChevronUp,
+  Globe01,
+  Monitor01,
+  Monitor05,
+  Users01,
+  Zap,
+} from "@untitledui/icons";
 import { cn } from "@/lib/utils";
 import { useOSStats, useBrowserStats } from "@/hooks/api/useSystemHealth";
 import { SectionLabel } from "./SectionLabel";
@@ -30,9 +40,12 @@ function browserIcon(family: string): string {
 }
 
 const RANK_COLORS = [
-  "bg-amber-400 text-amber-900",
-  "bg-slate-300 text-slate-700",
-  "bg-orange-300 text-orange-900",
+  // Rank numerals are text-xs bold — pairs chosen to clear WCAG 4.5:1 on the
+  // utility ladder (warning-700 on warning-200 ≈ 5.1:1; fg-secondary on
+  // gray-200/100 well above).
+  "bg-utility-warning-200 text-utility-warning-700",
+  "bg-utility-gray-200 text-fg-secondary",
+  "bg-utility-gray-100 text-fg-secondary",
 ];
 
 // ─── Version breakdown row ────────────────────────────────────────────────────
@@ -110,7 +123,7 @@ function OSGroupCard({
           title="Xem người dùng"
         >
           <div className="flex items-center gap-1 justify-end">
-            <Users className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors" />
+            <Users01 className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors" />
             <span className={cn("text-sm font-bold tabular-nums", isTop ? "text-primary" : "text-foreground")}>
               {stat.unique_users.toLocaleString()}
             </span>
@@ -212,7 +225,7 @@ function BrowserGroupCard({
           title="Xem người dùng"
         >
           <div className="flex items-center gap-1 justify-end">
-            <Users className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors" />
+            <Users01 className="h-3 w-3 text-muted-foreground group-hover:text-primary transition-colors" />
             <span className={cn("text-sm font-bold tabular-nums", isTop ? "text-primary" : "text-foreground")}>
               {stat.unique_users.toLocaleString()}
             </span>
@@ -294,7 +307,7 @@ export function BrowserPlatformStats({ days = 30 }: Props) {
     <section className="flex flex-col gap-6">
       {/* OS section */}
       <div>
-        <SectionLabel icon={Smartphone}>Hệ điều hành</SectionLabel>
+        <SectionLabel icon={Monitor05}>Hệ điều hành</SectionLabel>
         <p className="text-xs text-muted-foreground mb-3">{days} ngày qua · nhấn vào số người dùng để xem chi tiết</p>
 
         {osLoading ? (
@@ -318,7 +331,7 @@ export function BrowserPlatformStats({ days = 30 }: Props) {
 
       {/* Browser section */}
       <div>
-        <SectionLabel icon={Globe}>Trình duyệt</SectionLabel>
+        <SectionLabel icon={Globe01}>Trình duyệt</SectionLabel>
         <p className="text-xs text-muted-foreground mb-3">{days} ngày qua · nhấn vào số người dùng để xem chi tiết</p>
 
         {browserLoading ? (

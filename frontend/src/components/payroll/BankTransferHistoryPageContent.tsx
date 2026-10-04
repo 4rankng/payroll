@@ -1,13 +1,15 @@
 import { useMemo, useRef, useState, type MouseEvent } from 'react';
+// W13c: lucide → verified @untitledui/icons (admin+partner shared content —
+// icon swap only; slate neutrals stay until the W-final sweep).
 import {
-  CalendarDays,
+  Calendar,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Clock3,
-  ReceiptText,
-  UserRound,
-} from 'lucide-react';
+  Clock,
+  Receipt,
+  UserCircle,
+} from '@untitledui/icons';
 
 import { PageHeader } from '@/components/shared/PageHeader';
 import { FilterBar } from '@/components/shared/FilterBar';
@@ -79,7 +81,7 @@ function PayrollMonthPicker({ value, onValueChange, className }: PayrollMonthPic
           className={`mt-0 h-11 w-full justify-between rounded-xl border-slate-300 bg-slate-50/70 px-3 font-sans text-[12px] font-normal tabular-nums text-slate-700 shadow-none hover:border-slate-300 hover:bg-slate-50 focus-visible:bg-white sm:h-9 ${className ?? ''}`}
         >
           {displayValue}
-          <CalendarDays className="h-4 w-4 text-slate-500" aria-hidden="true" />
+          <Calendar className="h-4 w-4 text-slate-500" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[280px] rounded-xl p-3" align="start">
@@ -174,7 +176,7 @@ function TransferReferences({ item }: { item: BankTransferHistory }) {
             <div className="col-span-2 min-w-0 sm:col-span-1 xl:col-start-4 xl:row-start-1">
               <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Thời gian xử lý</p>
               <p className="mt-1 flex items-center gap-1.5 xl:mt-0">
-                <Clock3 className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+                <Clock className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" />
                 <time className="font-financial text-xs font-semibold tabular-nums text-slate-700" dateTime={transfer.paid_at}>
                   {formatBankTransferDateTime(transfer.paid_at)}
                 </time>
@@ -219,7 +221,7 @@ function HistoryRecord({ item, isOpen, onToggle }: { item: BankTransferHistory; 
         >
           <div className="col-span-2 flex min-w-0 items-center gap-2.5 pr-12 xl:col-span-1 xl:gap-2 xl:pr-0">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-200/80 bg-emerald-50 text-emerald-700 xl:h-5 xl:w-5 xl:rounded-md">
-              <UserRound className="h-4 w-4 xl:h-3 xl:w-3" aria-hidden="true" />
+              <UserCircle className="h-4 w-4 xl:h-3 xl:w-3" aria-hidden="true" />
             </div>
             <div className="min-w-0 xl:flex xl:min-w-0 xl:flex-wrap xl:items-baseline xl:gap-x-1.5">
               <p className="break-words font-display text-[13px] font-bold leading-snug text-slate-950 xl:truncate">
@@ -244,7 +246,7 @@ function HistoryRecord({ item, isOpen, onToggle }: { item: BankTransferHistory; 
             <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-slate-500 xl:hidden">Kỳ thanh toán</p>
             <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs font-semibold tabular-nums text-slate-800 xl:mt-0">
               <span className="flex min-w-0 items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+                <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-500" aria-hidden="true" />
                 <span
                   className="whitespace-nowrap"
                   aria-label={`Từ ${formatBankTransferDate(item.from_date)} đến ${formatBankTransferDate(item.to_date)}`}
@@ -450,7 +452,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
       <AdminPageCanvas>
         <AdminPageHeaderCard>
           <PageHeader
-            icon={ReceiptText}
+            icon={Receipt}
             title="Lịch sử trả lương"
             description="Lịch sử trả lương theo nhân viên và kỳ lương."
           />
@@ -466,7 +468,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
       <header className="admin-payment-history-header px-0.5 py-0.5">
         <PageHeader
           className="[&_h1]:text-lg sm:[&_h1]:text-xl [&_[data-slot=page-header-description]]:text-xs"
-          icon={ReceiptText}
+          icon={Receipt}
           title="Bút toán ngân hàng"
           description="Bút toán ngân hàng theo nhân viên và kỳ lương."
         />

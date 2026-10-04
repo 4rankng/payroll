@@ -1,7 +1,9 @@
 import { ErrorState } from "@/components/ui/error-state";
 import React, { useMemo } from "react";
 import { useAppState } from "@/contexts";
-import { Clock, Loader2 } from "lucide-react";
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; the loading
+// spinner is the UU Loading01 arc (kept animate-spin).
+import { Clock, Loading01 } from "@untitledui/icons";
 import { Badge } from "@/components/ui/badge";
 import {
   AdminPageCanvas,
@@ -27,7 +29,7 @@ export default function CronHealthPage() {
     return (
       <AdminPageCanvas>
         <div className="flex min-h-64 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <Loading01 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       </AdminPageCanvas>
     );

@@ -1,6 +1,14 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Users2, ChevronLeft, ChevronRight, HandCoins } from "lucide-react";
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons.
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  CoinsHand,
+  Plus,
+  Users01,
+} from "@untitledui/icons";
 import { Button } from "@/components/ui/button";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
@@ -49,7 +57,7 @@ const LendersPage = () => {
   return (
     <div className="flex min-h-full flex-col pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <MobilePageHeader
-        icon={HandCoins}
+        icon={CoinsHand}
         title="Chủ nợ"
         subtitle="Danh sách chủ nợ và thông tin liên quan"
         sticky={false}
@@ -90,7 +98,7 @@ const LendersPage = () => {
           </div>
         ) : lenders.length === 0 ? (
           <EmptyState
-            icon={Users2}
+            icon={Users01}
             title="Chưa có chủ nợ nào"
             description="Thêm chủ nợ đầu tiên để bắt đầu quản lý khoản vay."
             action={{ label: "Thêm chủ nợ", onClick: () => setShowAddSheet(true) }}

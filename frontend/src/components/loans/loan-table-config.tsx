@@ -7,7 +7,8 @@ import type { MobileField } from "@/components/ui/responsive-table";
 import type { Loan } from "@/types/api/loan.types";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Landmark } from "lucide-react";
+// W13c: lucide → verified @untitledui/icons.
+import { Bank } from "@untitledui/icons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { formatVND, daysUntil, getPaymentUrgencyColor } from "@/utils/loanHelpers";
 

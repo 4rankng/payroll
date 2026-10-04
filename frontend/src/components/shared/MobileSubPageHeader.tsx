@@ -1,4 +1,4 @@
-import { type LucideIcon } from 'lucide-react';
+import type { SVGProps } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -8,8 +8,9 @@ interface MobileSubPageHeaderProps {
   title: string;
   /** Optional subtitle (date, description, etc.) */
   subtitle?: string;
-  /** Icon displayed in a soft primary container */
-  icon: LucideIcon;
+  /** Icon displayed in a soft primary container — widened from LucideIcon so
+   * both lucide and @untitledui/icons components fit (W13a contract). */
+  icon: React.ComponentType<SVGProps<SVGSVGElement>>;
   /** Back navigation handler — typically `() => navigate(-1)` */
   onBack: () => void;
   /** Optional action button rendered on the right */

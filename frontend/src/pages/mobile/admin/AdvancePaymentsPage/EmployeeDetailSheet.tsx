@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Users, Wallet } from "lucide-react";
+// W13c: lucide → verified @untitledui/icons.
+import { Users01, Wallet01 } from "@untitledui/icons";
 import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
@@ -58,7 +59,7 @@ export function EmployeeDetailSheet({
             return (
               <>
                 <MobileSheetHeader
-                  icon={Users}
+                  icon={Users01}
                   title={emp.fullname}
                   description={emp.cccd}
                   onClose={onClose}
@@ -101,13 +102,13 @@ export function EmployeeDetailSheet({
                           <p className="text-xs text-muted-foreground">Hạn mức</p>
                           <p className="text-xs font-semibold tabular-nums">{formatCurrency(emp.maxAdvanceAmount)}</p>
                         </div>
-                        <div className="rounded-lg bg-orange-50 px-2.5 py-2">
+                        <div className="rounded-lg bg-utility-warning-50 px-2.5 py-2">
                           <p className="text-xs text-muted-foreground">Đã dùng</p>
-                          <p className="text-xs font-semibold text-orange-700 tabular-nums">{formatCurrency(emp.utilizedAmount)}</p>
+                          <p className="text-xs font-semibold text-fg-warning-primary tabular-nums">{formatCurrency(emp.utilizedAmount)}</p>
                         </div>
-                        <div className="rounded-lg bg-amber-50 px-2.5 py-2">
+                        <div className="rounded-lg bg-utility-warning-50/60 px-2.5 py-2">
                           <p className="text-xs text-muted-foreground">Chờ xử lý</p>
-                          <p className="text-xs font-semibold text-amber-700 tabular-nums">{formatCurrency(emp.pendingAmount)}</p>
+                          <p className="text-xs font-semibold text-utility-warning-700 tabular-nums">{formatCurrency(emp.pendingAmount)}</p>
                         </div>
                       </div>
                     </MobileCard>
@@ -151,7 +152,7 @@ export function EmployeeDetailSheet({
 
                     {requests.length === 0 ? (
                       <div className="px-4 pb-6 text-center">
-                        <Wallet className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
+                        <Wallet01 className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                         <p className="text-xs text-muted-foreground">
                           Chưa có yêu cầu nào
                         </p>

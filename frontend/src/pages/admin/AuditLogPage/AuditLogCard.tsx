@@ -10,7 +10,8 @@ import {
   extractLoginIdentifier,
   VARIANT_CLASSES,
 } from './utils';
-import { Globe, Monitor, MapPin, ChevronRight } from 'lucide-react';
+// W13c: lucide → verified @untitledui/icons.
+import { ChevronRight, Globe01, MarkerPin01, Monitor01 } from '@untitledui/icons';
 import { cn } from '@/lib/utils';
 
 interface AuditLogCardProps {
@@ -53,9 +54,9 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
 
   // Build meta chips for the footer row
   const metaChips: { icon: React.ReactNode; label: string }[] = [];
-  if (log.ip_address) metaChips.push({ icon: <Globe className="w-3 h-3" />, label: log.ip_address });
-  if (location) metaChips.push({ icon: <MapPin className="w-3 h-3" />, label: [location.city, location.country].filter(Boolean).join(', ') });
-  if (log.browser || log.platform) metaChips.push({ icon: <Monitor className="w-3 h-3" />, label: [log.browser, log.platform].filter(Boolean).join(' · ') });
+  if (log.ip_address) metaChips.push({ icon: <Globe01 className="w-3 h-3" />, label: log.ip_address });
+  if (location) metaChips.push({ icon: <MarkerPin01 className="w-3 h-3" />, label: [location.city, location.country].filter(Boolean).join(', ') });
+  if (log.browser || log.platform) metaChips.push({ icon: <Monitor01 className="w-3 h-3" />, label: [log.browser, log.platform].filter(Boolean).join(' · ') });
 
   return (
     <button
@@ -64,14 +65,14 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
       className={cn(
         'group w-full overflow-hidden border text-left transition-all duration-150 hover:border-primary/20 hover:bg-muted/30 active:bg-muted/50',
         compact
-          ? 'rounded-2xl border-slate-300 bg-white shadow-[0_8px_20px_-18px_rgba(15,23,42,0.34)]'
+          ? 'rounded-2xl border-utility-gray-300 bg-white shadow-[0_8px_20px_-18px_rgba(15,23,42,0.34)]'
           : 'rounded-xl border-border bg-card shadow-sm',
       )}
     >
       {/* Top bar: action badge + role | datetime + chevron */}
       <div className={cn(
         'flex flex-col gap-2 border-b border-border/60 px-3 pb-2.5 pt-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between',
-        compact && 'flex-row items-center justify-between gap-2 border-slate-200 bg-slate-50/80 px-3.5 py-2.5',
+        compact && 'flex-row items-center justify-between gap-2 border-utility-gray-200 bg-utility-gray-50/80 px-3.5 py-2.5',
       )}>
         <div className="flex min-w-0 items-center gap-2">
           <Badge
@@ -80,7 +81,7 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
           >
             {getActionLabel(log.action)}
           </Badge>
-          <span className={cn('min-w-0 truncate text-xs text-muted-foreground', compact && 'font-medium text-slate-500')}>
+          <span className={cn('min-w-0 truncate text-xs text-muted-foreground', compact && 'font-medium text-fg-tertiary')}>
             {getRoleLabel(log.user_role)}
           </span>
         </div>
@@ -88,7 +89,7 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
           'flex min-w-0 items-center justify-between gap-1.5 min-[380px]:shrink-0 min-[380px]:justify-end',
           compact && 'shrink-0 justify-end',
         )}>
-          <span className={cn('min-w-0 text-xs text-muted-foreground min-[380px]:whitespace-nowrap', compact && 'text-xs font-medium text-slate-600')}>
+          <span className={cn('min-w-0 text-xs text-muted-foreground min-[380px]:whitespace-nowrap', compact && 'text-xs font-medium text-fg-secondary')}>
             {compact ? compactTime : `${dateStr} ${timeStr}`}
           </span>
           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-muted-foreground" />
@@ -104,27 +105,27 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
             : <p className="text-sm text-muted-foreground">#{log.user_id}</p>
           }
           {username && (
-            <p className={cn('break-all text-xs leading-tight text-muted-foreground', compact && 'mt-0.5 text-slate-600')}>@{username}</p>
+            <p className={cn('break-all text-xs leading-tight text-muted-foreground', compact && 'mt-0.5 text-fg-secondary')}>@{username}</p>
           )}
         </div>
 
         {/* Message */}
-        <p className={cn('break-words text-sm leading-snug text-foreground', compact && 'text-slate-600')}>
+        <p className={cn('break-words text-sm leading-snug text-foreground', compact && 'text-fg-secondary')}>
           {log.message}
         </p>
 
         {/* Login identifier */}
         {showLoginId && (
-          <p className={cn('break-words text-xs font-medium text-amber-700', compact && 'rounded-lg bg-amber-50 px-2.5 py-2 text-amber-700')}>
+          <p className={cn('break-words text-xs font-medium text-fg-warning-primary', compact && 'rounded-lg bg-utility-warning-50 px-2.5 py-2 text-fg-warning-primary')}>
             Đăng nhập bằng: {loginId}
           </p>
         )}
 
         {/* Meta footer: IP · location · device as a single wrapping row of chips */}
         {metaChips.length > 0 && (
-          <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5', compact && 'border-t border-slate-200 pt-2.5')}>
+          <div className={cn('flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5', compact && 'border-t border-utility-gray-200 pt-2.5')}>
             {metaChips.map((chip, i) => (
-              <span key={i} className={cn('inline-flex min-w-0 items-center gap-1 text-xs text-muted-foreground', compact && 'text-slate-600')}>
+              <span key={i} className={cn('inline-flex min-w-0 items-center gap-1 text-xs text-muted-foreground', compact && 'text-fg-secondary')}>
                 {chip.icon}
                 <span className="min-w-0 break-all">{chip.label}</span>
               </span>

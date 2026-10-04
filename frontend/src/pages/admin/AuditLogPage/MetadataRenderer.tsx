@@ -29,18 +29,18 @@ function ChangedFieldsDiff({ fields }: { fields: Record<string, AuditFieldChange
           <thead>
             <tr className="border-b border-border bg-muted/50">
               <th className="text-left px-3 py-2 text-muted-foreground font-medium w-1/3">Trường</th>
-              <th className="text-left px-3 py-2 text-red-600 font-medium w-1/3">Trước</th>
-              <th className="text-left px-3 py-2 text-emerald-700 font-medium w-1/3">Sau</th>
+              <th className="text-left px-3 py-2 text-utility-error-600 font-medium w-1/3">Trước</th>
+              <th className="text-left px-3 py-2 text-fg-success-primary font-medium w-1/3">Sau</th>
             </tr>
           </thead>
           <tbody>
             {entries.map(([key, change]) => (
               <tr key={key} className="border-b border-border last:border-0 odd:bg-muted/20">
                 <td className="px-3 py-2 text-foreground font-medium">{formatFieldName(key)}</td>
-                <td className="px-3 py-2 text-red-600 line-through opacity-70">
+                <td className="px-3 py-2 text-utility-error-600 line-through opacity-70">
                   {formatAuditValue(key, change.before)}
                 </td>
-                <td className="px-3 py-2 text-emerald-700 font-medium">
+                <td className="px-3 py-2 text-fg-success-primary font-medium">
                   {formatAuditValue(key, change.after)}
                 </td>
               </tr>

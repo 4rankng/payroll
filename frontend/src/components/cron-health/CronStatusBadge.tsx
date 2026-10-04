@@ -1,4 +1,5 @@
-import { Minus } from "lucide-react";
+// W13c: lucide → verified @untitledui/icons (Minus exists in both).
+import { Minus } from "@untitledui/icons";
 import { cn } from "@/lib/utils";
 import { STATUS_META } from "./constants";
 import type { CronStatus } from "./constants";
@@ -10,7 +11,7 @@ export interface CronStatusBadgeProps {
 }
 
 const NULL_STYLE = {
-  color: "text-gray-600",
+  color: "text-utility-gray-600",
   label: "Chưa chạy",
 } as const;
 
@@ -35,7 +36,7 @@ export function CronStatusBadge({
       return (
         <div
           className={cn(
-            "shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap bg-gray-50 text-gray-600",
+            "shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap bg-utility-gray-50 text-utility-gray-600",
             className
           )}
         >

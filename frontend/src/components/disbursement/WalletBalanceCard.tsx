@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCw, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; the dark
+// treasury panel keeps its on-dark accents, now on the UU utility ladder.
+// Loading01 replaces lucide's Loader2 spinner.
+import {
+  AlertTriangle,
+  CheckCircle,
+  Loading01,
+  RefreshCw05,
+} from "@untitledui/icons";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -171,7 +179,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <span className="led-pulse h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.18)]" />
-                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-200">
+                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-utility-success-200">
                       Ví tiền
                     </span>
                   </div>
@@ -182,7 +190,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                     aria-label="Đồng bộ số dư"
                     className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 touch-manipulation"
                   >
-                    <RefreshCw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
+                    <RefreshCw05 className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
                   </button>
                 </div>
 
@@ -191,22 +199,22 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                   "treasury-value mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal tabular-nums",
                   "text-[clamp(1.375rem,7.5vw,1.5rem)]",
                   isLow
-                    ? "text-red-400 [text-shadow:0_0_32px_rgba(248,113,113,0.35)]"
+                    ? "text-utility-error-400 [text-shadow:0_0_32px_rgba(248,113,113,0.35)]"
                     : "text-white [text-shadow:0_0_36px_rgba(110,231,183,0.30)]"
                 )}>
                   {formatCurrency(available).replace('₫', '')}
-                  <span className="ml-1 font-medium text-emerald-200">₫</span>
+                  <span className="ml-1 font-medium text-utility-success-200">₫</span>
                 </div>
 
                 {hasDivergence && showProviderBalance && providerBalance && (
-                  <div className="mt-2 inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
+                  <div className="mt-2 inline-flex items-center gap-1 rounded border border-utility-warning-500/30 bg-utility-warning-500/10 px-2 py-0.5 text-xs font-medium text-utility-warning-400">
                     <AlertTriangle className="h-3.5 w-3.5" />
                     NCC: {formatCurrency(providerBalance.amount)}
                   </div>
                 )}
 
                 {isLow && !hasDivergence && (
-                  <div className="mt-1.5 text-xs text-red-400/80">
+                  <div className="mt-1.5 text-xs text-utility-error-400/80">
                     Số dư thấp — cân nhắc nạp thêm
                   </div>
                 )}
@@ -256,7 +264,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="led-pulse h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_3px_rgba(110,231,183,0.18)]" />
-                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-200">
+                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-utility-success-200">
                       Ví tiền
                     </span>
                   </div>
@@ -265,20 +273,20 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                       "treasury-value max-w-full break-words font-financial font-semibold leading-none tracking-normal tabular-nums",
                       "text-[clamp(1.5rem,3vw,1.75rem)]",
                       isLow
-                        ? "text-red-400 [text-shadow:0_0_32px_rgba(248,113,113,0.35)]"
+                        ? "text-utility-error-400 [text-shadow:0_0_32px_rgba(248,113,113,0.35)]"
                         : "text-white [text-shadow:0_0_36px_rgba(110,231,183,0.30)]"
                     )}>
                       {formatCurrency(available).replace('₫', '')}
-                      <span className={cn("ml-1 font-medium", isLow ? "text-red-400/80" : "text-emerald-200")}>₫</span>
+                      <span className={cn("ml-1 font-medium", isLow ? "text-utility-error-400/80" : "text-utility-success-200")}>₫</span>
                     </div>
                     {hasDivergence && showProviderBalance && providerBalance && (
-                      <div className="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-400">
+                      <div className="inline-flex items-center gap-1 rounded border border-utility-warning-500/30 bg-utility-warning-500/10 px-2 py-0.5 text-xs font-medium text-utility-warning-400">
                         <AlertTriangle className="h-3.5 w-3.5" />
                         NCC: {formatCurrency(providerBalance.amount)}
                       </div>
                     )}
                     {isLow && !hasDivergence && (
-                      <span className="text-xs text-red-400/80">
+                      <span className="text-xs text-utility-error-400/80">
                         Số dư thấp — cân nhắc nạp thêm
                       </span>
                     )}
@@ -309,7 +317,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                     aria-label="Đồng bộ số dư"
                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10 disabled:opacity-50 touch-manipulation"
                   >
-                    <RefreshCw className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
+                    <RefreshCw05 className={cn("h-3.5 w-3.5", isSyncing && "animate-spin")} />
                   </button>
                 </div>
               </div>
@@ -327,8 +335,8 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <div className="flex items-center gap-2.5 mb-1">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 border border-amber-200">
-                <RefreshCw className="h-3.5 w-3.5 text-amber-700" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-utility-warning-50 border border-utility-warning-200">
+                <RefreshCw05 className="h-3.5 w-3.5 text-fg-warning-primary" />
               </div>
               <AlertDialogTitle className="text-sm">Phát hiện chênh lệch số dư</AlertDialogTitle>
             </div>
@@ -350,14 +358,14 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                   <div
                     className={cn(
                       "rounded-lg border p-2.5",
-                      diff > 0 ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50",
+                      diff > 0 ? "border-utility-success-200 bg-utility-success-50" : "border-utility-error-200 bg-utility-error-50",
                     )}
                   >
                     <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Chênh lệch</p>
                     <p
                       className={cn(
                         "mt-0.5 font-financial text-sm font-bold tabular-nums",
-                        diff > 0 ? "text-emerald-700" : "text-rose-700",
+                        diff > 0 ? "text-fg-success-primary" : "text-fg-error-primary",
                       )}
                     >
                       {diff > 0 ? "+" : ""}
@@ -367,7 +375,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Tạo bản ghi điều chỉnh{" "}
-                  <strong className={cn("font-semibold", diff > 0 ? "text-emerald-700" : "text-rose-700")}>
+                  <strong className={cn("font-semibold", diff > 0 ? "text-fg-success-primary" : "text-fg-error-primary")}>
                     {diff > 0 ? "+" : ""}
                     {formatCurrency(diff)}
                   </strong>{" "}
@@ -394,12 +402,12 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
             >
               {adjusting ? (
                 <>
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loading01 className="h-3 w-3 animate-spin" />
                   Đang xử lý...
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="h-3 w-3" />
+                  <CheckCircle className="h-3 w-3" />
                   Điều chỉnh
                 </>
               )}

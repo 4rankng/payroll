@@ -52,9 +52,9 @@ export function ErrorByEndpointCards({ days = 1 }: ErrorByEndpointCardsProps) {
           className={cn(
             "flex flex-col gap-2 px-4 py-3 rounded-xl border text-sm",
             row.errorRate > 20
-              ? "bg-red-50/50 border-red-100"
+              ? "bg-utility-error-50/50 border-utility-error-100"
               : row.errorRate > 5
-                ? "bg-amber-50/40 border-amber-100"
+                ? "bg-utility-warning-50/40 border-utility-warning-100"
                 : "bg-card"
           )}
         >
@@ -65,7 +65,7 @@ export function ErrorByEndpointCards({ days = 1 }: ErrorByEndpointCardsProps) {
             </div>
             <div className="flex items-center gap-1 shrink-0">
               <span className="text-xs text-muted-foreground">Tổng lỗi:</span>
-              <span className="font-bold text-red-700 tabular-nums">
+              <span className="font-bold text-fg-error-primary tabular-nums">
                 {row.errorTotal.toLocaleString()}
               </span>
             </div>
@@ -79,9 +79,9 @@ export function ErrorByEndpointCards({ days = 1 }: ErrorByEndpointCardsProps) {
                 className={cn(
                   "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium border",
                   code >= 500
-                    ? "bg-red-100 border-red-200 text-red-700"
+                    ? "bg-utility-error-100 border-utility-error-200 text-fg-error-primary"
                     : code >= 400
-                      ? "bg-orange-50 border-orange-200 text-orange-700"
+                      ? "bg-utility-warning-50 border-utility-warning-200 text-fg-warning-primary"
                       : "bg-muted border-border text-muted-foreground"
                 )}
               >

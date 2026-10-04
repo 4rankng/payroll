@@ -1,4 +1,20 @@
-import { Plus, BarChart3, Mail, History, ChevronDownIcon, Wallet, Download, ReceiptText, Zap, Loader2, MoreHorizontal, ClipboardCheck, BookOpen } from 'lucide-react';
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; behavior and
+// Vietnamese copy unchanged. Loading01 replaces lucide's Loader2 spinner.
+import {
+  BarChart03,
+  BookOpen01,
+  ChevronDown,
+  ClipboardCheck,
+  ClockRewind,
+  Download01,
+  DotsHorizontal,
+  Loading01,
+  Mail01,
+  Plus,
+  Receipt,
+  Wallet01,
+  Zap,
+} from '@untitledui/icons';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -40,7 +56,7 @@ export function TransactionPageHeader({
   onSimulateSettlement,
 }: TransactionPageHeaderProps) {
   return (
-    <PageHeader title="Sổ Cái" description="Quản lý thu chi và dòng tiền" icon={BookOpen}>
+    <PageHeader title="Sổ Cái" description="Quản lý thu chi và dòng tiền" icon={BookOpen01}>
       <div className="hidden max-w-full flex-wrap items-center justify-end gap-2 min-[1800px]:flex">
         <div className="flex max-w-full items-center divide-x divide-border overflow-hidden rounded-xl border border-border">
           <DropdownMenu>
@@ -49,18 +65,18 @@ export function TransactionPageHeader({
                 variant="ghost"
                 className="rounded-none border-0 gap-1.5"
               >
-                <Download className="w-4 h-4" />
+                <Download01 className="w-4 h-4" />
                 Xuất sao kê
-                <ChevronDownIcon className="w-3 h-3" />
+                <ChevronDown className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onExportSaoKePayroll}>
-                <BarChart3 className="w-4 h-4 mr-2" />
+                <BarChart03 className="w-4 h-4 mr-2" />
                 Bảng công
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onExportSaoKeAdvance}>
-                <Wallet className="w-4 h-4 mr-2" />
+                <Wallet01 className="w-4 h-4 mr-2" />
                 Ứng lương
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -72,18 +88,18 @@ export function TransactionPageHeader({
                 className="rounded-none border-0 gap-1.5"
                 disabled={isSendingSaoKe}
               >
-                <Mail className="w-4 h-4" />
+                <Mail01 className="w-4 h-4" />
                 {isSendingSaoKe ? 'Đang gửi...' : 'Gửi sao kê'}
-                <ChevronDownIcon className="w-3 h-3" />
+                <ChevronDown className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onSendSaoKePayroll}>
-                <BarChart3 className="w-4 h-4 mr-2" />
+                <BarChart03 className="w-4 h-4 mr-2" />
                 Bảng công
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onSendSaoKeAdvance}>
-                <Wallet className="w-4 h-4 mr-2" />
+                <Wallet01 className="w-4 h-4 mr-2" />
                 Ứng lương
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -93,12 +109,12 @@ export function TransactionPageHeader({
             className="rounded-none border-0 gap-1.5"
             onClick={onViewSaoKeHistory}
           >
-            <History className="w-4 h-4" />
+            <ClockRewind className="w-4 h-4" />
             Đối soát
           </Button>
         </div>
         <Button variant="outline" onClick={onImportOnePayFeeReport}>
-          <ReceiptText className="w-4 h-4" />
+          <Receipt className="w-4 h-4" />
           Phí OnePay
         </Button>
         {onSimulateSettlement && (
@@ -114,7 +130,7 @@ export function TransactionPageHeader({
             disabled={isRunningWalletSettlement}
           >
             {isRunningWalletSettlement ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loading01 className="w-4 h-4 animate-spin" />
             ) : (
               <Zap className="w-4 h-4" />
             )}
@@ -136,22 +152,22 @@ export function TransactionPageHeader({
               className="h-9 w-9 shrink-0"
               aria-label="Tùy chọn khác"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <DotsHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <Download className="mr-2 h-4 w-4" />
+                <Download01 className="mr-2 h-4 w-4" />
                 Xuất sao kê
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 <DropdownMenuItem onClick={onExportSaoKePayroll}>
-                  <BarChart3 className="mr-2 h-4 w-4" />
+                  <BarChart03 className="mr-2 h-4 w-4" />
                   Bảng công
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onExportSaoKeAdvance}>
-                  <Wallet className="mr-2 h-4 w-4" />
+                  <Wallet01 className="mr-2 h-4 w-4" />
                   Ứng lương
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
@@ -160,19 +176,19 @@ export function TransactionPageHeader({
             <DropdownMenuSub>
               <DropdownMenuSubTrigger disabled={isSendingSaoKe}>
                 {isSendingSaoKe ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loading01 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Mail className="mr-2 h-4 w-4" />
+                  <Mail01 className="mr-2 h-4 w-4" />
                 )}
                 {isSendingSaoKe ? 'Đang gửi...' : 'Gửi sao kê'}
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 <DropdownMenuItem onClick={onSendSaoKePayroll}>
-                  <BarChart3 className="mr-2 h-4 w-4" />
+                  <BarChart03 className="mr-2 h-4 w-4" />
                   Bảng công
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onSendSaoKeAdvance}>
-                  <Wallet className="mr-2 h-4 w-4" />
+                  <Wallet01 className="mr-2 h-4 w-4" />
                   Ứng lương
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
@@ -180,11 +196,11 @@ export function TransactionPageHeader({
 
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onViewSaoKeHistory}>
-              <History className="mr-2 h-4 w-4" />
+              <ClockRewind className="mr-2 h-4 w-4" />
               Đối soát
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onImportOnePayFeeReport}>
-              <ReceiptText className="mr-2 h-4 w-4" />
+              <Receipt className="mr-2 h-4 w-4" />
               Phí OnePay
             </DropdownMenuItem>
             {onSimulateSettlement && (
@@ -199,7 +215,7 @@ export function TransactionPageHeader({
                 disabled={isRunningWalletSettlement}
               >
                 {isRunningWalletSettlement ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loading01 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Zap className="mr-2 h-4 w-4" />
                 )}

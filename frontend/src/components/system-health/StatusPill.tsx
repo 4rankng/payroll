@@ -1,23 +1,24 @@
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
+// W13c: icon slot widened (W13a pattern); accents on the UU ladders.
+import type { ComponentType, SVGProps } from "react";
 import type { PillStatus } from "./utils";
 
 const iconBg: Record<PillStatus, string> = {
-  ok:     "bg-emerald-50 text-emerald-700",
-  warn:   "bg-amber-50 text-amber-700",
-  danger: "bg-red-50 text-red-700",
+  ok:     "bg-utility-success-50 text-fg-success-primary",
+  warn:   "bg-utility-warning-50 text-fg-warning-primary",
+  danger: "bg-utility-error-50 text-fg-error-primary",
 };
 
 const valueCls: Record<PillStatus, string> = {
-  ok:     "text-emerald-700",
-  warn:   "text-amber-700",
-  danger: "text-red-700",
+  ok:     "text-fg-success-primary",
+  warn:   "text-fg-warning-primary",
+  danger: "text-fg-error-primary",
 };
 
 const borderCls: Record<PillStatus, string> = {
-  ok:     "border-emerald-100",
-  warn:   "border-amber-100",
-  danger: "border-red-100",
+  ok:     "border-utility-success-100",
+  warn:   "border-utility-warning-100",
+  danger: "border-utility-error-100",
 };
 
 interface Props {
@@ -25,7 +26,7 @@ interface Props {
   value: string;
   sub?: string;
   status: PillStatus;
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   className?: string;
 }
 

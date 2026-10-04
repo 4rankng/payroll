@@ -1,4 +1,6 @@
-import { AlertCircle, FileText, Mail, Paperclip, Send, X } from 'lucide-react';
+// W13c: lucide → verified @untitledui/icons; error banner on the UU
+// error ladder.
+import { AlertCircle, File05, Mail01, Paperclip, Send01, XClose } from '@untitledui/icons';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,7 +22,7 @@ export function AdminEmailComposer({ embedded = false }: AdminEmailComposerProps
 
   return (
     <div className={embedded ? 'space-y-5' : 'p-4 lg:p-6 max-w-[1320px] mx-auto space-y-5 pb-[calc(5rem+env(safe-area-inset-bottom))]'}>
-      {!embedded && <PageHeader icon={Mail} title="Gửi email" description="Soạn email HTML, chọn địa chỉ gửi đã xác minh và xem trước trước khi gửi." />}
+      {!embedded && <PageHeader icon={Mail01} title="Gửi email" description="Soạn email HTML, chọn địa chỉ gửi đã xác minh và xem trước trước khi gửi." />}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)]">
         <section className="min-w-0 space-y-4 rounded-xl border bg-card p-4 sm:p-5" aria-labelledby="email-composer-title">
@@ -65,10 +67,10 @@ export function AdminEmailComposer({ embedded = false }: AdminEmailComposerProps
           <div className="space-y-2">
             <Label htmlFor="email-attachments">Tệp đính kèm (tuỳ chọn)</Label>
             <Input id="email-attachments" type="file" multiple accept=".pdf,.xlsx,.xls,.doc,.docx,.png,.jpg,.jpeg,.gif,.txt,.csv" onChange={composer.handleAttachmentChange} disabled={composer.sendEmail.isPending} />
-            {composer.attachments.length > 0 && <div className="flex flex-wrap gap-2">{composer.attachments.map((file) => <Badge key={`${file.name}-${file.size}`} variant="secondary" className="min-w-0 max-w-full gap-1"><FileText className="h-3 w-3 shrink-0" /><span className="truncate" title={file.name}>{file.name}</span><button type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => composer.setAttachments((current) => current.filter((item) => item !== file))} aria-label={`Bỏ tệp ${file.name}`}><X className="h-3 w-3" /></button></Badge>)}</div>}
+            {composer.attachments.length > 0 && <div className="flex flex-wrap gap-2">{composer.attachments.map((file) => <Badge key={`${file.name}-${file.size}`} variant="secondary" className="min-w-0 max-w-full gap-1"><File05 className="h-3 w-3 shrink-0" /><span className="truncate" title={file.name}>{file.name}</span><button type="button" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => composer.setAttachments((current) => current.filter((item) => item !== file))} aria-label={`Bỏ tệp ${file.name}`}><XClose className="h-3 w-3" /></button></Badge>)}</div>}
           </div>
-          {composer.error && <p role="alert" className="flex items-center gap-1.5 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"><AlertCircle className="h-4 w-4" />{composer.error}</p>}
-          <Button type="button" className="w-full min-h-11" onClick={composer.handleSend} disabled={!composer.canSend || composer.sendEmail.isPending}><Send className="mr-2 h-4 w-4" />{composer.sendEmail.isPending ? 'Đang gửi email...' : 'Gửi email'}</Button>
+          {composer.error && <p role="alert" className="flex items-center gap-1.5 rounded-md border border-utility-error-300 bg-utility-error-50 px-3 py-2 text-sm text-fg-error-primary"><AlertCircle className="h-4 w-4" />{composer.error}</p>}
+          <Button type="button" className="w-full min-h-11" onClick={composer.handleSend} disabled={!composer.canSend || composer.sendEmail.isPending}><Send01 className="mr-2 h-4 w-4" />{composer.sendEmail.isPending ? 'Đang gửi email...' : 'Gửi email'}</Button>
         </section>
 
         <aside className="min-w-0 space-y-3 xl:sticky xl:top-4 xl:self-start" aria-labelledby="email-preview-title">

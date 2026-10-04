@@ -35,12 +35,12 @@ const ACTION_VARIANT_MAP: Record<string, ActionVariant> = {
 
 // Uses semantic CSS variables — works on both light and dark themes
 export const VARIANT_CLASSES: Record<ActionVariant, string> = {
-  green:  'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+  green:  'bg-utility-success-50 text-fg-success-primary border-utility-success-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
   blue:   'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800',
-  red:    'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-  yellow: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
+  red:    'bg-utility-error-50 text-fg-error-primary border-utility-error-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+  yellow: 'bg-utility-warning-50 text-fg-warning-primary border-utility-warning-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
   teal:   'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800',
-  orange: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800',
+  orange: 'bg-utility-warning-50 text-fg-warning-primary border-utility-warning-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800',
   gray:   'bg-muted text-muted-foreground border-border',
 };
 

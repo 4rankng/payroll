@@ -1,29 +1,30 @@
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+// W13c: lucide → verified @untitledui/icons; Loading01 replaces lucide's Loader2.
+import { CheckCircle, Loading01, XCircle } from "@untitledui/icons";
 
 export const STATUS_META = {
   success: {
-    icon: CheckCircle2,
-    color: "text-emerald-700",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
+    icon: CheckCircle,
+    color: "text-fg-success-primary",
+    bg: "bg-utility-success-50",
+    border: "border-utility-success-200",
     label: "Thành công",
-    dot: "bg-emerald-500",
+    dot: "bg-utility-success-500",
   },
   failed: {
     icon: XCircle,
-    color: "text-red-700",
-    bg: "bg-red-50",
-    border: "border-red-200",
+    color: "text-fg-error-primary",
+    bg: "bg-utility-error-50",
+    border: "border-utility-error-200",
     label: "Thất bại",
-    dot: "bg-red-500",
+    dot: "bg-utility-error-500",
   },
   running: {
-    icon: Loader2,
-    color: "text-amber-800",
-    bg: "bg-amber-50",
-    border: "border-amber-200",
+    icon: Loading01,
+    color: "text-fg-warning-primary",
+    bg: "bg-utility-warning-50",
+    border: "border-utility-warning-200",
     label: "Đang chạy",
-    dot: "bg-amber-400",
+    dot: "bg-utility-warning-400",
   },
 } as const;
 

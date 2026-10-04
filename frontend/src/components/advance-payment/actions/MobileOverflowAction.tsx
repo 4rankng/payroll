@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+// W13c: icon slot widened from lucide's LucideIcon (approved W13a
+// pattern) so both lucide and @untitledui/icons fit.
+import type { ComponentType, SVGProps } from "react";
 
 interface MobileOverflowActionProps {
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   label: string;
   onClick: () => void;
   disabled?: boolean;

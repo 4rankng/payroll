@@ -1,7 +1,8 @@
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2 } from "lucide-react";
+// W13c: lucide → verified @untitledui/icons (same glyph semantics).
+import { CheckCircle } from "@untitledui/icons";
 import { formatCurrency } from "@/utils/formatters";
 
 export interface AdvPartnerStatusOverviewProps {
@@ -117,7 +118,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
           </span>
           {totalRequests > 0 && (
             <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-px font-financial text-xs font-medium tabular-nums text-foreground/70">
-              <CheckCircle2 className="h-3 w-3" />
+              <CheckCircle className="h-3 w-3" />
               {successRate.toFixed(0)}%
             </span>
           )}

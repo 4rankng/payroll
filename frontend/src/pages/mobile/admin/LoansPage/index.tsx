@@ -10,7 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useLoans, useLenders } from '@/hooks/api/useLoans';
 import { formatVND, daysUntil, getPaymentUrgencyColor } from '@/utils/loanHelpers';
-import { Plus, Landmark, ArrowUp, ArrowDown } from 'lucide-react';
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; status
+// accents on the UU utility ladders.
+import { ArrowDown, ArrowUp, Bank, Plus } from '@untitledui/icons';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import type { Lender, LoanStatus, Loan, LoanFilters } from '@/types/api/loan.types';
@@ -22,9 +24,9 @@ import { cn } from '@/lib/utils';
 import { vietnameseIncludes } from '@/utils/vietnameseNormalization';
 
 const LOAN_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  active: { label: "Đang vay", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  active: { label: "Đang vay", className: "bg-utility-success-50 text-fg-success-primary border-utility-success-200" },
   paid: { label: "Đã trả", className: "bg-muted/50 text-muted-foreground border-border" },
-  overdue: { label: "Quá hạn", className: "bg-red-50 text-red-700 border-red-200" },
+  overdue: { label: "Quá hạn", className: "bg-utility-error-50 text-fg-error-primary border-utility-error-200" },
 };
 
 const LoanMobileCard = ({ loan, onClick }: { loan: Loan; onClick: (loan: Loan) => void }) => {
@@ -54,11 +56,11 @@ const LoanMobileCard = ({ loan, onClick }: { loan: Loan; onClick: (loan: Loan) =
       {/* Line 2: lender · principal · next payment */}
       <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5">
         <span className="min-w-0 break-words text-xs text-muted-foreground">{loan.lender.name}</span>
-        <span className="text-gray-300 shrink-0">·</span>
+        <span className="text-utility-gray-300 shrink-0">·</span>
         <span className="break-words text-xs font-medium text-foreground">{formatVND(loan.principal_amount)}</span>
         {loan.next_payment_date && (
           <>
-            <span className="text-gray-300 shrink-0">·</span>
+            <span className="text-utility-gray-300 shrink-0">·</span>
             <span className={cn("break-words text-xs font-medium", urgencyColor)}>{format(new Date(loan.next_payment_date), 'dd/MM/yyyy')}</span>
           </>
         )}
@@ -143,7 +145,7 @@ const LoansPageMobile = () => {
       {/* Header */}
       <MobilePageHeader
         title="Khoản vay"
-        icon={Landmark}
+        icon={Bank}
         actions={
           <div className="flex items-center gap-2 shrink-0">
             <Button variant="outline" size="sm" className="min-h-11" onClick={() => navigate('lenders')}>

@@ -24,7 +24,24 @@ import {
   useCreditAttendanceQuota,
 } from "@/hooks/api/useAdminAttendance";
 import { useSendPayrollReportEmail } from "@/hooks/transactions/useSendPayrollReportEmail";
-import { FileDown, ArrowRightLeft, History, Mail, FileText, CalendarCheck, Users as UsersIcon, Receipt, MapPin, Check, X, UserRoundCheck, Zap } from "lucide-react";
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; blue-gray hex
+// chrome moved onto the utility-gray bridge. Flexible-pay quota logic and all
+// flows byte-preserved.
+import {
+  CalendarCheck01,
+  Check,
+  ClockRewind,
+  DownloadCloud01,
+  File05,
+  Mail01,
+  MarkerPin01,
+  Receipt,
+  SwitchHorizontal02,
+  UserCheck01,
+  Users01,
+  XClose,
+  Zap,
+} from "@untitledui/icons";
 import { AdvancePaymentPageHeaderMobile } from "@/components/advance-payment/AdvancePaymentPageHeaderMobile";
 import { MobileOverflowAction, MobileOverflowDivider } from "@/components/advance-payment/actions";
 import { AdvancePaymentMobileList } from "@/components/advance-payment/AdvancePaymentMobileList";
@@ -121,7 +138,7 @@ export function AttendanceMobileCard({
         <AttendanceMetric label="Ra" value={fmtTime(row.check_out_time)} />
       </div>
       {showCreditQuota && (
-        <p className="mt-2 text-xs font-medium text-amber-700">Chờ cộng hạn mức</p>
+        <p className="mt-2 text-xs font-medium text-fg-warning-primary">Chờ cộng hạn mức</p>
       )}
       <div className="mt-3 grid grid-cols-1 gap-2 min-[360px]:grid-cols-3">
         <Button
@@ -130,14 +147,14 @@ export function AttendanceMobileCard({
           className="min-h-11 gap-1.5 px-2 text-xs"
           onClick={() => onViewMap(row)}
         >
-          <MapPin className="h-4 w-4" />
+          <MarkerPin01 className="h-4 w-4" />
           Bản đồ
         </Button>
         {showApprove && (
           <Button
             type="button"
             variant="outline"
-            className="min-h-11 gap-1.5 px-2 text-xs text-emerald-700"
+            className="min-h-11 gap-1.5 px-2 text-xs text-fg-success-primary"
             onClick={() => onApprove(row)}
           >
             <Check className="h-4 w-4" />
@@ -148,7 +165,7 @@ export function AttendanceMobileCard({
           <Button
             type="button"
             variant="outline"
-            className="min-h-11 gap-1.5 px-2 text-xs text-amber-700"
+            className="min-h-11 gap-1.5 px-2 text-xs text-fg-warning-primary"
             onClick={() => onCreditQuota(row)}
           >
             <Zap className="h-4 w-4" />
@@ -159,10 +176,10 @@ export function AttendanceMobileCard({
           <Button
             type="button"
             variant="outline"
-            className="min-h-11 gap-1.5 px-2 text-xs text-rose-700"
+            className="min-h-11 gap-1.5 px-2 text-xs text-fg-error-primary"
             onClick={() => onReject(row)}
           >
-            <X className="h-4 w-4" />
+            <XClose className="h-4 w-4" />
             Từ chối
           </Button>
         )}
@@ -337,7 +354,7 @@ const AdvancePaymentsPageMobile = () => {
           renderOverflowContent={(close) => (
             <>
               <MobileOverflowAction
-                icon={FileDown}
+                icon={DownloadCloud01}
                 label="Chuyển lô"
                 onClick={() => { exportBatchMutation.mutate(undefined); close(); }}
                 disabled={exportBatchMutation.isPending}
@@ -345,13 +362,13 @@ const AdvancePaymentsPageMobile = () => {
               />
               {!isAdvPartner && (
                 <MobileOverflowAction
-                  icon={ArrowRightLeft}
+                  icon={SwitchHorizontal02}
                   label="Nhập KQ"
                   onClick={() => { setIsResultUploadOpen(true); close(); }}
                 />
               )}
               <MobileOverflowAction
-                icon={CalendarCheck}
+                icon={CalendarCheck01}
                 label="Cấu hình điểm danh"
                 onClick={() => {
                   navigate(
@@ -363,12 +380,12 @@ const AdvancePaymentsPageMobile = () => {
                 }}
               />
               <MobileOverflowAction
-                icon={FileText}
+                icon={File05}
                 label="Sao kê"
                 onClick={() => { setIsStatementSheetOpen(true); close(); }}
               />
               <MobileOverflowAction
-                icon={Mail}
+                icon={Mail01}
                 label="Email sao kê"
                 onClick={() => { setIsEmailDialogOpen(true); close(); }}
                 disabled={sendEmailMutation.isPending}
@@ -377,7 +394,7 @@ const AdvancePaymentsPageMobile = () => {
               <MobileOverflowDivider />
               {!isAdvPartner && (
                 <MobileOverflowAction
-                  icon={History}
+                  icon={ClockRewind}
                   label="Lịch sử file"
                   onClick={() => { setIsHistorySheetOpen(true); close(); }}
                 />
@@ -386,7 +403,7 @@ const AdvancePaymentsPageMobile = () => {
           )}
         />
 
-        <div className="mt-3 overflow-x-auto rounded-xl border border-[#D8E2EE] bg-[#F3F7FB] p-1">
+        <div className="mt-3 overflow-x-auto rounded-xl border border-utility-gray-300 bg-utility-gray-50 p-1">
           <TimesheetMonthSelector
             value={page.selectedMonth}
             onChange={page.setSelectedMonth}
@@ -401,14 +418,14 @@ const AdvancePaymentsPageMobile = () => {
             compact
             monthlyProviderFee={page.providerFees.monthlyProviderFee}
             totalProviderFee={page.providerFees.totalProviderFee}
-            className="rounded-2xl border border-slate-900/10 shadow-[0_16px_42px_-30px_rgba(15,23,42,0.75)]"
+            className="rounded-2xl border border-utility-gray-300 shadow-[0_16px_42px_-30px_rgba(15,23,42,0.75)]"
           />
         )}
 
         {/* Treasury summary — one card, stacked stat rows (mirrors desktop hero) */}
         <section
           aria-label="Tổng quan kỳ ứng lương"
-          className="overflow-hidden rounded-2xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
+          className="overflow-hidden rounded-2xl border border-utility-gray-300 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
         >
           <div className="treasury-grid">
             <AdvPartnerHeroStrip
@@ -450,7 +467,7 @@ const AdvancePaymentsPageMobile = () => {
                 : "text-muted-foreground",
             )}
           >
-            <CalendarCheck className="h-3.5 w-3.5" />
+            <CalendarCheck01 className="h-3.5 w-3.5" />
             Chấm công
           </button>
         </div>
@@ -461,14 +478,14 @@ const AdvancePaymentsPageMobile = () => {
       <MobileSurface className="space-y-3 p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-fg-secondary">
               Yêu cầu
             </p>
-            <h2 className="text-[15px] font-bold leading-tight text-slate-900">
+            <h2 className="text-[15px] font-bold leading-tight text-fg-primary">
               Danh sách ứng lương
             </h2>
           </div>
-          <div className="grid h-8 min-w-8 place-items-center rounded-full bg-slate-100 px-2 text-xs font-semibold tabular-nums text-slate-600">
+          <div className="grid h-8 min-w-8 place-items-center rounded-full bg-utility-gray-100 px-2 text-xs font-semibold tabular-nums text-fg-secondary">
             {page.statusCounts?.all ?? 0}
           </div>
         </div>
@@ -486,7 +503,7 @@ const AdvancePaymentsPageMobile = () => {
                 value={((page.filters.status as string) || "all") as import("@/types/api/advance-payment.types").AdvancePaymentRequestStatus | "all"}
                 onChange={page.handleStatusChange}
                 counts={page.statusCounts}
-                triggerClassName="h-11 min-w-[108px] rounded-lg border-slate-300 bg-slate-50 px-3 text-[13px]"
+                triggerClassName="h-11 min-w-[108px] rounded-lg border-utility-gray-300 bg-utility-gray-50 px-3 text-[13px]"
               />
             </div>
           </div>
@@ -512,14 +529,14 @@ const AdvancePaymentsPageMobile = () => {
         <MobileSurface className="space-y-3 p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-fg-secondary">
                 Chấm công
               </p>
-              <h2 className="text-[15px] font-bold leading-tight text-slate-900">
+              <h2 className="text-[15px] font-bold leading-tight text-fg-primary">
                 Chấm công nhân viên
               </h2>
             </div>
-            <div className="grid h-8 min-w-8 place-items-center rounded-full bg-slate-100 px-2 text-xs font-semibold tabular-nums text-slate-600">
+            <div className="grid h-8 min-w-8 place-items-center rounded-full bg-utility-gray-100 px-2 text-xs font-semibold tabular-nums text-fg-secondary">
               {attendance.totalRecords ?? 0}
             </div>
           </div>
@@ -546,7 +563,7 @@ const AdvancePaymentsPageMobile = () => {
             className="min-h-11 w-full gap-1.5"
             onClick={() => setIsCreateCheckInOpen(true)}
           >
-            <UserRoundCheck className="h-4 w-4" />
+            <UserCheck01 className="h-4 w-4" />
             Tạo check-in
           </Button>
 
@@ -558,7 +575,7 @@ const AdvancePaymentsPageMobile = () => {
             </div>
           ) : attendance.attendances.length === 0 ? (
             <div className="py-12 text-center">
-              <UsersIcon className="mx-auto h-10 w-10 text-muted-foreground" />
+              <Users01 className="mx-auto h-10 w-10 text-muted-foreground" />
               <p className="mt-3 text-sm font-medium text-muted-foreground">
                 Không có dữ liệu chấm công
               </p>
@@ -605,7 +622,7 @@ const AdvancePaymentsPageMobile = () => {
       <AdvPartnerStatusOverview
         {...statusProps}
         isLoading={page.summaryLoading}
-        className="rounded-2xl border-[#D8E2EE] bg-white"
+        className="rounded-2xl border-utility-gray-300 bg-white"
       />
 
       <ImportPayrollDialog open={isImportSheetOpen} onOpenChange={setIsImportSheetOpen} />

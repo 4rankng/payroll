@@ -1,9 +1,11 @@
-import type { LucideIcon } from "lucide-react";
+// W13c: icon slot widened from lucide's LucideIcon to a plain ComponentType
+// (approved W13a pattern) so both lucide and @untitledui/icons fit.
+import type { ComponentType, SVGProps } from "react";
 import { cn } from "@/lib/utils";
 
 interface SectionLabelProps {
   children: React.ReactNode;
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   className?: string;
 }
 

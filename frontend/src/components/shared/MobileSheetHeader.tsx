@@ -1,4 +1,8 @@
-import { type LucideIcon, X } from 'lucide-react';
+// W13c: icon slot widened from lucide's LucideIcon (approved W13a pattern;
+// this slot was missed by the original 8-component sweep) so both lucide and
+// @untitledui/icons fit. The inline X close glyph keeps its lucide import.
+import { X, type LucideIcon } from 'lucide-react';
+import type { ComponentType, SVGProps } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   SheetTitle,
@@ -8,7 +12,7 @@ import { cn } from '@/lib/utils';
 
 interface MobileSheetHeaderProps {
   /** Icon displayed in a soft primary container */
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   /** Sheet title */
   title: string;
   /** Optional description below the title */

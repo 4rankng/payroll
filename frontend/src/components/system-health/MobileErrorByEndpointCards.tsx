@@ -53,9 +53,9 @@ export function MobileErrorByEndpointCards({ days = 1 }: MobileErrorByEndpointCa
           className={cn(
             "px-3 py-3 rounded-xl border",
             row.errorRate > 20
-              ? "bg-red-50/50 border-red-100"
+              ? "bg-utility-error-50/50 border-utility-error-100"
               : row.errorRate > 5
-                ? "bg-amber-50/40 border-amber-100"
+                ? "bg-utility-warning-50/40 border-utility-warning-100"
                 : "bg-card"
           )}
         >
@@ -68,13 +68,13 @@ export function MobileErrorByEndpointCards({ days = 1 }: MobileErrorByEndpointCa
           </div>
           {/* Stats row */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-red-700 tabular-nums text-sm">
+            <span className="font-bold text-fg-error-primary tabular-nums text-sm">
               {row.errorTotal.toLocaleString()} lỗi
             </span>
             <span className={cn(
               "text-xs font-semibold tabular-nums",
-              row.errorRate > 20 ? "text-red-700"
-                : row.errorRate > 5 ? "text-amber-700"
+              row.errorRate > 20 ? "text-fg-error-primary"
+                : row.errorRate > 5 ? "text-fg-warning-primary"
                 : "text-muted-foreground"
             )}>
               {row.errorRate.toFixed(1)}%

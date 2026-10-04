@@ -22,7 +22,18 @@ import {
   VARIANT_CLASSES,
 } from './utils';
 import { useAuditLogDetail } from '@/hooks/api/useAuditLogs';
-import { Monitor, Globe, User, Clock, Hash, FileText, MapPin, LogIn, X } from 'lucide-react';
+// W13c: lucide → verified @untitledui/icons.
+import {
+  Clock,
+  File05,
+  Globe01,
+  Hash01,
+  LogIn01,
+  MarkerPin01,
+  Monitor01,
+  User01,
+  XClose,
+} from '@untitledui/icons';
 import { cn } from '@/lib/utils';
 
 interface AuditLogDetailSheetProps {
@@ -74,7 +85,7 @@ export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps
             </SheetTitle>
             <SheetClose asChild>
               <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0" aria-label="Đóng chi tiết nhật ký">
-                <X className="h-4 w-4" />
+                <XClose className="h-4 w-4" />
               </Button>
             </SheetClose>
           </div>
@@ -108,11 +119,11 @@ export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps
           <div className="pt-4 space-y-5">
             {/* Core fields */}
             <div className="rounded-lg border border-border bg-muted/20 px-3">
-              <DetailRow icon={Hash} label="ID" value={`#${log.id}`} />
+              <DetailRow icon={Hash01} label="ID" value={`#${log.id}`} />
 
               {/* User: fullname + username */}
               <DetailRow
-                icon={User}
+                icon={User01}
                 label="Người dùng"
                 value={
                   <div className="flex flex-col gap-0.5">
@@ -130,27 +141,27 @@ export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps
               />
 
               <DetailRow icon={Clock} label="Thời gian" value={formatDateTime(log.created_at)} />
-              <DetailRow icon={FileText} label="Nội dung" value={log.message} />
+              <DetailRow icon={File05} label="Nội dung" value={log.message} />
 
               {/* Login identifier — what the user actually typed */}
               {loginIdentifier && loginIdentifier !== log.user_username && (
                 <DetailRow
-                  icon={LogIn}
+                  icon={LogIn01}
                   label="Đăng nhập bằng"
                   value={
-                    <span className="font-medium text-amber-700">{loginIdentifier}</span>
+                    <span className="font-medium text-fg-warning-primary">{loginIdentifier}</span>
                   }
                 />
               )}
 
               {log.ip_address && (
-                <DetailRow icon={Globe} label="IP" value={log.ip_address} />
+                <DetailRow icon={Globe01} label="IP" value={log.ip_address} />
               )}
 
               {/* Geo location */}
               {location && (
                 <DetailRow
-                  icon={MapPin}
+                  icon={MarkerPin01}
                   label="Vị trí"
                   value={[location.city, location.region, location.country].filter(Boolean).join(', ')}
                 />
@@ -158,7 +169,7 @@ export function AuditLogDetailSheet({ logId, onClose }: AuditLogDetailSheetProps
 
               {(log.browser || log.platform) && (
                 <DetailRow
-                  icon={Monitor}
+                  icon={Monitor01}
                   label="Thiết bị"
                   value={[log.browser, log.platform].filter(Boolean).join(' · ')}
                 />

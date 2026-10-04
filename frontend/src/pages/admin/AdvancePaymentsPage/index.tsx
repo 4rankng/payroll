@@ -22,7 +22,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Wallet, Calendar, Users, Banknote, UserRoundCheck, EllipsisVertical, Download, FileDown, ArrowRightLeft, ScanFace, History, type LucideIcon } from "lucide-react";
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; shared icon
+// slots take ComponentType<SVGProps<SVGSVGElement>> (W13a pattern). Flexible-
+// pay quota logic and all flows byte-preserved.
+import {
+  BankNote01,
+  Calendar,
+  ClockRewind,
+  Download01,
+  DotsVertical,
+  FileDownload01,
+  Scan,
+  SwitchHorizontal02,
+  UserCheck01,
+  Users01,
+  Wallet01,
+} from "@untitledui/icons";
+import type { ComponentType, SVGProps } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -278,7 +294,7 @@ const AdvancePaymentsPage = () => {
           <PageHeader
             title="Quản lý ứng lương"
             description="Xem và quản lý các yêu cầu ứng lương của nhân viên"
-            icon={Banknote}
+            icon={BankNote01}
           >
             <TimesheetMonthSelector
               value={page.selectedMonth}
@@ -291,7 +307,7 @@ const AdvancePaymentsPage = () => {
         <section
           aria-label="Tổng quan kỳ ứng lương"
           className={cn(
-            "overflow-hidden rounded-xl border border-slate-300 bg-white",
+            "overflow-hidden rounded-xl border border-utility-gray-300 bg-white",
             "shadow-[0_1px_2px_rgba(16,24,40,0.05),0_22px_60px_-42px_rgba(8,120,62,0.30)]",
             isMobile && "mobile-section-enter",
           )}
@@ -337,7 +353,7 @@ const AdvancePaymentsPage = () => {
           data-mobile-stats
           aria-label="Trạng thái xử lý ứng lương"
           className={cn(
-            "overflow-hidden rounded-xl border border-slate-300 bg-white",
+            "overflow-hidden rounded-xl border border-utility-gray-300 bg-white",
             "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]",
             isMobile && "mobile-section-enter",
           )}
@@ -360,7 +376,7 @@ const AdvancePaymentsPage = () => {
         <section
           data-mobile-content
           className={cn(
-            "overflow-hidden rounded-xl border border-slate-300 bg-white",
+            "overflow-hidden rounded-xl border border-utility-gray-300 bg-white",
             "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]",
             isMobile && "mobile-section-enter",
           )}
@@ -377,13 +393,13 @@ const AdvancePaymentsPage = () => {
                 {
                   id: "requests",
                   label: "Yêu cầu",
-                  icon: Wallet,
+                  icon: Wallet01,
                   count: page.statusCounts?.all ?? 0,
                 },
                 {
                   id: "employees",
                   label: "Nhân viên",
-                  icon: Users,
+                  icon: Users01,
                   count: page.flexPayPagination?.totalRecords ?? 0,
                 },
                 {
@@ -405,36 +421,36 @@ const AdvancePaymentsPage = () => {
                   page.handleExportFlexPayEmployees && {
                     key: "export-list",
                     label: "Xuất danh sách",
-                    icon: Download,
+                    icon: Download01,
                     onClick: () => page.handleExportFlexPayEmployees?.(),
                     disabled: page.exportFlexPayMutation.isPending,
                   },
                   !isAdvPartner && {
                     key: "export-batch",
                     label: "Chuyển lô",
-                    icon: FileDown,
+                    icon: FileDownload01,
                     onClick: () => exportBatchMutation.mutate(undefined),
                     disabled: exportBatchMutation.isPending,
                   },
                   !isAdvPartner && {
                     key: "upload-result",
                     label: "Nhập kết quả",
-                    icon: ArrowRightLeft,
+                    icon: SwitchHorizontal02,
                     onClick: () => setIsUploadResultDialogOpen(true),
                   },
                   {
                     key: "check-in",
                     label: "Điểm danh",
-                    icon: ScanFace,
+                    icon: Scan,
                     onClick: () => navigate("/admin/advance-payments/check-in-settings"),
                   },
                   !isAdvPartner && {
                     key: "history",
                     label: "Lịch sử file",
-                    icon: History,
+                    icon: ClockRewind,
                     onClick: () => setIsHistorySheetOpen(true),
                   },
-                ].filter(Boolean) as Array<{ key: string; label: string; icon: LucideIcon; onClick: () => void; disabled?: boolean }>;
+                ].filter(Boolean) as Array<{ key: string; label: string; icon: ComponentType<SVGProps<SVGSVGElement>>; onClick: () => void; disabled?: boolean }>;
                 if (overflowItems.length === 0) return null;
                 return (
                   <DropdownMenu>
@@ -446,7 +462,7 @@ const AdvancePaymentsPage = () => {
                         title="Thao tác khác"
                         className="h-9 w-9 p-0"
                       >
-                        <EllipsisVertical className="h-4 w-4" />
+                        <DotsVertical className="h-4 w-4" aria-hidden="true" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52">
@@ -491,12 +507,12 @@ const AdvancePaymentsPage = () => {
                 </>
               }
               rowTitle={(row: AdvancePaymentListItem) => (
-                <div className="text-[15px] font-semibold text-slate-800">{row.employeeName}</div>
+                <div className="text-[15px] font-semibold text-fg-primary">{row.employeeName}</div>
               )}
               rowSubtitle={(row: AdvancePaymentListItem) => (
                 <div>
-                  <div className="text-[13px] font-medium text-slate-500">{row.employeeCCCD}</div>
-                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-500">{row.projectName || "-"}</div>
+                  <div className="text-[13px] font-medium text-fg-tertiary">{row.employeeCCCD}</div>
+                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-fg-tertiary">{row.projectName || "-"}</div>
                 </div>
               )}
               getRowId={(row: AdvancePaymentListItem) => row.id.toString()}
@@ -547,12 +563,12 @@ const AdvancePaymentsPage = () => {
                 </>
               }
               rowTitle={(row: FlexPayEmployeeListItem) => (
-                <div className="text-[15px] font-semibold text-slate-800">{row.fullname}</div>
+                <div className="text-[15px] font-semibold text-fg-primary">{row.fullname}</div>
               )}
               rowSubtitle={(row: FlexPayEmployeeListItem) => (
                 <div>
-                  <div className="text-[13px] font-medium text-slate-500">{row.cccd}</div>
-                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-500">{row.project?.name || "-"}</div>
+                  <div className="text-[13px] font-medium text-fg-tertiary">{row.cccd}</div>
+                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-fg-tertiary">{row.project?.name || "-"}</div>
                 </div>
               )}
               getRowId={(row: FlexPayEmployeeListItem) =>
@@ -597,18 +613,18 @@ const AdvancePaymentsPage = () => {
                       className="min-h-9 shrink-0 gap-1.5"
                       onClick={() => setIsCreateCheckInOpen(true)}
                     >
-                      <UserRoundCheck data-icon="inline-start" />
+                      <UserCheck01 data-icon="inline-start" />
                       Tạo check-in
                     </Button>
                   )}
                 </>
               }
               rowTitle={(row: AdminAttendanceResponse) => (
-                <div className="text-[15px] font-semibold text-slate-800">{row.employee_name}</div>
+                <div className="text-[15px] font-semibold text-fg-primary">{row.employee_name}</div>
               )}
               rowSubtitle={(row: AdminAttendanceResponse) => (
                 <div>
-                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-slate-500">{row.project_name || "-"}</div>
+                  <div className="mt-0.5 max-w-[160px] truncate text-[13px] text-fg-tertiary">{row.project_name || "-"}</div>
                 </div>
               )}
               getRowId={(row: AdminAttendanceResponse) => row.id.toString()}

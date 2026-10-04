@@ -1,6 +1,8 @@
 import { ErrorState } from "@/components/ui/error-state";
 import { useState, useMemo } from 'react';
-import { ClipboardList, Filter, X, Check } from 'lucide-react';
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; daisyUI
+// ct-btn chrome replaced with equivalent utility classes.
+import { Check, Clipboard, FilterLines, XClose } from '@untitledui/icons';
 import { useInfiniteAuditLogs } from '@/hooks/api/useAuditLogs';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll.tsx';
 import { AuditLogCard, AuditLogCardSkeleton } from '../../../admin/AuditLogPage/AuditLogCard';
@@ -62,7 +64,7 @@ function FilterChipGroup({
               'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors touch-manipulation active:scale-95',
               isActive
                 ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-slate-300 bg-white text-slate-600',
+                : 'border-utility-gray-300 bg-white text-fg-secondary',
             )}
           >
             {isActive && <Check className="h-3 w-3" />}
@@ -130,7 +132,7 @@ export default function AuditLogPageMobile() {
     <MobilePageShell>
       <MobilePageHeader
         title="Nhật ký hoạt động"
-        icon={ClipboardList}
+        icon={Clipboard}
         sticky={false}
         actionsLayout="inline"
         className="border-0 px-0 pb-3 shadow-none"
@@ -142,10 +144,10 @@ export default function AuditLogPageMobile() {
         actions={
           <button
             type="button"
-            className="ct-btn ct-btn-outline h-11 min-h-11 gap-1.5 rounded-xl border-slate-300 bg-white px-3 text-xs font-semibold normal-case text-slate-700 shadow-none"
+            className="inline-flex h-11 min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-utility-gray-300 bg-white px-3 text-xs font-semibold text-fg-secondary shadow-none"
             onClick={() => setIsFilterOpen(true)}
           >
-            <Filter className="h-3.5 w-3.5" />
+            <FilterLines className="h-3.5 w-3.5" />
             Lọc
             {activeCount > 0 && (
               <Badge className="h-5 min-w-5 border-0 bg-primary px-1 text-xs text-primary-foreground">
@@ -183,9 +185,9 @@ export default function AuditLogPageMobile() {
           ))}
           <button
             onClick={reset}
-            className="inline-flex min-h-11 items-center gap-1 px-1 text-xs font-semibold text-destructive active:opacity-70"
+            className="inline-flex min-h-11 items-center gap-1 px-1 text-xs font-semibold text-fg-error-primary active:opacity-70"
           >
-            <X className="h-3 w-3" />
+            <XClose className="h-3 w-3" />
             Xóa lọc
           </button>
         </div>
@@ -212,7 +214,7 @@ export default function AuditLogPageMobile() {
           </>
         ) : logs.length === 0 && isError ? null : logs.length === 0 ? (
           <EmptyState
-            icon={ClipboardList}
+            icon={Clipboard}
             title="Không có bản ghi nào"
             description={
               activeCount > 0
@@ -241,18 +243,18 @@ export default function AuditLogPageMobile() {
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent
           side="bottom"
-          className="flex h-auto max-h-[85dvh] flex-col overflow-hidden rounded-t-[28px] border-t border-white/70 bg-slate-50/95 p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl"
+          className="flex h-auto max-h-[85dvh] flex-col overflow-hidden rounded-t-[28px] border-t border-white/70 bg-utility-gray-50/95 p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl"
           title="Bộ lọc nhật ký"
           description="Thu hẹp kết quả theo thời gian, hành động và đối tượng"
         >
           <div className="flex justify-center pt-3">
-            <div className="h-1.5 w-12 rounded-full bg-slate-300" />
+            <div className="h-1.5 w-12 rounded-full bg-utility-gray-300" />
           </div>
           <SheetHeader className="px-5 pb-3 pt-4 text-left">
-            <SheetTitle className="text-xl font-bold tracking-tight text-slate-950">
+            <SheetTitle className="text-xl font-bold tracking-tight text-fg-primary">
               Bộ lọc nhật ký
             </SheetTitle>
-            <p className="text-sm font-medium text-slate-500">
+            <p className="text-sm font-medium text-fg-tertiary">
               Thu hẹp kết quả theo thời gian, hành động và đối tượng
             </p>
           </SheetHeader>
@@ -260,10 +262,10 @@ export default function AuditLogPageMobile() {
           <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
             {/* Date range */}
             <div className="mb-5">
-              <MobileSectionHeader icon={ClipboardList} title="Khoảng thời gian" />
+              <MobileSectionHeader icon={Clipboard} title="Khoảng thời gian" />
               <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
                 <div className="min-w-0">
-                  <label htmlFor="audit-from-date" className="mb-1 block text-xs font-medium text-slate-500">
+                  <label htmlFor="audit-from-date" className="mb-1 block text-xs font-medium text-fg-tertiary">
                     Từ ngày
                   </label>
                   <Input
@@ -281,7 +283,7 @@ export default function AuditLogPageMobile() {
                   />
                 </div>
                 <div className="min-w-0">
-                  <label htmlFor="audit-to-date" className="mb-1 block text-xs font-medium text-slate-500">
+                  <label htmlFor="audit-to-date" className="mb-1 block text-xs font-medium text-fg-tertiary">
                     Đến ngày
                   </label>
                   <Input
@@ -303,7 +305,7 @@ export default function AuditLogPageMobile() {
 
             {/* Action multi-select */}
             <div className="mb-5">
-              <MobileSectionHeader icon={ClipboardList} title="Hành động" />
+              <MobileSectionHeader icon={Clipboard} title="Hành động" />
               <FilterChipGroup
                 options={ALL_ACTIONS}
                 selected={filters.action ?? []}
@@ -314,7 +316,7 @@ export default function AuditLogPageMobile() {
 
             {/* Entity type multi-select */}
             <div className="mb-5">
-              <MobileSectionHeader icon={ClipboardList} title="Đối tượng" />
+              <MobileSectionHeader icon={Clipboard} title="Đối tượng" />
               <FilterChipGroup
                 options={ALL_ENTITY_TYPES}
                 selected={filters.entityType ?? []}
@@ -328,7 +330,7 @@ export default function AuditLogPageMobile() {
             <div className="grid grid-cols-1 gap-2 pt-2 min-[380px]:grid-cols-2">
               <Button
                 variant="outline"
-                className="h-11 w-full border-slate-300"
+                className="h-11 w-full border-utility-gray-300"
                 onClick={reset}
                 disabled={activeCount === 0}
               >

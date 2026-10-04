@@ -1,6 +1,15 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Lock, CornerDownRight, Zap, CalendarClock } from 'lucide-react';
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; error/warning
+// accents on the UU utility ladders. Validation flow and copy byte-preserved.
+import {
+  ArrowLeft,
+  CalendarDate,
+  CornerDownRight,
+  Lock01,
+  Save01,
+  Zap,
+} from '@untitledui/icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,7 +52,7 @@ function FieldFeedback({ field, onApplySuggestion }: {
   return (
     <div className={cn(
       "mt-1.5 rounded-xl px-3 py-2 text-xs space-y-1",
-      isError ? "bg-red-50 border border-red-200 text-red-700" : "bg-amber-50 border border-amber-200 text-amber-700"
+      isError ? "bg-utility-error-50 border border-utility-error-200 text-fg-error-primary" : "bg-utility-warning-50 border border-utility-warning-200 text-fg-warning-primary"
     )}>
       <p className="font-medium">{field.message}</p>
       {field.hint && (
@@ -55,7 +64,7 @@ function FieldFeedback({ field, onApplySuggestion }: {
           onClick={() => onApplySuggestion(field.suggested_value!)}
           className={cn(
             "flex items-center gap-1 text-xs font-semibold mt-1 underline underline-offset-2",
-            isError ? "text-red-700 hover:text-red-900" : "text-amber-700 hover:text-amber-900"
+            isError ? "text-fg-error-primary hover:text-utility-error-700" : "text-fg-warning-primary hover:text-utility-warning-700"
           )}
         >
           <CornerDownRight className="h-3 w-3" />
@@ -70,10 +79,10 @@ function FieldFeedback({ field, onApplySuggestion }: {
 
 function fieldBorderClass(field: FieldResult | undefined, highlighted = false): string {
   if (!field || field.status === 'ok') {
-    return highlighted ? 'border-amber-400 ring-2 ring-amber-200 bg-amber-50/40' : '';
+    return highlighted ? 'border-utility-warning-400 ring-2 ring-utility-warning-200 bg-utility-warning-50/40' : '';
   }
-  if (field.status === 'error') return 'border-red-400 ring-1 ring-red-200 bg-red-50/30';
-  if (field.status === 'warning') return 'border-amber-400 ring-1 ring-amber-200 bg-amber-50/30';
+  if (field.status === 'error') return 'border-utility-error-400 ring-1 ring-utility-error-200 bg-utility-error-50/30';
+  if (field.status === 'warning') return 'border-utility-warning-400 ring-1 ring-utility-warning-200 bg-utility-warning-50/30';
   return '';
 }
 
@@ -292,7 +301,7 @@ export default function PayrateEditPage() {
                 </span>
               ) : (
                 <span className="flex items-center gap-1.5">
-                  <Save className="h-3.5 w-3.5" />
+                  <Save01 className="h-3.5 w-3.5" />
                   {editorMode === 'create' ? 'Tạo cấu hình' : 'Lưu thay đổi'}
                 </span>
               )}
@@ -308,7 +317,7 @@ export default function PayrateEditPage() {
             {isNew ? 'Tạo cấu hình lương mới' : 'Chỉnh sửa cấu hình lương'}
           </h1>
           {isFlexible && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-xs font-medium bg-utility-success-100 text-fg-success-primary border border-utility-success-200 px-2 py-0.5 rounded-full">
               <Zap className="h-3 w-3" />
               Linh hoạt
             </span>
@@ -334,7 +343,7 @@ export default function PayrateEditPage() {
           <>
             {/* ── Validate error banner ── */}
             {validateError && (
-              <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="flex items-center gap-2 rounded-xl border border-utility-error-200 bg-utility-error-50 px-4 py-3 text-sm text-fg-error-primary">
                 <span>⚠</span>
                 <span>{validateError}</span>
               </div>
@@ -343,14 +352,14 @@ export default function PayrateEditPage() {
             {/* ── Compact editor controls ── */}
             <section className={cn(
               "border-y bg-card px-4 transition-colors",
-              fromDateIsActionable ? "border-amber-400 bg-amber-50/30" : "border-border",
+              fromDateIsActionable ? "border-utility-warning-400 bg-utility-warning-50/30" : "border-border",
             )}>
               <div className="grid gap-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
                 {!isFlexible ? (
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
-                        <CalendarClock className="h-4 w-4" aria-hidden="true" />
+                        <CalendarDate className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hiệu lực cấu hình</p>
@@ -360,11 +369,11 @@ export default function PayrateEditPage() {
                         <Label htmlFor="fromDate" className={cn(
                           "flex items-center gap-1 text-xs font-medium",
                           fromDateLocked && !fromDateIsActionable ? "text-muted-foreground" : "text-foreground",
-                          sf?.effective_from.status === 'error' && !fromDateIsActionable && "text-red-600",
-                          fromDateIsActionable && "font-semibold text-amber-700",
+                          sf?.effective_from.status === 'error' && !fromDateIsActionable && "text-utility-error-600",
+                          fromDateIsActionable && "font-semibold text-fg-warning-primary",
                         )}>
                           Từ ngày <span className="text-destructive">*</span>
-                          {fromDateLocked && !fromDateIsActionable && <Lock className="h-3 w-3" aria-hidden="true" />}
+                          {fromDateLocked && !fromDateIsActionable && <Lock01 className="h-3 w-3" aria-hidden="true" />}
                         </Label>
                         <Input
                           ref={fromDateRef}
@@ -382,14 +391,14 @@ export default function PayrateEditPage() {
                           className={cn(
                             "h-9 w-44 text-sm",
                             fromDateLocked && !fromDateIsActionable && "cursor-not-allowed bg-muted/50 opacity-60",
-                            fromDateIsActionable && "border-amber-400 bg-amber-50/40 ring-2 ring-amber-200",
+                            fromDateIsActionable && "border-utility-warning-400 bg-utility-warning-50/40 ring-2 ring-utility-warning-200",
                             !fromDateIsActionable && fieldBorderClass(sf?.effective_from),
                           )}
                         />
                       </div>
                     </div>
                     {fromDateIsActionable && sf?.rates.suggested_value && (
-                      <div className="ml-12 mt-2 space-y-1 border-l-2 border-amber-300 pl-3 text-xs text-amber-800">
+                      <div className="ml-12 mt-2 space-y-1 border-l-2 border-utility-warning-300 pl-3 text-xs text-utility-warning-700">
                         <p className="font-medium">Cần tạo cấu hình mới để thay đổi mức lương.</p>
                         <p>Các bảng công chưa thanh toán và chưa duyệt từ ngày này sẽ được cập nhật theo mức lương mới.</p>
                         <p>Ngày bắt đầu sớm nhất: <strong>{formatIsoDateDisplay(sf.rates.suggested_value)}</strong>.</p>
@@ -458,7 +467,7 @@ export default function PayrateEditPage() {
 
             {/* ── Client-side validation — only shown after first save attempt ── */}
             {hasAttemptedSave && !clientValidation.valid && (
-              <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <div className="flex items-start gap-2 rounded-xl border border-utility-warning-200 bg-utility-warning-50 px-4 py-3 text-sm text-utility-warning-700">
                 <span className="shrink-0 mt-0.5">⚠</span>
                 <ul className="space-y-0.5">
                   {clientValidation.errors?.map((e, i) => <li key={i}>{e}</li>)}
@@ -469,14 +478,14 @@ export default function PayrateEditPage() {
             <section className={cn(
               "overflow-hidden border-y bg-card transition-all",
               ratesLocked ? "border-muted" : "border-border",
-              sf?.rates?.status === 'error' && "border-red-300 ring-2 ring-red-100",
+              sf?.rates?.status === 'error' && "border-utility-error-300 ring-2 ring-utility-error-100",
             )}>
 
               {/* Rates field feedback — shown inside the section */}
               {sf?.rates.status === 'error' && sf.rates.message && !fromDateIsActionable && (
-                <div className="mx-4 mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs space-y-1.5">
-                  <p className="font-semibold text-red-800">{sf.rates.message}</p>
-                  {sf.rates.hint && <p className="text-red-700">{sf.rates.hint}</p>}
+                <div className="mx-4 mt-3 rounded-xl border border-utility-error-200 bg-utility-error-50 px-3 py-2.5 text-xs space-y-1.5">
+                  <p className="font-semibold text-fg-error-primary">{sf.rates.message}</p>
+                  {sf.rates.hint && <p className="text-utility-error-600">{sf.rates.hint}</p>}
                 </div>
               )}
 

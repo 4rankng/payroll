@@ -1,4 +1,13 @@
-import { Building, CreditCard, User, Phone, Mail, Calendar, FileText } from "lucide-react";
+// W13c: lucide → verified @untitledui/icons.
+import {
+  Building02,
+  Calendar,
+  CreditCard01,
+  File05,
+  Mail01,
+  PhoneCall01,
+  User01,
+} from "@untitledui/icons";
 import { format } from 'date-fns';
 import type { Lender } from "@/types/api/loan.types";
 import { cn } from "@/lib/utils";
@@ -53,7 +62,7 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {lender.email && (
           <div className="flex items-center gap-2 min-w-0">
-            <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Mail01 className="w-4 h-4 text-muted-foreground shrink-0" />
             <span className="typography-body-small min-w-0 break-all text-muted-foreground">
               {lender.email}
             </span>
@@ -61,7 +70,7 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
         )}
         {lender.mobile && (
           <div className="flex min-w-0 items-center gap-2">
-            <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+            <PhoneCall01 className="w-4 h-4 text-muted-foreground shrink-0" />
             <span className="typography-body-small break-all text-muted-foreground">
               {lender.mobile}
             </span>
@@ -74,7 +83,7 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t">
           <div className="space-y-1">
             <div className="flex items-center gap-1.5">
-              <Building className="w-3.5 h-3.5 text-muted-foreground" />
+              <Building02 className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="typography-body-small text-muted-foreground">Ngân hàng</span>
             </div>
             <p className="typography-body-small break-words pl-5 font-medium">
@@ -83,7 +92,7 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-1.5">
-              <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
+              <CreditCard01 className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="typography-body-small text-muted-foreground">Số TK</span>
             </div>
             <p className="typography-body-small break-all pl-5 font-mono font-medium">
@@ -92,7 +101,7 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-muted-foreground" />
+              <User01 className="w-3.5 h-3.5 text-muted-foreground" />
               <span className="typography-body-small text-muted-foreground">Chủ TK</span>
             </div>
             <p className="typography-body-small break-words pl-5 font-medium">
@@ -101,9 +110,9 @@ export function LenderCard({ lender, onClick }: LenderCardProps) {
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded">
-          <FileText className="w-4 h-4 text-amber-700 shrink-0" />
-          <span className="typography-body-small text-amber-900">
+        <div className="flex items-center gap-2 p-2 bg-utility-warning-50 border border-utility-warning-200 rounded">
+          <File05 className="w-4 h-4 text-fg-warning-primary shrink-0" />
+          <span className="typography-body-small text-utility-warning-700">
             Chưa có thông tin ngân hàng
           </span>
         </div>

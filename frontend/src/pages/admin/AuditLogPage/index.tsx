@@ -1,7 +1,8 @@
 import { ErrorState } from "@/components/ui/error-state";
 import React, { useState, useCallback, useMemo } from 'react';
 import { useAppState } from '@/contexts';
-import { ClipboardList, Loader2 } from 'lucide-react';
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons.
+import { Clipboard, Loading01 } from '@untitledui/icons';
 import { useInfiniteAuditLogs } from '@/hooks/api/useAuditLogs';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll.tsx';
 import {
@@ -61,7 +62,7 @@ export default function AuditLogPage() {
     <AdminPageCanvas>
       <AdminPageHeaderCard>
         <PageHeader
-          icon={ClipboardList}
+          icon={Clipboard}
           title="Nhật ký hoạt động"
           description="Lịch sử thao tác của người dùng trong hệ thống"
         >
@@ -76,7 +77,7 @@ export default function AuditLogPage() {
       {/* Filters */}
       <AdminSectionCard aria-label="Bộ lọc nhật ký">
         <AdminFilterRow>
-          <p className="text-sm font-semibold text-slate-800">Nhật ký</p>
+          <p className="text-sm font-semibold text-fg-primary">Nhật ký</p>
           <div className="flex flex-1 items-center justify-end">
             <AuditLogFilters filters={filters} onChange={handleFiltersChange} />
           </div>
@@ -133,7 +134,7 @@ export default function AuditLogPage() {
         {/* Loading more */}
         {isFetchingNextPage && (
           <div className="flex items-center justify-center py-6">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loading01 className="h-5 w-5 animate-spin text-muted-foreground" />
             <span className="ml-2 text-sm text-muted-foreground">Đang tải thêm...</span>
           </div>
         )}

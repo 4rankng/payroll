@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, Download, Users } from "lucide-react";
+// W13c: lucide → verified @untitledui/icons.
+import { ArrowLeft, Calendar, Download01, Users01 } from "@untitledui/icons";
 import { Button } from "@/components/ui/button";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
@@ -36,7 +37,7 @@ const EmployeeListPage = () => {
       <MobilePageHeader
         title="Danh sách nhân viên"
         subtitle="Hạn mức ứng lương theo tháng"
-        icon={Users}
+        icon={Users01}
         sticky={false}
         bordered={false}
         actions={
@@ -64,7 +65,7 @@ const EmployeeListPage = () => {
             disabled={page.exportFlexPayMutation.isPending}
             aria-label="Xuất danh sách"
           >
-            <Download className="h-4 w-4" />
+            <Download01 className="h-4 w-4" />
           </Button>
         </div>
 

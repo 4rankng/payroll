@@ -1,11 +1,14 @@
 import { memo } from 'react';
-import { type LucideIcon } from 'lucide-react';
+// W13c: icon slot widened from lucide's LucideIcon (approved W13a pattern;
+// this slot was missed by the original 8-component sweep) so both lucide and
+// @untitledui/icons fit.
+import type { ComponentType, SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface TabWithBadges {
   id: string;
   label: string;
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   /** Total count badge (hidden when zero) */
   count?: number;
   /** Secondary accent badge (e.g. pending items) */

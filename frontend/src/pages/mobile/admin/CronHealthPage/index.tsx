@@ -1,6 +1,8 @@
 import { ErrorState } from "@/components/ui/error-state";
 import React, { useMemo } from "react";
-import { Loader2, Clock } from "lucide-react";
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; the loading
+// spinner is the UU Loading01 arc (kept animate-spin).
+import { Clock, Loading01 } from "@untitledui/icons";
 import { Badge } from "@/components/ui/badge";
 import { useCronJobs, useToggleCronJob } from "@/hooks/api/useCronHealth";
 import { CronJobCard, computeCronSummary } from "@/components/cron-health";
@@ -18,7 +20,7 @@ export default function CronHealthPageMobile() {
   if (isLoading) {
     return (
       <div className="min-h-[100dvh] bg-[hsl(var(--surface-page))] flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loading01 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -47,7 +49,7 @@ export default function CronHealthPageMobile() {
             <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
               {summary.total} jobs
             </Badge>
-            <Badge variant="outline" className="text-xs font-medium text-emerald-700 border-emerald-200 bg-emerald-50">
+            <Badge variant="outline" className="text-xs font-medium text-fg-success-primary border-utility-success-200 bg-utility-success-50">
               {summary.enabled} bật
             </Badge>
             {summary.failed > 0 && (

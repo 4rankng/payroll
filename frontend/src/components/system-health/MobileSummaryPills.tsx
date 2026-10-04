@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAPISummary, useErrorCount } from "@/hooks/api/useSystemHealth";
 import { StatusPill } from "./StatusPill";
-import { AlertTriangle, AlertCircle } from "lucide-react";
+// W13c: lucide → verified @untitledui/icons.
+import { AlertCircle, AlertTriangle } from "@untitledui/icons";
 
 interface MobileSummaryPillsProps {
   days?: number;

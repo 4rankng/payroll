@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons.
 import {
-  ArrowRightLeft,
-  SearchCheck,
-  Upload,
-  Wallet as WalletIcon,
-} from "lucide-react";
+  SearchMd,
+  SwitchHorizontal02,
+  Upload01,
+  Wallet01,
+} from "@untitledui/icons";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +39,7 @@ export default function WalletPage() {
     <AdminPageCanvas>
       {/* Page header — slim bar: title left, actions right */}
       <PageHeader
-        icon={WalletIcon}
+        icon={Wallet01}
         title="Quản lý ví"
       >
         <Button
@@ -47,7 +48,7 @@ export default function WalletPage() {
           onClick={() => setEmployeeAccountLookupOpen(true)}
           className="h-9 gap-1.5"
         >
-          <SearchCheck className="size-3.5" />
+          <SearchMd className="size-3.5" aria-hidden="true" />
           Tra cứu
         </Button>
         <Button
@@ -56,7 +57,7 @@ export default function WalletPage() {
           onClick={() => setBulkTransferDialogOpen(true)}
           className="gap-1.5 h-9"
         >
-          <Upload className="h-3.5 w-3.5" />
+          <Upload01 className="h-3.5 w-3.5" aria-hidden="true" />
           Chuyển lô
         </Button>
         <Button
@@ -64,7 +65,7 @@ export default function WalletPage() {
           onClick={() => setDisbursementOpen(true)}
           className="gap-1.5 h-9"
         >
-          <ArrowRightLeft className="h-3.5 w-3.5" />
+          <SwitchHorizontal02 className="h-3.5 w-3.5" aria-hidden="true" />
           Chuyển tiền
         </Button>
       </PageHeader>

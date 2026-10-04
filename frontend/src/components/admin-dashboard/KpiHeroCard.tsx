@@ -1,5 +1,10 @@
 import { memo } from 'react';
-import type { LucideIcon } from 'lucide-react';
+// W13c follow-up (approved W13a pattern): icon slot widened from lucide's
+// LucideIcon to a plain ComponentType so both lucide and @untitledui/icons
+// fit. LucideIcon stays structurally assignable; the hardcoded
+// strokeWidth={2} was dropped (it equals lucide's default — no visual change
+// for existing callers; UU icons keep their native weight).
+import type { ComponentType, SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 import { useCountUp } from '@/hooks/useCountUp';
 import { splitCurrencyDisplay } from '@/utils/formatters';
@@ -9,7 +14,7 @@ export interface KpiHeroCardProps {
   value: string | number;
   unit?: string;
   formattedValue?: string;
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   color: 'blue' | 'emerald' | 'amber' | 'teal' | 'rose';
   sublabel?: string;
   trend?: { value: string; positive: boolean };
@@ -83,7 +88,7 @@ export const KpiHeroCard = memo(function KpiHeroCard({
       <div className={cn('relative flex h-full flex-col p-4', variant === 'stack' && 'sm:p-5')}>
         <div className="flex items-start justify-between gap-3">
           <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', colorStyle.icon)}>
-            <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
+            <Icon className="h-[18px] w-[18px]" />
           </div>
           {(trend || badge) && (
             <div className="flex min-h-7 flex-wrap items-center justify-end gap-1.5">

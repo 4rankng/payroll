@@ -10,7 +10,8 @@
  */
 import { memo, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+// W13c: lucide → verified @untitledui/icons; Loading01 replaces Loader2.
+import { ChevronLeft, ChevronRight, Loading01 } from '@untitledui/icons';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

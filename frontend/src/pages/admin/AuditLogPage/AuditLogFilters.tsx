@@ -17,7 +17,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Filter, X, ChevronDown } from 'lucide-react';
+// W13c: lucide → verified @untitledui/icons.
+import { ChevronDown, FilterLines, XClose } from '@untitledui/icons';
 import { VIETNAMESE_AUDIT_LABELS } from '@/types/api/audit.types';
 import type { AuditLogsQueryParams } from '@/types/api/audit.types';
 
@@ -165,7 +166,7 @@ function FilterBody({ filters, onChange }: AuditLogFiltersProps) {
           onClick={reset}
           className="min-h-11 gap-1 text-xs text-muted-foreground"
         >
-          <X className="h-3 w-3" />
+          <XClose className="h-3 w-3" />
           Xóa bộ lọc
           <Badge variant="secondary" className="h-4 min-w-4 px-1 text-xs">
             {activeCount}
@@ -197,7 +198,7 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="sm" className="min-h-11 gap-1.5 text-xs">
-              <Filter className="h-3.5 w-3.5" />
+              <FilterLines className="h-3.5 w-3.5" />
               Bộ lọc
               {activeCount > 0 && (
                 <Badge className="h-4 min-w-4 border-0 bg-primary px-1 text-xs text-primary-foreground">
@@ -251,7 +252,7 @@ export function AuditLogFilters({ filters, onChange }: AuditLogFiltersProps) {
                   onClick={() => { onChange({ page: 1, pageSize: filters.pageSize }); setMobileOpen(false); }}
                   className="min-h-11 gap-1 self-start text-xs text-muted-foreground"
                 >
-                  <X className="h-3 w-3" />
+                  <XClose className="h-3 w-3" />
                   Xóa tất cả bộ lọc
                 </Button>
               )}

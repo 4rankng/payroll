@@ -1,6 +1,14 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, Lock, CornerDownRight, Zap, CalendarClock } from 'lucide-react';
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; error/warning
+// accents on the UU utility ladders. Validation flow and copy byte-preserved.
+import {
+  CalendarDate,
+  CornerDownRight,
+  Lock01,
+  Save01,
+  Zap,
+} from '@untitledui/icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,8 +52,8 @@ function FieldFeedback({ field, onApplySuggestion }: {
     <div className={cn(
       'mt-1.5 rounded-xl px-3 py-2 text-xs',
       isError
-        ? 'border border-red-200 bg-red-50 text-red-700'
-        : 'border border-amber-200 bg-amber-50 text-amber-700',
+        ? 'border border-utility-error-200 bg-utility-error-50 text-fg-error-primary'
+        : 'border border-utility-warning-200 bg-utility-warning-50 text-fg-warning-primary',
     )}>
       <p className="font-medium">{field.message}</p>
       {field.hint && <p className="mt-0.5 opacity-80">{field.hint}</p>}
@@ -55,7 +63,7 @@ function FieldFeedback({ field, onApplySuggestion }: {
             onClick={() => onApplySuggestion(field.suggested_value!)}
             className={cn(
               'mt-1.5 flex min-h-11 items-center gap-1 text-xs font-semibold underline underline-offset-2',
-              isError ? 'hover:text-red-900' : 'hover:text-amber-900',
+              isError ? 'hover:text-utility-error-700' : 'hover:text-utility-warning-700',
             )}
         >
           <CornerDownRight className="h-3 w-3" />
@@ -68,10 +76,10 @@ function FieldFeedback({ field, onApplySuggestion }: {
 
 function fieldBorderClass(field: FieldResult | undefined, highlighted = false): string {
   if (!field || field.status === 'ok') {
-    return highlighted ? 'border-amber-400 ring-2 ring-amber-200 bg-amber-50/40' : '';
+    return highlighted ? 'border-utility-warning-400 ring-2 ring-utility-warning-200 bg-utility-warning-50/40' : '';
   }
-  if (field.status === 'error') return 'border-red-400 ring-1 ring-red-200 bg-red-50/30';
-  if (field.status === 'warning') return 'border-amber-400 ring-1 ring-amber-200 bg-amber-50/30';
+  if (field.status === 'error') return 'border-utility-error-400 ring-1 ring-utility-error-200 bg-utility-error-50/30';
+  if (field.status === 'warning') return 'border-utility-warning-400 ring-1 ring-utility-warning-200 bg-utility-warning-50/30';
   return '';
 }
 
@@ -262,7 +270,7 @@ export default function PayrateEditPageMobile() {
           <>
             {/* Flexible badge */}
             {isFlexible && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+              <span className="inline-flex items-center gap-1 rounded-full border border-utility-success-200 bg-utility-success-100 px-2 py-0.5 text-xs font-medium text-fg-success-primary">
                 <Zap className="h-3 w-3" />
                 Linh hoạt
               </span>
@@ -270,7 +278,7 @@ export default function PayrateEditPageMobile() {
 
             {/* Validate error banner */}
             {validateError && (
-              <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="flex items-center gap-2 rounded-xl border border-utility-error-200 bg-utility-error-50 px-4 py-3 text-sm text-fg-error-primary">
                 <span>⚠</span>
                 <span>{validateError}</span>
               </div>
@@ -279,14 +287,14 @@ export default function PayrateEditPageMobile() {
             {/* Compact editor controls */}
             <section className={cn(
               '-mx-4 border-y bg-card transition-colors',
-              fromDateIsActionable ? 'border-amber-400 bg-amber-50/30' : 'border-[hsl(var(--surface-border))]',
+              fromDateIsActionable ? 'border-utility-warning-400 bg-utility-warning-50/30' : 'border-[hsl(var(--surface-border))]',
             )}>
               {!isFlexible && (
                 <div className="px-4 py-3">
                   <div className="grid gap-3 min-[380px]:grid-cols-[minmax(0,1fr)_9.5rem] min-[380px]:items-end">
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
-                        <CalendarClock className="h-4 w-4" aria-hidden="true" />
+                        <CalendarDate className="h-4 w-4" aria-hidden="true" />
                       </span>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Hiệu lực cấu hình</p>
@@ -297,11 +305,11 @@ export default function PayrateEditPageMobile() {
                       <Label htmlFor="fromDate" className={cn(
                         'flex items-center gap-1 text-xs font-medium',
                         fromDateLocked && !fromDateIsActionable ? 'text-muted-foreground' : 'text-foreground',
-                        sf?.effective_from.status === 'error' && !fromDateIsActionable && 'text-red-600',
-                        fromDateIsActionable && 'font-semibold text-amber-700',
+                        sf?.effective_from.status === 'error' && !fromDateIsActionable && 'text-utility-error-600',
+                        fromDateIsActionable && 'font-semibold text-fg-warning-primary',
                       )}>
                         Từ ngày <span className="text-destructive">*</span>
-                        {fromDateLocked && !fromDateIsActionable && <Lock className="h-3 w-3" aria-hidden="true" />}
+                        {fromDateLocked && !fromDateIsActionable && <Lock01 className="h-3 w-3" aria-hidden="true" />}
                       </Label>
                       <Input
                         ref={fromDateRef}
@@ -319,14 +327,14 @@ export default function PayrateEditPageMobile() {
                         className={cn(
                           'h-11 w-full text-sm',
                           fromDateLocked && !fromDateIsActionable && 'cursor-not-allowed bg-muted/50 opacity-60',
-                          fromDateIsActionable && 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-200',
+                          fromDateIsActionable && 'border-utility-warning-400 bg-utility-warning-50/40 ring-2 ring-utility-warning-200',
                           !fromDateIsActionable && fieldBorderClass(sf?.effective_from),
                         )}
                       />
                     </div>
                   </div>
                   {fromDateIsActionable && sf?.rates.suggested_value && (
-                    <div className="mt-3 space-y-1 border-l-2 border-amber-300 pl-3 text-xs text-amber-800">
+                    <div className="mt-3 space-y-1 border-l-2 border-utility-warning-300 pl-3 text-xs text-utility-warning-700">
                       <p className="font-medium">Cần tạo cấu hình mới để thay đổi mức lương.</p>
                       <p>Các bảng công chưa thanh toán và chưa duyệt từ ngày này sẽ được cập nhật.</p>
                       <p>Ngày bắt đầu sớm nhất: <strong>{sf.rates.suggested_value}</strong>.</p>
@@ -381,7 +389,7 @@ export default function PayrateEditPageMobile() {
 
             {/* Client-side validation */}
             {hasAttemptedSave && !clientValidation.valid && (
-              <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <div className="flex items-start gap-2 rounded-xl border border-utility-warning-200 bg-utility-warning-50 px-4 py-3 text-sm text-utility-warning-700">
                 <span className="mt-0.5 shrink-0">⚠</span>
                 <ul className="space-y-0.5">
                   {clientValidation.errors?.map((e, i) => <li key={i}>{e}</li>)}
@@ -393,12 +401,12 @@ export default function PayrateEditPageMobile() {
             <section className={cn(
               '-mx-4 overflow-hidden border-y bg-card transition-all',
               ratesLocked ? 'border-muted' : 'border-[hsl(var(--surface-border))]',
-              sf?.rates?.status === 'error' && 'ring-2 ring-red-100',
+              sf?.rates?.status === 'error' && 'ring-2 ring-utility-error-100',
             )}>
               {sf?.rates.status === 'error' && sf.rates.message && !fromDateIsActionable && (
-                <div className="mx-4 mt-3 space-y-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs">
-                  <p className="font-semibold text-red-800">{sf.rates.message}</p>
-                  {sf.rates.hint && <p className="text-red-700">{sf.rates.hint}</p>}
+                <div className="mx-4 mt-3 space-y-1.5 rounded-xl border border-utility-error-200 bg-utility-error-50 px-3 py-2.5 text-xs">
+                  <p className="font-semibold text-fg-error-primary">{sf.rates.message}</p>
+                  {sf.rates.hint && <p className="text-utility-error-600">{sf.rates.hint}</p>}
                 </div>
               )}
 
@@ -452,7 +460,7 @@ export default function PayrateEditPageMobile() {
             </span>
           ) : (
             <span className="flex items-center gap-1.5">
-              <Save className="h-3.5 w-3.5" />
+              <Save01 className="h-3.5 w-3.5" />
               {editorMode === 'create' ? 'Tạo cấu hình' : 'Lưu thay đổi'}
             </span>
           )}

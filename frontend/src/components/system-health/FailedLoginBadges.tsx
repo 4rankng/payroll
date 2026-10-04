@@ -1,5 +1,7 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { ShieldAlert, Clock, AlertTriangle } from "lucide-react";
+// W13c: lucide → verified @untitledui/icons (ShieldAlert → ShieldTick,
+// nearest shield semantics on the verified list).
+import { AlertTriangle, Clock, ShieldTick } from "@untitledui/icons";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useFailedLogins } from "@/hooks/api/useSystemHealth";
@@ -48,9 +50,9 @@ function BadgeItem({
         "group relative inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm",
         "transition-all hover:shadow-sm hover:scale-[1.02] active:scale-[0.98]",
         "cursor-pointer text-left",
-        variant === "destructive" && "border-red-200 bg-red-50 hover:bg-red-100",
-        variant === "warning" && "border-amber-200 bg-amber-50 hover:bg-amber-100",
-        variant === "secondary" && "border-slate-300 bg-slate-50 hover:bg-slate-100",
+        variant === "destructive" && "border-utility-error-200 bg-utility-error-50 hover:bg-utility-error-100",
+        variant === "warning" && "border-utility-warning-200 bg-utility-warning-50 hover:bg-utility-warning-100",
+        variant === "secondary" && "border-utility-gray-300 bg-utility-gray-50 hover:bg-utility-gray-100",
       )}
     >
       <span className="font-medium text-foreground truncate max-w-[200px]">
@@ -92,7 +94,7 @@ export function FailedLoginBadges({ days }: FailedLoginBadgesProps) {
   if (isLoading) {
     return (
       <section>
-        <SectionLabel icon={ShieldAlert}>Đăng Nhập Thất Bại</SectionLabel>
+        <SectionLabel icon={ShieldTick}>Đăng Nhập Thất Bại</SectionLabel>
         <div className="animate-pulse flex gap-2 flex-wrap">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-9 w-40 rounded-lg bg-muted" />
@@ -105,7 +107,7 @@ export function FailedLoginBadges({ days }: FailedLoginBadgesProps) {
   if (!data?.summary?.length) {
     return (
       <section>
-        <SectionLabel icon={ShieldAlert}>Đăng Nhập Thất Bại</SectionLabel>
+        <SectionLabel icon={ShieldTick}>Đăng Nhập Thất Bại</SectionLabel>
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
           <Clock className="h-4 w-4" />
           <span>Không có lần đăng nhập thất bại nào trong {days} ngày qua</span>
@@ -116,7 +118,7 @@ export function FailedLoginBadges({ days }: FailedLoginBadgesProps) {
 
   return (
     <section>
-      <SectionLabel icon={ShieldAlert}>Đăng Nhập Thất Bại</SectionLabel>
+      <SectionLabel icon={ShieldTick}>Đăng Nhập Thất Bại</SectionLabel>
 
       {summaryStats && (
         <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">

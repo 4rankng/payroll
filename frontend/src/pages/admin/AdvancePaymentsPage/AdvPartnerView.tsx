@@ -12,7 +12,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Wallet, Users, Calendar, ChevronLeft, ChevronRight, Download, FileText, ScanFace } from "lucide-react";
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; the AdvPartner
+// view rides the same bridge as the admin page (W12 pill idioms kept).
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Download01,
+  File05,
+  Scan,
+  Users01,
+  Wallet01,
+} from "@untitledui/icons";
+import type { ComponentType, SVGProps } from "react";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { SearchBar } from "@/components/shared/SearchBar";
 import {
@@ -56,7 +68,7 @@ import type { ActiveTab } from "./types";
 interface ViewTab {
   id: ActiveTab;
   label: string;
-  icon: typeof Wallet;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   count?: number;
 }
 
@@ -157,7 +169,7 @@ function MonthNavigator({
         {displayLabel}
         {isCurrent && (
           <span className="ml-1 inline-flex items-center align-middle">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+            <span className="h-1.5 w-1.5 rounded-full bg-utility-success-500" aria-hidden />
           </span>
         )}
       </span>
@@ -264,7 +276,7 @@ const AdvPartnerAdvancePaymentsPage = () => {
             onClick={() => navigate("/adv-partner/advance-payments/check-in-settings")}
             className="h-8 gap-1.5 rounded-lg px-3 text-[13px] font-medium"
           >
-            <ScanFace className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <Scan className="h-3.5 w-3.5 shrink-0" aria-hidden />
             Cấu hình điểm danh
           </Button>
           <Button
@@ -275,9 +287,9 @@ const AdvPartnerAdvancePaymentsPage = () => {
                 `sao_ke_thanh_toan_${page.selectedMonth}.xlsx`,
               ).catch((error) => { showErrorNotification(error); });
             }}
-            className="h-8 px-3 font-medium text-[13px] gap-1.5 rounded-lg bg-white/80 hover:bg-white border border-neutral-300 text-neutral-700 shadow-sm hover:shadow-md transition-all duration-200"
+            className="h-8 gap-1.5 rounded-lg border border-utility-gray-300 bg-white px-3 text-[13px] font-medium text-fg-secondary shadow-sm transition-all duration-200 hover:bg-utility-gray-50"
           >
-            <FileText className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+            <File05 className="h-3.5 w-3.5 shrink-0" />
             Xuất sao kê
           </Button>
           <Button
@@ -285,9 +297,9 @@ const AdvPartnerAdvancePaymentsPage = () => {
             onClick={page.handleExportFlexPayEmployees}
             disabled={page.exportFlexPayMutation.isPending}
             aria-label="Xuất danh sách"
-            className="h-8 px-3 font-medium text-[13px] gap-1.5 rounded-lg bg-white/80 hover:bg-white border border-neutral-300 text-neutral-700 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50"
+            className="h-8 gap-1.5 rounded-lg border border-utility-gray-300 bg-white px-3 text-[13px] font-medium text-fg-secondary shadow-sm transition-all duration-200 hover:bg-utility-gray-50 disabled:opacity-50"
           >
-            <Download className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+            <Download01 className="h-3.5 w-3.5 shrink-0" />
             Xuất DS
           </Button>
           {/* Month nav on desktop only here */}
@@ -322,13 +334,13 @@ const AdvPartnerAdvancePaymentsPage = () => {
                 {
                   id: "requests",
                   label: "Yêu cầu",
-                  icon: Wallet,
+                  icon: Wallet01,
                   count: page.statusCounts?.all ?? 0,
                 },
                 {
                   id: "employees",
                   label: "Nhân viên",
-                  icon: Users,
+                  icon: Users01,
                   count: page.flexPayPagination?.totalRecords ?? 0,
                 },
               ]}
@@ -361,25 +373,25 @@ const AdvPartnerAdvancePaymentsPage = () => {
                     <SelectItem value="all" className="text-[13px] py-1">Tất cả</SelectItem>
                     <SelectItem value="pending" className="text-[13px] py-1">
                       <span className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-utility-warning-400" />
                         Chờ xử lý
                       </span>
                     </SelectItem>
                     <SelectItem value="completed" className="text-[13px] py-1">
                       <span className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-utility-success-500" />
                         Hoàn tất
                       </span>
                     </SelectItem>
                     <SelectItem value="failed" className="text-[13px] py-1">
                       <span className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-utility-error-400" />
                         Thất bại
                       </span>
                     </SelectItem>
                     <SelectItem value="cancelled" className="text-[13px] py-1">
                       <span className="flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-utility-gray-400" />
                         Đã hủy
                       </span>
                     </SelectItem>

@@ -3,21 +3,23 @@
 
 import { useMemo, useState } from "react";
 import {
-  RefreshCw,
+  // W13c: lucide → verified @untitledui/icons; Loading01 replaces Loader2,
+  // Ban → SlashCircle01, SlidersHorizontal → FilterLines.
   ArrowDownLeft,
   ArrowUpRight,
-  ChevronRight,
-  Copy,
-  Check,
-  X,
-  Loader2,
   AlertCircle,
-  CheckCircle2,
+  Check,
+  CheckCircle,
+  ChevronRight,
   Clock,
-  Ban,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react";
+  Copy01,
+  FilterLines,
+  Loading01,
+  RefreshCw05,
+  SearchLg,
+  SlashCircle01,
+  XClose,
+} from "@untitledui/icons";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -69,19 +71,19 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_BADGE_CLASS: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+  pending: "bg-utility-warning-100 text-utility-warning-700 hover:bg-utility-warning-100",
   verified: "bg-cyan-100 text-cyan-800 hover:bg-cyan-100",
   authorised: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-  completed: "bg-emerald-100 text-emerald-800 hover:bg-emerald-100",
+  completed: "bg-utility-success-100 text-utility-success-700 hover:bg-utility-success-100",
   failed: "bg-rose-100 text-rose-800 hover:bg-rose-100",
   reversed: "bg-teal-100 text-teal-800 hover:bg-teal-100",
 };
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
   pending:    <Clock className="h-3.5 w-3.5" />,
-  verified:   <CheckCircle2 className="h-3.5 w-3.5" />,
-  authorised: <CheckCircle2 className="h-3.5 w-3.5" />,
-  completed:  <CheckCircle2 className="h-3.5 w-3.5" />,
+  verified:   <CheckCircle className="h-3.5 w-3.5" />,
+  authorised: <CheckCircle className="h-3.5 w-3.5" />,
+  completed:  <CheckCircle className="h-3.5 w-3.5" />,
   failed:     <AlertCircle className="h-3.5 w-3.5" />,
   reversed:   <AlertCircle className="h-3.5 w-3.5" />,
 };
@@ -121,10 +123,10 @@ function CopyButton({ value }: { value: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="ml-1 inline-flex h-11 w-11 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+      className="ml-1 inline-flex h-11 w-11 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded text-fg-tertiary hover:text-slate-700 hover:bg-slate-100 transition-colors"
       title="Sao chép"
     >
-      {copied ? <Check className="h-3 w-3 text-emerald-700" /> : <Copy className="h-3 w-3" />}
+      {copied ? <Check className="h-3 w-3 text-fg-success-primary" /> : <Copy01 className="h-3 w-3" />}
     </button>
   );
 }
@@ -156,19 +158,19 @@ function TypeLabel({ type }: { type: UnifiedTransaction["type"] }) {
   if (type === "topup") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 ring-1 ring-emerald-100">
-          <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-700" />
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-utility-success-50 ring-1 ring-utility-success-100">
+          <ArrowDownLeft className="h-3.5 w-3.5 text-fg-success-primary" />
         </span>
-        <span className="text-xs text-emerald-700 font-medium whitespace-nowrap">Nạp tiền</span>
+        <span className="text-xs text-fg-success-primary font-medium whitespace-nowrap">Nạp tiền</span>
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 ring-1 ring-slate-200">
-        <ArrowUpRight className="h-3.5 w-3.5 text-slate-500" />
+        <ArrowUpRight className="h-3.5 w-3.5 text-fg-tertiary" />
       </span>
-      <span className="text-xs text-slate-500 whitespace-nowrap">Chi trả</span>
+      <span className="text-xs text-fg-tertiary whitespace-nowrap">Chi trả</span>
     </span>
   );
 }
@@ -190,7 +192,7 @@ function DetailRow({
 }) {
   return (
     <div className={`flex flex-col gap-0.5 py-2.5 ${className ?? ""}`}>
-      <span className="text-xs font-medium uppercase tracking-wider text-slate-500">{label}</span>
+      <span className="text-xs font-medium uppercase tracking-wider text-fg-tertiary">{label}</span>
       <div className={`flex items-center gap-1 text-sm text-slate-800 ${mono ? "font-mono text-xs" : ""}`}>
         {typeof value === "string" && mono ? (
           <span className="break-all">{value}</span>
@@ -242,23 +244,23 @@ function TransactionDetailSheet({
         description="Thông tin đầy đủ của giao dịch này"
       >
         {/* Header */}
-        <div className={`px-6 pt-6 pb-5 ${isInflow ? "bg-emerald-50/60" : "bg-slate-50/60"}`}>
+        <div className={`px-6 pt-6 pb-5 ${isInflow ? "bg-utility-success-50/60" : "bg-utility-gray-50/60"}`}>
           <div className="flex items-start justify-between mb-4">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isInflow ? "bg-emerald-100" : "bg-slate-200"}`}>
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isInflow ? "bg-utility-success-100" : "bg-utility-gray-200"}`}>
               {isInflow
-                ? <ArrowDownLeft className="h-5 w-5 text-emerald-700" />
-                : <ArrowUpRight className="h-5 w-5 text-slate-600" />
+                ? <ArrowDownLeft className="h-5 w-5 text-fg-success-primary" />
+                : <ArrowUpRight className="h-5 w-5 text-fg-secondary" />
               }
             </div>
-            <SheetClose aria-label="Đóng chi tiết giao dịch" className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 hover:text-slate-700 hover:bg-white/70 transition-colors">
-              <X className="h-4 w-4" />
+            <SheetClose aria-label="Đóng chi tiết giao dịch" className="flex h-11 w-11 items-center justify-center rounded-lg text-fg-tertiary hover:text-slate-700 hover:bg-white/70 transition-colors">
+              <XClose className="h-4 w-4" />
             </SheetClose>
           </div>
 
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-1">
+          <p className="text-xs font-medium uppercase tracking-wider text-fg-tertiary mb-1">
             {tx?.type === "topup" ? "Nạp tiền" : "Chi trả"}
           </p>
-          <p className={`text-3xl font-bold tabular-nums leading-none mb-3 ${isInflow ? "text-emerald-700" : "text-slate-900"}`}>
+          <p className={`text-3xl font-bold tabular-nums leading-none mb-3 ${isInflow ? "text-fg-success-primary" : "text-fg-primary"}`}>
             {tx ? formatAmount(tx.amount) : "—"}
           </p>
 
@@ -284,7 +286,7 @@ function TransactionDetailSheet({
             <TopupDetail topup={topup} tx={tx} />
           ) : (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
+              <Loading01 className="h-5 w-5 animate-spin text-fg-tertiary" />
             </div>
           )}
         </div>
@@ -302,7 +304,7 @@ function PaymentDetail({ payment, tx }: { payment: WalletPayment; tx: UnifiedTra
         value={
           <div className="flex flex-col gap-0.5">
             <span className="text-sm font-semibold text-slate-800">{payment.recipient_name}</span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-fg-tertiary">
               {payment.recipient_account_no} · {payment.recipient_bank}
             </span>
           </div>
@@ -350,7 +352,7 @@ function PaymentDetail({ payment, tx }: { payment: WalletPayment; tx: UnifiedTra
           label="Lỗi"
           value={
             <span className="inline-flex items-center gap-1.5 text-rose-600">
-              <Ban className="h-3.5 w-3.5 shrink-0" />
+              <SlashCircle01 className="h-3.5 w-3.5 shrink-0" />
               {payment.error_message || "Giao dịch thất bại"}
             </span>
           }
@@ -360,8 +362,8 @@ function PaymentDetail({ payment, tx }: { payment: WalletPayment; tx: UnifiedTra
         <DetailRow
           label="Mã phản hồi"
           value={
-            <span className="inline-flex items-center gap-1.5 text-emerald-700">
-              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+            <span className="inline-flex items-center gap-1.5 text-fg-success-primary">
+              <CheckCircle className="h-3.5 w-3.5 shrink-0" />
               {payment.error_code} — {payment.error_message}
             </span>
           }
@@ -450,7 +452,7 @@ export default function WalletTransactionsList(
             Lịch sử giao dịch
           </h2>
           {total > 0 && (
-            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-xs font-bold text-slate-600 tabular-nums tracking-wide">
+            <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-slate-100 px-1.5 text-xs font-bold text-fg-secondary tabular-nums tracking-wide">
               {total.toLocaleString("vi-VN")}
             </span>
           )}
@@ -461,7 +463,7 @@ export default function WalletTransactionsList(
       <div className="flex items-center gap-2 flex-wrap">
         {!isMobile && (
           <div className="relative min-w-[220px] flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <SearchLg className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <input
               value={searchInput}
               onChange={(e) => {
@@ -528,7 +530,7 @@ export default function WalletTransactionsList(
             type="button"
             onClick={onResetFilters}
             className={cn(
-              "text-xs text-slate-500 hover:text-slate-700 transition-colors ml-auto",
+              "text-xs text-fg-tertiary hover:text-slate-700 transition-colors ml-auto",
               isMobile && "min-h-11 px-2",
             )}
           >
@@ -553,7 +555,7 @@ export default function WalletTransactionsList(
       {/* Pagination */}
       {transactions.length > 0 && totalPages > 1 && (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t pt-4">
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-fg-tertiary">
             {Math.min((page - 1) * PAGE_SIZE + 1, total)}–{Math.min(page * PAGE_SIZE, total)} / {total} giao dịch
           </p>
           <div className="flex items-center gap-2">
@@ -566,7 +568,7 @@ export default function WalletTransactionsList(
             >
               Trước
             </Button>
-            <span className="text-sm text-slate-500 tabular-nums">
+            <span className="text-sm text-fg-tertiary tabular-nums">
               {page} / {totalPages}
             </span>
             <Button
@@ -616,12 +618,12 @@ function DesktopTable({
       <Table className="min-w-[820px]">
         <TableHeader>
           <TableRow className="bg-slate-50 hover:bg-slate-50">
-            <TableHead className="w-[148px] text-xs font-semibold text-slate-500">Ngày</TableHead>
-            <TableHead className="w-[100px] text-xs font-semibold text-slate-500">Loại</TableHead>
-            <TableHead className="w-[120px] text-right text-xs font-semibold text-slate-500">Số tiền</TableHead>
-            <TableHead className="text-xs font-semibold text-slate-500">Người nhận</TableHead>
-            <TableHead className="w-[148px] text-xs font-semibold text-slate-500">Tham chiếu</TableHead>
-            <TableHead className="w-[110px] text-xs font-semibold text-slate-500">Trạng thái</TableHead>
+            <TableHead className="w-[148px] text-xs font-semibold text-fg-tertiary">Ngày</TableHead>
+            <TableHead className="w-[100px] text-xs font-semibold text-fg-tertiary">Loại</TableHead>
+            <TableHead className="w-[120px] text-right text-xs font-semibold text-fg-tertiary">Số tiền</TableHead>
+            <TableHead className="text-xs font-semibold text-fg-tertiary">Người nhận</TableHead>
+            <TableHead className="w-[148px] text-xs font-semibold text-fg-tertiary">Tham chiếu</TableHead>
+            <TableHead className="w-[110px] text-xs font-semibold text-fg-tertiary">Trạng thái</TableHead>
             <TableHead className="w-6" />
           </TableRow>
         </TableHeader>
@@ -634,7 +636,7 @@ function DesktopTable({
                 onClick={() => onSelect(tx)}
                 className="cursor-pointer hover:bg-slate-50/80 group transition-colors"
               >
-                <TableCell className="text-sm text-slate-600 tabular-nums">
+                <TableCell className="text-sm text-fg-secondary tabular-nums">
                   {formatDateTime(tx.occurred_at)}
                 </TableCell>
                 <TableCell>
@@ -642,7 +644,7 @@ function DesktopTable({
                 </TableCell>
                 <TableCell
                   className={`text-right font-semibold tabular-nums text-sm ${
-                    isInflow ? "text-emerald-700" : "text-red-600"
+                    isInflow ? "text-fg-success-primary" : "text-red-600"
                   }`}
                 >
                   {formatAmount(tx.amount)}
@@ -653,18 +655,18 @@ function DesktopTable({
                     return (
                       <div>
                         <div className="text-slate-800 font-medium truncate max-w-[180px]">{name}</div>
-                        {detail && <div className="text-slate-500 text-xs truncate max-w-[180px]">{detail}</div>}
+                        {detail && <div className="text-fg-tertiary text-xs truncate max-w-[180px]">{detail}</div>}
                       </div>
                     );
                   })() : (
-                    <span className="text-slate-500 text-sm">
+                    <span className="text-fg-tertiary text-sm">
                       {tx.type === "topup" ? "Nạp ví nội bộ" : "—"}
                     </span>
                   )}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-0.5">
-                    <span className="text-slate-500 font-mono text-xs truncate max-w-[140px]">
+                    <span className="text-fg-tertiary font-mono text-xs truncate max-w-[140px]">
                       {tx.reference || "—"}
                     </span>
                     {tx.reference && <CopyButton value={tx.reference} />}
@@ -674,7 +676,7 @@ function DesktopTable({
                   <StatusBadge status={tx.status} />
                 </TableCell>
                 <TableCell className="pr-3">
-                  <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                  <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-fg-tertiary transition-colors" />
                 </TableCell>
               </TableRow>
             );
@@ -710,10 +712,10 @@ function MobileTransactionList({
             className="flex items-center gap-2 px-3 py-2.5 text-left hover:bg-slate-50 active:bg-slate-100 transition-colors w-full"
           >
             {/* Icon */}
-            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${isInflow ? "bg-emerald-50 ring-1 ring-emerald-100" : "bg-slate-100 ring-1 ring-slate-200"}`}>
+            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${isInflow ? "bg-utility-success-50 ring-1 ring-utility-success-100" : "bg-slate-100 ring-1 ring-slate-200"}`}>
               {isInflow
-                ? <ArrowDownLeft className="h-4 w-4 text-emerald-700" />
-                : <ArrowUpRight className="h-4 w-4 text-slate-500" />
+                ? <ArrowDownLeft className="h-4 w-4 text-fg-success-primary" />
+                : <ArrowUpRight className="h-4 w-4 text-fg-tertiary" />
               }
             </div>
 
@@ -723,13 +725,13 @@ function MobileTransactionList({
                 <span className="text-[13.5px] text-slate-800 font-semibold tracking-tight line-clamp-2 break-words">{cpName}</span>
                 <StatusBadge status={tx.status} />
               </div>
-              {cpDetail && <div className="text-xs text-slate-500 truncate leading-snug">{cpDetail}</div>}
-              <div className="text-xs text-slate-500 mt-1 tabular-nums tracking-wide">{formatDateTime(tx.occurred_at)}</div>
+              {cpDetail && <div className="text-xs text-fg-tertiary truncate leading-snug">{cpDetail}</div>}
+              <div className="text-xs text-fg-tertiary mt-1 tabular-nums tracking-wide">{formatDateTime(tx.occurred_at)}</div>
             </div>
 
             {/* Amount + chevron */}
             <div className="flex items-center gap-1 shrink-0">
-              <span className={`text-[13.5px] font-bold tabular-nums tracking-tight ${isInflow ? "text-emerald-700" : "text-red-600"}`}>
+              <span className={`text-[13.5px] font-bold tabular-nums tracking-tight ${isInflow ? "text-fg-success-primary" : "text-red-600"}`}>
                 {formatAmount(tx.amount)}
               </span>
               <ChevronRight className="h-4 w-4 text-slate-300" />
@@ -746,7 +748,7 @@ function MobileTransactionList({
 function SkeletonTable() {
   return (
     <div className="rounded-xl border border-slate-300 overflow-x-auto">
-      <div className="grid grid-cols-7 gap-4 px-4 py-3 bg-slate-50 border-b border-slate-300 text-xs font-semibold text-slate-500 min-w-[820px]">
+      <div className="grid grid-cols-7 gap-4 px-4 py-3 bg-slate-50 border-b border-slate-300 text-xs font-semibold text-fg-tertiary min-w-[820px]">
         <div>Ngày</div><div>Loại</div><div className="text-right">Số tiền</div><div>Người nhận</div><div>Tham chiếu</div><div>Trạng thái</div><div />
       </div>
       <div className="divide-y divide-slate-200">
@@ -818,9 +820,9 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
         <AlertCircle className="h-5 w-5 text-rose-600" />
       </div>
       <p className="text-sm font-medium text-rose-700">Không thể tải lịch sử giao dịch</p>
-      <p className="text-xs text-slate-500 mt-1 mb-4">Đã xảy ra lỗi khi gọi API. Vui lòng thử lại.</p>
+      <p className="text-xs text-fg-tertiary mt-1 mb-4">Đã xảy ra lỗi khi gọi API. Vui lòng thử lại.</p>
       <Button variant="outline" size="sm" onClick={onRetry}>
-        <RefreshCw className="h-4 w-4 mr-2" />
+        <RefreshCw05 className="h-4 w-4 mr-2" />
         Thử lại
       </Button>
     </div>

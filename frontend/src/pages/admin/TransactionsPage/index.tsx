@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react';
+// UU PRO restyle (W13c): page chrome on the UU bridge; header icons swapped
+// in TransactionPageHeader. Table/filter machinery stays with W13b.
 import {
   AdminPageCanvas,
   AdminPageHeaderCard,
@@ -194,7 +196,7 @@ const TransactionsPage = () => {
 
       <AdminSectionCard aria-label="Danh sách bút toán">
         <AdminFilterRow>
-          <p className="text-sm font-semibold text-slate-800">Bút toán</p>
+          <p className="text-sm font-semibold text-fg-primary">Bút toán</p>
           <div className="flex flex-1 items-center justify-end">
             <TransactionFilters
               filters={filters}

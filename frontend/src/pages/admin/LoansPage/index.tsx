@@ -13,7 +13,9 @@ import { SearchBar } from '@/components/shared/SearchBar';
 import { FilterPill } from '@/components/shared/FilterPill';
 import { useLoans, useLenders } from '@/hooks/api/useLoans';
 import { useTableSorting } from '@/utils/sorting';
-import { Plus, Users2, Landmark, TrendingUp, Coins, Wallet } from 'lucide-react';
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons (KpiHeroCard's
+// icon slot widened to ComponentType<SVGProps> in the same wave).
+import { Bank, CoinsHand, Plus, TrendUp01, Users01, Wallet01 } from '@untitledui/icons';
 import type { Lender, LoanStatus, Loan, LoanFilters } from '@/types/api/loan.types';
 import { LenderManagementSheet } from '@/components/sheets/LenderManagementSheet';
 import { AddLoanSheet } from '@/components/sheets/AddLoanSheet';
@@ -116,14 +118,14 @@ const LoansPage = () => {
     <AdminPageCanvas>
       <AdminPageHeaderCard>
         <PageHeader
-          icon={Landmark}
+          icon={Bank}
           title="Quản lý khoản vay"
           description="Quản lý chủ nợ và các khoản vay của công ty"
           actions={[
             {
               label: 'QL Chủ nợ',
               onClick: handleOpenLenderSheet,
-              icon: Users2,
+              icon: Users01,
               variant: 'outline' as const,
             },
             {
@@ -141,7 +143,7 @@ const LoansPage = () => {
           label="Tổng vay"
           value={loansSummary.total_borrowed}
           unit="₫"
-          icon={Landmark}
+          icon={Bank}
           color="blue"
           variant="stack"
         />
@@ -149,7 +151,7 @@ const LoansPage = () => {
           label="Dư nợ hiện tại"
           value={loansSummary.total_outstanding}
           unit="₫"
-          icon={TrendingUp}
+          icon={TrendUp01}
           color="amber"
           variant="stack"
         />
@@ -157,14 +159,14 @@ const LoansPage = () => {
           label="Lãi đã trả"
           value={loansSummary.total_interest_paid}
           unit="₫"
-          icon={Coins}
+          icon={CoinsHand}
           color="emerald"
           variant="stack"
         />
         <KpiHeroCard
           label="Khoản vay"
           value={loansSummary.active_loans_count}
-          icon={Wallet}
+          icon={Wallet01}
           color="teal"
           variant="stack"
         />
@@ -172,7 +174,7 @@ const LoansPage = () => {
 
       <AdminSectionCard aria-label="Danh sách khoản vay">
         <AdminFilterRow>
-          <p className="text-sm font-semibold text-slate-800">Danh sách</p>
+          <p className="text-sm font-semibold text-fg-primary">Danh sách</p>
           <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
             <SearchBar
               searchTerm={loanSearch}

@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { Activity, ChevronDown } from "lucide-react";
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; health meta
+// on the UU utility ladders. Copy and flow unchanged.
+import { Activity, ChevronDown } from "@untitledui/icons";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import {
@@ -22,18 +24,18 @@ type HealthLevel = "healthy" | "degraded" | "critical";
 const HEALTH_META: Record<HealthLevel, { label: string; dot: string; pill: string }> = {
   healthy: {
     label: "Bình Thường",
-    dot: "bg-emerald-500",
-    pill: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    dot: "bg-utility-success-500",
+    pill: "bg-utility-success-50 text-fg-success-primary border-utility-success-200",
   },
   degraded: {
     label: "Cảnh Báo",
-    dot: "bg-amber-500",
-    pill: "bg-amber-50 text-amber-700 border-amber-200",
+    dot: "bg-utility-warning-500",
+    pill: "bg-utility-warning-50 text-fg-warning-primary border-utility-warning-200",
   },
   critical: {
     label: "Nghiêm Trọng",
-    dot: "bg-red-500",
-    pill: "bg-red-50 text-red-700 border-red-200",
+    dot: "bg-utility-error-500",
+    pill: "bg-utility-error-50 text-fg-error-primary border-utility-error-200",
   },
 };
 
@@ -69,7 +71,7 @@ export default function SystemHealthPage() {
             <TimeRangeToggle value={errorDays} onChange={setErrorDays} />
             {healthMeta && (
               <div className={cn(
-                "ct-badge h-10 shrink-0 gap-1.5 rounded-full px-3 text-xs font-semibold",
+                "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold",
                 healthMeta.pill,
               )}>
                 <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse shrink-0", healthMeta.dot)} />

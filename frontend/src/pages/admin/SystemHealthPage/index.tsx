@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { useAppState } from "@/contexts";
-import { Activity, AlertTriangle, Gauge, Eye } from "lucide-react";
+// UU PRO restyle (W13c): lucide → verified @untitledui/icons; Gauge →
+// Speedometer01. Layout, copy and data flow unchanged.
+import { Activity, AlertTriangle, Eye, Speedometer01 } from "@untitledui/icons";
 import { cn } from "@/lib/utils";
 import {
   AdminPageCanvas,
@@ -58,7 +60,7 @@ export default function SystemHealthPage() {
       <SummaryPills days={errorDays} />
 
       <section>
-        <SectionLabel icon={Gauge}>Độ Trễ — Endpoint (7 ngày)</SectionLabel>
+        <SectionLabel icon={Speedometer01}>Độ Trễ — Endpoint (7 ngày)</SectionLabel>
         <LatencyGrid days={7} limit={12} />
       </section>
 
