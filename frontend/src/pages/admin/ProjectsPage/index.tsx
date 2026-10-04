@@ -77,9 +77,9 @@ const ProjectsPage = () => {
         </AdminPageHeaderCard>
         <AdminSectionCard>
           <Skeleton className="m-3 h-11 rounded-xl sm:m-4" />
-          <div className="border-t border-slate-300">
+          <div className="border-t border-utility-gray-200">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-4 border-b border-slate-300 px-4 py-4 last:border-b-0">
+              <div key={i} className="flex items-center gap-4 border-b border-utility-gray-200 px-4 py-4 last:border-b-0">
                 <Skeleton className="h-9 w-9 rounded-lg" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-3.5 w-40" />
@@ -103,7 +103,7 @@ const ProjectsPage = () => {
 
       <AdminSectionCard aria-label="Danh sách dự án">
         <AdminFilterRow>
-          <p className="text-sm font-semibold text-slate-800">Danh sách</p>
+          <p className="text-sm font-semibold text-foreground">Danh sách</p>
           <div className="flex flex-1 items-center justify-end">
             <ProjectFilters
               searchTerm={filterControls.searchTerm}

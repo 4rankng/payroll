@@ -16,7 +16,7 @@ import { useUsersSummary, useResetPassword } from "@/hooks/api/useUsers";
 import { createUserColumns } from "@/config/user-table-columns";
 import { createUserMobileConfig } from "@/config/user-table-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Loader2 } from "lucide-react";
+import { RefreshCw05 } from "@untitledui/icons";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useCallback } from "react";
 import { useTableSorting } from "@/utils/sorting";
@@ -122,7 +122,7 @@ const UsersPage = () => {
 
       <AdminSectionCard aria-label="Danh sách người dùng">
         <AdminFilterRow>
-          <p className="text-sm font-semibold text-slate-800">Danh sách</p>
+          <p className="text-sm font-semibold text-foreground">Danh sách</p>
           <div className="flex flex-1 items-center justify-end">
             <UserFiltersBar
               search={filterState.search}
@@ -175,8 +175,8 @@ const UsersPage = () => {
         )}
 
         {userData.isFetchingNextPage && (
-          <div className="flex items-center justify-center border-t border-slate-300 py-4">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <div className="flex items-center justify-center border-t border-utility-gray-200 py-4">
+            <RefreshCw05 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
             <span className="ml-2 text-sm text-muted-foreground">
               Đang tải thêm...
             </span>
@@ -186,7 +186,7 @@ const UsersPage = () => {
         {!userData.error && !userData.hasMore &&
           !userData.isFetchingNextPage &&
           userData.users.length > 0 && (
-            <p className="border-t border-slate-300 py-3 text-center text-xs text-muted-foreground">
+            <p className="border-t border-utility-gray-200 py-3 text-center text-xs text-muted-foreground">
               {userData.users.length} người dùng
             </p>
           )}

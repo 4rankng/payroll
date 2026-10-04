@@ -25,7 +25,7 @@ import { useProjectFilters } from "@/hooks/projects/useProjectFilters";
 import { useProjectModals } from "@/hooks/useModalNavigation";
 import { getVietnameseProjectStatus } from "@/utils/vietnamese";
 import { generateMonthOptions } from "@/utils/dateHelpers";
-import { Briefcase, Plus, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Briefcase01, ChevronLeft, ChevronRight, FilterLines, Plus, XClose } from "@untitledui/icons";
 import type { Project } from "@/types/api/project.types";
 
 const ITEMS_PER_PAGE = 20;
@@ -106,15 +106,15 @@ const ProjectsPageMobile = () => {
       {/* Header */}
       <MobilePageHeader
         title="Dự án"
-        icon={Briefcase}
+        icon={Briefcase01}
         actionsLayout="inline"
         actions={
           <Button
             size="sm"
-            className="ct-btn ct-btn-primary ct-btn-sm h-11 min-h-11 shrink-0 rounded-xl px-3 normal-case shadow-sm"
+            className="h-11 min-h-11 shrink-0 rounded-xl px-3 shadow-sm"
             onClick={() => openCreateProject()}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" aria-hidden="true" />
             Tạo dự án
           </Button>
         }
@@ -128,7 +128,7 @@ const ProjectsPageMobile = () => {
           placeholder="Tìm kiếm dự án..."
         />
         <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-border bg-card shrink-0 relative" onClick={() => setFilterSheetOpen(true)} aria-label="Bộ lọc">
-          <SlidersHorizontal className="h-4 w-4" />
+          <FilterLines className="h-4 w-4" aria-hidden="true" />
           {activeFilterCount > 0 && (
             <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs text-white flex items-center justify-center font-bold">{activeFilterCount}</span>
           )}
@@ -140,12 +140,12 @@ const ProjectsPageMobile = () => {
         <div className="px-4 pb-3 flex gap-2 flex-wrap">
           {currentStatusLabel && (
             <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-secondary px-3 text-xs font-semibold text-secondary-foreground" onClick={() => filterControls.setStatusFilter("all")} aria-label={`Xóa lọc trạng thái ${currentStatusLabel}`}>
-              {currentStatusLabel}<X className="h-3 w-3" />
+              {currentStatusLabel}<XClose className="h-3 w-3" aria-hidden="true" />
             </button>
           )}
           {currentMonthLabel && (
             <button type="button" className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-secondary px-3 text-xs font-semibold text-secondary-foreground" onClick={() => filterControls.setMonthFilter(undefined)} aria-label={`Xóa lọc tháng ${currentMonthLabel}`}>
-              {currentMonthLabel}<X className="h-3 w-3" />
+              {currentMonthLabel}<XClose className="h-3 w-3" aria-hidden="true" />
             </button>
           )}
           <button onClick={filterControls.clearFilters} className="min-h-11 px-1 text-xs text-muted-foreground underline underline-offset-2">Xóa tất cả</button>
@@ -186,7 +186,7 @@ const ProjectsPageMobile = () => {
               disabled={currentPage <= 1 || isFetching}
               aria-label="Trang dự án trước"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               <span className="sr-only min-[360px]:not-sr-only">Trước</span>
             </Button>
             <p className="text-center text-xs text-muted-foreground tabular-nums" aria-live="polite">
@@ -202,7 +202,7 @@ const ProjectsPageMobile = () => {
               aria-label="Trang dự án sau"
             >
               <span className="sr-only min-[360px]:not-sr-only">Sau</span>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
           </nav>
         )}

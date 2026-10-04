@@ -2,7 +2,21 @@ import { parseTimesheetStatusFilter } from "@/utils/timesheetFilterHelpers";
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, FileText, ArrowRightLeft, FileUp, History, MoreVertical, CheckCheck, FileSpreadsheet, Banknote, Trash2, Undo2, FileDown } from 'lucide-react';
+import {
+  CheckDone01,
+  ClockStopwatch,
+  DotsVertical,
+  FileCheck02,
+  FileDownload01,
+  Grid01,
+  Plus,
+  RefreshCw05,
+  Send01,
+  Trash01,
+  Upload01,
+  UploadCloud01,
+  Wallet01,
+} from '@untitledui/icons';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { MissingBankDetailsSection } from '@/components/employees/MissingBankDetailsSection';
 import { TimesheetDisplaySection } from '@/components/timesheet/TimesheetDisplaySection';
@@ -301,21 +315,21 @@ const TimesheetPage = () => {
             onClick={handleBulkApprove}
             className="inline-flex items-center gap-1.5 h-8 px-3 bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors border-r border-border"
           >
-            <CheckCheck className="h-4 w-4 shrink-0" />
+            <CheckDone01 className="h-4 w-4 shrink-0" aria-hidden="true" />
             Duyệt hết
           </button>
           <button
             onClick={handleResetAll}
             className="inline-flex items-center gap-1.5 h-8 px-3 bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors border-r border-border"
           >
-            <Undo2 className="h-4 w-4 shrink-0" />
+            <RefreshCw05 className="h-4 w-4 shrink-0" aria-hidden="true" />
             Bỏ duyệt
           </button>
           <button
             onClick={handleChuyenLo}
             className="inline-flex items-center gap-1.5 h-8 px-3 bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors border-r border-border"
           >
-            <ArrowRightLeft className="h-4 w-4 shrink-0" />
+            <Send01 className="h-4 w-4 shrink-0" aria-hidden="true" />
             Chuyển lô
           </button>
           <DropdownMenu>
@@ -324,45 +338,45 @@ const TimesheetPage = () => {
                 aria-label="Thêm tùy chọn"
                 className="inline-flex items-center justify-center h-8 w-8 bg-card text-foreground hover:bg-muted transition-colors"
               >
-                <MoreVertical className="h-4 w-4" />
+                <DotsVertical className="h-4 w-4" aria-hidden="true" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-52">
               {/* Group 1: Nhập / Input */}
               <DropdownMenuItem onClick={handleAddTimesheet}>
-                <Plus className="w-4 h-4 mr-2" />
+                <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
                 Nhập công
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleBulkTransferResultUpload}>
-                <FileUp className="w-4 h-4 mr-2" />
+                <Upload01 className="w-4 h-4 mr-2" aria-hidden="true" />
                 Nhập KQ chuyển lô
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setBulkTransferKQDialogOpen(true)}>
-                <FileDown className="w-4 h-4 mr-2" />
+                <FileCheck02 className="w-4 h-4 mr-2" aria-hidden="true" />
                 Tạo KQ CK
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {/* Group 2: Import / Upload */}
               <DropdownMenuItem onClick={() => setBccUploadOpen(true)}>
-                <FileUp className="w-4 h-4 mr-2" />
+                <UploadCloud01 className="w-4 h-4 mr-2" aria-hidden="true" />
                 Tải lên BCC
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {/* Group 3: Báo cáo / Reports */}
               <DropdownMenuItem onClick={handleChuyenOnePay} disabled={exportOnePayMutation.isPending}>
-                <Banknote className="w-4 h-4 mr-2" />
+                <Wallet01 className="w-4 h-4 mr-2" aria-hidden="true" />
                 {exportOnePayMutation.isPending ? 'Đang xuất...' : 'Chuyển OnePay'}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleApprovedTimesheetsExport} disabled={exportApprovedTimesheetsMutation.isPending}>
-                <FileText className="w-4 h-4 mr-2" />
+                <FileDownload01 className="w-4 h-4 mr-2" aria-hidden="true" />
                 {exportApprovedTimesheetsMutation.isPending ? 'Đang xuất...' : 'Xuất bảng công'}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleBulkTransferHistory}>
-                <History className="w-4 h-4 mr-2" />
+                <ClockStopwatch className="w-4 h-4 mr-2" aria-hidden="true" />
                 Lịch sử chuyển lô
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleBccHistory}>
-                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                <Grid01 className="w-4 h-4 mr-2" aria-hidden="true" />
                 Lịch sử BCC
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -370,7 +384,7 @@ const TimesheetPage = () => {
                 onClick={() => setRejectUnpaidDialogOpen(true)}
                 className="text-destructive focus:text-destructive"
               >
-                <Trash2 className="w-4 h-4 mr-2" />
+                <Trash01 className="w-4 h-4 mr-2" aria-hidden="true" />
                 Loại công
               </DropdownMenuItem>
             </DropdownMenuContent>

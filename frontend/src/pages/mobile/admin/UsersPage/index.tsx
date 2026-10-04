@@ -25,15 +25,7 @@ import { useUserModals } from "@/hooks/useModalNavigation";
 import { useUserFiltersWithBackend } from "@/hooks/users/useUserFiltersWithBackend";
 import { useUsersSummary } from "@/hooks/api/useUsers";
 import { useAuth } from "@/contexts";
-import {
-  Users,
-  UserCog,
-  Briefcase,
-  User,
-  Plus,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
+import { FilterLines, Plus, Users01, XClose } from "@untitledui/icons";
 
 const UsersPageMobile = () => {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
@@ -73,33 +65,21 @@ const UsersPageMobile = () => {
       {
         label: "Tổng",
         value: summaryData.total_users || 0,
-        icon: Users,
-        color: "text-blue-600",
-        bg: "bg-blue-50",
         role: null as "admin" | "partner" | "employee" | null,
       },
       {
         label: "Quản trị",
         value: summaryData.total_admins || 0,
-        icon: UserCog,
-        color: "text-red-600",
-        bg: "bg-red-50",
         role: "admin" as const,
       },
       {
         label: "Quản lý",
         value: summaryData.total_partners || 0,
-        icon: Briefcase,
-        color: "text-blue-600",
-        bg: "bg-blue-50",
         role: "partner" as const,
       },
       {
         label: "Nhân viên",
         value: summaryData.total_employees || 0,
-        icon: User,
-        color: "text-muted-foreground",
-        bg: "bg-muted/40",
         role: "employee" as const,
       },
     ];
@@ -136,7 +116,7 @@ const UsersPageMobile = () => {
       {/* Header */}
       <MobilePageHeader
         title="Người dùng"
-        icon={Users}
+        icon={Users01}
         actions={
           !isAdvPartner ? (
             <Button
@@ -144,7 +124,7 @@ const UsersPageMobile = () => {
               className="h-11 px-4 btn-admin-primary shrink-0"
               onClick={() => openAddUser()}
             >
-              <Plus className="h-4 w-4 mr-1" />
+              <Plus className="h-4 w-4 mr-1" aria-hidden="true" />
               Thêm
             </Button>
           ) : undefined
@@ -199,7 +179,7 @@ const UsersPageMobile = () => {
             onClick={() => setFilterSheetOpen(true)}
             aria-label="Bộ lọc"
           >
-            <SlidersHorizontal className="h-4 w-4" />
+            <FilterLines className="h-4 w-4" aria-hidden="true" />
             {activeFilterCount > 0 && (
               <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs text-white flex items-center justify-center font-bold">
                 {activeFilterCount}
@@ -227,7 +207,7 @@ const UsersPageMobile = () => {
                   accountant: "Kế toán",
                 }[filterState.role]
               }
-              <X className="h-3 w-3" />
+              <XClose className="h-3 w-3" aria-hidden="true" />
             </button>
           )}
           <button

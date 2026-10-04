@@ -31,17 +31,13 @@ import { useEmployeeExport } from "@/hooks/employees/useEmployeeExport";
 import { useAssignableProjects } from "@/hooks/api/useProjects";
 import { EMPLOYEE_SORT_FIELD_MAP } from "@/pages/admin/EmployeesPage/constants";
 import {
-  Users,
-  UserCheck,
-  UserX,
-  UserPlus,
-  SlidersHorizontal,
-  Plus,
-  Download,
-  X,
-  ArrowUp,
   ArrowDown,
-} from "lucide-react";
+  ArrowUp,
+  Download01,
+  FilterLines,
+  Plus,
+  XClose,
+} from "@untitledui/icons";
 import { MobileStatStrip } from "@/components/shared/MobileStatStrip";
 import type { Employee } from "@/types/api/employee.types";
 
@@ -177,17 +173,11 @@ const EmployeesPageMobile = () => {
       {
         label: "Tổng",
         value: employeesSummary.total_employees,
-        icon: Users,
-        color: "text-blue-600",
-        bg: "bg-blue-50",
         filter: null as "working" | "unassigned" | null,
       },
       {
         label: "Đang làm",
         value: employeesSummary.total_working_employees,
-        icon: UserCheck,
-        color: "text-emerald-700",
-        bg: "bg-emerald-50",
         filter: "working" as const,
       },
       {
@@ -195,17 +185,11 @@ const EmployeesPageMobile = () => {
         value:
           employeesSummary.total_employees -
           employeesSummary.total_working_employees,
-        icon: UserX,
-        color: "text-amber-700",
-        bg: "bg-amber-50",
         filter: "unassigned" as const,
       },
       {
         label: "Tháng này",
         value: employeesSummary.employees_hired_this_month,
-        icon: UserPlus,
-        color: "text-teal-700",
-        bg: "bg-teal-50",
         filter: null as "working" | "unassigned" | null,
       },
     ];
@@ -251,14 +235,14 @@ const EmployeesPageMobile = () => {
               aria-label="Xuất danh sách nhân viên"
               disabled={isExporting}
             >
-              <Download className="h-3.5 w-3.5" />
+              <Download01 className="h-3.5 w-3.5" aria-hidden="true" />
             </Button>
             <Button
               size="sm"
               className="h-11 px-3 btn-admin-primary"
               onClick={() => openAddEmployee()}
             >
-              <Plus className="h-4 w-4 mr-1" />
+              <Plus className="h-4 w-4 mr-1" aria-hidden="true" />
               Thêm
             </Button>
           </>
@@ -306,7 +290,7 @@ const EmployeesPageMobile = () => {
           onClick={() => setFilterSheetOpen(true)}
           aria-label="Bộ lọc"
         >
-          <SlidersHorizontal className="h-4 w-4" />
+          <FilterLines className="h-4 w-4" aria-hidden="true" />
           {activeFilterCount > 0 && (
             <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs text-white flex items-center justify-center font-bold">
               {activeFilterCount}
@@ -325,7 +309,7 @@ const EmployeesPageMobile = () => {
               onClick={() => updateFilters({ status: undefined })}
             >
               {statusFilter === "working" ? "Đang làm việc" : "Chưa phân công"}
-              <X className="h-3 w-3" />
+              <XClose className="h-3 w-3" aria-hidden="true" />
             </Badge>
           )}
           {month && (
@@ -335,7 +319,7 @@ const EmployeesPageMobile = () => {
               onClick={() => updateFilters({ month: undefined })}
             >
               {monthOptions.find((m) => m.value === month)?.label ?? month}
-              <X className="h-3 w-3" />
+              <XClose className="h-3 w-3" aria-hidden="true" />
             </Badge>
           )}
           {projectId && (
@@ -345,7 +329,7 @@ const EmployeesPageMobile = () => {
               onClick={() => updateFilters({ projectId: undefined })}
             >
               {projects.find((p) => p.id === projectId)?.name ?? "Dự án"}
-              <X className="h-3 w-3" />
+              <XClose className="h-3 w-3" aria-hidden="true" />
             </Badge>
           )}
           <button
@@ -530,9 +514,9 @@ const EmployeesPageMobile = () => {
                   }
                 >
                   {sortOrder === "asc" ? (
-                    <ArrowUp className="h-4 w-4" />
+                    <ArrowUp className="h-4 w-4" aria-hidden="true" />
                   ) : (
-                    <ArrowDown className="h-4 w-4" />
+                    <ArrowDown className="h-4 w-4" aria-hidden="true" />
                   )}
                 </Button>
               </div>
