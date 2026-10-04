@@ -1,8 +1,16 @@
 import { useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Phone, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle, Mail01, PhoneCall01 } from "@untitledui/icons";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useRequestPasswordReset } from "@/hooks/api/usePasswordReset";
 import { useRequestZaloReset } from "@/hooks/api/useZaloReset";
+import { AuthBrandMark } from "@/components/auth/AuthBrandMark";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { AuthSpinner } from "@/components/auth/AuthSpinner";
+import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
+import { cx } from "@/utils/cx";
 
 /**
  * ForgotPassword — step 1 of the self-service password-reset flow.
@@ -76,110 +84,97 @@ const ForgotPassword = () => {
     <div
       data-admin-ui=""
       data-theme="congtruong"
-      className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-base-200 px-4 py-6 text-base-content"
+      className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-muted px-4 py-6 text-fg-primary"
       style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100">
-        <div className="ct-card-body gap-0 p-6 sm:p-8">
-          <div className="mb-6 flex items-center gap-3">
-            <img src="/logo-square.png" alt="TingTing logo" className="h-12 w-12 object-contain" />
-            <div>
-              <p className="font-display text-[1.35rem] font-black leading-none tracking-[-0.03em]">TingTing</p>
-            </div>
-          </div>
+      <AuthCard>
+        <AuthBrandMark className="mb-6" />
 
-          {!done ? (
-            <>
-              <div className="mb-5">
-                <h2 className="font-display text-3xl font-black leading-tight tracking-[-0.04em] sm:text-4xl">
-                  Quên mật khẩu?
-                </h2>
-                <p className="mt-2 text-sm text-base-content">
-                  Nhập email hoặc số điện thoại đã đăng ký để đặt lại mật khẩu.
+        {!done ? (
+          <>
+            <div className="mb-5">
+              <h2 className="font-display text-display-md font-semibold leading-tight tracking-tight text-fg-primary">
+                Quên mật khẩu?
+              </h2>
+              <p className="mt-2 text-sm text-fg-tertiary">
+                Nhập email hoặc số điện thoại đã đăng ký để đặt lại mật khẩu.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              <div className="space-y-1.5">
+                <Label htmlFor="identifier">Email hoặc số điện thoại</Label>
+                <div className="relative">
+                  {/* Swap icon based on detected input type */}
+                  {isEmailMode ? (
+                    <Mail01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+                  ) : (
+                    <PhoneCall01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+                  )}
+                  <Input
+                    id="identifier"
+                    type="text"
+                    inputMode={isEmailMode ? "email" : "tel"}
+                    placeholder="email@cua-ban.vn  hoặc  0987 654 321"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    className="pl-9"
+                    required
+                    autoComplete="off"
+                    disabled={pending}
+                  />
+                </div>
+                {/* Channel hint — neutral; does NOT confirm the value exists in the DB. */}
+                {identifier.trim() && (
+                  <p className="text-xs text-fg-tertiary">
+                    {isEmailMode
+                      ? "📧 Nếu email tồn tại, liên kết đặt lại sẽ gửi qua email."
+                      : "💬 Nếu số điện thoại tồn tại, mã OTP sẽ gửi qua Zalo."}
+                  </p>
+                )}
+              </div>
+
+              <Button type="submit" className="mt-2 w-full" disabled={pending || !identifier.trim()}>
+                {pending ? (
+                  <>
+                    <AuthSpinner className="size-4" /> Đang gửi...
+                  </>
+                ) : (
+                  "Gửi yêu cầu đặt lại"
+                )}
+              </Button>
+            </form>
+
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => navigate("/login", { replace: true })}
+              className="mt-5 text-xs"
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              Quay lại đăng nhập
+            </Button>
+          </>
+        ) : (
+          <div className="py-2" role="status">
+            <div className="mb-5 flex items-start gap-3">
+              <FeaturedIcon icon={CheckCircle} color="success" theme="light" size="md" />
+              <div>
+                <p className="text-sm font-bold text-fg-primary">
+                  Nếu email tồn tại trong hệ thống
+                </p>
+                <p className="mt-1 text-sm leading-5 text-fg-secondary">
+                  Bạn sẽ nhận được liên kết đặt lại mật khẩu trong vài phút. Vui lòng kiểm tra hộp thư (kể cả thư rác).
                 </p>
               </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                <div className="space-y-2">
-                  <label htmlFor="identifier" className="block text-xs font-bold text-base-content">
-                    Email hoặc số điện thoại
-                  </label>
-                  <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
-                    {/* Swap icon based on detected input type */}
-                    {isEmailMode ? (
-                      <Mail className="h-4 w-4 shrink-0 text-base-content" aria-hidden="true" />
-                    ) : (
-                      <Phone className="h-4 w-4 shrink-0 text-base-content" aria-hidden="true" />
-                    )}
-                    <input
-                      id="identifier"
-                      type="text"
-                      inputMode={isEmailMode ? "email" : "tel"}
-                      placeholder="email@cua-ban.vn  hoặc  0987 654 321"
-                      value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
-                      className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content"
-                      required
-                      autoComplete="off"
-                      disabled={pending}
-                    />
-                  </label>
-                  {/* Channel hint — neutral; does NOT confirm the value exists in the DB. */}
-                  {identifier.trim() && (
-                    <p className="text-xs text-base-content">
-                      {isEmailMode
-                        ? "📧 Nếu email tồn tại, liên kết đặt lại sẽ gửi qua email."
-                        : "💬 Nếu số điện thoại tồn tại, mã OTP sẽ gửi qua Zalo."}
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  className="ct-btn ct-btn-primary ct-btn-lg mt-2 h-12 w-full rounded-xl text-sm font-extrabold normal-case"
-                  disabled={pending || !identifier.trim()}
-                >
-                  {pending ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Đang gửi...</>
-                  ) : (
-                    "Gửi yêu cầu đặt lại"
-                  )}
-                </button>
-              </form>
-
-              <button
-                type="button"
-                onClick={() => navigate("/login", { replace: true })}
-                className="mt-5 flex items-center gap-1.5 text-xs font-bold text-base-content hover:text-base-content"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-                Quay lại đăng nhập
-              </button>
-            </>
-          ) : (
-            <div className="py-2" role="status">
-              <div className="mb-5 flex items-start gap-3 rounded-xl border border-success/30 bg-success/10 p-4">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden="true" />
-                <div>
-                  <p className="text-sm font-bold text-base-content">
-                    Nếu email tồn tại trong hệ thống
-                  </p>
-                  <p className="mt-1 text-sm leading-5 text-base-content">
-                    Bạn sẽ nhận được liên kết đặt lại mật khẩu trong vài phút. Vui lòng kiểm tra hộp thư (kể cả thư rác).
-                  </p>
-                </div>
-              </div>
-              <Link
-                to="/login"
-                className="ct-btn ct-btn-outline ct-btn-lg flex h-12 w-full items-center justify-center gap-2 rounded-xl border-base-300 text-sm font-bold"
-              >
-                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                Quay lại đăng nhập
-              </Link>
             </div>
-          )}
-        </div>
-      </div>
+            <Link to="/login" className={cx(buttonVariants({ variant: "outline" }), "w-full")}>
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              Quay lại đăng nhập
+            </Link>
+          </div>
+        )}
+      </AuthCard>
     </div>
   );
 };

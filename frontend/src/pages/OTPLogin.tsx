@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { ArrowLeft, AlertCircle, ShieldTick } from "@untitledui/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, Loader2, ArrowLeft, ShieldCheck } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { authManager } from "@/lib/auth";
 import { useAuth } from "@/contexts";
 import { authService, getPendingOtpSessionId, clearPendingOtp } from "@/services/api/auth.service";
 import { showErrorNotification } from "@/utils/error-handler";
 import { generateAvatarUrl } from "@/utils/avatarHelpers";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { AuthSpinner } from "@/components/auth/AuthSpinner";
+import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
 
 const RESEND_COOLDOWN_SECONDS = 30;
 
@@ -119,86 +120,90 @@ const OTPLogin = () => {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md space-y-6 rounded-xl border border-slate-300 bg-white p-8 shadow-sm">
-        <div className="space-y-2 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-            <ShieldCheck className="h-6 w-6 text-slate-600" aria-hidden="true" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-x-hidden bg-muted px-4 py-6 text-fg-primary">
+      <AuthCard>
+        <div className="space-y-6">
+          <div className="space-y-4 text-center">
+            <FeaturedIcon icon={ShieldTick} color="brand" theme="light" size="lg" className="mx-auto" />
+            <div className="space-y-2">
+              <h1 className="font-display text-display-sm font-semibold tracking-tight text-fg-primary">Xác thực hai bước</h1>
+              <p className="text-sm text-fg-tertiary">
+                Chúng tôi đã gửi mã xác thực 6 chữ số đến email của bạn. Vui lòng nhập mã để tiếp tục.
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Xác thực hai bước</h1>
-          <p className="text-sm text-slate-500">
-            Chúng tôi đã gửi mã xác thực 6 chữ số đến email của bạn. Vui lòng nhập mã để tiếp tục.
-          </p>
-        </div>
 
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" aria-hidden="true" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        <div className="space-y-2">
-          <Label htmlFor="otp-code">Mã xác thực</Label>
-          <Input
-            id="otp-code"
-            ref={inputRef}
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]*"
-            maxLength={6}
-            value={code}
-            onChange={(e) => {
-              const v = e.target.value.replace(/\D/g, "").slice(0, 6);
-              setCode(v);
-              if (error) setError(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && code.length === 6 && !submitting) {
-                handleVerify();
-              }
-            }}
-            placeholder="••••••"
-            className="text-center text-2xl tracking-[0.5em]"
-            disabled={submitting}
-          />
-        </div>
-
-        <Button
-          onClick={handleVerify}
-          className="w-full"
-          disabled={submitting || code.length !== 6}
-        >
-          {submitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-              Đang xác thực...
-            </>
-          ) : (
-            "Xác thực"
+          {error && (
+            <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-utility-error-300 bg-utility-error-50 p-3 text-sm">
+              <AlertCircle className="size-5 shrink-0 text-utility-error-600" aria-hidden="true" />
+              <span className="font-semibold leading-5 text-fg-error-primary">{error}</span>
+            </div>
           )}
-        </Button>
 
-        <div className="flex items-center justify-between text-sm">
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-700"
+          <div className="space-y-1.5">
+            <Label htmlFor="otp-code">Mã xác thực</Label>
+            <Input
+              id="otp-code"
+              ref={inputRef}
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]*"
+              maxLength={6}
+              value={code}
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, "").slice(0, 6);
+                setCode(v);
+                if (error) setError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && code.length === 6 && !submitting) {
+                  handleVerify();
+                }
+              }}
+              placeholder="••••••"
+              className="text-center text-2xl tracking-[0.5em]"
+              disabled={submitting}
+            />
+          </div>
+
+          <Button
+            onClick={handleVerify}
+            className="w-full"
+            disabled={submitting || code.length !== 6}
           >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            Quay lại đăng nhập
-          </button>
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={cooldown > 0 || resending}
-            className="font-medium text-slate-600 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {resending ? "Đang gửi..." : cooldown > 0 ? `Gửi lại (${cooldown}s)` : "Gửi lại mã"}
-          </button>
+            {submitting ? (
+              <>
+                <AuthSpinner className="size-4" />
+                Đang xác thực...
+              </>
+            ) : (
+              "Xác thực"
+            )}
+          </Button>
+
+          <div className="flex items-center justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleCancel}
+              className="text-sm"
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              Quay lại đăng nhập
+            </Button>
+            <Button
+              type="button"
+              variant="link"
+              onClick={handleResend}
+              disabled={cooldown > 0 || resending}
+              className="text-sm"
+            >
+              {resending ? "Đang gửi..." : cooldown > 0 ? `Gửi lại (${cooldown}s)` : "Gửi lại mã"}
+            </Button>
+          </div>
         </div>
-      </div>
+      </AuthCard>
     </div>
   );
 };

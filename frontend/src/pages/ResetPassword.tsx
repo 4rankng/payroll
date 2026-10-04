@@ -1,8 +1,16 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Lock, Eye, EyeOff, AlertCircle, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff, Lock01 } from "@untitledui/icons";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useConfirmPasswordReset } from "@/hooks/api/usePasswordReset";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
+import { AuthBrandMark } from "@/components/auth/AuthBrandMark";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { AuthSpinner } from "@/components/auth/AuthSpinner";
+import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
+import { cx } from "@/utils/cx";
 
 /**
  * ResetPassword — step 2 of the self-service password-reset flow.
@@ -83,20 +91,17 @@ const ResetPassword = () => {
     return (
       <ResetShell>
         <div className="py-2" role="status">
-          <div className="mb-5 flex items-start gap-3 rounded-xl border border-success/30 bg-success/10 p-4">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden="true" />
+          <div className="mb-5 flex items-start gap-3">
+            <FeaturedIcon icon={CheckCircle} color="success" theme="light" size="md" />
             <div>
-              <p className="text-sm font-bold text-base-content">Đặt lại mật khẩu thành công</p>
-              <p className="mt-1 text-sm leading-5 text-base-content">
+              <p className="text-sm font-bold text-fg-primary">Đặt lại mật khẩu thành công</p>
+              <p className="mt-1 text-sm leading-5 text-fg-secondary">
                 Vui lòng đăng nhập bằng mật khẩu mới.
               </p>
             </div>
           </div>
-          <Link
-            to="/login"
-            className="ct-btn ct-btn-primary ct-btn-lg flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-extrabold normal-case"
-          >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          <Link to="/login" className={cx(buttonVariants({ variant: "default" }), "w-full")}>
+            <ArrowLeft className="size-4" aria-hidden="true" />
             Đi đến đăng nhập
           </Link>
         </div>
@@ -110,10 +115,10 @@ const ResetPassword = () => {
   return (
     <ResetShell>
       <div className="mb-6">
-        <h2 className="font-display text-3xl font-black leading-tight tracking-[-0.04em] sm:text-4xl">
+        <h2 className="font-display text-display-md font-semibold leading-tight tracking-tight text-fg-primary">
           Đặt lại mật khẩu
         </h2>
-        <p className="mt-2 text-sm text-base-content">Nhập mật khẩu mới cho tài khoản của bạn.</p>
+        <p className="mt-2 text-sm text-fg-tertiary">Nhập mật khẩu mới cho tài khoản của bạn.</p>
       </div>
 
       {apiError && (
@@ -124,28 +129,26 @@ const ResetPassword = () => {
               message="Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."
             />
           ) : (
-            <div role="alert" className="ct-alert ct-alert-error mb-5 items-start rounded-xl text-sm shadow-none">
-              <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
-              <span className="font-semibold leading-5">{apiError.message || "Đã có lỗi xảy ra, vui lòng thử lại."}</span>
+            <div role="alert" className="mb-5 flex items-start gap-2.5 rounded-lg border border-utility-error-300 bg-utility-error-50 p-3 text-sm">
+              <AlertCircle className="size-5 shrink-0 text-utility-error-600" aria-hidden="true" />
+              <span className="font-semibold leading-5 text-fg-error-primary">{apiError.message || "Đã có lỗi xảy ra, vui lòng thử lại."}</span>
             </div>
           )}
         </>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <div className="space-y-2">
-          <label htmlFor="newPassword" className="block text-xs font-bold text-base-content">
-            Mật khẩu mới
-          </label>
-          <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
-            <Lock className="h-4 w-4 shrink-0 text-base-content" aria-hidden="true" />
-            <input
+        <div className="space-y-1.5">
+          <Label htmlFor="newPassword">Mật khẩu mới</Label>
+          <div className="relative">
+            <Lock01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+            <Input
               id="newPassword"
               type={showPassword ? "text" : "password"}
               placeholder="Nhập mật khẩu mới"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content"
+              className="pr-12 pl-9 sm:pr-10"
               required
               autoComplete="new-password"
               disabled={mutation.isPending}
@@ -154,49 +157,43 @@ const ResetPassword = () => {
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-              className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square -mr-2 min-h-9 h-9 w-9 text-base-content hover:text-base-content"
+              className="absolute inset-y-0 right-0 flex h-11 w-11 items-center justify-center rounded-lg text-fg-quaternary outline-brand transition duration-100 ease-linear hover:text-fg-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 sm:h-9 sm:w-9"
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? <EyeOff className="size-5" aria-hidden="true" /> : <Eye className="size-5" aria-hidden="true" />}
             </button>
-          </label>
+          </div>
           {newPassword && <PasswordStrengthIndicator password={newPassword} />}
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="block text-xs font-bold text-base-content">
-            Xác nhận mật khẩu
-          </label>
-          <label className="ct-input ct-input-bordered flex h-12 w-full items-center gap-3 rounded-xl border-base-300 bg-base-200/55 px-4 focus-within:border-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary/10">
-            <Lock className="h-4 w-4 shrink-0 text-base-content" aria-hidden="true" />
-            <input
+        <div className="space-y-1.5">
+          <Label htmlFor="confirmPassword">Xác nhận mật khẩu</Label>
+          <div className="relative">
+            <Lock01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+            <Input
               id="confirmPassword"
               type={showPassword ? "text" : "password"}
               placeholder="Nhập lại mật khẩu mới"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-base-content"
+              className="pl-9"
               required
               autoComplete="new-password"
               disabled={mutation.isPending}
             />
-          </label>
-          {matchError && <p className="text-xs font-semibold text-destructive">{matchError}</p>}
+          </div>
+          {matchError && <p className="text-xs font-semibold text-fg-error-primary">{matchError}</p>}
         </div>
 
-        <button
-          type="submit"
-          className="ct-btn ct-btn-primary ct-btn-lg mt-2 h-12 w-full rounded-xl text-sm font-extrabold normal-case"
-          disabled={mutation.isPending || !newPassword || !confirmPassword}
-        >
+        <Button type="submit" className="mt-2 w-full" disabled={mutation.isPending || !newPassword || !confirmPassword}>
           {mutation.isPending ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <AuthSpinner className="size-4" />
               Đang đặt lại...
             </>
           ) : (
             "Đặt lại mật khẩu"
           )}
-        </button>
+        </Button>
       </form>
     </ResetShell>
   );
@@ -207,37 +204,29 @@ const ResetShell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div
     data-admin-ui=""
     data-theme="congtruong"
-    className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-base-200 px-4 py-6 text-base-content"
+    className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-muted px-4 py-6 text-fg-primary"
     style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
   >
-    <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100">
-      <div className="ct-card-body gap-0 p-6 sm:p-8">
-        <div className="mb-6 flex items-center gap-3">
-          <img src="/logo-square.png" alt="TingTing logo" className="h-12 w-12 object-contain" />
-          <p className="font-display text-[1.35rem] font-black leading-none tracking-[-0.03em]">TingTing</p>
-        </div>
-        {children}
-      </div>
-    </div>
+    <AuthCard>{children}</AuthCard>
   </div>
 );
 
 const InvalidLinkState: React.FC<{ title: string; message: string }> = ({ title, message }) => (
   <div className="py-2">
-    <div className="mb-5 flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4">
-      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
+    <div className="mb-5 flex items-start gap-3">
+      <FeaturedIcon icon={AlertCircle} color="error" theme="light" size="md" />
       <div>
-        <p className="text-sm font-bold text-base-content">{title}</p>
-        <p className="mt-1 text-sm leading-5 text-base-content">{message}</p>
+        <p className="text-sm font-bold text-fg-primary">{title}</p>
+        <p className="mt-1 text-sm leading-5 text-fg-secondary">{message}</p>
       </div>
     </div>
-    <Link
-      to="/forgot-password"
-      className="ct-btn ct-btn-primary ct-btn-lg flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-extrabold normal-case"
-    >
+    <Link to="/forgot-password" className={cx(buttonVariants({ variant: "default" }), "w-full")}>
       Yêu cầu liên kết mới
     </Link>
   </div>
 );
 
 export default ResetPassword;
+
+
+

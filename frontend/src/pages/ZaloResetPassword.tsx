@@ -1,8 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { Lock, Eye, EyeOff, AlertCircle, Loader2, CheckCircle2, ArrowLeft, MessageCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff, Lock01, MessageChatCircle } from "@untitledui/icons";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useConfirmZaloReset } from "@/hooks/api/useZaloReset";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { AuthSpinner } from "@/components/auth/AuthSpinner";
+import { FeaturedIcon } from "@/components/foundations/featured-icon/featured-icon";
 
 /**
  * ZaloResetPassword — step 2 of the Zalo-OTP password-reset flow.
@@ -14,7 +20,7 @@ import { PasswordStrengthIndicator } from "@/components/ui/password-strength-ind
  * back to `/forgot-password`.
  *
  * The user enters the 6-digit code they received via ZNS + a new password.
- * On success they're sent to `/login` with a success toast.
+ * On success they're sent to /login with a success toast.
  */
 const ZaloResetPassword = () => {
   const navigate = useNavigate();
@@ -126,17 +132,17 @@ const ZaloResetPassword = () => {
       <div
         data-admin-ui=""
         data-theme="congtruong"
-        className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-base-200 px-4 py-6 text-base-content"
+        className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-muted px-4 py-6 text-fg-primary"
       >
-        <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100">
-          <div className="ct-card-body gap-4 p-6 sm:p-8 text-center">
-            <CheckCircle2 className="mx-auto h-14 w-14 text-success" />
-            <h2 className="font-display text-2xl font-black leading-tight tracking-[-0.04em]">
+        <AuthCard className="text-center">
+          <div className="flex flex-col items-center gap-4">
+            <FeaturedIcon icon={CheckCircle} color="success" theme="light" size="xl" />
+            <h2 className="font-display text-display-sm font-semibold leading-tight tracking-tight text-fg-primary">
               Đặt lại mật khẩu thành công
             </h2>
-            <p className="text-sm text-base-content">Vui lòng đăng nhập bằng mật khẩu mới.</p>
+            <p className="text-sm text-fg-tertiary">Vui lòng đăng nhập bằng mật khẩu mới.</p>
           </div>
-        </div>
+        </AuthCard>
       </div>
     );
   }
@@ -145,136 +151,133 @@ const ZaloResetPassword = () => {
     <div
       data-admin-ui=""
       data-theme="congtruong"
-      className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-base-200 px-4 py-6 text-base-content"
+      className="relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-muted px-4 py-6 text-fg-primary"
       style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="ct-card w-full max-w-[470px] border border-base-300 bg-base-100">
-        <div className="ct-card-body gap-0 p-6 sm:p-8">
-          <Link to="/forgot-password" className="mb-4 inline-flex items-center gap-1.5 text-xs font-bold text-base-content hover:text-primary">
-            <ArrowLeft className="h-3.5 w-3.5" /> Quay lại
-          </Link>
+      <AuthCard>
+        <Link
+          to="/forgot-password"
+          className="-mx-1 inline-flex h-9 items-center gap-1 rounded-md px-1 text-xs font-semibold text-fg-tertiary outline-brand transition duration-100 ease-linear hover:text-tertiary_hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:h-8"
+        >
+          <ArrowLeft className="size-4" aria-hidden="true" /> Quay lại
+        </Link>
 
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
-              <MessageCircle className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h2 className="font-display text-2xl font-black leading-none tracking-[-0.03em]">Đặt lại mật khẩu</h2>
-              <p className="mt-1 text-xs text-base-content">
-                {mobile
-                  ? `Nếu số điện thoại ${mobile} tồn tại trong hệ thống, mã OTP đã được gửi qua Zalo.`
-                  : "Nếu số điện thoại tồn tại trong hệ thống, mã OTP đã được gửi qua Zalo."}
-              </p>
+        <div className="mb-6 mt-4 flex items-center gap-3">
+          <FeaturedIcon icon={MessageChatCircle} color="brand" theme="light" size="md" />
+          <div>
+            <h2 className="font-display text-display-sm font-semibold leading-none tracking-tight text-fg-primary">Đặt lại mật khẩu</h2>
+            <p className="mt-1 text-xs text-fg-tertiary">
+              {mobile
+                ? `Nếu số điện thoại ${mobile} tồn tại trong hệ thống, mã OTP đã được gửi qua Zalo.`
+                : "Nếu số điện thoại tồn tại trong hệ thống, mã OTP đã được gửi qua Zalo."}
+            </p>
+          </div>
+        </div>
+
+        {apiError && (
+          <div role="alert" className="mb-4 flex items-start gap-2 rounded-lg border border-utility-error-300 bg-utility-error-50 p-3 text-sm">
+            <AlertCircle className="size-4 shrink-0 text-utility-error-600" aria-hidden="true" />
+            <p className="text-sm leading-5 text-fg-error-primary">
+              {apiError.message || "Mã đặt lại không đúng hoặc đã hết hạn. Vui lòng yêu cầu mã mới."}
+            </p>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* 6-digit OTP input */}
+          <div>
+            <Label className="mb-2 block">Mã OTP (6 số)</Label>
+            <div className="flex justify-between gap-1.5 sm:gap-2" onPaste={handleCodePaste}>
+              {code.map((digit, idx) => (
+                <input
+                  key={idx}
+                  ref={(el) => { inputsRef.current[idx] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleCodeChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleCodeKeyDown(idx, e)}
+                  disabled={mutation.isPending}
+                  className="h-12 w-full min-w-0 flex-1 rounded-lg border border-input bg-card text-center text-lg font-semibold text-fg-primary shadow-xs outline-brand transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 sm:h-14"
+                  aria-label={`Số thứ ${idx + 1}`}
+                />
+              ))}
             </div>
           </div>
 
-          {apiError && (
-            <div className="mb-4 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-              <p className="text-sm text-destructive">
-                {apiError.message || "Mã đặt lại không đúng hoặc đã hết hạn. Vui lòng yêu cầu mã mới."}
-              </p>
+          {/* New password */}
+          <div>
+            <Label htmlFor="zalo-new-pwd">Mật khẩu mới</Label>
+            <div className="relative mt-1.5">
+              <Lock01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+              <Input
+                id="zalo-new-pwd"
+                type={showPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={mutation.isPending}
+                className="pr-12 pl-9 sm:pr-10"
+                placeholder="Ít nhất 8 ký tự"
+                required
+                minLength={8}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                className="absolute inset-y-0 right-0 flex h-11 w-11 items-center justify-center rounded-lg text-fg-quaternary outline-brand transition duration-100 ease-linear hover:text-fg-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 sm:h-9 sm:w-9"
+              >
+                {showPassword ? <EyeOff className="size-5" aria-hidden="true" /> : <Eye className="size-5" aria-hidden="true" />}
+              </button>
             </div>
-          )}
+            {newPassword && <div className="mt-2"><PasswordStrengthIndicator password={newPassword} /></div>}
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* 6-digit OTP input */}
-            <div>
-              <label className="mb-2 block text-xs font-bold text-base-content">Mã OTP (6 số)</label>
-              <div className="flex justify-between gap-1.5 sm:gap-2" onPaste={handleCodePaste}>
-                {code.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    ref={(el) => { inputsRef.current[idx] = el; }}
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleCodeChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleCodeKeyDown(idx, e)}
-                    disabled={mutation.isPending}
-                    className="h-12 w-full min-w-0 flex-1 rounded-lg border border-base-300 bg-base-100 text-center text-lg font-bold text-base-content outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 sm:h-14 sm:text-xl"
-                    aria-label={`Số thứ ${idx + 1}`}
-                  />
-                ))}
-              </div>
+          {/* Confirm password */}
+          <div>
+            <Label htmlFor="zalo-confirm-pwd">Xác nhận mật khẩu mới</Label>
+            <div className="relative mt-1.5">
+              <Lock01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+              <Input
+                id="zalo-confirm-pwd"
+                type={showPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={mutation.isPending}
+                className="pl-9"
+                placeholder="Nhập lại mật khẩu mới"
+                required
+                minLength={8}
+              />
             </div>
+            {matchError && <p className="mt-1.5 text-xs font-semibold text-fg-error-primary">{matchError}</p>}
+          </div>
 
-            {/* New password */}
-            <div>
-              <label htmlFor="zalo-new-pwd" className="mb-2 block text-xs font-bold text-base-content">
-                Mật khẩu mới
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content" />
-                <input
-                  id="zalo-new-pwd"
-                  type={showPassword ? "text" : "password"}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  disabled={mutation.isPending}
-                  className="w-full rounded-lg border border-base-300 bg-base-100 py-2.5 pl-10 pr-10 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  placeholder="Ít nhất 8 ký tự"
-                  required
-                  minLength={8}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content hover:text-base-content"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              {newPassword && <PasswordStrengthIndicator password={newPassword} />}
-            </div>
+          <Button
+            type="submit"
+            disabled={mutation.isPending || code.some((d) => !d) || newPassword.length < 8}
+            className="w-full"
+          >
+            {mutation.isPending ? (
+              <>
+                <AuthSpinner className="size-4" /> Đang đặt lại...
+              </>
+            ) : (
+              "Đặt lại mật khẩu"
+            )}
+          </Button>
+        </form>
 
-            {/* Confirm password */}
-            <div>
-              <label htmlFor="zalo-confirm-pwd" className="mb-2 block text-xs font-bold text-base-content">
-                Xác nhận mật khẩu mới
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content" />
-                <input
-                  id="zalo-confirm-pwd"
-                  type={showPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={mutation.isPending}
-                  className="w-full rounded-lg border border-base-300 bg-base-100 py-2.5 pl-10 pr-10 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  placeholder="Nhập lại mật khẩu mới"
-                  required
-                  minLength={8}
-                />
-              </div>
-              {matchError && <p className="mt-1.5 text-xs text-destructive">{matchError}</p>}
-            </div>
-
-            <button
-              type="submit"
-              disabled={mutation.isPending || code.some((d) => !d) || newPassword.length < 8}
-              className="ct-btn ct-btn-primary ct-btn-lg h-12 w-full rounded-xl text-sm font-extrabold normal-case"
-            >
-              {mutation.isPending ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Đang đặt lại...</>
-              ) : (
-                "Đặt lại mật khẩu"
-              )}
-            </button>
-          </form>
-
-          <p className="mt-4 text-center text-xs text-base-content">
-            Không nhận được mã?{" "}
-            <Link to="/forgot-password" className="font-bold text-primary hover:underline">
-              Yêu cầu lại
-            </Link>{" "}
-            hoặc liên hệ quản trị viên.
-          </p>
-        </div>
-      </div>
+        <p className="mt-4 text-center text-xs text-fg-tertiary">
+          Không nhận được mã?{" "}
+          <Link to="/forgot-password" className="font-semibold text-brand-secondary underline-offset-2 outline-brand transition duration-100 ease-linear hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 rounded-sm">
+            Yêu cầu lại
+          </Link>{" "}
+          hoặc liên hệ quản trị viên.
+        </p>
+      </AuthCard>
     </div>
   );
 };

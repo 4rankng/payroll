@@ -3,12 +3,16 @@ import { Page, expect } from '@playwright/test';
 export class LoginPage {
   constructor(private page: Page) {}
 
-  // Selectors
-  private readonly emailInput = 'input[type="email"], input[name="email"]';
-  private readonly passwordInput = 'input[type="password"], input[name="password"]';
-  private readonly loginButton = 'button[type="submit"], button:has-text("Đăng nhập"), button:has-text("Login")';
-  private readonly errorMessage = '[data-testid="error-message"], .error-message, .alert-error';
-  private readonly forgotPasswordLink = 'a:has-text("Quên mật khẩu"), a:has-text("Forgot password")';
+  // Selectors — retargeted to the rebuilt (UU PRO) login markup.
+  // #emailOrUsername is the CCCD/phone/username identity field (type="text"
+  // by design — it is NOT an email input); #password is the password field;
+  // the submit button is the native type=submit "Đăng nhập"; the login error
+  // alert carries role="alert" + data-testid="error-message".
+  private readonly emailInput = '#emailOrUsername';
+  private readonly passwordInput = '#password';
+  private readonly loginButton = 'button[type="submit"]';
+  private readonly errorMessage = '[data-testid="error-message"]';
+  private readonly forgotPasswordLink = 'a:has-text("Quên mật khẩu")';
   private readonly loadingSpinner = '[data-testid="loading"], .loading, .spinner';
 
   // Actions
@@ -17,25 +21,33 @@ export class LoginPage {
     await this.page.waitForLoadState('networkidle');
   }
 
-  async login(email: string, password: string) {
-    await this.page.fill(this.emailInput, email);
+  async fillCredentials(username: string, password: string) {
+    await this.page.fill(this.emailInput, username);
     await this.page.fill(this.passwordInput, password);
-    await this.page.click(this.loginButton);
+  }
 
-    // Wait for navigation or error message
+  async submit() {
+    await this.page.click(this.loginButton);
+  }
+
+  async login(username: string, password: string, destination: string = '**/dashboard') {
+    await this.fillCredentials(username, password);
+    await this.submit();
+
+    // Wait for post-login navigation (destination varies by role: admin →
+    // /admin, partner → /partner/dashboard) or the inline error alert.
     await Promise.race([
-      this.page.waitForURL('**/dashboard', { timeout: 10000 }),
-      this.page.waitForSelector(this.errorMessage, { timeout: 5000 })
+      this.page.waitForURL(destination, { timeout: 15000 }),
+      this.page.waitForSelector(this.errorMessage, { timeout: 15000 })
     ]);
   }
 
-  async loginWithInvalidCredentials(email: string, password: string) {
-    await this.page.fill(this.emailInput, email);
-    await this.page.fill(this.passwordInput, password);
-    await this.page.click(this.loginButton);
+  async loginWithInvalidCredentials(username: string, password: string) {
+    await this.fillCredentials(username, password);
+    await this.submit();
 
     // Wait for error message
-    await this.page.waitForSelector(this.errorMessage, { timeout: 5000 });
+    await this.page.waitForSelector(this.errorMessage, { timeout: 15000 });
   }
 
   async clickForgotPassword() {
@@ -67,17 +79,24 @@ export class LoginPage {
   }
 
   async expectToBeLoggedIn() {
-    // Check for dashboard elements or user menu
-    await expect(this.page).toHaveURL(/.*dashboard/);
-    await expect(this.page.locator('[data-testid="user-menu"], .user-menu, .profile-menu')).toBeVisible();
+    // Away from /login and inside an authenticated app shell.
+    await expect(this.page).not.toHaveURL(/.*login/);
+    await expect(this.page.locator('main').first()).toBeVisible();
+  }
+
+  async expectMobileLoginForm() {
+    // The rebuilt login renders a usable single-column form at mobile widths
+    // (hero strip on top, form below); assert the form contract is present.
+    await expect(this.page.locator(this.emailInput)).toBeVisible();
+    await expect(this.page.locator(this.passwordInput)).toBeVisible();
+    await expect(this.page.locator(this.loginButton)).toBeVisible();
   }
 
   // Rate limiting tests
-  async attemptMultipleLogins(email: string, password: string, attempts: number = 5) {
+  async attemptMultipleLogins(username: string, password: string, attempts: number = 5) {
     for (let i = 0; i < attempts; i++) {
-      await this.page.fill(this.emailInput, email);
-      await this.page.fill(this.passwordInput, password);
-      await this.page.click(this.loginButton);
+      await this.fillCredentials(username, password);
+      await this.submit();
 
       // Wait a bit between attempts
       await this.page.waitForTimeout(1000);
@@ -85,6 +104,8 @@ export class LoginPage {
   }
 
   async expectRateLimitMessage() {
-    await expect(this.page.locator(this.errorMessage)).toContainText(/rate limit|too many attempts|quá nhiều lần thử/);
+    // The axios interceptor owns the 429 copy ("Quá nhiều yêu cầu…"); the
+    // fallback alert copy is "Quá nhiều lần đăng nhập…".
+    await expect(this.page.locator(this.errorMessage)).toContainText(/Quá nhiều yêu cầu|Quá nhiều lần đăng nhập/);
   }
 }

@@ -3,10 +3,13 @@ import { Page, expect } from '@playwright/test';
 export class DashboardPage {
   constructor(private page: Page) {}
 
-  // Selectors
-  private readonly sidebar = '[data-testid="sidebar"], .sidebar, nav';
-  private readonly userMenu = '[data-testid="user-menu"], .user-menu, .profile-menu';
-  private readonly logoutButton = 'button:has-text("Đăng xuất"), button:has-text("Logout")';
+  // Selectors — retargeted to the real admin shell (AdminSidebar): the nav
+  // landmark carries aria-label "Điều hướng chính", the account menu trigger
+  // is .admin-sidebar-account (aria-label "Tài khoản: …"), and the logout
+  // action is the "Đăng xuất" item inside its Radix dropdown.
+  private readonly sidebar = '[role="navigation"], nav';
+  private readonly userMenu = 'button.admin-sidebar-account, button[aria-label^="Tài khoản"], button:has-text("Xin chào")';
+  private readonly logoutButton = '[role="menuitem"]:has-text("Đăng xuất"), button:has-text("Đăng xuất")';
   private readonly statsCards = '[data-testid="stats-cards"], .stats-cards, .dashboard-stats';
   private readonly recentActivities = '[data-testid="recent-activities"], .recent-activities';
   private readonly urgentTasks = '[data-testid="urgent-tasks"], .urgent-tasks';
@@ -46,9 +49,10 @@ export class DashboardPage {
 
   // Assertions
   async expectToBeOnDashboard() {
-    await expect(this.page).toHaveURL(/.*dashboard/);
-    await expect(this.page.locator(this.sidebar)).toBeVisible();
-    await expect(this.page.locator(this.userMenu)).toBeVisible();
+    // Role landing pages: admin → /admin, partner → /partner/dashboard.
+    await expect(this.page).toHaveURL(/\/admin(\/|$)|\/dashboard(\/|$)/);
+    await expect(this.page.locator(this.sidebar).first()).toBeVisible();
+    await expect(this.page.locator(this.userMenu).first()).toBeVisible();
   }
 
   async expectStatsCardsVisible() {
@@ -68,17 +72,35 @@ export class DashboardPage {
   }
 
   // Role-based assertions
+  /** Expand a collapsible sidebar nav group if the sidebar collapsed it. */
+  private async openNavGroup(label: string) {
+    const toggle = this.page.getByRole('button', { name: label, exact: true });
+    try {
+      if ((await toggle.getAttribute('aria-expanded', { timeout: 2000 })) === 'false') {
+        await toggle.click();
+      }
+    } catch {
+      // Group toggle not present (collapsed rail / flat nav) — links may
+      // still be directly visible.
+    }
+  }
+
   async expectAdminFeatures() {
-    // Admin should see all navigation items
-    await expect(this.page.locator('a:has-text("Nhân viên"), a:has-text("Employees")')).toBeVisible();
-    await expect(this.page.locator('a:has-text("Dự án"), a:has-text("Projects")')).toBeVisible();
-    await expect(this.page.locator('a:has-text("Phê duyệt"), a:has-text("Approvals")')).toBeVisible();
+    // Admin should see the full management navigation. The Quản lý group can
+    // auto-collapse on overflow, so expand it defensively first. The admin
+    // sidebar has no "Phê duyệt" entry — "Người dùng" (/admin/users,
+    // partner-hidden) is the admin-only nav item this assertion targets.
+    await this.openNavGroup('Quản lý');
+    await expect(this.page.locator('a:has-text("Nhân viên"), a:has-text("Employees")').first()).toBeVisible();
+    await expect(this.page.locator('a:has-text("Dự án"), a:has-text("Projects")').first()).toBeVisible();
+    await expect(this.page.locator('a:has-text("Người dùng"), a:has-text("Users")').first()).toBeVisible();
   }
 
   async expectPartnerFeatures() {
     // Partner should see limited navigation
-    await expect(this.page.locator('a:has-text("Nhân viên"), a:has-text("Employees")')).toBeVisible();
-    await expect(this.page.locator('a:has-text("Dự án"), a:has-text("Projects")')).toBeVisible();
+    await this.openNavGroup('Quản lý');
+    await expect(this.page.locator('a:has-text("Nhân viên"), a:has-text("Employees")').first()).toBeVisible();
+    await expect(this.page.locator('a:has-text("Dự án"), a:has-text("Projects")').first()).toBeVisible();
     // Partner might not see admin-only features
   }
 
