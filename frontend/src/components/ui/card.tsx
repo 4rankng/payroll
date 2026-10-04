@@ -2,6 +2,11 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * UU PRO restyle: utility-gray borders/shadows and fg copy tokens; the
+ * app's `variant` prop (default/elevated/outlined/filled) and structure
+ * are unchanged. Padding stays compact (no UU p-5 inflation).
+ */
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & {
@@ -9,10 +14,10 @@ const Card = React.forwardRef<
   }
 >(({ className, variant = 'default', ...props }, ref) => {
   const variants = {
-    default: "rounded-lg border bg-card text-card-foreground shadow-sm",
-    elevated: "rounded-lg border bg-card text-card-foreground shadow-sm hover:shadow-sm transition-shadow",
-    outlined: "rounded-lg border-2 border-border bg-card text-card-foreground",
-    filled: "rounded-lg bg-muted text-muted-foreground",
+    default: "rounded-lg border border-utility-gray-200 bg-card text-card-foreground shadow-xs",
+    elevated: "rounded-lg border border-utility-gray-200 bg-card text-card-foreground shadow-xs hover:shadow-sm transition-shadow",
+    outlined: "rounded-lg border-2 border-utility-gray-300 bg-card text-card-foreground",
+    filled: "rounded-lg bg-utility-gray-50 text-fg-secondary",
   }
 
   return (
@@ -44,7 +49,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "typography-title-large",
+      "text-lg font-semibold text-fg-primary",
       className
     )}
     {...props}
@@ -58,7 +63,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("typography-body-medium text-muted-foreground", className)}
+    className={cn("text-sm text-fg-tertiary", className)}
     {...props}
   />
 ))

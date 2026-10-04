@@ -3,25 +3,39 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * UU PRO badge system (vendored reference: `@/components/base/badges`):
+ * soft-tinted utility-ladder chips (utility-{c}-50 surface, -700 copy,
+ * -200 ring). App-specific role variants have no UU equivalent and stay
+ * as solid cva entries layered on UU tokens where the W1 bridge provides
+ * the family (`partner`, `role`).
+ *
+ * Bridge gap (owner call, not silently swapped): no utility-blue ladder
+ * exists yet, so `info` and `admin` keep the legacy tailwind-default
+ * palette.
+ */
 const badgeVariants = cva(
-  "inline-flex items-center rounded-sm border px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center whitespace-nowrap rounded-md ring-1 ring-inset px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "bg-utility-brand-50 text-utility-brand-700 ring-utility-brand-200",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-utility-gray-50 text-utility-gray-700 ring-utility-gray-200",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground border-border",
-        success: "border-transparent bg-emerald-600 text-white hover:bg-emerald-500",
-        warning: "border-transparent bg-amber-100 text-amber-900 hover:bg-amber-200",
-        info: "border-transparent bg-sky-600 text-white hover:bg-sky-500",
-        admin: "border-transparent bg-blue-600 text-white hover:bg-blue-700",
-        partner: "border-transparent bg-emerald-600 text-white hover:bg-emerald-700",
-        manager: "border-transparent bg-teal-600 text-white hover:bg-teal-700",
-        role: "border-transparent bg-slate-600 text-white hover:bg-slate-700",
+          "bg-utility-error-50 text-utility-error-700 ring-utility-error-200",
+        outline: "bg-transparent text-fg-primary ring-utility-gray-300",
+        success:
+          "bg-utility-success-50 text-utility-success-700 ring-utility-success-200",
+        warning:
+          "bg-utility-warning-50 text-utility-warning-700 ring-utility-warning-200",
+        info: "bg-sky-600 text-white hover:bg-sky-500",
+        admin: "bg-blue-600 text-white hover:bg-blue-700",
+        partner:
+          "bg-brand-solid text-fg-white hover:bg-brand-solid_hover",
+        manager: "bg-teal-600 text-white hover:bg-teal-700",
+        role: "bg-utility-gray-600 text-fg-white hover:bg-utility-gray-700",
       },
     },
     defaultVariants: {
