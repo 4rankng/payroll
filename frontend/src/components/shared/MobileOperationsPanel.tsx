@@ -1,5 +1,8 @@
 import { type ReactNode } from 'react';
-import { ChevronRight, type LucideIcon } from 'lucide-react';
+// W13a follow-up (approved): icon slots widened from LucideIcon so both lucide
+// and @untitledui/icons components fit (UU's are plain FunctionComponents).
+import type { ComponentType, SVGProps } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type MobileOperationTone = 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
@@ -8,14 +11,14 @@ export interface MobileOperationMetric {
   label: string;
   value: ReactNode;
   helper?: ReactNode;
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   tone?: MobileOperationTone;
   onClick?: () => void;
 }
 
 export interface MobileOperationAction {
   label: string;
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   onClick: () => void;
   badge?: ReactNode;
   disabled?: boolean;
@@ -25,7 +28,7 @@ export interface MobileTaskRow {
   title: string;
   description?: ReactNode;
   value?: ReactNode;
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   tone?: MobileOperationTone;
   onClick?: () => void;
 }

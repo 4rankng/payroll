@@ -1,6 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AlertCircle, RefreshCw, Settings } from 'lucide-react';
+// PageHeader's icon slot is widened to ComponentType<SVGProps> (W13a
+// follow-up), so the UU icon fits; page-owned icons are UU as well.
+import { AlertCircle, RefreshCw05, Settings01 } from '@untitledui/icons';
 import {
   AdminPageCanvas,
   AdminPageHeaderCard,
@@ -76,21 +78,21 @@ const SettingsPage = () => {
       <AdminPageCanvas contentClassName="max-w-[1180px] space-y-6">
         <AdminPageHeaderCard>
           <PageHeader
-            icon={Settings}
+            icon={Settings01}
             title="Cài đặt hệ thống"
             description="Quản lý các cài đặt nghiệp vụ của hệ thống"
           />
         </AdminPageHeaderCard>
         <div
           role="alert"
-          className="flex flex-col gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-4 rounded-xl border border-utility-error-300 bg-utility-error-50 p-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="flex min-w-0 items-start gap-3">
-            <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-            <p className="text-sm text-destructive">{form.loadError}</p>
+            <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-utility-error-600" />
+            <p className="text-sm text-fg-error-primary">{form.loadError}</p>
           </div>
           <Button type="button" variant="outline" onClick={form.retryLoading} className="h-11 gap-2">
-            <RefreshCw aria-hidden="true" className="h-4 w-4" />
+            <RefreshCw05 aria-hidden="true" className="h-4 w-4" />
             Thử lại
           </Button>
         </div>
@@ -102,7 +104,7 @@ const SettingsPage = () => {
     <AdminPageCanvas contentClassName="max-w-[1180px] space-y-5">
       <AdminPageHeaderCard>
         <PageHeader
-          icon={Settings}
+          icon={Settings01}
           title="Cài đặt hệ thống"
           description="Quản lý các cài đặt nghiệp vụ của hệ thống"
         />

@@ -1,12 +1,15 @@
 import { Button } from '@/components/ui/button';
-import { LucideIcon } from 'lucide-react';
+// W13a follow-up (approved): icon slots widened from lucide's LucideIcon to
+// plain ComponentType so both lucide and @untitledui/icons fit — LucideIcon
+// is structurally assignable to this; UU's plain-FC icons were not to the old type.
+import type { ComponentType, SVGProps } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
 interface PageHeaderAction {
   label: string;
   onClick: () => void;
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'monochrome' | 'monochrome-outline';
   className?: string;
   disabled?: boolean;
@@ -17,7 +20,7 @@ interface PageHeaderProps {
   description?: string;
   actions?: PageHeaderAction[];
   children?: React.ReactNode;
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   className?: string;
 }
 

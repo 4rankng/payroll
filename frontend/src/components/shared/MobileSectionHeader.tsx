@@ -1,9 +1,11 @@
-import { type LucideIcon } from 'lucide-react';
+// W13a follow-up (approved): icon slot widened from LucideIcon so both lucide
+// and @untitledui/icons components fit (UU's are plain FunctionComponents).
+import type { ComponentType, SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 
 interface MobileSectionHeaderProps {
   /** Section icon — rendered in a soft primary/5 container */
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   /** Section title */
   title: string;
   /** Optional right-side content (selectors, badges, etc.) */

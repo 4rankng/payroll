@@ -1,5 +1,7 @@
 import { memo, type ReactNode } from 'react';
-import { type LucideIcon } from 'lucide-react';
+// W13a follow-up (approved): icon slot widened from LucideIcon so both lucide
+// and @untitledui/icons components fit (UU's are plain FunctionComponents).
+import type { ComponentType, SVGProps } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   EmptyStateIllustration,
@@ -8,7 +10,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export interface EmptyStateProps {
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   title: string;
   description?: string;
   action?: {

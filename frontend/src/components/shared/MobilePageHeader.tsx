@@ -1,4 +1,6 @@
-import { type LucideIcon } from 'lucide-react';
+// W13a follow-up (approved): icon slot widened from LucideIcon so both lucide
+// and @untitledui/icons components fit (UU's are plain FunctionComponents).
+import type { ComponentType, SVGProps } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -9,7 +11,7 @@ interface MobilePageHeaderProps {
   /** Optional subtitle below the title (date, record count, etc.) */
   subtitle?: React.ReactNode;
   /** Optional icon displayed in a soft colored container */
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   /** When provided, renders a back chevron button on the left.
    *  Collapses the role of MobileSubPageHeader for drill-down pages. */
   back?: () => void;

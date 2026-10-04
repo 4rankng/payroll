@@ -1,16 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
 import { format, startOfMonth } from 'date-fns';
+// UU PRO restyle (W13a): lucide → verified @untitledui/icons. The shared
+// admin-dashboard icon slots are widened to ComponentType<SVGProps> (W13a
+// follow-up), so UU's plain-FC icons fit everywhere on this page.
 import {
   AlertTriangle,
-  ArrowRightLeft,
-  BarChart3,
-  Building2,
-  FolderKanban,
-  ShieldCheck,
-  TrendingUp,
-  Trophy,
-  Users,
-} from 'lucide-react';
+  ArrowUpRight,
+  BarChart03,
+  Building02,
+  FolderCheck,
+  ShieldTick,
+  SwitchHorizontal01,
+  Trophy01,
+  Users01,
+} from '@untitledui/icons';
 
 import { DashboardLoadingSkeleton } from '@/components/ui/loading-states';
 import { DashboardHeader } from '@/components/admin-dashboard/DashboardHeader';
@@ -190,7 +193,7 @@ const AdminDashboard = () => {
         value: formatVND(data.dashboardSummary.pending_salary_this_month),
         statusLabel:
           data.dashboardSummary.pending_salary_this_month > 0 ? 'Cần theo dõi' : 'Đã giải ngân',
-        icon: ArrowRightLeft,
+        icon: SwitchHorizontal01,
         tone: data.dashboardSummary.pending_salary_this_month > 0 ? 'primary' : 'success',
         onClick: dashboardNav.navigateToSalaryLedger,
       },
@@ -255,7 +258,7 @@ const AdminDashboard = () => {
                   eyebrow="Sổ dòng tiền"
                   title="Lịch sử tài chính"
                   subtitle="Sổ chi phí, doanh thu và lợi nhuận tích lũy 12 tháng gần nhất."
-                  icon={TrendingUp}
+                  icon={ArrowUpRight}
                 />
                 <MonthlyFinancialTable />
               </section>
@@ -265,7 +268,7 @@ const AdminDashboard = () => {
                   eyebrow="Chi trả"
                   title="Ngân hàng nhận lương"
                   subtitle="Phân bổ nhân sự theo ngân hàng để rà soát dữ liệu nhận tiền."
-                  icon={Building2}
+                  icon={Building02}
                   actions={
                     bankData && bankData.projects.length > 0 ? (
                       <ProjectSelector
@@ -288,7 +291,7 @@ const AdminDashboard = () => {
                 eyebrow="Dự án"
                 title="Lợi nhuận dự án"
                 subtitle="Theo dõi đà lợi nhuận và dự án đang kéo kết quả kỳ lương."
-                icon={FolderKanban}
+                icon={FolderCheck}
               />
               <ProjectProfitabilityCard />
             </section>
@@ -313,7 +316,7 @@ const AdminDashboard = () => {
                 eyebrow="Phân tích chi trả"
                 title="Phân bổ lương"
                 subtitle="Các khoảng lương điển hình để kiểm tra độ lệch trước khi giải ngân."
-                icon={BarChart3}
+                icon={BarChart03}
               />
               <SalaryDistributionChart />
             </section>
@@ -326,7 +329,7 @@ const AdminDashboard = () => {
                 eyebrow="Nhân sự"
                 title={`Chi trả theo nhân viên — ${monthLabel}`}
                 subtitle="Nhân viên nhận lương cao nhất trong kỳ đang xem."
-                icon={Trophy}
+                icon={Trophy01}
               />
               <TopPaidEmployeesCard month={monthParam} />
             </section>
@@ -339,7 +342,7 @@ const AdminDashboard = () => {
                 eyebrow="Nhân sự"
                 title="Nhân viên mới nhất"
                 subtitle="Các hồ sơ vừa được thêm để đối chiếu biên chế dự án."
-                icon={Users}
+                icon={Users01}
               />
               <RecentEmployeesCard
                 employees={employees.employees}
@@ -361,7 +364,7 @@ const AdminDashboard = () => {
               eyebrow="Sức khỏe vận hành"
               title="Tự chấm công và hạn mức ứng lương"
               subtitle="Rà soát lỗi chấm công và hạn mức ứng lương trước khi chốt kỳ."
-              icon={ShieldCheck}
+              icon={ShieldTick}
             />
             <CheckInHealthStrip month={monthParam} />
           </section>

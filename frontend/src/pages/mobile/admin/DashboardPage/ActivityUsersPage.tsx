@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, User, Activity } from "lucide-react";
+// UU PRO restyle (W13a): lucide → verified @untitledui/icons; the shared
+// icon slots are widened to ComponentType<SVGProps> (W13a follow-up).
+import { Activity, ArrowLeft, User01 } from "@untitledui/icons";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,7 +85,7 @@ const ActivityUsersPage = () => {
         bordered={false}
         actions={
           <Button variant="ghost" size="icon" className="h-11 w-11" onClick={() => navigate(-1)} aria-label="Quay lại tổng quan">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Button>
         }
       />
@@ -107,7 +109,7 @@ const ActivityUsersPage = () => {
           </div>
         ) : !users || users.length === 0 ? (
           <EmptyState
-            icon={User}
+            icon={User01}
             title="Không có nhân viên nào đăng nhập"
           />
         ) : (
@@ -115,7 +117,7 @@ const ActivityUsersPage = () => {
             {users.map((user) => (
               <button
                 key={user.user_id}
-                className="flex flex-col gap-2 rounded-xl border bg-card p-3 text-left transition-colors hover:bg-muted/50 active:bg-muted/70 motion-reduce:transition-none touch-manipulation"
+                className="flex flex-col gap-2 rounded-xl border border-input bg-card p-3 text-left transition-colors hover:bg-utility-gray-50 active:bg-utility-gray-100 motion-reduce:transition-none touch-manipulation focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
                 onClick={() => setSelectedEmployeeId(user.employee_id)}
               >
                 <div className="flex items-center gap-2 min-w-0">
@@ -126,15 +128,15 @@ const ActivityUsersPage = () => {
                     className="shrink-0"
                   />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate leading-tight">
+                    <p className="text-sm font-medium text-fg-primary truncate leading-tight">
                       {user.fullname}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="text-xs text-fg-tertiary truncate">
                       @{user.username}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center justify-between gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center justify-between gap-1 text-xs text-fg-tertiary">
                   <span>{ROLE_LABELS[user.role] ?? user.role}</span>
                   <span>
                     {SCHEDULE_BADGE_LABELS[user.payment_schedule] ??
@@ -142,7 +144,7 @@ const ActivityUsersPage = () => {
                   </span>
                 </div>
                 {user.last_login && (
-                  <p className="text-xs text-muted-foreground leading-none">
+                  <p className="text-xs text-fg-tertiary leading-none">
                     {format(parseISO(user.last_login), "dd/MM/yyyy HH:mm", {
                       locale: vi,
                     })}

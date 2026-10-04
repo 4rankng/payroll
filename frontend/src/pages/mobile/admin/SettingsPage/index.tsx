@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AlertCircle, RefreshCw, Settings } from 'lucide-react';
+// MobilePageHeader's icon slot is widened to ComponentType<SVGProps> (W13a
+// follow-up), so the UU icon fits; page-owned icons are UU as well.
+import { AlertCircle, RefreshCw05, Settings01 } from '@untitledui/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -45,10 +47,10 @@ const SettingsPageMobile = () => {
 
   if (form.isLoading) {
     return (
-      <div className="min-h-[100dvh] bg-[hsl(var(--surface-page))]">
+      <div className="min-h-[100dvh] bg-background">
         <MobilePageHeader
           title="Cài đặt"
-          icon={Settings}
+          icon={Settings01}
           subtitle="Quản lý cấu hình hệ thống"
         />
         <div className="px-4 pt-4 space-y-4">
@@ -66,20 +68,20 @@ const SettingsPageMobile = () => {
 
   if (form.loadError) {
     return (
-      <div className="min-h-[100dvh] bg-[hsl(var(--surface-page))]">
+      <div className="min-h-[100dvh] bg-background">
         <MobilePageHeader
           title="Cài đặt"
-          icon={Settings}
+          icon={Settings01}
           subtitle="Quản lý cấu hình hệ thống"
         />
         <div className="px-4 pt-4">
           <div
             role="alert"
-            className="space-y-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-5"
+            className="space-y-4 rounded-2xl border border-utility-error-300 bg-utility-error-50 p-5"
           >
             <div className="flex min-w-0 items-start gap-3">
-              <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-              <p className="min-w-0 break-words text-sm leading-relaxed text-destructive">{form.loadError}</p>
+              <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-utility-error-600" />
+              <p className="min-w-0 break-words text-sm leading-relaxed text-fg-error-primary">{form.loadError}</p>
             </div>
             <Button
               type="button"
@@ -87,7 +89,7 @@ const SettingsPageMobile = () => {
               onClick={form.retryLoading}
               className="h-12 w-full gap-2"
             >
-              <RefreshCw aria-hidden="true" className="h-4 w-4" />
+              <RefreshCw05 aria-hidden="true" className="h-4 w-4" />
               Thử lại
             </Button>
           </div>
@@ -97,10 +99,10 @@ const SettingsPageMobile = () => {
   }
 
   return (
-    <div className="min-h-[100dvh] max-w-full overflow-x-clip bg-[hsl(var(--surface-page))]">
+    <div className="min-h-[100dvh] max-w-full overflow-x-clip bg-background">
       <MobilePageHeader
         title="Cài đặt"
-        icon={Settings}
+        icon={Settings01}
         subtitle="Quản lý cấu hình hệ thống"
       />
 

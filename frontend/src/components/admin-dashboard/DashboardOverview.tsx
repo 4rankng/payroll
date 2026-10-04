@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react';
-import { Activity, ArrowUpRight, Loader2, RefreshCcw, type LucideIcon } from 'lucide-react';
+// W13a follow-up (approved): icon slots widened from LucideIcon so both lucide
+// and @untitledui/icons components fit (UU's are plain FunctionComponents).
+import type { ComponentType, ReactNode, SVGProps } from 'react';
+import { Activity, ArrowUpRight, Loader2, RefreshCcw } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -11,7 +13,7 @@ export interface DashboardMetricItem {
   context: string;
   /** Kept for API compatibility; the treasury strip renders a signal LED
    *  instead of an icon tile. */
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   tone: DashboardTone;
   onClick?: () => void;
 }
@@ -21,7 +23,7 @@ export interface DashboardPriorityItem {
   value: string;
   detail: string;
   statusLabel: string;
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   tone: DashboardTone;
   onClick?: () => void;
 }

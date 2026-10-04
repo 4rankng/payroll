@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import { cn } from '@/lib/utils';
-import { LucideIcon } from 'lucide-react';
+// W13a follow-up (approved): icon slot widened from LucideIcon so both lucide
+// and @untitledui/icons components fit (UU's are plain FunctionComponents).
+import type { ComponentType, SVGProps } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCountUp } from '@/hooks/useCountUp';
 
@@ -15,7 +17,7 @@ export interface StatItem {
 
 export interface GroupedStatCardProps {
   title: string;
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   stats: StatItem[];
   onClick?: () => void;
   isLoading?: boolean;

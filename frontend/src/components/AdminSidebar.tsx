@@ -1,28 +1,31 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+// UU PRO restyle (W13a): lucide → verified @untitledui/icons. The dark
+// --admin-sidebar-* surface stays the role identity (variables.css remains
+// authoritative); only glyph + token vocabulary changes here.
 import {
-  Users,
-  Briefcase,
-  Calendar,
-  LogOut,
-  Home,
-  BookOpen,
-  Settings,
-  Landmark,
-  HandCoins,
-  Wallet,
-  UserCog,
-  UserCircle,
-  Key,
-  ChevronUp,
-  ChevronDown,
-  Bell,
   Activity,
+  Bank,
+  Bell01,
+  BookOpen01,
+  Briefcase01,
+  CalendarCheck01,
+  ChevronDown,
+  ChevronUp,
+  Clipboard,
   Clock,
-  ClipboardList,
-  ReceiptText,
-} from "lucide-react";
+  CoinsHand,
+  Home01,
+  Key01,
+  LogOut01,
+  Receipt,
+  Settings01,
+  UserCircle,
+  UserEdit,
+  Users01,
+  Wallet01,
+} from "@untitledui/icons";
 import { cn } from "@/lib/utils";
 import { authManager } from "@/lib/auth";
 import {
@@ -69,20 +72,20 @@ type MenuItem = {
 };
 
 export const ADMIN_MENU_ITEMS: MenuItem[] = [
-  { title: "Tổng quan", icon: Home, path: "/admin", end: true, group: "top" },
-  { title: "Người dùng", icon: UserCog, path: "/admin/users", group: "quan-ly" },
-  { title: "Dự án", icon: Briefcase, path: "/admin/projects", group: "quan-ly" },
-  { title: "Nhân viên", icon: Users, path: "/admin/employees", group: "quan-ly" },
-  { title: "Bảng công", icon: Calendar, path: "/admin/timesheet", group: "quan-ly" },
-  { title: "Ứng lương", icon: HandCoins, path: "/admin/advance-payments", group: "quan-ly" },
-  { title: "Lịch sử trả lương", icon: ReceiptText, path: "/admin/payment-history", group: "tai-chinh" },
-  { title: "Sổ Cái", icon: BookOpen, path: "/admin/ledger", group: "tai-chinh" },
-  { title: "Khoản vay", icon: Landmark, path: "/admin/loans", group: "tai-chinh" },
+  { title: "Tổng quan", icon: Home01, path: "/admin", end: true, group: "top" },
+  { title: "Người dùng", icon: UserEdit, path: "/admin/users", group: "quan-ly" },
+  { title: "Dự án", icon: Briefcase01, path: "/admin/projects", group: "quan-ly" },
+  { title: "Nhân viên", icon: Users01, path: "/admin/employees", group: "quan-ly" },
+  { title: "Bảng công", icon: CalendarCheck01, path: "/admin/timesheet", group: "quan-ly" },
+  { title: "Ứng lương", icon: CoinsHand, path: "/admin/advance-payments", group: "quan-ly" },
+  { title: "Lịch sử trả lương", icon: Receipt, path: "/admin/payment-history", group: "tai-chinh" },
+  { title: "Sổ Cái", icon: BookOpen01, path: "/admin/ledger", group: "tai-chinh" },
+  { title: "Khoản vay", icon: Bank, path: "/admin/loans", group: "tai-chinh" },
   { title: "Kiểm tra API", icon: Activity, path: "/admin/system-health", group: "he-thong" },
   { title: "Lịch công việc", icon: Clock, path: "/admin/cron-health", group: "he-thong" },
-  { title: "Nhật ký", icon: ClipboardList, path: "/admin/audit-log", group: "he-thong" },
-  { title: "Cài đặt", icon: Settings, path: "/admin/settings", group: "he-thong" },
-  { title: "Quản lý ví", icon: Wallet, path: "/admin/wallet", group: "tai-chinh" },
+  { title: "Nhật ký", icon: Clipboard, path: "/admin/audit-log", group: "he-thong" },
+  { title: "Cài đặt", icon: Settings01, path: "/admin/settings", group: "he-thong" },
+  { title: "Quản lý ví", icon: Wallet01, path: "/admin/wallet", group: "tai-chinh" },
 ];
 
 const menuGroups = [
@@ -108,7 +111,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
     <NavLink to={item.path} className="block w-full" onClick={onNavigate}>
       <div
         className={cn(
-          "relative flex items-center gap-2.5 rounded-xl transition-all duration-150 ease-out cursor-pointer select-none",
+          "relative flex items-center gap-2.5 rounded-lg transition-all duration-150 ease-out cursor-pointer select-none",
           isCollapsed
             ? isActive
               ? "h-9 w-9 justify-center mx-auto bg-card/[0.08] ring-1 ring-white/[0.12]"
@@ -116,7 +119,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
             : "h-11 px-2.5 lg:h-10",
           isActive
             ? "bg-card/[0.08] text-white"
-            : "text-white/85 hover:bg-card/10 hover:text-white"
+            : "text-white/85 hover:bg-card/[0.06] hover:text-white"
         )}
       >
         {/* Gliding active pill — slides in with a scale animation */}
@@ -128,7 +131,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
             "shrink-0 transition-all duration-150",
             isCollapsed ? "w-[17px] h-[17px]" : "w-[15px] h-[15px]",
             // Icon morphs from outline-weight to accent color when active
-            isActive ? "text-[hsl(var(--admin-accent))]" : "text-white/90 group-hover:text-white"
+            isActive ? "text-[hsl(var(--admin-accent))]" : "text-white/90"
           )}
         />
         {!isCollapsed && (
@@ -140,12 +143,12 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
           </span>
         )}
         {item.badge && !isCollapsed && (
-          <span className="ml-auto bg-destructive text-destructive-foreground text-xs px-1.5 py-0.5 rounded-full shrink-0 font-semibold">
+          <span className="ml-auto bg-utility-error-600 text-white text-xs px-1.5 py-0.5 rounded-full shrink-0 font-semibold">
             {item.badge}
           </span>
         )}
         {item.badge && isCollapsed && (
-          <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold">
+          <span className="absolute -top-0.5 -right-0.5 bg-utility-error-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center font-bold">
             {item.badge}
           </span>
         )}
@@ -497,7 +500,7 @@ const AdminSidebar = () => {
                   <span className={cn(
                     "absolute h-4 min-w-4 flex items-center justify-center px-1",
                     isCollapsed ? "-top-0.5 -right-0.5" : "-top-1.5 -right-1.5",
-                    "text-xs font-semibold rounded-full bg-red-500 text-white",
+                    "text-xs font-semibold rounded-full bg-utility-error-600 text-white",
                     "animate-badge-pulse"
                   )}>
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -524,20 +527,20 @@ const AdminSidebar = () => {
                 </>
               )}
               <DropdownMenuItem onClick={() => setShowProfile(true)}>
-                <UserCircle className="mr-2 h-4 w-4" />
+                <UserCircle className="mr-2 h-4 w-4" aria-hidden="true" />
                 Thông tin cá nhân
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => openModal(MODAL_IDS.CHANGE_PASSWORD)}>
-                <Key className="mr-2 h-4 w-4" />
+                <Key01 className="mr-2 h-4 w-4" aria-hidden="true" />
                 Đổi mật khẩu
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => openModal(MODAL_IDS.NOTIFICATION_SHEET)}>
-                <Bell className="mr-2 h-4 w-4" />
+                <Bell01 className="mr-2 h-4 w-4" aria-hidden="true" />
                 Thông báo
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={handleLogout} className="text-fg-error-primary focus:text-fg-error-primary">
+                <LogOut01 className="mr-2 h-4 w-4" aria-hidden="true" />
                 Đăng xuất
               </DropdownMenuItem>
             </DropdownMenuContent>

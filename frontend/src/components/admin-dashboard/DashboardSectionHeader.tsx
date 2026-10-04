@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
-import { LucideIcon } from 'lucide-react';
+// W13a follow-up (approved): icon slot widened from LucideIcon so both lucide
+// and @untitledui/icons components fit (UU's are plain FunctionComponents).
+import type { ComponentType, SVGProps } from 'react';
 
 interface DashboardSectionHeaderProps {
   title: string;
   eyebrow?: string;
   subtitle?: string;
-  icon?: LucideIcon;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
   className?: string;
   actions?: ReactNode;
 }

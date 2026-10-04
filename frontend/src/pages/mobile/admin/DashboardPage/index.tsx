@@ -1,26 +1,27 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ComponentType, type ReactNode, type SVGProps } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addMonths, format, parse, startOfMonth, subMonths } from 'date-fns';
 import { vi } from 'date-fns/locale';
+// UU PRO restyle (W13a): lucide → verified @untitledui/icons; daisyUI ct-btn
+// chrome → bridge tokens. The shared icon slots are widened to
+// ComponentType<SVGProps> (W13a follow-up), so UU icons fit everywhere.
 import {
   Activity,
   AlertCircle,
-  ArrowRightLeft,
-  BarChart2,
-  BarChart3,
-  Building2,
-  Calendar as CalendarIcon,
+  ArrowUpRight,
+  BarChart02,
+  BarChart03,
+  Building02,
+  CalendarCheck01,
   ChevronLeft,
   ChevronRight,
   Clock,
-  FolderKanban,
-  Loader2,
-  RefreshCcw,
-  TrendingUp,
-  UserPlus,
-  Users,
-  type LucideIcon,
-} from 'lucide-react';
+  FolderCheck,
+  RefreshCcw01,
+  SwitchHorizontal01,
+  UserPlus01,
+  Users01,
+} from '@untitledui/icons';
 
 import { MonthPicker } from '@/components/ui/month-picker';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -61,7 +62,7 @@ interface DashboardDisclosureProps {
   title: string;
   summary: string;
   meta?: ReactNode;
-  icon: LucideIcon;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
   children: ReactNode;
 }
 
@@ -77,28 +78,29 @@ function DashboardDisclosureSection({
   return (
     <AccordionItem
       value={value}
-      className="admin-dashboard-mobile-disclosure overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white shadow-none"
+      className="admin-dashboard-mobile-disclosure overflow-hidden rounded-2xl border border-input bg-card shadow-xs"
     >
       <AccordionTrigger className="min-h-11 px-3 py-3 no-underline hover:no-underline">
         <div className="flex min-w-0 items-start gap-2 pr-1 text-left">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/5">
-            <Icon className="h-4 w-4 text-primary" />
+          {/* UU FeaturedIcon-gray moment: tintless chip, secondary fg. */}
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-utility-gray-100 text-fg-secondary">
+            <Icon className="h-4 w-4" aria-hidden="true" />
           </span>
           <span className="min-w-0">
-            <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-fg-tertiary">
               {eyebrow}
             </span>
-            <span className="mt-1 block text-sm font-semibold text-foreground">{title}</span>
+            <span className="mt-1 block text-sm font-semibold text-fg-primary">{title}</span>
             <span className="sr-only">{summary}</span>
             {meta && (
-              <span className="mt-1 inline-flex items-center text-xs font-semibold text-foreground tabular-nums">
+              <span className="mt-1 inline-flex items-center text-xs font-semibold text-fg-primary tabular-nums">
                 {meta}
               </span>
             )}
           </span>
         </div>
       </AccordionTrigger>
-      <AccordionContent className="ct-card-body gap-3 px-3 pb-3 pt-0">
+      <AccordionContent className="gap-3 px-3 pb-3 pt-0">
         {children}
       </AccordionContent>
     </AccordionItem>
@@ -200,7 +202,7 @@ const AdminDashboardMobile = () => {
     () => [
       {
         label: 'Chấm công',
-        icon: CalendarIcon,
+        icon: CalendarCheck01,
         onClick: () => openTimesheetEntry(),
       },
       {
@@ -211,12 +213,12 @@ const AdminDashboardMobile = () => {
       },
       {
         label: 'Ví tiền',
-        icon: ArrowRightLeft,
+        icon: SwitchHorizontal01,
         onClick: () => navigate('/admin/wallet'),
       },
       {
         label: 'Thêm NV',
-        icon: UserPlus,
+        icon: UserPlus01,
         onClick: () => openAddEmployee(),
       },
     ],
@@ -231,7 +233,7 @@ const AdminDashboardMobile = () => {
         label: 'Nhân viên đang làm',
         value: data.dashboardSummary.total_working_employees.toLocaleString('vi-VN'),
         helper: `Tổng ${data.dashboardSummary.total_employees.toLocaleString('vi-VN')} nhân viên`,
-        icon: Users,
+        icon: Users01,
         tone: 'primary',
         onClick: dashboardNav.navigateToActiveEmployees,
       },
@@ -239,7 +241,7 @@ const AdminDashboardMobile = () => {
         label: 'Đã trả kỳ này',
         value: formatVND(data.dashboardSummary.paid_salary_this_month),
         helper: monthLabel,
-        icon: ArrowRightLeft,
+        icon: SwitchHorizontal01,
         tone: 'success',
         onClick: dashboardNav.navigateToSalaryLedger,
       },
@@ -247,7 +249,7 @@ const AdminDashboardMobile = () => {
         label: 'Nhân viên mới',
         value: data.dashboardSummary.employees_hired_this_month.toLocaleString('vi-VN'),
         helper: 'Trong kỳ đang xem',
-        icon: UserPlus,
+        icon: UserPlus01,
         tone: 'neutral',
         onClick: dashboardNav.navigateToNewEmployees,
       },
@@ -282,7 +284,7 @@ const AdminDashboardMobile = () => {
         title: 'Đối soát ví trả lương',
         description: 'Kiểm tra số dư và lịch chuyển tiền',
         value: 'Ví',
-        icon: ArrowRightLeft,
+        icon: SwitchHorizontal01,
         tone: 'primary',
         onClick: () => navigate('/admin/wallet'),
       },
@@ -290,7 +292,7 @@ const AdminDashboardMobile = () => {
         title: 'Dự án & tài khoản ngân hàng',
         description: 'Kiểm tra dữ liệu nhận tiền theo dự án',
         value: bankData ? bankData.projects.length.toLocaleString('vi-VN') : '--',
-        icon: Building2,
+        icon: Building02,
         tone: 'neutral',
         onClick: () => navigate('/admin/projects'),
       },
@@ -312,7 +314,7 @@ const AdminDashboardMobile = () => {
       <MobilePageHeader
         title="Tổng quan"
         subtitle={format(new Date(), 'EEEE, dd/MM', { locale: vi })}
-        icon={BarChart3}
+        icon={BarChart03}
         sticky={false}
         bordered={false}
         className="px-0 pt-0 [&_.shadow-sm]:shadow-none"
@@ -320,30 +322,32 @@ const AdminDashboardMobile = () => {
 
       <CheckInRosterReminderBanner />
 
-      <div className="admin-dashboard-mobile-monthbar overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white">
+      <div className="admin-dashboard-mobile-monthbar overflow-hidden rounded-2xl border border-input bg-card shadow-xs">
         <div className="grid grid-cols-[auto_44px_minmax(0,1fr)_44px_44px] items-center gap-1 px-1 py-1">
           <button
             onClick={() => setSelectedMonth('all')}
+            aria-pressed={selectedMonth === 'all'}
             className={cn(
-              'ct-btn ct-btn-sm h-11 min-h-11 rounded-full border-0 px-3.5 text-xs font-semibold normal-case shadow-none',
+              'h-11 min-h-11 rounded-full px-3.5 text-xs font-semibold transition-colors duration-100 ease-linear',
+              'focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand',
               selectedMonth === 'all'
-                ? 'ct-btn-active bg-primary text-primary-foreground'
-                : 'bg-muted/60 text-muted-foreground hover:bg-muted',
+                ? 'bg-brand-solid text-white shadow-xs'
+                : 'bg-utility-gray-100 text-fg-secondary hover:bg-utility-gray-200',
             )}
           >
             Tất cả
           </button>
           <button
             onClick={() => setSelectedMonth(format(subMonths(selectedDate, 1), 'yyyy-MM'))}
-            className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square h-11 w-11 min-h-11 rounded-full border-0 shadow-none"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-fg-quaternary transition-colors duration-100 ease-linear hover:bg-utility-gray-100 hover:text-fg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
             aria-label="Tháng trước"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
           <Popover open={monthPickerOpen} onOpenChange={setMonthPickerOpen}>
             <PopoverTrigger asChild>
-              <button type="button" aria-label="Chọn tháng" className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full bg-muted/60 px-2 text-xs font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <CalendarIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
+              <button type="button" aria-label="Chọn tháng" className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full bg-utility-gray-100 px-2 text-xs font-semibold text-fg-primary transition-colors duration-100 ease-linear hover:bg-utility-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
+                <CalendarCheck01 className="h-3 w-3 shrink-0 text-fg-quaternary" aria-hidden="true" />
                 {selectedMonth === 'all' ? 'Chọn tháng' : format(selectedDate, 'MM/yyyy', { locale: vi })}
               </button>
             </PopoverTrigger>
@@ -353,24 +357,20 @@ const AdminDashboardMobile = () => {
           </Popover>
           <button
             onClick={() => setSelectedMonth(format(addMonths(selectedDate, 1), 'yyyy-MM'))}
-            className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square h-11 w-11 min-h-11 rounded-full border-0 shadow-none"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-fg-quaternary transition-colors duration-100 ease-linear hover:bg-utility-gray-100 hover:text-fg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
             aria-label="Tháng sau"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>
           <button
             type="button"
             onClick={handleRefresh}
             disabled={isDashboardRefreshing}
             aria-busy={isDashboardRefreshing}
-            className="ct-btn ct-btn-ghost ct-btn-sm ct-btn-square h-11 w-11 min-h-11 rounded-full border-0 shadow-none"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-fg-quaternary transition-colors duration-100 ease-linear hover:bg-utility-gray-100 hover:text-fg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:opacity-50"
             aria-label="Làm mới số liệu"
           >
-            {isDashboardRefreshing ? (
-              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-            ) : (
-              <RefreshCcw className="h-4 w-4" aria-hidden="true" />
-            )}
+            <RefreshCcw01 className={cn('h-4 w-4', isDashboardRefreshing && 'animate-spin motion-reduce:animate-none')} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -402,19 +402,19 @@ const AdminDashboardMobile = () => {
           title="Lương và nhân sự"
           summary="Theo dõi bảng công, nhân viên đang làm và hồ sơ mới."
           meta={`${dashboardSummary?.total_working_employees.toLocaleString('vi-VN') ?? '--'} đang làm`}
-          icon={Users}
+          icon={Users01}
         >
           <div className="space-y-3">
             {resolvedSalaryStats.length > 0 && (
               <GroupedStatCard title="Bảng công" icon={Clock} stats={resolvedSalaryStats} />
             )}
-            {employeeStats.length > 0 && <GroupedStatCard title="Nhân viên" icon={Users} stats={employeeStats} />}
+            {employeeStats.length > 0 && <GroupedStatCard title="Nhân viên" icon={Users01} stats={employeeStats} />}
             {isActivityLoading && !activityData ? (
-              <p className="rounded-xl border border-border/60 bg-muted/30 px-3 py-3 text-xs text-muted-foreground">
+              <p className="rounded-xl border border-input bg-muted px-3 py-3 text-xs text-fg-tertiary">
                 Đang tải hoạt động nhân sự…
               </p>
             ) : hasActivityError ? (
-              <p className="rounded-xl border border-border/60 bg-muted/30 px-3 py-3 text-xs text-muted-foreground">
+              <p className="rounded-xl border border-input bg-muted px-3 py-3 text-xs text-fg-tertiary">
                 Không thể tải hoạt động nhân sự. Hãy làm mới để thử lại.
               </p>
             ) : activityData && activityStats.length > 0 ? (
@@ -423,7 +423,7 @@ const AdminDashboardMobile = () => {
           </div>
 
           <div className="space-y-2">
-            <SectionHeader icon={Users} title="Nhân viên mới nhất" />
+            <SectionHeader icon={Users01} title="Nhân viên mới nhất" />
             <RecentEmployeesCard
               employees={employees.employees}
               isLoading={employees.isLoading}
@@ -442,24 +442,24 @@ const AdminDashboardMobile = () => {
           title="Chi trả và biến động"
           summary="Đối chiếu phân bổ lương, lợi nhuận và người nhận lương cao nhất."
           meta={`${formatVND(dashboardSummary?.total_profit_this_month ?? 0)} lợi nhuận`}
-          icon={TrendingUp}
+          icon={ArrowUpRight}
         >
           <div className="space-y-3">
-            {profitStats.length > 0 && <GroupedStatCard title="Tài chính" icon={BarChart2} stats={profitStats} />}
+            {profitStats.length > 0 && <GroupedStatCard title="Tài chính" icon={BarChart02} stats={profitStats} />}
           </div>
 
           <div className="space-y-2">
-            <SectionHeader icon={BarChart3} title="Phân bổ lương" />
+            <SectionHeader icon={BarChart03} title="Phân bổ lương" />
             <SalaryDistributionChartMobile />
           </div>
 
           <div className="space-y-2">
-            <SectionHeader icon={Users} title={`Chi trả theo nhân viên — ${monthLabel}`} />
+            <SectionHeader icon={Users01} title={`Chi trả theo nhân viên — ${monthLabel}`} />
             <TopPaidEmployeesCard month={monthParam} />
           </div>
 
           <div className="space-y-2">
-            <SectionHeader icon={TrendingUp} title="Lịch sử tài chính" />
+            <SectionHeader icon={ArrowUpRight} title="Lịch sử tài chính" />
             <MonthlyFinancialTable />
           </div>
         </DashboardDisclosureSection>
@@ -470,15 +470,15 @@ const AdminDashboardMobile = () => {
           title="Dự án, ngân hàng và sức khỏe hệ thống"
           summary="Rà soát tài khoản nhận lương, chấm công và hạn mức ứng."
           meta={`${bankData?.projects.length.toLocaleString('vi-VN') ?? '--'} dự án`}
-          icon={Building2}
+          icon={Building02}
         >
           <div className="space-y-2">
-            <SectionHeader icon={FolderKanban} title="Lợi nhuận dự án" />
+            <SectionHeader icon={FolderCheck} title="Lợi nhuận dự án" />
             <ProjectProfitabilityMobile />
           </div>
 
           <div className="space-y-2">
-            <SectionHeader icon={Building2} title="Ngân hàng">
+            <SectionHeader icon={Building02} title="Ngân hàng">
               {bankData && bankData.projects.length > 0 ? (
                 <div className="ml-auto">
                   <ProjectSelector
