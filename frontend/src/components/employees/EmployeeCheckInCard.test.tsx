@@ -428,7 +428,7 @@ describe("EmployeeCheckInCard geofence guidance", () => {
     expect(screen.getByRole("button", { name: "Ẩn bản đồ" })).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("keeps genuinely poor GPS guidance collapsed instead of presenting a direction", () => {
+  it("keeps genuinely poor GPS guidance from presenting a direction", () => {
     const gate = { name: "Cổng D", lat: 20.8679818, lng: 106.5711738 };
     locationMock.mockReturnValue({
       sample: { lat: gate.lat, lng: gate.lng, accuracy: 800, timestamp: Date.now() },
@@ -457,7 +457,9 @@ describe("EmployeeCheckInCard geofence guidance", () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByRole("button", { name: "Xem bản đồ" })).toHaveAttribute("aria-expanded", "false");
+    // The map renders open by default even for a poor fix — only the bogus
+    // direction hint must stay suppressed.
+    expect(screen.getByRole("button", { name: "Ẩn bản đồ" })).toHaveAttribute("aria-expanded", "true");
     expect(screen.queryByText("Tiến gần tâm khu vực")).not.toBeInTheDocument();
   });
 

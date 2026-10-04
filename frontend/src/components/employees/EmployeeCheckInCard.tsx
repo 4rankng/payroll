@@ -402,7 +402,10 @@ export function EmployeeCheckInCard({
   const [timingGuidance, setTimingGuidance] = useState<TimingErrorGuidance | null>(null);
   const [noSalaryReason, setNoSalaryReason] = useState<string | null>(null);
   const [showNoSalaryConfirm, setShowNoSalaryConfirm] = useState(false);
-  const [showLocationMap, setShowLocationMap] = useState(false);
+  // The map is shown by default — a worker checking status should not have to
+  // discover a disclosure first. The toggle still lets them collapse it, and a
+  // manual close stays respected (see the boundary-episode effect below).
+  const [showLocationMap, setShowLocationMap] = useState(true);
   const [attendanceConfirmation, setAttendanceConfirmation] = useState<{ action: "check_in" | "check_out"; time: string } | null>(null);
   const [showWindowOpen, setShowWindowOpen] = useState(false);
   const locationMapRegionId = useId();
@@ -414,11 +417,10 @@ export function EmployeeCheckInCard({
   // backend rejects with 400 ("Bạn đã vào làm/tan ca rồi"), producing a duplicate
   // toast. This ref is set in the same call stack, closing that race.
   const submittingRef = useRef(false);
-  // Brief lockout after a GPS/geofence checkout failure. It gives the phone's GPS
-  // a few seconds to settle before the next attempt and stops a frantic burst of
-  // retries (observed six identical check-out failures in 42 s on demo) from
-  // spamming the backend. The backend dedups the same window; this is the UX half.
-  const CHECKOUT_GPS_COOLDOWN_MS = 10_000;
+  // Brief lockout after a GPS/geofence checkout failure. Just a 1s debounce so
+  // a double-tap doesn't fire a second request while the toast lands; the
+  // backend dedups identical failures in its own window regardless.
+  const CHECKOUT_GPS_COOLDOWN_MS = 1_000;
   const [checkoutCooldownUntil, setCheckoutCooldownUntil] = useState<number | null>(null);
   const checkoutCooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const attendanceConfirmationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
