@@ -1,0 +1,7 @@
+{
+  "status": "success",
+  "data": {
+    "projects": [],
+    "overall": { "banks": [], "total_employees": 0, "total_paid_vnd": 0, "total_transfers": 0 }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "status": "success",
+  "data": {
+    "report_date": "2026-10-01",
+    "period_start": "2026-10-01",
+    "period_end": "2026-11-01",
+    "failed_attempts_by_category": [],
+    "failed_check_in_today": 0,
+    "failed_check_out_today": 0,
+    "open_checked_in": 0,
+    "orphaned": 0,
+    "auto_rejected_today": 0,
+    "completed_zero_earning_today": 0,
+    "successful_checkouts_today": 0,
+    "quota_invariant_drift": 0,
+    "missing_quota_rows": 0,
+    "stale_quota_after_disable": 0,
+    "quota_salary_this_month": 0,
+    "quota_max_adv_this_month": 0,
+    "requests_stuck_pending": 0,
+    "requests_failed_today": 0,
+    "requests_completed_today": 0,
+    "requests_total_today": 0
+  },
+  "message": "Lấy chỉ số sức khoẻ check-in thành công"
+}

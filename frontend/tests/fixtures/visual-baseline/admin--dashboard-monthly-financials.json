@@ -1,0 +1,81 @@
+{
+  "status": "success",
+  "data": {
+    "period": "1y",
+    "months": [
+      {
+        "month": "2025-11",
+        "paid_out": 403591825,
+        "billed": 411663647,
+        "fee_earned": 8071822
+      },
+      {
+        "month": "2025-12",
+        "paid_out": 487262512,
+        "billed": 497007742,
+        "fee_earned": 9745230
+      },
+      {
+        "month": "2026-01",
+        "paid_out": 534469575,
+        "billed": 545158956,
+        "fee_earned": 10689381
+      },
+      {
+        "month": "2026-02",
+        "paid_out": 284349550,
+        "billed": 290036540,
+        "fee_earned": 5686990
+      },
+      {
+        "month": "2026-03",
+        "paid_out": 526925977,
+        "billed": 537464488,
+        "fee_earned": 10538511
+      },
+      {
+        "month": "2026-04",
+        "paid_out": 589985542,
+        "billed": 601785222,
+        "fee_earned": 11799680
+      },
+      {
+        "month": "2026-05",
+        "paid_out": 853475652,
+        "billed": 870545127,
+        "fee_earned": 17069475
+      },
+      {
+        "month": "2026-06",
+        "paid_out": 1894748311,
+        "billed": 1932643256,
+        "fee_earned": 37894945
+      },
+      {
+        "month": "2026-07",
+        "paid_out": 2431574137,
+        "billed": 2480205609,
+        "fee_earned": 48631472
+      },
+      {
+        "month": "2026-08",
+        "paid_out": 2365788350,
+        "billed": 2413103565,
+        "fee_earned": 47315215
+      },
+      {
+        "month": "2026-09",
+        "paid_out": 1791553816,
+        "billed": 1827381681,
+        "fee_earned": 35827865
+      }
+    ],
+    "total": {
+      "month": "total",
+      "paid_out": 12163725247,
+      "billed": 12406995833,
+      "fee_earned": 243270586
+    }
+  },
+  "message": "Lấy tổng kết tài chính theo tháng thành công"
+}

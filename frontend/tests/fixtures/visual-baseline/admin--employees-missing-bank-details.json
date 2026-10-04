@@ -1,0 +1,85 @@
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1612,
+      "fullname": "Ly A Tu",
+      "email": null,
+      "cccd": "014200006378",
+      "address": "",
+      "mobile": "0354315491",
+      "bank": {
+        "id": 4499,
+        "branch_name": "Hàng hải (MSB)"
+      },
+      "bank_account_number": "02101010625657",
+      "bank_account_name": "Ly A Tu",
+      "bank_account_status": "invalid",
+      "bank_account_invalid_reason": "Số tài khoản không hợp lệ",
+      "bank_account_validated_at": "2026-09-25T12:21:38+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T12:21:37.96+07:00",
+      "updated_at": "2026-09-25T12:21:37.96+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 0,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1467,
+      "fullname": "Nguyễn Văn Trường",
+      "email": null,
+      "cccd": "070064285",
+      "address": "",
+      "mobile": "",
+      "bank_account_number": "",
+      "bank_account_name": "",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-04T20:39:34+07:00",
+      "date_of_birth": null,
+      "created_by": 976,
+      "created_at": "2026-09-04T20:39:34.275+07:00",
+      "updated_at": "2026-09-04T20:39:34.275+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 78,
+          "project_employee_id": 0,
+          "name": "PA BUMHAN",
+          "code": "PB001",
+          "client_name": "PA BUMHAN",
+          "position": "600",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    }
+  ],
+  "message": "Employees with missing bank details retrieved successfully",
+  "pagination": {
+    "page": 1,
+    "pageSize": 100,
+    "totalPages": 1,
+    "totalRecords": 2
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "status": "success",
+  "data": {
+    "totalEntries": 0,
+    "totalEmployees": 0,
+    "pendingApproval": 0,
+    "pendingEmployees": 0,
+    "pendingPaymentAmount": 0,
+    "approvedEntries": 0,
+    "paidEntries": 0,
+    "paidAmount": 0,
+    "paidEmployees": 0,
+    "rejectedEntries": 0,
+    "lastUpdated": "2026-10-04T20:13:31.427671+07:00"
+  },
+  "message": "Lấy tóm tắt bảng chấm công thành công"
+}

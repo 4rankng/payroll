@@ -1,0 +1,10 @@
+{
+  "status": "success",
+  "data": {
+    "active_weekly": 0,
+    "active_monthly": 0,
+    "active_flexible": 1,
+    "active_total": 1
+  },
+  "message": "Lấy thống kê hoạt động nhân viên thành công"
+}

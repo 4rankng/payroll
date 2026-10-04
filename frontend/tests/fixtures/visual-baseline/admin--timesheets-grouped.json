@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "data": {
+    "groups": null
+  },
+  "message": "No timesheets found",
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "totalPages": 0,
+    "totalRecords": 0
+  }
+}

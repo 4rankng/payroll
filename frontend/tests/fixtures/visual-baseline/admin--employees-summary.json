@@ -1,0 +1,11 @@
+{
+  "status": "success",
+  "data": {
+    "total_employees": 1480,
+    "total_working_employees": 1298,
+    "employees_hired_this_month": 0,
+    "salary_month_to_date": 0,
+    "paid_month_to_date": 0
+  },
+  "message": "Employee summary retrieved successfully"
+}

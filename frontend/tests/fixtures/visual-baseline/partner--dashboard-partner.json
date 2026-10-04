@@ -1,0 +1,36 @@
+{
+  "status": "success",
+  "data": {
+    "active_employees": 42,
+    "dropped_employees": 125,
+    "paid_employees": 0,
+    "total_paid_vnd": 0,
+    "wow_paid_employees": {
+      "current_week": 42,
+      "previous_week": 57,
+      "change_amount": -15,
+      "change_pct": -26.32
+    },
+    "wow_paid_amount": {
+      "current_week": 17153500,
+      "previous_week": 110390900,
+      "change_amount": -93237400,
+      "change_pct": -84.46
+    },
+    "mom_paid_employees": {
+      "current_month": 80,
+      "previous_month": 144,
+      "change_amount": -64,
+      "change_pct": -44.44
+    },
+    "mom_paid_amount": {
+      "current_month": 310687100,
+      "previous_month": 671355600,
+      "change_amount": -360668500,
+      "change_pct": -53.72
+    },
+    "top_paid_employees": [],
+    "period": "2026-10"
+  },
+  "message": "Lấy tổng quan đối tác thành công"
+}

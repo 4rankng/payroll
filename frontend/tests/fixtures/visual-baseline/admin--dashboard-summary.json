@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "data": {
+    "total_employees": 1298,
+    "total_working_employees": 211,
+    "employees_hired_this_month": 0,
+    "total_paid_salary": 12268861873,
+    "pending_salary_this_month": 0,
+    "paid_salary_this_month": 0,
+    "total_revenue": 12514235181,
+    "total_revenue_this_month": 0,
+    "total_profit": 275839783,
+    "total_profit_this_month": 0,
+    "total_weekly_salary_employees": 934,
+    "total_monthly_salary_employees": 2,
+    "avg_weekly_salary": 2809648,
+    "avg_monthly_salary": 11238592
+  },
+  "message": "Lấy dữ liệu thành công"
+}

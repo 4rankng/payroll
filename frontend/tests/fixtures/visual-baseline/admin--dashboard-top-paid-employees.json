@@ -1,0 +1,8 @@
+{
+  "status": "success",
+  "data": {
+    "employees": [],
+    "period": "2026-10"
+  },
+  "message": "Lấy danh sách nhân viên được trả lương cao nhất thành công"
+}

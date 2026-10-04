@@ -1,0 +1,10 @@
+{
+  "status": "success",
+  "data": {
+    "total_projects": 4,
+    "active_projects": 4,
+    "completed_projects": 0,
+    "total_employees": 400
+  },
+  "message": "Lấy tóm tắt dự án quản lý thành công"
+}

@@ -1,0 +1,3759 @@
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1596,
+      "fullname": "Bàn Văn Cường",
+      "email": null,
+      "cccd": "008202007650",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4489,
+        "branch_name": "Nông nghiệp và Phát triển nông thôn (VBA)"
+      },
+      "bank_account_number": "8888382949759",
+      "bank_account_name": "Bàn Văn Cường",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:33+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:23:32.984+07:00",
+      "updated_at": "2026-09-24T16:23:32.984+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1837,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1157,
+      "fullname": "Bùi Anh Tú",
+      "email": null,
+      "cccd": "031208012472",
+      "address": "",
+      "mobile": "0123456789",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0867334079",
+      "bank_account_name": "BÙI ANH TÚ",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-24T14:08:53.032+07:00",
+      "updated_at": "2026-07-24T15:41:37.988+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1266,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1246,
+      "fullname": "Bùi Hà Thu Phương",
+      "email": null,
+      "cccd": "017302007066",
+      "address": "",
+      "mobile": "0981550741",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0981550741",
+      "bank_account_name": "Bùi Hà Thu Phương",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T13:58:17+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:16.934+07:00",
+      "updated_at": "2026-08-10T13:58:16.934+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1386,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 812,
+      "fullname": "Bùi Thị Minh Hà",
+      "email": null,
+      "cccd": "031308015898",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0359779427",
+      "bank_account_name": "Bùi Thị Minh Hà",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:43:23.307+07:00",
+      "updated_at": "2026-06-10T10:43:23.307+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 910,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 347,
+      "fullname": "Bùi Thị Nga",
+      "email": null,
+      "cccd": "031199003245",
+      "address": "",
+      "mobile": "0856256588",
+      "bank": {
+        "id": 4499,
+        "branch_name": "Hàng hải (MSB)"
+      },
+      "bank_account_number": "02101013810098",
+      "bank_account_name": "Bùi Thị Nga",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-03-16T08:31:34.176+07:00",
+      "updated_at": "2026-07-01T16:03:13.728+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 335,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-03-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 668,
+      "fullname": "Bùi Thị Phượng",
+      "email": null,
+      "cccd": "031192012962",
+      "address": "",
+      "mobile": "0387441855",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0387441855",
+      "bank_account_name": "Bùi Thị Phượng",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-04-17T02:38:37.143+07:00",
+      "updated_at": "2026-07-01T16:03:13.754+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 1268,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-04-08",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 326,
+      "fullname": "Bùi Thị Thắm",
+      "email": null,
+      "cccd": "031195003804",
+      "address": "",
+      "mobile": "0329453299",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "1994301094",
+      "bank_account_name": "Bùi Thị Thắm",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-03-09T07:26:54.64+07:00",
+      "updated_at": "2026-07-01T16:03:13.685+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 320,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-04-28",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 912,
+      "fullname": "Bùi Thị Yến Anh",
+      "email": null,
+      "cccd": "031308016831",
+      "address": "",
+      "mobile": "0936928661",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0936928661",
+      "bank_account_name": "Bùi Thị Yến Anh",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-24T14:35:32.749+07:00",
+      "updated_at": "2026-07-01T16:03:13.93+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 1012,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-06-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 813,
+      "fullname": "Bùi Trọng Hiệp",
+      "email": null,
+      "cccd": "031204010447",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0365958018",
+      "bank_account_name": "Bùi Trọng Hiệp",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:43:23.693+07:00",
+      "updated_at": "2026-06-10T10:43:23.693+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 911,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1202,
+      "fullname": "Bùi Văn Đại",
+      "email": null,
+      "cccd": "031201010382",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0001990336068",
+      "bank_account_name": "Bùi Văn Đại",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-07-31T15:07:18+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-31T15:07:18.061+07:00",
+      "updated_at": "2026-07-31T15:07:18.061+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1340,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1250,
+      "fullname": "Bùi Văn Nghĩa",
+      "email": null,
+      "cccd": "031207017221",
+      "address": "",
+      "mobile": "0386318487",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0762486895",
+      "bank_account_name": "Bùi Văn Nghĩa",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T13:58:19+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:19.081+07:00",
+      "updated_at": "2026-08-10T13:58:19.081+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1390,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1340,
+      "fullname": "Bùi Văn Phú",
+      "email": null,
+      "cccd": "017090005827",
+      "address": "",
+      "mobile": "0816416566",
+      "bank": {
+        "id": 4499,
+        "branch_name": "Hàng hải (MSB)"
+      },
+      "bank_account_number": "02001011948903",
+      "bank_account_name": "Bùi Văn Phú",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-24T16:49:11+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-24T16:49:11.61+07:00",
+      "updated_at": "2026-08-24T16:49:11.61+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1479,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1241,
+      "fullname": "Bùi Văn Trường",
+      "email": null,
+      "cccd": "031206007165",
+      "address": "",
+      "mobile": "0396897922",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "116112006",
+      "bank_account_name": "Bùi Văn Trường",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T13:58:11+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:11.63+07:00",
+      "updated_at": "2026-08-10T13:58:11.63+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1380,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 808,
+      "fullname": "Cà Hiền Nương",
+      "email": null,
+      "cccd": "011307001003",
+      "address": "",
+      "mobile": "0345409064",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0987195829",
+      "bank_account_name": "Cà Hiền Nương",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:43:21.899+07:00",
+      "updated_at": "2026-07-01T16:41:34.109+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 906,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 836,
+      "fullname": "Cà Thị Dấn",
+      "email": null,
+      "cccd": "011307002229",
+      "address": "",
+      "mobile": "0333906719",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0343320260",
+      "bank_account_name": "Cà Thị Dấn",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:52:17.408+07:00",
+      "updated_at": "2026-07-01T16:41:34.269+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 935,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 171,
+      "fullname": "Cà Thị Thư",
+      "email": null,
+      "cccd": "011196002961",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0782495137",
+      "bank_account_name": "Cà Thị Thư",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2025-11-29T14:21:51.436+07:00",
+      "updated_at": "2025-11-29T14:21:51.871+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 849,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-30",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1251,
+      "fullname": "Cà Văn Duẩn",
+      "email": null,
+      "cccd": "011208007211",
+      "address": "",
+      "mobile": "0345033851",
+      "bank": {
+        "id": 4490,
+        "branch_name": "Ngoại thương Việt Nam (VCB)"
+      },
+      "bank_account_number": "1069111057",
+      "bank_account_name": "Cà Văn Duẩn",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T13:58:19+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:19.697+07:00",
+      "updated_at": "2026-08-10T13:58:19.697+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1391,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1156,
+      "fullname": "Cà Văn Hiến",
+      "email": null,
+      "cccd": "011090007288",
+      "address": "",
+      "mobile": "0336680884",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0336680884",
+      "bank_account_name": "Cà Văn Hiến",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-11T17:13:53+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-24T14:08:52.733+07:00",
+      "updated_at": "2026-08-11T17:13:55.009+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1265,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 728,
+      "fullname": "Cà Văn Hùng",
+      "email": null,
+      "cccd": "011206008170",
+      "address": "",
+      "mobile": "0862167801",
+      "bank": {
+        "id": 4491,
+        "branch_name": "Đầu tư và phát triển (BIDV)"
+      },
+      "bank_account_number": "8897799313",
+      "bank_account_name": "Cà Văn Hùng",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-05-17T09:01:24.196+07:00",
+      "updated_at": "2026-07-01T16:41:34.045+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 827,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-10",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1484,
+      "fullname": "Cà Việt Hoàng",
+      "email": null,
+      "cccd": "011208004461",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0392679439",
+      "bank_account_name": "Cà Việt Hoàng",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-10T16:39:46+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-10T16:39:46.801+07:00",
+      "updated_at": "2026-09-10T16:39:46.801+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1712,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1597,
+      "fullname": "Cao Thị Ngọc Anh",
+      "email": null,
+      "cccd": "031198004486",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4492,
+        "branch_name": "Công Thương Việt Nam (VIETINBANK)"
+      },
+      "bank_account_number": "101881928412",
+      "bank_account_name": "Cao Thị Ngọc Anh",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:33+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:23:33.531+07:00",
+      "updated_at": "2026-09-24T16:23:33.531+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1838,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1342,
+      "fullname": "Chu Đức Mạnh",
+      "email": null,
+      "cccd": "031205017459",
+      "address": "",
+      "mobile": "0904204714",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "5999993062005",
+      "bank_account_name": "Chu Đức Mạnh",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-24T16:49:13+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-24T16:49:13.19+07:00",
+      "updated_at": "2026-08-24T16:49:13.19+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1481,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 814,
+      "fullname": "Chu Ngọc Vỹ",
+      "email": null,
+      "cccd": "031206019231",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0869486923",
+      "bank_account_name": "Chu Ngọc Vỹ",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:43:24.154+07:00",
+      "updated_at": "2026-06-10T10:43:24.154+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 912,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1245,
+      "fullname": "Chương Văn Chuyền",
+      "email": null,
+      "cccd": "040099018517",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0862443723",
+      "bank_account_name": "Chương Văn Chuyền",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T13:58:15+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:15.755+07:00",
+      "updated_at": "2026-08-10T13:58:15.755+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1384,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 649,
+      "fullname": "Cứ Thị Máy",
+      "email": null,
+      "cccd": "011304008055",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0358070239",
+      "bank_account_name": "Cứ Thị Máy",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-04-09T09:50:58.146+07:00",
+      "updated_at": "2026-04-09T09:50:58.146+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 737,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-03-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1598,
+      "fullname": "Đặng Thị Bình",
+      "email": null,
+      "cccd": "031192002203",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0977912385",
+      "bank_account_name": "Đặng Thị Bình",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:34+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:23:34.194+07:00",
+      "updated_at": "2026-09-24T16:23:34.194+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1839,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1599,
+      "fullname": "Đặng Thị Thảo",
+      "email": null,
+      "cccd": "002301007107",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4498,
+        "branch_name": "Kỹ Thương (TCB)"
+      },
+      "bank_account_number": "19037866983013",
+      "bank_account_name": "Đặng Thị Thảo",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:35+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:23:35.482+07:00",
+      "updated_at": "2026-09-24T16:23:35.482+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1840,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1203,
+      "fullname": "Đào Minh Sơn",
+      "email": null,
+      "cccd": "031207002797",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0343231959",
+      "bank_account_name": "Đào Minh Sơn",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-07-31T15:07:19+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-31T15:07:19.913+07:00",
+      "updated_at": "2026-07-31T15:07:19.913+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1341,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1035,
+      "fullname": "Đào Thị Hoa",
+      "email": null,
+      "cccd": "031187012840",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4521,
+        "branch_name": "Sacombank (STB)"
+      },
+      "bank_account_number": "030077971099",
+      "bank_account_name": "Đào Thị Hoa",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-10T10:39:32.168+07:00",
+      "updated_at": "2026-07-10T10:39:32.168+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 54,
+          "project_employee_id": 1142,
+          "name": "EPE KCN Vsip",
+          "code": "EX004",
+          "client_name": "EPE",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1049,
+      "fullname": "Đào Thị Linh",
+      "email": null,
+      "cccd": "031308015499",
+      "address": "",
+      "mobile": "0356581576",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "09302425340999",
+      "bank_account_name": "Đào Thị Linh",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-10T18:11:42.933+07:00",
+      "updated_at": "2026-07-10T18:11:42.933+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1156,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 343,
+      "fullname": "Đào Thị Miền",
+      "email": null,
+      "cccd": "030185019027",
+      "address": "",
+      "mobile": "0968236294",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0968236294",
+      "bank_account_name": "Đào Thị Miền",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-03-16T08:25:11.544+07:00",
+      "updated_at": "2026-07-01T16:03:13.736+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 339,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-03-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 729,
+      "fullname": "Đào Thị Tâm",
+      "email": null,
+      "cccd": "031177006601",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4500,
+        "branch_name": "Ngân hàng Thương mại Cổ phần Lộc Phát Việt Nam (LPB)"
+      },
+      "bank_account_number": "022578600001",
+      "bank_account_name": "Đào Thị Tâm",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-05-17T09:02:39.644+07:00",
+      "updated_at": "2026-05-17T09:08:04.676+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 826,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-05",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 234,
+      "fullname": "Đào Thị Thu",
+      "email": null,
+      "cccd": "037181000818",
+      "address": "",
+      "mobile": "0397673535",
+      "bank": {
+        "id": 4498,
+        "branch_name": "Kỹ Thương (TCB)"
+      },
+      "bank_account_number": "19024872144029",
+      "bank_account_name": "Đào Thị Thu",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2025-12-29T07:25:04.77+07:00",
+      "updated_at": "2026-07-01T16:03:13.943+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 1013,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-06-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1204,
+      "fullname": "Đào Trọng Khải",
+      "email": null,
+      "cccd": "031097009890",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0374562768",
+      "bank_account_name": "Đào Trọng Khải",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-07-31T15:07:20+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-31T15:07:20.731+07:00",
+      "updated_at": "2026-07-31T15:07:20.731+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1342,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1052,
+      "fullname": "Đậu Đăng Thắng",
+      "email": null,
+      "cccd": "040205005634",
+      "address": "",
+      "mobile": "0372667334",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "03335559992005",
+      "bank_account_name": "Đậu Đăng Thắng",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-10T18:11:44.063+07:00",
+      "updated_at": "2026-07-10T18:11:44.063+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1159,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1575,
+      "fullname": "Đinh Đức Duy",
+      "email": null,
+      "cccd": "031080016890",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0917520384",
+      "bank_account_name": "ĐINH ĐỨC DUY",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:30+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-17T18:10:14.261+07:00",
+      "updated_at": "2026-09-24T16:23:30.485+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1813,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 681,
+      "fullname": "Đinh Thị Khánh Nhi",
+      "email": null,
+      "cccd": "044307009163",
+      "address": "",
+      "mobile": "0705429652",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "62574823062007",
+      "bank_account_name": "Đinh Thị Khánh Nhi",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-04-17T04:26:00.943+07:00",
+      "updated_at": "2026-07-01T16:41:33.997+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 770,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-07",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1053,
+      "fullname": "Đinh Thị Minh Hiền",
+      "email": null,
+      "cccd": "025304001859",
+      "address": "",
+      "mobile": "0382501604",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0000925032993",
+      "bank_account_name": "Đinh Thị Minh Hiền",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-10T18:11:44.425+07:00",
+      "updated_at": "2026-07-10T18:11:44.425+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1160,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 673,
+      "fullname": "Đinh Thị Tuyến",
+      "email": null,
+      "cccd": "031176000320",
+      "address": "",
+      "mobile": "0969197376",
+      "bank": {
+        "id": 4494,
+        "branch_name": "Quốc tế (VIB)"
+      },
+      "bank_account_number": "020054152",
+      "bank_account_name": "Đinh Thị Tuyến",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-04-17T04:13:07.54+07:00",
+      "updated_at": "2026-07-01T16:41:34.392+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 783,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-07",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 774,
+      "fullname": "Đỗ Thị Hương Giang",
+      "email": null,
+      "cccd": "031308004989",
+      "address": "",
+      "mobile": "0819518928",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "788080604",
+      "bank_account_name": "Đỗ Thị Hương Giang",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-09T08:13:39.108+07:00",
+      "updated_at": "2026-07-01T16:03:13.808+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 872,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Không có tay nghề",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 665,
+      "fullname": "Đỗ Thị Quỳnh Giang",
+      "email": null,
+      "cccd": "031197007235",
+      "address": "",
+      "mobile": "0789244346",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0789244346",
+      "bank_account_name": "Đỗ Thị Quỳnh Giang",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-04-17T02:33:21.547+07:00",
+      "updated_at": "2026-07-01T16:03:13.776+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 762,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 793,
+      "fullname": "Đỗ Thị Thu Hằng",
+      "email": null,
+      "cccd": "031179015253",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4498,
+        "branch_name": "Kỹ Thương (TCB)"
+      },
+      "bank_account_number": "19032189422016",
+      "bank_account_name": "Đỗ Thị Thu Hằng",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-09T09:38:27.868+07:00",
+      "updated_at": "2026-07-01T16:05:38.538+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 54,
+          "project_employee_id": 891,
+          "name": "EPE KCN Vsip",
+          "code": "EX004",
+          "client_name": "EPE",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1236,
+      "fullname": "Đỗ Thùy Linh",
+      "email": null,
+      "cccd": "022308002399",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0346085004",
+      "bank_account_name": "Đỗ Thùy Linh",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T13:56:35+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:56:35.541+07:00",
+      "updated_at": "2026-08-10T13:56:35.541+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 54,
+          "project_employee_id": 1375,
+          "name": "EPE KCN Vsip",
+          "code": "EX004",
+          "client_name": "EPE",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1033,
+      "fullname": "Đỗ Văn Duy",
+      "email": null,
+      "cccd": "031092017876",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4492,
+        "branch_name": "Công Thương Việt Nam (VIETINBANK)"
+      },
+      "bank_account_number": "107878902745",
+      "bank_account_name": "Đỗ Văn Duy",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-10T10:39:31.365+07:00",
+      "updated_at": "2026-07-10T10:39:31.365+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 54,
+          "project_employee_id": 1140,
+          "name": "EPE KCN Vsip",
+          "code": "EX004",
+          "client_name": "EPE",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1048,
+      "fullname": "Đỗ Văn Phương",
+      "email": null,
+      "cccd": "031079002683",
+      "address": "",
+      "mobile": "0310790026",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0978889467",
+      "bank_account_name": "Đỗ Văn Phương",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-10T18:11:42.581+07:00",
+      "updated_at": "2026-07-10T18:11:42.581+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1155,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1238,
+      "fullname": "Đỗ Văn Thậm",
+      "email": null,
+      "cccd": "031202008953",
+      "address": "",
+      "mobile": "",
+      "bank_account_number": "108880786388",
+      "bank_account_name": "ĐỖ VĂN THẬM",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T14:00:35+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:04.412+07:00",
+      "updated_at": "2026-08-10T14:00:34.959+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1377,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 789,
+      "fullname": "Đồng Thị Thu Huế",
+      "email": null,
+      "cccd": "030178005709",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4498,
+        "branch_name": "Kỹ Thương (TCB)"
+      },
+      "bank_account_number": "19032103235014",
+      "bank_account_name": "Đồng Thị Thu Huế",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-09T09:38:25.84+07:00",
+      "updated_at": "2026-07-01T16:05:38.515+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 54,
+          "project_employee_id": 887,
+          "name": "EPE KCN Vsip",
+          "code": "EX004",
+          "client_name": "EPE",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 675,
+      "fullname": "Đồng Xuân Tuấn Vũ",
+      "email": null,
+      "cccd": "031097007895",
+      "address": "",
+      "mobile": "0815000288",
+      "bank": {
+        "id": 4492,
+        "branch_name": "Công Thương Việt Nam (VIETINBANK)"
+      },
+      "bank_account_number": "101877214855",
+      "bank_account_name": "Đồng Xuân Tuấn Vũ",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-04-17T04:17:07.547+07:00",
+      "updated_at": "2026-07-01T16:41:34.012+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 768,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-07",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1051,
+      "fullname": "Đường Thị Loan",
+      "email": null,
+      "cccd": "020196001508",
+      "address": "",
+      "mobile": "0398716722",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0398716722",
+      "bank_account_name": "Đường Thị Loan",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-10T18:11:43.684+07:00",
+      "updated_at": "2026-07-10T18:11:43.684+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1158,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1567,
+      "fullname": "Hoàng Cao Nguyên",
+      "email": null,
+      "cccd": "010208008918",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4493,
+        "branch_name": "Việt Nam Thịnh Vượng (VPB)"
+      },
+      "bank_account_number": "0376019424",
+      "bank_account_name": "Hoàng Cao Nguyên",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-17T18:10:08+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-17T18:10:08.397+07:00",
+      "updated_at": "2026-09-17T18:10:08.397+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1804,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1566,
+      "fullname": "Hoàng Thị Ánh Thiện",
+      "email": null,
+      "cccd": "010303001108",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4498,
+        "branch_name": "Kỹ Thương (TCB)"
+      },
+      "bank_account_number": "19073523763014",
+      "bank_account_name": "Hoàng Thị Ánh Thiện",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-17T18:10:07+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-17T18:10:07.13+07:00",
+      "updated_at": "2026-09-17T18:10:07.13+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1803,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 852,
+      "fullname": "Hoàng Thị Ngọc Ánh",
+      "email": null,
+      "cccd": "031307013668",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4492,
+        "branch_name": "Công Thương Việt Nam (VIETINBANK)"
+      },
+      "bank_account_number": "888815043333",
+      "bank_account_name": "Hoàng Thị Ngọc Ánh",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:52:22.804+07:00",
+      "updated_at": "2026-06-10T10:52:22.804+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 951,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1149,
+      "fullname": "Hoàng Thị Phi Yến",
+      "email": null,
+      "cccd": "031308008449",
+      "address": "",
+      "mobile": "0357459634",
+      "bank": {
+        "id": 4490,
+        "branch_name": "Ngoại thương Việt Nam (VCB)"
+      },
+      "bank_account_number": "1357459634",
+      "bank_account_name": "HOÀNG THỊ PHI YẾN",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-24T14:08:50.538+07:00",
+      "updated_at": "2026-07-24T15:41:37.895+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1258,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1043,
+      "fullname": "Hoàng Văn Nam",
+      "email": null,
+      "cccd": "031208004799",
+      "address": "",
+      "mobile": "0397797607",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0397797607",
+      "bank_account_name": "Hoàng Văn Nam",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-10T18:11:40.755+07:00",
+      "updated_at": "2026-07-10T18:11:40.755+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1150,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 341,
+      "fullname": "Hoàng Văn Toàn",
+      "email": null,
+      "cccd": "031094000944",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4490,
+        "branch_name": "Ngoại thương Việt Nam (VCB)"
+      },
+      "bank_account_number": "1020636378",
+      "bank_account_name": "Hoàng Văn Toàn",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-03-16T07:48:44.353+07:00",
+      "updated_at": "2026-03-16T07:48:44.353+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 333,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-03-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 837,
+      "fullname": "Hoàng Văn Tư",
+      "email": null,
+      "cccd": "038200015310",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4498,
+        "branch_name": "Kỹ Thương (TCB)"
+      },
+      "bank_account_number": "19075743721013",
+      "bank_account_name": "Hoàng Văn Tư",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:52:17.771+07:00",
+      "updated_at": "2026-06-10T10:52:17.771+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 936,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 346,
+      "fullname": "Huỳnh Thị Thu Hoa",
+      "email": null,
+      "cccd": "031192020913",
+      "address": "",
+      "mobile": "0772254475",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0772254475",
+      "bank_account_name": "Huỳnh Thị Thu Hoa",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-03-16T08:30:08.579+07:00",
+      "updated_at": "2026-07-01T16:03:13.719+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 336,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-03-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1132,
+      "fullname": "Kha Thị Xu Đa",
+      "email": null,
+      "cccd": "040191005847",
+      "address": "",
+      "mobile": "0335347870",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0343247604",
+      "bank_account_name": "Kha Thị Xu Đa",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-17T18:32:05.607+07:00",
+      "updated_at": "2026-07-17T18:32:05.607+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1240,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 815,
+      "fullname": "Kha Văn Định",
+      "email": null,
+      "cccd": "040201023553",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4490,
+        "branch_name": "Ngoại thương Việt Nam (VCB)"
+      },
+      "bank_account_number": "1031455927",
+      "bank_account_name": "Kha Văn Định",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:43:24.508+07:00",
+      "updated_at": "2026-06-10T10:43:24.508+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 913,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1450,
+      "fullname": "Kha Văn Tâm",
+      "email": null,
+      "cccd": "040200002926",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4498,
+        "branch_name": "Kỹ Thương (TCB)"
+      },
+      "bank_account_number": "19076141428011",
+      "bank_account_name": "Kha Văn Tâm",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-31T14:51:48+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-31T14:51:48.187+07:00",
+      "updated_at": "2026-08-31T14:51:48.187+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1633,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1483,
+      "fullname": "Lê Bá Lễ",
+      "email": null,
+      "cccd": "031082010859",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4490,
+        "branch_name": "Ngoại thương Việt Nam (VCB)"
+      },
+      "bank_account_number": "1029772219",
+      "bank_account_name": "Lê Bá Lễ",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-10T16:39:46+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-10T16:39:45.949+07:00",
+      "updated_at": "2026-09-10T16:39:45.949+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1711,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1591,
+      "fullname": "Lê Thị Bích Thảo",
+      "email": null,
+      "cccd": "031193003863",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4493,
+        "branch_name": "Việt Nam Thịnh Vượng (VPB)"
+      },
+      "bank_account_number": "6612101993",
+      "bank_account_name": "Lê Thị Bích Thảo",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:22:53+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:22:53.241+07:00",
+      "updated_at": "2026-09-24T16:22:53.241+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 54,
+          "project_employee_id": 1832,
+          "name": "EPE KCN Vsip",
+          "code": "EX004",
+          "client_name": "EPE",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 348,
+      "fullname": "Lê Thị Hằng",
+      "email": null,
+      "cccd": "031306002190",
+      "address": "",
+      "mobile": "0867759258",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0867759258",
+      "bank_account_name": "Lê Thị Hằng",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-03-16T08:32:50.362+07:00",
+      "updated_at": "2026-07-01T16:03:13.696+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 334,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-04-28",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 913,
+      "fullname": "Lê Thị Hồng Nhung",
+      "email": null,
+      "cccd": "031308009246",
+      "address": "",
+      "mobile": "0977476372",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0328232483",
+      "bank_account_name": "Lê Thị Hồng Nhung",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-24T14:35:33.224+07:00",
+      "updated_at": "2026-07-01T16:03:13.961+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 1014,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-06-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        },
+        {
+          "project_id": 54,
+          "project_employee_id": 1374,
+          "name": "EPE KCN Vsip",
+          "code": "EX004",
+          "client_name": "EPE",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1205,
+      "fullname": "Lê Thùy Linh",
+      "email": null,
+      "cccd": "022306003706",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0986005259",
+      "bank_account_name": "Lê Thùy Linh",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-07-31T15:07:21+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-31T15:07:21.382+07:00",
+      "updated_at": "2026-07-31T15:07:21.382+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1343,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 739,
+      "fullname": "Lê Văn Dũng",
+      "email": null,
+      "cccd": "031208010357",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0374841772",
+      "bank_account_name": "Lê Văn Dũng",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-05-23T04:16:28.204+07:00",
+      "updated_at": "2026-05-23T04:16:28.204+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 835,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-14",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 766,
+      "fullname": "Linh Văn Hùng",
+      "email": null,
+      "cccd": "031075003196",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0974730457",
+      "bank_account_name": "Linh Văn Hùng",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-01T09:48:30.679+07:00",
+      "updated_at": "2026-06-01T09:48:30.679+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 54,
+          "project_employee_id": 863,
+          "name": "EPE KCN Vsip",
+          "code": "EX004",
+          "client_name": "EPE",
+          "position": "phổ thông",
+          "start_date": "2026-05-25",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1127,
+      "fullname": "Lò Hải Đăng",
+      "email": null,
+      "cccd": "011207007122",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4490,
+        "branch_name": "Ngoại thương Việt Nam (VCB)"
+      },
+      "bank_account_number": "1065858840",
+      "bank_account_name": "Lò Hải Đăng",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-17T18:32:03.554+07:00",
+      "updated_at": "2026-07-17T18:32:03.554+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1235,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 838,
+      "fullname": "Lò Kiều Linh",
+      "email": null,
+      "cccd": "011305000923",
+      "address": "",
+      "mobile": "0355093321",
+      "bank": {
+        "id": 4491,
+        "branch_name": "Đầu tư và phát triển (BIDV)"
+      },
+      "bank_account_number": "3600934112",
+      "bank_account_name": "Lò Kiều Linh",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:52:18.152+07:00",
+      "updated_at": "2026-07-01T16:41:34.284+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 937,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 752,
+      "fullname": "Lò Ngọc Quyền",
+      "email": null,
+      "cccd": "011205003319",
+      "address": "",
+      "mobile": "0364274583",
+      "bank": {
+        "id": 4521,
+        "branch_name": "Sacombank (STB)"
+      },
+      "bank_account_number": "030093668551",
+      "bank_account_name": "Lò Ngọc Quyền",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-05-31T10:49:58.736+07:00",
+      "updated_at": "2026-07-01T16:41:34.067+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 850,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-30",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 839,
+      "fullname": "Lò Thị Ánh Tuyết",
+      "email": null,
+      "cccd": "011307002851",
+      "address": "",
+      "mobile": "0374990377",
+      "bank": {
+        "id": 4490,
+        "branch_name": "Ngoại thương Việt Nam (VCB)"
+      },
+      "bank_account_number": "1059886616",
+      "bank_account_name": "Lò Thị Ánh Tuyết",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:52:18.493+07:00",
+      "updated_at": "2026-07-01T16:41:34.305+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 938,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1345,
+      "fullname": "Lò Thị Bịch Ngọc",
+      "email": null,
+      "cccd": "011308002759",
+      "address": "",
+      "mobile": "0382168097",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0382168097",
+      "bank_account_name": "Lò Thị Bịch Ngọc",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-24T16:49:15+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-24T16:49:15.094+07:00",
+      "updated_at": "2026-08-24T16:49:15.094+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1484,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 840,
+      "fullname": "Lò Thị Chinh",
+      "email": null,
+      "cccd": "014306001095",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0332760802",
+      "bank_account_name": "Lò Thị Chinh",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:52:18.795+07:00",
+      "updated_at": "2026-06-10T14:41:07.687+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 939,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 841,
+      "fullname": "Lò Thị Dân",
+      "email": null,
+      "cccd": "011307006145",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0396035602",
+      "bank_account_name": "Lò Thị Dân",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:52:19.127+07:00",
+      "updated_at": "2026-06-10T10:52:19.127+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 940,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 816,
+      "fullname": "Lò Thị Doan",
+      "email": null,
+      "cccd": "011307004617",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0384973008",
+      "bank_account_name": "Lò Thị Doan",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:43:24.819+07:00",
+      "updated_at": "2026-06-10T10:43:24.819+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 914,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 760,
+      "fullname": "Lò Thị Dương",
+      "email": null,
+      "cccd": "011307004081",
+      "address": "",
+      "mobile": "0355537821",
+      "bank": {
+        "id": 4492,
+        "branch_name": "Công Thương Việt Nam (VIETINBANK)"
+      },
+      "bank_account_number": "106884750781",
+      "bank_account_name": "LÒ THỊ DƯƠNG",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-07-31T15:07:17+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-05-31T10:50:01.499+07:00",
+      "updated_at": "2026-07-31T15:07:16.57+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 858,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-30",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1140,
+      "fullname": "Lò Thị Hiêm",
+      "email": null,
+      "cccd": "011192005836",
+      "address": "",
+      "mobile": "0867948241",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0867948241",
+      "bank_account_name": "Lò Thị Hiêm",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-18T17:45:34.299+07:00",
+      "updated_at": "2026-07-24T14:08:48.717+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1248,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-07",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 817,
+      "fullname": "Lò Thị Hiến",
+      "email": null,
+      "cccd": "011307003959",
+      "address": "",
+      "mobile": "0799931576",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0372813073",
+      "bank_account_name": "Lò Thị Hiến",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:43:25.164+07:00",
+      "updated_at": "2026-07-01T16:41:34.2+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 915,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 892,
+      "fullname": "Lò Thị Hiên",
+      "email": null,
+      "cccd": "011305001743",
+      "address": "",
+      "mobile": "0365153234",
+      "bank": {
+        "id": 4492,
+        "branch_name": "Công Thương Việt Nam (VIETINBANK)"
+      },
+      "bank_account_number": "104881481200",
+      "bank_account_name": "Lò Thị Hiên",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-17T17:17:34.658+07:00",
+      "updated_at": "2026-07-01T16:41:34.331+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 992,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-06-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 676,
+      "fullname": "Lò Thị Hoạch",
+      "email": null,
+      "cccd": "014309004488",
+      "address": "",
+      "mobile": "0327325401",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0377943598",
+      "bank_account_name": "Lò Thị Hoạch",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-17T10:16:09+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-04-17T04:18:34.154+07:00",
+      "updated_at": "2026-09-17T10:16:09.066+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 767,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-07",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 761,
+      "fullname": "Lò Thị Hoàn",
+      "email": null,
+      "cccd": "011304000314",
+      "address": "",
+      "mobile": "0374067298",
+      "bank": {
+        "id": 4499,
+        "branch_name": "Hàng hải (MSB)"
+      },
+      "bank_account_number": "02001011846241",
+      "bank_account_name": "Lò Thị Hoàn",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-05-31T10:50:02.476+07:00",
+      "updated_at": "2026-07-01T16:41:34.188+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 859,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-30",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1134,
+      "fullname": "Lò Thị Hồng Nhung",
+      "email": null,
+      "cccd": "011308007990",
+      "address": "",
+      "mobile": "0342805967",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "11815112345",
+      "bank_account_name": "Lò Thị Hồng Nhung",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-17T18:32:06.219+07:00",
+      "updated_at": "2026-07-17T18:32:06.219+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1242,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 755,
+      "fullname": "Lò Thị Hương",
+      "email": null,
+      "cccd": "031307003149",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "030099239359",
+      "bank_account_name": "Lò Thị Hương",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-05-31T10:49:59.664+07:00",
+      "updated_at": "2026-05-31T10:49:59.664+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 853,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-30",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 807,
+      "fullname": "Lò Thị Hương",
+      "email": null,
+      "cccd": "011307003149",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4521,
+        "branch_name": "Sacombank (STB)"
+      },
+      "bank_account_number": "030099239359",
+      "bank_account_name": "Lò Thị Hương",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:43:21.513+07:00",
+      "updated_at": "2026-06-10T10:43:21.513+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 905,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 784,
+      "fullname": "Lò Thị Lan",
+      "email": null,
+      "cccd": "011307008046",
+      "address": "",
+      "mobile": "0392400140",
+      "bank": {
+        "id": 4489,
+        "branch_name": "Nông nghiệp và Phát triển nông thôn (VBA)"
+      },
+      "bank_account_number": "8910220028941",
+      "bank_account_name": "Lò Thị Lan",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-09T08:13:42.971+07:00",
+      "updated_at": "2026-07-01T16:03:13.874+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 882,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1252,
+      "fullname": "Lò Thị Lệ Quyên",
+      "email": null,
+      "cccd": "011307004804",
+      "address": "",
+      "mobile": "0327859815",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0359566396",
+      "bank_account_name": "Lò Thị Lệ Quyên",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-11T10:04:49+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:20.011+07:00",
+      "updated_at": "2026-08-11T10:04:49.165+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1392,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1247,
+      "fullname": "Lò Thị Luân",
+      "email": null,
+      "cccd": "011305001083",
+      "address": "",
+      "mobile": "0374990377",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "3923052005",
+      "bank_account_name": "Lò Thị Luân",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T13:58:17+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:17.535+07:00",
+      "updated_at": "2026-08-10T13:58:17.535+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1387,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 818,
+      "fullname": "Lò Thị Minh Thư",
+      "email": null,
+      "cccd": "011305002757",
+      "address": "",
+      "mobile": "0339265410",
+      "bank": {
+        "id": 4492,
+        "branch_name": "Công Thương Việt Nam (VIETINBANK)"
+      },
+      "bank_account_number": "104883783670",
+      "bank_account_name": "Lò Thị Minh Thư",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-10T10:43:25.55+07:00",
+      "updated_at": "2026-07-01T16:41:34.208+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 916,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1446,
+      "fullname": "Lò Thị Nhung",
+      "email": null,
+      "cccd": "011308003755",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0374762938",
+      "bank_account_name": "Lò Thị Nhung",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-31T14:51:45+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-31T14:51:45.106+07:00",
+      "updated_at": "2026-08-31T14:51:45.106+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1629,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1253,
+      "fullname": "Lò Thị Nhung",
+      "email": null,
+      "cccd": "011308004264",
+      "address": "",
+      "mobile": "0397768983",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0397768983",
+      "bank_account_name": "Lò Thị Nhung",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T13:58:20+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:20.673+07:00",
+      "updated_at": "2026-08-10T13:58:20.673+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1393,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 889,
+      "fullname": "Lò Thị Phúc",
+      "email": null,
+      "cccd": "011305005351",
+      "address": "",
+      "mobile": "0977405250",
+      "bank": {
+        "id": 4490,
+        "branch_name": "Ngoại thương Việt Nam (VCB)"
+      },
+      "bank_account_number": "1039739657",
+      "bank_account_name": "Lò Thị Phúc",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-17T17:17:33.7+07:00",
+      "updated_at": "2026-07-01T16:41:34.221+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 989,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-06-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 890,
+      "fullname": "Lò Thị Phương",
+      "email": null,
+      "cccd": "011304001728",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4521,
+        "branch_name": "Sacombank (STB)"
+      },
+      "bank_account_number": "030084125969",
+      "bank_account_name": "Lò Thị Phương",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-17T17:17:34.031+07:00",
+      "updated_at": "2026-06-17T17:17:34.031+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 990,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-06-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 893,
+      "fullname": "Lò Thị Thân",
+      "email": null,
+      "cccd": "011306001177",
+      "address": "",
+      "mobile": "0378077041",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0971943780",
+      "bank_account_name": "Lò Thị Thân",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-17T17:17:34.995+07:00",
+      "updated_at": "2026-07-01T16:41:34.34+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 993,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-06-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1129,
+      "fullname": "Lò Thị Thu Hiền",
+      "email": null,
+      "cccd": "011307001054",
+      "address": "",
+      "mobile": "0355093321",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0382439326",
+      "bank_account_name": "Lò Thị Thu Hiền",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-18T18:31:19+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-17T18:32:04.564+07:00",
+      "updated_at": "2026-08-18T18:31:18.796+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1237,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 754,
+      "fullname": "Lò Thị Thươn",
+      "email": null,
+      "cccd": "011307007037",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4492,
+        "branch_name": "Công Thương Việt Nam (VIETINBANK)"
+      },
+      "bank_account_number": "102876231813",
+      "bank_account_name": "Lò Thị Thươn",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-05-31T10:49:59.321+07:00",
+      "updated_at": "2026-05-31T10:49:59.321+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 852,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-30",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1254,
+      "fullname": "Lò Thị Thưởng",
+      "email": null,
+      "cccd": "011300006346",
+      "address": "",
+      "mobile": "0364234609",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0356645956",
+      "bank_account_name": "Lò Thị Thưởng",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T13:58:21+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:21.342+07:00",
+      "updated_at": "2026-08-10T13:58:21.342+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1394,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 775,
+      "fullname": "Lò Thị Thúy",
+      "email": null,
+      "cccd": "011307000396",
+      "address": "",
+      "mobile": "0362526841",
+      "bank": {
+        "id": 4490,
+        "branch_name": "Ngoại thương Việt Nam (VCB)"
+      },
+      "bank_account_number": "1058902007",
+      "bank_account_name": "Lò Thị Thúy",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-06-09T08:13:39.481+07:00",
+      "updated_at": "2026-07-01T16:03:13.816+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 7,
+          "project_employee_id": 873,
+          "name": "PQC Hải Phòng",
+          "code": "PX001",
+          "client_name": "PQC",
+          "position": "Có tay nghề",
+          "start_date": "2026-05-31",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 677,
+      "fullname": "Lò Thị Trường",
+      "email": null,
+      "cccd": "014190012767",
+      "address": "",
+      "mobile": "0326769071",
+      "bank": {
+        "id": 4522,
+        "branch_name": "An Bình (ABBANK)"
+      },
+      "bank_account_number": "0326769071",
+      "bank_account_name": "LÒ THỊ TRƯỞNG",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:36+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-04-17T04:19:32.347+07:00",
+      "updated_at": "2026-09-24T16:23:35.888+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 766,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-04-07",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1155,
+      "fullname": "Lò Thị Tửa",
+      "email": null,
+      "cccd": "011192006410",
+      "address": "",
+      "mobile": "0904204714",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0904204714",
+      "bank_account_name": "LÒ THỊ TỬA",
+      "bank_account_status": "valid",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-07-24T14:08:52.419+07:00",
+      "updated_at": "2026-07-24T15:41:37.957+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1264,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-07-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1244,
+      "fullname": "Lò Tuấn Hùng",
+      "email": null,
+      "cccd": "011206002983",
+      "address": "",
+      "mobile": "0859588509",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0859588509",
+      "bank_account_name": "Lò Tuấn Hùng",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-08-10T13:58:14+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-08-10T13:58:14.607+07:00",
+      "updated_at": "2026-08-10T13:58:14.607+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1383,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-08-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    }
+  ],
+  "message": "Lấy danh sách nhân viên thành công",
+  "pagination": {
+    "page": 1,
+    "pageSize": 100,
+    "totalPages": 3,
+    "totalRecords": 290
+  }
+}

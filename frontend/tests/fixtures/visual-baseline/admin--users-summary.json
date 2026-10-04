@@ -1,0 +1,11 @@
+{
+  "status": "success",
+  "data": {
+    "total_users": 1510,
+    "total_admins": 2,
+    "total_partners": 22,
+    "total_employees": 1485,
+    "recent_logins_today": 2
+  },
+  "message": "Lấy tóm tắt người dùng thành công"
+}

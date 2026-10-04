@@ -1,0 +1,27 @@
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 999909,
+      "fullname": "Trần Đăng Đức",
+      "email": null,
+      "cccd": "031092020742",
+      "date_of_birth": "",
+      "current_project": {
+        "id": 67,
+        "name": "TEV",
+        "code": "CX002"
+      },
+      "created_at": "2026-09-30T18:32:45.965+07:00",
+      "created_by_name": "Thanh Mai",
+      "avatar": null
+    }
+  ],
+  "message": "Lấy nhân viên mới thành công",
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "totalPages": 1,
+    "totalRecords": 1
+  }
+}

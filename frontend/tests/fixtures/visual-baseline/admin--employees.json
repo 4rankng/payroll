@@ -1,0 +1,765 @@
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 999909,
+      "fullname": "Trần Đăng Đức",
+      "email": null,
+      "cccd": "031092020742",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4499,
+        "branch_name": "Hàng hải (MSB)"
+      },
+      "bank_account_number": "02101010890101",
+      "bank_account_name": "Trần Đăng Đức",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-30T18:32:45+07:00",
+      "date_of_birth": null,
+      "created_by": 764,
+      "created_at": "2026-09-30T18:32:45.965+07:00",
+      "updated_at": "2026-09-30T18:32:45.965+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 67,
+          "project_employee_id": 999902,
+          "name": "TEV",
+          "code": "CX002",
+          "client_name": "TEV",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1615,
+      "fullname": "Đỗ Văn Hùng",
+      "email": null,
+      "cccd": "031090011085",
+      "address": "",
+      "mobile": "0358364376",
+      "bank": {
+        "id": 4498,
+        "branch_name": "Kỹ Thương (TCB)"
+      },
+      "bank_account_number": "19036240859012",
+      "bank_account_name": "Đỗ Văn Hùng",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-25T18:37:08+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T18:37:08.399+07:00",
+      "updated_at": "2026-09-25T20:44:09.593+07:00",
+      "can_delete": false,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 1856,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "flexible",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": true,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1614,
+      "fullname": "Cháng A Thăm",
+      "email": null,
+      "cccd": "002093003597",
+      "address": "",
+      "mobile": "0343154221",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0368899648",
+      "bank_account_name": "Cháng A Thăm",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-25T12:37:47+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T12:37:47.098+07:00",
+      "updated_at": "2026-09-25T12:37:47.098+07:00",
+      "can_delete": false,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 1855,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "flexible",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": true,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1613,
+      "fullname": "Đào Xuân Vững",
+      "email": null,
+      "cccd": "030206017863",
+      "address": "",
+      "mobile": "0785814662",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0934203228",
+      "bank_account_name": "Đào Xuân Vững",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-25T12:21:38+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T12:21:38.727+07:00",
+      "updated_at": "2026-09-25T12:21:38.727+07:00",
+      "can_delete": false,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 1854,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "flexible",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": true,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1612,
+      "fullname": "Ly A Tu",
+      "email": null,
+      "cccd": "014200006378",
+      "address": "",
+      "mobile": "0354315491",
+      "bank": {
+        "id": 4499,
+        "branch_name": "Hàng hải (MSB)"
+      },
+      "bank_account_number": "02101010625657",
+      "bank_account_name": "Ly A Tu",
+      "bank_account_status": "invalid",
+      "bank_account_invalid_reason": "Số tài khoản không hợp lệ",
+      "bank_account_validated_at": "2026-09-25T12:21:38+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T12:21:37.96+07:00",
+      "updated_at": "2026-09-25T12:21:37.96+07:00",
+      "can_delete": false,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 1853,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "flexible",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": true,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1611,
+      "fullname": "Nguyễn Đình Việt",
+      "email": null,
+      "cccd": "031208009171",
+      "address": "",
+      "mobile": "0396529444",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0396529444",
+      "bank_account_name": "Nguyễn Đình Việt",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-25T12:21:37+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T12:21:37.193+07:00",
+      "updated_at": "2026-09-25T12:21:37.193+07:00",
+      "can_delete": false,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 1852,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "flexible",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": true,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1610,
+      "fullname": "Nguyễn Trung Nghĩa",
+      "email": null,
+      "cccd": "030208000476",
+      "address": "",
+      "mobile": "0917186748",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0704526657",
+      "bank_account_name": "Nguyễn Trung Nghĩa",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-25T12:21:36+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T12:21:36.377+07:00",
+      "updated_at": "2026-09-25T12:21:36.377+07:00",
+      "can_delete": false,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 1851,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "flexible",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": true,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1609,
+      "fullname": "Nguyễn Văn Hiệu",
+      "email": null,
+      "cccd": "030091003700",
+      "address": "",
+      "mobile": "0948009740",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0948009740",
+      "bank_account_name": "Nguyễn Văn Hiệu",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-25T12:21:35+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T12:21:35.579+07:00",
+      "updated_at": "2026-09-25T12:21:35.579+07:00",
+      "can_delete": false,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 1850,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "flexible",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": true,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1608,
+      "fullname": "Nguyễn Thị Nga",
+      "email": null,
+      "cccd": "031183008929",
+      "address": "",
+      "mobile": "0389253442",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0001232274980",
+      "bank_account_name": "Nguyễn Thị Nga",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-25T12:21:34+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T12:21:34.556+07:00",
+      "updated_at": "2026-09-25T12:21:34.556+07:00",
+      "can_delete": false,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 1849,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "flexible",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": true,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1607,
+      "fullname": "Lữ Văn Quyết",
+      "email": null,
+      "cccd": "040204015920",
+      "address": "",
+      "mobile": "0369375631",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "070620004",
+      "bank_account_name": "Lữ Văn Quyết",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-25T12:21:33+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T12:21:33.561+07:00",
+      "updated_at": "2026-09-25T12:21:33.561+07:00",
+      "can_delete": false,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 1848,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "flexible",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": true,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1606,
+      "fullname": "Nguyễn Xuân Tùng",
+      "email": null,
+      "cccd": "031088000742",
+      "address": "",
+      "mobile": "0865526981",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "6913797097108",
+      "bank_account_name": "Nguyễn Xuân Tùng",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-25T12:21:32+07:00",
+      "date_of_birth": null,
+      "created_by": 1,
+      "created_at": "2026-09-25T12:21:32.487+07:00",
+      "updated_at": "2026-09-25T12:21:32.487+07:00",
+      "can_delete": false,
+      "current_projects": [
+        {
+          "project_id": 58,
+          "project_employee_id": 1847,
+          "name": "LGD",
+          "code": "LGD",
+          "client_name": "LGD",
+          "position": "Nhân viên sản xuất",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "flexible",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": true,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1605,
+      "fullname": "Phạm Anh Quân",
+      "email": null,
+      "cccd": "031207010420",
+      "address": "",
+      "mobile": "",
+      "bank_account_number": "",
+      "bank_account_name": "",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T20:08:06+07:00",
+      "date_of_birth": null,
+      "created_by": 1194,
+      "created_at": "2026-09-24T20:08:06.116+07:00",
+      "updated_at": "2026-09-24T20:08:06.116+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 77,
+          "project_employee_id": 1846,
+          "name": "Georim",
+          "code": "GX001",
+          "client_name": "Georim",
+          "position": "Up Công LGD",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1604,
+      "fullname": "Phạm Văn Hoàng",
+      "email": null,
+      "cccd": "031202013269",
+      "address": "Tổ Dân Phố Thuần Tị, Hồng An, Hải Phòng",
+      "mobile": "0941580111",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "3312112433333",
+      "bank_account_name": "Phạm Văn Hoàng",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:27:04+07:00",
+      "date_of_birth": "2002-02-16",
+      "created_by": 1194,
+      "created_at": "2026-09-24T16:27:04.458+07:00",
+      "updated_at": "2026-09-24T16:27:04.458+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 77,
+          "project_employee_id": 1845,
+          "name": "Georim",
+          "code": "GX001",
+          "client_name": "Georim",
+          "position": "Up Công LGD",
+          "start_date": "2026-09-17",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1603,
+      "fullname": "Nguyễn Đức Phúc",
+      "email": null,
+      "cccd": "031207009984",
+      "address": "Tổ Dân Phố Xuyên Đông, Hồng An, Hải Phòng",
+      "mobile": "0927681599",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0962060535",
+      "bank_account_name": "Nguyễn Đức Phúc",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:25:03+07:00",
+      "date_of_birth": "2007-06-28",
+      "created_by": 1194,
+      "created_at": "2026-09-24T16:25:03.772+07:00",
+      "updated_at": "2026-09-24T16:25:03.772+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 77,
+          "project_employee_id": 1844,
+          "name": "Georim",
+          "code": "GX001",
+          "client_name": "Georim",
+          "position": "Up Công LGD",
+          "start_date": "2026-09-16",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1602,
+      "fullname": "Vũ Thị Nguyệt Ánh",
+      "email": null,
+      "cccd": "031302006571",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "868616112002",
+      "bank_account_name": "Vũ Thị Nguyệt Ánh",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:37+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:23:37.52+07:00",
+      "updated_at": "2026-09-24T16:23:37.52+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1843,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1601,
+      "fullname": "Phạm Văn Huy",
+      "email": null,
+      "cccd": "031085014130",
+      "address": "",
+      "mobile": "",
+      "bank_account_number": "",
+      "bank_account_name": "",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:37+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:23:36.904+07:00",
+      "updated_at": "2026-09-24T16:23:36.904+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1842,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1600,
+      "fullname": "Nguyễn Thị Thu Hương",
+      "email": null,
+      "cccd": "031188001095",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4492,
+        "branch_name": "Công Thương Việt Nam (VIETINBANK)"
+      },
+      "bank_account_number": "101869713075",
+      "bank_account_name": "Nguyễn Thị Thu Hương",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:36+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:23:36.599+07:00",
+      "updated_at": "2026-09-24T16:23:36.599+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1841,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1599,
+      "fullname": "Đặng Thị Thảo",
+      "email": null,
+      "cccd": "002301007107",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4498,
+        "branch_name": "Kỹ Thương (TCB)"
+      },
+      "bank_account_number": "19037866983013",
+      "bank_account_name": "Đặng Thị Thảo",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:35+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:23:35.482+07:00",
+      "updated_at": "2026-09-24T16:23:35.482+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1840,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1598,
+      "fullname": "Đặng Thị Bình",
+      "email": null,
+      "cccd": "031192002203",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4488,
+        "branch_name": "Quân đội (MB)"
+      },
+      "bank_account_number": "0977912385",
+      "bank_account_name": "Đặng Thị Bình",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:34+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:23:34.194+07:00",
+      "updated_at": "2026-09-24T16:23:34.194+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1839,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    },
+    {
+      "id": 1597,
+      "fullname": "Cao Thị Ngọc Anh",
+      "email": null,
+      "cccd": "031198004486",
+      "address": "",
+      "mobile": "",
+      "bank": {
+        "id": 4492,
+        "branch_name": "Công Thương Việt Nam (VIETINBANK)"
+      },
+      "bank_account_number": "101881928412",
+      "bank_account_name": "Cao Thị Ngọc Anh",
+      "bank_account_status": "valid",
+      "bank_account_validated_at": "2026-09-24T16:23:33+07:00",
+      "date_of_birth": null,
+      "created_by": 4,
+      "created_at": "2026-09-24T16:23:33.531+07:00",
+      "updated_at": "2026-09-24T16:23:33.531+07:00",
+      "can_delete": true,
+      "current_projects": [
+        {
+          "project_id": 10,
+          "project_employee_id": 1838,
+          "name": "EVA KCN Vsip",
+          "code": "EX003",
+          "client_name": "EVA",
+          "position": "phổ thông",
+          "start_date": "2026-09-01",
+          "last_date": null,
+          "payment_schedule": "weekly",
+          "pending_payment_schedule": null,
+          "schedule_effective_from": null,
+          "is_flexible": false,
+          "check_in_enabled": false
+        }
+      ]
+    }
+  ],
+  "message": "Lấy danh sách nhân viên thành công",
+  "pagination": {
+    "page": 1,
+    "pageSize": 20,
+    "totalPages": 74,
+    "totalRecords": 1480
+  }
+}
