@@ -1,3 +1,4 @@
+import plugin from "tailwindcss/plugin";
 import type { Config } from "tailwindcss";
 
 export default {
@@ -172,15 +173,91 @@ export default {
 				success: 'hsl(var(--success))',
 				warning: 'hsl(var(--warning))',
 				info: 'hsl(var(--info))',
+
+				// ---- Untitled UI PRO pilot tokens (banner-dual-action) ----
+				// Flat keys must match the vendored class names verbatim
+				// (underscore + dash hybrids: brand_alt, primary_on-brand).
+				// brand.solid doubles as the primary button + FeaturedIcon fill;
+				// section_subtle is the banner background — deliberately darker
+				// than solid so white-on-solid text and the icon separate.
+				brand: {
+					DEFAULT: '#0a6b3a',
+					solid: '#08783e',
+					solid_hover: '#066632',
+					// Near-black forest: white copy hits 16:1 and the #08783e
+					// solid button/FeaturedIcon clears 3.8:1 against the strip.
+					section_subtle: '#032214',
+					secondary: '#0a6b3a',
+					secondary_hover: '#085c33',
+				},
+				brand_alt: '#085c33',
+				'primary_on-brand': '#ffffff',
+				'tertiary_on-brand': 'rgb(255 255 255 / 0.72)',
+				'primary_hover': '#066632',
+				'secondary_hover': '#e4e7ec',
+				fg: {
+					white: '#ffffff',
+					quaternary: '#98a2b3',
+					quaternary_hover: '#667085',
+					disabled: '#d0d5dd',
+					disabled_subtle: '#e4e7ec',
+				},
+				disabled: '#e4e7ec',
+				disabled_subtle: '#eaecf0',
+				// Icon colors UU applies to data-icon children inside buttons
+				// (text-only banner buttons never show them; the loading spinner
+				// inherits text-white anyway — token kept so the class resolves).
+				'button-primary-icon': '#ffffff',
+				'button-primary-icon_hover': '#ffffff',
+				utility: {
+					'brand-200': '#86efac',
+				},
+				'focus-ring': '#2e90fa',
 			},
 			backgroundImage: {
 				'gradient-navy': 'linear-gradient(135deg, #08783e 0%, #066534 100%)',
 				'gradient-teal': 'linear-gradient(135deg, hsl(180 70% 45%) 0%, hsl(180 65% 40%) 100%)',
 				'gradient-subtle': 'linear-gradient(180deg, hsl(220 20% 98%) 0%, hsl(220 15% 96%) 100%)',
 			},
+			borderRadius: {
+				// UU's rounded-xs (v4 scale name; TW3 starts at sm).
+				'xs': '0.125rem',
+			},
+			// UU uses half-step spacing values TW3's default scale lacks.
+			spacing: {
+				'4.5': '1.125rem',
+				'8.5': '2.125rem',
+				'9.5': '2.375rem',
+				'10.5': '2.625rem',
+				'11.5': '2.875rem',
+			},
+			// UU's 12% alpha modifier (border-white/12) — not in TW3's opacity scale.
+			opacity: {
+				'12': '12%',
+			},
+			zIndex: {
+				// FeaturedIcon pins its glyph above the ::before/::after rings.
+				'1': '1',
+			},
+			textUnderlineOffset: {
+				'3': '3px',
+			},
 			boxShadow: {
 				'navy': '0 8px 32px rgb(8 120 62 / 0.22)',
 				'card-elevated': '0 1px 3px hsl(220 20% 90%), 0 10px 40px -10px hsl(220 30% 85%), 0 0 0 1px hsl(220 10% 90%) inset',
+				// UU button/icon elevation (TW3 has no shadow-xs — v4 added it).
+				'xs': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+				'xs-skeumorphic': '0 1px 2px 0 rgb(16 24 40 / 0.05), 0 1px 3px 0 rgb(16 24 40 / 0.1)',
+			},
+			maxWidth: {
+				// UU's max-w-container. 100% (not 1280px): inside the dashboard's
+				// padded column the banner must align with its sibling cards,
+				// not introduce a second centering grid.
+				'container': '100%',
+			},
+			outlineColor: {
+				'focus-ring': '#2e90fa',
+				'brand': '#0a6b3a',
 			},
 			keyframes: {
 				// Staggered page load animations
@@ -269,6 +346,9 @@ export default {
 				'500': '500ms',
 			},
 			fontSize: {
+				// UU's body-md (banner title / lg buttons) — distinct from this
+				// app's compact `base` (12px); only vendored UU classes use it.
+				'md': ['1rem', { lineHeight: '1.5' }],         // 16px
 				'xs': ['0.6875rem', { lineHeight: '1.4' }],    // 11px
 				'sm': ['0.75rem', { lineHeight: '1.4' }],     // 12px
 				'base': ['0.75rem', { lineHeight: '1.5' }],    // 12px
@@ -312,5 +392,14 @@ export default {
 		require("tailwindcss-animate"),
 		require("@tailwindcss/typography"),
 		require("daisyui"),
+		// UU PRO primitive: children (icons, text spans) mirror the parent
+		// button's transition (duration/timing) instead of animating with
+		// defaults. Must be a plugin utility — not plain CSS — so variants
+		// like [&>[data-icon]]:transition-inherit-all compile.
+		plugin(({ addUtilities }) => {
+			addUtilities({
+				'.transition-inherit-all': { transition: 'inherit' },
+			});
+		}),
 	],
 } satisfies Config;

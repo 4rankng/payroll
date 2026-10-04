@@ -254,7 +254,7 @@ export interface Asset {
   original_filename?: string; // Original filename before processing
   content_type?: string; // MIME type
   file_size?: number; // File size in bytes
-  upload_type: 'document' | 'ledger_evidence' | 'bulk_transfer_result' | 'general';
+  upload_type: 'document' | 'ledger_evidence' | 'bulk_transfer_result' | 'general' | 'checkin_roster';
   uploaded_by: number;
   created_at: string;
 }

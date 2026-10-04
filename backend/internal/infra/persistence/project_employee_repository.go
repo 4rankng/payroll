@@ -137,15 +137,21 @@ func (r *ProjectEmployeeRepository) checkInConfigurationBaseQuery(
 		Where("check_in_time >= ? AND check_in_time < ?", query.MonthStart, query.MonthEnd).
 		Group("project_id, employee_id")
 
-	return r.getDB(ctx).
+	base := r.getDB(ctx).
 		Table("project_employees").
 		Joins("LEFT JOIN (?) AS month_attendance ON month_attendance.project_id = project_employees.project_id AND month_attendance.employee_id = project_employees.employee_id", monthAttendance).
 		// Mobile lives on employees (project_employees keeps only the
 		// denormalized name/CCCD/code). The join is 1:1 on the primary key and
 		// drops soft-deleted employees, so it never changes row counts for the
 		// summary aggregate below.
-		Joins("LEFT JOIN employees ON employees.id = project_employees.employee_id AND employees.deleted_at IS NULL").
-		Where("project_employees.project_id = ?", query.ProjectID).
+		Joins("LEFT JOIN employees ON employees.id = project_employees.employee_id AND employees.deleted_at IS NULL")
+	// ProjectID 0 = "every project": the day-9 roster the admin sends to the
+	// partner spans all self check-in assignments, not one project. Named
+	// callers (the per-project screen) always pass a real id.
+	if query.ProjectID > 0 {
+		base = base.Where("project_employees.project_id = ?", query.ProjectID)
+	}
+	return base.
 		Where("project_employees.deleted_at IS NULL").
 		Where("project_employees.start_date <= ?", query.AsOfDate).
 		Where("project_employees.last_date IS NULL OR project_employees.last_date >= ?", query.AsOfDate).

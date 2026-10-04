@@ -78,6 +78,9 @@ const (
 	UploadTypeSaoKe                     = "sao_ke"           // sao kê reminder email attachments
 	UploadTypeSettlementProof           = "settlement_proof" // settlement evidence uploads
 	UploadTypeEmployeeImports           = "employee_imports" // bulk employee import files
+	// UploadTypeCheckInRoster holds the day-9 prepared self check-in roster
+	// the admin downloads from Tổng quan (dashboard). One file per period.
+	UploadTypeCheckInRoster = "checkin_roster"
 )
 
 // allowedUploadTypes is the closed set of upload_type values accepted for file
@@ -98,6 +101,7 @@ var allowedUploadTypes = map[string]bool{
 	UploadTypeSaoKe:                     true,
 	UploadTypeSettlementProof:           true,
 	UploadTypeEmployeeImports:           true,
+	UploadTypeCheckInRoster:             true,
 }
 
 // IsValidUploadType reports whether t is one of the recognized upload_type

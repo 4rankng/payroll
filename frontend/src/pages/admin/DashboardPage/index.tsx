@@ -37,6 +37,7 @@ import { useDashboardStats } from '@/hooks/admin-dashboard/useDashboardStats';
 import { useTimesheets } from '@/hooks/api/useTimesheets';
 import { useBankUsageAllProjects, useEmployeeActivityStats } from '@/hooks/api/useDashboard';
 import { useDashboardNavigation } from '@/hooks/useDashboardNavigation';
+import { CheckInRosterReminderBanner } from '@/components/admin-dashboard/CheckInRosterReminderBanner';
 import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 const AdminDashboard = () => {
@@ -210,6 +211,8 @@ const AdminDashboard = () => {
         <div className="motion-reduce:animate-none motion-reduce:opacity-100">
           <DashboardHeader value={selectedMonth} onChange={handleMonthChange} />
         </div>
+
+        <CheckInRosterReminderBanner />
 
         <DashboardMetricStrip items={metricItems} />
 

@@ -45,6 +45,7 @@ import { cn } from '@/lib/utils';
 import { MobileSectionHeader as SectionHeader } from '@/components/shared/MobileSectionHeader';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { MobilePageShell } from '@/components/shared/MobilePageShell';
+import { CheckInRosterReminderBanner } from '@/components/admin-dashboard/CheckInRosterReminderBanner';
 import {
   MobileOperationsPanel,
   MobileTaskList,
@@ -316,6 +317,8 @@ const AdminDashboardMobile = () => {
         bordered={false}
         className="px-0 pt-0 [&_.shadow-sm]:shadow-none"
       />
+
+      <CheckInRosterReminderBanner />
 
       <div className="admin-dashboard-mobile-monthbar overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white">
         <div className="grid grid-cols-[auto_44px_minmax(0,1fr)_44px_44px] items-center gap-1 px-1 py-1">

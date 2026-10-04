@@ -13,6 +13,7 @@ export type NotificationType =
   | 'payment_reminder'
   | 'password_change'
   | 'advance_quota_changed'
+  | 'checkin_roster'
   | 'custom';
 
 export type NotificationChannel = 'push' | 'email';

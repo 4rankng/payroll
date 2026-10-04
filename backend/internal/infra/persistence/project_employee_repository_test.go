@@ -562,6 +562,33 @@ func TestProjectEmployeeRepository_GetCheckInConfigurationUsesSelectedMonthForUs
 	require.NotNil(t, employeesByID[102].LastCheckInAt)
 }
 
+// ProjectID 0 must return every project's assignments (the day-9 combined
+// roster), while named projects keep filtering — regression guard for the
+// ProjectID = 0 branch added to checkInConfigurationBaseQuery.
+func TestProjectEmployeeRepository_GetCheckInConfigurationAllProjects(t *testing.T) {
+	repo, db := newCheckInConfigurationTestRepository(t)
+	seedCheckInConfigurationTestData(t, db)
+
+	all, err := repo.GetCheckInConfiguration(context.Background(), domain.CheckInConfigurationQuery{
+		ProjectID:  0,
+		MonthStart: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC),
+		MonthEnd:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
+		AsOfDate:   time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC),
+		Status:     domain.CheckInConfigurationStatusEnabled,
+		Limit:      50,
+	})
+	require.NoError(t, err)
+
+	// Enabled rows: 101, 102 (project 7), 106 (project 8); 105 ended 2026-07-31.
+	require.Equal(t, int64(3), all.Total)
+	require.Len(t, all.Employees, 3)
+	projectIDs := map[uint]bool{}
+	for _, employee := range all.Employees {
+		projectIDs[employee.ProjectID] = true
+	}
+	require.Equal(t, map[uint]bool{7: true, 8: true}, projectIDs)
+}
+
 func TestProjectEmployeeRepository_GetCheckInConfigurationFiltersInactiveAcrossAllRows(t *testing.T) {
 	repo, db := newCheckInConfigurationTestRepository(t)
 	seedCheckInConfigurationTestData(t, db)

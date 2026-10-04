@@ -10,6 +10,7 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/advance_payment"
+	"api-server/internal/app/services/asset"
 	"api-server/internal/app/services/cleanup"
 	"api-server/internal/app/services/ledger"
 	"api-server/internal/app/services/notification"
@@ -38,6 +39,7 @@ func registerSchedulerJobs(
 	zaloConnectService *zaloconnect.Service,
 	aggregateRecomputeService *project.AggregateRecomputeService,
 	walletBalanceAlertService *notification.WalletBalanceAlertService,
+	assetSvc *asset.AssetService,
 	logger *slog.Logger,
 ) {
 	// Helper for template rendering
@@ -342,6 +344,76 @@ func registerSchedulerJobs(
 			message := fmt.Sprintf("Hãy gửi sao kê thanh toán ứng lương cho tháng %s (%d dự án) cho đối tác.", forMonth, projectCount)
 
 			sendSaoKeReminder(ctx, title, message)
+		},
+	})
+
+	// 10b. Self check-in roster preparation - 9th at 9:15 AM
+	// Builds the combined (all projects) self check-in roster for the previous
+	// month, stores it as a checkin_roster asset and pushes a checkin_roster
+	// notification to admins. The Tổng quan dashboard card keys off the unread
+	// notification: "Tải file" downloads this asset, "Đã xong" marks it read.
+	// Skips silently when nobody is enrolled (file + notification are created
+	// together, so no notification can dangle without a file).
+	s.AddJob(scheduler.Job{
+		Name:    "prepare_check_in_roster",
+		Cron:    "15 9 9 * *",
+		Enabled: true,
+		Handler: func() {
+			ctx := context.Background()
+			// The list describes the closed month the partner is billed against,
+			// matching the day-9 sao kê semantics (reporting on the prior period).
+			prevMonth := clock.Now().AddDate(0, -1, 0)
+			forMonth := prevMonth.Format("2006-01")
+
+			file, count, err := projectEmployeeService.ExportAllCheckInRosters(
+				ctx,
+				domain.CheckInConfigurationStatusEnabled,
+				prevMonth,
+			)
+			if err != nil {
+				logger.Error("Failed to export check-in roster", "month", forMonth, "error", err)
+				return
+			}
+			if count == 0 {
+				logger.Info("No self check-in employees enrolled, skipping roster preparation", "month", forMonth)
+				return
+			}
+			defer func() { _ = file.Close() }()
+
+			buffer, err := file.WriteToBuffer()
+			if err != nil {
+				logger.Error("Failed to serialize check-in roster workbook", "month", forMonth, "error", err)
+				return
+			}
+			filename := fmt.Sprintf("danh_sach_tu_cham_cong_%s.xlsx", forMonth)
+			assetRecord, err := assetSvc.UploadAssetFromBytes(
+				ctx,
+				buffer.Bytes(),
+				filename,
+				domain.UploadTypeCheckInRoster,
+				constants.SystemUserID,
+			)
+			if err != nil {
+				logger.Error("Failed to store check-in roster asset", "month", forMonth, "error", err)
+				return
+			}
+
+			title := "Danh sách tự chấm công đã sẵn sàng"
+			message := fmt.Sprintf(
+				"Danh sách nhân viên tự chấm công tháng %s (%d người) đã được tạo. Tải file tại Tổng quan và gửi cho đối tác.",
+				forMonth, count,
+			)
+			if err := notificationService.NotifyUsersByRole(
+				ctx,
+				domain.RoleAdmin,
+				domain.NotificationTypeCheckInRoster,
+				title,
+				message,
+			); err != nil {
+				logger.Error("Check-in roster notification failed", "month", forMonth, "asset_id", assetRecord.ID, "error", err)
+				return
+			}
+			logger.Info("Check-in roster prepared", "month", forMonth, "employees", count, "asset_id", assetRecord.ID)
 		},
 	})
 

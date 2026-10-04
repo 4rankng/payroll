@@ -24,6 +24,11 @@ const (
 	NotificationTypeAdvancePaymentReport         NotificationType = "advance_payment_report"
 	NotificationTypeWalletBalanceLow             NotificationType = "wallet_balance_low"
 	NotificationTypeCustom                       NotificationType = "custom"
+	// NotificationTypeCheckInRoster is the day-9 reminder that the self
+	// check-in roster for the previous month is prepared and waiting on
+	// Tổng quan. The dashboard card keys off this type (unread = pending),
+	// so it must stay distinct from generic custom notifications.
+	NotificationTypeCheckInRoster NotificationType = "checkin_roster"
 )
 
 // Notification titles use plain text — no emoji prefixes.
