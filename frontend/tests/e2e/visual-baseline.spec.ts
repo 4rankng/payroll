@@ -253,6 +253,37 @@ test.describe("visual baselines", () => {
     // it on the page as the second layer.
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.addStyleTag({ content: ANIMATION_KILLER });
+    // Remote font stylesheets apply via an async media="print" -> "all"
+    // swap (index.html data-font-stylesheet links: Manrope, Inter, JetBrains
+    // Mono). If a capture lands before a stylesheet applies or its woff2
+    // files finish, text renders with fallback metrics — subpixel glyph
+    // diffs between runs (observed on partner/projects@320: 257 differing
+    // antialiasing pixels in the search placeholder, content identical).
+    // Wait for every stylesheet to apply, then for document.fonts.ready and
+    // an explicit load() of all registered faces, so captures always use
+    // final font metrics.
+    await page
+      .waitForFunction(
+        () =>
+          Array.from(document.querySelectorAll("link[data-font-stylesheet]")).every(
+            (link) => link.getAttribute("media") === "all"
+          ),
+        undefined,
+        { timeout: 15_000 }
+      )
+      .catch(() => {
+        // Offline environment: the links never apply and fallback fonts are
+        // the consistent state — capture proceeds.
+      });
+    await page
+      .evaluate(() => {
+        const faces = Array.from(document.fonts);
+        return Promise.all([
+          document.fonts.ready,
+          ...faces.map((face) => face.load().catch(() => null)),
+        ]).then(() => true);
+      })
+      .catch(() => {});
     // Pages with short polling intervals may never go fully idle; the quiet
     // window and loading waits below are the real determinism budget.
     await page.waitForLoadState("networkidle", { timeout: 10_000 }).catch(() => {});
