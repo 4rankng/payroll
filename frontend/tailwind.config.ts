@@ -174,12 +174,14 @@ export default {
 				warning: 'hsl(var(--warning))',
 				info: 'hsl(var(--info))',
 
-				// ---- Untitled UI PRO pilot tokens (banner-dual-action) ----
-				// Flat keys must match the vendored class names verbatim
-				// (underscore + dash hybrids: brand_alt, primary_on-brand).
-				// brand.solid doubles as the primary button + FeaturedIcon fill;
-				// section_subtle is the banner background — deliberately darker
-				// than solid so white-on-solid text and the icon separate.
+				// ---- Untitled UI PRO token bridge (W1) ----
+				// UU v7 token names; UU scale values for semantic families.
+				// Brand + brand utility ladders use this app's green so vendored
+				// UU components render in the product identity. Flat keys must
+				// match the vendored class names verbatim (underscore + dash
+				// hybrids: brand_alt, error-solid_hover, fg-brand-secondary_alt)
+				// and stay flat to avoid colliding with the shadcn
+				// success/warning/info vars above.
 				brand: {
 					DEFAULT: '#0a6b3a',
 					solid: '#08783e',
@@ -195,22 +197,128 @@ export default {
 				'tertiary_on-brand': 'rgb(255 255 255 / 0.72)',
 				'primary_hover': '#066632',
 				'secondary_hover': '#e4e7ec',
+				// Neutral roles. `tertiary` is the UU tertiary-button text pair
+				// (gray-700 / gray-800); light gray surfaces reference the
+				// utility-gray ladder instead.
+				tertiary: '#344054',
+				tertiary_hover: '#1d2939',
+				'secondary-solid': '#475467',
+				secondary_alt: '#d0d5dd',
 				fg: {
 					white: '#ffffff',
+					primary: '#101828',
+					secondary: '#344054',
+					tertiary: '#667085',
 					quaternary: '#98a2b3',
 					quaternary_hover: '#667085',
 					disabled: '#d0d5dd',
 					disabled_subtle: '#e4e7ec',
+					brand: {
+						primary: '#066632',
+						secondary: '#08783e',
+						secondary_hover: '#066632',
+						secondary_alt: '#08783e',
+					},
+					error: { primary: '#b42318', secondary: '#d92d20' },
+					warning: { primary: '#b54708' },
+					success: { primary: '#027a48' },
 				},
 				disabled: '#e4e7ec',
 				disabled_subtle: '#eaecf0',
+				// UU error scale (employee theme already uses error-700 #b42318).
+				'error-solid': '#d92d20',
+				'error-solid_hover': '#b42318',
+				'error-primary': '#b42318',
+				'error-primary_hover': '#912018',
+				'error-secondary': '#d92d20',
+				'error-secondary_hover': '#b42318',
+				'error_subtle': '#fef3f2',
+				'warning-solid': '#dc6803',
+				'warning-solid_hover': '#b54708',
+				'warning-primary': '#b54708',
+				'warning-primary_hover': '#93370d',
+				'warning-secondary': '#dc6803',
+				'warning-secondary_hover': '#b54708',
+				'warning_subtle': '#fffaeb',
+				'success-solid': '#039855',
+				'success-solid_hover': '#027a48',
+				'success-primary': '#027a48',
+				'success-primary_hover': '#05603a',
+				'success-secondary': '#039855',
+				'success-secondary_hover': '#027a48',
+				'success_subtle': '#ecfdf3',
 				// Icon colors UU applies to data-icon children inside buttons
 				// (text-only banner buttons never show them; the loading spinner
 				// inherits text-white anyway — token kept so the class resolves).
 				'button-primary-icon': '#ffffff',
 				'button-primary-icon_hover': '#ffffff',
+				'button-destructive-primary-icon': '#ffffff',
+				'button-destructive-primary-icon_hover': '#ffffff',
+				// Full UU utility ladders (50–600 used by FeaturedIcon rings,
+				// soft fills and badge borders). Brand ladder = app green.
 				utility: {
-					'brand-200': '#86efac',
+					gray: {
+						'25': '#fcfcfd',
+						'50': '#f9fafb',
+						'100': '#f2f4f7',
+						'200': '#eaecf0',
+						'300': '#d0d5dd',
+						'400': '#98a2b3',
+						'500': '#667085',
+						'600': '#475467',
+						'700': '#344054',
+					},
+					brand: {
+						'25': '#f6fef9',
+						'50': '#eaf8f0',
+						'100': '#d3f2df',
+						'200': '#86efac',
+						'300': '#4ddb95',
+						'400': '#26d67d',
+						'500': '#00b14f',
+						'600': '#009e45',
+						'700': '#007a37',
+					},
+					error: {
+						'25': '#fffbfa',
+						'50': '#fef3f2',
+						'100': '#fee4e2',
+						'200': '#fecdca',
+						'300': '#fda29b',
+						'400': '#f97066',
+						'500': '#f04438',
+						'600': '#d92d20',
+						'700': '#b42318',
+					},
+					warning: {
+						'25': '#fffcf5',
+						'50': '#fffaeb',
+						'100': '#fef0c7',
+						'200': '#fedf89',
+						'300': '#fec84b',
+						'400': '#fdb022',
+						'500': '#f79009',
+						'600': '#dc6803',
+						'700': '#b54708',
+					},
+					success: {
+						'25': '#f6fef9',
+						'50': '#ecfdf3',
+						'100': '#d1fadf',
+						'200': '#a6f4c5',
+						'300': '#6ce9a6',
+						'400': '#32d583',
+						'500': '#12b76a',
+						'600': '#039855',
+						'700': '#027a48',
+					},
+				},
+				'featured-icon-light-fg': {
+					brand: '#08783e',
+					gray: '#667085',
+					error: '#d92d20',
+					warning: '#dc6803',
+					success: '#039855',
 				},
 				'focus-ring': '#2e90fa',
 			},
@@ -258,6 +366,7 @@ export default {
 			outlineColor: {
 				'focus-ring': '#2e90fa',
 				'brand': '#0a6b3a',
+				'error': '#b42318',
 			},
 			keyframes: {
 				// Staggered page load animations
@@ -346,6 +455,15 @@ export default {
 				'500': '500ms',
 			},
 			fontSize: {
+				// UU display sizes ported to this app's compact heading scale
+				// (cx.ts/tailwind-merge registers text-display-*; never adopt
+				// UU's 48–60px values on data-dense screens).
+				'display-xs': ['1.25rem', { lineHeight: '1.3' }],   // 20px
+				'display-sm': ['1.5rem', { lineHeight: '1.25' }],   // 24px
+				'display-md': ['1.75rem', { lineHeight: '1.15' }],  // 28px
+				'display-lg': ['2rem', { lineHeight: '1.2' }],      // 32px
+				'display-xl': ['2.25rem', { lineHeight: '1.2' }],   // 36px
+				'display-2xl': ['2.5rem', { lineHeight: '1.1' }],   // 40px
 				// UU's body-md (banner title / lg buttons) — distinct from this
 				// app's compact `base` (12px); only vendored UU classes use it.
 				'md': ['1rem', { lineHeight: '1.5' }],         // 16px

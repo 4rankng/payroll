@@ -11,8 +11,9 @@ export const styles = sortCx({
     common: {
         root: [
             "group relative inline-flex h-max cursor-pointer items-center justify-center whitespace-nowrap outline-brand transition duration-100 ease-linear before:absolute focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
-            // When button is used within `InputGroup`
-            "in-data-input-wrapper:shadow-xs in-data-input-wrapper:focus:!z-50 in-data-input-wrapper:in-data-leading:-mr-px in-data-input-wrapper:in-data-leading:rounded-r-none in-data-input-wrapper:in-data-leading:before:rounded-r-none in-data-input-wrapper:in-data-trailing:-ml-px in-data-input-wrapper:in-data-trailing:rounded-l-none in-data-input-wrapper:in-data-trailing:before:rounded-l-none",
+            // When button is used within `InputGroup`: the upstream TW4
+            // `in-data-input-wrapper:*` variants have no TW3 compiler support;
+            // re-port as `[[data-input-wrapper]_&]:` when input-group lands.
             // Disabled styles
             "disabled:cursor-not-allowed disabled:text-fg-disabled",
             // Icon styles
@@ -24,17 +25,11 @@ export const styles = sortCx({
     },
     sizes: {
         sm: {
-            root: [
-                "gap-1 rounded-lg px-3 py-2 text-sm font-semibold before:rounded-[7px] data-[icon-only]:p-2",
-                "in-data-input-wrapper:px-3.5 in-data-input-wrapper:py-2.5 in-data-input-wrapper:data-[icon-only]:p-2.5",
-            ].join(" "),
+            root: "gap-1 rounded-lg px-3 py-2 text-sm font-semibold before:rounded-[7px] data-[icon-only]:p-2",
             linkRoot: "gap-1",
         },
         md: {
-            root: [
-                "gap-1 rounded-lg px-3.5 py-2.5 text-sm font-semibold before:rounded-[7px] data-[icon-only]:p-2.5",
-                "in-data-input-wrapper:gap-1.5 in-data-input-wrapper:px-4 in-data-input-wrapper:text-md in-data-input-wrapper:data-[icon-only]:p-3",
-            ].join(" "),
+            root: "gap-1 rounded-lg px-3.5 py-2.5 text-sm font-semibold before:rounded-[7px] data-[icon-only]:p-2.5",
             linkRoot: "gap-1",
         },
         lg: {

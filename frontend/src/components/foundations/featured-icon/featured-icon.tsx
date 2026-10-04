@@ -21,7 +21,10 @@ const styles = sortCx({
         },
         colors: {
             brand: "bg-brand-secondary text-featured-icon-light-fg-brand",
-            gray: "bg-tertiary text-featured-icon-light-fg-gray",
+            // Adaptation: upstream uses `bg-tertiary` (a light gray surface in
+            // UU's TW4 theme). Here `tertiary` is the tertiary-button text
+            // pair, so the light-gray surface references the utility ladder.
+            gray: "bg-utility-gray-100 text-featured-icon-light-fg-gray",
             error: "bg-error-secondary text-featured-icon-light-fg-error",
             warning: "bg-warning-secondary text-featured-icon-light-fg-warning",
             success: "bg-success-secondary text-featured-icon-light-fg-success",
