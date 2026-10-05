@@ -107,6 +107,33 @@ func translateStatusToVietnamese(status string) string {
 	return status
 }
 
+// filterReportDataForPartner narrows an atDate report to the projects the
+// partner may access. The fromDate+toDate branch scopes its query up front via
+// filterProjectsForPartner, but GetProjectsForPayrollReport picks projects
+// internally, so without this a partner could export every active project's
+// payroll through ?atDate=.
+func filterReportDataForPartner(reportData []*domainServices.ProjectReportData, allowedIDs []uint) []*domainServices.ProjectReportData {
+	if len(reportData) == 0 || len(allowedIDs) == 0 {
+		return nil
+	}
+
+	allowed := make(map[uint]struct{}, len(allowedIDs))
+	for _, id := range allowedIDs {
+		allowed[id] = struct{}{}
+	}
+
+	kept := make([]*domainServices.ProjectReportData, 0, len(reportData))
+	for _, rd := range reportData {
+		if rd == nil || rd.Project == nil {
+			continue
+		}
+		if _, ok := allowed[rd.Project.ID]; ok {
+			kept = append(kept, rd)
+		}
+	}
+	return kept
+}
+
 // PayrollReportExport exports payroll report by project and salary period.
 // Supports two modes:
 //  1. fromDate + toDate (+ optional projectIds) — export by date range
@@ -195,6 +222,21 @@ func (h *Handler) PayrollReportExport(c *gin.Context) {
 		if err != nil {
 			response.InternalServerError(c, constants.MsgFailedToGetPayrollReportDataVN)
 			return
+		}
+
+		// Partner: this branch picks projects itself, so scope the result the
+		// same way the date-range branch scopes its query.
+		if userRole == string(domain.RolePartner) {
+			allowedIDs, err := h.filterProjectsForPartner(c.Request.Context(), userID, nil)
+			if err != nil {
+				response.InternalServerError(c, constants.MsgFailedToCheckProjectAccessVN)
+				return
+			}
+			if len(allowedIDs) == 0 {
+				response.Forbidden(c, constants.MsgForbiddenVN)
+				return
+			}
+			reportData = filterReportDataForPartner(reportData, allowedIDs)
 		}
 
 		var buf []byte
