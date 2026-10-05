@@ -51,7 +51,7 @@ import {
   getCheckInGeofenceInstruction,
   type CheckInGeofenceGuidance,
 } from "@/utils/checkInGeofenceGuidance";
-import { parseEpochMs } from "@/utils/vn-time";
+import { formatVnDayMonth, parseEpochMs } from "@/utils/vn-time";
 import type { AttendanceScheduleWindow, CheckInTarget } from "@/types/api/auth.types";
 import {
   EmployeeAttendanceActionDock,
@@ -821,7 +821,7 @@ export function EmployeeCheckInCard({
   // card — no check-in/out actions, no geofence reference.
   if (isPendingActivation) {
     const effectiveLabel = pendingEffectiveFrom
-      ? format(new Date(pendingEffectiveFrom), "dd/MM")
+      ? formatVnDayMonth(pendingEffectiveFrom)
       : "ngày 1 tháng sau";
     return (
       <>

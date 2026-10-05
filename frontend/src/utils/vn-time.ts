@@ -53,6 +53,22 @@ export function formatVnTime(iso: string | null | undefined): string {
   return formatted.startsWith("24") ? `00${formatted.slice(2)}` : formatted;
 }
 
+const vnDayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: VN_TIMEZONE,
+  day: "2-digit",
+  month: "2-digit",
+});
+
+/**
+ * Format an ISO instant as DD/MM in Vietnam time (e.g. "01/09"). Returns ""
+ * for falsy/invalid input.
+ */
+export function formatVnDayMonth(iso: string | null | undefined): string {
+  const ms = parseEpochMs(iso);
+  if (ms === null) return "";
+  return vnDayMonthFormatter.format(new Date(ms));
+}
+
 /**
  * The Vietnam calendar-day (YYYY-MM-DD) of an ISO instant. Used to detect
  * cross-midnight shifts by comparing the start and end calendar days.
