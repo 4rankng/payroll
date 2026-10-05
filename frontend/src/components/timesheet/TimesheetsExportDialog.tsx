@@ -285,7 +285,9 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
                         placeholder="Tìm dự án theo tên hoặc mã..."
                         value={projectSearch}
                         onChange={(e) => setProjectSearch(e.target.value)}
-                        className="min-h-11 pl-8 text-sm"
+                        // sm:pl-8 overrides the Input base sm:px-2.5 at >=640px,
+                        // which would otherwise pull the text under the icon.
+                        className="min-h-11 pl-8 text-sm sm:pl-8"
                       />
                     </div>
 

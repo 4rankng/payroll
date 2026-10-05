@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Download, X, Calendar, Loader2, Search } from 'lucide-react';
+import { Download, X, Calendar, Loader2, Search, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { dateToString } from '@/utils/dateHelpers';
 import { vietnameseIncludes } from '@/utils/vietnameseNormalization';
@@ -18,6 +18,8 @@ import { apiClient, buildQueryString } from '@/services/api/client';
 import { API_ENDPOINTS } from '@/config/api.config';
 import { useProjects } from '@/hooks/api/useProjects';
 import { getErrorMessage } from '@/utils/error-handler';
+import { authManager } from '@/lib/auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ExportSaoKeDialogProps {
   open: boolean;
@@ -25,8 +27,22 @@ interface ExportSaoKeDialogProps {
 }
 
 export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps) {
-  const { data: projectsData } = useProjects({ status: 'active', pageSize: 100 });
+  // Only fetch while the dialog is open: it both avoids a 1–2s query on every
+  // timesheet page load and gives each open a fresh attempt, so a cached failed
+  // fetch (useProjects sets retry:false) can no longer pin the list at 0 forever.
+  const userRole = authManager.getUserRole();
+  const canPickProjects =
+    userRole === 'admin' || userRole === 'partner' || userRole === 'accountant';
+
+  const {
+    data: projectsData,
+    isPending,
+    isFetching,
+    isError,
+    refetch,
+  } = useProjects({ status: 'active', pageSize: 100 }, { enabled: open && canPickProjects });
   const projects = useMemo(() => projectsData?.data || [], [projectsData]);
+  const isLoadingProjects = isPending || (isFetching && projects.length === 0);
 
   const defaultDateRange = useMemo(() => {
     const now = new Date();
@@ -184,18 +200,45 @@ export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps
                 placeholder="Tìm dự án..."
                 value={projectSearch}
                 onChange={(e) => setProjectSearch(e.target.value)}
-                className="h-11 pl-8 text-sm"
+                // sm:pl-* is required: the Input base sets sm:px-2.5, which wins at
+                // >=640px and pulls the text back under the leading icon otherwise.
+                className="h-11 pl-8 text-sm sm:pl-8"
               />
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto -mx-1 px-1" style={{ maxHeight: '340px' }}>
               <div className="grid grid-cols-1 gap-1.5 min-[420px]:grid-cols-2">
-                {filteredProjects.length === 0 ? (
-                  projectSearch && (
-                    <div className="col-span-2 text-center text-muted-foreground text-xs py-6">
-                      Không tìm thấy dự án
-                    </div>
-                  )
+                {!canPickProjects ? (
+                  <div className="col-span-2 py-6 text-center text-xs text-muted-foreground">
+                    Bạn không có quyền xem danh sách dự án.
+                  </div>
+                ) : isLoadingProjects ? (
+                  <>
+                    <Skeleton className="h-12 rounded-md" />
+                    <Skeleton className="h-12 rounded-md" />
+                    <Skeleton className="h-12 rounded-md" />
+                    <Skeleton className="h-12 rounded-md" />
+                  </>
+                ) : isError && projects.length === 0 ? (
+                  <div className="col-span-2 flex flex-col items-center gap-2 py-6 text-center">
+                    <p className="text-xs text-muted-foreground">
+                      Không tải được danh sách dự án.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 text-xs"
+                      onClick={() => refetch()}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                      Thử lại
+                    </Button>
+                  </div>
+                ) : filteredProjects.length === 0 ? (
+                  <div className="col-span-2 py-6 text-center text-xs text-muted-foreground">
+                    {projectSearch ? 'Không tìm thấy dự án' : 'Chưa có dự án nào được cấp cho tài khoản này'}
+                  </div>
                 ) : (
                   filteredProjects.map((project) => {
                     const isSelected = !isAllProjectsSelected && selectedProjectIds.includes(project.id);
@@ -228,7 +271,11 @@ export function ExportSaoKeDialog({ open, onOpenChange }: ExportSaoKeDialogProps
             )}
             {isAllProjectsSelected && (
               <div className="text-xs text-muted-foreground pt-1 shrink-0">
-                Tất cả dự án ({projects.length})
+                {isLoadingProjects
+                  ? 'Đang tải dự án…'
+                  : isError && projects.length === 0
+                    ? 'Chưa tải được dự án'
+                    : `Tất cả dự án (${projects.length})`}
               </div>
             )}
           </div>

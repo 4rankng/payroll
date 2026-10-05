@@ -118,7 +118,7 @@ const ForgotPassword = () => {
                     placeholder="email@cua-ban.vn  hoặc  0987 654 321"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 sm:pl-9"
                     required
                     autoComplete="off"
                     disabled={pending}

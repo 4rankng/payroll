@@ -22,7 +22,7 @@ export const UserSearchBar = ({
         placeholder={placeholder}
         value={localValue}
         onChange={handleChange}
-        className="pl-9"
+        className="pl-9 sm:pl-9"
       />
     </div>
   );

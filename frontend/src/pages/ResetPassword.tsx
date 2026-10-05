@@ -148,7 +148,7 @@ const ResetPassword = () => {
               placeholder="Nhập mật khẩu mới"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="pr-12 pl-9 sm:pr-10"
+              className="pr-12 pl-9 sm:pr-10 sm:pl-9"
               required
               autoComplete="new-password"
               disabled={mutation.isPending}
@@ -175,7 +175,7 @@ const ResetPassword = () => {
               placeholder="Nhập lại mật khẩu mới"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="pl-9"
+              className="pl-9 sm:pl-9"
               required
               autoComplete="new-password"
               disabled={mutation.isPending}

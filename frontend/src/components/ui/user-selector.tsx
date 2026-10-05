@@ -154,7 +154,7 @@ export function UserSelector({
                 // Prevent Select from closing when focusing input
                 e.stopPropagation();
               }}
-              className="h-9 pl-8 pr-8"
+              className="h-9 pl-8 pr-8 sm:pl-8 sm:pr-8"
               autoComplete="off"
               autoFocus
             />

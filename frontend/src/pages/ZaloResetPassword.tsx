@@ -218,7 +218,7 @@ const ZaloResetPassword = () => {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 disabled={mutation.isPending}
-                className="pr-12 pl-9 sm:pr-10"
+                className="pr-12 pl-9 sm:pr-10 sm:pl-9"
                 placeholder="Ít nhất 8 ký tự"
                 required
                 minLength={8}
@@ -246,7 +246,7 @@ const ZaloResetPassword = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={mutation.isPending}
-                className="pl-9"
+                className="pl-9 sm:pl-9"
                 placeholder="Nhập lại mật khẩu mới"
                 required
                 minLength={8}

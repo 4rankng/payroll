@@ -182,7 +182,7 @@ export function PartnerEmployeeListSheet({ type, month, onClose }: PartnerEmploy
                 value={search}
                 onChange={handleSearchChange}
                 placeholder="Tìm tên, SĐT, CCCD, dự án..."
-                className="h-8 pl-8 text-xs rounded-lg"
+                className="h-8 pl-8 text-xs rounded-lg sm:pl-8"
               />
             </div>
           </div>
