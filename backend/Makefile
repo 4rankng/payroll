@@ -167,15 +167,16 @@ restore:
 	fi && \
 	echo "📂 Found latest backup: $$(basename $$LATEST_BACKUP)" && \
 	echo "📊 Backup size: $$(du -h "$$LATEST_BACKUP" | cut -f1)" && \
-	echo "🗑️  Dropping existing database..." && \
+	RESTORE_T0=$$(date +%s) && \
+	echo "[$$(date +%H:%M:%S)] 🗑️  Dropping existing database (this can take a few minutes)..." && \
 	docker exec payroll-mysql sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS payroll_db;"' && \
 	echo "🆕 Creating fresh database..." && \
 	docker exec payroll-mysql sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE payroll_db;"' && \
-	echo "⏳ Decompressing and restoring to payroll_db..." && \
-	gunzip -c "$$LATEST_BACKUP" | docker exec -i payroll-mysql sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" payroll_db' && \
-	echo "✅ Database restored successfully from backup!" && \
+	echo "[$$(date +%H:%M:%S)] ⏳ Decompressing and restoring to payroll_db..." && \
+	gunzip -c "$$LATEST_BACKUP" | docker exec -i payroll-mysql sh -c 'mysql --init-command="SET sql_log_bin=0" -u root -p"$$MYSQL_ROOT_PASSWORD" payroll_db' && \
+	echo "[$$(date +%H:%M:%S)] ✅ Database restored from backup in $$(( $$(date +%s) - $$RESTORE_T0 ))s!" && \
 	echo "🔐 Generating Argon2id hash for 'Admin123' (using app peppers)..." && \
-	HASH=$$(if [ -f .env ]; then set -a; . ./.env; set +a; fi; HASH_SECRET=$${HASH_SECRET:-dev-not-for-prod-hash-secret} HASH_SALT=$${HASH_SALT:-dev-not-for-prod-hash-salt} go run ./cmd/hashpw Admin123) && \
+	HASH=$$(if [ -f .env ]; then HS=$$(grep -E '^HASH_SECRET=' .env | cut -d= -f2-); HSA=$$(grep -E '^HASH_SALT=' .env | cut -d= -f2-); else HS='dev-not-for-prod-hash-secret'; HSA='dev-not-for-prod-hash-salt'; fi; HASH_SECRET="$$HS" HASH_SALT="$$HSA" go run ./cmd/hashpw Admin123) && \
 	echo "🔐 Updating ALL user passwords to 'Admin123'..." && \
 	docker exec -e UPD="UPDATE users SET password='$$HASH';" payroll-mysql \
 		sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" payroll_db -e "$$UPD"' && \
@@ -185,7 +186,7 @@ restore:
 # Useful when you want a fresh login state but want to keep current dev data.
 reset-passwords:
 	@echo "🔐 Generating Argon2id hash for 'Admin123' (using app peppers)..."
-	@HASH=$$(if [ -f .env ]; then set -a; . ./.env; set +a; fi; HASH_SECRET=$${HASH_SECRET:-dev-not-for-prod-hash-secret} HASH_SALT=$${HASH_SALT:-dev-not-for-prod-hash-salt} go run ./cmd/hashpw Admin123) && \
+	@HASH=$$(if [ -f .env ]; then HS=$$(grep -E '^HASH_SECRET=' .env | cut -d= -f2-); HSA=$$(grep -E '^HASH_SALT=' .env | cut -d= -f2-); else HS='dev-not-for-prod-hash-secret'; HSA='dev-not-for-prod-hash-salt'; fi; HASH_SECRET="$$HS" HASH_SALT="$$HSA" go run ./cmd/hashpw Admin123) && \
 	docker exec -e UPD="UPDATE users SET password='$$HASH';" payroll-mysql \
 		sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" payroll_db -e "$$UPD"' && \
 	echo "✅ All users now have password: Admin123"
