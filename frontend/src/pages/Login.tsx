@@ -272,7 +272,7 @@ const Login = () => {
                         value={emailOrUsername}
                         onChange={(e) => setEmailOrUsername(e.target.value)}
                         onBlur={() => void syncCaptchaRequirement()}
-                        className="pl-9"
+                        className="pl-9 sm:pl-9"
                         required
                         autoComplete="username"
                         autoCapitalize="none"
@@ -294,7 +294,7 @@ const Login = () => {
                         placeholder="Nhập mật khẩu của bạn"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pr-12 pl-9 sm:pr-10"
+                        className="pr-12 pl-9 sm:pr-10 sm:pl-9"
                         required
                         autoComplete="current-password"
                         disabled={isDisabled}
