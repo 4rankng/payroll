@@ -200,8 +200,8 @@ func TestImportFlexPayFile_SkipsCheckInEnabledEmployeeQuota(t *testing.T) {
 	}, slog.New(slog.NewTextHandler(io.Discard, nil)))
 
 	file := excelize.NewFile()
-	file.SetSheetName("Sheet1", "UL")
-	file.SetCellValue("UL", "B1", "Mã nhân viên")
+	_ = file.SetSheetName("Sheet1", "UL")
+	_ = file.SetCellValue("UL", "B1", "Mã nhân viên")
 
 	rows := [][]string{
 		{"", "012345678901", "PROJ1", "phổ thông", "0912345678", "NGUYEN VAN A", "NGUYEN VAN A", "0123456789", "", "2000000"},
@@ -210,7 +210,7 @@ func TestImportFlexPayFile_SkipsCheckInEnabledEmployeeQuota(t *testing.T) {
 	for i, row := range rows {
 		for col, val := range row {
 			cell, _ := excelize.CoordinatesToCellName(col+1, i+2)
-			file.SetCellValue("UL", cell, val)
+			_ = file.SetCellValue("UL", cell, val)
 		}
 	}
 

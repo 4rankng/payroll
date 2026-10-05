@@ -47,15 +47,15 @@ func newPeriodImportService(
 func periodWorkbook(t *testing.T, emp *domain.Employee, projectCode, amount string) *excelize.File {
 	t.Helper()
 	file := excelize.NewFile()
-	file.SetSheetName("Sheet1", "UL")
-	file.SetCellValue("UL", "B1", "Mã nhân viên")
+	_ = file.SetSheetName("Sheet1", "UL")
+	_ = file.SetCellValue("UL", "B1", "Mã nhân viên")
 	row := []string{
 		"", emp.CCCD, projectCode, "phổ thông", emp.Mobile,
 		emp.Fullname, emp.BankAccountName, emp.BankAccountNumber, "", amount,
 	}
 	for col, val := range row {
 		cell, _ := excelize.CoordinatesToCellName(col+1, 2)
-		file.SetCellValue("UL", cell, val)
+		_ = file.SetCellValue("UL", cell, val)
 	}
 	return file
 }
