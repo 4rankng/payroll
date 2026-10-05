@@ -37,14 +37,20 @@ describe('ImportPayrollDialog', () => {
     await waitFor(() => expect(mutate).toHaveBeenCalledOnce());
     const formData = mutate.mock.calls[0][0] as FormData;
     expect(formData.get('force_reprocess')).toBe('true');
-    // The month selector defaults to the current month (YYYY-MM) and sends it
-    // explicitly; the server only derives it when the field is absent.
+    // The month selector defaults to the payroll period (YYYY-MM) and sends it
+    // explicitly; the server only derives it when the field is absent. Before
+    // day 9 the payroll period is still the previous month — payroll for a
+    // month is imported early in the following month — so the default tracks
+    // the same day-9 rule as the selector.
     const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    expect(formData.get('forMonth')).toBe(currentMonth);
+    const period = now.getDate() < 9
+      ? new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      : now;
+    const expectedMonth = `${period.getFullYear()}-${String(period.getMonth() + 1).padStart(2, '0')}`;
+    expect(formData.get('forMonth')).toBe(expectedMonth);
   });
 
-  it('shows the salary period selector defaulting to the current month', () => {
+  it('shows the salary period selector defaulting to the payroll month', () => {
     render(<ImportPayrollDialog open onOpenChange={vi.fn()} />);
 
     expect(screen.getByText('Kỳ lương')).toBeInTheDocument();

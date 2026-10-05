@@ -26,10 +26,15 @@ interface ImportPayrollDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/** Generate month options: current month and next month only. */
+/** Generate month options for the salary period. Payroll for a month is
+ * imported early in the following month, so before day 9 the window is
+ * still [previous, current] (default = previous); from day 9 it becomes
+ * [current, next] (default = current). */
 function getMonthOptions(): Array<{ value: string; label: string; isCurrent: boolean }> {
   const now = new Date();
-  return [0, 1].map((offset) => {
+  const startOffset = now.getDate() < 9 ? -1 : 0;
+  return [0, 1].map((index) => {
+    const offset = startOffset + index;
     const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const label = `Tháng ${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
