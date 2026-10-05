@@ -117,8 +117,8 @@ func (s *PayrollReportByProjectService) GetProjectsForPayrollReport(ctx context.
 			"calculatedToDate", toDate.Format("2006-01-02 15:04:05 -0700"),
 			"atDateTZ", atDate.Location().String())
 
-		// Get paid timesheets where revenue_paid = false
-		timesheets, err := s.getPaidTimesheets(ctx, project.ID, fromDate, toDate)
+		// Billing view: only what the client still owes (revenue_paid = false).
+		timesheets, err := s.getPaidTimesheets(ctx, project.ID, fromDate, toDate, false)
 		if err != nil {
 			s.logger.Error("Failed to get timesheets for project",
 				"projectID", project.ID,
@@ -350,6 +350,11 @@ func (s *PayrollReportByProjectService) GetProjectsForPayrollReport(ctx context.
 
 // GetPayrollReportForProjects generates payroll report data for specific projects and date range.
 // If projectIDs is empty, all active projects are included.
+//
+// This is the date-range (period statement) path used by GET /timesheets/payroll/report
+// with fromDate+toDate. Unlike GetProjectsForPayrollReport — the atDate billing view
+// behind the reconciliation email — it reports every paid row in the range, settled or
+// not: a statement must still be exportable after the period has been reconciled.
 func (s *PayrollReportByProjectService) GetPayrollReportForProjects(ctx context.Context, projectIDs []uint, fromDate, toDate time.Time) ([]*ProjectReportData, error) {
 	var projects []*domain.Project
 	var err error
@@ -383,7 +388,9 @@ func (s *PayrollReportByProjectService) GetPayrollReportForProjects(ctx context.
 	var reportData []*ProjectReportData
 
 	for _, project := range projects {
-		timesheets, err := s.getPaidTimesheets(ctx, project.ID, fromDate, toDate)
+		// Period statement: include already-settled rows too, so re-exporting a
+		// settled month still yields that month's statement.
+		timesheets, err := s.getPaidTimesheets(ctx, project.ID, fromDate, toDate, true)
 		if err != nil {
 			s.logger.Warn("Failed to get timesheets for project", "projectID", project.ID, "error", err)
 			continue
@@ -472,9 +479,15 @@ func (s *PayrollReportByProjectService) buildProjectReportData(project *domain.P
 	}
 }
 
-// getPaidTimesheets gets paid-but-unsettled timesheets for a project and date range.
-// Excludes timesheets where revenue_paid=true (already settled with client).
-func (s *PayrollReportByProjectService) getPaidTimesheets(ctx context.Context, projectID uint, fromDate, toDate time.Time) ([]*domain.Timesheet, error) {
+// getPaidTimesheets returns the paid timesheets for a project and date range.
+//
+// includeSettled=false keeps only revenue_paid=false rows (still owed to us) —
+// that is what the atDate billing/email export must show. includeSettled=true
+// returns every paid row — the date-range export is a period statement, and
+// filtering settled rows there made re-exporting a fully settled period
+// silently produce an empty workbook (prod 2026-10-05, project 67:
+// rawCount=237, finalCount=0).
+func (s *PayrollReportByProjectService) getPaidTimesheets(ctx context.Context, projectID uint, fromDate, toDate time.Time, includeSettled bool) ([]*domain.Timesheet, error) {
 	filters := domain.TimesheetFilters{
 		ProjectIDs:    []uint{projectID},
 		PaymentStatus: []domain.PaymentStatus{domain.PaymentStatusPaid},
@@ -490,19 +503,23 @@ func (s *PayrollReportByProjectService) getPaidTimesheets(ctx context.Context, p
 		return nil, err
 	}
 
-	// Exclude settled timesheets (revenue_paid=true)
-	var result []*domain.Timesheet
-	for _, ts := range timesheets {
-		if ts.RevenuePaid {
-			continue
+	result := make([]*domain.Timesheet, 0, len(timesheets))
+	if includeSettled {
+		result = append(result, timesheets...)
+	} else {
+		for _, ts := range timesheets {
+			if ts.RevenuePaid {
+				continue
+			}
+			result = append(result, ts)
 		}
-		result = append(result, ts)
 	}
 
 	s.logger.Info("Paid timesheets for export",
 		"projectID", projectID,
 		"fromDate", fromDate.Format("2006-01-02"),
 		"toDate", toDate.Format("2006-01-02"),
+		"includeSettled", includeSettled,
 		"rawCount", len(timesheets),
 		"finalCount", len(result),
 	)
