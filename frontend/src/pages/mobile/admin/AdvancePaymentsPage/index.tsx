@@ -24,6 +24,7 @@ import {
   useCreditAttendanceQuota,
 } from "@/hooks/api/useAdminAttendance";
 import { useSendPayrollReportEmail } from "@/hooks/transactions/useSendPayrollReportEmail";
+import { formatVnTime } from "@/utils/vn-time";
 // UU PRO restyle (W13c): lucide → verified @untitledui/icons; blue-gray hex
 // chrome moved onto the utility-gray bridge. Flexible-pay quota logic and all
 // flows byte-preserved.
@@ -105,8 +106,7 @@ export function AttendanceMobileCard({
    * immediately, skipping the post-checkout hold. */
   onCreditQuota?: (row: AdminAttendanceResponse) => void;
 }) {
-  const fmtTime = (t?: string) =>
-    t ? (() => { try { return format(new Date(t), "HH:mm"); } catch { return "-"; } })() : "-";
+  const fmtTime = (t?: string) => (t ? formatVnTime(t) || "-" : "-");
   const fmtDate = (d: string) => {
     try { return format(new Date(d), "dd/MM/yyyy"); } catch { return d; }
   };

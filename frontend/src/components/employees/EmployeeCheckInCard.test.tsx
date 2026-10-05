@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { format } from "date-fns";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AttendanceReference, EmployeeCheckInCard } from "./EmployeeCheckInCard";
 import type { CheckInTarget } from "@/types/api/auth.types";
@@ -47,7 +46,9 @@ beforeEach(() => {
   attendanceQueryMock.refetch.mockReset();
 });
 
-const localTime = (iso: string) => format(new Date(iso), "HH:mm");
+// Schedule fixtures are RFC 3339 with a +07:00 offset, and the card renders
+// them in Asia/Ho_Chi_Minh — exactly the wall time embedded in the string.
+const localTime = (iso: string) => iso.slice(11, 16);
 
 describe("AttendanceReference", () => {
   it("shows the selected shift timing and configured checkpoints in the compact reference", () => {
@@ -85,7 +86,7 @@ describe("AttendanceReference", () => {
     expect(screen.getByRole("list", { name: "Các điểm chấm công" })).toHaveTextContent("Cổng kho");
   });
 
-  it("shows schedule values as device-local HH:mm instead of raw API timestamps", () => {
+  it("renders schedule values as Vietnam-time HH:mm instead of raw API timestamps", () => {
     const shiftStart = "2026-07-12T08:00:00+07:00";
     const shiftEnd = "2026-07-12T17:00:00+07:00";
 
@@ -106,7 +107,7 @@ describe("AttendanceReference", () => {
     expect(screen.queryByText(shiftEnd)).not.toBeInTheDocument();
   });
 
-  it("shows overnight shift times as device-local HH:mm", () => {
+  it("renders overnight shift times as Vietnam-time HH:mm", () => {
     render(
       <AttendanceReference
         scheduleWindows={[

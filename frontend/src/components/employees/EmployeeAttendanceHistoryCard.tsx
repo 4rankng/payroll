@@ -1,5 +1,4 @@
 import { useId, useMemo, useState } from "react";
-import { format } from "date-fns";
 import {
   AlertCircle,
   Calendar,
@@ -20,19 +19,17 @@ import {
   type AttendanceIssueDetail,
 } from "@/utils/attendanceHelpers";
 import { formatDate } from "@/utils/formatters";
+import { formatVnTime } from "@/utils/vn-time";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmployeeDataError } from "./EmployeeDataError";
 
 const ATTENDANCE_PREVIEW_LIMIT = 3;
 
+// Server instants are RFC 3339 with a +07:00 offset; render them in the
+// business timezone via vn-time so the display does not follow the device.
 function formatTime(time: string | undefined | null, fallback = "--:--"): string {
-  if (!time) return fallback;
-  try {
-    return format(new Date(time), "HH:mm");
-  } catch {
-    return fallback;
-  }
+  return formatVnTime(time) || fallback;
 }
 
 interface EmployeeAttendanceHistoryCardProps {

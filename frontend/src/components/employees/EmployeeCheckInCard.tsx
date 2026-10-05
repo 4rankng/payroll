@@ -26,7 +26,6 @@ import {
   scrollToLocationGuidance,
   type TimingErrorGuidance,
 } from "@/utils/attendance-error-guidance";
-import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import { EMPLOYEE_BRAND_COLOR } from "@/constants/branding";
 import { formatCurrency } from "@/utils/formatters";
@@ -51,7 +50,7 @@ import {
   getCheckInGeofenceInstruction,
   type CheckInGeofenceGuidance,
 } from "@/utils/checkInGeofenceGuidance";
-import { formatVnDayMonth, parseEpochMs } from "@/utils/vn-time";
+import { formatVnDayMonth, formatVnTime, parseEpochMs } from "@/utils/vn-time";
 import type { AttendanceScheduleWindow, CheckInTarget } from "@/types/api/auth.types";
 import {
   EmployeeAttendanceActionDock,
@@ -62,13 +61,10 @@ const EmployeeLocationMap = lazy(() =>
   import("./EmployeeLocationMap").then((module) => ({ default: module.EmployeeLocationMap }))
 );
 
+// Server instants are RFC 3339 with a +07:00 offset; render them in the
+// business timezone via vn-time so the display does not follow the device.
 function safeFormatTime(time: string | undefined | null, fallback = "--:--"): string {
-  if (!time) return fallback;
-  try {
-    return format(new Date(time), "HH:mm");
-  } catch {
-    return fallback;
-  }
+  return formatVnTime(time) || fallback;
 }
 
 interface EmployeeCheckInCardProps {
@@ -534,7 +530,7 @@ export function EmployeeCheckInCard({
   };
 
   const showAttendanceConfirmation = (action: "check_in" | "check_out") => {
-    setAttendanceConfirmation({ action, time: format(new Date(), "HH:mm") });
+    setAttendanceConfirmation({ action, time: formatVnTime(new Date().toISOString()) });
     if (attendanceConfirmationTimer.current) clearTimeout(attendanceConfirmationTimer.current);
     attendanceConfirmationTimer.current = setTimeout(() => setAttendanceConfirmation(null), 3500);
   };

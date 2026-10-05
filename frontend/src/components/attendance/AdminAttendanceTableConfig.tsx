@@ -2,6 +2,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Check, DotsHorizontal, MarkerPin01, X, Zap } from "@untitledui/icons";
 import { formatCurrency } from "@/utils/formatters";
+import { formatVnTime } from "@/utils/vn-time";
 import type { AdminAttendanceResponse } from "@/types/api/attendance.types";
 import {
   DropdownMenu,
@@ -139,7 +140,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
         try {
           return (
             <div>
-              <div className="text-xs font-medium text-fg-secondary">{format(new Date(row.original.check_in_time), "HH:mm")}</div>
+              <div className="text-xs font-medium text-fg-secondary">{formatVnTime(row.original.check_in_time) || "-"}</div>
               <div className="text-xs text-muted-foreground truncate max-w-[120px]">{row.original.check_in_gate || "Chưa xác định"}</div>
             </div>
           );
@@ -157,7 +158,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
         try {
           return (
             <div>
-              <div className="text-xs font-medium text-fg-secondary">{format(new Date(row.original.check_out_time), "HH:mm")}</div>
+              <div className="text-xs font-medium text-fg-secondary">{formatVnTime(row.original.check_out_time) || "-"}</div>
               <div className="text-xs text-muted-foreground truncate max-w-[120px]">{row.original.check_out_gate || "Chưa xác định"}</div>
             </div>
           );
@@ -276,12 +277,12 @@ export const attendanceMobileFields = [
   {
     key: "check_in_time",
     label: "Check-in",
-    render: (row: AdminAttendanceResponse) => row.check_in_time ? format(new Date(row.check_in_time), "HH:mm") : "-"
+    render: (row: AdminAttendanceResponse) => row.check_in_time ? formatVnTime(row.check_in_time) || "-" : "-"
   },
   {
     key: "check_out_time",
     label: "Check-out",
-    render: (row: AdminAttendanceResponse) => row.check_out_time ? format(new Date(row.check_out_time), "HH:mm") : "-"
+    render: (row: AdminAttendanceResponse) => row.check_out_time ? formatVnTime(row.check_out_time) || "-" : "-"
   },
   {
     key: "earning_amount",
