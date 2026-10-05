@@ -14,12 +14,12 @@ interface EmptyStateIllustrationProps {
 }
 
 const ILLUSTRATION_SOURCES: Record<EmptyStateIllustrationVariant, string> = {
-  activity: '/images/empty-states/activity-empty-state-illustration.png',
-  employees: '/images/empty-states/employees-empty-state-illustration.png',
-  finance: '/images/empty-states/finance-empty-state-illustration.png',
-  projects: '/images/empty-states/projects-empty-state-illustration.png',
-  records: '/images/empty-states/records-empty-state-illustration.png',
-  search: '/images/empty-states/search-empty-state-illustration.png',
+  activity: '/images/empty-states/activity-empty-state-illustration.webp',
+  employees: '/images/empty-states/employees-empty-state-illustration.webp',
+  finance: '/images/empty-states/finance-empty-state-illustration.webp',
+  projects: '/images/empty-states/projects-empty-state-illustration.webp',
+  records: '/images/empty-states/records-empty-state-illustration.webp',
+  search: '/images/empty-states/search-empty-state-illustration.webp',
 };
 
 /** A context-specific visual language for data, search, and history empty states. */

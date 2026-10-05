@@ -85,7 +85,7 @@ describe('shared control density', () => {
     expect(container.querySelector('[data-slot="empty-state"]')).toHaveClass('flex', 'items-center', 'text-left');
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      '/images/empty-states/employees-empty-state-illustration.png',
+      '/images/empty-states/employees-empty-state-illustration.webp',
     );
   });
 
@@ -93,13 +93,13 @@ describe('shared control density', () => {
     const { rerender, container } = render(<EmptyState title="Chưa có dự án nào" size="sm" />);
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      '/images/empty-states/projects-empty-state-illustration.png',
+      '/images/empty-states/projects-empty-state-illustration.webp',
     );
 
     rerender(<EmptyState title="Không có giao dịch nào" size="sm" />);
     expect(container.querySelector('img')).toHaveAttribute(
       'src',
-      '/images/empty-states/finance-empty-state-illustration.png',
+      '/images/empty-states/finance-empty-state-illustration.webp',
     );
   });
 });
