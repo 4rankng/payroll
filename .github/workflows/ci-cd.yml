@@ -97,18 +97,18 @@ jobs:
         working-directory: frontend
         run: npx vite build
 
-      # Raised from 10MB (2026-10-05): the illustrated empty states and UU PRO
-      # assets put dist at ~23.3MB. Follow-up: convert the empty-state PNGs
-      # (~9MB) to WebP/AVIF and dedupe the byte-identical login/employee AVIF
-      # backgrounds, then re-tighten this gate.
+      # 15MB as of 2026-10-05: empty-state PNGs were converted to WebP (~9MB
+      # saved) and unreferenced legacy backgrounds removed (~5MB). dist measures
+      # ~11.4MB. Revisit if og-image/tingting-link-preview (byte-identical) or
+      # the pdfmake chunk ever need attention.
       - name: Check bundle size
         working-directory: frontend
         run: |
           DIST_SIZE=$(du -sb dist/ | cut -f1)
-          MAX_SIZE=$((25 * 1024 * 1024))
+          MAX_SIZE=$((15 * 1024 * 1024))
           echo "Bundle size: $(numfmt --to=iec $DIST_SIZE)"
           if [ "$DIST_SIZE" -gt "$MAX_SIZE" ]; then
-            echo "::error::Bundle size exceeds 25MB limit"
+            echo "::error::Bundle size exceeds 15MB limit"
             exit 1
           fi
 
