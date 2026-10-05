@@ -79,16 +79,6 @@ func equalUintPtr(a, b *uint) bool {
 	return *a == *b
 }
 
-func equalTimePtr(a, b *time.Time) bool {
-	if a == nil && b == nil {
-		return true
-	}
-	if a == nil || b == nil {
-		return false
-	}
-	return a.Equal(*b)
-}
-
 func equalDatePtr(a, b *time.Time) bool {
 	if a == nil && b == nil {
 		return true
