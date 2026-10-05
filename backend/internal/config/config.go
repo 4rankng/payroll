@@ -11,27 +11,27 @@ import (
 )
 
 type Config struct {
-	App            AppConfig
-	DB             DBConfig
-	Auth           AuthConfig
-	Log            LogConfig
-	RateLimit      RateLimitConfig
-	Casbin         CasbinConfig
-	Redis          RedisConfig
-	Asynq          AsynqConfig
-	Security       SecurityConfig
-	CORS           CORSConfig
-	Notification   NotificationConfig
-	WebSocket      WebSocketConfig
-	Scheduler      SchedulerConfig
-	Asset          AssetConfig
-	Disbursement   DisbursementConfig
-	OTP            OTPConfig
-	Google         GoogleConfig
-	Captcha        CaptchaConfig
-	PasswordReset  PasswordResetConfig
-	Zalo           ZaloConfig
-	CashForecast   CashForecastConfig
+	App           AppConfig
+	DB            DBConfig
+	Auth          AuthConfig
+	Log           LogConfig
+	RateLimit     RateLimitConfig
+	Casbin        CasbinConfig
+	Redis         RedisConfig
+	Asynq         AsynqConfig
+	Security      SecurityConfig
+	CORS          CORSConfig
+	Notification  NotificationConfig
+	WebSocket     WebSocketConfig
+	Scheduler     SchedulerConfig
+	Asset         AssetConfig
+	Disbursement  DisbursementConfig
+	OTP           OTPConfig
+	Google        GoogleConfig
+	Captcha       CaptchaConfig
+	PasswordReset PasswordResetConfig
+	Zalo          ZaloConfig
+	CashForecast  CashForecastConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
 	// Request timeout applied to each incoming HTTP request (e.g. "10s")

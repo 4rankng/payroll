@@ -18,12 +18,12 @@ import (
 // quota/max_adv_amount may cap an in-progress projection, but must never be
 // treated as demand by itself.
 type cohortSeries struct {
-	forMonth       string
-	isCurrent      bool
-	maxCycleDay    int
-	dailyAmount    map[int]int64
-	cumulative     map[int]int64
-	grandTotal     int64
+	forMonth    string
+	isCurrent   bool
+	maxCycleDay int
+	dailyAmount map[int]int64
+	cumulative  map[int]int64
+	grandTotal  int64
 }
 
 // cumulativeAt returns the cumulative-all request amount through day, clamped to
