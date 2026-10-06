@@ -31,6 +31,10 @@ type UserService struct {
 	businessContext   *BusinessContextMapper
 	metricsCalculator *MetricsCalculator
 
+	// Clock is injected so time-dependent writes (e.g. the
+	// tokens_invalid_before stamp on a password reset) stay testable per ADR-006.
+	clk clock.Clock
+
 	// Logger
 	logger *slog.Logger
 }
@@ -44,14 +48,20 @@ type HashConfig struct {
 	KeyLength   uint32
 }
 
-// NewUserService creates a new UserService instance with all dependencies
+// NewUserService creates a new UserService instance with all dependencies.
+// Pass nil for clk to use the production clock (mirrors passwordreset.NewService).
 func NewUserService(
 	userRepo domain.UserRepository,
 	auditRepo domain.AuditLogRepository,
 	eventBus domain.EventBus,
 	hashSecret, hashSalt string,
+	clk clock.Clock,
 ) *UserService {
 	logger := observability.GetLogger()
+
+	if clk == nil {
+		clk = clock.New()
+	}
 
 	hashConfig := DefaultHashConfig()
 
@@ -69,6 +79,7 @@ func NewUserService(
 		businessContext:   businessContext,
 		metricsCalculator: metricsCalculator,
 		logger:            logger,
+		clk:               clk,
 	}
 
 	logger.Info("UserService initialized",

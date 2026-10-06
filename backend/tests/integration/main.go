@@ -88,6 +88,10 @@ func main() {
 	// Phase 7.5: Self-service password reset (no-token contracts; see flow file)
 	runPasswordResetTests(client, testData, reporter, cfg)
 
+	// Phase 7.55: Admin/partner employee password reset (the previously
+	// untested PUT /employees/:id/change-password endpoint)
+	runEmployeePasswordAdminTests(client, testData, reporter, cfg)
+
 	// Phase 7.6: Integration API (chatbot API-key channel)
 	runIntegrationResetTests(client, testData, reporter, cfg)
 

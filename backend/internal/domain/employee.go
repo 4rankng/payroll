@@ -206,6 +206,11 @@ type EmployeeRepository interface {
 	// (paid timesheets) or a completed FlexPay advance within [from, to] but
 	// has no mobile number on file. Used by the admin data-quality export.
 	GetPaidWithoutMobile(ctx context.Context, from, to time.Time) ([]*EmployeePaidActivity, error)
+	// GetDuplicateIdentities lists phone numbers and CCCDs carried by more than
+	// one employee record. These are the accounts that cannot log in via mobile
+	// (identity.Resolver fails closed) and are surfaced to admins as a data-
+	// quality report. Read-only; it never merges or picks a winner.
+	GetDuplicateIdentities(ctx context.Context) ([]*DuplicateIdentityGroup, error)
 }
 
 // EmployeeFilters represents filtering options for employee queries
@@ -485,6 +490,27 @@ type EmployeeWithProject struct {
 type EmployeeWithProjects struct {
 	Employee
 	CurrentProjects []CurrentProject `json:"current_projects"`
+}
+
+// DuplicateIdentityGroup is a diagnostic row describing one phone number or
+// CCCD that is carried by more than one employee record.
+//
+// Such a group is the operator-visible cause of "the admin reset the password
+// but the employee still cannot log in": identity.Resolver fails closed on such
+// a number (it refuses to pick one of the accounts), so no password reset can
+// make that number log in until the records are disambiguated.
+type DuplicateIdentityGroup struct {
+	// Field is "mobile" or "cccd".
+	Field string `json:"field"`
+	// Value is the duplicated number.
+	Value string `json:"value"`
+	// EmployeeIDs are the colliding employee records.
+	EmployeeIDs []uint `json:"employee_ids"`
+	// UserIDs are the linked accounts, parallel to EmployeeIDs. Zero means the
+	// employee has no linked account.
+	UserIDs []uint `json:"user_ids"`
+	// Count is len(EmployeeIDs).
+	Count int `json:"count"`
 }
 
 // CurrentProject represents a project assignment for an employee

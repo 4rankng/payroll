@@ -74,7 +74,9 @@ export function ResetPasswordModalContainer({
     ? resetPasswordMutation.isPending
     : changeEmployeePasswordMutation.isPending;
 
-  // Handle password reset
+  // Handle password reset. The mutation closes this modal on success only — on
+  // failure the dialog stays open with the typed password intact so the operator
+  // can see why it was rejected and retry without retyping.
   const handleResetPassword = (id: number, password: string) => {
     if (targetType === 'user') {
       resetPasswordMutation.mutate({ id, password }, { onSuccess: () => onClose() });
@@ -82,6 +84,12 @@ export function ResetPasswordModalContainer({
       changeEmployeePasswordMutation.mutate({ id, password }, { onSuccess: () => onClose() });
     }
   };
+
+  const activeError = targetType === 'user' ? resetPasswordMutation.error : changeEmployeePasswordMutation.error;
+  const submitError = activeError
+    ? ((activeError as { response?: { data?: { message?: string } }; message?: string })
+        .response?.data?.message ?? (activeError as Error).message ?? null)
+    : null;
 
   // Show loading state
   if (isLoading) {
@@ -127,6 +135,7 @@ export function ResetPasswordModalContainer({
       target={target}
       targetType={targetType}
       loading={isPending}
+      submitError={submitError}
     />
   );
 }

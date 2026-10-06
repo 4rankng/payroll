@@ -36,7 +36,7 @@ func TestCreateEmployeePublishesOnlyAfterOuterCommit(t *testing.T) {
 			users := &createEmployeeTestUserRepo{}
 			service := &EmployeeService{
 				EmployeeRepo: &stubEmployeeRepo{}, UserRepo: users,
-				UserService:        userservice.NewUserService(users, nil, events, "test-secret", "test-salt"),
+				UserService:        userservice.NewUserService(users, nil, events, "test-secret", "test-salt", nil),
 				TransactionManager: directTransactionManager{}, events: events,
 			}
 			transaction := &domain.TransactionContext{IsTransactional: true}

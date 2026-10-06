@@ -12,7 +12,7 @@ func TestNewUserService(t *testing.T) {
 	hashSecret := "test-secret"
 	hashSalt := "test-salt"
 
-	service := NewUserService(nil, nil, nil, hashSecret, hashSalt)
+	service := NewUserService(nil, nil, nil, hashSecret, hashSalt, nil)
 
 	assert.NotNil(t, service)
 	assert.Equal(t, hashSecret, service.hashSecret)

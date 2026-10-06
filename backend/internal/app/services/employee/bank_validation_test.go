@@ -649,7 +649,7 @@ func TestCreateEmployeeFromImport_PersistsInvalidVerdictWhileManualCreateRemains
 	employeeRepo := &stubEmployeeRepo{}
 	userRepo := &createEmployeeTestUserRepo{}
 	eventBus := createEmployeeTestEventBus{}
-	userService := userservice.NewUserService(userRepo, nil, eventBus, "test-secret", "test-salt")
+	userService := userservice.NewUserService(userRepo, nil, eventBus, "test-secret", "test-salt", nil)
 	service := &EmployeeService{
 		EmployeeRepo:         employeeRepo,
 		BankRepo:             &stubBankRepo{byID: map[uint]*domain.Bank{bank.ID: bank}},
@@ -701,7 +701,7 @@ func TestEnsureEmployeeUserAccount_CreatesAndLinksLegacyEmployee(t *testing.T) {
 	employeeRepo := &stubEmployeeRepo{byID: map[uint]*domain.Employee{employee.ID: employee}}
 	userRepo := &createEmployeeTestUserRepo{}
 	eventBus := createEmployeeTestEventBus{}
-	userService := userservice.NewUserService(userRepo, nil, eventBus, "test-secret", "test-salt")
+	userService := userservice.NewUserService(userRepo, nil, eventBus, "test-secret", "test-salt", nil)
 	service := &EmployeeService{
 		EmployeeRepo:       employeeRepo,
 		UserRepo:           userRepo,
@@ -719,7 +719,7 @@ func TestEnsureEmployeeUserAccount_CreatesAndLinksLegacyEmployee(t *testing.T) {
 func TestImportService_DoesNotPersistEmployeeWhenUserCreationFails(t *testing.T) {
 	employeeRepo := &stubEmployeeRepo{}
 	userRepo := &createEmployeeTestUserRepo{createErr: errors.New("user storage unavailable")}
-	userService := userservice.NewUserService(userRepo, nil, createEmployeeTestEventBus{}, "test-secret", "test-salt")
+	userService := userservice.NewUserService(userRepo, nil, createEmployeeTestEventBus{}, "test-secret", "test-salt", nil)
 	employeeService := &EmployeeService{
 		EmployeeRepo:       employeeRepo,
 		UserRepo:           userRepo,

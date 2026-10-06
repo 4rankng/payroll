@@ -1,0 +1,13 @@
+-- Restore the legacy phone numbers cleared by the up migration.
+--
+-- The values are NOT preserved by the up migration, so they cannot be rebuilt
+-- from SQL alone. If a rollback is required, restore `users.mobile` for the
+-- affected employee rows from the pre-migration backup; the authoritative
+-- source is the matching employees.mobile value.
+
+-- Rows to repair after a rollback (returns them once the backup is applied):
+-- SELECT u.id, u.username, e.mobile
+--   FROM users u
+--   JOIN employees e ON e.user_id = u.id
+--  WHERE u.role = 'employee' AND u.mobile IS NULL AND e.mobile IS NOT NULL
+--    AND e.mobile <> '';

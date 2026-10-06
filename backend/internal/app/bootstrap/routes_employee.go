@@ -22,6 +22,10 @@ func setupEmployeeRoutes(protected *gin.RouterGroup, container *Container) {
 		employees.GET("/missing-bank-details", container.Handlers.Employee.GetEmployeesMissingBankDetails)
 		employees.GET("/cccd/:cccd", container.Handlers.Employee.GetEmployeeByCCCD)
 		employees.GET("/duplicate-check", container.Handlers.Employee.CheckEmployeeDuplicates)
+		// Data-quality report: mobiles/CCCDs carried by more than one employee.
+		// Those accounts cannot log in via mobile, so a password reset on one of
+		// them looks successful but has no effect.
+		employees.GET("/duplicate-identities", container.Handlers.Employee.GetDuplicateIdentities)
 		employees.GET("/:id", container.Handlers.Employee.GetEmployee)
 		employees.GET("/:id/export", container.Handlers.Employee.ExportEmployeeDetail)
 		employees.PUT("/:id", container.Handlers.Employee.UpdateEmployee)

@@ -272,7 +272,7 @@ func TestConfirmReset_ValidToken_CallsTransactionalRepoOnce(t *testing.T) {
 
 	// Real *user.UserService with nil repos — ConfirmReset only touches
 	// ValidatePassword + HashNewPassword, which don't use the repos.
-	userSvc := user.NewUserService(nil, nil, nil, "test-secret", "test-salt")
+	userSvc := user.NewUserService(nil, nil, nil, "test-secret", "test-salt", nil)
 
 	svc := &Service{
 		tokenStore:  store,
@@ -327,7 +327,7 @@ func TestConfirmReset_WeakPassword_ReturnsValidationError(t *testing.T) {
 	repo := &fakeUserRepo{
 		byID: map[uint]*domain.User{userID: {ID: userID, Username: "dave", Fullname: "Dave", Email: &email}},
 	}
-	userSvc := user.NewUserService(nil, nil, nil, "test-secret", "test-salt")
+	userSvc := user.NewUserService(nil, nil, nil, "test-secret", "test-salt", nil)
 	svc := &Service{
 		tokenStore: store, userRepo: repo, userService: userSvc,
 		emailSender: &recordingEmailSender{}, fromEmail: "noreply@test.example",

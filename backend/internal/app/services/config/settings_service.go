@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -11,6 +12,8 @@ import (
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/secret"
+
+	"gorm.io/gorm"
 )
 
 // Cache TTL constants for settings
@@ -107,6 +110,14 @@ func (s *SettingsService) CreateSetting(ctx context.Context, settings *domain.Se
 	}
 
 	if err := s.SettingsRepo.Create(ctx, settings); err != nil {
+		// A duplicate key is a conflict the caller can act on, not a server
+		// fault. Returning it wrapped in a plain error made the handler emit an
+		// opaque HTTP 500 ("Không thể tạo cài đặt"), which read as a flaky test
+		// rather than "this setting already exists".
+		if isDuplicateKeyError(err) {
+			return nil, domain.NewConflictError(
+				fmt.Sprintf("Cài đặt \"%s\" đã tồn tại", settings.Key))
+		}
 		return nil, fmt.Errorf("failed to create setting: %w", err)
 	}
 
@@ -387,4 +398,17 @@ func (s *SettingsService) invalidateSettingsCache(ctx context.Context) {
 	if err := s.CacheService.DeletePattern(ctx, "settings:detail:*"); err != nil {
 		s.logger.Warn("Failed to clear settings detail cache", "error", err)
 	}
+}
+
+// isDuplicateKeyError reports whether err is a MySQL unique-constraint
+// violation. GORM only surfaces gorm.ErrDuplicatedKey when the driver translates
+// the error, so the message is checked as well — the settings repository is used
+// against MySQL in every environment.
+func isDuplicateKeyError(err error) bool {
+	if errors.Is(err, gorm.ErrDuplicatedKey) {
+		return true
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "duplicate entry") ||
+		strings.Contains(msg, "uniq_settings_active_key")
 }

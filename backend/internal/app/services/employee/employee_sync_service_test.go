@@ -390,6 +390,14 @@ func (m *MockEmployeeRepository) GetPaidWithoutMobile(ctx context.Context, from,
 	return args.Get(0).([]*domain.EmployeePaidActivity), args.Error(1)
 }
 
+func (m *MockEmployeeRepository) GetDuplicateIdentities(ctx context.Context) ([]*domain.DuplicateIdentityGroup, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*domain.DuplicateIdentityGroup), args.Error(1)
+}
+
 // MockEventBus is a mock for EventBus
 type MockEventBus struct {
 	mock.Mock

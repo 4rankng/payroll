@@ -40,6 +40,15 @@ func (s *EmployeeService) ListEmployeesPaidWithoutMobile(ctx context.Context, fr
 	return s.EmployeeRepo.GetPaidWithoutMobile(ctx, from, to)
 }
 
+// GetDuplicateIdentities returns phone numbers and CCCDs carried by more than one
+// employee record. These are the accounts that cannot log in via mobile, because
+// identity.Resolver fails closed rather than picking one of the colliding
+// accounts — so resetting a password for one of them appears to do nothing.
+// Read-only: it reports, it never merges.
+func (s *EmployeeService) GetDuplicateIdentities(ctx context.Context) ([]*domain.DuplicateIdentityGroup, error) {
+	return s.EmployeeRepo.GetDuplicateIdentities(ctx)
+}
+
 // ChangeEmployeePassword changes the password for an employee's user account
 // RBAC: ADMIN can change any employee password
 // RBAC: PARTNER can change passwords for employees they have access to:

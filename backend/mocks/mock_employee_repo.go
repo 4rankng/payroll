@@ -393,6 +393,21 @@ func (mr *MockEmployeeRepositoryMockRecorder) GetEmployeesWithMissingBankDetails
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeesWithMissingBankDetails", reflect.TypeOf((*MockEmployeeRepository)(nil).GetEmployeesWithMissingBankDetails), ctx, filters)
 }
 
+// GetDuplicateIdentities mocks base method.
+func (m *MockEmployeeRepository) GetDuplicateIdentities(ctx context.Context) ([]*domain.DuplicateIdentityGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDuplicateIdentities", ctx)
+	ret0, _ := ret[0].([]*domain.DuplicateIdentityGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDuplicateIdentities indicates an expected call of GetDuplicateIdentities.
+func (mr *MockEmployeeRepositoryMockRecorder) GetDuplicateIdentities(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDuplicateIdentities", reflect.TypeOf((*MockEmployeeRepository)(nil).GetDuplicateIdentities), ctx)
+}
+
 // GetPaidWithoutMobile mocks base method.
 func (m *MockEmployeeRepository) GetPaidWithoutMobile(ctx context.Context, from, to time.Time) ([]*domain.EmployeePaidActivity, error) {
 	m.ctrl.T.Helper()

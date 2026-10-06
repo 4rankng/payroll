@@ -117,9 +117,27 @@ type DuplicateCheckItemResponse struct {
 }
 
 // DuplicateCheckResponse is the payload for GET /employees/duplicate-check
+// DuplicateCheckResponse represents the response for duplicate check
 type DuplicateCheckResponse struct {
 	HasDuplicates bool                         `json:"has_duplicates"`
 	Data          []DuplicateCheckItemResponse `json:"data"`
+}
+
+// DuplicateIdentityGroupResponse is one duplicated identifier group in the
+// admin data-quality report. The number is returned unmasked because this
+// endpoint is admin-only and its whole purpose is to be actionable.
+type DuplicateIdentityGroupResponse struct {
+	Field       string `json:"field"`
+	Value       string `json:"value"`
+	EmployeeIDs []uint `json:"employee_ids"`
+	UserIDs     []uint `json:"user_ids"`
+	Count       int    `json:"count"`
+}
+
+// DuplicateIdentitiesResponse is the report payload. Total counts groups.
+type DuplicateIdentitiesResponse struct {
+	Total int                              `json:"total"`
+	Data  []DuplicateIdentityGroupResponse `json:"data"`
 }
 
 // EmployeesSummaryResponse represents the response for employees summary

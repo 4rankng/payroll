@@ -60,3 +60,45 @@ func (h *Handler) CheckEmployeeDuplicates(c *gin.Context) {
 		Data:          items,
 	}, constants.MsgEmployeeDuplicatesFoundVN)
 }
+
+// GetDuplicateIdentities reports phone numbers and CCCDs carried by more than
+// one employee record.
+//
+// Such a number cannot log in: identity.Resolver refuses to choose between the
+// colliding accounts, so the operator sees a successful password reset and the
+// employee still cannot authenticate. This endpoint is the admin-facing way to
+// see which records need disambiguating. It is strictly read-only — merging or
+// reassigning duplicate records is a business decision, not an automatic one.
+// @Summary List duplicated employee identities
+// @Description List mobiles and CCCDs shared by more than one employee record; those accounts cannot log in via mobile
+// @Tags employees
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.DuplicateIdentitiesResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Security ApiKeyAuth
+// @Router /employees/duplicate-identities [get]
+func (h *Handler) GetDuplicateIdentities(c *gin.Context) {
+	groups, err := h.employeeService.GetDuplicateIdentities(c.Request.Context())
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	items := make([]dto.DuplicateIdentityGroupResponse, 0, len(groups))
+	for _, g := range groups {
+		items = append(items, dto.DuplicateIdentityGroupResponse{
+			Field:       g.Field,
+			Value:       g.Value,
+			EmployeeIDs: g.EmployeeIDs,
+			UserIDs:     g.UserIDs,
+			Count:       g.Count,
+		})
+	}
+
+	response.Success(c, dto.DuplicateIdentitiesResponse{
+		Total: len(items),
+		Data:  items,
+	}, constants.MsgEmployeeDuplicatesFoundVN)
+}

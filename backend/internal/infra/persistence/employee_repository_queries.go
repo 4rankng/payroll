@@ -153,6 +153,82 @@ func (r *EmployeeRepository) GetEmployeesWithMissingBankDetails(ctx context.Cont
 	return empWithProjects, nil
 }
 
+// GetDuplicateIdentities lists phone numbers and CCCDs carried by more than one
+// non-deleted employee record.
+//
+// Only rows whose value actually collides are returned, and empty strings are
+// excluded: many legacy employee rows share a blank mobile, and a blank is never
+// a login identifier (identity.EmployeesByMobile skips empty candidates).
+func (r *EmployeeRepository) GetDuplicateIdentities(ctx context.Context) ([]*domain.DuplicateIdentityGroup, error) {
+	type row struct {
+		Field      string
+		Value      string
+		EmployeeID uint
+		UserID     *uint
+	}
+
+	collect := func(field string) ([]row, error) {
+		var rows []row
+		err := r.DB.WithContext(ctx).
+			Model(&domain.Employee{}).
+			Select(field+" AS value, id AS employee_id, user_id").
+			Where("deleted_at IS NULL").
+			Where(field+" IS NOT NULL AND "+field+" <> ''").
+			Where(field+" IN (?)",
+				r.DB.Model(&domain.Employee{}).
+					Select(field).
+					Where("deleted_at IS NULL").
+					Where(field+" IS NOT NULL AND "+field+" <> ''").
+					Group(field).
+					Having("COUNT(*) > 1"),
+			).
+			Order(field + " ASC, id ASC").
+			Scan(&rows).Error
+		if err != nil {
+			return nil, err
+		}
+		for i := range rows {
+			rows[i].Field = field
+		}
+		return rows, nil
+	}
+
+	mobileRows, err := collect("mobile")
+	if err != nil {
+		return nil, err
+	}
+	cccdRows, err := collect("cccd")
+	if err != nil {
+		return nil, err
+	}
+
+	groups := make([]*domain.DuplicateIdentityGroup, 0)
+	index := make(map[string]*domain.DuplicateIdentityGroup)
+	for _, rw := range append(mobileRows, cccdRows...) {
+		key := rw.Field + "\x00" + rw.Value
+		g, ok := index[key]
+		if !ok {
+			g = &domain.DuplicateIdentityGroup{
+				Field:       rw.Field,
+				Value:       rw.Value,
+				EmployeeIDs: []uint{},
+				UserIDs:     []uint{},
+			}
+			index[key] = g
+			groups = append(groups, g)
+		}
+		g.EmployeeIDs = append(g.EmployeeIDs, rw.EmployeeID)
+		if rw.UserID != nil {
+			g.UserIDs = append(g.UserIDs, *rw.UserID)
+		} else {
+			g.UserIDs = append(g.UserIDs, 0)
+		}
+		g.Count = len(g.EmployeeIDs)
+	}
+
+	return groups, nil
+}
+
 // CountEmployeesWithMissingBankDetails returns count of employees with missing banking information
 func (r *EmployeeRepository) CountEmployeesWithMissingBankDetails(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
 	var count int64

@@ -24,6 +24,8 @@ interface ResetPasswordModalProps {
   target: TargetInfo | null;
   targetType?: TargetType;
   loading?: boolean;
+  /** Server-side failure for the last submit, shown inline. */
+  submitError?: string | null;
 }
 
 const TARGET_LABELS: Record<TargetType, { noun: string; footer: string }> = {
@@ -37,7 +39,8 @@ export function ResetPasswordModal({
   onResetPassword,
   target,
   targetType = 'user',
-  loading = false
+  loading = false,
+  submitError = null
 }: ResetPasswordModalProps) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -79,8 +82,11 @@ export function ResetPasswordModal({
   const handleSubmit = () => {
     if (!validateForm() || !target) return;
 
+    // Do NOT close here. Closing before the server answers snaps the dialog shut
+    // and clears the field, so a failure discards what the operator typed and
+    // leaves no link between the action and its outcome. The container closes
+    // the modal on success only.
     onResetPassword(target.id, password);
-    handleClose();
   };
 
   const handleClose = () => {
@@ -129,6 +135,11 @@ export function ResetPasswordModal({
               </Button>
             </div>
             {errors.password && <p className="typography-body-medium text-destructive">{errors.password}</p>}
+            {submitError && (
+              <p className="typography-body-medium text-destructive" role="alert">
+                {submitError}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground">
               Mật khẩu là bắt buộc
             </p>

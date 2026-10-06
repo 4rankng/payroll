@@ -150,7 +150,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	cachePort := cacheAdapter.NewRedisAdapter(cacheService)
 
 	// Step 3: Create base services needed for other services
-	userService := user.NewUserService(repos.User, repos.AuditLog, eventBus, cfg.Security.HashSecret, cfg.Security.HashSalt)
+	userService := user.NewUserService(repos.User, repos.AuditLog, eventBus, cfg.Security.HashSecret, cfg.Security.HashSalt, clk)
 	passwordResetJobManager := user.NewPasswordResetJobManager(userService, cacheService)
 	pushSvc := pushService.NewPushService(repos.PushSubscription, cfg.Notification, logger)
 	notificationService := notification.NewNotificationService(repos.Notification, repos.User, repos.Project, userService, pushSvc, logger)

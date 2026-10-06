@@ -388,12 +388,23 @@ func (s *UserService) ResetUserPassword(ctx context.Context, userID uint, newPas
 		return domain.NewInternalError(constants.MsgFailedToHashNewPasswordVN, err)
 	}
 
-	// Update user password
-	user.Password = hashedPassword
-	err = s.UserRepo.Update(ctx, user)
+	// Persist the new password.
+	//
+	// This MUST go through UpdatePasswordAndInvalidateSessions (a column-scoped
+	// UPDATE) rather than UserRepo.Update, which does a full-row Save(user).
+	// A full-row Save has two defects for a credential operation:
+	//   1. it clobbers concurrent profile edits (fullname/cccd/mobile/email),
+	//   2. it never advances tokens_invalid_before, so sessions issued under the
+	//      old password keep working until they expire — the reset looks
+	//      successful while the previous credential stays live.
+	//
+	// It also avoids UserRepo.Update's IsValid() gate, which demands a non-empty
+	// fullname and a >=3 char username and would otherwise fail a pure
+	// credential reset on an otherwise-valid, sparsely-populated user.
+	err = s.UserRepo.UpdatePasswordAndInvalidateSessions(ctx, userID, hashedPassword, s.clk.Now())
 	if err != nil {
 		s.logger.Error("Failed to update user password", "error", err, "user_id", userID)
-		return domain.NewInternalError(constants.MsgFailedToUpdateUserPasswordVN, err)
+		return err
 	}
 
 	// Publish domain event

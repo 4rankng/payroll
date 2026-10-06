@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
@@ -19,7 +20,13 @@ type SettingsRepository struct {
 	// cipher seals the values of secret.ProtectedKeys rows at rest. Nil means no
 	// key is configured: values are read and written exactly as before.
 	cipher *secret.Cipher
+	logger *slog.Logger
 }
+
+// unmaskedValue stands in for a protected value that could not be decrypted, so
+// the API reports that the setting exists but cannot reveal a value this
+// process cannot read. It is intentionally not a valid credential.
+const unmaskedValue = "********"
 
 // NewSettingsRepository builds the settings repository. It returns the concrete
 // type (which satisfies domain.SettingsRepository) so callers can reach
@@ -28,6 +35,7 @@ func NewSettingsRepository(db *Database) *SettingsRepository {
 	return &SettingsRepository{
 		BaseRepository: NewBaseRepository(db),
 		cipher:         secret.Default(),
+		logger:         observability.GetLogger(),
 	}
 }
 
@@ -39,6 +47,7 @@ func NewSettingsRepositoryWithCipher(db *Database, cipher *secret.Cipher) *Setti
 	return &SettingsRepository{
 		BaseRepository: NewBaseRepository(db),
 		cipher:         cipher,
+		logger:         observability.GetLogger(),
 	}
 }
 
@@ -95,10 +104,21 @@ func (r *SettingsRepository) opened(settings *domain.Settings) (*domain.Settings
 	return settings, nil
 }
 
+// openedAll decrypts every protected row in the slice.
+//
+// A row that cannot be decrypted (for example a credential sealed with a
+// previous pepper, after a restore or a pepper rotation) is masked in place
+// rather than aborting the batch: a single unreadable secret must not take
+// down the whole settings list. The plaintext is never surfaced — the row keeps
+// its identity and value_type so an operator can see the setting exists and
+// re-enter it.
 func (r *SettingsRepository) openedAll(settings []*domain.Settings) ([]*domain.Settings, error) {
 	for _, row := range settings {
 		if _, err := r.opened(row); err != nil {
-			return nil, err
+			masked := unmaskedValue
+			row.Value = &masked
+			r.logger.Warn("Failed to decrypt protected setting; value masked in response",
+				"key", row.Key, "error", err)
 		}
 	}
 	return settings, nil
