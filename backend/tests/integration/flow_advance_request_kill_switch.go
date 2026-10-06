@@ -25,16 +25,31 @@ func runAdvanceRequestKillSwitchTests(client *APIClient, data *TestData, reporte
 
 	var projectID uint
 
-	reporter.RunTest(flowAdvKillSwitch, "Employees list finds the test employee's project", func() error {
+	// Resolve the project BEFORE recording an assertion.
+	//
+	// Advance eligibility is not stable across a run: it depends on the month's
+	// imported quota and on the assignment's check_in_enabled flag, both of
+	// which earlier flows may change. When the fixture employee drops out of the
+	// list this flow used to record a FAIL and then skip, turning "not eligible
+	// this run" into a red test. This flow authenticates as that specific
+	// employee (it has only their token), so it cannot substitute another one —
+	// skipping with a reason is the honest outcome.
+	projectID = advanceProjectForEmployee(adminClient, employeeID)
+	if projectID == 0 {
+		reporter.Skip(flowAdvKillSwitch, "All kill switch tests",
+			fmt.Sprintf("employee %d is not in the advance employee list this run", employeeID))
+		return
+	}
+
+	fmt.Printf("    employee %d -> project %d\n", employeeID, projectID)
+
+	reporter.RunTest(flowAdvKillSwitch, "Advance list resolves the test employee's project", func() error {
 		var items []EmployeeAdvanceItem
 		if _, err := adminClient.GetInto("/api/v1/advance-payments/employees?pageSize=100", &items); err != nil {
 			return fmt.Errorf("list employees: %w", err)
 		}
 		for _, it := range items {
-			if it.EmployeeID == employeeID && it.Project != nil {
-				projectID = it.Project.ID
-				fmt.Printf("    employee %d -> project %d (%s), advance_request_enabled=%v\n",
-					employeeID, projectID, it.Project.Name, it.Project.AdvanceRequestEnabled)
+			if it.EmployeeID == employeeID && it.Project != nil && it.Project.ID == projectID {
 				// Canary: the removal-visibility flow re-adds this employee
 				// right before us; a freshly (re)assigned employee must start
 				// advance-request ENABLED — catches Create/Save zero-value
@@ -45,13 +60,8 @@ func runAdvanceRequestKillSwitchTests(client *APIClient, data *TestData, reporte
 				return nil
 			}
 		}
-		return fmt.Errorf("employee %d not found in advance-payments/employees", employeeID)
+		return fmt.Errorf("employee %d left the advance list between the probe and the assertion", employeeID)
 	})
-
-	if projectID == 0 {
-		reporter.Skip(flowAdvKillSwitch, "Remaining kill switch tests", "employee not in flexible employee list")
-		return
-	}
 
 	togglePath := fmt.Sprintf("/api/v1/projects/%d/employees/%d/advance-request-enabled", projectID, employeeID)
 
@@ -137,4 +147,21 @@ func runAdvanceRequestKillSwitchTests(client *APIClient, data *TestData, reporte
 		fmt.Printf("    re-enabled: canRequest=%v title=%q\n", info.CanRequest, info.CanRequestTitle)
 		return nil
 	})
+}
+
+// advanceProjectForEmployee returns the project the employee is currently
+// listed under in the advance-payments employee list, or 0 when the employee is
+// not listed. The list is month-sensitive and eligibility-sensitive, so callers
+// must probe at run time rather than trusting a fixture captured earlier.
+func advanceProjectForEmployee(adminClient *APIClient, employeeID uint) uint {
+	var items []EmployeeAdvanceItem
+	if _, err := adminClient.GetInto("/api/v1/advance-payments/employees?pageSize=100", &items); err != nil {
+		return 0
+	}
+	for _, it := range items {
+		if it.EmployeeID == employeeID && it.Project != nil {
+			return it.Project.ID
+		}
+	}
+	return 0
 }

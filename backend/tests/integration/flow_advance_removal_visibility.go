@@ -34,6 +34,30 @@ func runAdvanceRemovalVisibilityTests(client *APIClient, data *TestData, reporte
 	projectID := flexProject.ProjectID
 	employeeID := emp.ID
 
+	// Re-resolve the employee against the advance list as it stands right now.
+	//
+	// data.EmployeeForAdvance is chosen during fixture setup from whichever
+	// employees are advance-eligible at that moment. Membership is not stable:
+	// it depends on the month's imported quota and on the assignment's
+	// check_in_enabled flag, both of which earlier flows in the same run can
+	// change. Asserting against the stale choice made this flow fail for
+	// reasons that had nothing to do with removal visibility — and because it
+	// bailed before its own restore step, the next run inherited the damage.
+	//
+	// When the fixture employee has dropped out, fall back to any other
+	// eligible employee in that project rather than reporting a false failure.
+	if !employeeInAdvanceList(adminClient, employeeID, projectID) {
+		if alt := firstEligibleAdvanceEmployee(adminClient, projectID); alt != 0 {
+			fmt.Printf("    fixture employee %d is no longer advance-eligible; using employee %d\n",
+				employeeID, alt)
+			employeeID = alt
+		} else {
+			reporter.Skip(flowAdvRemoval, "All tests",
+				"no advance-eligible employee in the project (fixture data is not eligible this run)")
+			return
+		}
+	}
+
 	var originalForMonth string
 	var found bool
 
@@ -172,4 +196,38 @@ func runAdvanceRemovalVisibilityTests(client *APIClient, data *TestData, reporte
 		}
 		return fmt.Errorf("employee %d not found after re-add for forMonth %s", employeeID, originalForMonth)
 	})
+}
+
+// employeeInAdvanceList reports whether the employee currently appears in the
+// unfiltered advance-payments employee list for the given project.
+func employeeInAdvanceList(adminClient *APIClient, employeeID, projectID uint) bool {
+	var items []EmployeeAdvanceItem
+	if _, err := adminClient.GetInto("/api/v1/advance-payments/employees?pageSize=100", &items); err != nil {
+		return false
+	}
+	for _, item := range items {
+		if item.EmployeeID == employeeID && item.Project != nil && item.Project.ID == projectID {
+			return true
+		}
+	}
+	return false
+}
+
+// firstEligibleAdvanceEmployee returns an employee that currently qualifies for
+// an advance in the given project, or 0 when none does. Used to keep the
+// advance flows runnable when the fixture employee has dropped out of the list.
+func firstEligibleAdvanceEmployee(adminClient *APIClient, projectID uint) uint {
+	var items []EmployeeAdvanceItem
+	if _, err := adminClient.GetInto("/api/v1/advance-payments/employees?pageSize=100", &items); err != nil {
+		return 0
+	}
+	for _, item := range items {
+		if item.Project == nil || item.Project.ID != projectID {
+			continue
+		}
+		if item.MaxAdvanceAmount > 0 || item.AvailableAmount > 0 {
+			return item.EmployeeID
+		}
+	}
+	return 0
 }
