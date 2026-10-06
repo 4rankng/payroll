@@ -271,6 +271,41 @@ func TestIsCheckInPeriodUsesTheRecordedStartDay(t *testing.T) {
 	}
 }
 
+// A start day on the 1st of the month FOLLOWING a period must not reach back:
+// an employee enabled for check-in on Oct 1 still had September funded by the
+// workbook, so a September upload must import. October itself remains a
+// check-in period, and a start on September's last day still counts.
+func TestIsCheckInPeriodMonthBoundary(t *testing.T) {
+	pe := activeAssignment()
+	pe.CheckInEnabled = true
+	pe.CheckInStartDate = startOfVNDayPtr(2026, 10, 1)
+
+	september, err := pe.IsCheckInPeriod("2026-09")
+	if err != nil {
+		t.Fatalf("IsCheckInPeriod(2026-09): %v", err)
+	}
+	if september {
+		t.Error("a start on Oct 1 must not make September a check-in period")
+	}
+
+	october, err := pe.IsCheckInPeriod("2026-10")
+	if err != nil {
+		t.Fatalf("IsCheckInPeriod(2026-10): %v", err)
+	}
+	if !october {
+		t.Error("the month containing the start day is a check-in period")
+	}
+
+	pe.CheckInStartDate = startOfVNDayPtr(2026, 9, 30)
+	lastDay, err := pe.IsCheckInPeriod("2026-09")
+	if err != nil {
+		t.Fatalf("IsCheckInPeriod(2026-09) start Sep 30: %v", err)
+	}
+	if !lastDay {
+		t.Error("a start on the period's last day is still a check-in period")
+	}
+}
+
 // An employee enabled before the start-day column existed has no recorded
 // start; refusing the workbook is the safe reading, since the service may
 // already have been in use.

@@ -90,10 +90,12 @@ func (pe *ProjectEmployee) IsCheckInPeriod(forMonth string) (bool, error) {
 	if err != nil {
 		return false, NewValidationError("Định dạng tháng không hợp lệ (YYYY-MM)")
 	}
-	// The period ends the day before the next month begins; comparing against
-	// that boundary makes a start day late in the month still count.
-	periodEnd := periodStart.AddDate(0, 1, 0)
-	return !pe.CheckInStartDate.After(periodEnd), nil
+	// The period's last day is the day before the next month begins. A start
+	// on or before that day means check-in was live during the period; a start
+	// on the 1st of the FOLLOWING month must not reach back into it — October
+	// check-in must not turn September into a check-in period.
+	periodLastDay := periodStart.AddDate(0, 1, 0).AddDate(0, 0, -1)
+	return !pe.CheckInStartDate.After(periodLastDay), nil
 }
 
 // ProjectEmployeeRepository defines the interface for project employee persistence operations
