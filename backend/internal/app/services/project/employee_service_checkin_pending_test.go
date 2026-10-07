@@ -480,6 +480,44 @@ func TestApplyPendingCheckInChangesAppliesDueRows(t *testing.T) {
 	}
 }
 
+func TestApplyPendingCheckInChangesSweepZeroesQuotaForEffectiveMonth(t *testing.T) {
+	// A disable queued for Oct 1 applied by a late self-healing run on Nov 5
+	// must zero the EFFECTIVE month (2026-10) — the month the service actually
+	// turned off — not the month the sweep runs in.
+	setFakeClock(t, time.Date(2026, 11, 5, 3, 0, 0, 0, clock.DefaultLocation))
+	advanceRepo := &checkinPendingAdvanceRepo{}
+	assignment := newPendingAssignment()
+	assignment.CheckInEnabled = true
+	started := time.Date(2026, 9, 1, 0, 0, 0, 0, clock.DefaultLocation)
+	assignment.CheckInStartDate = &started
+	disabled := false
+	assignment.PendingCheckInEnabled = &disabled
+	effective := time.Date(2026, 10, 1, 0, 0, 0, 0, clock.DefaultLocation)
+	assignment.CheckInEffectiveFrom = &effective
+	repo := &checkinPendingAssignmentRepo{assignment: assignment}
+	svc := newCheckinPendingService(repo, advanceRepo)
+
+	if err := svc.ApplyPendingCheckInChanges(context.Background()); err != nil {
+		t.Fatalf("apply: %v", err)
+	}
+
+	if assignment.CheckInEnabled {
+		t.Error("due pending disable must turn the service off")
+	}
+	if assignment.HasPendingCheckInChange() {
+		t.Error("applied disable must clear the pending columns")
+	}
+	if assignment.CheckInStartDate == nil || !assignment.CheckInStartDate.Equal(started) {
+		t.Errorf("disable must keep CheckInStartDate, got %v", assignment.CheckInStartDate)
+	}
+	if len(advanceRepo.zeroedMonths) != 1 || advanceRepo.zeroedMonths[0] != "2026-10" {
+		t.Errorf("quota zero-out months = %v, want exactly [2026-10] (effective month, not run month)", advanceRepo.zeroedMonths)
+	}
+	if len(repo.saved) != 1 {
+		t.Errorf("saved = %d rows, want 1", len(repo.saved))
+	}
+}
+
 func TestToggleCheckInEnableRequiresPayrate(t *testing.T) {
 	setFakeClock(t, time.Date(2026, 8, 20, 10, 0, 0, 0, clock.DefaultLocation))
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
