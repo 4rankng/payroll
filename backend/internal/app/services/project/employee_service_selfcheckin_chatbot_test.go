@@ -607,6 +607,72 @@ func TestBulkAdminDisableWhilePendingDisableQueuedIsNoop(t *testing.T) {
 	}
 }
 
+// An admin enable on a row with a queued disable supersedes it, mirroring the
+// chatbot row: the queued disable is cancelled, the service stays on from its
+// original start date, and the admin's start-month choice is irrelevant
+// because nothing needs scheduling. No quota is zeroed either way.
+func TestAdminEnableOverQueuedDisableSupersedes(t *testing.T) {
+	queuedFor := time.Date(2026, 11, 1, 0, 0, 0, 0, clock.DefaultLocation)
+	runningSince := time.Date(2026, 9, 1, 0, 0, 0, 0, clock.DefaultLocation)
+
+	t.Run("single toggle", func(t *testing.T) {
+		setFakeClock(t, time.Date(2026, 10, 20, 10, 0, 0, 0, clock.DefaultLocation))
+		advanceRepo := &checkinPendingAdvanceRepo{}
+		repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
+		pendingDisableOn(queuedFor)(repo.assignment)
+		repo.assignment.CheckInStartDate = &runningSince
+		svc := newCheckinPendingService(repo, advanceRepo)
+
+		if err := svc.ToggleCheckInEnabled(context.Background(), 5, 99, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
+			t.Fatalf("admin enable over a queued disable: %v", err)
+		}
+
+		a := repo.assignment
+		if !a.CheckInEnabled {
+			t.Error("the service must stay on after the supersede")
+		}
+		if a.HasPendingCheckInChange() {
+			t.Error("the queued disable must be cancelled")
+		}
+		if a.CheckInStartDate == nil || !a.CheckInStartDate.Equal(runningSince) {
+			t.Errorf("CheckInStartDate = %v, want the original %v (never rewritten)", a.CheckInStartDate, runningSince)
+		}
+		if len(repo.saved) != 1 {
+			t.Errorf("the cancellation must persist, saved = %d", len(repo.saved))
+		}
+		if len(advanceRepo.zeroedMonths) != 0 {
+			t.Errorf("superseding must not zero quota, got %v", advanceRepo.zeroedMonths)
+		}
+	})
+
+	t.Run("bulk toggle", func(t *testing.T) {
+		setFakeClock(t, time.Date(2026, 10, 20, 10, 0, 0, 0, clock.DefaultLocation))
+		advanceRepo := &checkinPendingAdvanceRepo{}
+		repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
+		pendingDisableOn(queuedFor)(repo.assignment)
+		repo.assignment.CheckInStartDate = &runningSince
+		svc := newCheckinPendingService(repo, advanceRepo)
+
+		if err := svc.BulkToggleCheckInEnabled(context.Background(), 5, []uint{99}, true, domain.CheckInStartMonthNextMonth, 1); err != nil {
+			t.Fatalf("bulk enable over a queued disable: %v", err)
+		}
+
+		a := repo.assignment
+		if !a.CheckInEnabled || a.HasPendingCheckInChange() {
+			t.Errorf("row must stay enabled with the queued disable cancelled, got enabled=%v pending=%v", a.CheckInEnabled, a.HasPendingCheckInChange())
+		}
+		if a.CheckInStartDate == nil || !a.CheckInStartDate.Equal(runningSince) {
+			t.Errorf("CheckInStartDate = %v, want the original %v", a.CheckInStartDate, runningSince)
+		}
+		if len(repo.saved) != 1 {
+			t.Errorf("the cancellation must persist, saved = %d", len(repo.saved))
+		}
+		if len(advanceRepo.zeroedMonths) != 0 {
+			t.Errorf("superseding must not enroll the row in BatchZeroOutQuota, got %v", advanceRepo.zeroedMonths)
+		}
+	})
+}
+
 // The admin delete route (DELETE .../checkin-enabled → CancelPendingCheckInEnable)
 // cancels a queued disable as well as a queued enable — intended per the plan
 // — and leaves the service running.
