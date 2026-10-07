@@ -40,4 +40,7 @@ func setupIntegrationResetRoutes(v1 *gin.RouterGroup, container *Container) {
 		g.POST("/self-checkin/verify", container.Handlers.IntegrationSelfCheckin.VerifyOTP)
 		g.POST("/self-checkin/update", container.Handlers.IntegrationSelfCheckin.Update)
 	}
+	if container.Handlers.IntegrationZaloToken != nil {
+		g.GET("/zalo/token", container.Handlers.IntegrationZaloToken.GetToken)
+	}
 }

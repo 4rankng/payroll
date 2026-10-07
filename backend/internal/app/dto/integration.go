@@ -63,6 +63,13 @@ type IntegrationLookupResponse struct {
 	Mobile       string `json:"mobile"`
 }
 
+// ZaloTokenResponse is the current OA access token for the TingTing chatbot's
+// pull lane (GET /integration/zalo/token). Payroll is the sole rotator of the
+// shared OA token pair; the refresh token never leaves payroll.
+type ZaloTokenResponse struct {
+	AccessToken string `json:"access_token"`
+}
+
 // --- Self check-in via chatbot (TingTing OA) ---------------------------------
 
 // SelfCheckinOTPRequest is the body for POST /integration/self-checkin/otp.

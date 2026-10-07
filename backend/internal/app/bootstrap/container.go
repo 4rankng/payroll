@@ -77,6 +77,7 @@ type Handlers struct {
 	IntegrationReset       *integrationHandlers.PasswordResetHandler
 	IntegrationLookup      *integrationHandlers.EmployeeLookupHandler
 	IntegrationSelfCheckin *integrationHandlers.SelfCheckinHandler
+	IntegrationZaloToken   *integrationHandlers.ZaloTokenHandler
 	AdminAttendance        *adminHandlers.AttendanceHandler
 	Bank                   *handlers.BankHandler
 	Timesheet              *handlers.TimesheetHandler
@@ -514,6 +515,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		IntegrationReset:       integrationHandlers.NewPasswordResetHandler(services.Integration),
 		IntegrationLookup:      integrationHandlers.NewEmployeeLookupHandler(services.Integration),
 		IntegrationSelfCheckin: integrationHandlers.NewSelfCheckinHandler(services.IntegrationSelfCheckin),
+		IntegrationZaloToken:   integrationHandlers.NewZaloTokenHandler(services.ZaloConnect),
 		AdminAttendance:        adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
 		Wallet:                 handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, clk),
 		WalletBulkTransfer:     newWalletBulkTransferHandler(walletBulkSvc, logger),

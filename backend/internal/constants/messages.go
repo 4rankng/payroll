@@ -408,6 +408,9 @@ const (
 	MsgIntegrationResetSuccessVN      = "Đặt lại mật khẩu thành công."
 	MsgIntegrationEmployeeFoundVN     = "Tìm thấy nhân viên."
 	MsgIntegrationEmployeeNotFoundVN  = "Không tìm thấy nhân viên với số điện thoại này."
+	// Zalo OA access-token delivery to the chatbot: payroll is the sole rotator
+	// of the shared OA token pair and serves GET /integration/zalo/token.
+	MsgIntegrationZaloTokenVN = "Token Zalo OA hiện tại."
 
 	// Self check-in via chatbot (TingTing OA integration endpoints).
 	MsgSelfCheckinProjectNotSupportedVN = "Dự án này chưa hỗ trợ bật/tắt tự chấm công qua chatbot."
