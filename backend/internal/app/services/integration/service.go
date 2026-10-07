@@ -18,7 +18,6 @@ import (
 	"log/slog"
 	"time"
 
-	"api-server/internal/app/services/identity"
 	"api-server/internal/app/services/otp"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
@@ -284,16 +283,7 @@ func (s *Service) ResetPassword(ctx context.Context, resetToken, newPassword str
 // employee row is returned too — it is the authoritative source for that
 // person's name and CCCD, so every endpoint reports the same identity.
 func (s *Service) resolveAccount(ctx context.Context, raw string) (*domain.User, *domain.Employee, error) {
-	u, err := identity.New(s.userRepo, s.employeeRepo).ResolveUserByMobile(ctx, raw)
-	if err != nil {
-		return nil, nil, err
-	}
-	if matches := identity.EmployeesByMobile(ctx, s.employeeRepo, raw); len(matches) == 1 {
-		if emp := matches[0]; emp.UserID != nil && *emp.UserID == u.ID {
-			return u, emp, nil
-		}
-	}
-	return u, nil, nil
+	return resolveAccountFor(ctx, s.userRepo, s.employeeRepo, raw)
 }
 
 // displayName picks the authoritative display name: the employee record's when
