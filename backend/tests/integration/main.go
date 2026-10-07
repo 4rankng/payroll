@@ -95,6 +95,9 @@ func main() {
 	// Phase 7.6: Integration API (chatbot API-key channel)
 	runIntegrationResetTests(client, testData, reporter, cfg)
 
+	// Phase 7.65: Integration self check-in (chatbot enable/disable channel)
+	runIntegrationSelfCheckinTests(client, testData, reporter, cfg)
+
 	// Phase 8: CRUD flows
 	runBankCRUDTests(client, testData, reporter, cfg)
 	runEmployeeCRUDTests(client, testData, reporter, cfg)
