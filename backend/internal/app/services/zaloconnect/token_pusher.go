@@ -57,9 +57,21 @@ func (p *TokenWebhookPusher) Push(ctx context.Context, accessToken string) {
 		return
 	}
 	if p.url == "" || p.apiKey == "" {
-		p.log.Debug("zalo: chatbot token webhook not fully configured, skipping push")
+		// Both unset is a deliberate "push disabled"; exactly one is a typo
+		// that would silently disable every push behind the pull fallback.
+		if p.url != "" || p.apiKey != "" {
+			p.log.Warn("zalo: chatbot token webhook half-configured — set BOTH " +
+				"CHATBOT_OA_TOKEN_WEBHOOK_URL and CHATBOT_OA_TOKEN_WEBHOOK_KEY or pushes are skipped")
+		} else {
+			p.log.Debug("zalo: chatbot token webhook not configured, skipping push")
+		}
 		return
 	}
+	// The rotation hook forwards the triggering request's context: an OTP send
+	// or admin refresh whose client hangs up must not abort a push for a
+	// rotation that already persisted. Detach from cancellation; the client
+	// timeout bounds the call.
+	ctx = context.WithoutCancel(ctx)
 	body, err := json.Marshal(tokenWebhookPayload{AccessToken: accessToken})
 	if err != nil {
 		p.log.Warn("zalo: encode chatbot token push payload", "error", err)
