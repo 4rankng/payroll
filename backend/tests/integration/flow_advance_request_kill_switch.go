@@ -23,8 +23,6 @@ func runAdvanceRequestKillSwitchTests(client *APIClient, data *TestData, reporte
 	adminClient := client.WithToken(data.AdminToken)
 	employeeID := data.EmployeeForAdvance.ID
 
-	var projectID uint
-
 	// Resolve the project BEFORE recording an assertion.
 	//
 	// Advance eligibility is not stable across a run: it depends on the month's
@@ -34,7 +32,7 @@ func runAdvanceRequestKillSwitchTests(client *APIClient, data *TestData, reporte
 	// this run" into a red test. This flow authenticates as that specific
 	// employee (it has only their token), so it cannot substitute another one —
 	// skipping with a reason is the honest outcome.
-	projectID = advanceProjectForEmployee(adminClient, employeeID)
+	projectID := advanceProjectForEmployee(adminClient, employeeID)
 	if projectID == 0 {
 		reporter.Skip(flowAdvKillSwitch, "All kill switch tests",
 			fmt.Sprintf("employee %d is not in the advance employee list this run", employeeID))
