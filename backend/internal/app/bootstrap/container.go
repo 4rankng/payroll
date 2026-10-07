@@ -402,6 +402,16 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		}
 	}
 
+	// Startup push: hand the chatbot the current OA access token the moment the
+	// app boots (owner requirement: "once payroll app start it should call
+	// webhook immediately to provide latest access token to chatbot"), so the
+	// bot holds the latest token even when no rotation runs for another ~24h.
+	// Fail-soft by design — the pusher logs its own failures; this goroutine
+	// must never block or fail container initialization.
+	if services.ZaloTokenPusher != nil {
+		go services.ZaloTokenPusher.PushCurrent(context.Background(), services.ZaloConnect)
+	}
+
 	return &Container{
 		Config:             cfg,
 		Logger:             infra.Logger,

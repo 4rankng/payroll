@@ -71,6 +71,7 @@ type Services struct {
 	APIKey                            *apikey.Service                 // Machine API keys for the chatbot integration API
 	Integration                       *integration.Service            // Chatbot password-reset + employee lookup (API-key auth)
 	IntegrationSelfCheckin            *integration.SelfCheckinService // Chatbot self check-in enable/disable (API-key auth)
+	ZaloTokenPusher                   *zaloconnect.TokenWebhookPusher // Pushes the OA access token to the chatbot webhook (rotation + startup)
 	FlexPayZNS                        *zaloconnect.FlexPayZNSService  // ZNS notifications for FlexPay salary notifications
 	FlexPaySalaryDelivery             *zaloconnect.SalaryNotificationDeliveryService
 	Auth                              *auth.AuthService
@@ -661,6 +662,14 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	zaloProvider := zalo.NewProvider(zaloConnectSvc, zalo.DefaultConfig(), logger)
 	zaloProvider.SetRefreshCoordinator(zalo.NewRedisRefreshCoordinator(redis.Client))
 	zaloConnectSvc.SetProvider(zaloProvider)
+	// Push lane to the TingTing chatbot (payroll is the sole OA token rotator):
+	// every persisted rotation — refresh exchange, validated admin paste, or
+	// metadata save — hands the new access token to the chatbot webhook. The
+	// pusher skips itself at debug when CHATBOT_OA_TOKEN_WEBHOOK_URL/KEY are
+	// unset, so wiring is unconditional and unconfigured deploys stay inert.
+	zaloTokenPusher := zaloconnect.NewTokenWebhookPusher(
+		cfg.Zalo.ChatbotTokenWebhookURL, cfg.Zalo.ChatbotTokenWebhookKey, logger)
+	zaloProvider.SetRotationHook(zaloTokenPusher.Push)
 	_ = zaloConnectSvc.SeedFromEnvIfEmpty(context.Background(), zaloconnect.EnvSeed{
 		Enabled:    cfg.Zalo.Enabled,
 		AppID:      cfg.Zalo.AppID,
@@ -742,6 +751,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		EmailPasswordReset:                emailPasswordResetService,
 		ZaloPasswordReset:                 zaloResetService,
 		ZaloConnect:                       zaloConnectSvc,
+		ZaloTokenPusher:                   zaloTokenPusher,
 		APIKey:                            apiKeyService,
 		Integration:                       integrationService,
 		IntegrationSelfCheckin:            selfCheckinService,

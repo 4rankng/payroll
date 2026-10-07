@@ -103,6 +103,13 @@ type ZaloConfig struct {
 	SecretKey  string
 	TemplateID string // default "619684" (OTP-ZNS-v2)
 	CodeTTL    time.Duration
+	// Chatbot token delivery. Payroll is the sole rotator of the shared Zalo OA
+	// token pair; the TingTing chatbot pulls the access token from the
+	// integration endpoint and additionally receives it pushed to this webhook
+	// after every rotation and once at startup. The refresh token never leaves
+	// payroll. Both values are optional — unset disables the push lane.
+	ChatbotTokenWebhookURL string // CHATBOT_OA_TOKEN_WEBHOOK_URL
+	ChatbotTokenWebhookKey string // CHATBOT_OA_TOKEN_WEBHOOK_KEY (sent as X-API-Key)
 }
 
 // SelfCheckinConfig gates the chatbot self check-in flow. SupportedProjectCodes
@@ -453,12 +460,14 @@ func Load() (*Config, error) {
 			ResetURL:         getEnv("PASSWORD_RESET_URL", "https://tingting.vip/reset-password"),
 		},
 		Zalo: ZaloConfig{
-			Enabled:    parseBool(getEnv("ZALO_RESET_ENABLE", "false")),
-			UseSandbox: parseBool(getEnv("ZALO_USE_SANDBOX", "false")),
-			AppID:      getEnv("ZALO_APP_ID", ""),
-			SecretKey:  getEnv("ZALO_SECRET_KEY", ""),
-			TemplateID: getEnv("ZALO_RESET_TEMPLATE_ID", "619684"),
-			CodeTTL:    parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
+			Enabled:                parseBool(getEnv("ZALO_RESET_ENABLE", "false")),
+			UseSandbox:             parseBool(getEnv("ZALO_USE_SANDBOX", "false")),
+			AppID:                  getEnv("ZALO_APP_ID", ""),
+			SecretKey:              getEnv("ZALO_SECRET_KEY", ""),
+			TemplateID:             getEnv("ZALO_RESET_TEMPLATE_ID", "619684"),
+			CodeTTL:                parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
+			ChatbotTokenWebhookURL: getEnv("CHATBOT_OA_TOKEN_WEBHOOK_URL", ""),
+			ChatbotTokenWebhookKey: getEnv("CHATBOT_OA_TOKEN_WEBHOOK_KEY", ""),
 		},
 		SelfCheckin: SelfCheckinConfig{
 			TemplateID:            getEnv("ZALO_SELFCHECKIN_TEMPLATE_ID", ""),
