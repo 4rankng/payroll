@@ -975,8 +975,9 @@ func (s *ProjectEmployeeService) ApplyPendingScheduleChanges(ctx context.Context
 // that has already arrived, so the service activates immediately and records
 // the start date as the 1st. An already-pending enable is rescheduled instead
 // of being rejected, so an admin can move it to the other month. Enabling
-// supersedes a queued disable: the pending disable is cancelled and the
-// enable proceeds. Disabling stays instant and zeroes out quota for the
+// supersedes a queued disable: the pending disable is cancelled — on an
+// already-running row the service just stays on from its original start.
+// Disabling stays instant and zeroes out quota for the
 // current month onward; disabling a pending (not yet active) enable just
 // cancels the pending request without touching quota, and disabling while a
 // disable is already queued is a no-op.
