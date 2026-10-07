@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -175,5 +176,114 @@ func TestZaloResetStore_DummyAndRealProduceSameShapeID(t *testing.T) {
 	// Both are base64url (~43 chars from 32 bytes).
 	if len(realSID) < 40 {
 		t.Errorf("real id too short: %q", realSID)
+	}
+}
+
+// newSharedZaloStores spins up ONE miniredis and returns two stores over it —
+// the password-reset namespace ("zreset") and the self check-in namespace
+// ("zsc") — mirroring production, where both flows share a single Redis.
+func newSharedZaloStores(t *testing.T) (resetStore, selfCheckinStore *ZaloResetStore) {
+	t.Helper()
+	mr, err := miniredis.Run()
+	if err != nil {
+		t.Fatalf("miniredis: %v", err)
+	}
+	t.Cleanup(mr.Close)
+	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	t.Cleanup(func() { _ = client.Close() })
+	return NewZaloResetStoreWithPrefix(client, 10*time.Minute, "zreset"),
+		NewZaloResetStoreWithPrefix(client, 10*time.Minute, "zsc")
+}
+
+// TestZaloResetStore_CrossFlowTokensAreIsolated pins the Redis namespace
+// boundary between the password-reset and self check-in flows: a session id or
+// verified token minted by one flow must be unconsumable by the other. This is
+// what makes a self-checkin action token replayable ONLY at the self-checkin
+// update endpoint, never at /password-reset/reset (and vice versa).
+func TestZaloResetStore_CrossFlowTokensAreIsolated(t *testing.T) {
+	resetStore, scStore := newSharedZaloStores(t)
+	ctx := context.Background()
+
+	// OTP sessions: one created per flow, each flow can only consume its own.
+	resetSID, err := resetStore.Create(ctx, 42, "hashA")
+	if err != nil {
+		t.Fatalf("reset store create: %v", err)
+	}
+	scSID, err := scStore.Create(ctx, 42, "hashA")
+	if err != nil {
+		t.Fatalf("self check-in store create: %v", err)
+	}
+	if _, err := resetStore.Consume(ctx, scSID, "hashA"); err != ErrZaloResetSessionNotFound {
+		t.Errorf("reset store consumed a self check-in session: err = %v, want ErrZaloResetSessionNotFound", err)
+	}
+	if _, err := scStore.Consume(ctx, resetSID, "hashA"); err != ErrZaloResetSessionNotFound {
+		t.Errorf("self check-in store consumed a reset session: err = %v, want ErrZaloResetSessionNotFound", err)
+	}
+	if uid, err := scStore.Consume(ctx, scSID, "hashA"); err != nil || uid != 42 {
+		t.Errorf("own-session consume: uid=%d err=%v", uid, err)
+	}
+
+	// Verified tokens: the self-checkin action token must be dead at the reset
+	// endpoint's store, and the reset token dead at the self-checkin store.
+	scToken, err := scStore.CreateVerified(ctx, 42)
+	if err != nil {
+		t.Fatalf("self check-in CreateVerified: %v", err)
+	}
+	resetToken, err := resetStore.CreateVerified(ctx, 42)
+	if err != nil {
+		t.Fatalf("reset CreateVerified: %v", err)
+	}
+	if _, err := resetStore.ConsumeVerified(ctx, scToken); err != ErrZaloResetVerifiedNotFound {
+		t.Errorf("reset store consumed a self check-in action token: err = %v, want ErrZaloResetVerifiedNotFound", err)
+	}
+	if _, err := scStore.ConsumeVerified(ctx, resetToken); err != ErrZaloResetVerifiedNotFound {
+		t.Errorf("self check-in store consumed a reset token: err = %v, want ErrZaloResetVerifiedNotFound", err)
+	}
+	if uid, err := scStore.ConsumeVerified(ctx, scToken); err != nil || uid != 42 {
+		t.Errorf("own-token consume: uid=%d err=%v", uid, err)
+	}
+}
+
+// TestZaloResetStore_PrefixedKeysLandUnderTheirNamespace checks the physical
+// key layout so the isolation above cannot regress by a key-formatting change.
+func TestZaloResetStore_PrefixedKeysLandUnderTheirNamespace(t *testing.T) {
+	mr, err := miniredis.Run()
+	if err != nil {
+		t.Fatalf("miniredis: %v", err)
+	}
+	t.Cleanup(mr.Close)
+	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	t.Cleanup(func() { _ = client.Close() })
+	scStore := NewZaloResetStoreWithPrefix(client, 10*time.Minute, "zsc")
+	ctx := context.Background()
+
+	sid, err := scStore.Create(ctx, 42, "hashA")
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if _, err := scStore.CreateVerified(ctx, 42); err != nil {
+		t.Fatalf("create verified: %v", err)
+	}
+
+	keys := mr.Keys()
+	var sessionKeys, verifiedKeys []string
+	for _, k := range keys {
+		switch {
+		case strings.HasPrefix(k, "zsc-ok:"):
+			verifiedKeys = append(verifiedKeys, k)
+		case strings.HasPrefix(k, "zsc:"):
+			sessionKeys = append(sessionKeys, k)
+		default:
+			t.Errorf("key %q landed outside the zsc namespace", k)
+		}
+	}
+	if len(sessionKeys) != 1 {
+		t.Errorf("session keys = %v, want exactly 1 under zsc:", sessionKeys)
+	}
+	if len(verifiedKeys) != 1 {
+		t.Errorf("verified keys = %v, want exactly 1 under zsc-ok:", verifiedKeys)
+	}
+	if sid == "" {
+		t.Fatal("empty session id")
 	}
 }
