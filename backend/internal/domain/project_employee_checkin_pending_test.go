@@ -79,8 +79,9 @@ func TestApplyPendingCheckInBeforeAndOnEffectiveDate(t *testing.T) {
 	if err := past.RequestCheckInEnable(startOfVNDay(2020, 1, 1)); err != nil {
 		t.Fatalf("past request: %v", err)
 	}
-	if !past.ApplyPendingCheckIn() {
-		t.Error("past-dated pending should apply")
+	applied, kind := past.ApplyPendingCheckInChange()
+	if !applied || kind != "enable" {
+		t.Errorf("past-dated pending should apply as enable, got applied=%v kind=%q", applied, kind)
 	}
 	if !past.CheckInEnabled || past.HasPendingCheckInEnable() {
 		t.Error("apply must set CheckInEnabled and clear pending fields")
@@ -92,7 +93,7 @@ func TestApplyPendingCheckInBeforeAndOnEffectiveDate(t *testing.T) {
 	if err := future.RequestCheckInEnable(startOfVNDay(2100, 1, 1)); err != nil {
 		t.Fatalf("future request: %v", err)
 	}
-	if future.ApplyPendingCheckIn() {
+	if applied, _ := future.ApplyPendingCheckInChange(); applied {
 		t.Error("future-dated pending must not apply")
 	}
 	if future.CheckInEnabled {
@@ -102,21 +103,21 @@ func TestApplyPendingCheckInBeforeAndOnEffectiveDate(t *testing.T) {
 
 func TestApplyPendingCheckInNoopWithoutPending(t *testing.T) {
 	pe := activeAssignment()
-	if pe.ApplyPendingCheckIn() {
+	if applied, _ := pe.ApplyPendingCheckInChange(); applied {
 		t.Error("no pending → no change")
 	}
 }
 
-func TestCancelPendingCheckInEnable(t *testing.T) {
+func TestCancelPendingCheckInChange(t *testing.T) {
 	pe := activeAssignment()
-	if err := pe.CancelPendingCheckInEnable(); err == nil {
+	if err := pe.CancelPendingCheckInChange(); err == nil {
 		t.Error("cancel without pending should error")
 	}
 
 	if err := pe.RequestCheckInEnable(startOfVNDay(2026, 9, 1)); err != nil {
 		t.Fatalf("request: %v", err)
 	}
-	if err := pe.CancelPendingCheckInEnable(); err != nil {
+	if err := pe.CancelPendingCheckInChange(); err != nil {
 		t.Fatalf("cancel: %v", err)
 	}
 	if pe.HasPendingCheckInEnable() || pe.CheckInEnabled {
@@ -224,8 +225,8 @@ func TestReschedulePendingCheckInEnableMovesPendingToChosenMonth(t *testing.T) {
 	}
 
 	// A rescheduled month that has already begun applies right away.
-	if !pe.ApplyPendingCheckIn() {
-		t.Fatal("a past effective date must apply")
+	if applied, kind := pe.ApplyPendingCheckInChange(); !applied || kind != "enable" {
+		t.Fatalf("a past effective date must apply as enable, got applied=%v kind=%q", applied, kind)
 	}
 	if !pe.CheckInEnabled || pe.HasPendingCheckInEnable() {
 		t.Errorf("expected immediate activation, got enabled=%v pending=%v", pe.CheckInEnabled, pe.HasPendingCheckInEnable())

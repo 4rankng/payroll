@@ -404,19 +404,19 @@ func (mr *MockProjectEmployeeRepositoryMockRecorder) GetEmployeesByPaymentSchedu
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeesByPaymentSchedule", reflect.TypeOf((*MockProjectEmployeeRepository)(nil).GetEmployeesByPaymentSchedule), ctx, schedule)
 }
 
-// GetEmployeesWithPendingCheckInEnable mocks base method.
-func (m *MockProjectEmployeeRepository) GetEmployeesWithPendingCheckInEnable(ctx context.Context, effectiveDate time.Time) ([]*domain.ProjectEmployee, error) {
+// GetEmployeesWithPendingCheckInChange mocks base method.
+func (m *MockProjectEmployeeRepository) GetEmployeesWithPendingCheckInChange(ctx context.Context, effectiveDate time.Time) ([]*domain.ProjectEmployee, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEmployeesWithPendingCheckInEnable", ctx, effectiveDate)
+	ret := m.ctrl.Call(m, "GetEmployeesWithPendingCheckInChange", ctx, effectiveDate)
 	ret0, _ := ret[0].([]*domain.ProjectEmployee)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetEmployeesWithPendingCheckInEnable indicates an expected call of GetEmployeesWithPendingCheckInEnable.
-func (mr *MockProjectEmployeeRepositoryMockRecorder) GetEmployeesWithPendingCheckInEnable(ctx, effectiveDate interface{}) *gomock.Call {
+// GetEmployeesWithPendingCheckInChange indicates an expected call of GetEmployeesWithPendingCheckInChange.
+func (mr *MockProjectEmployeeRepositoryMockRecorder) GetEmployeesWithPendingCheckInChange(ctx, effectiveDate interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeesWithPendingCheckInEnable", reflect.TypeOf((*MockProjectEmployeeRepository)(nil).GetEmployeesWithPendingCheckInEnable), ctx, effectiveDate)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeesWithPendingCheckInChange", reflect.TypeOf((*MockProjectEmployeeRepository)(nil).GetEmployeesWithPendingCheckInChange), ctx, effectiveDate)
 }
 
 // GetEmployeesWithPendingScheduleChanges mocks base method.

@@ -797,7 +797,7 @@ func (s *ProjectEmployeeService) CancelPendingCheckInEnable(ctx context.Context,
 			return err
 		}
 
-		if err := assignment.CancelPendingCheckInEnable(); err != nil {
+		if err := assignment.CancelPendingCheckInChange(); err != nil {
 			return err
 		}
 
@@ -825,26 +825,38 @@ func (s *ProjectEmployeeService) CancelPendingCheckInEnable(ctx context.Context,
 	})
 }
 
-// ApplyPendingCheckInEnables activates all pending check-in enables whose
-// effective date (day 1 of the month) has arrived. Self-healing: the query is
-// date-driven (`effective <= today`), so a missed run applies on the next one.
-func (s *ProjectEmployeeService) ApplyPendingCheckInEnables(ctx context.Context) error {
+// ApplyPendingCheckInChanges applies all pending check-in changes whose
+// effective date (day 1 of the month) has arrived: a pending enable activates
+// the service, a pending disable turns it off and zeroes advance quota from
+// the effective month onward (the month the service actually turned off,
+// which on a self-healing late run may differ from the current month).
+// Self-healing: the query is date-driven (`effective <= today`), so a missed
+// run applies on the next one.
+func (s *ProjectEmployeeService) ApplyPendingCheckInChanges(ctx context.Context) error {
 	return s.transactionManager.ExecuteInTransaction(ctx, func(tx *gorm.DB) error {
 		now := clock.Now()
 		startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
-		assignments, err := s.projectEmployeeRepo.GetEmployeesWithPendingCheckInEnable(ctx, startOfToday)
+		assignments, err := s.projectEmployeeRepo.GetEmployeesWithPendingCheckInChange(ctx, startOfToday)
 		if err != nil {
 			return err
 		}
 
 		for _, assignment := range assignments {
-			if !assignment.ApplyPendingCheckIn() {
+			effectiveDate := assignment.CheckInEffectiveFrom
+			applied, kind := assignment.ApplyPendingCheckInChange()
+			if !applied {
 				continue
 			}
 
+			if kind == "disable" && effectiveDate != nil {
+				if err := s.advancePaymentRepo.ZeroOutQuota(ctx, assignment.ProjectID, assignment.EmployeeID, effectiveDate.Format("2006-01")); err != nil {
+					return err
+				}
+			}
+
 			if err := s.projectEmployeeRepo.Update(ctx, assignment); err != nil {
-				observability.GetLogger().Warn("failed to apply pending check-in enable", "assignmentID", assignment.ID, "error", err)
+				observability.GetLogger().Warn("failed to apply pending check-in change", "assignmentID", assignment.ID, "error", err)
 				continue
 			}
 
@@ -860,7 +872,7 @@ func (s *ProjectEmployeeService) ApplyPendingCheckInEnables(ctx context.Context)
 
 				event := domain.NewProjectEmployeeUpdatedEvent(ctx, assignment)
 				if err := s.eventBus.Publish(ctx, event); err != nil {
-					observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (apply pending check-in)", "error", err)
+					observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (apply pending check-in change)", "error", err)
 				}
 			}
 		}
@@ -1002,6 +1014,9 @@ func (s *ProjectEmployeeService) ToggleCheckInEnabled(ctx context.Context, proje
 				// no quota to zero out.
 				assignment.PendingCheckInEnabled = nil
 				assignment.CheckInEffectiveFrom = nil
+			} else if assignment.HasPendingCheckInDisable() {
+				// A disable is already queued — nothing to change.
+				return nil
 			} else if assignment.CheckInEnabled {
 				assignment.CheckInEnabled = false
 				// Zero out quota for current month onward (as per spec)
@@ -1062,19 +1077,143 @@ func (s *ProjectEmployeeService) ToggleAdvanceRequestEnabled(ctx context.Context
 	})
 }
 
+// SelfCheckinChatbotResult reports what a chatbot-requested self check-in
+// change did, so the bot can quote the effective month in its reply.
+type SelfCheckinChatbotResult struct {
+	// Kind is "enable" or "disable".
+	Kind string
+	// Immediate is true when an enable activated right away (a day 1-8
+	// request); false means it is queued for EffectiveFrom.
+	Immediate bool
+	// EffectiveFrom is day 1 of the month the change takes (or took) effect.
+	// Zero when a queued enable was merely cancelled.
+	EffectiveFrom time.Time
+	// CancelledPendingEnable is true when a queued enable was cancelled.
+	CancelledPendingEnable bool
+}
+
+// SetSelfCheckinViaChatbot applies a self check-in enable/disable requested by
+// the employee through the TingTing chatbot. Enables follow the day-9 rule
+// (domain.ResolveCheckInEnableStartMonth): days 1-8 activate immediately with
+// the start recorded as the 1st — the admin "this month" semantics; day 9+
+// queue for the 1st of the next month. Disables are always deferred to the
+// 1st of the next month, never immediate — quota zeroing happens at sweep
+// time using the effective month. The assignment read takes a row lock
+// (withAssignmentUpdateLock) so a concurrent admin toggle cannot interleave.
+func (s *ProjectEmployeeService) SetSelfCheckinViaChatbot(ctx context.Context, projectID, employeeID uint, enable bool, updatedBy uint) (*SelfCheckinChatbotResult, error) {
+	// Same payrate precondition as the admin toggle: without an active rate,
+	// attendance records cannot be priced and timesheets would fail.
+	if enable {
+		rates, err := s.payrateRepo.GetActiveByProject(ctx, projectID, clock.Now())
+		if err != nil {
+			return nil, fmt.Errorf("failed to check payrate configuration: %w", err)
+		}
+		if len(rates) == 0 {
+			return nil, domain.NewValidationError("Dự án chưa có bảng lương. Vui lòng cấu hình bảng lương trước khi bật điểm danh.")
+		}
+	}
+
+	var result *SelfCheckinChatbotResult
+	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
+		assignment, err := s.projectEmployeeRepo.GetActiveAssignmentByProjectAndEmployee(txCtx, projectID, employeeID)
+		if err != nil {
+			return err
+		}
+
+		result, err = s.applySelfCheckinChatbotChange(txCtx, assignment, enable)
+		if err != nil || result == nil {
+			return err
+		}
+
+		if err := s.projectEmployeeRepo.Update(txCtx, assignment); err != nil {
+			return err
+		}
+
+		// Publish domain event
+		if s.eventBus != nil {
+			event := domain.NewProjectEmployeeUpdatedEvent(txCtx, assignment)
+			if err := s.eventBus.Publish(txCtx, event); err != nil {
+				observability.GetLogger().Warn("failed to publish ProjectEmployeeUpdatedEvent (chatbot self check-in)", "error", err)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// applySelfCheckinChatbotChange resolves the admin/bot interaction matrix and
+// mutates the assignment in memory; the caller persists and publishes.
+func (s *ProjectEmployeeService) applySelfCheckinChatbotChange(ctx context.Context, assignment *domain.ProjectEmployee, enable bool) (*SelfCheckinChatbotResult, error) {
+	now := clock.Now()
+
+	if enable {
+		if assignment.CheckInEnabled {
+			return nil, domain.NewValidationError(constants.MsgSelfCheckinAlreadyEnabledVN)
+		}
+		if assignment.HasPendingCheckInEnable() {
+			return nil, domain.NewValidationError(constants.MsgSelfCheckinPendingExistsVN)
+		}
+		changed, err := s.applyCheckInEnable(ctx, assignment, domain.ResolveCheckInEnableStartMonth(now).EffectiveFrom(now))
+		if err != nil {
+			return nil, err
+		}
+		if !changed {
+			return nil, domain.NewValidationError(constants.MsgSelfCheckinAlreadyEnabledVN)
+		}
+		if assignment.CheckInEnabled {
+			return &SelfCheckinChatbotResult{Kind: "enable", Immediate: true, EffectiveFrom: *assignment.CheckInStartDate}, nil
+		}
+		return &SelfCheckinChatbotResult{Kind: "enable", EffectiveFrom: *assignment.CheckInEffectiveFrom}, nil
+	}
+
+	if assignment.HasPendingCheckInEnable() {
+		// A queued enable that never activated: cancelling it leaves the
+		// service off, which is what the employee asked for.
+		if err := assignment.CancelPendingCheckInChange(); err != nil {
+			return nil, err
+		}
+		return &SelfCheckinChatbotResult{Kind: "disable", CancelledPendingEnable: true}, nil
+	}
+	if !assignment.CheckInEnabled {
+		return nil, domain.NewValidationError(constants.MsgSelfCheckinAlreadyDisabledVN)
+	}
+	if assignment.HasPendingCheckInDisable() {
+		// Already queued — repeat the verdict so the reply stays idempotent.
+		return &SelfCheckinChatbotResult{Kind: "disable", EffectiveFrom: *assignment.CheckInEffectiveFrom}, nil
+	}
+
+	nextFirst := firstDayOfNextMonth(now)
+	if err := assignment.RequestCheckInDisable(nextFirst); err != nil {
+		return nil, err
+	}
+	return &SelfCheckinChatbotResult{Kind: "disable", EffectiveFrom: nextFirst}, nil
+}
+
 // applyCheckInEnable records an enable that starts on effectiveDate (always a
 // day 1) and reports whether the row needs persisting. A pending enable is
 // rescheduled instead of rejected, which is how an admin moves a queued
-// activation from next month back to this month. When effectiveDate has
-// already arrived — the "this month" choice, or a reschedule to a month that
-// began earlier — the row activates right away rather than waiting for the
-// nightly pending sweep, and the start date is recorded as that day 1.
+// activation from next month back to this month. A queued disable is
+// superseded: the employee asking to enable cancels it and the enable path
+// proceeds. When effectiveDate has already arrived — the "this month" choice,
+// or a reschedule to a month that began earlier — the row activates right
+// away rather than waiting for the nightly pending sweep, and the start date
+// is recorded as that day 1.
 //
 // The start month must not already be funded by the admin workbook, or the
 // employee would hold two independent sources for the same period.
 func (s *ProjectEmployeeService) applyCheckInEnable(ctx context.Context, assignment *domain.ProjectEmployee, effectiveDate time.Time) (bool, error) {
 	if err := s.ensureNoUploadQuotaForPeriod(ctx, assignment.ProjectID, assignment.EmployeeID, effectiveDate); err != nil {
 		return false, err
+	}
+	if assignment.HasPendingCheckInDisable() {
+		// The queued disable is superseded by this enable.
+		if err := assignment.CancelPendingCheckInChange(); err != nil {
+			return false, err
+		}
 	}
 	if assignment.HasPendingCheckInEnable() {
 		changed, err := assignment.ReschedulePendingCheckInEnable(effectiveDate)
@@ -1158,6 +1297,8 @@ func (s *ProjectEmployeeService) BulkToggleCheckInEnabled(ctx context.Context, p
 					// Cancel pending enable — never active, no quota to zero.
 					assignment.PendingCheckInEnabled = nil
 					assignment.CheckInEffectiveFrom = nil
+				} else if assignment.HasPendingCheckInDisable() {
+					continue // Disable already queued — nothing to change
 				} else if assignment.CheckInEnabled {
 					assignment.CheckInEnabled = false
 					disabledIDs = append(disabledIDs, empID)

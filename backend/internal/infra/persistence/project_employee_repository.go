@@ -243,8 +243,10 @@ func (r *ProjectEmployeeRepository) GetCheckInConfiguration(
 	// A pending enable has no recorded start date yet, so the day the admin
 	// picked is the start day the roster must show. Resolved here rather than
 	// with SQL COALESCE so each column keeps its own DATE type on the scan.
+	// Only pending ENABLES backfill: a pending disable's effective date is the
+	// day the service turns off, never a start day.
 	for i := range employees {
-		if employees[i].CheckInStartDate == nil {
+		if employees[i].CheckInStartDate == nil && employees[i].PendingCheckInEnable {
 			employees[i].CheckInStartDate = employees[i].CheckInEffectiveFrom
 		}
 	}
@@ -957,9 +959,10 @@ func (r *ProjectEmployeeRepository) GetEmployeesWithPendingScheduleChanges(ctx c
 	return assignments, nil
 }
 
-// GetEmployeesWithPendingCheckInEnable retrieves employees whose deferred
-// check-in enable should be activated on or before the given date.
-func (r *ProjectEmployeeRepository) GetEmployeesWithPendingCheckInEnable(ctx context.Context, effectiveDate time.Time) ([]*domain.ProjectEmployee, error) {
+// GetEmployeesWithPendingCheckInChange retrieves employees whose deferred
+// check-in change (enable or disable — both live in the same pending columns)
+// should be applied on or before the given date.
+func (r *ProjectEmployeeRepository) GetEmployeesWithPendingCheckInChange(ctx context.Context, effectiveDate time.Time) ([]*domain.ProjectEmployee, error) {
 	var assignments []*domain.ProjectEmployee
 
 	query := r.DB.WithContext(ctx).

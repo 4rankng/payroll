@@ -31,6 +31,7 @@ type Config struct {
 	Captcha       CaptchaConfig
 	PasswordReset PasswordResetConfig
 	Zalo          ZaloConfig
+	SelfCheckin   SelfCheckinConfig
 	CashForecast  CashForecastConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
@@ -102,6 +103,16 @@ type ZaloConfig struct {
 	SecretKey  string
 	TemplateID string // default "619684" (OTP-ZNS-v2)
 	CodeTTL    time.Duration
+}
+
+// SelfCheckinConfig gates the chatbot self check-in flow. SupportedProjectCodes
+// lists the project codes whose employees may enable/disable via the bot, so
+// rollout to a new project is a config change, not a code edit. TemplateID
+// selects a dedicated ZNS template; empty falls back to the reset template
+// until one is approved in the Zalo console.
+type SelfCheckinConfig struct {
+	TemplateID            string
+	SupportedProjectCodes []string
 }
 
 // GoogleConfig holds Google OIDC settings. GoogleClientID is the OAuth client
@@ -449,6 +460,10 @@ func Load() (*Config, error) {
 			TemplateID: getEnv("ZALO_RESET_TEMPLATE_ID", "619684"),
 			CodeTTL:    parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
 		},
+		SelfCheckin: SelfCheckinConfig{
+			TemplateID:            getEnv("ZALO_SELFCHECKIN_TEMPLATE_ID", ""),
+			SupportedProjectCodes: splitCSV(getEnv("SELF_CHECKIN_SUPPORTED_PROJECT_CODES", "LGD")),
+		},
 		Captcha: CaptchaConfig{
 			Enabled:    parseBool(getEnv("CAPTCHA_ENABLE", "false")),
 			Threshold:  parseInt(getEnv("CAPTCHA_THRESHOLD", "3")),
@@ -711,6 +726,19 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// splitCSV parses a comma-separated env value into trimmed, non-empty parts —
+// "LGD, ABC" → ["LGD", "ABC"]; "" → nil.
+func splitCSV(s string) []string {
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 // getEnvWithEmpty is like getEnv but distinguishes between "not set" (returns

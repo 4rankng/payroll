@@ -115,18 +115,19 @@ func registerSchedulerJobs(
 		},
 	})
 
-	// 1b. Apply pending check-in enables (deferred activation, day 1 of month)
+	// 1b. Apply pending check-in changes — deferred enables activate, deferred
+	// disables turn the service off (both live in the same pending columns)
 	s.AddJob(scheduler.Job{
-		Name:    "apply_pending_check_in_enables",
+		Name:    "apply_pending_check_in_changes",
 		Cron:    "10 1 * * *",
 		Enabled: true,
 		Handler: func() {
 			ctx := context.Background()
-			logger.Info("Starting pending check-in enable application")
-			if err := projectEmployeeService.ApplyPendingCheckInEnables(ctx); err != nil {
-				logger.Error("Failed to apply pending check-in enables", "error", err)
+			logger.Info("Starting pending check-in change application")
+			if err := projectEmployeeService.ApplyPendingCheckInChanges(ctx); err != nil {
+				logger.Error("Failed to apply pending check-in changes", "error", err)
 			} else {
-				logger.Info("Pending check-in enables applied successfully")
+				logger.Info("Pending check-in changes applied successfully")
 			}
 		},
 	})

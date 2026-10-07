@@ -77,19 +77,32 @@ type ZaloResetStore struct {
 	client      *redis.Client
 	ttl         time.Duration
 	verifiedTTL time.Duration
+	prefix      string
 }
 
 // NewZaloResetStore constructs a store. ttl defaults to DefaultZaloResetCodeTTL.
 // verifiedTTL (the lifetime of a verified reset token) defaults to
 // DefaultZaloResetVerifiedTTL.
 func NewZaloResetStore(client *redis.Client, ttl time.Duration) *ZaloResetStore {
+	return NewZaloResetStoreWithPrefix(client, ttl, "zreset")
+}
+
+// NewZaloResetStoreWithPrefix builds a store under a custom Redis key
+// namespace. Distinct flows MUST use distinct prefixes: sessions and verified
+// tokens minted by one flow must never be consumable by another (e.g. a self
+// check-in action token replayed at the password-reset endpoint).
+func NewZaloResetStoreWithPrefix(client *redis.Client, ttl time.Duration, prefix string) *ZaloResetStore {
 	if ttl <= 0 {
 		ttl = DefaultZaloResetCodeTTL
+	}
+	if prefix == "" {
+		prefix = "zreset"
 	}
 	return &ZaloResetStore{
 		client:      client,
 		ttl:         ttl,
 		verifiedTTL: DefaultZaloResetVerifiedTTL,
+		prefix:      prefix,
 	}
 }
 
@@ -105,7 +118,7 @@ func (s *ZaloResetStore) Create(ctx context.Context, userID uint, codeHashHex st
 		return "", fmt.Errorf("zalo reset: generate session id: %w", err)
 	}
 	val := strconv.FormatUint(uint64(userID), 10) + ":" + codeHashHex
-	if err := s.client.Set(ctx, zaloSessionKey(sid), val, s.ttl).Err(); err != nil {
+	if err := s.client.Set(ctx, s.sessionKey(sid), val, s.ttl).Err(); err != nil {
 		return "", fmt.Errorf("zalo reset: write session: %w", err)
 	}
 	return sid, nil
@@ -124,7 +137,7 @@ func (s *ZaloResetStore) CreateDummy(ctx context.Context) (string, error) {
 	}
 	dummyHash := randomHashHex()
 	val := "0:" + dummyHash
-	if err := s.client.Set(ctx, zaloSessionKey(sid), val, s.ttl).Err(); err != nil {
+	if err := s.client.Set(ctx, s.sessionKey(sid), val, s.ttl).Err(); err != nil {
 		return "", fmt.Errorf("zalo reset: write dummy session: %w", err)
 	}
 	return sid, nil
@@ -139,7 +152,7 @@ func (s *ZaloResetStore) CreateDummy(ctx context.Context) (string, error) {
 // hash is cryptographically random and never disclosed, so this is not a
 // practical concern. The service treats userID 0 as "not found".
 func (s *ZaloResetStore) Consume(ctx context.Context, sessionID, codeHashHex string) (uint, error) {
-	key := zaloSessionKey(sessionID)
+	key := s.sessionKey(sessionID)
 	result, err := zaloConsumeScript.Run(ctx, s.client, []string{key}, codeHashHex).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
@@ -168,12 +181,12 @@ func (s *ZaloResetStore) Consume(ctx context.Context, sessionID, codeHashHex str
 // Delete removes a session without checking the code. Used by resend to
 // replace a session with a fresh one (rotating the code).
 func (s *ZaloResetStore) Delete(ctx context.Context, sessionID string) error {
-	return s.client.Del(ctx, zaloSessionKey(sessionID)).Err()
+	return s.client.Del(ctx, s.sessionKey(sessionID)).Err()
 }
 
-func zaloSessionKey(sessionID string) string {
+func (s *ZaloResetStore) sessionKey(sessionID string) string {
 	sum := sha256.Sum256([]byte(sessionID))
-	return "zreset:" + hex.EncodeToString(sum[:])
+	return s.prefix + ":" + hex.EncodeToString(sum[:])
 }
 
 // CreateVerified mints a single-use token bound to userID after the OTP was
@@ -185,7 +198,7 @@ func (s *ZaloResetStore) CreateVerified(ctx context.Context, userID uint) (strin
 		return "", fmt.Errorf("zalo reset: generate verified token: %w", err)
 	}
 	val := strconv.FormatUint(uint64(userID), 10)
-	if err := s.client.Set(ctx, zaloVerifiedKey(token), val, s.verifiedTTL).Err(); err != nil {
+	if err := s.client.Set(ctx, s.verifiedKey(token), val, s.verifiedTTL).Err(); err != nil {
 		return "", fmt.Errorf("zalo reset: write verified token: %w", err)
 	}
 	return token, nil
@@ -196,7 +209,7 @@ func (s *ZaloResetStore) CreateVerified(ctx context.Context, userID uint) (strin
 // already-consumed token returns ErrZaloResetVerifiedNotFound. A Redis outage
 // returns ErrZaloResetStoreUnavailable.
 func (s *ZaloResetStore) ConsumeVerified(ctx context.Context, token string) (uint, error) {
-	val, err := s.client.GetDel(ctx, zaloVerifiedKey(token)).Result()
+	val, err := s.client.GetDel(ctx, s.verifiedKey(token)).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
 			return 0, ErrZaloResetVerifiedNotFound
@@ -210,9 +223,9 @@ func (s *ZaloResetStore) ConsumeVerified(ctx context.Context, token string) (uin
 	return uint(uid), nil
 }
 
-func zaloVerifiedKey(token string) string {
+func (s *ZaloResetStore) verifiedKey(token string) string {
 	sum := sha256.Sum256([]byte(token))
-	return "zreset-ok:" + hex.EncodeToString(sum[:])
+	return s.prefix + "-ok:" + hex.EncodeToString(sum[:])
 }
 
 // newZaloOpaqueID returns a 256-bit base64url id (≈43 chars, no padding).

@@ -39,7 +39,10 @@ type EmployeeScheduleInfo struct {
 	PaymentSchedule string
 	CheckInEnabled  bool
 	// Deferred check-in activation: enable is pending until day 1 of next month.
-	PendingCheckInEnabled       bool
+	PendingCheckInEnabled bool
+	// PendingCheckInDisable is true when a queued change will turn the
+	// service off on CheckInEffectiveFrom (the app renders "sẽ tắt từ 01/xx").
+	PendingCheckInDisable       bool
 	CheckInEffectiveFrom        *time.Time
 	CheckInTargetStatus         CheckInTargetStatus
 	CheckInTarget               *CheckInTargetInfo
@@ -146,6 +149,10 @@ func (s *EmployeeProfileService) GetEmployeeScheduleInfo(ctx context.Context, em
 			}
 			if !info.CheckInEnabled && assignment.HasPendingCheckInEnable() {
 				info.PendingCheckInEnabled = true
+				info.CheckInEffectiveFrom = assignment.CheckInEffectiveFrom
+			}
+			if assignment.CheckInEnabled && assignment.HasPendingCheckInDisable() {
+				info.PendingCheckInDisable = true
 				info.CheckInEffectiveFrom = assignment.CheckInEffectiveFrom
 			}
 			if assignment.PaymentSchedule == string(domain.PaymentScheduleFlexible) {

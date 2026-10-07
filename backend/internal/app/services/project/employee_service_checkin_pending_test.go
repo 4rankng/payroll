@@ -30,8 +30,8 @@ func (f *checkinPendingAssignmentRepo) GetActiveAssignmentByProjectAndEmployee(_
 	return f.assignment, nil
 }
 
-func (f *checkinPendingAssignmentRepo) GetEmployeesWithPendingCheckInEnable(_ context.Context, effectiveDate time.Time) ([]*domain.ProjectEmployee, error) {
-	if f.assignment == nil || !f.assignment.HasPendingCheckInEnable() {
+func (f *checkinPendingAssignmentRepo) GetEmployeesWithPendingCheckInChange(_ context.Context, effectiveDate time.Time) ([]*domain.ProjectEmployee, error) {
+	if f.assignment == nil || !f.assignment.HasPendingCheckInChange() {
 		return nil, nil
 	}
 	if f.assignment.CheckInEffectiveFrom != nil && f.assignment.CheckInEffectiveFrom.After(effectiveDate) {
@@ -460,7 +460,7 @@ func TestCancelPendingCheckInEnableService(t *testing.T) {
 	}
 }
 
-func TestApplyPendingCheckInEnablesAppliesDueRows(t *testing.T) {
+func TestApplyPendingCheckInChangesAppliesDueRows(t *testing.T) {
 	// Effective far in the past → due today regardless of the real clock.
 	repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
 	svc := newCheckinPendingService(repo, &checkinPendingAdvanceRepo{})
@@ -469,7 +469,7 @@ func TestApplyPendingCheckInEnablesAppliesDueRows(t *testing.T) {
 		t.Fatalf("request: %v", err)
 	}
 
-	if err := svc.ApplyPendingCheckInEnables(context.Background()); err != nil {
+	if err := svc.ApplyPendingCheckInChanges(context.Background()); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
 	if !repo.assignment.CheckInEnabled {

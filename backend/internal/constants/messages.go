@@ -409,6 +409,16 @@ const (
 	MsgIntegrationEmployeeFoundVN     = "Tìm thấy nhân viên."
 	MsgIntegrationEmployeeNotFoundVN  = "Không tìm thấy nhân viên với số điện thoại này."
 
+	// Self check-in via chatbot (TingTing OA integration endpoints).
+	MsgSelfCheckinProjectNotSupportedVN = "Dự án này chưa hỗ trợ bật/tắt tự chấm công qua chatbot."
+	MsgSelfCheckinAlreadyEnabledVN      = "Tự chấm công của bạn đang bật rồi."
+	MsgSelfCheckinAlreadyDisabledVN     = "Tự chấm công của bạn đang tắt."
+	MsgSelfCheckinPendingExistsVN       = "Đã có yêu cầu bật tự chấm công đang chờ kích hoạt."
+	MsgSelfCheckinUpdateSuccessVN       = "Cập nhật tự chấm công thành công."
+	MsgSelfCheckinOTPSentVN             = "Mã xác thực đã được gửi qua Zalo."
+	MsgSelfCheckinOTPVerifiedVN         = "Mã xác thực hợp lệ."
+	MsgSelfCheckinTokenInvalidVN        = "Phiên xác thực không hợp lệ hoặc đã hết hạn."
+
 	// Bank Messages - Vietnamese
 	MsgInvalidBankIDVN             = "ID ngân hàng không hợp lệ"
 	MsgBankNotFoundVN              = "Không tìm thấy ngân hàng"

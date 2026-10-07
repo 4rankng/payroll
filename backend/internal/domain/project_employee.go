@@ -144,7 +144,7 @@ type ProjectEmployeeRepository interface {
 	ApplyScheduleChanges(ctx context.Context, employeeIDs []uint) error
 
 	// Deferred check-in activation methods
-	GetEmployeesWithPendingCheckInEnable(ctx context.Context, effectiveDate time.Time) ([]*ProjectEmployee, error)
+	GetEmployeesWithPendingCheckInChange(ctx context.Context, effectiveDate time.Time) ([]*ProjectEmployee, error)
 	GetCheckInConfiguration(ctx context.Context, query CheckInConfigurationQuery) (*CheckInConfigurationResult, error)
 
 	// HasAccessViaProject checks if user can access employee through project assignments
@@ -591,9 +591,40 @@ func (m CheckInStartMonth) EffectiveFrom(now time.Time) time.Time {
 	return time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, now.Location())
 }
 
+// checkInEnableCutoffDay is the last day of the month on which a chatbot
+// enable may still start in the current month; day 9 or later waits for the
+// next month. Owner ruling 2026-10-07: days 1-8 enable same month, day 9
+// counts as "after".
+const checkInEnableCutoffDay = 9
+
+// ResolveCheckInEnableStartMonth fixes the start month for a chatbot-requested
+// enable: early in the month (days 1-8) the current month still works; from
+// day 9 the enable waits for the next month. The admin keeps an explicit
+// choice via ParseCheckInStartMonth — this only pins the bot's rule.
+func ResolveCheckInEnableStartMonth(now time.Time) CheckInStartMonth {
+	if now.Day() < checkInEnableCutoffDay {
+		return CheckInStartMonthThisMonth
+	}
+	return CheckInStartMonthNextMonth
+}
+
 // HasPendingCheckInEnable returns true if a check-in enable is awaiting activation
 func (pe *ProjectEmployee) HasPendingCheckInEnable() bool {
 	return pe.PendingCheckInEnabled != nil && *pe.PendingCheckInEnabled && pe.CheckInEffectiveFrom != nil
+}
+
+// HasPendingCheckInChange returns true if any check-in change (enable or
+// disable) is awaiting its effective date. The pending columns carry the
+// direction in the boolean's value: true = pending enable, false = pending
+// disable.
+func (pe *ProjectEmployee) HasPendingCheckInChange() bool {
+	return pe.PendingCheckInEnabled != nil && pe.CheckInEffectiveFrom != nil
+}
+
+// HasPendingCheckInDisable returns true if a check-in disable is awaiting its
+// effective date.
+func (pe *ProjectEmployee) HasPendingCheckInDisable() bool {
+	return pe.HasPendingCheckInChange() && !*pe.PendingCheckInEnabled
 }
 
 // RequestCheckInEnable records a deferred check-in enable: activation happens
@@ -607,11 +638,34 @@ func (pe *ProjectEmployee) RequestCheckInEnable(effectiveDate time.Time) error {
 		return NewValidationError("Nhân viên đã được bật chấm công")
 	}
 
-	if pe.HasPendingCheckInEnable() {
-		return NewValidationError("Đã có yêu cầu bật chấm công đang chờ kích hoạt")
+	if pe.HasPendingCheckInChange() {
+		return NewValidationError("Đã có thay đổi chấm công đang chờ xử lý")
 	}
 
 	enabled := true
+	pe.PendingCheckInEnabled = &enabled
+	pe.CheckInEffectiveFrom = &effectiveDate
+
+	return nil
+}
+
+// RequestCheckInDisable records a deferred check-in disable: the service turns
+// off on the effective date (always day 1 of a month). Disabling is never
+// immediate — the employee keeps checking in until the queued date arrives.
+func (pe *ProjectEmployee) RequestCheckInDisable(effectiveDate time.Time) error {
+	if !pe.IsCurrentlyAssigned() {
+		return NewValidationError("Chỉ có thể tắt chấm công cho nhân viên đang làm việc")
+	}
+
+	if !pe.CheckInEnabled {
+		return NewValidationError("Nhân viên chưa được bật chấm công")
+	}
+
+	if pe.HasPendingCheckInChange() {
+		return NewValidationError("Đã có thay đổi chấm công đang chờ xử lý")
+	}
+
+	enabled := false
 	pe.PendingCheckInEnabled = &enabled
 	pe.CheckInEffectiveFrom = &effectiveDate
 
@@ -644,28 +698,39 @@ func (pe *ProjectEmployee) ActivateCheckIn(startDate time.Time) {
 	pe.CheckInEffectiveFrom = nil
 }
 
-// ApplyPendingCheckIn activates the pending check-in enable if the effective
-// date has arrived. Returns true when the row changed.
-func (pe *ProjectEmployee) ApplyPendingCheckIn() bool {
-	if !pe.HasPendingCheckInEnable() {
-		return false
+// ApplyPendingCheckInChange activates the pending check-in change (enable or
+// disable) if the effective date has arrived. Returns whether the row changed
+// and the direction applied ("enable" or "disable"; "" when nothing applied).
+// A disable keeps CheckInStartDate so the roster keeps reporting when the
+// service was last in use.
+func (pe *ProjectEmployee) ApplyPendingCheckInChange() (bool, string) {
+	if !pe.HasPendingCheckInChange() {
+		return false, ""
 	}
 
 	now := clock.Now()
 	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
-	if !pe.CheckInEffectiveFrom.After(startOfToday) {
-		pe.ActivateCheckIn(*pe.CheckInEffectiveFrom)
-		return true
+	if pe.CheckInEffectiveFrom.After(startOfToday) {
+		return false, ""
 	}
 
-	return false
+	effectiveDate := *pe.CheckInEffectiveFrom
+	if *pe.PendingCheckInEnabled {
+		pe.ActivateCheckIn(effectiveDate)
+		return true, "enable"
+	}
+
+	pe.CheckInEnabled = false
+	pe.PendingCheckInEnabled = nil
+	pe.CheckInEffectiveFrom = nil
+	return true, "disable"
 }
 
-// CancelPendingCheckInEnable cancels a pending check-in enable
-func (pe *ProjectEmployee) CancelPendingCheckInEnable() error {
-	if !pe.HasPendingCheckInEnable() {
-		return NewValidationError("Không có yêu cầu bật chấm công nào đang chờ kích hoạt")
+// CancelPendingCheckInChange cancels a pending check-in change (either direction)
+func (pe *ProjectEmployee) CancelPendingCheckInChange() error {
+	if !pe.HasPendingCheckInChange() {
+		return NewValidationError("Không có thay đổi chấm công nào đang chờ xử lý")
 	}
 
 	pe.PendingCheckInEnabled = nil
