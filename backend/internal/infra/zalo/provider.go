@@ -42,12 +42,13 @@ var ErrCredentialsChanged = errors.New("zalo: credentials changed while waiting 
 // refreshes so two concurrent -124 retries cannot double-spend the
 // single-use refresh_token.
 type Provider struct {
-	creds       CredentialSource
-	coordinator RefreshCoordinator
-	cfg         Config
-	http        *http.Client
-	log         *slog.Logger
-	mu          sync.Mutex
+	creds        CredentialSource
+	coordinator  RefreshCoordinator
+	rotationHook func(ctx context.Context, accessToken string)
+	cfg          Config
+	http         *http.Client
+	log          *slog.Logger
+	mu           sync.Mutex
 }
 
 // SetRefreshCoordinator adds cross-process refresh ownership. Bootstrap wires
@@ -55,6 +56,19 @@ type Provider struct {
 // and still retain the Provider's in-process mutex.
 func (p *Provider) SetRefreshCoordinator(coordinator RefreshCoordinator) {
 	p.coordinator = coordinator
+}
+
+// SetRotationHook registers fn to run after every successful token rotation —
+// a refresh_exchange, a validated admin paste, or a metadata save that persists
+// a new access token. Payroll wires a pusher that hands the fresh access token
+// to the TingTing chatbot, which no longer rotates on its own. fn must bound
+// its own runtime (the pusher uses a 5s HTTP timeout) and must never surface a
+// failure into the send/renew path: fireRotationHook swallows panics, and fn's
+// signature carries no error on purpose.
+func (p *Provider) SetRotationHook(fn func(ctx context.Context, accessToken string)) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.rotationHook = fn
 }
 
 // NewProvider constructs a Provider. cfg zero-values are filled from
@@ -226,7 +240,7 @@ func (p *Provider) doSend(ctx context.Context, phone, templateID string, data ma
 // (getAccessToken) passes force=false so it short-circuits while the token is
 // genuinely still within the refresh buffer.
 func (p *Provider) refreshLocked(ctx context.Context, force bool, rejectedAccessToken string) (string, error) {
-	return p.withRefreshAuthority(ctx, func() (string, error) {
+	return p.withRefreshAuthority(ctx, func(notify func(string)) (string, error) {
 		creds, err := p.creds.Get(ctx)
 		if err != nil {
 			return "", fmt.Errorf("zalo: read credentials for refresh: %w", err)
@@ -241,35 +255,74 @@ func (p *Provider) refreshLocked(ctx context.Context, force bool, rejectedAccess
 		if !force && creds.ExpiresAt != nil && time.Until(*creds.ExpiresAt) >= p.cfg.RefreshBuffer {
 			return creds.AccessToken, nil
 		}
-		return p.refresh(ctx, creds)
+		return p.refresh(ctx, notify, creds)
 	})
 }
 
-func (p *Provider) withRefreshAuthority(ctx context.Context, fn func() (string, error)) (string, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if p.coordinator == nil {
-		return fn()
+// withRefreshAuthority runs fn under the in-process mutex and, when wired, the
+// cross-process refresh lease. fn reports a completed rotation through notify
+// (the newly persisted access token); short-circuit returns that reused an
+// already-advanced chain must NOT call notify. Recorded rotations fire the
+// rotation hook only AFTER the lease and mutex are released, so a slow webhook
+// push never extends the refresh authority or blocks a concurrent -124 retry.
+func (p *Provider) withRefreshAuthority(ctx context.Context, fn func(notify func(string)) (string, error)) (string, error) {
+	var rotatedTo string
+	notify := func(accessToken string) {
+		if accessToken != "" {
+			rotatedTo = accessToken
+		}
 	}
+	token, err := func() (result string, fnErr error) {
+		p.mu.Lock()
+		defer p.mu.Unlock()
 
-	release, err := p.coordinator.Acquire(ctx)
-	if err != nil {
-		return "", fmt.Errorf("zalo: coordinate token refresh: %w", err)
+		if p.coordinator == nil {
+			return fn(notify)
+		}
+
+		release, err := p.coordinator.Acquire(ctx)
+		if err != nil {
+			return "", fmt.Errorf("zalo: coordinate token refresh: %w", err)
+		}
+		defer func() {
+			releaseCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+			if releaseErr := release(releaseCtx); releaseErr != nil {
+				p.log.Error("zalo: failed to release refresh lease", "error", releaseErr)
+			}
+		}()
+		return fn(notify)
+	}()
+	p.fireRotationHook(ctx, rotatedTo)
+	return token, err
+}
+
+// fireRotationHook invokes the rotation hook off the refresh authority. A
+// panicking hook is contained here: the rotation already persisted, so a
+// broken push must never fail the send/renew call that triggered it.
+func (p *Provider) fireRotationHook(ctx context.Context, accessToken string) {
+	if accessToken == "" {
+		return
+	}
+	p.mu.Lock()
+	hook := p.rotationHook
+	p.mu.Unlock()
+	if hook == nil {
+		return
 	}
 	defer func() {
-		releaseCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if releaseErr := release(releaseCtx); releaseErr != nil {
-			p.log.Error("zalo: failed to release refresh lease", "error", releaseErr)
+		if r := recover(); r != nil {
+			p.log.Error("zalo: rotation hook panicked (rotation already persisted)", "panic", r)
 		}
 	}()
-	return fn()
+	hook(ctx, accessToken)
 }
 
 // refresh performs one OAuth refresh_token exchange and persists the new pair.
 // Caller must hold p.mu (use refreshLocked from Send/getAccessToken/RefreshNow).
-func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, error) {
+// notify records the rotation so withRefreshAuthority can fire the hook after
+// releasing authority.
+func (p *Provider) refresh(ctx context.Context, notify func(string), creds Credentials) (string, error) {
 	next, err := p.exchangeRefreshToken(ctx, creds)
 	if err != nil {
 		return "", err
@@ -279,6 +332,7 @@ func (p *Provider) refresh(ctx context.Context, creds Credentials) (string, erro
 	if err := p.creds.UpdateTokens(ctx, next); err != nil {
 		return "", fmt.Errorf("zalo: persist refreshed tokens: %w", err)
 	}
+	notify(next.AccessToken)
 	p.log.Info("zalo: access token refreshed",
 		"expires_at", next.ExpiresAt.Format(time.RFC3339),
 		"refresh_rotated", next.RefreshToken != creds.RefreshToken)
@@ -369,7 +423,7 @@ func (p *Provider) exchangeRefreshToken(ctx context.Context, creds Credentials) 
 // the credentials as configured. A rejected token therefore fails during save
 // instead of remaining hidden until the access token expires about a day later.
 func (p *Provider) ValidateAndStore(ctx context.Context, candidate Credentials, observed Credentials) error {
-	_, err := p.withRefreshAuthority(ctx, func() (string, error) {
+	_, err := p.withRefreshAuthority(ctx, func(notify func(string)) (string, error) {
 		current, getErr := p.creds.Get(ctx)
 		if getErr != nil {
 			return "", fmt.Errorf("zalo: read credentials before validation: %w", getErr)
@@ -387,6 +441,7 @@ func (p *Provider) ValidateAndStore(ctx context.Context, candidate Credentials, 
 		if updateErr := p.creds.Update(ctx, next); updateErr != nil {
 			return "", fmt.Errorf("zalo: persist validated credentials: %w", updateErr)
 		}
+		notify(next.AccessToken)
 		p.log.Info("zalo: credentials validated and refresh token rotated",
 			"expires_at", next.ExpiresAt.Format(time.RFC3339),
 			"refresh_rotated", next.RefreshToken != candidate.RefreshToken)
@@ -399,7 +454,7 @@ func (p *Provider) ValidateAndStore(ctx context.Context, candidate Credentials, 
 // It rejects stale saves instead of overwriting a configuration that changed
 // while the request waited for cross-process refresh authority.
 func (p *Provider) StoreConfiguration(ctx context.Context, candidate Credentials, observed Credentials) error {
-	_, err := p.withRefreshAuthority(ctx, func() (string, error) {
+	_, err := p.withRefreshAuthority(ctx, func(notify func(string)) (string, error) {
 		current, getErr := p.creds.Get(ctx)
 		if getErr != nil {
 			return "", fmt.Errorf("zalo: read credentials before save: %w", getErr)
@@ -410,6 +465,7 @@ func (p *Provider) StoreConfiguration(ctx context.Context, candidate Credentials
 		if updateErr := p.creds.Update(ctx, candidate); updateErr != nil {
 			return "", fmt.Errorf("zalo: persist credentials: %w", updateErr)
 		}
+		notify(candidate.AccessToken)
 		return candidate.AccessToken, nil
 	})
 	return err
