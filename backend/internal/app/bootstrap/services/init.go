@@ -65,12 +65,13 @@ import (
 type Services struct {
 	User                              *user.UserService
 	PasswordResetJobManager           *user.PasswordResetJobManager
-	EmailPasswordReset                *passwordreset.Service         // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
-	ZaloPasswordReset                 *zaloreset.Service             // Employee mobile-channel OTP reset (Phase 2)
-	ZaloConnect                       *zaloconnect.Service           // Admin-managed OA connection + runtime toggle (Phase 4)
-	APIKey                            *apikey.Service                // Machine API keys for the chatbot integration API
-	Integration                       *integration.Service           // Chatbot password-reset + employee lookup (API-key auth)
-	FlexPayZNS                        *zaloconnect.FlexPayZNSService // ZNS notifications for FlexPay salary notifications
+	EmailPasswordReset                *passwordreset.Service          // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
+	ZaloPasswordReset                 *zaloreset.Service              // Employee mobile-channel OTP reset (Phase 2)
+	ZaloConnect                       *zaloconnect.Service            // Admin-managed OA connection + runtime toggle (Phase 4)
+	APIKey                            *apikey.Service                 // Machine API keys for the chatbot integration API
+	Integration                       *integration.Service            // Chatbot password-reset + employee lookup (API-key auth)
+	IntegrationSelfCheckin            *integration.SelfCheckinService // Chatbot self check-in enable/disable (API-key auth)
+	FlexPayZNS                        *zaloconnect.FlexPayZNSService  // ZNS notifications for FlexPay salary notifications
 	FlexPaySalaryDelivery             *zaloconnect.SalaryNotificationDeliveryService
 	Auth                              *auth.AuthService
 	Authorization                     *auth.AuthorizationService
@@ -691,6 +692,22 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		cfg.Zalo.TemplateID, zaloConnectSvc, eventBus, clk, logger,
 	)
 
+	// Self check-in via chatbot shares the OTP machinery but MUST live under
+	// its own Redis key namespace ("zsc"): its sessions and action tokens are
+	// then never consumable at the password-reset endpoints, and a reset token
+	// never unlocks a self check-in update (cross-flow replay defense).
+	selfCheckinStore := cache.NewZaloResetStoreWithPrefix(redis.Client, cfg.Zalo.CodeTTL, "zsc")
+	selfCheckinTemplate := cfg.SelfCheckin.TemplateID
+	if selfCheckinTemplate == "" {
+		selfCheckinTemplate = cfg.Zalo.TemplateID
+	}
+	selfCheckinService := integration.NewSelfCheckinService(
+		selfCheckinStore, repos.User, repos.Employee, repos.Project,
+		repos.ProjectEmployee, repos.Payrate, projectEmployeeSvc, zaloSender,
+		selfCheckinTemplate, zaloConnectSvc, cfg.SelfCheckin.SupportedProjectCodes,
+		clk, logger,
+	)
+
 	// FlexPay ZNS service for employee salary notifications
 	flexPayZNSService := zaloconnect.NewFlexPayZNSService(
 		zaloProvider,
@@ -727,6 +744,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		ZaloConnect:                       zaloConnectSvc,
 		APIKey:                            apiKeyService,
 		Integration:                       integrationService,
+		IntegrationSelfCheckin:            selfCheckinService,
 		FlexPayZNS:                        flexPayZNSService,
 		FlexPaySalaryDelivery:             flexPaySalaryDelivery,
 		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, cfg.Google.ClientID, nonceStore, captchaService, logger),

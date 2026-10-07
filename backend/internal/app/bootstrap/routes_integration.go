@@ -21,14 +21,23 @@ func setupAPIKeyAdminRoutes(v1 *gin.RouterGroup, container *Container) {
 // endpoints. These are mounted on v1 (inheriting APIRateLimit + APIMetrics) but
 // deliberately NOT on the protected group — no JWT, no Casbin.
 func setupIntegrationResetRoutes(v1 *gin.RouterGroup, container *Container) {
-	if container == nil || container.Handlers == nil || container.Handlers.IntegrationReset == nil {
+	if container == nil || container.Handlers == nil {
 		return
 	}
 	g := v1.Group("/integration")
 	g.Use(container.Middleware.APIKeyAuth.Authenticate())
 	g.Use(container.Middleware.IntegrationRateLimit)
-	g.POST("/password-reset/otp", container.Handlers.IntegrationReset.RequestOTP)
-	g.POST("/password-reset/verify", container.Handlers.IntegrationReset.VerifyOTP)
-	g.POST("/password-reset/reset", container.Handlers.IntegrationReset.ResetPassword)
-	g.POST("/employee/lookup", container.Handlers.IntegrationLookup.LookupEmployee)
+	if container.Handlers.IntegrationReset != nil {
+		g.POST("/password-reset/otp", container.Handlers.IntegrationReset.RequestOTP)
+		g.POST("/password-reset/verify", container.Handlers.IntegrationReset.VerifyOTP)
+		g.POST("/password-reset/reset", container.Handlers.IntegrationReset.ResetPassword)
+	}
+	if container.Handlers.IntegrationLookup != nil {
+		g.POST("/employee/lookup", container.Handlers.IntegrationLookup.LookupEmployee)
+	}
+	if container.Handlers.IntegrationSelfCheckin != nil {
+		g.POST("/self-checkin/otp", container.Handlers.IntegrationSelfCheckin.RequestOTP)
+		g.POST("/self-checkin/verify", container.Handlers.IntegrationSelfCheckin.VerifyOTP)
+		g.POST("/self-checkin/update", container.Handlers.IntegrationSelfCheckin.Update)
+	}
 }
