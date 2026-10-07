@@ -157,4 +157,9 @@ type SelfCheckinUpdateResponse struct {
 	Immediate              bool       `json:"immediate"`
 	EffectiveFrom          *time.Time `json:"effective_from,omitempty"`
 	CancelledPendingEnable bool       `json:"cancelled_pending_enable"`
+	// CancelledPendingDisable is true when the enable superseded a queued
+	// disable: the service was never off (it stays on from the original start
+	// date), so the bot confirms the cancellation instead of announcing a
+	// fresh activation.
+	CancelledPendingDisable bool `json:"cancelled_pending_disable"`
 }

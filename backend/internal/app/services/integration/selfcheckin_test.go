@@ -440,3 +440,69 @@ func TestSelfCheckinUpdateTokenSingleUse(t *testing.T) {
 		t.Fatalf("mutator calls = %d, want 1", mutator.calls)
 	}
 }
+
+// recordingSender captures the ZNS template id at the actual send site, so a
+// test can pin which template the flow dispatches with.
+type recordingSender struct {
+	result       zalo.SendResult
+	err          error
+	lastTemplate string
+	lastData     map[string]string
+}
+
+func (f *recordingSender) Send(_ context.Context, _ string, templateID string, _ string, data map[string]string) (zalo.SendResult, error) {
+	f.lastTemplate = templateID
+	f.lastData = data
+	return f.result, f.err
+}
+
+// TestSelfCheckinOTPSendsWithConfiguredTemplate pins the template at the send
+// site: the bootstrap layer resolves SELF_CHECKIN template → reset-template
+// fallback into the constructor, and the service must dispatch with exactly
+// that value.
+func TestSelfCheckinOTPSendsWithConfiguredTemplate(t *testing.T) {
+	sender := &recordingSender{}
+	svc, _, _, _ := newSelfCheckinFixture(t, sender, nil)
+
+	res, err := svc.SelfCheckinOTP(context.Background(), "0987654321")
+	if err != nil {
+		t.Fatalf("SelfCheckinOTP: %v", err)
+	}
+	if !res.OTPSent {
+		t.Fatalf("otp_sent = false")
+	}
+	if sender.lastTemplate != "12345" {
+		t.Fatalf("template = %q, want the configured self check-in template", sender.lastTemplate)
+	}
+	if sender.lastData == nil || len(sender.lastData["otp"]) != 6 {
+		t.Fatalf("sender data = %v", sender.lastData)
+	}
+}
+
+// TestSelfCheckinUpdateEnableSupersedesQueuedDisable pins the supersede
+// verdict: enabling over a queued disable is a success whose EffectiveFrom is
+// the ORIGINAL start date, and the cancelled-disable flag lets the bot phrase
+// "đã huỷ lệnh tắt, tự chấm công vẫn bật" instead of a fresh activation.
+func TestSelfCheckinUpdateEnableSupersedesQueuedDisable(t *testing.T) {
+	sender := &fakeSender{}
+	svc, _, mutator, _ := newSelfCheckinFixture(t, sender, nil)
+	originalStart := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	mutator.result = &project.SelfCheckinChatbotResult{
+		Kind:                    "enable",
+		Immediate:               true,
+		EffectiveFrom:           originalStart,
+		CancelledPendingDisable: true,
+	}
+	token := selfCheckinVerifyHappy(t, svc, sender)
+
+	res, err := svc.SelfCheckinUpdate(context.Background(), token, 10, true, 99)
+	if err != nil {
+		t.Fatalf("SelfCheckinUpdate: %v", err)
+	}
+	if res.Kind != "enable" || !res.Immediate || !res.CancelledPendingDisable || res.CancelledPendingEnable {
+		t.Fatalf("res = %+v", res)
+	}
+	if !res.EffectiveFrom.Equal(originalStart) {
+		t.Fatalf("effective_from = %v, want the original start %v", res.EffectiveFrom, originalStart)
+	}
+}

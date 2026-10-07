@@ -103,6 +103,11 @@ type SelfCheckinUpdateResult struct {
 	Immediate              bool
 	EffectiveFrom          time.Time // zero when a queued enable was cancelled
 	CancelledPendingEnable bool
+	// CancelledPendingDisable is true when this enable superseded a queued
+	// disable: the service was never off (it stays on from the original
+	// CheckInStartDate, reported in EffectiveFrom), so the bot must confirm
+	// the cancellation rather than announce a fresh activation.
+	CancelledPendingDisable bool
 }
 
 // SelfCheckinService implements the chatbot's self check-in flow:
@@ -284,10 +289,11 @@ func (s *SelfCheckinService) SelfCheckinUpdate(ctx context.Context, actionToken 
 	}
 
 	return &SelfCheckinUpdateResult{
-		Kind:                   r.Kind,
-		Immediate:              r.Immediate,
-		EffectiveFrom:          r.EffectiveFrom,
-		CancelledPendingEnable: r.CancelledPendingEnable,
+		Kind:                    r.Kind,
+		Immediate:               r.Immediate,
+		EffectiveFrom:           r.EffectiveFrom,
+		CancelledPendingEnable:  r.CancelledPendingEnable,
+		CancelledPendingDisable: r.CancelledPendingDisable,
 	}, nil
 }
 

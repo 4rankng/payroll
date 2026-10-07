@@ -135,11 +135,12 @@ func (h *SelfCheckinHandler) Update(c *gin.Context) {
 	}
 
 	response.Success(c, dto.SelfCheckinUpdateResponse{
-		Success:                true,
-		Kind:                   result.Kind,
-		Immediate:              result.Immediate,
-		EffectiveFrom:          effectiveFrom(result),
-		CancelledPendingEnable: result.CancelledPendingEnable,
+		Success:                 true,
+		Kind:                    result.Kind,
+		Immediate:               result.Immediate,
+		EffectiveFrom:           effectiveFrom(result),
+		CancelledPendingEnable:  result.CancelledPendingEnable,
+		CancelledPendingDisable: result.CancelledPendingDisable,
 	}, constants.MsgSelfCheckinUpdateSuccessVN)
 }
 
