@@ -150,66 +150,94 @@ func TestSetSelfCheckinEnableRefusals(t *testing.T) {
 	}
 }
 
-// A queued disable only exists on rows that are still enabled (the service
-// keeps running until the sweep turns it off), so the chatbot enable guard
-// "already enabled" fires BEFORE the enable path can supersede the queued
-// disable. This is the production behavior today: the employee is told the
-// service is already on, and the queued disable survives — meaning it will
-// still turn the service off on its effective date. Deviation from the
-// interaction matrix ("enable + pending-disable → cancel pending, then
-// enable") reported to the controller; pinned here as-is.
-func TestSetSelfCheckinEnableOverQueuedDisableIsRefused(t *testing.T) {
+// An enable arriving while a disable is queued supersedes it: the queued
+// disable is cancelled and the running service simply continues from its
+// original start date — on any day of the month, because there is nothing
+// left to schedule. The verdict carries CancelledPendingDisable so the bot
+// confirms "vẫn bật" instead of claiming a fresh activation.
+func TestSetSelfCheckinEnableSupersedesQueuedDisable(t *testing.T) {
 	queuedFor := time.Date(2026, 11, 1, 0, 0, 0, 0, clock.DefaultLocation)
+	runningSince := time.Date(2026, 9, 1, 0, 0, 0, 0, clock.DefaultLocation)
 
-	t.Run("day 5", func(t *testing.T) {
+	t.Run("day 5 keeps the service running from its original start", func(t *testing.T) {
+		setFakeClock(t, time.Date(2026, 10, 5, 10, 0, 0, 0, clock.DefaultLocation))
+		repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
+		pendingDisableOn(queuedFor)(repo.assignment)
+		repo.assignment.CheckInStartDate = &runningSince
+		svc := newCheckinPendingService(repo, &checkinPendingAdvanceRepo{})
+
+		result, err := svc.SetSelfCheckinViaChatbot(context.Background(), 5, 99, true, 42)
+		if err != nil {
+			t.Fatalf("enable over queued disable: %v", err)
+		}
+
+		a := repo.assignment
+		if !a.CheckInEnabled {
+			t.Error("the service must stay on after the supersede")
+		}
+		if a.HasPendingCheckInChange() {
+			t.Error("the queued disable must be cancelled")
+		}
+		if a.CheckInStartDate == nil || !a.CheckInStartDate.Equal(runningSince) {
+			t.Errorf("CheckInStartDate = %v, want the original %v", a.CheckInStartDate, runningSince)
+		}
+		if result == nil || !result.Immediate || result.Kind != "enable" || !result.EffectiveFrom.Equal(runningSince) {
+			t.Errorf("result = %+v, want enable effective from the original start %v", result, runningSince)
+		}
+		if !result.CancelledPendingDisable {
+			t.Error("CancelledPendingDisable = false, want true so the bot can confirm the service stayed on")
+		}
+		if len(repo.saved) != 1 {
+			t.Errorf("saved = %d rows, want 1", len(repo.saved))
+		}
+	})
+
+	t.Run("day 15 behaves the same — nothing needs scheduling", func(t *testing.T) {
+		setFakeClock(t, time.Date(2026, 10, 15, 10, 0, 0, 0, clock.DefaultLocation))
+		repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
+		pendingDisableOn(queuedFor)(repo.assignment)
+		repo.assignment.CheckInStartDate = &runningSince
+		svc := newCheckinPendingService(repo, &checkinPendingAdvanceRepo{})
+
+		result, err := svc.SetSelfCheckinViaChatbot(context.Background(), 5, 99, true, 42)
+		if err != nil {
+			t.Fatalf("enable over queued disable: %v", err)
+		}
+		if result == nil || !result.Immediate || !result.EffectiveFrom.Equal(runningSince) || !result.CancelledPendingDisable {
+			t.Errorf("result = %+v, want immediate enable from %v with the queued disable cancelled", result, runningSince)
+		}
+		if repo.assignment.HasPendingCheckInEnable() {
+			t.Error("the day-9 rule must not queue a new enable for a service that is already on")
+		}
+	})
+
+	t.Run("a legacy row without a recorded start still answers", func(t *testing.T) {
+		// Rows enabled before CheckInStartDate existed carry no start day; the
+		// verdict must not dereference it and quotes the computed day-1.
 		setFakeClock(t, time.Date(2026, 10, 5, 10, 0, 0, 0, clock.DefaultLocation))
 		repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
 		pendingDisableOn(queuedFor)(repo.assignment)
 		svc := newCheckinPendingService(repo, &checkinPendingAdvanceRepo{})
 
 		result, err := svc.SetSelfCheckinViaChatbot(context.Background(), 5, 99, true, 42)
-
-		if err == nil || err.Error() != constants.MsgSelfCheckinAlreadyEnabledVN {
-			t.Fatalf("error = %v, want %q", err, constants.MsgSelfCheckinAlreadyEnabledVN)
+		if err != nil {
+			t.Fatalf("enable over queued disable on a legacy row: %v", err)
 		}
-		if result != nil {
-			t.Errorf("result = %+v, want nil on refusal", result)
+		if result == nil || !result.Immediate || !result.EffectiveFrom.Equal(time.Date(2026, 10, 1, 0, 0, 0, 0, clock.DefaultLocation)) {
+			t.Errorf("result = %+v, want immediate enable quoting the current month's day 1", result)
 		}
-		a := repo.assignment
-		if !a.CheckInEnabled || !a.HasPendingCheckInDisable() {
-			t.Error("the queued disable must survive the refusal untouched")
-		}
-		if a.CheckInEffectiveFrom == nil || !a.CheckInEffectiveFrom.Equal(queuedFor) {
-			t.Errorf("queued date = %v, want unchanged %v", a.CheckInEffectiveFrom, queuedFor)
-		}
-		if len(repo.saved) != 0 {
-			t.Errorf("refused request must not persist, saved = %d", len(repo.saved))
-		}
-	})
-
-	t.Run("day 15", func(t *testing.T) {
-		setFakeClock(t, time.Date(2026, 10, 15, 10, 0, 0, 0, clock.DefaultLocation))
-		repo := &checkinPendingAssignmentRepo{assignment: newPendingAssignment()}
-		pendingDisableOn(queuedFor)(repo.assignment)
-		svc := newCheckinPendingService(repo, &checkinPendingAdvanceRepo{})
-
-		if _, err := svc.SetSelfCheckinViaChatbot(context.Background(), 5, 99, true, 42); err == nil || err.Error() != constants.MsgSelfCheckinAlreadyEnabledVN {
-			t.Fatalf("error = %v, want %q", err, constants.MsgSelfCheckinAlreadyEnabledVN)
-		}
-		if !repo.assignment.HasPendingCheckInDisable() {
-			t.Error("the queued disable must survive the refusal untouched")
+		if !result.CancelledPendingDisable {
+			t.Error("CancelledPendingDisable = false, want true")
 		}
 	})
 }
 
-// The supersede branch inside the enable path (cancel queued disable, then
-// proceed) still exists as a defensive rule, but no public caller can reach it
-// today: both the chatbot and the admin toggle refuse with "already enabled"
-// when CheckInEnabled is true, and every reachable queued-disable row is
-// enabled. Pinned at the helper level so the branch's actual behavior is on
-// record: an inactive row carrying a queued disable (a state not producible
-// through the service today) gets the disable cancelled and the enable queued
-// or immediate per the day-9 rule.
+// The supersede on a running row keeps the service on with its original start
+// (pinned above at the public level). This pins the remaining branch shape at
+// the helper level: an INACTIVE row carrying a queued disable — a state the
+// service cannot produce today (a queued disable only exists on enabled rows)
+// but tolerates — gets the disable cancelled and a real enable queued or
+// activated per the day-9 rule.
 func TestApplySelfCheckinChatbotChangeSupersedesQueuedDisableOnInactiveRow(t *testing.T) {
 	queuedFor := time.Date(2026, 11, 1, 0, 0, 0, 0, clock.DefaultLocation)
 
@@ -237,6 +265,9 @@ func TestApplySelfCheckinChatbotChangeSupersedesQueuedDisableOnInactiveRow(t *te
 		if result == nil || !result.Immediate || result.EffectiveFrom != (time.Date(2026, 10, 1, 0, 0, 0, 0, clock.DefaultLocation)) {
 			t.Errorf("result = %+v, want immediate enable effective 2026-10-01", result)
 		}
+		if result == nil || !result.CancelledPendingDisable {
+			t.Error("CancelledPendingDisable = false, want true")
+		}
 	})
 
 	t.Run("day 15 queues for next month", func(t *testing.T) {
@@ -256,6 +287,9 @@ func TestApplySelfCheckinChatbotChangeSupersedesQueuedDisableOnInactiveRow(t *te
 		}
 		if result == nil || result.Immediate || !result.EffectiveFrom.Equal(queuedFor) {
 			t.Errorf("result = %+v, want queued enable effective %v", result, queuedFor)
+		}
+		if result == nil || !result.CancelledPendingDisable {
+			t.Error("CancelledPendingDisable = false, want true")
 		}
 	})
 }
