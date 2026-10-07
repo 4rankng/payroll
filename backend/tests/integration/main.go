@@ -98,6 +98,9 @@ func main() {
 	// Phase 7.65: Integration self check-in (chatbot enable/disable channel)
 	runIntegrationSelfCheckinTests(client, testData, reporter, cfg)
 
+	// Phase 7.66: Integration Zalo token (chatbot pull lane for the OA token)
+	runIntegrationZaloTokenTests(client, testData, reporter, cfg)
+
 	// Phase 8: CRUD flows
 	runBankCRUDTests(client, testData, reporter, cfg)
 	runEmployeeCRUDTests(client, testData, reporter, cfg)
