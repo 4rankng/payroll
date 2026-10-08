@@ -155,6 +155,33 @@ func effectiveFrom(r *integration.SelfCheckinUpdateResult) *time.Time {
 }
 
 // writeError maps service domain errors to HTTP responses.
+// Status
+// @Summary Report the employee's current self check-in state
+// @Description Read-only: peek the verified action token (never consumed) and return each supported project's on/off flag, start date and queued change.
+// @Tags integration
+// @Security ApiKeyAuth
+// @Param body body dto.SelfCheckinStatusRequest true "Verified action token"
+// @Success 200 {object} response.SuccessResponse
+// @Router /integration/self-checkin/status [post]
+func (h *SelfCheckinHandler) Status(c *gin.Context) {
+	var req dto.SelfCheckinStatusRequest
+	if !helpers.BindJSON(c, &req) {
+		return
+	}
+
+	result, err := h.service.SelfCheckinStatus(c.Request.Context(), req.ActionToken)
+	if err != nil {
+		h.writeError(c, err)
+		return
+	}
+
+	response.Success(c, dto.SelfCheckinStatusResponse{
+		Found:        result.Found,
+		EmployeeName: result.EmployeeName,
+		Assignments:  mapAssignments(result.Assignments),
+	}, "ok")
+}
+
 func (h *SelfCheckinHandler) writeError(c *gin.Context, err error) {
 	switch {
 	case domain.IsUnauthorizedError(err):

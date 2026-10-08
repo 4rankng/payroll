@@ -297,6 +297,36 @@ func (s *SelfCheckinService) SelfCheckinUpdate(ctx context.Context, actionToken 
 	}, nil
 }
 
+// SelfCheckinStatusResult is the read-only view behind a verified action
+// token: who the session belongs to and each supported project's current
+// toggle state, so the bot can answer "is it on?" and pre-empt no-op updates.
+type SelfCheckinStatusResult struct {
+	Found        bool
+	EmployeeName string
+	Assignments  []SelfCheckinAssignment
+}
+
+// SelfCheckinStatus reports the employee's current self check-in state for a
+// VERIFIED action token. The token is peeked, never consumed: a status read
+// must not spend the single-use credential the update step still needs.
+func (s *SelfCheckinService) SelfCheckinStatus(ctx context.Context, actionToken string) (*SelfCheckinStatusResult, error) {
+	userID, err := s.store.PeekVerified(ctx, actionToken)
+	if err != nil {
+		return nil, s.mapStoreError(err)
+	}
+
+	emp, err := s.employeeRepo.GetByUserID(ctx, userID)
+	if err != nil || emp == nil {
+		return nil, domain.NewUnauthorizedError(constants.MsgSelfCheckinTokenInvalidVN)
+	}
+
+	return &SelfCheckinStatusResult{
+		Found:        true,
+		EmployeeName: emp.Fullname,
+		Assignments:  s.assignmentsForEmployee(ctx, userID),
+	}, nil
+}
+
 // assignmentsForEmployee lists the employee's active assignments restricted to
 // projects whose code is enabled for the chatbot flow. Errors are logged and
 // degrade to an empty list: the assignments are advisory context for the bot,

@@ -204,6 +204,24 @@ func (s *ZaloResetStore) CreateVerified(ctx context.Context, userID uint) (strin
 	return token, nil
 }
 
+// PeekVerified reads the userID bound to a verified token WITHOUT consuming
+// it (GET, not GETDEL) — read-only flows such as the chatbot's status query
+// must not spend the single-use token. Same error contract as ConsumeVerified.
+func (s *ZaloResetStore) PeekVerified(ctx context.Context, token string) (uint, error) {
+	val, err := s.client.Get(ctx, s.verifiedKey(token)).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return 0, ErrZaloResetVerifiedNotFound
+		}
+		return 0, fmt.Errorf("%w: %v", ErrZaloResetStoreUnavailable, err)
+	}
+	uid, err := strconv.ParseUint(val, 10, 64)
+	if err != nil || uid == 0 {
+		return 0, ErrZaloResetVerifiedNotFound
+	}
+	return uint(uid), nil
+}
+
 // ConsumeVerified atomically fetches and deletes a verified reset token
 // (Redis GETDEL — single use). Returns the bound userID. A missing, expired, or
 // already-consumed token returns ErrZaloResetVerifiedNotFound. A Redis outage

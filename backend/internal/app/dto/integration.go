@@ -133,6 +133,21 @@ type SelfCheckinAssignmentDTO struct {
 	ShiftWindows     []SelfCheckinShiftWindowDTO  `json:"shift_windows"`
 }
 
+// SelfCheckinStatusRequest carries the verified action token for a read-only
+// state query. The token is peeked, never consumed.
+type SelfCheckinStatusRequest struct {
+	ActionToken string `json:"action_token" binding:"required"`
+}
+
+// SelfCheckinStatusResponse reports the employee's current self check-in
+// state: one entry per supported project with its on/off flag, start date and
+// any queued change, so the bot answers state questions without mutating.
+type SelfCheckinStatusResponse struct {
+	Found        bool                       `json:"found"`
+	EmployeeName string                     `json:"employee_name"`
+	Assignments  []SelfCheckinAssignmentDTO `json:"assignments"`
+}
+
 // SelfCheckinOTPResponse reports the explicit outcome of a self check-in OTP
 // request. On success assignments carries the eligible projects so the bot
 // needs one round-trip before asking the employee to verify.

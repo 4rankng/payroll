@@ -1087,8 +1087,8 @@ func (s *ProjectEmployeeService) ToggleAdvanceRequestEnabled(ctx context.Context
 type SelfCheckinChatbotResult struct {
 	// Kind is "enable" or "disable".
 	Kind string
-	// Immediate is true when an enable activated right away (a day 1-8
-	// request); false means it is queued for EffectiveFrom.
+	// Immediate is true when the change applied right away (a day 1-8
+	// request of either direction); false means it is queued for EffectiveFrom.
 	Immediate bool
 	// EffectiveFrom is day 1 of the month the change takes (or took) effect.
 	// Zero when a queued enable was merely cancelled.
@@ -1208,11 +1208,26 @@ func (s *ProjectEmployeeService) applySelfCheckinChatbotChange(ctx context.Conte
 		return &SelfCheckinChatbotResult{Kind: "disable", EffectiveFrom: *assignment.CheckInEffectiveFrom}, nil
 	}
 
-	nextFirst := firstDayOfNextMonth(now)
-	if err := assignment.RequestCheckInDisable(nextFirst); err != nil {
+	// Owner rule 2026-10-08: disable follows the same day-9 boundary as
+	// enable. Days 1-8: the effective date (the current month's 1st) has
+	// already arrived, so the service turns off NOW — start date kept, quota
+	// zeroed from the effective month, mirroring the admin immediate disable.
+	// Day 9+: queue for the 1st of next month; the nightly sweep applies it
+	// and zeroes quota from the effective month.
+	effective := domain.ResolveCheckInEnableStartMonth(now).EffectiveFrom(now)
+	if !effective.After(time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())) {
+		assignment.CheckInEnabled = false
+		assignment.PendingCheckInEnabled = nil
+		assignment.CheckInEffectiveFrom = nil
+		if err := s.advancePaymentRepo.ZeroOutQuota(ctx, assignment.ProjectID, assignment.EmployeeID, effective.Format("2006-01")); err != nil {
+			return nil, err
+		}
+		return &SelfCheckinChatbotResult{Kind: "disable", Immediate: true, EffectiveFrom: effective}, nil
+	}
+	if err := assignment.RequestCheckInDisable(effective); err != nil {
 		return nil, err
 	}
-	return &SelfCheckinChatbotResult{Kind: "disable", EffectiveFrom: nextFirst}, nil
+	return &SelfCheckinChatbotResult{Kind: "disable", EffectiveFrom: effective}, nil
 }
 
 // applyCheckInEnable records an enable that starts on effectiveDate (always a

@@ -701,3 +701,76 @@ func TestCancelPendingCheckInEnableRouteCancelsQueuedDisable(t *testing.T) {
 		t.Error("cancelling with nothing pending must fail")
 	}
 }
+
+// Owner rule 2026-10-08: disable follows the same day-9 boundary as enable.
+// Days 1-8 apply immediately (service off now, start date kept, quota zeroed
+// from the current month); day 9+ queue for the 1st of next month.
+func TestSetSelfCheckinDisableFollowsTheDay9Rule(t *testing.T) {
+	tests := []struct {
+		name          string
+		day           int
+		wantImmediate bool
+		wantEffective time.Time
+	}{
+		{
+			name:          "day 5 turns the service off now",
+			day:           5,
+			wantImmediate: true,
+			wantEffective: time.Date(2026, 10, 1, 0, 0, 0, 0, clock.DefaultLocation),
+		},
+		{
+			name:          "day 15 queues for the 1st of the next month",
+			day:           15,
+			wantImmediate: false,
+			wantEffective: time.Date(2026, 11, 1, 0, 0, 0, 0, clock.DefaultLocation),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setFakeClock(t, time.Date(2026, 10, tt.day, 10, 0, 0, 0, clock.DefaultLocation))
+			a := newPendingAssignment()
+			a.CheckInEnabled = true
+			sept1 := time.Date(2026, 9, 1, 0, 0, 0, 0, clock.DefaultLocation)
+			a.CheckInStartDate = &sept1
+			adv := &checkinPendingAdvanceRepo{}
+			repo := &checkinPendingAssignmentRepo{assignment: a}
+			svc := newCheckinPendingService(repo, adv)
+
+			result, err := svc.SetSelfCheckinViaChatbot(context.Background(), 5, 99, false, 42)
+			if err != nil {
+				t.Fatalf("disable on day %d: %v", tt.day, err)
+			}
+			if result.Kind != "disable" {
+				t.Errorf("Kind = %q, want disable", result.Kind)
+			}
+			if result.Immediate != tt.wantImmediate {
+				t.Errorf("Immediate = %v, want %v", result.Immediate, tt.wantImmediate)
+			}
+			if !result.EffectiveFrom.Equal(tt.wantEffective) {
+				t.Errorf("EffectiveFrom = %v, want %v", result.EffectiveFrom, tt.wantEffective)
+			}
+			if tt.wantImmediate && a.CheckInEnabled {
+				t.Errorf("immediate disable must leave the service off, got enabled=%v", a.CheckInEnabled)
+			}
+			if a.CheckInStartDate == nil || !a.CheckInStartDate.Equal(sept1) {
+				t.Errorf("CheckInStartDate = %v, want it kept at 2026-09-01", a.CheckInStartDate)
+			}
+			if tt.wantImmediate {
+				if a.PendingCheckInEnabled != nil || a.CheckInEffectiveFrom != nil {
+					t.Error("immediate disable must not queue anything")
+				}
+				if len(adv.zeroedMonths) != 1 || adv.zeroedMonths[0] != "2026-10" {
+					t.Errorf("zeroedMonths = %v, want exactly [2026-10]", adv.zeroedMonths)
+				}
+			} else {
+				if a.PendingCheckInEnabled == nil || *a.PendingCheckInEnabled {
+					t.Error("day 9+ must queue a pending disable")
+				}
+				if len(adv.zeroedMonths) != 0 {
+					t.Errorf("queued disable must not zero quota at request time, got %v", adv.zeroedMonths)
+				}
+			}
+		})
+	}
+}

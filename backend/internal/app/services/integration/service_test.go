@@ -67,6 +67,14 @@ func (f *fakeStore) ConsumeVerified(_ context.Context, token string) (uint, erro
 	return uid, nil
 }
 
+func (f *fakeStore) PeekVerified(_ context.Context, token string) (uint, error) {
+	uid, ok := f.verified[token]
+	if !ok {
+		return 0, cache.ErrZaloResetVerifiedNotFound
+	}
+	return uid, nil
+}
+
 func (f *fakeStore) TTL() time.Duration { return 10 * time.Minute }
 
 type fakeSender struct {

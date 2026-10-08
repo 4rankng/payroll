@@ -46,6 +46,9 @@ type ResetStore interface {
 	Consume(ctx context.Context, sessionID, codeHashHex string) (uint, error)
 	CreateVerified(ctx context.Context, userID uint) (string, error)
 	ConsumeVerified(ctx context.Context, token string) (uint, error)
+	// PeekVerified reads the verified token's bound userID without consuming
+	// it — the read-only status query must not spend the single-use token.
+	PeekVerified(ctx context.Context, token string) (uint, error)
 	TTL() time.Duration
 }
 
