@@ -89,6 +89,9 @@ var onePayDetailTemplates = []*onePayDetailTemplate{
 		// Monthly statement: "CHI TIET THANG" sheet behind banner rows,
 		// bilingual VN/EN header rows, no State column. Also accepts the
 		// legacy English spellings so future layout merges keep parsing.
+		// BBDS_DETAIL_PO exports carry per-row fee columns (Phí XLGD /
+		// Tổng phí) and no PHI THANG summary sheet; the importer derives
+		// the summary from the details in that case.
 		name:       "CHI TIET THANG",
 		sheetNames: []string{"CHI TIET THANG"},
 		headerAliases: mergeDetailHeaderAliases(map[string]string{
@@ -100,6 +103,12 @@ var onePayDetailTemplates = []*onePayDetailTemplate{
 			"transaction amount":  "amount",
 			"giá trị gd":          "amount",
 			"gia tri gd":          "amount",
+			"fix fee":             "fix fee",
+			"phí xlgd":            "fix fee",
+			"phi xlgd":            "fix fee",
+			"total fee":           "total fee",
+			"tổng phí":            "total fee",
+			"tong phi":            "total fee",
 		}),
 		requiredColumns: []string{
 			"merchant id", "merchant fund transfer id", "op transaction id", "create date",
@@ -204,6 +213,103 @@ func (tpl *onePayDetailTemplate) detailHeaderIndex(rows [][]string) int {
 	return -1
 }
 
+// feeColumnsPresent reports whether the sheet's header row resolves both
+// per-row fee columns (Phí XLGD / Fix Fee and Tổng phí / Total Fee), which
+// make a summary-less BBDS_DETAIL_PO workbook self-contained.
+func (tpl *onePayDetailTemplate) feeColumnsPresent(f *excelize.File, sheet string) bool {
+	rows, err := f.Rows(sheet)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = rows.Close() }()
+	for i := 0; i < detailHeaderScanRows && rows.Next(); i++ {
+		cols, err := rows.Columns()
+		if err != nil {
+			return false
+		}
+		if !tpl.headerRowMatches(cols) {
+			continue
+		}
+		resolved := make(map[string]bool, len(cols))
+		for _, c := range cols {
+			if canonical := tpl.resolveHeader(c); canonical != "" {
+				resolved[canonical] = true
+			}
+		}
+		return resolved["fix fee"] && resolved["total fee"]
+	}
+	return false
+}
+
+// deriveSummaryFromDetails builds the PHI THANG-equivalent summary for
+// BBDS_DETAIL_PO exports: they carry per-row fee columns instead of a summary
+// sheet, so SLGD, phí XLGD, tổng phí and the period come from the details
+// themselves. The same invariants as the summary-sheet path are enforced —
+// one uniform fee per transaction, and fee math that multiplies out.
+func deriveSummaryFromDetails(summary *dto.OnePayFeeReportSummary, details []onePayFeeReportDetail) []dto.OnePayFeeReportIssue {
+	var issues []dto.OnePayFeeReportIssue
+	summary.TransactionCount = len(details)
+
+	feePerTransaction := int64(0)
+	for _, d := range details {
+		if d.fixFee <= 0 {
+			continue
+		}
+		if feePerTransaction == 0 {
+			feePerTransaction = d.fixFee
+		} else if d.fixFee != feePerTransaction {
+			issues = append(issues, issue("fee_per_transaction_inconsistent", d.row, d.fundTransferID, fmt.Sprintf("Phí XLGD %d khác phí %d của các dòng khác", d.fixFee, feePerTransaction)))
+		}
+	}
+	summary.FeePerTransaction = feePerTransaction
+
+	totalFee := int64(0)
+	hasRowTotalFee := false
+	for _, d := range details {
+		if d.rowTotalFee > 0 {
+			hasRowTotalFee = true
+			totalFee += d.rowTotalFee
+		}
+	}
+	if hasRowTotalFee {
+		summary.TotalFee = totalFee
+	} else {
+		summary.TotalFee = feePerTransaction * int64(len(details))
+	}
+
+	var minDate, maxDate time.Time
+	for _, d := range details {
+		if d.createDate.IsZero() {
+			continue
+		}
+		if minDate.IsZero() || d.createDate.Before(minDate) {
+			minDate = d.createDate
+		}
+		if maxDate.IsZero() || d.createDate.After(maxDate) {
+			maxDate = d.createDate
+		}
+	}
+	if minDate.IsZero() || maxDate.IsZero() {
+		issues = append(issues, issue("period_missing", 0, "", "Không đọc được kỳ đối soát trong sheet PHI THANG"))
+	} else {
+		summary.PeriodFrom = minDate.Format(timeutil.DateFormat)
+		summary.PeriodTo = maxDate.Format(timeutil.DateFormat)
+		summary.PeriodLabel = fmt.Sprintf("Tháng %02d.%d", int(maxDate.Month()), maxDate.Year())
+	}
+
+	if summary.FeePerTransaction <= 0 {
+		issues = append(issues, issue("fee_per_transaction_missing", 0, "", "Phí xử lý giao dịch phải lớn hơn 0"))
+	}
+	if summary.TotalFee <= 0 {
+		issues = append(issues, issue("total_fee_missing", 0, "", "Tổng phí phải lớn hơn 0"))
+	}
+	expectedTotalFee := summary.FeePerTransaction * int64(summary.TransactionCount)
+	if expectedTotalFee != summary.TotalFee {
+		issues = append(issues, issue("fee_total_mismatch", 0, "", fmt.Sprintf("Tổng phí %d không bằng SLGD %d x phí XLGD %d", summary.TotalFee, summary.TransactionCount, summary.FeePerTransaction)))
+	}
+	return issues
+}
+
 type OnePayFeeImportValidationError struct {
 	Message string
 	Issues  []dto.OnePayFeeReportIssue
@@ -243,6 +349,10 @@ type onePayFeeReportDetail struct {
 	beneficiaryBank        string
 	amount                 int64
 	state                  string
+	// Per-row fee columns; present in BBDS_DETAIL_PO exports that ship
+	// without a PHI THANG summary sheet. Zero when the column is absent.
+	fixFee      int64
+	rowTotalFee int64
 }
 
 func NewOnePayFeeImportService(
@@ -399,7 +509,7 @@ func (s *OnePayFeeImportService) validateWalletPayments(ctx context.Context, rep
 }
 
 func parseOnePayFeeReport(r io.Reader) (*onePayFeeReport, []dto.OnePayFeeReportIssue, error) {
-	f, err := excelkit.OpenReader(r)
+	f, err := excelkit.OpenWorkbook(r)
 	if err != nil {
 		return nil, nil, &OnePayFeeImportValidationError{
 			Message: "Không thể đọc file Excel OnePay",
@@ -414,7 +524,10 @@ func parseOnePayFeeReport(r io.Reader) (*onePayFeeReport, []dto.OnePayFeeReportI
 	summarySheet := findSummarySheet(f)
 	detailTemplate, detailSheet := locateDetailSheet(f, summarySheet)
 	var issues []dto.OnePayFeeReportIssue
-	if summarySheet == "" {
+	if summarySheet == "" && (detailSheet == "" || !detailTemplate.feeColumnsPresent(f, detailSheet)) {
+		// BBDS_DETAIL_PO exports replace the PHI THANG sheet with per-row
+		// fee columns on the detail sheet. Without either fee source the
+		// workbook is not a parseable fee report.
 		issues = append(issues, issue("missing_sheet", 0, "", "Không tìm thấy sheet tổng hợp phí PHI THANG"))
 	}
 	if detailSheet == "" {
@@ -424,18 +537,26 @@ func parseOnePayFeeReport(r io.Reader) (*onePayFeeReport, []dto.OnePayFeeReportI
 		return nil, issues, nil
 	}
 
-	summary, summaryIssues := parseSummarySheet(f, summarySheet)
-	issues = append(issues, summaryIssues...)
+	var summary dto.OnePayFeeReportSummary
+	if summarySheet != "" {
+		var summaryIssues []dto.OnePayFeeReportIssue
+		summary, summaryIssues = parseSummarySheet(f, summarySheet)
+		issues = append(issues, summaryIssues...)
+	}
 	details, detailTotalAmount, detailIssues := parseDetailSheet(f, detailSheet, detailTemplate, summary.PeriodFrom, summary.PeriodTo)
 	summary.DetailTotalAmount = detailTotalAmount
 	issues = append(issues, detailIssues...)
 
-	if len(details) != summary.TransactionCount {
-		issues = append(issues, issue("transaction_count_mismatch", 0, "", fmt.Sprintf("Sheet chi tiết có %d giao dịch, sheet PHI THANG ghi %d giao dịch", len(details), summary.TransactionCount)))
-	}
-	expectedTotalFee := summary.FeePerTransaction * int64(summary.TransactionCount)
-	if expectedTotalFee != summary.TotalFee {
-		issues = append(issues, issue("fee_total_mismatch", 0, "", fmt.Sprintf("Tổng phí %d không bằng SLGD %d x phí XLGD %d", summary.TotalFee, summary.TransactionCount, summary.FeePerTransaction)))
+	if summarySheet != "" {
+		if len(details) != summary.TransactionCount {
+			issues = append(issues, issue("transaction_count_mismatch", 0, "", fmt.Sprintf("Sheet chi tiết có %d giao dịch, sheet PHI THANG ghi %d giao dịch", len(details), summary.TransactionCount)))
+		}
+		expectedTotalFee := summary.FeePerTransaction * int64(summary.TransactionCount)
+		if expectedTotalFee != summary.TotalFee {
+			issues = append(issues, issue("fee_total_mismatch", 0, "", fmt.Sprintf("Tổng phí %d không bằng SLGD %d x phí XLGD %d", summary.TotalFee, summary.TransactionCount, summary.FeePerTransaction)))
+		}
+	} else {
+		issues = append(issues, deriveSummaryFromDetails(&summary, details)...)
 	}
 
 	merchantID, merchantName := inferMerchant(details)
@@ -564,6 +685,14 @@ func parseDetailSheet(f *excelize.File, sheet string, tpl *onePayDetailTemplate,
 		if hasState {
 			state = strings.TrimSpace(cell(row, stateColumn))
 		}
+		fixFee := int64(0)
+		if feeColumn, ok := headers["fix fee"]; ok {
+			fixFee = parseMoney(cell(row, feeColumn))
+		}
+		rowTotalFee := int64(0)
+		if feeColumn, ok := headers["total fee"]; ok {
+			rowTotalFee = parseMoney(cell(row, feeColumn))
+		}
 
 		detail := onePayFeeReportDetail{
 			row:                    idx + 1,
@@ -577,6 +706,8 @@ func parseDetailSheet(f *excelize.File, sheet string, tpl *onePayDetailTemplate,
 			beneficiaryBank:        strings.TrimSpace(cell(row, headers["beneficiary bank"])),
 			amount:                 parseMoney(cell(row, headers["amount"])),
 			state:                  state,
+			fixFee:                 fixFee,
+			rowTotalFee:            rowTotalFee,
 		}
 		detail.createDate, _ = parseOnePayDate(cell(row, headers["create date"]))
 

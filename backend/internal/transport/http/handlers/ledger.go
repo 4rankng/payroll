@@ -89,7 +89,9 @@ func (h *LedgerHandler) UploadOnePayFeeReport(c *gin.Context) {
 		return
 	}
 
-	fileHeader, ok := uploadguard.Validate(c, false)
+	// OnePay ships statements as .xlsx or legacy .xls (BBDS_DETAIL_PO_*);
+	// the parser opens both via excelkit.OpenWorkbook.
+	fileHeader, ok := uploadguard.Validate(c, true)
 	if !ok {
 		return
 	}

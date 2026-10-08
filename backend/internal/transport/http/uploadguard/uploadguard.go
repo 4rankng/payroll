@@ -106,7 +106,11 @@ func Validate(c *gin.Context, allowXLS bool) (*multipart.FileHeader, bool) {
 	head = head[:n]
 
 	if !excelMagic(head, allowXLS) {
-		response.BadRequest(c, "File phải là file Excel (.xlsx) hợp lệ")
+		if allowXLS {
+			response.BadRequest(c, "File phải là file Excel (.xlsx hoặc .xls) hợp lệ")
+		} else {
+			response.BadRequest(c, "File phải là file Excel (.xlsx) hợp lệ")
+		}
 		return nil, false
 	}
 	return fileHeader, true

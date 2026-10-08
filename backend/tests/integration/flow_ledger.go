@@ -1,8 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"os"
 )
 
 const flowLedger = "Ledger"
@@ -134,6 +139,8 @@ func runLedgerTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 		return nil
 	})
 
+	runOnePayFeeReportImportTests(admin, reporter)
+
 	reporter.RunTest(flowLedger, "Reverse entry", func() error {
 		if testEntryID == 0 {
 			return fmt.Errorf("no test entry ID")
@@ -228,4 +235,105 @@ func runLedgerTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 		}
 		return AssertGreaterOrEqual("status", 400, statusCode)
 	})
+}
+
+// OnePay fee report imports. The provider ships statements as legacy .xls
+// (BIFF) and strict-OOXML .xlsx; both must pass the upload guard and the
+// parser, then fail only at wallet reconciliation — the integration database
+// carries no wallet payments matching the report's fund transfer IDs, so a
+// 400 whose issues are reconciliation codes (not format codes) is the pass
+// signal: the bytes were read, sheet located, and all 250 rows parsed.
+const onepayFeeReportFixture = "tests/fixtures/BBDS_DETAIL_PO_1791366534312_4065"
+
+func runOnePayFeeReportImportTests(admin *APIClient, reporter *Reporter) {
+	for _, ext := range []string{".xls", ".xlsx"} {
+		ext := ext
+		reporter.RunTest(flowLedger, "OnePay fee report: "+ext+" accepted and parsed", func() error {
+			content, err := os.ReadFile(onepayFeeReportFixture + ext)
+			if err != nil {
+				return fmt.Errorf("read fixture: %w", err)
+			}
+			statusCode, body, err := uploadOnePayFeeReport(admin, "BBDS_DETAIL_PO_1791366534312_4065"+ext, content)
+			if err != nil {
+				return fmt.Errorf("upload: %w", err)
+			}
+			if statusCode != 400 {
+				return fmt.Errorf("expected 400 (reconciliation issues), got %d: %s", statusCode, body)
+			}
+			var parsed struct {
+				Status  string `json:"status"`
+				Message string `json:"message"`
+				Details struct {
+					Issues []struct {
+						Code string `json:"code"`
+					} `json:"issues"`
+				} `json:"details"`
+			}
+			if err := json.Unmarshal(body, &parsed); err != nil {
+				return fmt.Errorf("decode response: %w", err)
+			}
+			if parsed.Status != "error" {
+				return fmt.Errorf("expected status error, got %q", parsed.Status)
+			}
+			if len(parsed.Details.Issues) == 0 {
+				return fmt.Errorf("expected reconciliation issues, got none: %s", body)
+			}
+			// Format/parse failures would mean the file was never really read.
+			for _, iss := range parsed.Details.Issues {
+				switch iss.Code {
+				case "invalid_excel", "missing_sheet", "missing_header_row", "detail_read_failed":
+					return fmt.Errorf("format-level issue %q — file was not parsed", iss.Code)
+				}
+			}
+			fmt.Printf("    %s parsed; %d reconciliation issue(s), first=%s\n", ext, len(parsed.Details.Issues), parsed.Details.Issues[0].Code)
+			return nil
+		})
+	}
+
+	reporter.RunTest(flowLedger, "OnePay fee report: garbage .xls is rejected as invalid", func() error {
+		statusCode, body, err := uploadOnePayFeeReport(admin, "not_excel.xls", []byte("this is not a workbook"))
+		if err != nil {
+			return fmt.Errorf("upload: %w", err)
+		}
+		if statusCode != 400 {
+			return fmt.Errorf("expected 400, got %d: %s", statusCode, body)
+		}
+		return nil
+	})
+}
+
+// uploadOnePayFeeReport POSTs a multipart "file" to the OnePay fee import
+// endpoint and returns the status code with the raw body.
+func uploadOnePayFeeReport(client *APIClient, filename string, content []byte) (int, []byte, error) {
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+	part, err := writer.CreateFormFile("file", filename)
+	if err != nil {
+		return 0, nil, fmt.Errorf("create form file: %w", err)
+	}
+	if _, err := part.Write(content); err != nil {
+		return 0, nil, fmt.Errorf("write file content: %w", err)
+	}
+	if err := writer.Close(); err != nil {
+		return 0, nil, fmt.Errorf("close writer: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", client.BaseURL+"/api/v1/ledger/onepay-fee-reports", &buf)
+	if err != nil {
+		return 0, nil, fmt.Errorf("create request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if client.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+client.Token)
+	}
+	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		return 0, nil, fmt.Errorf("do request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp.StatusCode, nil, fmt.Errorf("read body: %w", err)
+	}
+	return resp.StatusCode, body, nil
 }
