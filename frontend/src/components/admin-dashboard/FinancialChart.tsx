@@ -124,15 +124,15 @@ export function FinancialChart({ className }: FinancialChartProps) {
           break;
         case 'Chi phí':
           value = latestPeriod.expenses_vnd;
-          color = 'text-red-600';
+          color = 'text-red-700';
           break;
         case 'Lợi nhuận':
           value = latestPeriod.profit_vnd;
-          color = value >= 0 ? 'text-green-700' : 'text-red-600';
+          color = value >= 0 ? 'text-green-700' : 'text-red-700';
           break;
         case 'Tiền mặt':
           value = latestPeriod.cash_vnd;
-          color = 'text-blue-600';
+          color = 'text-blue-700';
           break;
         case 'Công nợ phải thu':
           value = latestPeriod.receivable_vnd;
@@ -290,7 +290,7 @@ export function FinancialChart({ className }: FinancialChartProps) {
                 <DollarSign className="h-5 w-5" />
                 Biểu Đồ Tài Chính
                 {trend === 'up' && <TrendingUp className="h-4 w-4 text-green-700" />}
-                {trend === 'down' && <TrendingDown className="h-4 w-4 text-red-600" />}
+                {trend === 'down' && <TrendingDown className="h-4 w-4 text-red-700" />}
               </div>
 
               {/* Period Toggle Group */}

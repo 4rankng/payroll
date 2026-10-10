@@ -48,7 +48,7 @@ export const EarningsPill = memo(function EarningsPill({
         className={cn(
           'font-bold tabular-nums leading-none',
           size === 'default' ? 'text-xl' : 'text-base',
-          isWarn ? 'text-red-600' : 'text-slate-800',
+          isWarn ? 'text-red-700' : 'text-slate-800',
         )}
       >
         {amount.toLocaleString('vi-VN')}

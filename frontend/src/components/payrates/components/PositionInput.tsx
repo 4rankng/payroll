@@ -121,7 +121,7 @@ export function PositionInput({ positions, onChange, disabled }: PositionInputPr
             className={error ? 'border-red-500' : ''}
           />
           {error && (
-            <div className="flex items-center gap-1 mt-1 typography-body-medium text-red-600">
+            <div className="flex items-center gap-1 mt-1 typography-body-medium text-red-700">
               <AlertTriangle className="w-3 h-3" />
               {error}
             </div>

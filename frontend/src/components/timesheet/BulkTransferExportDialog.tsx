@@ -103,7 +103,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
                 <p className="text-xs text-muted-foreground">Hoàn tất</p>
               </div>
               <div className="rounded-lg border bg-muted/30 p-3">
-                <p className="text-2xl font-bold text-red-600">{status?.failed ?? 0}</p>
+                <p className="text-2xl font-bold text-red-700">{status?.failed ?? 0}</p>
                 <p className="text-xs text-muted-foreground">Thất bại</p>
               </div>
             </div>
@@ -196,7 +196,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
           {!isOnePay && (
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Chu kỳ trả lương <span className="text-red-600">*</span>
+                Chu kỳ trả lương <span className="text-red-700">*</span>
               </Label>
               <ButtonGroup
                 options={[

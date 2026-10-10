@@ -54,7 +54,7 @@ export const DateStrip = memo(
                 : markedDel
                   ? "bg-red-50 text-red-700 border border-red-200"
                   : hasEntryError
-                    ? "bg-red-50 text-red-600 border border-red-200"
+                    ? "bg-red-50 text-red-700 border border-red-200"
                     : filled
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : weekend

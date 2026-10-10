@@ -599,7 +599,7 @@ export function MobileTimesheetEntry({
                       className={cn(
                         "flex items-center gap-1 text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full",
                         earnings > 3500000
-                          ? "bg-red-100 text-red-600"
+                          ? "bg-red-100 text-red-700"
                           : "bg-emerald-100 text-emerald-700",
                       )}
                     >

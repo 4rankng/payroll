@@ -628,8 +628,8 @@ export function EmployeeProjectSection({
                 }
               }}
             >
-              <Plus className="h-6 w-6 text-muted-foreground group-hover:text-blue-600 mb-2" />
-              <span className="typography-body-small text-foreground/80 group-hover:text-blue-600 text-center">
+              <Plus className="h-6 w-6 text-muted-foreground group-hover:text-blue-700 mb-2" />
+              <span className="typography-body-small text-foreground/80 group-hover:text-blue-700 text-center">
                 Gán thêm dự án
               </span>
             </div>

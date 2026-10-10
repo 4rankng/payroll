@@ -169,7 +169,7 @@ const RequestCard = memo(function RequestCard({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-11 min-w-11 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    className="h-11 min-w-11 px-2 text-xs text-blue-700 hover:text-blue-700 hover:bg-blue-50"
                     onClick={() => onRetry(item.id)}
                     disabled={isRetrying}
                   >
@@ -183,7 +183,7 @@ const RequestCard = memo(function RequestCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-11 min-w-11 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              className="h-11 min-w-11 px-2 text-xs text-blue-700 hover:text-blue-700 hover:bg-blue-50"
               onClick={() => onRetry(item.id)}
               disabled={isRetrying}
             >

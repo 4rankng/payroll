@@ -423,7 +423,7 @@ export const ApiKeysSection = () => {
                       <p className="font-semibold text-amber-950 dark:text-amber-200">
                         Khoá chỉ hiển thị một lần. Hãy sao chép ngay.
                       </p>
-                      <p className="text-xs text-amber-900/80 dark:text-amber-300/80">
+                      <p className="text-xs text-amber-900 dark:text-amber-300/80">
                         Khoá được cấp cho <span className="font-medium underline">{revealed.name}</span>. Bạn sẽ không thể xem lại khoá sau khi đóng thông báo này.
                       </p>
                     </div>

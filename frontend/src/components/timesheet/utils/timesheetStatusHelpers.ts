@@ -34,7 +34,7 @@ export const getStatusColor = (status: TimesheetStatus): StatusColorConfig => {
     rejected: {
       bg: 'bg-red-500',
       border: 'border-red-200',
-      text: 'text-red-600',
+      text: 'text-red-700',
       badge: 'bg-red-50 text-red-700 border-red-200'
     }
   };

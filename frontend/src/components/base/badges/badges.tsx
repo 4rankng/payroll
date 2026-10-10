@@ -15,7 +15,7 @@ import { badgeTypes } from "./badge-types";
  * - Token-collision ports (this app's shadcn names shadow UU semantics):
  *   UU `bg-primary` (white surface) → `bg-white`, UU `text-secondary` →
  *   `text-fg-secondary`, UU `ring-primary` → `ring-utility-gray-200`,
- *   UU `text-gray-500` → `text-utility-gray-500`.
+ *   UU `text-gray-600` → `text-utility-gray-500`.
  * - Only the gray/brand/error/warning/success utility ladders exist in
  *   the W1 token bridge; the gray-blue/blue-light/blue/indigo/purple/
  *   pink/orange color entries stay in the type union but render unstyled

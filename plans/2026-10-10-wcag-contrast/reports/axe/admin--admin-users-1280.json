@@ -1,0 +1,2354 @@
+{
+  "route": "/admin/users",
+  "role": "admin",
+  "viewport": "1280",
+  "results": {
+    "testEngine": {
+      "name": "axe-core",
+      "version": "4.13.0"
+    },
+    "testRunner": {
+      "name": "axe"
+    },
+    "testEnvironment": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.55 Safari/537.36",
+      "windowWidth": 1280,
+      "windowHeight": 800,
+      "orientationAngle": 0,
+      "orientationType": "landscape-primary"
+    },
+    "timestamp": "2026-10-10T10:42:25.826Z",
+    "url": "http://localhost:3000/admin/users",
+    "toolOptions": {
+      "runOnly": {
+        "type": "rule",
+        "values": [
+          "color-contrast"
+        ]
+      },
+      "reporter": "v1"
+    },
+    "inapplicable": [],
+    "passes": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#ffffff",
+                  "bgColor": "#08783e",
+                  "contrastRatio": 5.57,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 5.57"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<button class=\"group relative inlin...\">",
+            "target": [
+              ".bg-brand-solid"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"text-xs font-semibold leading-tight text-muted-foreground\">Quản trị viên</p>",
+            "target": [
+              ".shadow-soft.transition-\\[border-color\\,box-shadow\\,transform\\].hover\\:border-primary\\/25:nth-child(2) > .p-4.flex-col.h-full > .mt-3.min-w-0 > .leading-tight"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "13.5pt (18px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span>2</span>",
+            "target": [
+              ".shadow-soft.transition-\\[border-color\\,box-shadow\\,transform\\].hover\\:border-primary\\/25:nth-child(2) > .p-4.flex-col.h-full > .mt-3.min-w-0 > .font-display.font-extrabold.tabular-nums > span"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"text-xs font-semibold leading-tight text-muted-foreground\">Quản lý</p>",
+            "target": [
+              ".shadow-soft.transition-\\[border-color\\,box-shadow\\,transform\\].hover\\:border-primary\\/25:nth-child(3) > .p-4.flex-col.h-full > .mt-3.min-w-0 > .leading-tight"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "13.5pt (18px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span>22</span>",
+            "target": [
+              ".shadow-soft.transition-\\[border-color\\,box-shadow\\,transform\\].hover\\:border-primary\\/25:nth-child(3) > .p-4.flex-col.h-full > .mt-3.min-w-0 > .font-display.font-extrabold.tabular-nums > span"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"text-xs font-semibold leading-tight text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              ".shadow-soft.transition-\\[border-color\\,box-shadow\\,transform\\].hover\\:border-primary\\/25:nth-child(4) > .p-4.flex-col.h-full > .mt-3.min-w-0 > .leading-tight"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "13.5pt (18px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span>1.485</span>",
+            "target": [
+              ".shadow-soft.transition-\\[border-color\\,box-shadow\\,transform\\].hover\\:border-primary\\/25:nth-child(4) > .p-4.flex-col.h-full > .mt-3.min-w-0 > .font-display.font-extrabold.tabular-nums > span"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"text-sm font-semibold text-foreground\">Danh sách</p>",
+            "target": [
+              ".text-sm.text-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<input type=\"text\" aria-label=\"Tìm theo tên, email...\" placeholder=\"Tìm theo tên, email...\" class=\"h-11 flex-1 min-w-0 bg-transparent outline-none placeholder:text-muted-foreground text-foreground sm:h-8\" value=\"\">",
+            "target": [
+              "input"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span>Vai trò</span>",
+            "target": [
+              ".focus-visible\\:ring-offset-1 > span"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.2pt (10.88px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<th class=\"align-middle [&:has(...\" scope=\"col\" style=\"min-width: 40px;\">",
+            "target": [
+              ".z-20"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#344054",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 10.46,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 10.46"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span>Người dùng</span>",
+            "target": [
+              "th:nth-child(2) > .-ml-3.data-\\[state\\=open\\]\\:bg-accent.h-7 > span"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#344054",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 10.46,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 10.46"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span>Vai trò</span>",
+            "target": [
+              "th:nth-child(3) > .-ml-3.data-\\[state\\=open\\]\\:bg-accent.h-7 > span"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#344054",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 10.46,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 10.46"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span>Hoạt động cuối</span>",
+            "target": [
+              "th:nth-child(4) > .-ml-3.data-\\[state\\=open\\]\\:bg-accent.h-7 > span"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#344054",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 10.46,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 10.46"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span>Ngày tạo</span>",
+            "target": [
+              "th:nth-child(5) > .-ml-3.data-\\[state\\=open\\]\\:bg-accent.h-7 > span"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"text-center typography-label-medium\">1</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(1) > .shadow-\\[4px_0_8px_-4px_rgba\\(0\\,0\\,0\\,0\\.12\\)\\].sticky.z-10 > .text-center.typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-label-medium\">Trần Đăng Đức</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(1) > td:nth-child(2) > .gap-3.flex.items-center > div > .typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium text-muted-foreground\">@ductd2</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(1) > td:nth-child(2) > .gap-3.flex.items-center > div > .text-muted-foreground.typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 17.74,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.74"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"inline-flex items-center whitespace-nowrap rounded-md ring-1 ring-inset px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring bg-transparent text-fg-primary ring-utility-gray-300\">",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(1) > td:nth-child(3) > .rounded-md.px-1\\.5.py-0\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">Chưa đăng nhập</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(1) > td:nth-child(4) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">30/09/2026</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(1) > td:nth-child(5) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"text-center typography-label-medium\">2</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(2) > .shadow-\\[4px_0_8px_-4px_rgba\\(0\\,0\\,0\\,0\\.12\\)\\].sticky.z-10 > .text-center.typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-label-medium\">Đỗ Văn Hùng</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(2) > td:nth-child(2) > .gap-3.flex.items-center > div > .typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium text-muted-foreground\">@hungdv2</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(2) > td:nth-child(2) > .gap-3.flex.items-center > div > .text-muted-foreground.typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 17.74,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.74"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"inline-flex items-center whitespace-nowrap rounded-md ring-1 ring-inset px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring bg-transparent text-fg-primary ring-utility-gray-300\">",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(2) > td:nth-child(3) > .rounded-md.px-1\\.5.py-0\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026 21:51</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(2) > td:nth-child(4) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(2) > td:nth-child(5) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"text-center typography-label-medium\">3</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(3) > .shadow-\\[4px_0_8px_-4px_rgba\\(0\\,0\\,0\\,0\\.12\\)\\].sticky.z-10 > .text-center.typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#eef7f2",
+                  "contrastRatio": 12.44,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 12.44"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-label-medium\">Cháng A Thăm</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(3) > td:nth-child(2) > .gap-3.flex.items-center > div > .typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#eef7f2",
+                  "contrastRatio": 8.13,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.13"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium text-muted-foreground\">@thamca</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(3) > td:nth-child(2) > .gap-3.flex.items-center > div > .text-muted-foreground.typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#eef7f2",
+                  "contrastRatio": 16.24,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 16.24"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"inline-flex items-center whitespace-nowrap rounded-md ring-1 ring-inset px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring bg-transparent text-fg-primary ring-utility-gray-300\">",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(3) > td:nth-child(3) > .rounded-md.px-1\\.5.py-0\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#eef7f2",
+                  "contrastRatio": 12.44,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 12.44"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026 13:43</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(3) > td:nth-child(4) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#eef7f2",
+                  "contrastRatio": 12.44,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 12.44"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(3) > td:nth-child(5) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"text-center typography-label-medium\">4</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(4) > .shadow-\\[4px_0_8px_-4px_rgba\\(0\\,0\\,0\\,0\\.12\\)\\].sticky.z-10 > .text-center.typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-label-medium\">Đào Xuân Vững</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(4) > td:nth-child(2) > .gap-3.flex.items-center > div > .typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium text-muted-foreground\">@vungdx</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(4) > td:nth-child(2) > .gap-3.flex.items-center > div > .text-muted-foreground.typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 17.74,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.74"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"inline-flex items-center whitespace-nowrap rounded-md ring-1 ring-inset px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring bg-transparent text-fg-primary ring-utility-gray-300\">",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(4) > td:nth-child(3) > .rounded-md.px-1\\.5.py-0\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026 16:22</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(4) > td:nth-child(4) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(4) > td:nth-child(5) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"text-center typography-label-medium\">5</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(5) > .shadow-\\[4px_0_8px_-4px_rgba\\(0\\,0\\,0\\,0\\.12\\)\\].sticky.z-10 > .text-center.typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-label-medium\">Ly A Tu</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(5) > td:nth-child(2) > .gap-3.flex.items-center > div > .typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium text-muted-foreground\">@tula3</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(5) > td:nth-child(2) > .gap-3.flex.items-center > div > .text-muted-foreground.typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 17.74,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.74"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"inline-flex items-center whitespace-nowrap rounded-md ring-1 ring-inset px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring bg-transparent text-fg-primary ring-utility-gray-300\">",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(5) > td:nth-child(3) > .rounded-md.px-1\\.5.py-0\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">Chưa đăng nhập</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(5) > td:nth-child(4) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(5) > td:nth-child(5) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"text-center typography-label-medium\">6</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(6) > .shadow-\\[4px_0_8px_-4px_rgba\\(0\\,0\\,0\\,0\\.12\\)\\].sticky.z-10 > .text-center.typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-label-medium\">Nguyễn Đình Việt</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(6) > td:nth-child(2) > .gap-3.flex.items-center > div > .typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium text-muted-foreground\">@vietnd</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(6) > td:nth-child(2) > .gap-3.flex.items-center > div > .text-muted-foreground.typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 17.74,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.74"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"inline-flex items-center whitespace-nowrap rounded-md ring-1 ring-inset px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring bg-transparent text-fg-primary ring-utility-gray-300\">",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(6) > td:nth-child(3) > .rounded-md.px-1\\.5.py-0\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">Chưa đăng nhập</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(6) > td:nth-child(4) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(6) > td:nth-child(5) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"text-center typography-label-medium\">7</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(7) > .shadow-\\[4px_0_8px_-4px_rgba\\(0\\,0\\,0\\,0\\.12\\)\\].sticky.z-10 > .text-center.typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-label-medium\">Nguyễn Trung Nghĩa</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(7) > td:nth-child(2) > .gap-3.flex.items-center > div > .typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium text-muted-foreground\">@nghiant</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(7) > td:nth-child(2) > .gap-3.flex.items-center > div > .text-muted-foreground.typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 17.74,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.74"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"inline-flex items-center whitespace-nowrap rounded-md ring-1 ring-inset px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring bg-transparent text-fg-primary ring-utility-gray-300\">",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(7) > td:nth-child(3) > .rounded-md.px-1\\.5.py-0\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">Chưa đăng nhập</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(7) > td:nth-child(4) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(7) > td:nth-child(5) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"text-center typography-label-medium\">8</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(8) > .shadow-\\[4px_0_8px_-4px_rgba\\(0\\,0\\,0\\,0\\.12\\)\\].sticky.z-10 > .text-center.typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-label-medium\">Nguyễn Văn Hiệu</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(8) > td:nth-child(2) > .gap-3.flex.items-center > div > .typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium text-muted-foreground\">@hieunv2</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(8) > td:nth-child(2) > .gap-3.flex.items-center > div > .text-muted-foreground.typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 17.74,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.74"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"inline-flex items-center whitespace-nowrap rounded-md ring-1 ring-inset px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring bg-transparent text-fg-primary ring-utility-gray-300\">",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(8) > td:nth-child(3) > .rounded-md.px-1\\.5.py-0\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">Chưa đăng nhập</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(8) > td:nth-child(4) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(8) > td:nth-child(5) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"text-center typography-label-medium\">9</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(9) > .shadow-\\[4px_0_8px_-4px_rgba\\(0\\,0\\,0\\,0\\.12\\)\\].sticky.z-10 > .text-center.typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-label-medium\">Nguyễn Thị Nga</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(9) > td:nth-child(2) > .gap-3.flex.items-center > div > .typography-label-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium text-muted-foreground\">@ngant</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(9) > td:nth-child(2) > .gap-3.flex.items-center > div > .text-muted-foreground.typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 17.74,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.74"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"inline-flex items-center whitespace-nowrap rounded-md ring-1 ring-inset px-1.5 py-0.5 text-xs font-medium leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring bg-transparent text-fg-primary ring-utility-gray-300\">",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(9) > td:nth-child(3) > .rounded-md.px-1\\.5.py-0\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">Chưa đăng nhập</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(9) > td:nth-child(4) > .typography-body-medium"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"typography-body-medium\">25/09/2026</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(9) > td:nth-child(5) > .typography-body-medium"
+            ]
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"relative flex items-center gap-2.5 rounded-lg transition-all duration-150 ease-out cursor-pointer select-none h-11 px-2.5 lg:h-10 text-white/85 hover:bg-card/[0.06] hover:text-white\">",
+                    "target": [
+                      "a[href$=\"admin\"] > .text-white\\/85.hover\\:bg-card\\/\\[0\\.06\\].hover\\:text-white"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-none truncate flex-1 transition-all duration-150 font-normal\">Tổng quan</span>",
+            "target": [
+              "a[href$=\"admin\"] > .text-white\\/85.hover\\:bg-card\\/\\[0\\.06\\].hover\\:text-white > .font-normal.text-base.truncate"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".bg-sidebar"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"flex-1 text-left text-xs font-semibold uppercase tracking-[0.1em] text-white/75 group-hover/label:text-white/90 transition-colors\">Quản lý</span>",
+            "target": [
+              "div[data-group=\"quan-ly\"] > .min-h-10.py-1.group\\/label > .tracking-\\[0\\.1em\\].group-hover\\/label\\:text-white\\/90.text-white\\/75"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"relative flex items-center gap-2.5 rounded-lg transition-all duration-150 ease-out cursor-pointer select-none h-11 px-2.5 lg:h-10 bg-card/[0.08] text-white\">",
+                    "target": [
+                      ".bg-card\\/\\[0\\.08\\]"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-none truncate flex-1 transition-all duration-150 font-medium text-white\">Người dùng</span>",
+            "target": [
+              ".text-white.text-base.truncate"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".bg-sidebar"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-none truncate flex-1 transition-all duration-150 font-normal\">Dự án</span>",
+            "target": [
+              "a[href$=\"projects\"] > .text-white\\/85.hover\\:bg-card\\/\\[0\\.06\\].hover\\:text-white > .font-normal.text-base.truncate"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".bg-sidebar"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-none truncate flex-1 transition-all duration-150 font-normal\">Nhân viên</span>",
+            "target": [
+              "a[href$=\"employees\"] > .text-white\\/85.hover\\:bg-card\\/\\[0\\.06\\].hover\\:text-white > .font-normal.text-base.truncate"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".bg-sidebar"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-none truncate flex-1 transition-all duration-150 font-normal\">Bảng công</span>",
+            "target": [
+              "a[href$=\"timesheet\"] > .text-white\\/85.hover\\:bg-card\\/\\[0\\.06\\].hover\\:text-white > .font-normal.text-base.truncate"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".bg-sidebar"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-none truncate flex-1 transition-all duration-150 font-normal\">Ứng lương</span>",
+            "target": [
+              "a[href$=\"advance-payments\"] > .text-white\\/85.hover\\:bg-card\\/\\[0\\.06\\].hover\\:text-white > .font-normal.text-base.truncate"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".bg-sidebar"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"flex-1 text-left text-xs font-semibold uppercase tracking-[0.1em] text-white/75 group-hover/label:text-white/90 transition-colors\">Tài chính</span>",
+            "target": [
+              "div[data-group=\"tai-chinh\"] > .min-h-10.py-1.group\\/label > .tracking-\\[0\\.1em\\].group-hover\\/label\\:text-white\\/90.text-white\\/75"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".bg-sidebar"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"flex-1 text-left text-xs font-semibold uppercase tracking-[0.1em] text-white/75 group-hover/label:text-white/90 transition-colors\">Hệ thống</span>",
+            "target": [
+              "div[data-group=\"he-thong\"] > .min-h-10.py-1.group\\/label > .tracking-\\[0\\.1em\\].group-hover\\/label\\:text-white\\/90.text-white\\/75"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<button type=\"button\" aria-label=\"Tài khoản: Test User\" aria-haspopup=\"menu\" class=\"admin-sidebar-accoun...\" id=\"radix-:rg:\" aria-expanded=\"false\" data-state=\"closed\">",
+                    "target": [
+                      "#radix-\\:rg\\:"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-xs text-white/75 truncate leading-tight uppercase font-semibold tracking-wide\">Xin chào</span>",
+            "target": [
+              ".text-white\\/75.leading-tight.tracking-wide"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<button type=\"button\" aria-label=\"Tài khoản: Test User\" aria-haspopup=\"menu\" class=\"admin-sidebar-accoun...\" id=\"radix-:rg:\" aria-expanded=\"false\" data-state=\"closed\">",
+                    "target": [
+                      "#radix-\\:rg\\:"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base font-medium truncate leading-tight text-white/90\">Test User</span>",
+            "target": [
+              ".leading-tight.text-white\\/90.text-base"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".bg-sidebar"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p class=\"text-xs text-white/70 text-center pt-1 pb-1 tracking-wide select-none\">v1.12.1</p>",
+            "target": [
+              ".text-white\\/70"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "19.2pt (25.6px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "3:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"min-h-full bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,rgba(248,250,249,0.96),#f5f7f9_34rem)]\">",
+                    "target": [
+                      ".min-h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<h1 class=\"text-xl font-bold tracking-tight text-foreground sm:text-2xl\">Người dùng</h1>",
+            "target": [
+              "h1"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"min-h-full bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,rgba(248,250,249,0.96),#f5f7f9_34rem)]\">",
+                    "target": [
+                      ".min-h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p data-slot=\"page-header-description\" class=\"mt-1 text-sm text-muted-foreground leading-normal sm:ml-9\">Quản lý tài khoản người dùng và phân quyền truy cập hệ thống</p>",
+            "target": [
+              ".leading-normal"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<button class=\"group relative h-ful...\" type=\"button\">",
+                    "target": [
+                      ".border-primary\\/30"
+                    ]
+                  },
+                  {
+                    "html": "<div class=\"min-h-full bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,rgba(248,250,249,0.96),#f5f7f9_34rem)]\">",
+                    "target": [
+                      ".min-h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p class=\"text-xs font-semibold leading-tight text-muted-foreground\">Tổng</p>",
+            "target": [
+              ".border-primary\\/30 > .p-4.flex-col.h-full > .mt-3.min-w-0 > .leading-tight"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "13.5pt (18px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<button class=\"group relative h-ful...\" type=\"button\">",
+                    "target": [
+                      ".border-primary\\/30"
+                    ]
+                  },
+                  {
+                    "html": "<div class=\"min-h-full bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,rgba(248,250,249,0.96),#f5f7f9_34rem)]\">",
+                    "target": [
+                      ".min-h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span>1.510</span>",
+            "target": [
+              ".border-primary\\/30 > .p-4.flex-col.h-full > .mt-3.min-w-0 > .font-display.font-extrabold.tabular-nums > span"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"typography-label-medium\">Lữ Văn Quyết</div>",
+            "target": [
+              "tr[data-state=\"false\"]:nth-child(10) > td:nth-child(2) > .gap-3.flex.items-center > div > .typography-label-medium"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          }
+        ]
+      }
+    ],
+    "violations": []
+  }
+}

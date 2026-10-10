@@ -351,8 +351,8 @@ export function TimesheetEntryTable({
 
           const getHourStatusColor = (status: string) => {
             switch (status) {
-              case 'excessive': return 'text-red-600'; // > 16 hours: red
-              case 'exceeded': return 'text-yellow-700'; // > 12 hours: yellow
+              case 'excessive': return 'text-red-700'; // > 16 hours: red
+              case 'exceeded': return 'text-yellow-800'; // > 12 hours: yellow
               default: return 'text-muted-foreground';
             }
           };
@@ -370,7 +370,7 @@ export function TimesheetEntryTable({
               <div className="flex flex-col gap-1">
                 <span className={cn(
                   "font-semibold typography-body-medium",
-                  isValidPosition ? "text-foreground" : "text-gray-500"
+                  isValidPosition ? "text-foreground" : "text-gray-600"
                 )}>
                   {fullname}
                 </span>
@@ -397,7 +397,7 @@ export function TimesheetEntryTable({
                     <TooltipTrigger>
                       <AlertTriangle className={cn(
                         "h-4 w-4",
-                        hourStatus === 'excessive' ? "text-red-600" : "text-yellow-700"
+                        hourStatus === 'excessive' ? "text-red-700" : "text-yellow-800"
                       )} />
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
@@ -508,7 +508,7 @@ export function TimesheetEntryTable({
           <div className="text-center">
             <span className={cn(
               "typography-body-medium",
-              totalAmount > 0 ? (isValidPosition ? "text-green-700" : "text-orange-700") : "text-gray-500"
+              totalAmount > 0 ? (isValidPosition ? "text-green-700" : "text-orange-700") : "text-gray-600"
             )}>
               {totalAmount > 0 ? formatCurrency(totalAmount) : '-'}
             </span>
@@ -574,7 +574,7 @@ export function TimesheetEntryTable({
         <div className="py-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-blue-600" />
+              <Info className="h-4 w-4 text-blue-700" />
               <div>
                 <span className="typography-body-medium text-foreground">Loại ngày: </span>
                 <Badge variant="outline" className={cn("ml-1", getDayTypeBadgeClass(dayType))}>
@@ -625,7 +625,7 @@ export function TimesheetEntryTable({
       <div className="py-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Info className="h-4 w-4 text-blue-600" />
+            <Info className="h-4 w-4 text-blue-700" />
             <div>
               <span className="typography-body-medium text-foreground">Loại ngày: </span>
               <Badge variant="outline" className={cn("ml-1", getDayTypeBadgeClass(dayType))}>

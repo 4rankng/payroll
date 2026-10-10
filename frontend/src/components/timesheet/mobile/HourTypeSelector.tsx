@@ -98,7 +98,7 @@ export function HourTypeSelector({
                   </div>
                 </div>
                 {type.rate > 0 && (
-                  <span className="ml-2 typography-body-small text-blue-600 font-medium">
+                  <span className="ml-2 typography-body-small text-blue-700 font-medium">
                     {formatRate(type.rate)}/h
                   </span>
                 )}

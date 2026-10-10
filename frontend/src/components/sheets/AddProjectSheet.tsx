@@ -244,7 +244,7 @@ export function AddProjectSheet({
                     disabled={isSaving}
                   />
                   {errors.name && (
-                    <p className="text-xs text-red-600 flex items-center gap-1">
+                    <p className="text-xs text-red-700 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {errors.name}
                     </p>
@@ -264,7 +264,7 @@ export function AddProjectSheet({
                     disabled={isSaving}
                   />
                   {errors.client_name && (
-                    <p className="text-xs text-red-600 flex items-center gap-1">
+                    <p className="text-xs text-red-700 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {errors.client_name}
                     </p>
@@ -284,7 +284,7 @@ export function AddProjectSheet({
                     disabled={isSaving}
                   />
                   {errors.code && (
-                    <p className="text-xs text-red-600 flex items-center gap-1">
+                    <p className="text-xs text-red-700 flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {errors.code}
                     </p>

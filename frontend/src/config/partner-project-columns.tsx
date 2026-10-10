@@ -149,7 +149,7 @@ export function createPartnerProjectColumns({
                 e.stopPropagation();
                 onDelete(project);
               }}
-              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="h-8 w-8 p-0 text-red-700 hover:text-red-700 hover:bg-red-50"
               title="Xóa dự án"
             >
               <Trash2 className="h-4 w-4" />

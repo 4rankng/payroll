@@ -1,0 +1,1480 @@
+{
+  "route": "/partner/projects",
+  "role": "partner",
+  "viewport": "1280",
+  "results": {
+    "testEngine": {
+      "name": "axe-core",
+      "version": "4.13.0"
+    },
+    "testRunner": {
+      "name": "axe"
+    },
+    "testEnvironment": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.55 Safari/537.36",
+      "windowWidth": 1280,
+      "windowHeight": 800,
+      "orientationAngle": 0,
+      "orientationType": "landscape-primary"
+    },
+    "timestamp": "2026-10-10T10:43:57.067Z",
+    "url": "http://localhost:3000/partner/projects",
+    "toolOptions": {
+      "runOnly": {
+        "type": "rule",
+        "values": [
+          "color-contrast"
+        ]
+      },
+      "reporter": "v1"
+    },
+    "inapplicable": [],
+    "passes": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "13.5pt (18px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<h1 class=\"text-xl font-bold tracking-tight text-foreground sm:text-2xl\">Dự án</h1>",
+            "target": [
+              "h1"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p data-slot=\"page-header-description\" class=\"mt-1 text-sm text-muted-foreground leading-normal\">Quản lý và theo dõi các dự án được phân quyền</p>",
+            "target": [
+              ".leading-normal"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#ffffff",
+                  "bgColor": "#08783e",
+                  "contrastRatio": 5.57,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 5.57"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<button class=\"group relative inlin...\">",
+            "target": [
+              ".bg-brand-solid"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#fbfcfd",
+                  "contrastRatio": 8.65,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.65"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"text-xs font-semibold text-muted-foreground\">Tổng dự án</p>",
+            "target": [
+              ".bg-muted\\/25.px-3\\.5.border-border\\/60:nth-child(1) > div:nth-child(2) > p:nth-child(1)"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#fbfcfd",
+                  "contrastRatio": 13.23,
+                  "fontSize": "12.0pt (16px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.23"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xl font-bold tabular-nums text-foreground\">4</p>",
+            "target": [
+              ".bg-muted\\/25.px-3\\.5.border-border\\/60:nth-child(1) > div:nth-child(2) > .mt-0\\.5.text-xl.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#fbfcfd",
+                  "contrastRatio": 8.65,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.65"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"text-xs font-semibold text-muted-foreground\">Đang hoạt động</p>",
+            "target": [
+              ".bg-muted\\/25.px-3\\.5.border-border\\/60:nth-child(2) > div:nth-child(2) > p:nth-child(1)"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#fbfcfd",
+                  "contrastRatio": 13.23,
+                  "fontSize": "12.0pt (16px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.23"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xl font-bold tabular-nums text-foreground\">4</p>",
+            "target": [
+              ".bg-muted\\/25.px-3\\.5.border-border\\/60:nth-child(2) > div:nth-child(2) > .mt-0\\.5.text-xl.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#fbfcfd",
+                  "contrastRatio": 8.65,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.65"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"text-xs font-semibold text-muted-foreground\">Đang xem</p>",
+            "target": [
+              ".bg-muted\\/25.px-3\\.5.border-border\\/60:nth-child(3) > div:nth-child(2) > p:nth-child(1)"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#fbfcfd",
+                  "contrastRatio": 13.23,
+                  "fontSize": "12.0pt (16px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.23"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xl font-bold tabular-nums text-foreground\">4</p>",
+            "target": [
+              ".bg-muted\\/25.px-3\\.5.border-border\\/60:nth-child(3) > div:nth-child(2) > .mt-0\\.5.text-xl.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-xs font-semibold text-muted-foreground\">Lọc danh sách</span>",
+            "target": [
+              ".border-border > .font-semibold.text-xs.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span>Trạng thái</span>",
+            "target": [
+              ".focus-visible\\:ring-2 > span"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#f8f9fb",
+                  "contrastRatio": 12.9,
+                  "fontSize": "9.4pt (12.5px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 12.9"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<input type=\"text\" aria-label=\"Tìm tên dự án, mã, khách hàng…\" placeholder=\"Tìm tên dự án, mã, khách hàng…\" class=\"h-11 flex-1 min-w-0 bg-transparent outline-none placeholder:text-muted-foreground text-foreground sm:h-8\" value=\"\">",
+            "target": [
+              "input"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#07693a",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 6.79,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 6.79"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<button type=\"button\" class=\"relative z-20 inline...\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(1) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .z-20.bg-primary\\/8.hover\\:bg-primary"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#07693a",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 6.79,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 6.79"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<button type=\"button\" class=\"relative z-20 inline...\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(2) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .z-20.bg-primary\\/8.hover\\:bg-primary"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#07693a",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 6.79,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 6.79"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<button type=\"button\" class=\"relative z-20 inline...\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(3) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .z-20.bg-primary\\/8.hover\\:bg-primary"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#07693a",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 6.79,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 6.79"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<button type=\"button\" class=\"relative z-20 inline...\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(4) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .z-20.bg-primary\\/8.hover\\:bg-primary"
+            ]
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-snug truncate flex-1 font-medium\">Tổng quan</span>",
+            "target": [
+              "a[href$=\"dashboard\"] > .text-white\\/50.hover\\:text-white\\/80.hover\\:translate-x-0\\.5 > .text-base.leading-snug.font-medium"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"relative flex items-center gap-2.5 rounded-xl transition-all duration-200 cursor-pointer select-none min-h-9 py-1.5 px-3 bg-card/[0.08] text-white shadow-[-3px_0_8px_-2px_hsl(var(--partner-accent)/0.15)]\">",
+                    "target": [
+                      ".bg-card\\/\\[0\\.08\\]"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-snug truncate flex-1 font-semibold text-white\">Dự án</span>",
+            "target": [
+              ".text-base.text-white.leading-snug"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-snug truncate flex-1 font-medium\">Nhân viên</span>",
+            "target": [
+              "a[href$=\"employees\"] > .text-white\\/50.hover\\:text-white\\/80.hover\\:translate-x-0\\.5 > .text-base.leading-snug.font-medium"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-snug truncate flex-1 font-medium\">Bảng công</span>",
+            "target": [
+              "a[href$=\"timesheet\"] > .text-white\\/50.hover\\:text-white\\/80.hover\\:translate-x-0\\.5 > .text-base.leading-snug.font-medium"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-base leading-snug truncate flex-1 font-medium\">Bút toán ngân hàng</span>",
+            "target": [
+              "li:nth-child(5) > a > .text-white\\/50.hover\\:text-white\\/80.hover\\:translate-x-0\\.5 > .text-base.leading-snug.font-medium"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<button type=\"button\" class=\"relative flex items-...\" id=\"radix-:rv:\" aria-haspopup=\"menu\" aria-expanded=\"false\" data-state=\"closed\">",
+                    "target": [
+                      "#radix-\\:rv\\:"
+                    ]
+                  },
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-xs text-white/45 truncate leading-tight uppercase font-semibold tracking-wide\">Xin chào</span>",
+            "target": [
+              ".uppercase"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.4pt (12.5px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<button type=\"button\" class=\"relative flex items-...\" id=\"radix-:rv:\" aria-haspopup=\"menu\" aria-expanded=\"false\" data-state=\"closed\">",
+                    "target": [
+                      "#radix-\\:rv\\:"
+                    ]
+                  },
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"text-[12.5px] font-semibold truncate leading-tight text-white/90\">Test User</span>",
+            "target": [
+              ".text-white\\/90"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div data-sidebar=\"sidebar\" role=\"navigation\" aria-label=\"Điều hướng chính\" class=\"flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow\">",
+                    "target": [
+                      ".h-full"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<p class=\"text-xs text-white/70 text-center pt-1 pb-1 tracking-wide select-none\">v1.12.1</p>",
+            "target": [
+              ".text-white\\/70"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgGradient",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<div class=\"min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.10),transparent_31rem)] px-4 py-5 lg:px-8 lg:py-7\">",
+                    "target": [
+                      ".bg-\\[radial-gradient\\(circle_at_top_right\\,rgba\\(8\\,120\\,62\\,0\\.10\\)\\,transparent_31rem\\)\\]"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined due to a background gradient"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span>Nhấn vào dự án để xem chi tiết</span>",
+            "target": [
+              ".mb-2\\.5 > span"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined due to a background gradient"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.8pt (13px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"flex items-center justify-center rounded-2xl font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_4px_12px_-4px_rgba(15,15,30,0.18)] shrink-0 bg-gradient-to-br from-primary/80 to-primary/50 h-12 w-12 text-[13px] tracking-tight\">EPE</div>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(1) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .from-primary\\/80.to-primary\\/50.shadow-\\[inset_0_1px_0_rgba\\(255\\,255\\,255\\,0\\.18\\)\\,0_4px_12px_-4px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-bold bg-success/10 text-success ring-1 ring-inset ring-success/30\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(1) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > .gap-2.items-center.flex > .rounded-full.py-1.ring-success\\/30"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"font-mono text-xs font-semibold tracking-wide text-muted-foreground\">EX004</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(1) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > .gap-2.items-center.flex > .font-mono.tracking-wide.font-semibold"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "11.3pt (15px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<h3 class=\"mt-2 line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-foreground\">EPE KCN Vsip</h3>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(1) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > h3"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"truncate font-medium text-foreground/85\">EPE</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(1) > .p-4.pl-5.md\\:p-5 > .mt-4.border-y.border-border\\/55 > .text-\\[12px\\].gap-2.text-muted-foreground > .text-foreground\\/85.font-medium.truncate"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"inline-flex items-center gap-1.5 text-xs text-muted-foreground\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(1) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .min-w-0.gap-2.items-center > .inline-flex.gap-1\\.5.text-xs"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"font-bold tabular-nums text-foreground\">30</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(1) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .min-w-0.gap-2.items-center > .inline-flex.gap-1\\.5.text-xs > .tabular-nums.text-foreground.font-bold"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.8pt (13px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"flex items-center justify-center rounded-2xl font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_4px_12px_-4px_rgba(15,15,30,0.18)] shrink-0 bg-gradient-to-br from-primary to-primary/60 h-12 w-12 text-[13px] tracking-tight\">PQC</div>",
+            "target": [
+              ".to-primary\\/60"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-bold bg-success/10 text-success ring-1 ring-inset ring-success/30\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(2) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > .gap-2.items-center.flex > .rounded-full.py-1.ring-success\\/30"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"font-mono text-xs font-semibold tracking-wide text-muted-foreground\">PX002</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(2) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > .gap-2.items-center.flex > .font-mono.tracking-wide.font-semibold"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "11.3pt (15px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<h3 class=\"mt-2 line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-foreground\">PQC Nam Định</h3>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(2) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > h3"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"truncate font-medium text-foreground/85\">PQC</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(2) > .p-4.pl-5.md\\:p-5 > .mt-4.border-y.border-border\\/55 > .text-\\[12px\\].gap-2.text-muted-foreground > .text-foreground\\/85.font-medium.truncate"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"inline-flex items-center gap-1.5 text-xs text-muted-foreground\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(2) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .min-w-0.gap-2.items-center > .inline-flex.gap-1\\.5.text-xs"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "messageKey": "shortTextContent",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element content is too short to determine if it is actual text content"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"font-bold tabular-nums text-foreground\">1</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(2) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .min-w-0.gap-2.items-center > .inline-flex.gap-1\\.5.text-xs > .tabular-nums.text-foreground.font-bold"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element content is too short to determine if it is actual text content"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.8pt (13px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"flex items-center justify-center rounded-2xl font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_4px_12px_-4px_rgba(15,15,30,0.18)] shrink-0 bg-gradient-to-br from-primary to-primary/70 h-12 w-12 text-[13px] tracking-tight\">EVA</div>",
+            "target": [
+              ".to-primary\\/70"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-bold bg-success/10 text-success ring-1 ring-inset ring-success/30\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(3) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > .gap-2.items-center.flex > .rounded-full.py-1.ring-success\\/30"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"font-mono text-xs font-semibold tracking-wide text-muted-foreground\">EX003</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(3) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > .gap-2.items-center.flex > .font-mono.tracking-wide.font-semibold"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "11.3pt (15px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<h3 class=\"mt-2 line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-foreground\">EVA KCN Vsip</h3>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(3) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > h3"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"truncate font-medium text-foreground/85\">EVA</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(3) > .p-4.pl-5.md\\:p-5 > .mt-4.border-y.border-border\\/55 > .text-\\[12px\\].gap-2.text-muted-foreground > .text-foreground\\/85.font-medium.truncate"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"inline-flex items-center gap-1.5 text-xs text-muted-foreground\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(3) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .min-w-0.gap-2.items-center > .inline-flex.gap-1\\.5.text-xs"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"font-bold tabular-nums text-foreground\">224</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(3) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .min-w-0.gap-2.items-center > .inline-flex.gap-1\\.5.text-xs > .tabular-nums.text-foreground.font-bold"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.8pt (13px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<div class=\"flex items-center justify-center rounded-2xl font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_4px_12px_-4px_rgba(15,15,30,0.18)] shrink-0 bg-gradient-to-br from-primary/80 to-primary/50 h-12 w-12 text-[13px] tracking-tight\">PQC</div>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(4) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .from-primary\\/80.to-primary\\/50.shadow-\\[inset_0_1px_0_rgba\\(255\\,255\\,255\\,0\\.18\\)\\,0_4px_12px_-4px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-bold bg-success/10 text-success ring-1 ring-inset ring-success/30\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(4) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > .gap-2.items-center.flex > .rounded-full.py-1.ring-success\\/30"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"font-mono text-xs font-semibold tracking-wide text-muted-foreground\">PX001</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(4) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > .gap-2.items-center.flex > .font-mono.tracking-wide.font-semibold"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "11.3pt (15px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<h3 class=\"mt-2 line-clamp-2 text-[15px] font-bold leading-snug tracking-tight text-foreground\">PQC Hải Phòng</h3>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(4) > .p-4.pl-5.md\\:p-5 > .items-start.justify-between.gap-3 > .items-start.gap-3.min-w-0 > .min-w-0 > h3"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"truncate font-medium text-foreground/85\">PQC</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(4) > .p-4.pl-5.md\\:p-5 > .mt-4.border-y.border-border\\/55 > .text-\\[12px\\].gap-2.text-muted-foreground > .text-foreground\\/85.font-medium.truncate"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"inline-flex items-center gap-1.5 text-xs text-muted-foreground\">",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(4) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .min-w-0.gap-2.items-center > .inline-flex.gap-1\\.5.text-xs"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "messageKey": "bgOverlap",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it is overlapped by another element"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"font-bold tabular-nums text-foreground\">38</span>",
+            "target": [
+              ".border-border\\/70.shadow-\\[0_1px_2px_-1px_rgba\\(15\\,15\\,30\\,0\\.06\\)\\,0_8px_18px_-16px_rgba\\(15\\,15\\,30\\,0\\.18\\)\\].hover\\:-translate-y-0\\.5:nth-child(4) > .p-4.pl-5.md\\:p-5 > .mt-3.justify-between.gap-3 > .min-w-0.gap-2.items-center > .inline-flex.gap-1\\.5.text-xs > .tabular-nums.text-foreground.font-bold"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+          }
+        ]
+      }
+    ],
+    "violations": []
+  }
+}

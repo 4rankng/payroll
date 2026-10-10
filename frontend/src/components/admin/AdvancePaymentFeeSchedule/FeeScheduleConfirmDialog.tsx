@@ -154,7 +154,7 @@ export const FeeScheduleConfirmDialog = ({
                           row.direction === "decrease" &&
                             "text-emerald-700 dark:text-emerald-400",
                           row.direction === "increase" &&
-                            "text-red-600 dark:text-red-400",
+                            "text-red-700 dark:text-red-400",
                           row.direction === "same" && "text-muted-foreground",
                           row.direction === "new" && "text-muted-foreground",
                         )}
@@ -192,7 +192,7 @@ export const FeeScheduleConfirmDialog = ({
                   Xanh
                 </span>{" "}
                 = phí giảm,{" "}
-                <span className="text-red-600 dark:text-red-400">đỏ</span> =
+                <span className="text-red-700 dark:text-red-400">đỏ</span> =
                 phí tăng so với cấu hình hiện tại.
               </p>
             )}

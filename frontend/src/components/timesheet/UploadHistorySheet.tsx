@@ -73,7 +73,7 @@ function ImportCard({ item, projectMap, onDownload }: {
     <div className="rounded-xl border bg-card p-4 space-y-3 hover:bg-muted/30 transition-colors">
       <div className="flex items-start gap-3">
         <div className="shrink-0 rounded-lg bg-blue-50 p-2 mt-0.5">
-          <FileSpreadsheet className="h-4 w-4 text-blue-600" />
+          <FileSpreadsheet className="h-4 w-4 text-blue-700" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium leading-snug truncate" title={item.original_name}>
@@ -115,7 +115,7 @@ function ImportCard({ item, projectMap, onDownload }: {
           <CheckCircle2 className="h-3 w-3" />
           {item.created_count} tạo mới
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-700 border border-yellow-100">
+        <span className="inline-flex items-center gap-1 rounded-full bg-yellow-50 px-2.5 py-1 text-xs font-medium text-yellow-800 border border-yellow-100">
           <MinusCircle className="h-3 w-3" />
           {item.skipped_count} bỏ qua
         </span>

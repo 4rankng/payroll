@@ -236,7 +236,7 @@ export const TimesheetsExportDialog = memo(function TimesheetsExportDialog({
           </div>
 
           {hasDateError && (
-            <div className="flex items-center gap-1.5 text-xs text-red-600">
+            <div className="flex items-center gap-1.5 text-xs text-red-700">
               <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
               <span>Ngày kết thúc phải sau ngày bắt đầu</span>
             </div>

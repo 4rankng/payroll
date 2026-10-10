@@ -108,9 +108,9 @@ export function daysUntil(dateString: string): number {
  * Get color indicator for upcoming payment
  */
 export function getPaymentUrgencyColor(daysUntil: number): string {
-  if (daysUntil < 0) return 'text-red-600'; // Overdue
-  if (daysUntil <= 7) return 'text-orange-600'; // Due soon
-  if (daysUntil <= 30) return 'text-yellow-600'; // Coming up
+  if (daysUntil < 0) return 'text-red-700'; // Overdue
+  if (daysUntil <= 7) return 'text-orange-700'; // Due soon
+  if (daysUntil <= 30) return 'text-yellow-800'; // Coming up
   return 'text-gray-600'; // Future
 }
 

@@ -20,7 +20,7 @@ const EnvironmentBannerComponent = ({ headline, detail }: EnvironmentBannerProps
     <div className="mx-auto flex max-w-6xl items-center justify-center gap-3 px-4 py-[4px] text-sm font-semibold text-foreground">
       <span className="tracking-wide">{headline}</span>
       {detail ? (
-        <span className="text-xs font-normal text-slate-800/90">{detail}</span>
+        <span className="text-xs font-normal text-slate-800">{detail}</span>
       ) : null}
     </div>
   </div>

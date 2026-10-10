@@ -41,7 +41,7 @@ export function OffDaysPicker({ value, onChange, disabled }: OffDaysPickerProps)
               className={cn(
                 'w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-xs font-semibold border transition-colors shrink-0',
                 active
-                  ? 'bg-red-100 border-red-400 text-red-600'
+                  ? 'bg-red-100 border-red-400 text-red-700'
                   : 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}

@@ -520,7 +520,7 @@ function TransactionFormComponent({
                     size="sm"
                     onClick={handleRemoveFile}
                     aria-label="Xóa chứng từ đã chọn"
-                    className="h-11 w-11 shrink-0 p-0 text-muted-foreground hover:text-red-600"
+                    className="h-11 w-11 shrink-0 p-0 text-muted-foreground hover:text-red-700"
                   >
                     <X className="h-4 w-4" />
                   </Button>

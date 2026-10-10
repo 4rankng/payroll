@@ -170,7 +170,7 @@ export function DisburseLoanModal({
                   className={errors.disbursement_date ? 'border-red-500' : ''}
                 />
                 {errors.disbursement_date && (
-                  <p className="text-xs text-red-600">{errors.disbursement_date.message}</p>
+                  <p className="text-xs text-red-700">{errors.disbursement_date.message}</p>
                 )}
               </div>
 

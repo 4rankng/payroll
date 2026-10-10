@@ -102,24 +102,24 @@ const HistoryRow = memo(function HistoryRow({ history, onClick, isLast }: Histor
             </Badge>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-500">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-slate-600">
           <span className="tabular-nums">
             {history.completed_txn}/{history.total_txn} thành công
           </span>
-          <span className="text-slate-500">·</span>
+          <span className="text-slate-600">·</span>
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3 shrink-0" />
             {formatDate(history.uploaded_at)}
           </span>
           <span className="hidden items-center gap-1 sm:flex">
-            <span className="text-slate-500">·</span>
+            <span className="text-slate-600">·</span>
             <User className="w-3 h-3 shrink-0" />
             <span className="max-w-[140px] break-words">{history.uploaded_by}</span>
           </span>
         </div>
       </div>
 
-      <ChevronRight className="w-3.5 h-3.5 text-slate-500 shrink-0 transition-transform group-hover:translate-x-0.5" />
+      <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0 transition-transform group-hover:translate-x-0.5" />
     </button>
   );
 });
@@ -201,7 +201,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
           <div className="flex items-start justify-between gap-3">
             <SheetHeader className="text-left space-y-0">
               <SheetTitle className="text-sm font-semibold">Lịch sử chuyển lô</SheetTitle>
-              <SheetDescription className="text-xs text-slate-500">
+              <SheetDescription className="text-xs text-slate-600">
                 Danh sách file kết quả đã tải lên
               </SheetDescription>
             </SheetHeader>
@@ -209,7 +209,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-11 w-11 shrink-0 rounded-xl text-slate-500 hover:text-foreground hover:bg-slate-100"
+                className="h-11 w-11 shrink-0 rounded-xl text-slate-600 hover:text-foreground hover:bg-slate-100"
                 aria-label="Đóng"
               >
                 <X className="h-3.5 w-3.5" />
@@ -296,7 +296,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
               {hasMore && (
                 <div ref={loadMoreRef} className="py-3 flex justify-center">
                   {isFetching && (
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-600">
                       <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       Đang tải thêm...
                     </div>
@@ -305,7 +305,7 @@ export const BulkTransferHistoryDialog = memo(function BulkTransferHistoryDialog
               )}
 
               {!hasMore && histories.length > 0 && (
-                <p className="py-3 text-center text-xs text-slate-500">
+                <p className="py-3 text-center text-xs text-slate-600">
                   {histories.length} kết quả
                 </p>
               )}

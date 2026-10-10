@@ -67,7 +67,7 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
     const payable = by_account.payable?.net_amount ?? 0;
     return [
       { label: 'Phải thu', value: formatCurrency(by_account.receivable?.net_amount ?? 0) },
-      { label: 'Phải trả', value: formatCurrency(payable), valueClassName: payable < 0 ? 'text-red-600' : undefined },
+      { label: 'Phải trả', value: formatCurrency(payable), valueClassName: payable < 0 ? 'text-red-700' : undefined },
       { label: 'Vay nợ', value: formatCurrency(by_account.loan?.net_amount ?? 0) },
     ];
   }, [ledgerSummary]);

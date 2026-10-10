@@ -203,8 +203,8 @@ func TestBCCNameIndex_Lookup(t *testing.T) {
 	assert.False(t, ambiguous)
 }
 
-func weeklyBCCAssignmentFixtures() (byCCCD map[string]*domain.ProjectEmployee, byName bccNameIndex, empNames map[uint]string) {
-	assignments := []*domain.ProjectEmployee{
+func weeklyBCCAssignmentFixtures() (byCCCD map[string]*domain.ProjectEmployee, assignments []*domain.ProjectEmployee, empNames map[uint]string) {
+	assignments = []*domain.ProjectEmployee{
 		{ID: 11, EmployeeID: 101, EmployeeCCCD: "031207009984", EmployeeName: "Nguyễn Đức Phúc", Position: "phổ thông"},
 		{ID: 12, EmployeeID: 102, EmployeeCCCD: "031207007051", EmployeeName: "Mai Ngọc Trung", Position: "phổ thông"},
 	}
@@ -214,7 +214,7 @@ func weeklyBCCAssignmentFixtures() (byCCCD map[string]*domain.ProjectEmployee, b
 		byCCCD[a.EmployeeCCCD] = a
 		empNames[a.EmployeeID] = a.EmployeeName
 	}
-	return byCCCD, newBCCNameIndex(assignments), empNames
+	return byCCCD, assignments, empNames
 }
 
 func weeklyBCCFlatRates() map[string]int {
@@ -226,7 +226,7 @@ func weeklyBCCFlatRates() map[string]int {
 // project carries it — the app used to report "Không tìm thấy nhân viên" for an
 // employee who plainly exists in the project.
 func TestBuildWeeklyBCCEntries_ResolvesNameOnlyRow(t *testing.T) {
-	byCCCD, byName, empNames := weeklyBCCAssignmentFixtures()
+	byCCCD, assignments, empNames := weeklyBCCAssignmentFixtures()
 	parsed := &excelparser.WeeklyBCCImportData{Sheets: []excelparser.WeeklyBCCSheetData{{
 		ShiftType: "HC",
 		Employees: []excelparser.WeeklyBCCEmployeeData{
@@ -240,7 +240,7 @@ func TestBuildWeeklyBCCEntries_ResolvesNameOnlyRow(t *testing.T) {
 
 	entries, _, totalRows, errs := (&BCCImportService{}).buildWeeklyBCCEntries(
 		context.Background(), parsed, 2026, time.October, time.UTC,
-		byCCCD, byName, empNames, nil, map[string]struct{}{},
+		newWeeklyRowResolver(byCCCD, assignments, nil), empNames, nil, map[string]struct{}{},
 		func(time.Time) map[string]int { return weeklyBCCFlatRates() }, 7, false)
 
 	assert.Empty(t, errs)
@@ -261,7 +261,7 @@ func TestBuildWeeklyBCCEntries_NameOnlyRowAmbiguous(t *testing.T) {
 	shared := &domain.ProjectEmployee{EmployeeID: 201, EmployeeCCCD: "000000000001", EmployeeName: "Nguyễn Văn An", Position: "phổ thông"}
 	other := &domain.ProjectEmployee{EmployeeID: 202, EmployeeCCCD: "000000000002", EmployeeName: "Nguyễn Văn An", Position: "phổ thông"}
 	byCCCD := map[string]*domain.ProjectEmployee{"000000000001": shared, "000000000002": other}
-	byName := newBCCNameIndex([]*domain.ProjectEmployee{shared, other})
+	assignments := []*domain.ProjectEmployee{shared, other}
 	empNames := map[uint]string{201: "Nguyễn Văn An", 202: "Nguyễn Văn An"}
 
 	row := excelparser.WeeklyBCCEmployeeData{FullName: "Nguyễn Văn An", Entries: []excelparser.WeeklyBCCEntryData{{Date: dateOf(2026, time.October, 6), Hours: 2}}}
@@ -272,7 +272,7 @@ func TestBuildWeeklyBCCEntries_NameOnlyRowAmbiguous(t *testing.T) {
 
 	entries, _, totalRows, errs := (&BCCImportService{}).buildWeeklyBCCEntries(
 		context.Background(), parsed, 2026, time.October, time.UTC,
-		byCCCD, byName, empNames, nil, map[string]struct{}{},
+		newWeeklyRowResolver(byCCCD, assignments, nil), empNames, nil, map[string]struct{}{},
 		func(time.Time) map[string]int { return weeklyBCCFlatRates() }, 7, false)
 
 	assert.Empty(t, entries)
@@ -288,7 +288,7 @@ func TestBuildWeeklyBCCEntries_NameOnlyRowAmbiguous(t *testing.T) {
 // A name-only row that matches nobody keeps failing, but the reason names the
 // blank identifier cell the partner has to fill in.
 func TestBuildWeeklyBCCEntries_NameOnlyRowNotFound(t *testing.T) {
-	byCCCD, byName, empNames := weeklyBCCAssignmentFixtures()
+	byCCCD, assignments, empNames := weeklyBCCAssignmentFixtures()
 	parsed := &excelparser.WeeklyBCCImportData{Sheets: []excelparser.WeeklyBCCSheetData{{
 		ShiftType: "HC",
 		Employees: []excelparser.WeeklyBCCEmployeeData{
@@ -298,7 +298,7 @@ func TestBuildWeeklyBCCEntries_NameOnlyRowNotFound(t *testing.T) {
 
 	entries, _, _, errs := (&BCCImportService{}).buildWeeklyBCCEntries(
 		context.Background(), parsed, 2026, time.October, time.UTC,
-		byCCCD, byName, empNames, nil, map[string]struct{}{},
+		newWeeklyRowResolver(byCCCD, assignments, nil), empNames, nil, map[string]struct{}{},
 		func(time.Time) map[string]int { return weeklyBCCFlatRates() }, 7, false)
 
 	assert.Empty(t, entries)
@@ -314,7 +314,7 @@ func TestBuildWeeklyBCCEntries_NameOnlyRowNotFound(t *testing.T) {
 // employee's CCCD maps to a different person in the STK sheet, the row fails
 // instead of posting hours against the wrong profile.
 func TestBuildWeeklyBCCEntries_NameOnlyRowCrossCheckedAgainstSTK(t *testing.T) {
-	byCCCD, byName, empNames := weeklyBCCAssignmentFixtures()
+	byCCCD, assignments, empNames := weeklyBCCAssignmentFixtures()
 	parsed := &excelparser.WeeklyBCCImportData{Sheets: []excelparser.WeeklyBCCSheetData{{
 		ShiftType: "HC",
 		Employees: []excelparser.WeeklyBCCEmployeeData{
@@ -325,7 +325,7 @@ func TestBuildWeeklyBCCEntries_NameOnlyRowCrossCheckedAgainstSTK(t *testing.T) {
 
 	entries, _, _, errs := (&BCCImportService{}).buildWeeklyBCCEntries(
 		context.Background(), parsed, 2026, time.October, time.UTC,
-		byCCCD, byName, empNames, stkNameByCCCD, map[string]struct{}{},
+		newWeeklyRowResolver(byCCCD, assignments, nil), empNames, stkNameByCCCD, map[string]struct{}{},
 		func(time.Time) map[string]int { return weeklyBCCFlatRates() }, 7, false)
 
 	assert.Empty(t, entries)
@@ -338,7 +338,7 @@ func TestBuildWeeklyBCCEntries_NameOnlyRowCrossCheckedAgainstSTK(t *testing.T) {
 // A name-resolved row must not resurrect an employee whose STK processing
 // already failed (the blocked set is keyed by CCCD).
 func TestBuildWeeklyBCCEntries_NameOnlyRowSkipsBlockedEmployee(t *testing.T) {
-	byCCCD, byName, empNames := weeklyBCCAssignmentFixtures()
+	byCCCD, assignments, empNames := weeklyBCCAssignmentFixtures()
 	parsed := &excelparser.WeeklyBCCImportData{Sheets: []excelparser.WeeklyBCCSheetData{{
 		ShiftType: "HC",
 		Employees: []excelparser.WeeklyBCCEmployeeData{
@@ -349,7 +349,7 @@ func TestBuildWeeklyBCCEntries_NameOnlyRowSkipsBlockedEmployee(t *testing.T) {
 
 	entries, _, totalRows, errs := (&BCCImportService{}).buildWeeklyBCCEntries(
 		context.Background(), parsed, 2026, time.October, time.UTC,
-		byCCCD, byName, empNames, nil, blocked,
+		newWeeklyRowResolver(byCCCD, assignments, nil), empNames, nil, blocked,
 		func(time.Time) map[string]int { return weeklyBCCFlatRates() }, 7, false)
 
 	assert.Empty(t, entries)
@@ -358,7 +358,7 @@ func TestBuildWeeklyBCCEntries_NameOnlyRowSkipsBlockedEmployee(t *testing.T) {
 }
 
 func TestBuildWeeklyPaymentEntries_ResolvesNameOnlyRow(t *testing.T) {
-	byCCCD, byName, empNames := weeklyBCCAssignmentFixtures()
+	byCCCD, assignments, empNames := weeklyBCCAssignmentFixtures()
 	byCCCD["031207007051"].Position = "Lương 520"
 	parsed := &excelparser.WeeklyPaymentImportData{Sheets: []excelparser.WeeklyPaymentSheetData{{
 		Position: "Lương 520",
@@ -370,7 +370,7 @@ func TestBuildWeeklyPaymentEntries_ResolvesNameOnlyRow(t *testing.T) {
 
 	entries, _, totalRows, errs := (&BCCImportService{}).buildWeeklyPaymentEntries(
 		context.Background(), parsed, 2026, time.October, time.UTC,
-		byCCCD, byName, empNames, nil, map[string]struct{}{},
+		newWeeklyRowResolver(byCCCD, assignments, nil), empNames, nil, map[string]struct{}{},
 		func(time.Time) map[string]int { return flatRates }, 7, false)
 
 	assert.Empty(t, errs)
@@ -392,7 +392,7 @@ func TestBuildWeeklyBCCEntries_BlankCodeNeverMatchesCCCDLessAssignment(t *testin
 	cccdLess := &domain.ProjectEmployee{ID: 21, EmployeeID: 301, EmployeeName: "Nguyễn Không Có CCCD", Position: "phổ thông"}
 	catchAll := &domain.ProjectEmployee{ID: 22, EmployeeID: 302, EmployeeCCCD: "031207007051", EmployeeName: "Mai Ngọc Trung", Position: "phổ thông"}
 	byCCCD := map[string]*domain.ProjectEmployee{"": cccdLess, "031207007051": catchAll}
-	byName := newBCCNameIndex([]*domain.ProjectEmployee{cccdLess, catchAll})
+	assignments := []*domain.ProjectEmployee{cccdLess, catchAll}
 	empNames := map[uint]string{301: cccdLess.EmployeeName, 302: catchAll.EmployeeName}
 
 	parsed := &excelparser.WeeklyBCCImportData{Sheets: []excelparser.WeeklyBCCSheetData{{
@@ -404,7 +404,7 @@ func TestBuildWeeklyBCCEntries_BlankCodeNeverMatchesCCCDLessAssignment(t *testin
 
 	entries, _, _, errs := (&BCCImportService{}).buildWeeklyBCCEntries(
 		context.Background(), parsed, 2026, time.October, time.UTC,
-		byCCCD, byName, empNames, nil, map[string]struct{}{},
+		newWeeklyRowResolver(byCCCD, assignments, nil), empNames, nil, map[string]struct{}{},
 		func(time.Time) map[string]int { return weeklyBCCFlatRates() }, 7, false)
 
 	assert.Empty(t, entries)
@@ -415,7 +415,7 @@ func TestBuildWeeklyBCCEntries_BlankCodeNeverMatchesCCCDLessAssignment(t *testin
 // name matches an assignment: a wrong identifier must be corrected in the file,
 // not silently re-pointed at another employee.
 func TestBuildWeeklyBCCEntries_UnknownCodeDoesNotFallBackToName(t *testing.T) {
-	byCCCD, byName, empNames := weeklyBCCAssignmentFixtures()
+	byCCCD, assignments, empNames := weeklyBCCAssignmentFixtures()
 	parsed := &excelparser.WeeklyBCCImportData{Sheets: []excelparser.WeeklyBCCSheetData{{
 		ShiftType: "HC",
 		Employees: []excelparser.WeeklyBCCEmployeeData{
@@ -425,12 +425,92 @@ func TestBuildWeeklyBCCEntries_UnknownCodeDoesNotFallBackToName(t *testing.T) {
 
 	entries, _, _, errs := (&BCCImportService{}).buildWeeklyBCCEntries(
 		context.Background(), parsed, 2026, time.October, time.UTC,
-		byCCCD, byName, empNames, nil, map[string]struct{}{},
+		newWeeklyRowResolver(byCCCD, assignments, nil), empNames, nil, map[string]struct{}{},
 		func(time.Time) map[string]int { return weeklyBCCFlatRates() }, 7, false)
 
 	assert.Empty(t, entries)
 	if assert.Len(t, errs, 1) {
 		assert.Equal(t, "không tìm thấy nhân viên với CCCD \"999999999999\" trong dự án", errs[0].Reason)
+	}
+}
+
+func TestWeeklySTKCCCDLookup_UniqueNamesOnly(t *testing.T) {
+	rows := []excelparser.STKRow{
+		{CCCD: "000000000001", FullName: "Mai Ngọc Trung"},
+		{CCCD: "000000000002", FullName: "Nguyễn Văn An"},
+		{CCCD: "000000000003", FullName: "Nguyễn Văn An"}, // duplicated name
+		{CCCD: "", FullName: "Thiếu CCCD"},
+		{CCCD: "000000000004", FullName: ""},
+	}
+	lookup := weeklySTKCCCDLookup(rows)
+
+	assert.Equal(t, "000000000001", lookup["mai ngọc trung"])
+	assert.Equal(t, "000000000001", lookup[bccNormName(norm.NFD.String("Mai Ngọc Trung"))])
+	assert.NotContains(t, lookup, "nguyễn văn an") // duplicates must not resolve
+	assert.Len(t, lookup, 1)
+}
+
+// The row's identifier comes from the workbook before its name: an assignment
+// whose stored snapshot name drifted from the sheet (typo, accent, rename)
+// still resolves through the CCCD the STK sheet carries.
+func TestBuildWeeklyBCCEntries_ResolvesBlankCodeFromSTKSheet(t *testing.T) {
+	// Snapshot name on the assignment carries no diacritics, so the name index
+	// cannot match the sheet's "Mai Ngọc Trung".
+	assignment := &domain.ProjectEmployee{ID: 12, EmployeeID: 102, EmployeeCCCD: "031207007051", EmployeeName: "Mai Ngoc Trung", Position: "phổ thông"}
+	byCCCD := map[string]*domain.ProjectEmployee{"031207007051": assignment}
+	assignments := []*domain.ProjectEmployee{assignment}
+	empNames := map[uint]string{102: assignment.EmployeeName}
+	stkRows := []excelparser.STKRow{{CCCD: "031207007051", FullName: "Mai Ngọc Trung"}}
+
+	parsed := &excelparser.WeeklyBCCImportData{Sheets: []excelparser.WeeklyBCCSheetData{{
+		ShiftType: "HC",
+		Employees: []excelparser.WeeklyBCCEmployeeData{
+			{FullName: "Mai Ngọc Trung", Entries: []excelparser.WeeklyBCCEntryData{{Date: dateOf(2026, time.October, 6), Hours: 2}}},
+		},
+	}}}
+
+	entries, _, _, errs := (&BCCImportService{}).buildWeeklyBCCEntries(
+		context.Background(), parsed, 2026, time.October, time.UTC,
+		newWeeklyRowResolver(byCCCD, assignments, stkRows), empNames,
+		weeklySTKNameLookup(stkRows), map[string]struct{}{},
+		func(time.Time) map[string]int { return weeklyBCCFlatRates() }, 7, false)
+
+	assert.Empty(t, errs)
+	if assert.Len(t, entries, 1) {
+		assert.Equal(t, uint(102), entries[0].EmployeeID)
+	}
+}
+
+// A name listed twice in the STK sheet identifies nobody, so it must not be
+// used to pick an employee — with two same-name assignments in the project the
+// row stays an error instead of posting hours against the wrong person.
+func TestBuildWeeklyBCCEntries_DuplicateNameInSTKDoesNotResolve(t *testing.T) {
+	first := &domain.ProjectEmployee{ID: 31, EmployeeID: 401, EmployeeCCCD: "000000000001", EmployeeName: "Nguyễn Văn An", Position: "phổ thông"}
+	second := &domain.ProjectEmployee{ID: 32, EmployeeID: 402, EmployeeCCCD: "000000000002", EmployeeName: "Nguyễn Văn An", Position: "phổ thông"}
+	byCCCD := map[string]*domain.ProjectEmployee{"000000000001": first, "000000000002": second}
+	assignments := []*domain.ProjectEmployee{first, second}
+	empNames := map[uint]string{401: first.EmployeeName, 402: second.EmployeeName}
+	stkRows := []excelparser.STKRow{
+		{CCCD: "000000000001", FullName: "Nguyễn Văn An"},
+		{CCCD: "000000000002", FullName: "Nguyễn Văn An"},
+	}
+
+	parsed := &excelparser.WeeklyBCCImportData{Sheets: []excelparser.WeeklyBCCSheetData{{
+		ShiftType: "HC",
+		Employees: []excelparser.WeeklyBCCEmployeeData{
+			{FullName: "Nguyễn Văn An", Entries: []excelparser.WeeklyBCCEntryData{{Date: dateOf(2026, time.October, 6), Hours: 2}}},
+		},
+	}}}
+
+	entries, _, _, errs := (&BCCImportService{}).buildWeeklyBCCEntries(
+		context.Background(), parsed, 2026, time.October, time.UTC,
+		newWeeklyRowResolver(byCCCD, assignments, stkRows), empNames,
+		weeklySTKNameLookup(stkRows), map[string]struct{}{},
+		func(time.Time) map[string]int { return weeklyBCCFlatRates() }, 7, false)
+
+	assert.Empty(t, entries)
+	if assert.Len(t, errs, 1) {
+		assert.Equal(t, "dòng thiếu mã CCCD và có nhiều nhân viên tên \"Nguyễn Văn An\" trong dự án", errs[0].Reason)
 	}
 }
 

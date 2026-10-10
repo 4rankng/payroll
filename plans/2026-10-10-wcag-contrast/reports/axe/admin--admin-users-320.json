@@ -1,0 +1,2005 @@
+{
+  "route": "/admin/users",
+  "role": "admin",
+  "viewport": "320",
+  "results": {
+    "testEngine": {
+      "name": "axe-core",
+      "version": "4.13.0"
+    },
+    "testRunner": {
+      "name": "axe"
+    },
+    "testEnvironment": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.55 Safari/537.36",
+      "windowWidth": 320,
+      "windowHeight": 568,
+      "orientationAngle": 0,
+      "orientationType": "landscape-primary"
+    },
+    "timestamp": "2026-10-10T10:42:43.265Z",
+    "url": "http://localhost:3000/admin/users",
+    "toolOptions": {
+      "runOnly": {
+        "type": "rule",
+        "values": [
+          "color-contrast"
+        ]
+      },
+      "reporter": "v1"
+    },
+    "inapplicable": [],
+    "passes": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#020617",
+                  "bgColor": "#e0e6e2",
+                  "contrastRatio": 15.93,
+                  "fontSize": "12.8pt (17px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 15.93"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<h1 class=\"break-words font-display text-[clamp(1.0625rem,4.6vw,1.1875rem)] font-extrabold leading-tight tracking-normal text-slate-950\">Người dùng</h1>",
+            "target": [
+              "h1"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#ffffff",
+                  "bgColor": "#07693a",
+                  "contrastRatio": 6.79,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 6.79"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<button class=\"group relative inlin...\">",
+            "target": [
+              ".bg-brand-solid"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-sm font-bold leading-none tabular-nums text-foreground\">1.510</span>",
+            "target": [
+              ".min-h-16.px-1\\.5.py-2\\.5:nth-child(1) > .font-bold.leading-none.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-xs leading-tight text-muted-foreground\">Tổng</span>",
+            "target": [
+              ".min-h-16.px-1\\.5.py-2\\.5:nth-child(1) > .leading-tight.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-sm font-bold leading-none tabular-nums text-foreground\">2</span>",
+            "target": [
+              ".border-l.min-h-16.px-1\\.5:nth-child(2) > .font-bold.leading-none.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-xs leading-tight text-muted-foreground\">Quản trị</span>",
+            "target": [
+              ".border-l.min-h-16.px-1\\.5:nth-child(2) > .leading-tight.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-sm font-bold leading-none tabular-nums text-foreground\">22</span>",
+            "target": [
+              ".border-l.min-h-16.px-1\\.5:nth-child(3) > .font-bold.leading-none.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-xs leading-tight text-muted-foreground\">Quản lý</span>",
+            "target": [
+              ".border-l.min-h-16.px-1\\.5:nth-child(3) > .leading-tight.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-sm font-bold leading-none tabular-nums text-foreground\">1.485</span>",
+            "target": [
+              ".border-l.min-h-16.px-1\\.5:nth-child(4) > .font-bold.leading-none.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-xs leading-tight text-muted-foreground\">Nhân viên</span>",
+            "target": [
+              ".border-l.min-h-16.px-1\\.5:nth-child(4) > .leading-tight.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#020617",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 20.17,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 20.17"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<input class=\"flex w-full border p...\" placeholder=\"Tìm tên, email...\" aria-label=\"Tìm tên, email...\" value=\"\">",
+            "target": [
+              "input"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Trần Đăng Đức</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Trần Đăng Đức\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@ductd2</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Trần Đăng Đức\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Trần Đăng Đức\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Đỗ Văn Hùng</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đỗ Văn Hùng\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@hungdv2</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đỗ Văn Hùng\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đỗ Văn Hùng\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Cháng A Thăm</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Cháng A Thăm\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@thamca</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Cháng A Thăm\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Cháng A Thăm\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Đào Xuân Vững</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đào Xuân Vững\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@vungdx</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đào Xuân Vững\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đào Xuân Vững\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Ly A Tu</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Ly A Tu\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@tula3</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Ly A Tu\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Ly A Tu\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Nguyễn Đình Việt</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Đình Việt\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@vietnd</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Đình Việt\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Đình Việt\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Nguyễn Trung Nghĩa</p>",
+            "target": [
+              ".p-2\\.5.active\\:scale-\\[0\\.98\\].active\\:brightness-95:nth-child(7) > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@nghiant</p>",
+            "target": [
+              ".p-2\\.5.active\\:scale-\\[0\\.98\\].active\\:brightness-95:nth-child(7) > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              ".p-2\\.5.active\\:scale-\\[0\\.98\\].active\\:brightness-95:nth-child(7) > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Nguyễn Văn Hiệu</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Văn Hiệu\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@hieunv2</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Văn Hiệu\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Văn Hiệu\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Nguyễn Thị Nga</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Thị Nga\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@ngant</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Thị Nga\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Thị Nga\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Lữ Văn Quyết</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Lữ Văn Quyết\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@quyetlv2</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Lữ Văn Quyết\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Lữ Văn Quyết\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Nguyễn Xuân Tùng</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Xuân Tùng\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@tungnx</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Xuân Tùng\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Xuân Tùng\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Phạm Anh Quân</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Phạm Anh Quân\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@quanpa</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Phạm Anh Quân\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Phạm Anh Quân\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Phạm Văn Hoàng</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Phạm Văn Hoàng\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@hoangpv3</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Phạm Văn Hoàng\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Phạm Văn Hoàng\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Nguyễn Đức Phúc</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Đức Phúc\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@phucnd</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Đức Phúc\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Nguyễn Đức Phúc\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Vũ Thị Nguyệt Ánh</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Vũ Thị Nguyệt Ánh\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@anhvtn</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Vũ Thị Nguyệt Ánh\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Vũ Thị Nguyệt Ánh\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Phạm Văn Huy</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Phạm Văn Huy\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@huypv</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Phạm Văn Huy\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Phạm Văn Huy\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Nguyễn Thị Thu Hương</p>",
+            "target": [
+              ".p-2\\.5.active\\:scale-\\[0\\.98\\].active\\:brightness-95:nth-child(17) > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@huongntt</p>",
+            "target": [
+              ".p-2\\.5.active\\:scale-\\[0\\.98\\].active\\:brightness-95:nth-child(17) > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              ".p-2\\.5.active\\:scale-\\[0\\.98\\].active\\:brightness-95:nth-child(17) > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Đặng Thị Thảo</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đặng Thị Thảo\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@thaodt</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đặng Thị Thảo\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đặng Thị Thảo\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Đặng Thị Bình</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đặng Thị Bình\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@binhdt</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đặng Thị Bình\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Đặng Thị Bình\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"line-clamp-2 min-h-8 break-words text-xs font-semibold leading-4 text-foreground\">Cao Thị Ngọc Anh</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Cao Thị Ngọc Anh\"] > .min-w-0 > .line-clamp-2.min-h-8.break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 truncate text-xs text-muted-foreground\">@anhctn</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Cao Thị Ngọc Anh\"] > .min-w-0 > .truncate.mt-0\\.5.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 text-xs font-medium leading-4 text-muted-foreground\">Nhân viên</p>",
+            "target": [
+              "button[aria-label=\"Xem chi tiết Cao Thị Ngọc Anh\"] > .min-w-0 > .font-medium.mt-0\\.5.leading-4"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<button class=\"group relative inlin...\">",
+            "target": [
+              ".hover\\:bg-muted.active\\:bg-muted\\/80.px-3"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#fefefe",
+                  "contrastRatio": 8.81,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.81"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate text-[hsl(var(--muted-foreground))]\">Ứng lương</span>",
+            "target": [
+              "a[aria-label=\"Ứng lương\"] > .max-w-full.px-0\\.5.max-\\[359px\\]\\:line-clamp-2"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate text-[hsl(var(--muted-foreground))]\">Tài khoản</span>",
+            "target": [
+              "button[aria-label=\"Tài khoản\"] > .max-w-full.px-0\\.5.max-\\[359px\\]\\:line-clamp-2"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate text-[hsl(var(--foreground))]\">Thêm</span>",
+            "target": [
+              ".text-\\[hsl\\(var\\(--foreground\\)\\)\\]"
+            ]
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "elmPartiallyObscuring",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it partially overlaps other elements"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate text-[hsl(var(--muted-foreground))]\">Tổng quan</span>",
+            "target": [
+              "a[aria-label=\"Tổng quan\"] > .max-w-full.px-0\\.5.max-\\[359px\\]\\:line-clamp-2"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "elmPartiallyObscuring",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it partially overlaps other elements"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate text-[hsl(var(--muted-foreground))]\">Lương tuần</span>",
+            "target": [
+              "a[aria-label=\"Lương tuần\"] > .max-w-full.px-0\\.5.max-\\[359px\\]\\:line-clamp-2"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+          }
+        ]
+      }
+    ],
+    "violations": []
+  }
+}

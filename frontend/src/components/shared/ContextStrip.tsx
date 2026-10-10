@@ -7,7 +7,7 @@ export interface ContextStripItem {
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
   /** Tailwind bg class for icon badge, e.g. 'bg-blue-100' */
   iconBg?: string;
-  /** Tailwind text class for icon color, e.g. 'text-blue-600' */
+  /** Tailwind text class for icon color, e.g. 'text-blue-700' */
   iconColor?: string;
   subtitle?: string;
 }
@@ -39,13 +39,13 @@ export const ContextStrip = memo(function ContextStrip({
             key={i}
             className="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300"
           >
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-1">
               {item.label}
             </span>
             <div className="flex items-center gap-2 min-w-0">
               {Icon && (
                 <div className={cn('w-7 h-7 rounded flex items-center justify-center shrink-0', item.iconBg ?? 'bg-slate-100')}>
-                  <Icon className={cn('h-3.5 w-3.5', item.iconColor ?? 'text-slate-500')} />
+                  <Icon className={cn('h-3.5 w-3.5', item.iconColor ?? 'text-slate-600')} />
                 </div>
               )}
               <span className="text-sm font-semibold text-slate-900 truncate">
@@ -53,7 +53,7 @@ export const ContextStrip = memo(function ContextStrip({
               </span>
             </div>
             {item.subtitle && (
-              <span className="text-xs text-slate-500 tabular-nums">
+              <span className="text-xs text-slate-600 tabular-nums">
                 {item.subtitle}
               </span>
             )}

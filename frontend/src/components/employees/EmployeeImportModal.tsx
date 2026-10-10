@@ -379,7 +379,7 @@ export function EmployeeImportModal({
                     {importStatus.status === 'processing' && <Loader2 className="h-5 w-5 animate-spin" />}
                     {importStatus.status === 'completed' && <CheckCircle className="h-5 w-5 text-green-700" />}
                     {importStatus.status === 'failed' && <XCircle className="h-5 w-5 text-red-700" />}
-                    {importStatus.status === 'pending' && <AlertCircle className="h-5 w-5 text-yellow-700" />}
+                    {importStatus.status === 'pending' && <AlertCircle className="h-5 w-5 text-yellow-800" />}
                     Trạng thái import
                   </CardTitle>
                   {getStatusBadge()}
@@ -405,16 +405,16 @@ export function EmployeeImportModal({
                 {/* Stats */}
                 <div className="grid grid-cols-4 gap-4 text-center">
                   <div className="p-3 bg-blue-50 rounded-xl">
-                    <div className="text-2xl font-bold text-blue-600">{importStatus.total_rows}</div>
-                    <div className="text-sm text-blue-600">Tổng dòng</div>
+                    <div className="text-2xl font-bold text-blue-700">{importStatus.total_rows}</div>
+                    <div className="text-sm text-blue-700">Tổng dòng</div>
                   </div>
                   <div className="p-3 bg-green-50 rounded-xl">
                     <div className="text-2xl font-bold text-green-700">{importStatus.created_count}</div>
                     <div className="text-sm text-green-700">Mới</div>
                   </div>
                   <div className="p-3 bg-yellow-50 rounded-xl">
-                    <div className="text-2xl font-bold text-yellow-700">{importStatus.updated_count}</div>
-                    <div className="text-sm text-yellow-700">Cập nhật</div>
+                    <div className="text-2xl font-bold text-yellow-800">{importStatus.updated_count}</div>
+                    <div className="text-sm text-yellow-800">Cập nhật</div>
                   </div>
                   <div className="p-3 bg-red-50 rounded-xl">
                     <div className="text-2xl font-bold text-red-700">{importStatus.error_count}</div>

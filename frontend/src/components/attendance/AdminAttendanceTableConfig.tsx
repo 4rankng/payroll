@@ -245,7 +245,7 @@ export function getAdminAttendanceColumns(actions?: AttendanceRowActions): Colum
                 {showReject && (
                   <DropdownMenuItem
                     onClick={() => actions.onReject(att)}
-                    className="text-rose-600 focus:text-rose-700"
+                    className="text-rose-700 focus:text-rose-700"
                   >
                     <X className="mr-2 h-4 w-4" aria-hidden="true" />
                     Từ chối

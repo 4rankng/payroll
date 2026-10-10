@@ -121,7 +121,7 @@ export function ReversalDialog({
                 className={error ? 'border-red-300 focus-visible:ring-red-500' : ''}
               />
               {error && (
-                <div className="typography-body-small text-red-600">{error}</div>
+                <div className="typography-body-small text-red-700">{error}</div>
               )}
             </div>
 

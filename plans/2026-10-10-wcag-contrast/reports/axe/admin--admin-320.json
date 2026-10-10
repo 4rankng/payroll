@@ -1,0 +1,1268 @@
+{
+  "route": "/admin",
+  "role": "admin",
+  "viewport": "320",
+  "results": {
+    "testEngine": {
+      "name": "axe-core",
+      "version": "4.13.0"
+    },
+    "testRunner": {
+      "name": "axe"
+    },
+    "testEnvironment": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.55 Safari/537.36",
+      "windowWidth": 320,
+      "windowHeight": 568,
+      "orientationAngle": 0,
+      "orientationType": "landscape-primary"
+    },
+    "timestamp": "2026-10-10T10:42:24.894Z",
+    "url": "http://localhost:3000/admin",
+    "toolOptions": {
+      "runOnly": {
+        "type": "rule",
+        "values": [
+          "color-contrast"
+        ]
+      },
+      "reporter": "v1"
+    },
+    "inapplicable": [],
+    "passes": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#020617",
+                  "bgColor": "#e0e6e2",
+                  "contrastRatio": 15.93,
+                  "fontSize": "12.8pt (17px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 15.93"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<h1 class=\"break-words font-display text-[clamp(1.0625rem,4.6vw,1.1875rem)] font-extrabold leading-tight tracking-normal text-slate-950\">Tổng quan</h1>",
+            "target": [
+              "h1"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#475569",
+                  "bgColor": "#e0e6e2",
+                  "contrastRatio": 5.98,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 5.98"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-0.5 break-words text-xs font-medium leading-normal text-slate-600\">Thứ Bảy, 10/10</p>",
+            "target": [
+              ".mt-0\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#344054",
+                  "bgColor": "#f2f4f7",
+                  "contrastRatio": 9.49,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 9.49"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<button aria-pressed=\"false\" class=\"h-11 min-h-11 rounde...\">",
+            "target": [
+              ".px-3\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#f2f4f7",
+                  "contrastRatio": 16.1,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 16.1"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<button type=\"button\" aria-label=\"Chọn tháng\" class=\"flex min-h-11 min-w-...\" aria-haspopup=\"dialog\" aria-expanded=\"false\" data-state=\"closed\">",
+            "target": [
+              "button[aria-label=\"Chọn tháng\"]"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<div class=\"mb-1 inline-flex items-center text-xs font-semibold text-muted-foreground\">Kỳ 10/2026</div>",
+            "target": [
+              ".mb-1"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<h2 class=\"font-display text-base font-extrabold leading-tight tracking-normal text-foreground\">Điều hành lương</h2>",
+            "target": [
+              ".text-base"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"text-xs font-semibold uppercase tracking-normal text-muted-foreground\">Chờ trả</p>",
+            "target": [
+              "p:nth-child(1)"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#07693a",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 6.79,
+                  "fontSize": "12.0pt (16px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 6.79"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-1 break-words font-display text-xl font-extrabold leading-tight tracking-normal text-primary tabular-nums min-[420px]:text-2xl min-[420px]:leading-none\">0 ₫</p>",
+            "target": [
+              ".text-xl"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<p class=\"mt-1 text-xs leading-snug text-muted-foreground min-[420px]:ml-auto min-[420px]:max-w-[12rem]\">Đã trả 0 ₫</p>",
+            "target": [
+              ".min-\\[420px\\]\\:ml-auto"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block text-xs font-medium leading-tight text-muted-foreground\">Nhân viên đang làm</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(1) > .grid-cols-\\[minmax\\(0\\,1fr\\)_auto\\].gap-x-2.grid > .font-medium.text-muted-foreground.block"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#07693a",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 6.79,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 6.79"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block break-words text-sm font-extrabold leading-tight tabular-nums text-primary\">211</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(1) > .grid-cols-\\[minmax\\(0\\,1fr\\)_auto\\].gap-x-2.grid > .break-words.font-extrabold.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"col-span-2 block text-xs leading-snug text-muted-foreground\">Tổng 1.298 nhân viên</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(1) > .grid-cols-\\[minmax\\(0\\,1fr\\)_auto\\].gap-x-2.grid > .col-span-2.leading-snug.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block text-xs font-medium leading-tight text-muted-foreground\">Đã trả kỳ này</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(2) > .grid-cols-\\[minmax\\(0\\,1fr\\)_auto\\].gap-x-2.grid > .font-medium.text-muted-foreground.block"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#047857",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 5.48,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 5.48"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block break-words text-sm font-extrabold leading-tight tabular-nums text-emerald-700\">0 ₫</span>",
+            "target": [
+              ".text-emerald-700"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"col-span-2 block text-xs leading-snug text-muted-foreground\">10/2026</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(2) > .grid-cols-\\[minmax\\(0\\,1fr\\)_auto\\].gap-x-2.grid > .col-span-2.leading-snug.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block text-xs font-medium leading-tight text-muted-foreground\">Nhân viên mới</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(3) > .grid-cols-\\[minmax\\(0\\,1fr\\)_auto\\].gap-x-2.grid > .font-medium.text-muted-foreground.block"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block break-words text-sm font-extrabold leading-tight tabular-nums text-foreground\">0</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(3) > .grid-cols-\\[minmax\\(0\\,1fr\\)_auto\\].gap-x-2.grid > .break-words.font-extrabold.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"col-span-2 block text-xs leading-snug text-muted-foreground\">Trong kỳ đang xem</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(3) > .grid-cols-\\[minmax\\(0\\,1fr\\)_auto\\].gap-x-2.grid > .col-span-2.leading-snug.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"max-w-full text-xs font-semibold leading-tight text-foreground\">Chấm công</span>",
+            "target": [
+              ".min-h-\\[48px\\].disabled\\:opacity-45.px-1\\.5:nth-child(1) > .max-w-full.text-foreground.leading-tight"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"max-w-full text-xs font-semibold leading-tight text-foreground\">Duyệt công</span>",
+            "target": [
+              ".min-h-\\[48px\\].disabled\\:opacity-45.px-1\\.5:nth-child(2) > .max-w-full.text-foreground.leading-tight"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#ffffff",
+                  "bgColor": "#71480f",
+                  "contrastRatio": 7.96,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 7.96"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"absolute right-1.5 top-1.5 rounded-full bg-warning px-1.5 text-xs font-bold leading-4 text-white\">2</span>",
+            "target": [
+              ".right-1\\.5"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"max-w-full text-xs font-semibold leading-tight text-foreground\">Ví tiền</span>",
+            "target": [
+              ".min-h-\\[48px\\].disabled\\:opacity-45.px-1\\.5:nth-child(3) > .max-w-full.text-foreground.leading-tight"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"max-w-full text-xs font-semibold leading-tight text-foreground\">Thêm NV</span>",
+            "target": [
+              ".min-h-\\[48px\\].disabled\\:opacity-45.px-1\\.5:nth-child(4) > .max-w-full.text-foreground.leading-tight"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<h2 class=\"text-sm font-extrabold leading-tight text-foreground\">Cần xử lý</h2>",
+            "target": [
+              ".py-2.px-3 > h2"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block text-sm font-semibold leading-tight text-foreground\">Duyệt bảng công</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(1) > .flex-1.min-w-0 > .text-foreground.text-sm.block"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"mt-1 block text-xs leading-relaxed text-muted-foreground\">Xem hàng đợi bảng công trên toàn hệ thống</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(1) > .flex-1.min-w-0 > .leading-relaxed.mt-1.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#b45309",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 5.02,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 5.02"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-right text-sm font-extrabold tabular-nums text-amber-700\">2</span>",
+            "target": [
+              ".text-amber-700"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block text-sm font-semibold leading-tight text-foreground\">Đối soát ví trả lương</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(2) > .flex-1.min-w-0 > .text-foreground.text-sm.block"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"mt-1 block text-xs leading-relaxed text-muted-foreground\">Kiểm tra số dư và lịch chuyển tiền</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(2) > .flex-1.min-w-0 > .leading-relaxed.mt-1.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#07693a",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 6.79,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 6.79"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-right text-sm font-extrabold tabular-nums text-primary\">Ví</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(2) > .gap-1\\.5.shrink-0.items-center > .text-right.font-extrabold.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block text-sm font-semibold leading-tight text-foreground\">Dự án &amp; tài khoản ngân hàng</span>",
+            "target": [
+              ".border-\\[hsl\\(var\\(--surface-border\\)\\)\\].bg-white.shadow-none:nth-child(4) > .divide-y.divide-border\\/60.border-border\\/60 > .py-2.gap-2.text-left:nth-child(3) > .flex-1.min-w-0 > .text-foreground.text-sm.block"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"mt-1 block text-xs leading-relaxed text-muted-foreground\">Kiểm tra dữ liệu nhận tiền theo dự án</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(3) > .flex-1.min-w-0 > .leading-relaxed.mt-1.text-muted-foreground"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#1f3228",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 13.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "bold",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 13.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"text-right text-sm font-extrabold tabular-nums text-foreground\">0</span>",
+            "target": [
+              ".py-2.gap-2.text-left:nth-child(3) > .gap-1\\.5.shrink-0.items-center > .text-right.font-extrabold.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#667085",
+                  "bgColor": "#fefefe",
+                  "contrastRatio": 4.93,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 4.93"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block text-xs font-semibold uppercase tracking-[0.2em] text-fg-tertiary\">Sổ vận hành</span>",
+            "target": [
+              "#radix-\\:r68\\: > .pr-1.items-start.gap-2 > .min-w-0 > .tracking-\\[0\\.2em\\].uppercase.text-fg-tertiary"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#fefefe",
+                  "contrastRatio": 17.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"mt-1 block text-sm font-semibold text-fg-primary\">Lương và nhân sự</span>",
+            "target": [
+              "#radix-\\:r68\\: > .pr-1.items-start.gap-2 > .min-w-0 > .text-fg-primary.mt-1.text-sm"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#fefefe",
+                  "contrastRatio": 17.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"mt-1 inline-flex items-center text-xs font-semibold text-fg-primary tabular-nums\">211 đang làm</span>",
+            "target": [
+              "#radix-\\:r68\\: > .pr-1.items-start.gap-2 > .min-w-0 > .inline-flex.text-fg-primary.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#667085",
+                  "bgColor": "#fefefe",
+                  "contrastRatio": 4.93,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 4.93"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block text-xs font-semibold uppercase tracking-[0.2em] text-fg-tertiary\">Phân tích</span>",
+            "target": [
+              "#radix-\\:r6a\\: > .pr-1.items-start.gap-2 > .min-w-0 > .tracking-\\[0\\.2em\\].uppercase.text-fg-tertiary"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#fefefe",
+                  "contrastRatio": 17.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"mt-1 block text-sm font-semibold text-fg-primary\">Chi trả và biến động</span>",
+            "target": [
+              "#radix-\\:r6a\\: > .pr-1.items-start.gap-2 > .min-w-0 > .text-fg-primary.mt-1.text-sm"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#fefefe",
+                  "contrastRatio": 17.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"mt-1 inline-flex items-center text-xs font-semibold text-fg-primary tabular-nums\">0 ₫ lợi nhuận</span>",
+            "target": [
+              "#radix-\\:r6a\\: > .pr-1.items-start.gap-2 > .min-w-0 > .inline-flex.text-fg-primary.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#667085",
+                  "bgColor": "#fefefe",
+                  "contrastRatio": 4.93,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 4.93"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"block text-xs font-semibold uppercase tracking-[0.2em] text-fg-tertiary\">Kiểm soát</span>",
+            "target": [
+              "#radix-\\:r6c\\: > .pr-1.items-start.gap-2 > .min-w-0 > .tracking-\\[0\\.2em\\].uppercase.text-fg-tertiary"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#fefefe",
+                  "contrastRatio": 17.59,
+                  "fontSize": "9.0pt (12px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"mt-1 block text-sm font-semibold text-fg-primary\">Dự án, ngân hàng và sức khỏe hệ thống</span>",
+            "target": [
+              "#radix-\\:r6c\\: > .pr-1.items-start.gap-2 > .min-w-0 > .text-fg-primary.mt-1.text-sm"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#101828",
+                  "bgColor": "#fefefe",
+                  "contrastRatio": 17.59,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 17.59"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"mt-1 inline-flex items-center text-xs font-semibold text-fg-primary tabular-nums\">0 dự án</span>",
+            "target": [
+              "#radix-\\:r6c\\: > .pr-1.items-start.gap-2 > .min-w-0 > .inline-flex.text-fg-primary.tabular-nums"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate text-[hsl(var(--muted-foreground))]\">Ứng lương</span>",
+            "target": [
+              "a[aria-label=\"Ứng lương\"] > .px-0\\.5.max-\\[359px\\]\\:line-clamp-2.max-\\[359px\\]\\:break-words"
+            ]
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "fgColor": "#3c4e43",
+                  "bgColor": "#ffffff",
+                  "contrastRatio": 8.88,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element has sufficient color contrast of 8.88"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": null,
+            "html": "<span class=\"w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate text-[hsl(var(--muted-foreground))]\">Tài khoản</span>",
+            "target": [
+              "button[aria-label=\"Tài khoản\"] > .px-0\\.5.max-\\[359px\\]\\:line-clamp-2.max-\\[359px\\]\\:break-words"
+            ]
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "elmPartiallyObscuring",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it partially overlaps other elements"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate text-[hsl(var(--foreground))]\">Tổng quan</span>",
+            "target": [
+              ".text-\\[hsl\\(var\\(--foreground\\)\\)\\]"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "elmPartiallyObscuring",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because it partially overlaps other elements"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate text-[hsl(var(--muted-foreground))]\">Lương tuần</span>",
+            "target": [
+              "a[aria-label=\"Lương tuần\"] > .px-0\\.5.max-\\[359px\\]\\:line-clamp-2.max-\\[359px\\]\\:break-words"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because it partially overlaps other elements"
+          },
+          {
+            "any": [
+              {
+                "id": "color-contrast",
+                "data": {
+                  "contrastRatio": 0,
+                  "fontSize": "8.3pt (11px)",
+                  "fontWeight": "normal",
+                  "messageKey": "imgNode",
+                  "expectedContrastRatio": "4.5:1"
+                },
+                "relatedNodes": [
+                  {
+                    "html": "<nav class=\"admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-card/95 backdrop-blur-xl lg:hidden\" aria-label=\"Điều hướng chính\" style=\"padding-bottom: env(safe-area-inset-bottom);\">",
+                    "target": [
+                      "nav"
+                    ]
+                  },
+                  {
+                    "html": "<svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" stroke=\"currentColor\" stroke-width=\"2\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" class=\"h-4 w-4 text-muted-foreground\"><path d=\"m9 18 6-6-6-6\"></path></svg>",
+                    "target": [
+                      ".py-2.gap-2.text-left:nth-child(2) > .gap-1\\.5.shrink-0.items-center > .text-muted-foreground.h-4.w-4"
+                    ]
+                  }
+                ],
+                "impact": "serious",
+                "message": "Element's background color could not be determined because element contains an image node"
+              }
+            ],
+            "all": [],
+            "none": [],
+            "impact": "serious",
+            "html": "<span class=\"w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate text-[hsl(var(--muted-foreground))]\">Thêm</span>",
+            "target": [
+              "button[aria-label=\"Thêm\"] > .px-0\\.5.max-\\[359px\\]\\:line-clamp-2.max-\\[359px\\]\\:break-words"
+            ],
+            "failureSummary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+          }
+        ]
+      }
+    ],
+    "violations": []
+  }
+}

@@ -799,11 +799,11 @@ function Td({ children, className }: { children: ReactNode; className?: string }
 }
 
 const MONOGRAM_PALETTE = [
-  'bg-blue-500/10 text-blue-600',
+  'bg-blue-500/10 text-blue-700',
   'bg-emerald-500/10 text-emerald-700',
   'bg-amber-500/10 text-amber-700',
   'bg-teal-500/10 text-teal-700',
-  'bg-rose-500/10 text-rose-600',
+  'bg-rose-500/10 text-rose-700',
   'bg-sky-500/10 text-sky-700',
   'bg-primary/10 text-primary',
 ];

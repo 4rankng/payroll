@@ -133,7 +133,7 @@ export function FileList({
               <div className="flex items-center gap-2">
                 <p
                   className={cn(
-                    "font-medium text-gray-900 truncate cursor-pointer hover:text-blue-600",
+                    "font-medium text-gray-900 truncate cursor-pointer hover:text-blue-700",
                     compact && "typography-body-medium"
                   )}
                   onClick={() => handlePreview(asset)}
@@ -154,20 +154,20 @@ export function FileList({
               </div>
 
               <div className="flex items-center gap-4 mt-1">
-                <p className={cn("text-gray-500", compact ? "typography-body-small" : "typography-body-medium")}>
+                <p className={cn("text-gray-600", compact ? "typography-body-small" : "typography-body-medium")}>
                   {assetService.formatFileSize(asset.file_size)}
                 </p>
                 
                 {!compact && (
                   <>
-                    <p className="typography-body-small text-gray-500">
+                    <p className="typography-body-small text-gray-600">
                       {format(new Date(asset.created_at), 'dd/MM/yyyy')}
                     </p>
                     
                     {(asset as unknown as { is_public?: boolean }).is_public && (
                       <div className="flex items-center gap-1">
-                        <ExternalLink className="w-3 h-3 text-gray-500" />
-                        <span className="typography-body-small text-gray-500">Công khai</span>
+                        <ExternalLink className="w-3 h-3 text-gray-600" />
+                        <span className="typography-body-small text-gray-600">Công khai</span>
                       </div>
                     )}
                   </>
@@ -184,7 +184,7 @@ export function FileList({
                   size="sm"
                   onClick={() => handlePreview(asset)}
                   disabled={downloadAsset.isPending}
-                  className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
+                  className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-700"
                   title={assetService.isImageFile(asset) ? "Xem trước" : "Mở file"}
                 >
                   {assetService.isImageFile(asset) ? (
@@ -215,7 +215,7 @@ export function FileList({
                     size="sm"
                     onClick={() => handleDelete(asset)}
                     disabled={deleteAsset.isPending}
-                    className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                    className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-700"
                     title="Xóa file"
                   >
                     <Trash2 className="w-4 h-4" />

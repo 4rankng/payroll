@@ -1,0 +1,90 @@
+{
+  "route": "/admin/employees",
+  "role": "admin",
+  "viewport": "1280",
+  "results": {
+    "testEngine": {
+      "name": "axe-core",
+      "version": "4.13.0"
+    },
+    "testRunner": {
+      "name": "axe"
+    },
+    "testEnvironment": {
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.7827.55 Safari/537.36",
+      "windowWidth": 1280,
+      "windowHeight": 800,
+      "orientationAngle": 0,
+      "orientationType": "landscape-primary"
+    },
+    "timestamp": "2026-10-10T10:42:46.748Z",
+    "url": "http://localhost:3000/admin/employees",
+    "toolOptions": {
+      "runOnly": {
+        "type": "rule",
+        "values": [
+          "color-contrast"
+        ]
+      },
+      "reporter": "v1"
+    },
+    "inapplicable": [],
+    "passes": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "error": {
+          "message": "Element midpoint exceeds the grid bounds Skipping color-contrast rule.",
+          "stack": "Error: Element midpoint exceeds the grid bounds\n    at assert (eval at evaluate (:303:30), <anonymous>:7417:15)\n    at Grid.getCellFromPoint (eval at evaluate (:303:30), <anonymous>:15657:11)\n    at getRectStack (eval at evaluate (:303:30), <anonymous>:16014:27)\n    at getRectStack (eval at evaluate (:303:30), <anonymous>:16026:17)\n    at eval (eval at evaluate (:303:30), <anonymous>:17829:16)\n    at Array.map (<anonymous>)\n    at getTextElementStack (eval at evaluate (:303:30), <anonymous>:17828:26)\n    at _getBackgroundStack (eval at evaluate (:303:30), <anonymous>:24805:20)\n    at _getBackgroundColor (eval at evaluate (:303:30), <anonymous>:25171:22)\n    at _getBackgroundColor2 (eval at evaluate (:303:30), <anonymous>:25161:21)",
+          "name": "Error",
+          "ruleId": "color-contrast",
+          "method": "color-contrast#evaluate"
+        },
+        "tags": [
+          "cat.color",
+          "wcag2aa",
+          "wcag143",
+          "TTv5",
+          "TT13.c",
+          "EN-301-549",
+          "EN-9.1.4.3",
+          "ACT",
+          "RGAAv4",
+          "RGAA-3.2.1"
+        ],
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "any": [],
+            "all": [],
+            "none": [
+              {
+                "id": "error-occurred",
+                "data": {
+                  "message": "Element midpoint exceeds the grid bounds Skipping color-contrast rule.",
+                  "stack": "Error: Element midpoint exceeds the grid bounds\n    at assert (eval at evaluate (:303:30), <anonymous>:7417:15)\n    at Grid.getCellFromPoint (eval at evaluate (:303:30), <anonymous>:15657:11)\n    at getRectStack (eval at evaluate (:303:30), <anonymous>:16014:27)\n    at getRectStack (eval at evaluate (:303:30), <anonymous>:16026:17)\n    at eval (eval at evaluate (:303:30), <anonymous>:17829:16)\n    at Array.map (<anonymous>)\n    at getTextElementStack (eval at evaluate (:303:30), <anonymous>:17828:26)\n    at _getBackgroundStack (eval at evaluate (:303:30), <anonymous>:24805:20)\n    at _getBackgroundColor (eval at evaluate (:303:30), <anonymous>:25171:22)\n    at _getBackgroundColor2 (eval at evaluate (:303:30), <anonymous>:25161:21)",
+                  "name": "Error",
+                  "ruleId": "color-contrast",
+                  "method": "color-contrast#evaluate"
+                },
+                "relatedNodes": [],
+                "message": "Axe encountered an error; test the page for this type of problem manually",
+                "impact": "serious"
+              }
+            ],
+            "impact": "serious",
+            "html": "<span>Nhân viên</span>",
+            "target": [
+              ".z-20 > .-ml-3.data-\\[state\\=open\\]\\:bg-accent.h-7 > span"
+            ],
+            "failureSummary": "Fix all of the following:\n  Axe encountered an error; test the page for this type of problem manually"
+          }
+        ]
+      }
+    ],
+    "violations": []
+  }
+}

@@ -9,15 +9,15 @@ interface NotificationStyle {
 }
 
 const NOTIFICATION_STYLES: Record<string, NotificationStyle> = {
-  timesheet_approval:   { iconColor: 'text-blue-600',   bgColor: 'bg-blue-100'   },
-  timesheet_reminder:   { iconColor: 'text-cyan-600',   bgColor: 'bg-cyan-100'   },
-  payroll_ready:        { iconColor: 'text-orange-600',  bgColor: 'bg-orange-100' },
-  payroll_complete:     { iconColor: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-  payment_reminder:     { iconColor: 'text-yellow-600',  bgColor: 'bg-yellow-100' },
-  system_alert:         { iconColor: 'text-red-600',     bgColor: 'bg-red-100'    },
-  project_update:       { iconColor: 'text-green-600',   bgColor: 'bg-green-100'  },
-  password_change:      { iconColor: 'text-red-600',     bgColor: 'bg-red-100'    },
-  custom:               { iconColor: 'text-gray-500',    bgColor: 'bg-gray-100'   },
+  timesheet_approval:   { iconColor: 'text-blue-700',   bgColor: 'bg-blue-100'   },
+  timesheet_reminder:   { iconColor: 'text-cyan-700',   bgColor: 'bg-cyan-100'   },
+  payroll_ready:        { iconColor: 'text-orange-700',  bgColor: 'bg-orange-100' },
+  payroll_complete:     { iconColor: 'text-emerald-700', bgColor: 'bg-emerald-100' },
+  payment_reminder:     { iconColor: 'text-yellow-800',  bgColor: 'bg-yellow-100' },
+  system_alert:         { iconColor: 'text-red-700',     bgColor: 'bg-red-100'    },
+  project_update:       { iconColor: 'text-green-700',   bgColor: 'bg-green-100'  },
+  password_change:      { iconColor: 'text-red-700',     bgColor: 'bg-red-100'    },
+  custom:               { iconColor: 'text-gray-600',    bgColor: 'bg-gray-100'   },
 };
 
 const DEFAULT_STYLE: NotificationStyle = { iconColor: 'text-muted-foreground', bgColor: 'bg-slate-100' };

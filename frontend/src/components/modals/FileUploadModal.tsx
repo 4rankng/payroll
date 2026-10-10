@@ -338,7 +338,7 @@ export function FileUploadModal({
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <Upload className="h-12 w-12 mx-auto text-gray-500" />
+                      <Upload className="h-12 w-12 mx-auto text-gray-600" />
                       <div>
                         <p className="typography-title-large">Kéo thả file vào đây</p>
                         <p className="text-muted-foreground">hoặc</p>
@@ -472,7 +472,7 @@ export function FileUploadModal({
                     const IconComponent = result.success ? CheckCircle : XCircle;
                     return (
                       <div key={index} className="flex items-start gap-3 p-3 border rounded-xl">
-                        <IconComponent className={`h-5 w-5 mt-0.5 ${result.success ? 'text-green-700' : 'text-red-600'}`} />
+                        <IconComponent className={`h-5 w-5 mt-0.5 ${result.success ? 'text-green-700' : 'text-red-700'}`} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium truncate">{result.fileName}</p>
@@ -490,7 +490,7 @@ export function FileUploadModal({
                           {result.warnings && result.warnings.length > 0 && (
                             <div className="mt-2">
                               {result.warnings.map((warning, wIndex) => (
-                                <div key={wIndex} className="flex items-center gap-2 typography-body-medium text-yellow-700">
+                                <div key={wIndex} className="flex items-center gap-2 typography-body-medium text-yellow-800">
                                   <AlertTriangle className="h-4 w-4" />
                                   {warning}
                                 </div>
@@ -501,7 +501,7 @@ export function FileUploadModal({
                           {result.errors && result.errors.length > 0 && (
                             <div className="mt-2">
                               {result.errors.map((error, eIndex) => (
-                                <p key={eIndex} className="typography-body-medium text-red-600">
+                                <p key={eIndex} className="typography-body-medium text-red-700">
                                   • {error}
                                 </p>
                               ))}

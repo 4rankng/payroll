@@ -107,7 +107,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
         {label && (
           <Label htmlFor={id} className="typography-body-medium text-foreground">
             {label}
-            {required && <span className="text-red-600 ml-1" aria-label="bắt buộc">*</span>}
+            {required && <span className="text-red-700 ml-1" aria-label="bắt buộc">*</span>}
           </Label>
         )}
 
@@ -138,14 +138,14 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
         </div>
 
         {error && (
-          <div className="flex items-start gap-2 typography-body-medium text-red-600">
+          <div className="flex items-start gap-2 typography-body-medium text-red-700">
             <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {!error && warning && (
-          <div className="flex items-start gap-2 typography-body-medium text-yellow-700">
+          <div className="flex items-start gap-2 typography-body-medium text-yellow-800">
             <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
             <span>{warning}</span>
           </div>

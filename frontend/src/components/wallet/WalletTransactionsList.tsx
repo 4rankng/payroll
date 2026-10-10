@@ -644,7 +644,7 @@ function DesktopTable({
                 </TableCell>
                 <TableCell
                   className={`text-right font-semibold tabular-nums text-sm ${
-                    isInflow ? "text-fg-success-primary" : "text-red-600"
+                    isInflow ? "text-fg-success-primary" : "text-red-700"
                   }`}
                 >
                   {formatAmount(tx.amount)}
@@ -676,7 +676,7 @@ function DesktopTable({
                   <StatusBadge status={tx.status} />
                 </TableCell>
                 <TableCell className="pr-3">
-                  <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-fg-tertiary transition-colors" />
+                  <ChevronRight className="h-4 w-4 text-slate-600 group-hover:text-fg-tertiary transition-colors" />
                 </TableCell>
               </TableRow>
             );
@@ -731,10 +731,10 @@ function MobileTransactionList({
 
             {/* Amount + chevron */}
             <div className="flex items-center gap-1 shrink-0">
-              <span className={`text-[13.5px] font-bold tabular-nums tracking-tight ${isInflow ? "text-fg-success-primary" : "text-red-600"}`}>
+              <span className={`text-[13.5px] font-bold tabular-nums tracking-tight ${isInflow ? "text-fg-success-primary" : "text-red-700"}`}>
                 {formatAmount(tx.amount)}
               </span>
-              <ChevronRight className="h-4 w-4 text-slate-500" />
+              <ChevronRight className="h-4 w-4 text-slate-600" />
             </div>
           </button>
         );

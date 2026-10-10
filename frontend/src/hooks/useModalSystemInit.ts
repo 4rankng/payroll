@@ -116,7 +116,7 @@ export function ModalSystemProvider({
     }, [
       React.createElement('div', {
         key: 'title',
-        className: "text-red-500 text-xl font-semibold"
+        className: "text-red-700 text-xl font-semibold"
       }, 'Lỗi khởi tạo hệ thống modal'),
       React.createElement('div', {
         key: 'message',

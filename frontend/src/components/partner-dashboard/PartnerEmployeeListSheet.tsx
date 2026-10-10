@@ -30,7 +30,7 @@ const TYPE_CONFIG: Record<PartnerEmployeeListType, {
     title: 'Nhân viên có thể đã nghỉ',
     emptyText: 'Không có nhân viên nào nghỉ việc',
     badgeLabel: 'Nghỉ việc',
-    badgeClass: 'border-rose-300 text-rose-600 bg-rose-50',
+    badgeClass: 'border-rose-300 text-rose-700 bg-rose-50',
   },
   paid: {
     title: 'Nhân viên được trả lương',

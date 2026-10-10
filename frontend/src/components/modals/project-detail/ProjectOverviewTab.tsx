@@ -99,7 +99,7 @@ export function ProjectOverviewTab({
             icon={Users}
             value={formData.employee_count || 0}
             label="Nhân viên"
-            color="text-blue-600"
+            color="text-blue-700"
           />
 
           <ProjectStatusCard

@@ -66,12 +66,12 @@ export const getEmployeeCountColor = (count: number): string => {
     return "text-muted-foreground";
   }
   if (count <= 10) {
-    return "text-blue-600 dark:text-blue-400";
+    return "text-blue-700 dark:text-blue-400";
   }
   if (count <= 20) {
-    return "text-green-600 dark:text-green-400";
+    return "text-green-700 dark:text-green-400";
   }
-  return "text-teal-600 dark:text-teal-400";
+  return "text-teal-700 dark:text-teal-400";
 };
 
 /**

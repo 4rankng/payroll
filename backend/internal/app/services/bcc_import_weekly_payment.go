@@ -93,14 +93,15 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	importErrors = append(importErrors, autoErrors...)
 	assignments = append(assignments, createdAssignments...)
 
-	// 6.6. Name index for rows whose "Mã nhân viên" cell is blank (see
-	// bccNameIndex). Built after auto-creation so a hire created from this file
-	// is matchable too.
-	assignmentsByName := newBCCNameIndex(assignments)
+	// 6.6. Row resolver for the "Mã nhân viên" cell: the row's own CCCD, then
+	// the workbook's STK CCCD for that name, then the project employee name
+	// (see weeklyRowResolver). Built after auto-creation so a hire created from
+	// this file is matchable too.
+	rows := newWeeklyRowResolver(byCCCD, assignments, stkRows)
 
 	// 7. Build timesheet entries for each salary-tier sheet.
 	entries, flexibleEmployeeIDs, totalRows, entryErrors := s.buildWeeklyPaymentEntries(
-		ctx, parsed, year, month, loc, byCCCD, assignmentsByName, empNames, stkNameByCCCD,
+		ctx, parsed, year, month, loc, rows, empNames, stkNameByCCCD,
 		blockedEmployeeCCCDs, rates.forDate, projectID, includeFlexibleEmployees)
 	importErrors = append(importErrors, entryErrors...)
 
@@ -534,8 +535,7 @@ func (s *BCCImportService) buildWeeklyPaymentEntries(
 	ctx context.Context,
 	parsed *excelparser.WeeklyPaymentImportData,
 	year int, month time.Month, loc *time.Location,
-	byCCCD map[string]*domain.ProjectEmployee,
-	assignmentsByName bccNameIndex,
+	rows weeklyRowResolver,
 	empNames map[uint]string,
 	stkNameByCCCD map[string]string,
 	blockedEmployeeCCCDs map[string]struct{},
@@ -555,20 +555,9 @@ func (s *BCCImportService) buildWeeklyPaymentEntries(
 			if isWeeklyBCCEmployeeBlocked(blockedEmployeeCCCDs, emp.EmployeeCode) {
 				continue
 			}
-			assignment := (*domain.ProjectEmployee)(nil)
-			ambiguousName := false
-			if emp.EmployeeCode == "" {
-				// Blank "Mã nhân viên" (e.g. a person added to the template
-				// after it was generated): the name must identify exactly one
-				// active assignment. A map lookup on "" is not an option — it
-				// would match a CCCD-less assignment and route every blank row
-				// to that single employee.
-				assignment, ambiguousName = assignmentsByName.lookup(emp.FullName)
-				if assignment != nil && isWeeklyBCCEmployeeBlocked(blockedEmployeeCCCDs, assignment.EmployeeCCCD) {
-					continue // a failed STK row must not be re-processed under its name
-				}
-			} else {
-				assignment = byCCCD[emp.EmployeeCode]
+			assignment, ambiguousName := rows.resolve(emp.EmployeeCode, emp.FullName)
+			if assignment != nil && isWeeklyBCCEmployeeBlocked(blockedEmployeeCCCDs, assignment.EmployeeCCCD) {
+				continue // a failed STK row must not be re-processed under its name
 			}
 			if assignment == nil {
 				if missingErr := weeklyBCCMissingAssignmentError(

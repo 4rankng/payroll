@@ -111,21 +111,21 @@ const ProjectCombobox = memo(function ProjectCombobox({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`block w-full rounded-lg border px-3 py-2 text-left text-sm leading-6 font-medium transition-colors placeholder:text-slate-500 focus:outline-none focus:ring-2
+        className={`block w-full rounded-lg border px-3 py-2 text-left text-sm leading-6 font-medium transition-colors placeholder:text-slate-600 focus:outline-none focus:ring-2
           ${hasProject
             ? 'border-emerald-500 bg-white text-slate-900'
             : !value
-              ? 'border-slate-300 bg-white text-slate-500 hover:border-slate-300'
+              ? 'border-slate-300 bg-white text-slate-600 hover:border-slate-300'
               : 'border-slate-300 bg-white text-slate-900 hover:border-slate-300'
           }
           ${open ? 'border-emerald-500 ring-2 ring-emerald-500/40' : ''}
         `}
       >
-        <span className={selectedName ? 'text-slate-900' : 'text-slate-500'}>
+        <span className={selectedName ? 'text-slate-900' : 'text-slate-600'}>
           {selectedName ?? 'Chọn dự án...'}
         </span>
         <ChevronDown
-          className={`float-right mt-1 h-4 w-4 text-slate-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`float-right mt-1 h-4 w-4 text-slate-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -134,17 +134,17 @@ const ProjectCombobox = memo(function ProjectCombobox({
         <div className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-lg border border-slate-300 bg-white shadow-lg">
           {/* Search input */}
           <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2.5">
-            <Search className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+            <Search className="h-3.5 w-3.5 shrink-0 text-slate-600" />
             <input
               ref={inputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm dự án..."
-              className="flex-1 bg-transparent text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none"
+              className="flex-1 bg-transparent text-sm font-medium text-slate-900 placeholder:text-slate-600 focus:outline-none"
             />
             {search && (
-              <button onClick={() => setSearch('')} className="text-slate-500 hover:text-slate-700">
+              <button onClick={() => setSearch('')} className="text-slate-600 hover:text-slate-700">
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
@@ -153,7 +153,7 @@ const ProjectCombobox = memo(function ProjectCombobox({
           {/* List */}
           <div className="max-h-[220px] overflow-y-auto py-1">
             {filtered.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-slate-500">Không tìm thấy dự án.</p>
+              <p className="px-4 py-3 text-sm text-slate-600">Không tìm thấy dự án.</p>
             ) : (
               filtered.map((p) => {
                 const isSelected = String(p.id) === value;
@@ -478,7 +478,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
               </span>
               <span className="flex flex-col leading-tight">
                 <span className="text-[15px] font-semibold">Tải lên Bảng Chấm Công</span>
-                <span className="text-[12px] font-normal text-slate-500 dark:text-slate-400">
+                <span className="text-[12px] font-normal text-slate-600 dark:text-slate-400">
                   Nhập dữ liệu chấm công từ tệp Excel
                 </span>
               </span>
@@ -486,7 +486,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
           </DialogTitle>
           <button
             onClick={handleClose}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-transparent text-slate-500 transition-colors hover:bg-slate-200/60 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-transparent text-slate-600 transition-colors hover:bg-slate-200/60 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
             title="Đóng"
             aria-label="Đóng"
           >
@@ -609,7 +609,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                       <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                         Kéo thả tệp <span className="text-emerald-700 dark:text-emerald-400">BCC</span> vào đây
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
                         hoặc nhấn để chọn tệp · định dạng .xlsx · tối đa 10 MB
                       </p>
                     </div>
@@ -634,7 +634,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                       <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {file.name}
                       </p>
-                      <p className="mt-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
+                      <p className="mt-0.5 font-mono text-xs text-slate-600 dark:text-slate-400">
                         {(file.size / 1024).toFixed(0)} KB
                       </p>
                     </div>
@@ -642,7 +642,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
                       onClick={handleRemoveFile}
                       title="Xóa tệp"
                       aria-label="Xóa tệp"
-                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-rose-700 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-600 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-rose-700 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -687,7 +687,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
         <div className="flex shrink-0 items-center gap-2 border-t border-slate-200 bg-slate-50 px-4 py-3 sm:gap-3 sm:px-5 sm:py-4 dark:border-slate-700 dark:bg-slate-800/50">
           {!result && (
             <div
-              className={`flex min-w-0 flex-1 items-center gap-1.5 ${isReady ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}
+              className={`flex min-w-0 flex-1 items-center gap-1.5 ${isReady ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'}`}
             >
               {isReady ? (
                 <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />

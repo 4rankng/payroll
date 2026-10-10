@@ -95,7 +95,7 @@ export function TransactionMobileList({
                 </p>
                 <p className={cn(
                   'break-words text-sm font-bold tabular-nums min-[380px]:shrink-0 min-[380px]:text-right',
-                  isRevenue ? 'text-emerald-700' : 'text-red-600'
+                  isRevenue ? 'text-emerald-700' : 'text-red-700'
                 )}>
                   {isRevenue ? '+' : '-'}{fmtCurrency(tx.amount)}
                 </p>

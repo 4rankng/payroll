@@ -61,22 +61,22 @@ const HistoryItemCard = ({ item, onCancel }: { item: AdvancePaymentHistoryItem; 
               {getVietnameseAdvancePaymentStatus(item.status)}
             </span>
             {item.status === "PENDING" && !showConfirmCancel && (
-              <button onClick={handleCancelClick} className="text-xs font-medium text-red-600 border border-red-200 rounded px-1.5 py-0.5 hover:bg-red-50 transition-colors shrink-0">
+              <button onClick={handleCancelClick} className="text-xs font-medium text-red-700 border border-red-200 rounded px-1.5 py-0.5 hover:bg-red-50 transition-colors shrink-0">
                 Hủy
               </button>
             )}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
             <span className="shrink-0">{safeDate(item.createdAt)}</span>
-            <span className="text-slate-500">·</span>
+            <span className="text-slate-600">·</span>
             <span className="shrink-0">Nhận <span className="font-semibold text-foreground">{safeFormat(item.netAmount)}</span></span>
-            <span className="text-slate-500">·</span>
+            <span className="text-slate-600">·</span>
             <span className="shrink-0">Phí {safeFormat(item.fee)}</span>
           </div>
           {showConfirmCancel && item.status === "PENDING" && (
             <div className="flex items-center gap-3 mt-2 pt-2 border-t border-border">              <span className="text-xs text-muted-foreground flex-1">Xác nhận hủy?</span>
               <button onClick={() => setShowConfirmCancel(false)} className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Không</button>
-              <button onClick={handleCancelClick} className="text-xs font-semibold text-red-600 hover:text-red-700 transition-colors">Xác nhận</button>
+              <button onClick={handleCancelClick} className="text-xs font-semibold text-red-700 hover:text-red-700 transition-colors">Xác nhận</button>
             </div>
           )}
         </div>
@@ -256,7 +256,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                         </div>
                         <div className="flex justify-between text-muted-foreground">
                           <span>Phí giao dịch</span>
-                          <span className="font-medium text-red-600">-{formatCurrency(feeDetails.fee)}</span>
+                          <span className="font-medium text-red-700">-{formatCurrency(feeDetails.fee)}</span>
                         </div>
                         <div className="flex justify-between pt-1.5 border-t border-border">                          <span className="font-semibold text-foreground">Thực nhận</span>
                           <span className="font-bold text-emerald-700">{formatCurrency(feeDetails.netAmount)}</span>
@@ -301,7 +301,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                 ) : history.length === 0 ? (
                   <div className="text-center py-8 rounded-xl border border-dashed border-border" style={{ background: "rgba(255,255,255,0.50)" }}>
                     <div className="w-10 h-10 bg-sky-100/80 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <History className="h-5 w-5 text-sky-600" />
+                      <History className="h-5 w-5 text-sky-700" />
                     </div>
                     <p className="text-sm text-muted-foreground">Chưa có yêu cầu nào</p>
                   </div>

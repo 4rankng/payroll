@@ -106,7 +106,7 @@ export const BulkTransferKQDialog = memo(function BulkTransferKQDialog({
 
           <div className="space-y-4">
             <Label className="typography-body-medium">
-              FILE CHUYỂN LÔ <span className="text-red-600">*</span>
+              FILE CHUYỂN LÔ <span className="text-red-700">*</span>
             </Label>
 
             {!selectedFile ? (
@@ -129,11 +129,11 @@ export const BulkTransferKQDialog = memo(function BulkTransferKQDialog({
                     </p>
                     <p className="typography-body-small text-muted-foreground">
                       Kéo thả hoặc{' '}
-                      <span className="text-blue-600 hover:text-blue-700 font-medium">
+                      <span className="text-blue-700 hover:text-blue-700 font-medium">
                         chọn file
                       </span>
                     </p>
-                    <p className="typography-body-small text-gray-500">
+                    <p className="typography-body-small text-gray-600">
                       File xuất từ “Chuyển lô” hoặc “Chuyển OnePay”
                     </p>
                   </div>
@@ -161,7 +161,7 @@ export const BulkTransferKQDialog = memo(function BulkTransferKQDialog({
                     size="sm"
                     onClick={() => setSelectedFile(null)}
                     disabled={generateMutation.isPending}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-700 hover:text-red-700 hover:bg-red-50"
                   >
                     <X className="w-4 h-4" />
                   </Button>

@@ -139,7 +139,7 @@ function ReverseTransactionModalComponent({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Số tiền:</span>
                   <span className={`font-semibold ${
-                    transaction.transaction_type === 'revenue' ? 'text-emerald-700' : 'text-red-600'
+                    transaction.transaction_type === 'revenue' ? 'text-emerald-700' : 'text-red-700'
                   }`}>
                     {formatCurrency(transaction.amount)}
                   </span>
@@ -183,7 +183,7 @@ function ReverseTransactionModalComponent({
                 rows={3}
               />
               {errors.reason && (
-                <p className="text-xs text-red-600">{errors.reason.message}</p>
+                <p className="text-xs text-red-700">{errors.reason.message}</p>
               )}
             </div>
 

@@ -222,7 +222,7 @@ const SendNotificationPage = () => {
               className="flex-1 w-full resize-none rounded-lg border border-border/60 bg-card text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 p-3"
             />
             {messageError && (
-              <div className="flex items-center gap-1.5 text-xs text-red-600 mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-1.5 text-xs text-red-700 mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                 <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                 <span>{messageError}</span>
               </div>
@@ -260,7 +260,7 @@ const SendNotificationPage = () => {
                 className="flex-1 w-full resize-none rounded-lg border border-border/60 bg-card text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 p-3"
               />
               {messageError && (
-                <div className="flex items-center gap-1.5 text-xs text-red-600 mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-1.5 text-xs text-red-700 mt-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                   <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>{messageError}</span>
                 </div>

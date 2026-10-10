@@ -77,7 +77,7 @@ describe('sonner toaster (UU restyle contract)', () => {
     expect(toastClasses).toContain('[&[data-type=error]_[data-icon]]:text-error-solid');
     expect(toastClasses).toContain('[&[data-type=warning]_[data-icon]]:text-warning-solid');
     // Bridge gap: no info ladder — W4's Tailwind sky interim applies.
-    expect(toastClasses).toContain('[&[data-type=info]_[data-icon]]:text-sky-600');
+    expect(toastClasses).toContain('[&[data-type=info]_[data-icon]]:text-sky-700');
   });
 
   it('keeps the toast() wrapper contract', () => {

@@ -273,7 +273,7 @@ function SettleTransactionModalComponent({
                     </span>
                   </div>
                   {errors.amount && (
-                    <p className="text-xs text-red-600">{errors.amount.message}</p>
+                    <p className="text-xs text-red-700">{errors.amount.message}</p>
                   )}
                 </div>
 
@@ -290,7 +290,7 @@ function SettleTransactionModalComponent({
                     className={errors.settlement_date ? 'border-red-500' : ''}
                   />
                   {errors.settlement_date && (
-                    <p className="text-xs text-red-600">{errors.settlement_date.message}</p>
+                    <p className="text-xs text-red-700">{errors.settlement_date.message}</p>
                   )}
                 </div>
 
@@ -352,7 +352,7 @@ function SettleTransactionModalComponent({
                             variant="ghost"
                             size="sm"
                             onClick={handleRemoveFile}
-                            className="h-11 w-11 p-0 text-muted-foreground hover:text-red-600"
+                            className="h-11 w-11 p-0 text-muted-foreground hover:text-red-700"
                             aria-label="Xóa file chứng từ"
                           >
                             <X className="h-4 w-4" />
@@ -360,7 +360,7 @@ function SettleTransactionModalComponent({
                         </div>
                       )}
                       {fileUploadError && (
-                        <p className="text-xs text-red-600">{fileUploadError}</p>
+                        <p className="text-xs text-red-700">{fileUploadError}</p>
                       )}
                     </div>
                   )}

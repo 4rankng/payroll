@@ -309,7 +309,7 @@ const GroupStatusSummary = memo(function GroupStatusSummary({ group }: { group: 
           </span>
         )}
         {group.statusBreakdown.rejected > 0 && (
-          <span className="inline-flex items-center gap-1 text-xs text-red-600 whitespace-nowrap">
+          <span className="inline-flex items-center gap-1 text-xs text-red-700 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
             {group.statusBreakdown.rejected} loại
           </span>
@@ -321,7 +321,7 @@ const GroupStatusSummary = memo(function GroupStatusSummary({ group }: { group: 
           </span>
         )}
         {group.entries.some(e => !e.payrate || e.payrate === 0) && (
-          <span className="inline-flex items-center gap-1 text-xs text-red-600 font-semibold whitespace-nowrap">
+          <span className="inline-flex items-center gap-1 text-xs text-red-700 font-semibold whitespace-nowrap">
             ⚠ đơn giá
           </span>
         )}
@@ -434,7 +434,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
               <span className="h-1.5 w-1.5 rounded-full bg-border" />
             </span>
           )}
-          {entry.force_payroll && <Star className="h-3 w-3 text-yellow-700 fill-yellow-500 shrink-0" />}
+          {entry.force_payroll && <Star className="h-3 w-3 text-yellow-800 fill-yellow-500 shrink-0" />}
         </div>
       </TableCell>
       <TableCell className="py-2 px-3">
@@ -485,7 +485,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
       <TableCell className="py-2 px-3 text-right">
         <p className={cn(
           "inline-flex h-7 items-center justify-end rounded-md bg-slate-50 px-2 text-xs tabular-nums",
-          (!entry.payrate || entry.payrate === 0) ? "text-red-600 font-semibold" : "font-medium text-muted-foreground",
+          (!entry.payrate || entry.payrate === 0) ? "text-red-700 font-semibold" : "font-medium text-muted-foreground",
         )}>
           {(!entry.payrate || entry.payrate === 0) && userRole === "partner" ? (
             <span

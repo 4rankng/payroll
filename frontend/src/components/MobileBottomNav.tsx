@@ -134,7 +134,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
           className={cn(
             "flex h-9 w-9 items-center justify-center rounded-xl border transition-colors",
             tone === "danger"
-              ? "border-white/80 bg-white/75 text-rose-600"
+              ? "border-white/80 bg-white/75 text-rose-700"
               : isActive
                 ? "border-white/10 bg-white/15 text-white"
                 : "border-[hsl(var(--border))/0.8] bg-white/80 text-[hsl(var(--primary))]"

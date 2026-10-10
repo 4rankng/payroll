@@ -99,7 +99,7 @@ export function CalendarDayCell({
         {/* Force Payroll Icon */}
         {day.hasForcePayroll && (
           <span className="inline-flex items-center" aria-label="Đánh dấu xuất hiện trong kỳ trả lương tiếp theo">
-            <Star className={cn('h-4 w-4', isSundayColumn && !hasEntries ? 'text-yellow-400 fill-yellow-400' : 'text-yellow-800 fill-yellow-800')} />
+            <Star className={cn('h-4 w-4', isSundayColumn && !hasEntries ? 'text-yellow-800 fill-yellow-800' : 'text-yellow-800 fill-yellow-800')} />
           </span>
         )}
       </div>
@@ -239,7 +239,7 @@ export function CalendarDayCellMobile({
         {/* Force Payroll Icon */}
         {day.hasForcePayroll && (
           <span className="inline-flex items-center" aria-label="Đánh dấu xuất hiện trong kỳ trả lương tiếp theo">
-            <Star className={cn('h-3 w-3', isSundayColumn && !hasEntries ? 'text-yellow-400 fill-yellow-400' : 'text-yellow-800 fill-yellow-800')} />
+            <Star className={cn('h-3 w-3', isSundayColumn && !hasEntries ? 'text-yellow-800 fill-yellow-800' : 'text-yellow-800 fill-yellow-800')} />
           </span>
         )}
       </div>

@@ -20,7 +20,7 @@ export const HoursWarningBadge = memo(
       <AlertTriangle
         className={cn(
           "h-3.5 w-3.5 shrink-0",
-          status === "excessive" ? "text-red-600" : "text-amber-700",
+          status === "excessive" ? "text-red-700" : "text-amber-700",
         )}
       />
       <p

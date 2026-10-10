@@ -214,7 +214,7 @@ export function getAdvancePaymentColumns(
                   <DropdownMenuItem
                     onClick={() => ctx.onRetry!(id)}
                     disabled={isRetrying}
-                    className="text-blue-600 focus:text-blue-700"
+                    className="text-blue-700 focus:text-blue-700"
                   >
                     <RefreshCw05 className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
                     {isRetrying ? "Đang gửi..." : "Thử lại"}

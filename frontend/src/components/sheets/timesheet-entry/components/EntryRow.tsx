@@ -325,7 +325,7 @@ export const EntryRow = memo(({
                   const boxStyle = isDisabled
                     ? 'border-border/40 bg-muted/30 text-muted-foreground'
                     : thisFieldDeleted
-                      ? 'border-red-300 bg-red-50/70 text-red-400'
+                      ? 'border-red-300 bg-red-50/70 text-red-700'
                       : thisFieldEdited
                         ? 'border-amber-300 bg-amber-50/70 text-amber-700 font-semibold'
                         : thisFieldNew

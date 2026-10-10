@@ -57,14 +57,14 @@ export function TimesheetWorkDetails({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <span className="typography-body-small text-blue-600">Loại công</span>
+          <span className="typography-body-small text-blue-700">Loại công</span>
           <div className="mt-1">
             <Badge variant="outline">{getPaytypeText(timesheet.paytype)}</Badge>
           </div>
         </div>
 
         <div>
-          <span className="typography-body-small text-blue-600">Trạng thái</span>
+          <span className="typography-body-small text-blue-700">Trạng thái</span>
           <div className="mt-1">{getStatusBadge(timesheet.status)}</div>
         </div>
       </div>

@@ -129,7 +129,7 @@ export function BulkTransferDateRangeSection({
   return (
     <div className="space-y-2.5">
       <Label className="block text-xs font-medium text-muted-foreground uppercase tracking-wide">
-        Khoảng thời gian <span className="text-red-600">*</span>
+        Khoảng thời gian <span className="text-red-700">*</span>
       </Label>
 
       {paymentSchedule === 'weekly' ? (
@@ -224,7 +224,7 @@ export function BulkTransferDateRangeSection({
               </div>
 
               {hasDateError && (
-                <div className="flex items-center gap-1.5 text-xs text-red-600">
+                <div className="flex items-center gap-1.5 text-xs text-red-700">
                   <AlertCircle className="w-3.5 h-3.5" />
                   <span>Ngày kết thúc phải sau ngày bắt đầu</span>
                 </div>

@@ -235,7 +235,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
 
                 <div className="flex flex-col gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <span className="typography-body-small text-muted-foreground">Số tiền:</span>
-                  <span className="typography-body-medium break-words font-semibold text-blue-600 min-[380px]:text-right">
+                  <span className="typography-body-medium break-words font-semibold text-blue-700 min-[380px]:text-right">
                     {formatVND(selectedSchedule.amount)}
                   </span>
                 </div>
@@ -262,7 +262,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
             </div>
 
             <div className="flex items-start gap-2 rounded-xl border border-blue-200 bg-blue-50 p-3">
-              <Calendar className="h-4 w-4 text-blue-600 flex-shrink-0" />
+              <Calendar className="h-4 w-4 text-blue-700 flex-shrink-0" />
               <p className="typography-body-small text-blue-800">
                 Dư nợ sau thanh toán: <span className="font-semibold">
                   {formatVND(Math.max(loan.outstanding_principal - selectedSchedule.principal_amount, 0))}

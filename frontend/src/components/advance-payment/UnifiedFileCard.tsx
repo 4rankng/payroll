@@ -29,8 +29,8 @@ export interface UnifiedFileItem {
 const TYPE_CONFIG = {
   flex_pay_import: {
     label: 'Nhập bảng lương',
-    iconboxClass: 'bg-blue-100 text-blue-600',
-    textClass: 'text-blue-600',
+    iconboxClass: 'bg-blue-100 text-blue-700',
+    textClass: 'text-blue-700',
     dotClass: 'bg-blue-500',
     Icon: Upload,
   },
@@ -57,8 +57,8 @@ const TYPE_CONFIG = {
   },
   advance_payment_sao_ke_result: {
     label: 'Kết quả thanh toán sao kê',
-    iconboxClass: 'bg-rose-100 text-rose-600',
-    textClass: 'text-rose-600',
+    iconboxClass: 'bg-rose-100 text-rose-700',
+    textClass: 'text-rose-700',
     dotClass: 'bg-rose-500',
     Icon: FileText,
   },

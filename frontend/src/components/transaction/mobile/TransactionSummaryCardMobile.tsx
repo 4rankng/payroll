@@ -66,7 +66,7 @@ export function TransactionSummaryCardMobile({ ledgerSummary, isLoading }: Trans
             <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
             <p className={`break-words text-sm font-bold tabular-nums ${
               stat.neutral ? 'text-foreground' :
-              stat.positive ? 'text-emerald-700' : 'text-red-600'
+              stat.positive ? 'text-emerald-700' : 'text-red-700'
             }`}>
               {stat.value}
             </p>

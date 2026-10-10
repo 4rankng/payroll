@@ -106,7 +106,7 @@ export function RemoveEmployeeSheet({
                   <RadioGroupItem value="immediate" id="immediate" />
                   <div className="flex-1">
                     <Label htmlFor="immediate" className="flex items-center gap-2 cursor-pointer">
-                      <Clock className="w-4 h-4 text-red-600" />
+                      <Clock className="w-4 h-4 text-red-700" />
                       <div>
                         <div className="font-medium">Xóa ngay lập tức</div>
                         <div className="typography-body-medium text-muted-foreground">
@@ -121,7 +121,7 @@ export function RemoveEmployeeSheet({
                   <RadioGroupItem value="scheduled" id="scheduled" />
                   <div className="flex-1 space-y-3">
                     <Label htmlFor="scheduled" className="flex items-center gap-2 cursor-pointer">
-                      <Calendar className="w-4 h-4 text-blue-600" />
+                      <Calendar className="w-4 h-4 text-blue-700" />
                       <div>
                         <div className="font-medium">Xóa vào ngày cụ thể</div>
                         <div className="typography-body-medium text-muted-foreground">

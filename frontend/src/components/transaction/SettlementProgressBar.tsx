@@ -38,7 +38,7 @@ export function SettlementProgressBar({
       return 'text-emerald-700';
     }
     if (percentage > 0) {
-      return 'text-yellow-700';
+      return 'text-yellow-800';
     }
     return 'text-muted-foreground';
   };

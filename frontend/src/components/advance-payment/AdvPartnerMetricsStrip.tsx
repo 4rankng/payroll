@@ -40,7 +40,7 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
   const processingCells = [
     { label: '<30 giây', count: completedUnder30s, tone: 'text-emerald-700' },
     { label: '<5 phút', count: completed30sTo2m + completed2mTo5m, tone: 'text-amber-700' },
-    { label: '>5 phút', count: completed5mTo15m + completedOver15m, tone: 'text-red-600' },
+    { label: '>5 phút', count: completed5mTo15m + completedOver15m, tone: 'text-red-700' },
   ];
 
   const chrome = bare

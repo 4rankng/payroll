@@ -558,7 +558,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                     </button>
                   </div>
                   {shiftErr && (
-                    <div className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                    <div className="mt-1.5 text-xs text-red-700 flex items-center gap-1">
                       Sai định dạng — cần <span className="fpe-mono">HH:MM-HH:MM</span> (24 giờ)
                       {typeof shiftErr === 'object' && shiftErr.fix && (
                         <button

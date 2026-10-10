@@ -183,7 +183,7 @@ export default function ReconcileUploadDialog({
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all ${
                 tab === "auto"
                   ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  : "text-slate-600 hover:text-slate-700"
               }`}
             >
               <Download size={13} />
@@ -194,7 +194,7 @@ export default function ReconcileUploadDialog({
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-lg transition-all ${
                 tab === "manual"
                   ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  : "text-slate-600 hover:text-slate-700"
               }`}
             >
               <Upload size={13} />
@@ -207,8 +207,8 @@ export default function ReconcileUploadDialog({
         <div className="px-4 pb-4">
           {tab === "auto" ? (
             <div>
-              <label className="text-xs font-bold uppercase tracking-tight text-slate-500 flex items-center gap-1 mb-1.5">
-                <Calendar size={10} className="text-slate-500" />
+              <label className="text-xs font-bold uppercase tracking-tight text-slate-600 flex items-center gap-1 mb-1.5">
+                <Calendar size={10} className="text-slate-600" />
                 Khoảng thời gian
               </label>
               <div className="rounded-md border border-slate-300 bg-white px-2.5 py-1.5">
@@ -253,7 +253,7 @@ export default function ReconcileUploadDialog({
                   <button
                     type="button"
                     onClick={() => setFile(null)}
-                    className="text-slate-500 hover:text-slate-600 transition-colors"
+                    className="text-slate-600 hover:text-slate-600 transition-colors"
                   >
                     &times;
                   </button>
@@ -263,14 +263,14 @@ export default function ReconcileUploadDialog({
                   onClick={() => fileInputRef.current?.click()}
                   className="border border-dashed border-slate-300 rounded bg-white py-4 flex flex-col items-center justify-center gap-1.5 hover:border-blue-500 transition-colors cursor-pointer"
                 >
-                  <div className="w-7 h-7 bg-slate-50 text-slate-500 rounded-full flex items-center justify-center">
+                  <div className="w-7 h-7 bg-slate-50 text-slate-600 rounded-full flex items-center justify-center">
                     <Upload size={14} />
                   </div>
                   <div className="text-center">
-                    <span className="text-xs font-bold text-blue-600 block">
+                    <span className="text-xs font-bold text-blue-700 block">
                       Nhấn để chọn file
                     </span>
-                    <p className="text-xs text-slate-500">CSV (Max 10MB)</p>
+                    <p className="text-xs text-slate-600">CSV (Max 10MB)</p>
                   </div>
                 </div>
               )}
@@ -284,7 +284,7 @@ export default function ReconcileUploadDialog({
             <div className="flex items-center gap-2">
               {polling && !isTerminal ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-600" />
                   <span className="text-xs text-slate-700">Đang xử lý...</span>
                 </>
               ) : job?.status === "completed" ? (
@@ -307,17 +307,17 @@ export default function ReconcileUploadDialog({
             {job && (
               <div className="grid grid-cols-3 gap-3 text-xs">
                 <div>
-                  <p className="text-xs text-slate-500">Tổng dòng</p>
+                  <p className="text-xs text-slate-600">Tổng dòng</p>
                   <p className="font-semibold tabular-nums">{job.total_rows}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Khớp</p>
+                  <p className="text-xs text-slate-600">Khớp</p>
                   <p className="font-semibold text-emerald-700 tabular-nums">
                     {job.matched}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500">Không khớp</p>
+                  <p className="text-xs text-slate-600">Không khớp</p>
                   <p className="font-semibold text-rose-700 tabular-nums">
                     {job.unmatched}
                   </p>
@@ -328,7 +328,7 @@ export default function ReconcileUploadDialog({
             {job?.status === "completed" && (job?.unmatched ?? 0) > 0 && job?.raw_rows?.length && (
               <button
                 onClick={() => walletService.downloadBreakTransactionsCsv(job)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-600 transition-colors mt-1"
+                className="flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-700 transition-colors mt-1"
               >
                 <Download size={12} />
                 Tải giao dịch không khớp
@@ -343,7 +343,7 @@ export default function ReconcileUploadDialog({
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={busy}
-            className="px-3 py-1 h-auto text-xs font-bold text-slate-500 hover:text-slate-700 uppercase tracking-tight"
+            className="px-3 py-1 h-auto text-xs font-bold text-slate-600 hover:text-slate-700 uppercase tracking-tight"
           >
             {isTerminal ? "Đóng" : "Hủy"}
           </Button>

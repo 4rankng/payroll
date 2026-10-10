@@ -99,7 +99,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
                       key={bit}
                       className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${
                         isOffDay(offDays, bit)
-                          ? 'bg-red-100 text-red-600 border-red-400'
+                          ? 'bg-red-100 text-red-700 border-red-400'
                           : 'bg-emerald-50 text-emerald-700 border-emerald-300'
                       }`}
                     >

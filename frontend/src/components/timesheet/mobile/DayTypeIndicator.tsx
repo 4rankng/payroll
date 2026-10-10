@@ -55,8 +55,8 @@ export function DayTypeIndicator({
         <div className="flex items-center gap-2">
           <Label className="typography-body-medium">Loại ngày</Label>
           <div className={`flex items-center gap-1 typography-body-medium font-medium ${
-            autoDayType === 'ngày lễ' ? 'text-red-600' :
-            autoDayType === 'ngày nghỉ' ? 'text-muted-foreground' : 'text-blue-600'
+            autoDayType === 'ngày lễ' ? 'text-red-700' :
+            autoDayType === 'ngày nghỉ' ? 'text-muted-foreground' : 'text-blue-700'
           }`}>
             {getDayTypeIcon(autoDayType)}
             {autoDayType === 'ngày thường' ? 'ngày thường' :

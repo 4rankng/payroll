@@ -31,7 +31,7 @@ function getInputColor(opts: {
     hasOriginalValues && value !== originalValue && !thisFieldDeleted;
   const thisFieldNew = !hasOriginalValues && value > 0;
 
-  if (thisFieldDeleted) return "border-red-300 bg-red-50/70 text-red-400";
+  if (thisFieldDeleted) return "border-red-300 bg-red-50/70 text-red-700";
   if (thisFieldEdited)
     return "border-amber-300 bg-amber-50/70 text-amber-700 font-semibold";
   if (thisFieldNew)

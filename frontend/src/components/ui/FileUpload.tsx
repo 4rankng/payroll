@@ -234,9 +234,9 @@ export function FileUpload({
               <Upload
                 className={cn(
                   "w-5 h-5",
-                  dragActive && !disabled && "text-blue-600",
-                  !dragActive && !disabled && "text-gray-500",
-                  disabled && "text-gray-500"
+                  dragActive && !disabled && "text-blue-700",
+                  !dragActive && !disabled && "text-gray-600",
+                  disabled && "text-gray-600"
                 )}
               />
             </div>
@@ -245,9 +245,9 @@ export function FileUpload({
               <p className="text-sm font-medium text-gray-900">
                 {dragActive ? "Thả file vào đây" : "Tải lên chứng từ"}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-600">
                 Kéo thả hoặc{" "}
-                <span className="text-blue-600 hover:text-blue-700 font-medium">
+                <span className="text-blue-700 hover:text-blue-700 font-medium">
                   chọn file
                 </span>
               </p>
@@ -291,7 +291,7 @@ export function FileUpload({
                   <p className="typography-body-medium text-gray-900 truncate">
                     {file.name}
                   </p>
-                  <p className="typography-body-small text-gray-500">
+                  <p className="typography-body-small text-gray-600">
                     {formatFileSize(file.size)}
                   </p>
 
@@ -308,8 +308,8 @@ export function FileUpload({
                   {/* Error */}
                   {file.error && (
                     <div className="flex items-center gap-1 mt-1">
-                      <AlertCircle className="w-3 h-3 text-red-600" />
-                      <p className="typography-body-small text-red-600">{file.error}</p>
+                      <AlertCircle className="w-3 h-3 text-red-700" />
+                      <p className="typography-body-small text-red-700">{file.error}</p>
                     </div>
                   )}
                 </div>
@@ -321,7 +321,7 @@ export function FileUpload({
                   size="sm"
                   onClick={() => removeFile(index)}
                   disabled={file.uploading}
-                  className="flex-shrink-0 h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
+                  className="flex-shrink-0 h-8 w-8 p-0 hover:bg-red-50 hover:text-red-700"
                 >
                   <X className="w-4 h-4" />
                 </Button>

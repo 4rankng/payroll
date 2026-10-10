@@ -256,11 +256,11 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
                     </p>
                     <p className="typography-body-small text-muted-foreground">
                       Kéo thả hoặc{" "}
-                      <span className="text-blue-600 hover:text-blue-700 font-medium">
+                      <span className="text-blue-700 hover:text-blue-700 font-medium">
                         chọn file
                       </span>
                     </p>
-                    <p className="typography-body-small text-gray-500">
+                    <p className="typography-body-small text-gray-600">
                       Chỉ chấp nhận file Excel (.xls, .xlsx) - Tối đa 10MB
                     </p>
                   </div>
