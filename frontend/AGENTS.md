@@ -29,6 +29,8 @@ React 18 + TypeScript + Vite 6 frontend for a Vietnamese payroll management syst
 
 ## For AI Agents
 
+**Release versioning (NON-NEGOTIABLE):** bump `package.json` "version" before every deployment — the sidebar renders it via `__APP_VERSION__` (vite define). Without a bump there is no way to tell which bundle a user is actually running.
+
 ### File Responsibility Rule (NON-NEGOTIABLE)
 
 - **`.tsx` files** — UI/UX rendering only. No business logic, no API calls, no data transformation.
