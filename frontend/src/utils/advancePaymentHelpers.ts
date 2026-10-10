@@ -294,10 +294,10 @@ export function getAdvanceQuotaSummaryForMonth(
 
 /**
  * Payment latency text: elapsed time from request creation to payment
- * completion, seconds-precise. Returns null when the request has not been
- * paid yet.
+ * completion, seconds-precise, in Vietnamese. Returns null when the request
+ * has not been paid yet.
  *
- * Example: "42s", "2m 15s", "1h 05m"
+ * Example: "42 giây", "5 phút 40 giây", "1 giờ 05 phút"
  */
 export function formatPaymentLatency(
   createdAt: string,
@@ -314,11 +314,13 @@ export function formatPaymentLatency(
   const mins = Math.floor(totalSecs / 60);
   const secs = totalSecs % 60;
 
-  if (mins < 1) return `${totalSecs}s`;
-  if (mins < 60) return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+  if (mins < 1) return `${totalSecs} giây`;
+  if (mins < 60) return secs > 0 ? `${mins} phút ${secs} giây` : `${mins} phút`;
   const hours = Math.floor(mins / 60);
   const remainMins = mins % 60;
-  return remainMins > 0 ? `${hours}h ${String(remainMins).padStart(2, '0')}m` : `${hours}h`;
+  return remainMins > 0
+    ? `${hours} giờ ${String(remainMins).padStart(2, '0')} phút`
+    : `${hours} giờ`;
 }
 
 /**

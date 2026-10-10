@@ -156,7 +156,7 @@ export function getAdvancePaymentColumns(
     {
       id: "latency",
       header: "Độ trễ",
-      size: 80,
+      size: 110,
       meta: { align: "right" },
       cell: ({ row }) => <LatencyCell row={row.original} />,
     },
