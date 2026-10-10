@@ -11,7 +11,10 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  GO_VERSION: '1.26'
+  # Exact patch, not '1.26': setup-go prefers the runner's cached 1.26.x and
+  # silently kept go1.26.8, which fails govulncheck on GO-2026-6610..6617
+  # (net/http fixed in 1.26.9). Bump with the base image in backend/Dockerfile.
+  GO_VERSION: '1.26.9'
   NODE_VERSION: '20'
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
