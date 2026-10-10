@@ -88,7 +88,7 @@ const SettingsSection = ({ icon: Icon, title, description, children }: SettingsS
   return (
     <section
       aria-labelledby={headingId}
-      className="grid gap-5 border-b py-7 first:pt-0 last:border-b-0 last:pb-0 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:gap-8"
+      className="grid gap-5 border-b bg-card px-4 py-7 first:rounded-t-2xl last:rounded-b-2xl last:border-b-0 last:pb-7 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:gap-8 lg:px-6"
     >
       <div className="flex min-w-0 items-start gap-3 lg:pt-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm">

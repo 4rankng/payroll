@@ -37,7 +37,7 @@
     /* Background System — nepocorp-style surface ladder: the canvas is a
        clearly tinted green-gray (#e2e8e4, ~1.24 luminance ratio vs white) so
        white cards separate instantly; card outlines are visible gray-green. */
-    --background: 140 10% 89%;        /* #e2e8e4 - page canvas */
+    --background: 152 6% 54%;          /* #82918a - page canvas: 3.30:1 vs white cards (WCAG 1.4.11) */
     --foreground: 220 43% 11%;        /* #101828 - neutral ink */
 
     /* Surface Colors - Subtle Depth */
@@ -57,9 +57,9 @@
     --accent-foreground: 151 87% 25%;
 
     /* Borders & Inputs - Crisp Definition (nepocorp border-1 ≈ #d1d9d4) */
-    --border: 145 10% 83%;             /* #d1dad4 - visible card outline */
+    --border: 138 10% 46%;             /* #6b8272 - card outline, 4.15:1 on card / 3.34:1 on page (WCAG 1.4.11) */
     --input: 216 18% 84%;              /* #d0d5dd */
-    --ring: 151 87% 25%;               /* emerald focus rings */
+    --ring: 151 87% 14%;               /* emerald focus rings: 11.4:1 on card, 3.5:1 on canvas (WCAG 1.4.11) */
 
     /* Secondary Actions - Neutral */
     --secondary: 216 24% 96%;
@@ -76,18 +76,18 @@
     /* ========================================================================
        SURFACE TOKENS - Mobile page chrome (single source of truth)
        ======================================================================== */
-    --surface-page: 140 10% 89%;      /* #E2E8E4 — tinted canvas */
-    --surface-border: 145 10% 83%;    /* #D1DAD4 — visible card outline */
+    --surface-page: 152 6% 54%;       /* #82918a — tinted canvas: 3.30:1 vs white cards */
+    --surface-border: 138 10% 46%;    /* #6b8272 — card outline, 3:1 vs card + page (WCAG 1.4.11) */
 
     /* Employee payroll-fintech surfaces. These aliases keep the employee
        portal cohesive without changing the admin and partner themes. */
-    --employee-page: #f5f7f9;
+    --employee-page: #82918a;         /* 3.30:1 vs white surfaces (WCAG 1.4.11) */
     --employee-surface: #ffffff;
     --employee-surface-muted: #f7f9f8;
     --employee-text: #101828;
     --employee-text-secondary: #475467;  /* 7.0:1 on white */
     --employee-text-muted: #667085;      /* 4.8:1 on white — WCAG AA floor for muted metadata */
-    --employee-border: #e4e7ec;
+    --employee-border: #6b8272;       /* 4.15:1 vs white surface (WCAG 1.4.11) */
     --employee-border-strong: #d0d5dd;
     --employee-accent: #08783e;
     --employee-accent-strong: #075c33;
@@ -109,7 +109,7 @@
     --employee-radius-control: 0.75rem;
     --employee-radius-card: 1rem;
     --employee-radius-feature: 1.25rem;
-    --employee-focus-ring: #08783e;
+    --employee-focus-ring: #044325;   /* 11.5:1 on white surface, 3.5:1 on page (WCAG 1.4.11) */
     --employee-action-toolbar-block-size: 0px;
 
     /* ========================================================================
@@ -226,7 +226,7 @@
     /* ========================================================================
        ADMIN LEDGER THEME - Scoped to [data-admin-ui]
        ======================================================================== */
-    --admin-background: 140 10% 89%;  /* #e2e8e4 — tinted canvas, cards pop */
+    --admin-background: 152 6% 54%;   /* #82918a — canvas: 3.30:1 vs white cards (WCAG 1.4.11) */
     --admin-foreground: 148 23% 16%;
     --admin-card: 0 0% 100%;
     --admin-card-foreground: 148 23% 16%;
@@ -240,9 +240,9 @@
     --admin-muted-foreground: 145 13% 27%;  /* deep green-gray, 8.4:1 on white */
     --admin-accent-soft: 148 38% 90%;
     --admin-accent-foreground: 151 46% 22%;
-    --admin-border: 145 10% 83%;      /* #d1dad4 — visible card outline */
+    --admin-border: 138 10% 46%;      /* #6b8272 — card outline, 3:1 vs card + page (WCAG 1.4.11) */
     --admin-input: 214 18% 84%;
-    --admin-ring: 151 49% 38%;
+    --admin-ring: 151 49% 18%;        /* #17442f: 11.0:1 on card, 3.3:1 on canvas (WCAG 1.4.11) */
     --admin-success: 146 66% 24%;   /* ≥4.5:1 as text on white and on success tints */
     --admin-success-foreground: 0 0% 100%;
     --admin-warning: 35 77% 25%;    /* WCAG AA: 7+:1 white, ≥5:1 on tints */
@@ -275,7 +275,7 @@
        as admin (--partner-accent already defined at line 212); this block gives
        partner its own surface tokens so it can evolve independently.
        ======================================================================== */
-    --partner-background: 140 10% 89%;  /* #e2e8e4 — tinted canvas, cards pop */
+    --partner-background: 152 6% 54%; /* #82918a — canvas: 3.30:1 vs white cards (WCAG 1.4.11) */
     --partner-foreground: 148 23% 16%;
     --partner-card: 0 0% 100%;
     --partner-card-foreground: 148 23% 16%;
@@ -289,9 +289,9 @@
     --partner-muted-foreground: 145 13% 27%;  /* deep green-gray, 8.4:1 on white */
     --partner-accent-soft: 148 38% 90%;
     --partner-accent-foreground: 151 46% 22%;
-    --partner-border: 145 10% 83%;    /* #d1dad4 — visible card outline */
+    --partner-border: 138 10% 46%;    /* #6b8272 — card outline, 3:1 vs card + page (WCAG 1.4.11) */
     --partner-input: 214 18% 84%;
-    --partner-ring: 151 49% 38%;
+    --partner-ring: 151 49% 18%;      /* #17442f: 11.0:1 on card, 3.3:1 on canvas (WCAG 1.4.11) */
     --partner-success: 146 66% 24%;   /* ≥4.5:1 as text on white and on success tints */
     --partner-success-foreground: 0 0% 100%;
     --partner-warning: 35 77% 25%;    /* WCAG AA: 7+:1 white, ≥5:1 on tints */

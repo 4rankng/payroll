@@ -227,7 +227,7 @@ export const ComponentErrorBoundary: React.FC<{
   return (
     <ErrorBoundary
       fallback={
-        <div className="p-6 border border-destructive/20 rounded-xl bg-destructive/5">
+        <div className="p-6 border border-destructive/30 rounded-xl bg-card">
           <div className="flex items-center gap-2 text-destructive">
             <AlertCircle className="h-5 w-5" />
             <p className="font-medium">
@@ -308,7 +308,7 @@ export class SectionErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center gap-4 p-8 text-center">
+        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border bg-card p-8 text-center">
           <div className="rounded-full bg-destructive/10 p-3">
             <AlertCircle className="h-6 w-6 text-destructive" />
           </div>

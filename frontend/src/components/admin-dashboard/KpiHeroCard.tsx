@@ -78,7 +78,11 @@ export const KpiHeroCard = memo(function KpiHeroCard({
       className={cn(
         'group relative h-full w-full overflow-hidden rounded-2xl border bg-card text-left',
         'shadow-soft transition-[border-color,box-shadow,transform] duration-200',
-        isActive ? 'border-primary/30 bg-primary/[0.03]' : 'border-border/60',
+        // Active state keeps bg-card (white) so label text stays 8.89:1; the
+        // green border + top accent bar carry the "selected" signal. A
+        // translucent bg tint here would composite over the page canvas and
+        // drop the label below AA.
+        isActive ? 'border-primary/50' : 'border-border/60',
         onClick && 'cursor-pointer hover:border-primary/25 hover:shadow-card active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         className,
       )}

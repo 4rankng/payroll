@@ -21,7 +21,7 @@ export const AdminPageCanvas = ({
 }) => (
   <div
     className={cn(
-      'min-h-full bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,rgba(248,250,249,0.96),#f5f7f9_34rem)]',
+      'min-h-full bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem)]',
       className,
     )}
   >
@@ -47,7 +47,9 @@ export const AdminPageHeaderCard = ({
   <div
     data-mobile-header
     className={cn(
-      'rounded-2xl border border-white/80 bg-white/82 px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.05),0_18px_48px_-32px_rgba(8,120,62,0.22)] backdrop-blur sm:px-5',
+      // padding lives on .admin-page-header (see admin-daisy.css) so wrapped
+      // and bare header usages share one inset and never double up.
+      'rounded-2xl border border-white/80 bg-white/82 shadow-[0_1px_2px_rgba(16,24,40,0.05),0_18px_48px_-32px_rgba(8,120,62,0.22)] backdrop-blur',
       className,
     )}
   >

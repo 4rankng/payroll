@@ -48,7 +48,7 @@ const SettingsSection = ({
     <section
       id={id}
       aria-labelledby={titleId}
-      className="grid gap-5 border-t px-4 py-6 sm:px-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8 lg:py-7 xl:grid-cols-[16rem_minmax(0,1fr)]"
+      className="grid gap-5 border-t bg-card px-4 py-6 sm:px-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8 lg:py-7 xl:grid-cols-[16rem_minmax(0,1fr)]"
     >
       <div className="min-w-0">
         <div className="mb-2 flex items-center gap-2">

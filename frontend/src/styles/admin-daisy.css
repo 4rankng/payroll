@@ -49,7 +49,7 @@
     isolation: isolate;
     background:
       radial-gradient(circle at top left, rgba(8, 120, 62, 0.055), transparent 30rem),
-      linear-gradient(180deg, #f8fafb 0%, #f5f7f9 100%);
+      hsl(var(--background));
   }
 
   [data-admin-ui] .admin-shell::before {
@@ -207,14 +207,19 @@
     color: hsl(var(--sidebar-foreground) / 0.76);
   }
 
+  /* Self-carding: the page canvas is a dark sage (WCAG 1.4.11 card/canvas
+     separation), so header text must sit on a light surface. Pages wrapped in
+     AdminPageHeaderCard already carry the frosted card; the inner fill is
+     seamless. Bare usages (timesheet, wallet, mobile pages) get a readable
+     card instead of falling onto the canvas. */
   [data-admin-ui] .admin-page-header {
     position: relative;
     overflow: visible;
     gap: 0.9rem;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
+    padding: 0.75rem 1rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    background: hsl(var(--card));
     box-shadow: none;
   }
 
@@ -438,7 +443,7 @@
     }
 
     [data-admin-ui] .admin-page-header {
-      padding: 0;
+      padding: 0.625rem 0.875rem;
     }
   }
 

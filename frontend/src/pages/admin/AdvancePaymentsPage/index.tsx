@@ -267,7 +267,7 @@ const AdvancePaymentsPage = () => {
   const handleEmployeeClose = useCallback(() => setSelectedEmployee(null), []);
 
   return (
-    <div ref={animRoot} className="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem),linear-gradient(180deg,rgba(248,250,249,0.96),#f5f7f9_34rem)]">
+    <div ref={animRoot} className="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem)]">
       <div className="mx-auto max-w-[1480px] space-y-4 p-4 lg:space-y-5 lg:p-6">
 
         {/* ─── MOBILE: Wallet hero — full-bleed, above everything ─── */}

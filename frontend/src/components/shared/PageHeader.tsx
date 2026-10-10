@@ -40,7 +40,12 @@ export const PageHeader = ({
         data-slot="page-header"
         data-admin-surface="header"
         className={cn(
-          'admin-page-header flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4',
+          // Self-sufficient card surface: the page canvas is a dark sage for
+          // WCAG 1.4.11 card/canvas separation, so header text must sit on a
+          // light surface. Pages that already wrap this in AdminPageHeaderCard
+          // get a seamless inner fill; pages that don't (timesheet, dashboard,
+          // ledger, wallet) stay readable instead of falling onto the canvas.
+          'admin-page-header flex flex-col gap-2 rounded-xl bg-card px-4 py-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4',
           className,
         )}
       >

@@ -18,10 +18,11 @@
     letter-spacing: var(--tracking-normal);
   }
 
-  /* Full viewport height with PWA splash background */
+  /* Full viewport height with PWA splash background (matches --background so
+     the canvas reads correctly before the shell paints) */
   html {
     height: 100%;
-    background-color: hsl(220 20% 98%);
+    background-color: hsl(var(--background));
   }
 
   body {
