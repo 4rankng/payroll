@@ -23,11 +23,14 @@ FULL_IMAGE_NAME = ghcr.io/$(GHCR_OWNER)/$(IMAGE_NAME):$(TAG)
 # level below the repo root.
 
 # Buildx builder (shared with backend) — persistent docker-container builder.
-# The builder's own volume caches layers; BUILD_CACHE_DIR adds an on-host cache
-# export/import so builds skip the slow `pnpm install` step WITHOUT a ~100s
-# registry manifest round-trip (type=registry,ref=...) on every build.
+# Layer cache lives in the builder's own volume and survives across builds;
+# the expensive steps (pnpm install, Vite caches) are covered by RUN
+# --mount=type=cache mounts, which persist in that same volume. There is no
+# --cache-to/--cache-from on purpose: a local mode=max export re-packs every
+# intermediate layer through Docker Desktop's VM→host share (~20 min per
+# deploy, 5.5GB on disk) and only benefits ephemeral CI builders — CI was
+# removed in 85cec106. If `bb` is ever recreated, expect one cold rebuild.
 BUILDER ?= bb
-BUILD_CACHE_DIR ?= $(HOME)/.cache/payroll-frontend-buildx
 
 .PHONY: push
 push:
@@ -41,9 +44,6 @@ push:
 	@echo "Building & pushing amd64 image with production environment variables: $(FULL_IMAGE_NAME)"
 	docker buildx build \
 		--platform linux/amd64 \
-		--cache-from type=local,src=$(BUILD_CACHE_DIR) \
-		--cache-to type=local,dest=$(BUILD_CACHE_DIR),mode=max \
-		--build-arg BUILDKIT_INLINE_CACHE=1 \
 		--build-arg VITE_API_BASE_URL=https://tingting.vip \
 		--build-arg VITE_API_VERSION=/api/v1 \
 		--build-arg VITE_API_TIMEOUT=30000 \

@@ -27,8 +27,12 @@
 FROM --platform=$BUILDPLATFORM ghcr.io/4rankng/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS deps
 WORKDIR /app
 
-# Enable corepack to use pnpm (version pinned via package.json's packageManager field)
-RUN corepack enable
+# Enable corepack and pre-download the pinned pnpm in its own layer, so a
+# flaky registry fetch (which has killed deploys mid-build) can't take down
+# the slow `pnpm install` step below — a retry then costs seconds, not
+# minutes. Keep the version in sync with "packageManager" in package.json;
+# corepack strict mode enforces the match at runtime anyway.
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 
 # Copy package files first for better layer caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -53,9 +57,10 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 FROM --platform=$BUILDPLATFORM ghcr.io/4rankng/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32 AS builder
 WORKDIR /app
 
-# Enable corepack so pnpm (pinned via package.json#packageManager) is available
-# for the build step. Dependencies themselves come from the deps stage.
-RUN corepack enable
+# Enable corepack so pnpm is available for the build step, with the same
+# pinned pre-download as the deps stage (corepack's download cache is not
+# shared across stages). Dependencies themselves come from the deps stage.
+RUN corepack enable && corepack prepare pnpm@10.33.2 --activate
 
 # Build arguments for environment variables
 ARG VITE_API_BASE_URL=https://tingting.vip
