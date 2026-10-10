@@ -24,7 +24,7 @@ export interface WeekPeriodsResult {
 
 /**
  * Calculate the start and end dates for a specific week in a given month/year
- * Week 1: Days 1-7, Week 2: Days 8-14, Week 3: Days 15-21, Week 4: Days 22-28
+ * Week 1: Days 1-7, Week 2: Days 8-14, Week 3: Days 15-21, Week 4: Days 22 through end of month
  */
 function getWeekPeriodDates(year: number, month: number, week: number): { from: string; to: string } {
   let startDay: number;
@@ -45,7 +45,7 @@ function getWeekPeriodDates(year: number, month: number, week: number): { from: 
       break;
     case 4:
       startDay = 22;
-      endDay = 28;
+      endDay = getLastDayOfMonth(year, month);
       break;
     default:
       throw new Error('Week must be between 1 and 4');
@@ -124,20 +124,15 @@ export function getAvailableWeekPeriods(currentDate: Date = new Date()): WeekPer
       createWeekPeriod(currentYear, currentMonth, 2, 'current')
     ];
     defaultPeriod = availablePeriods[1];
-  } else if (currentDay >= 22 && currentDay < 28) {
-    // Day 22-27: Show Week 2 & 3 of current, default = Week 3 current
-    availablePeriods = [
-      createWeekPeriod(currentYear, currentMonth, 2, 'current'),
-      createWeekPeriod(currentYear, currentMonth, 3, 'current')
-    ];
-    defaultPeriod = availablePeriods[1];
   } else {
-    // Day 28+: Show Week 3 & 4 of current, default = Week 4 current
+    // Day 22 through month end: show Week 3 & 4 of current, default = Week 3.
+    // Week 4 (day 22 to month end) stays selectable for early preparation of
+    // the day-1 payment, but the default never lands on an in-progress week.
     availablePeriods = [
       createWeekPeriod(currentYear, currentMonth, 3, 'current'),
       createWeekPeriod(currentYear, currentMonth, 4, 'current')
     ];
-    defaultPeriod = availablePeriods[1];
+    defaultPeriod = availablePeriods[0];
   }
 
   return {
@@ -199,12 +194,13 @@ export function getCustomDateRanges(currentDate: Date = new Date()): CustomDateR
 
     // Range 1: 15-21 Current Month
     const range15_21 = getWeekPeriodDates(currentYear, currentMonth + 1, 3);
-    // Range 2: 22-28 Current Month
-    const range22_28 = getWeekPeriodDates(currentYear, currentMonth + 1, 4);
+    // Range 2: 22 through end of current month
+    const range22_eom = getWeekPeriodDates(currentYear, currentMonth + 1, 4);
+    const lastDay = getLastDayOfMonth(currentYear, currentMonth + 1);
 
     return [
         { from: range15_21.from, to: range15_21.to, label: `15 - 21 Tháng ${monthNumber}` },
-        { from: range22_28.from, to: range22_28.to, label: `22 - 28 Tháng ${monthNumber}` }
+        { from: range22_eom.from, to: range22_eom.to, label: `22 - ${lastDay} Tháng ${monthNumber}` }
     ];
   }
 
@@ -222,15 +218,16 @@ export function getCustomDateRanges(currentDate: Date = new Date()): CustomDateR
     const prevMonthNumber = format(prevMonthDate, 'MM', { locale: vi });
     const currentMonthNumber = format(currentDate, 'MM', { locale: vi });
 
-    // Range 1: 22-28 Previous Month
-    const rangePrev22_28 = getWeekPeriodDates(prevYear, prevMonthIndex + 1, 4);
+    // Range 1: 22 through end of previous month
+    const rangePrev22_eom = getWeekPeriodDates(prevYear, prevMonthIndex + 1, 4);
+    const prevLastDay = getLastDayOfMonth(prevYear, prevMonthIndex + 1);
 
     // Range 2: 01-07 Current Month
     const currentMonthDateStart = new Date(currentYear, currentMonth, 1);
     const currentMonthDateEnd = new Date(currentYear, currentMonth, 7);
 
     return [
-      { from: rangePrev22_28.from, to: rangePrev22_28.to, label: `22 - 28 Tháng ${prevMonthNumber}` },
+      { from: rangePrev22_eom.from, to: rangePrev22_eom.to, label: `22 - ${prevLastDay} Tháng ${prevMonthNumber}` },
       {
         from: dateToString(currentMonthDateStart),
         to: dateToString(currentMonthDateEnd),
@@ -246,8 +243,8 @@ export function getCustomDateRanges(currentDate: Date = new Date()): CustomDateR
  * The month the weekly payroll screens open on.
  *
  * Weekly timesheets arrive a week at a time (weeks of 1-7, 8-14, 15-21,
- * 22-28) and are approved after the fact, so in the first days of a new month
- * the unapproved batch is still the previous month's 22-28 week. Defaulting to
+ * 22-month end) and are approved after the fact, so in the first days of a new
+ * month the unapproved batch is still the previous month's final week. Defaulting to
  * the calendar month opened the screen on an empty window with that batch
  * sitting right there — on 2026-10-01 the tiles read zero while 1,573 timesheets
  * dated 2026-09-22..28 were pending.

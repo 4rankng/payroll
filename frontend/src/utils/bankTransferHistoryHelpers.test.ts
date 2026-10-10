@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatBankTransferDateTime, formatBankTransferPeriod } from './bankTransferHistoryHelpers';
+import {
+  BANK_TRANSFER_CYCLE_LABELS,
+  formatBankTransferDateTime,
+  formatBankTransferPeriod,
+} from './bankTransferHistoryHelpers';
+
+describe('BANK_TRANSFER_CYCLE_LABELS', () => {
+  it('pins the four cycle labels', () => {
+    expect(BANK_TRANSFER_CYCLE_LABELS).toEqual({
+      1: 'Kỳ 1 · ngày 1–7',
+      2: 'Kỳ 2 · ngày 8–14',
+      3: 'Kỳ 3 · ngày 15–21',
+      4: 'Kỳ 4 · ngày 22–cuối tháng',
+    });
+  });
+});
 
 describe('formatBankTransferPeriod', () => {
   it('compacts a period within the same month', () => {

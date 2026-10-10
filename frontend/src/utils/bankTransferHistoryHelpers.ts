@@ -2,7 +2,7 @@ export const BANK_TRANSFER_CYCLE_LABELS = {
   1: 'Kỳ 1 · ngày 1–7',
   2: 'Kỳ 2 · ngày 8–14',
   3: 'Kỳ 3 · ngày 15–21',
-  4: 'Kỳ 4 · ngày 22–28',
+  4: 'Kỳ 4 · ngày 22–cuối tháng',
 } as const;
 
 const bankTransferDateFormatter = new Intl.DateTimeFormat('vi-VN', {

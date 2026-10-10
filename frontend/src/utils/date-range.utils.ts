@@ -6,9 +6,9 @@ export function getDefaultDateRange(): { startDate: string; endDate: string } {
    * - Day 4–10  → range = 1–7   (current month)
    * - Day 11–17 → range = 8–14  (current month)
    * - Day 18–24 → range = 15–21 (current month)
-   * - Day 25–end of month → range = 22–28 (current month)
+   * - Day 25–end of month → range = 22–end of month (current month)
    *
-   * For day = < 4 → range = 22–28 (last month)
+   * For day = < 4 → range = 22–end of month (last month)
    */
 
   // Determine which calendar month we should base the range on
@@ -37,7 +37,7 @@ export function getDefaultDateRange(): { startDate: string; endDate: string } {
   } else {
     // Day 25–end of month (or days 1-3 of next month mapped to previous month)
     startDay = 22;
-    endDay = 28;
+    endDay = new Date(year, month + 1, 0).getDate();
   }
 
   // Format as YYYY-MM-DD
