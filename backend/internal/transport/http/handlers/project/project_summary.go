@@ -38,7 +38,7 @@ func (h *Handler) GetProjectSummary(c *gin.Context) {
 
 // GetPartnerProjectSummary gets project statistics for partner users
 // @Summary Get partner project summary
-// @Description Get project statistics data for partner dashboard (only for projects created by the current user)
+// @Description Get project statistics for the partner dashboard (same accessible set as the partner project list: owned + shared projects)
 // @Tags projects
 // @Accept json
 // @Produce json

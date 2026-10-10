@@ -771,14 +771,15 @@ func (r *ProjectRepository) GetStatusCounts(ctx context.Context) (map[string]int
 	return statusCounts, nil
 }
 
+// projectStatusCount is one grouped (status → count) row.
+type projectStatusCount struct {
+	Status string
+	Count  int64
+}
+
 // GetStatusCountsForCreator gets project status counts for a specific creator
 func (r *ProjectRepository) GetStatusCountsForCreator(ctx context.Context, createdBy uint) (map[string]int, error) {
-	type StatusCount struct {
-		Status string
-		Count  int64
-	}
-
-	var results []StatusCount
+	var results []projectStatusCount
 	err := r.DB.WithContext(ctx).
 		Model(&domain.Project{}).
 		Select("project_status as status, COUNT(*) as count").
@@ -790,32 +791,53 @@ func (r *ProjectRepository) GetStatusCountsForCreator(ctx context.Context, creat
 		return nil, err
 	}
 
+	return statusCountsWithDefaults(results), nil
+}
+
+// GetStatusCountsForAccessible gets project status counts for every project
+// accessible to the user (owned + shared + assignment paths). It uses the same
+// accessible-ID set as Count/List with the AccessibleBy filter, so partner
+// summary cards and the partner project list always agree.
+func (r *ProjectRepository) GetStatusCountsForAccessible(ctx context.Context, userID uint) (map[string]int, error) {
+	accessibleIDs, err := r.getAccessibleProjectIDs(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(accessibleIDs) == 0 {
+		return statusCountsWithDefaults(nil), nil
+	}
+
+	var results []projectStatusCount
+	err = r.DB.WithContext(ctx).
+		Model(&domain.Project{}).
+		Select("project_status as status, COUNT(*) as count").
+		Where("projects.id IN (?)", accessibleIDs).
+		Group("status").
+		Find(&results).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return statusCountsWithDefaults(results), nil
+}
+
+// statusCountsWithDefaults normalizes grouped status rows into a map that has
+// an explicit zero entry for every known project status.
+func statusCountsWithDefaults(rows []projectStatusCount) map[string]int {
 	statusCounts := make(map[string]int)
-	for _, result := range results {
+	for _, result := range rows {
 		statusCounts[result.Status] = int(result.Count)
 	}
 
 	// Ensure all statuses are represented
-	if _, exists := statusCounts["draft"]; !exists {
-		statusCounts["draft"] = 0
-	}
-	if _, exists := statusCounts["active"]; !exists {
-		statusCounts["active"] = 0
-	}
-	if _, exists := statusCounts["paused"]; !exists {
-		statusCounts["paused"] = 0
-	}
-	if _, exists := statusCounts["completed"]; !exists {
-		statusCounts["completed"] = 0
-	}
-	if _, exists := statusCounts["cancelled"]; !exists {
-		statusCounts["cancelled"] = 0
-	}
-	if _, exists := statusCounts["inactive"]; !exists {
-		statusCounts["inactive"] = 0
+	for _, status := range []string{"draft", "active", "paused", "completed", "cancelled", "inactive"} {
+		if _, exists := statusCounts[status]; !exists {
+			statusCounts[status] = 0
+		}
 	}
 
-	return statusCounts, nil
+	return statusCounts
 }
 
 // SearchProjects searches for projects using Vietnamese text normalization

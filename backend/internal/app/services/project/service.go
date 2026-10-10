@@ -311,19 +311,25 @@ func (s *ProjectService) GetPartnerProjectSummary(ctx context.Context, createdBy
 		return &summary, nil
 	}
 
-	// Cache miss - fetch from database
-	// Get projects count for this partner (filter by creator)
-	filters := domain.ProjectFilters{
-		CreatedBy: &createdBy,
-	}
-	projects, err := s.ProjectRepo.List(ctx, filters)
+	// Cache miss - fetch from database.
+	// Scope by the same "accessible" set as the partner project list
+	// (AccessibleBy: owned + shared + assignment paths) — NOT CreatedBy.
+	// A partner whose projects were granted via project_users sees them in the
+	// list, so the summary cards must count them too; filtering by creator
+	// showed "Tổng dự án 0" above a non-empty list.
+	accessibleBy := createdBy
+
+	// Get total project count for this partner (accessible set)
+	totalProjects, err := s.ProjectRepo.Count(ctx, domain.ProjectFilters{
+		AccessibleBy: &accessibleBy,
+	})
 	if err != nil {
-		s.logger.Error("Failed to list projects for partner summary", "created_by", createdBy, "error", err)
+		s.logger.Error("Failed to count projects for partner summary", "created_by", createdBy, "error", err)
 		return nil, domain.NewInternalError(constants.MsgFailedToGetProjectsVN, err)
 	}
 
-	// Get status counts for this partner's projects only
-	statusCounts, err := s.ProjectRepo.GetStatusCountsForCreator(ctx, createdBy)
+	// Get status counts for this partner's accessible projects only
+	statusCounts, err := s.ProjectRepo.GetStatusCountsForAccessible(ctx, createdBy)
 	if err != nil {
 		s.logger.Error("Failed to get status counts for partner summary", "created_by", createdBy, "error", err)
 		return nil, domain.NewInternalError(constants.MsgFailedToGetStatusCountsVN, err)
@@ -338,7 +344,7 @@ func (s *ProjectService) GetPartnerProjectSummary(ctx context.Context, createdBy
 
 	// Calculate summary statistics for this partner only
 	result := &domain.PartnerProjectSummary{
-		TotalProjects:     len(projects),
+		TotalProjects:     int(totalProjects),
 		ActiveProjects:    statusCounts["active"],
 		CompletedProjects: statusCounts["completed"],
 		TotalEmployees:    activeEmployeeCount,

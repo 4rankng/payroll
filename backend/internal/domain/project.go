@@ -120,6 +120,7 @@ type ProjectRepository interface {
 	GetActiveCountAtDate(ctx context.Context, date time.Time) (int, error)
 	GetStatusCounts(ctx context.Context) (map[string]int, error)
 	GetStatusCountsForCreator(ctx context.Context, createdBy uint) (map[string]int, error)
+	GetStatusCountsForAccessible(ctx context.Context, userID uint) (map[string]int, error)
 	SearchProjects(ctx context.Context, search string, limit int) ([]*Project, error)
 	GetPendingActivatedProjects(ctx context.Context) ([]*Project, error)
 	CodeExistsIncludingDeleted(ctx context.Context, code string) bool
