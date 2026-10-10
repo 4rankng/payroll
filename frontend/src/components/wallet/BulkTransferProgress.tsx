@@ -270,8 +270,12 @@ function RowsView({
   }
   if (isMobile) return <MobileRowList rows={rows} />;
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60">
-      <Table>
+    // overflow-x-auto (not hidden): the repo's Table is a bare <table> with
+    // no scroll wrapper, so without this the 7-column table clips at the
+    // sheet edge — Trạng thái/FT become unreachable. min-w keeps columns
+    // readable and engages the scrollbar instead of crushing cells.
+    <div className="overflow-x-auto rounded-xl border border-border/60">
+      <Table className="min-w-[720px]">
         <TableHeader>
           <TableRow>
             <TableHead className="w-12 text-right">STT</TableHead>

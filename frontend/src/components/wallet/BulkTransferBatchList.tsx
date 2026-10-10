@@ -167,7 +167,9 @@ export const BulkTransferBatchList = memo(function BulkTransferBatchList({
       <Sheet open={selectedId !== null} onOpenChange={(o) => !o && setSelectedId(null)}>
         <SheetContent
           side="right"
-          className="flex w-full flex-col gap-0 sm:max-w-2xl"
+          // max-w-3xl: the batch-detail table needs ~720px for its 7
+          // columns; 2xl (672px) forced a clipped Trạng Thái/FT column.
+          className="flex w-full flex-col gap-0 sm:max-w-3xl"
         >
           <SheetHeader className="border-b">
             <SheetTitle>Chi tiết lô chuyển tiền</SheetTitle>
