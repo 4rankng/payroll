@@ -174,7 +174,7 @@ function EmployeeCard({
         {/* Bank */}
         {hasBank ? (
           <>
-            <span className="text-utility-gray-400 mr-2.5" aria-hidden>·</span>
+            <span className="text-utility-gray-500 mr-2.5" aria-hidden>·</span>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-fg-secondary pr-2.5">
               <CreditCard01 className="size-3 shrink-0 text-fg-tertiary" aria-hidden="true" />
               {emp.bank!.bankName}
@@ -182,7 +182,7 @@ function EmployeeCard({
           </>
         ) : (
           <>
-            <span className="text-utility-gray-400 mr-2.5" aria-hidden>·</span>
+            <span className="text-utility-gray-500 mr-2.5" aria-hidden>·</span>
             <span className="text-xs text-fg-tertiary italic">
               Chưa có ngân hàng
             </span>
@@ -192,7 +192,7 @@ function EmployeeCard({
         {/* Account number */}
         {emp.bank?.accountNumber && (
           <>
-            <span className="text-utility-gray-400 mr-2.5" aria-hidden>·</span>
+            <span className="text-utility-gray-500 mr-2.5" aria-hidden>·</span>
             <span className="break-all font-mono text-xs text-fg-tertiary tabular-nums">
               {emp.bank.accountNumber}
             </span>

@@ -17,21 +17,21 @@
     --primary-foreground: 0 0% 100%;  /* Pure white for contrast */
 
     /* Success - Professional Green (Positive, Achievement, Growth)
-       WCAG AA: 5.12:1 on white — safe for 11px/12px data text. */
-    --success: 142 65% 30%;            /* Deep emerald green */
+       WCAG AA: ≥4.5:1 as text on white and on success tints. */
+    --success: 142 68% 26%;            /* Deep emerald green */
     --success-foreground: 142 100% 10%; /* Dark green for readability */
 
     /* Warning - Amber Warmth (Attention, Energy, Alert)
        WCAG AA: 7+:1 on white; white/warm-white labels on solid pass too. */
-    --warning: 35 76% 29%;            /* Dark amber */
+    --warning: 35 77% 25%;            /* Dark amber */
 
     /* Info - Teal Professional (Clarity, Communication, Trust)
        WCAG AA: ≥4.5:1 on white and on 5-10% info tints. */
-    --info: 174 74% 26%;              /* Deep teal */
+    --info: 174 75% 22%;              /* Deep teal */
 
     /* Destructive - Confident Red (Critical Actions, Errors)
        WCAG AA: ≥4.5:1 as text on white/tints; white on solid clears 5:1. */
-    --destructive: 0 74% 44%;         /* Clear, urgent red */
+    --destructive: 0 66% 41%;         /* Clear, urgent red */
     --destructive-foreground: 0 0% 100%;
 
     /* Background System — nepocorp-style surface ladder: the canvas is a
@@ -243,13 +243,13 @@
     --admin-border: 145 10% 83%;      /* #d1dad4 — visible card outline */
     --admin-input: 214 18% 84%;
     --admin-ring: 151 49% 38%;
-    --admin-success: 146 62% 27%;   /* ≥4.5:1 as text on white and on success tints */
+    --admin-success: 146 66% 24%;   /* ≥4.5:1 as text on white and on success tints */
     --admin-success-foreground: 0 0% 100%;
-    --admin-warning: 35 76% 29%;    /* WCAG AA: 7+:1 white, ≥5:1 on tints */
+    --admin-warning: 35 77% 25%;    /* WCAG AA: 7+:1 white, ≥5:1 on tints */
     --admin-warning-foreground: 46 100% 97%;
-    --admin-info: 174 74% 26%;
+    --admin-info: 174 75% 22%;
     --admin-info-foreground: 0 0% 100%;
-    --admin-destructive: 0 62% 44%;
+    --admin-destructive: 0 66% 41%;
     --admin-destructive-foreground: 0 0% 100%;
     --admin-sidebar-background: 149 38% 18%;
     --admin-sidebar-foreground: 42 36% 92%;
@@ -292,13 +292,13 @@
     --partner-border: 145 10% 83%;    /* #d1dad4 — visible card outline */
     --partner-input: 214 18% 84%;
     --partner-ring: 151 49% 38%;
-    --partner-success: 146 62% 27%;   /* ≥4.5:1 as text on white and on success tints */
+    --partner-success: 146 66% 24%;   /* ≥4.5:1 as text on white and on success tints */
     --partner-success-foreground: 0 0% 100%;
-    --partner-warning: 35 76% 29%;    /* WCAG AA: 7+:1 white, ≥5:1 on tints */
+    --partner-warning: 35 77% 25%;    /* WCAG AA: 7+:1 white, ≥5:1 on tints */
     --partner-warning-foreground: 46 100% 97%;
-    --partner-info: 174 74% 26%;
+    --partner-info: 174 75% 22%;
     --partner-info-foreground: 0 0% 100%;
-    --partner-destructive: 0 62% 44%;
+    --partner-destructive: 0 66% 41%;
     --partner-destructive-foreground: 0 0% 100%;
     --partner-sidebar-background: 149 38% 18%;
     --partner-sidebar-foreground: 42 36% 92%;

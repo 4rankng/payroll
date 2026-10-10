@@ -329,10 +329,10 @@ export function formatPaymentLatency(
  * on what "slow" means.
  */
 export function getPaymentLatencyColor(totalSeconds: number): string {
-  if (totalSeconds < 30) return 'text-emerald-600';
+  if (totalSeconds < 30) return 'text-emerald-700';
   if (totalSeconds < 120) return 'text-foreground';
-  if (totalSeconds < 900) return 'text-amber-600';
-  return 'text-red-600';
+  if (totalSeconds < 900) return 'text-amber-700';
+  return 'text-red-700';
 }
 
 /**

@@ -361,7 +361,7 @@ export function ManualDisbursementForm(props: Props) {
               <p className="text-sm font-semibold text-amber-900 leading-tight">
                 Tên chủ tài khoản không khớp
               </p>
-              <p className="text-xs text-amber-800/80 mt-0.5 leading-snug">
+              <p className="text-xs text-amber-800 mt-0.5 leading-snug">
                 Ngân hàng trả về một tên khác với tên bạn nhập. Kiểm tra lại hoặc dùng tên ngân hàng xác nhận.
               </p>
             </div>

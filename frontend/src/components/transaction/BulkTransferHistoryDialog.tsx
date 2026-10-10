@@ -106,13 +106,13 @@ const HistoryRow = memo(function HistoryRow({ history, onClick, isLast }: Histor
           <span className="tabular-nums">
             {history.completed_txn}/{history.total_txn} thành công
           </span>
-          <span className="text-slate-400">·</span>
+          <span className="text-slate-500">·</span>
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3 shrink-0" />
             {formatDate(history.uploaded_at)}
           </span>
           <span className="hidden items-center gap-1 sm:flex">
-            <span className="text-slate-400">·</span>
+            <span className="text-slate-500">·</span>
             <User className="w-3 h-3 shrink-0" />
             <span className="max-w-[140px] break-words">{history.uploaded_by}</span>
           </span>

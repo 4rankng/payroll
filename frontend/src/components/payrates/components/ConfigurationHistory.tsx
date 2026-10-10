@@ -108,7 +108,7 @@ export function ConfigurationHistory({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-secondary/50 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center">
               <History className="w-4 h-4 text-secondary-foreground" />
             </div>
             <div>

@@ -117,7 +117,7 @@ export const EmployeeMobileCard = React.memo(function EmployeeMobileCard({
             )}
             {employee.cccd && (
               <>
-                <span aria-hidden="true" className="shrink-0 text-border">
+                <span aria-hidden="true" className="shrink-0">
                   ·
                 </span>
                 <IdCard aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />

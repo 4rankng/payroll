@@ -241,7 +241,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                     </div>
 
                     {error && (
-                      <p className="text-xs text-red-600 flex items-center gap-1">
+                      <p className="text-xs text-red-700 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3 shrink-0" />{error}
                       </p>
                     )}
