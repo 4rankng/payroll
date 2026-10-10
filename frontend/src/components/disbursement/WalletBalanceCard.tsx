@@ -26,6 +26,9 @@ import { walletService } from "@/services/api/wallet.service";
 import { formatCurrency } from "@/utils/formatters";
 import { showErrorNotification } from "@/utils/error-handler";
 import { useDisbursementSettings } from "@/hooks/useDisbursementSettings";
+import {
+  WALLET_BALANCE_REFETCH_INTERVAL_MS,
+} from "@/lib/cache/queryCacheTimes";
 import { formatVietnameseDateTime } from "@/utils/vietnamese";
 import type { WalletBalance } from "@/types/api/wallet.types";
 
@@ -46,11 +49,14 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
 
   // Wallet-page meta (as_of, pending_out) lives on the wallet-balance query,
   // not on disbursement-settings. Only the non-compact form consumes it; band
-  // usages pass fee props instead and keep the fee rail.
+  // usages pass fee props instead and keep the fee rail. Polls every minute
+  // so the as-of line and pending-out figure stay current without a manual
+  // sync click — the backend cron handles the actual provider sync.
   const { data: walletBalance } = useQuery<WalletBalance>({
     queryKey: ["wallet", "balance"],
     queryFn: () => walletService.getBalance(),
     enabled: !compact,
+    refetchInterval: WALLET_BALANCE_REFETCH_INTERVAL_MS,
   });
   const showFeeRail = monthlyProviderFee != null || totalProviderFee != null;
 
