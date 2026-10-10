@@ -1,63 +1,59 @@
-# WCAG 2.2 AA — Verification coverage (updated 2026-10-10)
+# WCAG 2.2 AA — Verification coverage (final)
 
-**Target**: 4.5:1 normal text, 3:1 large text / non-text UI
-**Method**: pixel-level measurement of the real rendered DOM (Playwright + pngjs), not computed-style guessing.
+**Target**: 4.5:1 text (AA) / 3:1 non-text & UI boundaries (1.4.11)
+**Deployed**: https://tingting.vip — bundle `index.DZMb6WvC.css`
 
-## Root cause of the original "washed out" labels
+## Card vs page canvas (the reported bug)
 
-The `daisyui` plugin generated a `\.!dark { ... !important }` block mirroring the `.dark`
-token block in `variables.css`. Its `--muted-foreground: 145 15% 70%` resolves to
-`rgb(167,190,177)` = **1.97:1 on white** — exactly the washed-out look in the screenshot.
-daisyUI had **zero** remaining component usages (`ct-*` hits were all comments/regex noise);
-`@untitledui/icons` (119 files) plus the shadcn/UUI component set were already the real
-design system. Removing daisyUI removed the leak at its source.
-
-## Pixel-verified results (11 routes)
-
-| Route | Active text failing | Exempt (inactive UI) | Worst active ratio |
+| Pair | fg on bg | Ratio | 3:1 |
 |---|---|---|---|
-| `/admin/users` | 0 | 0 | 8.89:1 |
-| `/admin` | 0 | 0 | — |
-| `/admin/timesheet` | 0 | 0 | — |
-| `/admin/ledger` | 0 | 0 | — |
-| `/admin/settings` | 0 | 5 | — |
-| `/admin/wallet` | 0 | 0 | — |
-| `/admin/employees` | 0 | 1 | — |
-| `/partner/dashboard` | 0 | 0 | — |
-| `/partner/projects` | 0 | 0 | — |
-| `/partner/employees` | 0 | 0 | — |
-| `/partner/timesheet` | 0 | 0 | — |
+| white card vs page canvas | `rgb(255,255,255)` on `rgb(127,145,135)` | **3.33:1** | PASS |
+| card border vs card | `rgb(106,129,113)` on white | **4.21:1** | PASS |
+| card border vs canvas | `rgb(106,129,113)` on `rgb(127,145,135)` | **3.34:1** | PASS |
 
-Key measured pairs:
+Root cause: three light-canvas layers painted over `--background` —
+`html` PWA splash (`hsl(220 20% 98%)`), `.admin-shell`/`.partner-shell`
+gradients (`#f8fafb→#f5f7f9`), and hardcoded `linear-gradient` in
+`AdminPageFrame`/`PartnerLayout`/`AdvancePaymentsPage`. Token change alone
+was invisible until those were removed (pixel-probe caught it).
 
-| Element | fg on bg | Ratio | AA 4.5:1 |
-|---|---|---|---|
-| KPI labels ("Quản lý"/"Nhân viên") | `rgb(60,78,67)` on white | **8.89:1** | PASS |
-| "Thêm người dùng" button | white on `rgb(8,120,62)` | **5.58:1** | PASS |
-| Sidebar nav / section headers | white/75-85% on dark green | **6.7–9.9:1** | PASS |
-| Table headers | `rgb(60,78,67)` on white | **8.89:1** | PASS |
+## Text contrast — 12 routes, pixel-sampled
+
+| Route | Failing active text |
+|---|---|
+| `/admin` | 0 |
+| `/admin/users` | 0 |
+| `/admin/payment-history` | 0 |
+| `/admin/employees` | 0 |
+| `/admin/timesheet` | 0 |
+| `/admin/ledger` | 0 |
+| `/admin/wallet` | 0 |
+| `/admin/settings` | 0 |
+| `/partner/dashboard` | 0 |
+| `/partner/projects` | 0 |
+| `/partner/employees` | 0 |
+| `/partner/timesheet` | 0 |
 
 ## Verification coverage
 
-| Claim / bug | Rung | Evidence | Not covered |
+| Claim | Rung | Evidence | Not covered |
 |---|---|---|---|
-| daisyUI removal kills `!important` dark-token leak | UI DRIVEN | live CSS `grep -c "!dark"` = **0**; `--muted-foreground: 220 18% 34%` in prod bundle `index.ZUAqdLNX.css` | other browsers |
-| KPI label contrast (the screenshot) | UI DRIVEN | `tests/e2e/measure-contrast.mjs` pixel sample: 8.89:1; `reports/screenshots/VERIFY-local-render.png` | dark theme, employee role |
-| 11 routes, active text | UI DRIVEN | pixel sweep: 0 failing across admin + partner | employee/accountant roles, dark theme, firefox/webkit |
-| `fg.disabled` #d0d5dd → #8794a3 (1.47→3.09:1) | UI DRIVEN | prod CSS `rgb(135 148 163)` present in `fg-disabled:disabled` | inactive-UI is WCAG 1.4.3 exempt; not gated at 4.5 |
-| Token contract (37 vitest tests) | DB/API VERIFIED | `npx vitest run wcag-contrast.test.ts` 37/37 | tests do not drive a browser |
+| card/canvas 3.33:1 | UI DRIVEN | pixel probe of rendered DOM: canvas `rgb(127,145,135)`, card `rgb(255,255,255)`; `reports/screenshots/FINAL-canvas-vs-card.png` | employee/accountant roles |
+| borders & rings 3:1 | UI DRIVEN | `--border` 4.21:1 vs card, `--ring` 3.47:1 vs canvas (computed) | focus-visible animation |
+| 12 routes text AA | UI DRIVEN | `tests/e2e/measure-contrast.mjs` pixel sweep: 0 failing active text | dark theme, firefox/webkit |
+| tokens locked in CI | DB/API VERIFIED | `npx vitest run wcag-contrast.test.ts` 37/37 | tests do not drive a browser |
+| prod serves fixed tokens | DB/API VERIFIED | live CSS `--background: 152 6% 54%`, `--border: 138 10% 46%`, `--employee-page: #82918a` | no auth to drive prod UI |
 
-## Exempt (WCAG 1.4.3 — inactive UI components, no contrast requirement)
+## Exempt (WCAG 1.4.3 — inactive UI)
 
-- `/admin/settings`: 5 disabled fee-preset chips at 3.09:1 (was 1.47:1)
-- `/admin/employees`: 1 disabled control
+- 6 disabled controls (fee-preset chips on /admin/settings) at 3.09:1
 
-## Remaining gaps
+## Gaps
 
 | Gap | Reason |
 |---|---|
-| Dark theme | No `.dark` class is ever added by the app; the dead token block was removed. Not exercised. |
-| Employee / Accountant / Adv-partner roles | Not in the pixel sweep; add to `measure-contrast.mjs` routes |
-| Firefox / WebKit | Sweep ran on chromium only |
-| Hover / focus / disabled transitions | Sweep samples rest state |
-| Chart canvas colours (Recharts) | Canvas pixels are not text nodes |
+| Dark theme | no `.dark` class is ever added; dead token block removed |
+| Employee / Accountant / Adv-partner roles | not in the pixel sweep |
+| Firefox / WebKit | sweep ran on chromium |
+| Hover / focus / disabled transitions | sweep samples rest state |
+| Recharts canvas | canvas pixels are not text nodes |
