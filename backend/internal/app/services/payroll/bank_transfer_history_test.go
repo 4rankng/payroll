@@ -56,22 +56,32 @@ func historyDate(year int, month time.Month, day int) time.Time {
 
 func TestFixedWeeklyCycle(t *testing.T) {
 	tests := []struct {
-		from, to int
-		want     int
-		ok       bool
+		name  string
+		year  int
+		month time.Month
+		from  int
+		to    int
+		want  int
+		ok    bool
 	}{
-		{1, 7, 1, true},
-		{8, 14, 2, true},
-		{15, 21, 3, true},
-		{22, 28, 4, true},
-		{22, 31, 0, false},
-		{29, 31, 0, false},
+		{"ky1", 2026, time.July, 1, 7, 1, true},
+		{"ky2", 2026, time.July, 8, 14, 2, true},
+		{"ky3", 2026, time.July, 15, 21, 3, true},
+		{"legacy ky4 ends day 28", 2026, time.July, 22, 28, 4, true},
+		{"ky4 ends july eom", 2026, time.July, 22, 31, 4, true},
+		{"ky4 mid-month end rejected", 2026, time.July, 22, 30, 0, false},
+		{"ky4 ends june eom", 2026, time.June, 22, 30, 4, true},
+		{"ky4 ends leap february eom", 2028, time.February, 22, 29, 4, true},
+		{"ky4 february eom equals legacy 28", 2026, time.February, 22, 28, 4, true},
+		{"non-canonical start rejected", 2026, time.July, 29, 31, 0, false},
 	}
 	for _, test := range tests {
-		got, ok := fixedWeeklyCycle(historyDate(2026, time.July, test.from), historyDate(2026, time.July, test.to))
-		if got != test.want || ok != test.ok {
-			t.Fatalf("%d-%d: got (%d,%v), want (%d,%v)", test.from, test.to, got, ok, test.want, test.ok)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			got, ok := fixedWeeklyCycle(historyDate(test.year, test.month, test.from), historyDate(test.year, test.month, test.to))
+			if got != test.want || ok != test.ok {
+				t.Fatalf("got (%d,%v), want (%d,%v)", got, ok, test.want, test.ok)
+			}
+		})
 	}
 }
 
@@ -81,19 +91,21 @@ func TestResolveWeeklyHistoryCycleFromTimesheets(t *testing.T) {
 	timesheetDates := map[uint]time.Time{10: historyDate(2026, time.July, 23)}
 
 	cycle, fromDate, toDate, ok := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, weekly, timesheetDates, workMonth)
-	if !ok || cycle != 4 || fromDate.Day() != 22 || toDate.Day() != 28 {
+	if !ok || cycle != 4 || fromDate.Day() != 22 || toDate.Day() != 31 {
 		t.Fatalf("got cycle=%d from=%v to=%v ok=%v", cycle, fromDate, toDate, ok)
 	}
 }
 
-func TestResolveWeeklyHistoryCycleExcludesDaysAfter28(t *testing.T) {
+// Days 29–31 belong to Ky 4 under the 22–end-of-month window; the timesheet
+// fallback must resolve them instead of skipping.
+func TestResolveWeeklyHistoryCycleIncludesDaysAfter28(t *testing.T) {
 	workMonth := historyDate(2026, time.July, 1)
 	weekly := &domain.CyclePayData{TimesheetIDs: []uint{10}}
 	timesheetDates := map[uint]time.Time{10: historyDate(2026, time.July, 29)}
 
-	_, _, _, ok := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, weekly, timesheetDates, workMonth)
-	if ok {
-		t.Fatal("day 29 must not be assigned to a payroll cycle")
+	cycle, fromDate, toDate, ok := resolveWeeklyHistoryCycle(&domain.BulkTransferFile{}, weekly, timesheetDates, workMonth)
+	if !ok || cycle != 4 || fromDate.Day() != 22 || toDate.Day() != 31 {
+		t.Fatalf("got cycle=%d from=%v to=%v ok=%v", cycle, fromDate, toDate, ok)
 	}
 }
 
@@ -102,24 +114,31 @@ func TestResolveWeeklyHistoryCycleExcludesDaysAfter28(t *testing.T) {
 // WITHOUT consulting timesheetDates and WITHOUT fixedWeeklyCycle (which would
 // reject off-boundary export ranges — red-team F2).
 func TestResolveWeeklyHistoryCycleFromPersistedFromDate(t *testing.T) {
-	workMonth := historyDate(2026, time.July, 1)
 	tests := []struct {
 		name     string
+		year     int
+		month    time.Month
 		day      int // FromDate day-of-month (off-boundary allowed)
 		wantKy   int
 		wantFrom int // expected canonical cycle start day
 		wantTo   int // expected canonical cycle end day
 	}{
-		{"canonical Ky1 (day 1)", 1, 1, 1, 7},
-		{"off-boundary Ky1 (day 3, red-team F2)", 3, 1, 1, 7},
-		{"off-boundary Ky2 (day 10)", 10, 2, 8, 14},
-		{"canonical Ky3 (day 15)", 15, 3, 15, 21},
-		{"canonical Ky4 (day 22)", 22, 4, 22, 28},
-		{"off-boundary Ky4 (day 25)", 25, 4, 22, 28},
+		{"canonical Ky1 (day 1)", 2026, time.July, 1, 1, 1, 7},
+		{"off-boundary Ky1 (day 3, red-team F2)", 2026, time.July, 3, 1, 1, 7},
+		{"off-boundary Ky2 (day 10)", 2026, time.July, 10, 2, 8, 14},
+		{"canonical Ky3 (day 15)", 2026, time.July, 15, 3, 15, 21},
+		{"canonical Ky4 (day 22)", 2026, time.July, 22, 4, 22, 31},
+		{"off-boundary Ky4 (day 25)", 2026, time.July, 25, 4, 22, 31},
+		{"off-boundary Ky4 (day 29)", 2026, time.July, 29, 4, 22, 31},
+		{"off-boundary Ky4 (day 31)", 2026, time.July, 31, 4, 22, 31},
+		{"Ky4 window ends june 30", 2026, time.June, 22, 4, 22, 30},
+		{"Ky4 window ends february 28", 2026, time.February, 22, 4, 22, 28},
+		{"Ky4 window ends leap february 29", 2028, time.February, 22, 4, 22, 29},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			fromDate := historyDate(2026, time.July, tc.day)
+			workMonth := historyDate(tc.year, tc.month, 1)
+			fromDate := historyDate(tc.year, tc.month, tc.day)
 			weekly := &domain.CyclePayData{FromDate: &fromDate, TimesheetIDs: []uint{999}}
 			// timesheetDates intentionally has NO entry for 999 — the persisted
 			// path must resolve without consulting it.

@@ -103,7 +103,9 @@ Fixed weekly cycle windows:
 | 1 | Days 1-7 |
 | 2 | Days 8-14 |
 | 3 | Days 15-21 |
-| 4 | Days 22-28 |
+| 4 | Days 22-end of month |
+
+Each cycle pays shortly after its window closes: cycles 1–3 pay on days 10, 17, and 24 of the same month; cycle 4 pays on day 1 of the next month.
 
 The history response is intentionally read-only and history-only. It returns completed transfer rows grouped by employee and cycle, including the employee name and CCCD (`employee_cccd`), each payment transfer code (`transfer_code`), bank reference number, amount, cycle window, payment date, total amount, and pagination. The `search` filter matches Vietnamese employee names without requiring diacritics and matches transfer codes or bank references case-insensitively. Partner access is filtered to accessible projects server-side.
 

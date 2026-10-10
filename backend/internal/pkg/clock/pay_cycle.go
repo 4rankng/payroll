@@ -5,15 +5,16 @@ import "time"
 // Timesheet pay-cycle model.
 //
 // The timesheet payroll runs on a global, fixed 4-cycle monthly schedule — the
-// same for every employee and project. Each Ky (cycle) has a 7-day work window
-// followed by a pay date roughly three days later, during which approvals keep
-// trickling in. Cash-readiness forecasting samples cumulative approved pay
-// across this axis to project the next bulk transfer.
+// same for every employee and project. Ky 1–3 each have a 7-day work window;
+// Ky 4 runs from day 22 to the last day of the month. Each is followed by a
+// pay date a few days later, during which approvals keep trickling in.
+// Cash-readiness forecasting samples cumulative approved pay across this axis
+// to project the next bulk transfer.
 //
-//	Ky 1: work days 1–7   → pay day 10
-//	Ky 2: work days 8–14  → pay day 17
-//	Ky 3: work days 15–21 → pay day 24
-//	Ky 4: work days 22–28 → pay day 1 of the NEXT month
+//	Ky 1: work days 1–7             → pay day 10
+//	Ky 2: work days 8–14            → pay day 17
+//	Ky 3: work days 15–21           → pay day 24
+//	Ky 4: work days 22–end of month → pay day 1 of the NEXT month
 //
 // cycle-day 1 is the Ky's work-start calendar day; the pay date lands on
 // MaxCycleDay. This is a DISTINCT cycle from the advance-payment period
@@ -224,8 +225,8 @@ func NextPayCycleAfter(current TimesheetPayCycle) TimesheetPayCycle {
 
 // CycleWindow returns the [from, to] work-day window (inclusive, HCM timezone,
 // date-only) for a cycle. Kỳ 1 → days 1–7, Kỳ 2 → 8–14, Kỳ 3 → 15–21,
-// Kỳ 4 → 22 through last day of the work month. Used by the settlement
-// simulation to scope each projected cycle's ExportPlanner.Plan() call.
+// Kỳ 4 → 22 through last day of the work month. Used by the bank-transfer
+// history resolver to reconstruct each cycle's canonical boundaries.
 func (c TimesheetPayCycle) CycleWindow() (from, to time.Time) {
 	year, month := c.WorkMonth.Year(), c.WorkMonth.Month()
 	startDay := WorkStartDay(c.Ky)

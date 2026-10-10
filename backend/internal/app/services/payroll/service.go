@@ -555,14 +555,20 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 	}, nil
 }
 
+// fixedWeeklyCycle maps an exact legacy file date range onto a cycle 1–4.
+// Cycle 4 ends on day 28 for files exported under the old 22–28 window and on
+// the last day of the month for files exported under the 22–end-of-month
+// window; anything else is not a canonical fixed-week range.
 func fixedWeeklyCycle(fromDate, toDate time.Time) (int, bool) {
 	starts := []int{0, 1, 8, 15, 22}
 	ends := []int{0, 7, 14, 21, 28}
 	if fromDate.Year() != toDate.Year() || fromDate.Month() != toDate.Month() {
 		return 0, false
 	}
+	// Day 0 of the next month = last day of this month (pay_cycle.go idiom).
+	lastDay := time.Date(fromDate.Year(), fromDate.Month()+1, 0, 0, 0, 0, 0, time.UTC).Day()
 	for cycle := 1; cycle <= 4; cycle++ {
-		if fromDate.Day() == starts[cycle] && toDate.Day() == ends[cycle] {
+		if fromDate.Day() == starts[cycle] && (toDate.Day() == ends[cycle] || (cycle == 4 && toDate.Day() == lastDay)) {
 			return cycle, true
 		}
 	}
@@ -579,10 +585,12 @@ func resolveWeeklyHistoryCycle(file *domain.BulkTransferFile, weeklyData *domain
 	// mixing Ky1+Ky2 entries resolves correctly (red-team F4).
 	if weeklyData != nil && weeklyData.FromDate != nil {
 		fd := weeklyData.FromDate.In(clock.DefaultLocation)
-		if fd.Year() == workMonth.Year() && fd.Month() == workMonth.Month() && fd.Day() >= 1 && fd.Day() <= 28 {
+		if fd.Year() == workMonth.Year() && fd.Month() == workMonth.Month() {
 			if cycle := clock.KyFromWorkDay(fd.Day()); cycle >= 1 && cycle <= 4 {
-				fromDate := time.Date(workMonth.Year(), workMonth.Month(), clock.WorkStartDay(cycle), 0, 0, 0, 0, clock.DefaultLocation)
-				return cycle, fromDate, fromDate.AddDate(0, 0, 6), true
+				// Canonical boundaries: Ky 1–3 = 7-day windows, Ky 4 = day 22
+				// through the last day of the work month.
+				fromDate, toDate := (clock.TimesheetPayCycle{Ky: cycle, WorkMonth: workMonth}).CycleWindow()
+				return cycle, fromDate, toDate, true
 			}
 		}
 		// FromDate present but out of range / zero-value (red-team F-MEDIUM-1):
@@ -598,12 +606,12 @@ func resolveWeeklyHistoryCycle(file *domain.BulkTransferFile, weeklyData *domain
 	}
 	for _, id := range weeklyData.TimesheetIDs {
 		date, ok := timesheetDates[id]
-		if !ok || date.Year() != workMonth.Year() || date.Month() != workMonth.Month() || date.Day() > 28 {
+		if !ok || date.Year() != workMonth.Year() || date.Month() != workMonth.Month() {
 			continue
 		}
 		cycle := clock.KyFromWorkDay(date.Day())
-		fromDate := time.Date(workMonth.Year(), workMonth.Month(), clock.WorkStartDay(cycle), 0, 0, 0, 0, clock.DefaultLocation)
-		return cycle, fromDate, fromDate.AddDate(0, 0, 6), true
+		fromDate, toDate := (clock.TimesheetPayCycle{Ky: cycle, WorkMonth: workMonth}).CycleWindow()
+		return cycle, fromDate, toDate, true
 	}
 	return 0, time.Time{}, time.Time{}, false
 }

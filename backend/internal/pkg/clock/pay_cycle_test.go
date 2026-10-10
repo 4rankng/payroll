@@ -35,6 +35,7 @@ func TestMaxCycleDay(t *testing.T) {
 		{4, 2026, time.July, 11},    // 31-day July: (31-22+1)+1 = 11
 		{4, 2026, time.June, 10},    // 30-day June: (30-22+1)+1 = 10
 		{4, 2026, time.February, 8}, // 28-day Feb: (28-22+1)+1 = 8
+		{4, 2028, time.February, 9}, // leap Feb: (29-22+1)+1 = 9
 	}
 	for _, c := range cases {
 		if got := MaxCycleDay(c.ky, c.year, c.month); got != c.want {
@@ -142,7 +143,7 @@ func TestNextTimesheetPayCycle(t *testing.T) {
 }
 
 func TestNextTimesheetPayCycleKy4MonthBoundary(t *testing.T) {
-	// The primary correctness risk: Ky 4 work window Jul 22–28, pay Aug 1.
+	// The primary correctness risk: Ky 4 work window Jul 22–31, pay Aug 1.
 	pc := NextTimesheetPayCycle(dateAt(2026, time.July, 29))
 	if pc.Ky != 4 {
 		t.Fatalf("Jul 29 → Ky %d, want 4", pc.Ky)
