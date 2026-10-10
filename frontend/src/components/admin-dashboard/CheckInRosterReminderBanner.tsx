@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BannerDualActionBrandFullWidth } from "@/components/marketing/banners/banner-dual-action-brand-full-width";
 import { useAssets } from "@/hooks/api/useAssets";
 import { useMarkAsReadSilent, useUnreadNotifications } from "@/hooks/api/useNotifications";
@@ -38,13 +38,27 @@ export function CheckInRosterReminderBanner() {
 function RosterReminderActions({ notices }: { notices: Notification[] }) {
   const latest = notices[0];
   // Backend defaults sort to created_at DESC, so limit 1 = newest workbook.
-  const { data: assetsData, isLoading: assetsLoading } = useAssets({
+  const { data: assetsData, isLoading: assetsLoading, refetch } = useAssets({
     upload_type: "checkin_roster",
     limit: 1,
   });
   const asset = assetsData?.data?.[0];
   const markAsRead = useMarkAsReadSilent();
   const [downloading, setDownloading] = useState(false);
+
+  // Bounded auto-recovery: the workbook is written ~200ms before the
+  // notification, but a refetch racing that window (or a persisted empty
+  // result) can leave the primary action dead-ended on a missing asset while
+  // the copy promises the file exists. Retry a few times before giving up.
+  const retryCountRef = useRef(0);
+  useEffect(() => {
+    if (asset || assetsLoading || retryCountRef.current >= 3) return;
+    const timer = setTimeout(() => {
+      retryCountRef.current += 1;
+      void refetch();
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [asset, assetsLoading, refetch]);
 
   const handleDownload = async () => {
     if (!asset) return;
@@ -65,7 +79,7 @@ function RosterReminderActions({ notices }: { notices: Notification[] }) {
       title={latest.title}
       description={latest.message}
       primaryAction={{
-        label: "Tải file",
+        label: asset ? "Tải file" : "Đang tải file…",
         onClick: handleDownload,
         loading: downloading,
         disabled: !asset || assetsLoading,

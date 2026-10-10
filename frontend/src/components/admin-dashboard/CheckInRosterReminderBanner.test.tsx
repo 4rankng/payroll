@@ -10,6 +10,7 @@ const notificationsMock = vi.hoisted(() => ({
 const assetsMock = vi.hoisted(() => ({
   data: undefined as AssetsResponse | undefined,
   isLoading: false,
+  refetch: vi.fn(),
 }));
 const markAsReadMock = vi.hoisted(() => ({
   mutate: vi.fn(),
@@ -65,6 +66,7 @@ describe("CheckInRosterReminderBanner", () => {
     notificationsMock.data = { notifications: [], count: 0 };
     assetsMock.data = makeAssetsResponse();
     assetsMock.isLoading = false;
+    assetsMock.refetch.mockClear();
     markAsReadMock.mutate.mockClear();
     markAsReadMock.isPending = false;
     downloadAssetFileMock.mockClear();
@@ -111,13 +113,39 @@ describe("CheckInRosterReminderBanner", () => {
     );
   });
 
-  it("disables Tải file until the asset list has loaded", () => {
+  it("shows a loading label until the asset list has loaded", () => {
     notificationsMock.data = { notifications: [makeNotice()], count: 1 };
     assetsMock.data = undefined;
     assetsMock.isLoading = true;
     render(<CheckInRosterReminderBanner />);
 
-    expect(screen.getByRole("button", { name: "Tải file" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Đang tải file…" })
+    ).toBeDisabled();
+  });
+
+  it("retries the asset lookup when no workbook is found yet", async () => {
+    vi.useFakeTimers();
+    try {
+      notificationsMock.data = { notifications: [makeNotice()], count: 1 };
+      assetsMock.data = undefined;
+      assetsMock.isLoading = false;
+      render(<CheckInRosterReminderBanner />);
+
+      expect(assetsMock.refetch).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1500);
+      expect(assetsMock.refetch).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not retry once the workbook is available", () => {
+    notificationsMock.data = { notifications: [makeNotice()], count: 1 };
+    render(<CheckInRosterReminderBanner />);
+
+    expect(assetsMock.refetch).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Tải file" })).toBeEnabled();
   });
 
   it("marks every roster notice read on Đã xong, leaving other types alone", () => {

@@ -28,6 +28,9 @@ const DO_NOT_PERSIST_KEYS = [
   'me',          // current user profile
   'attendance',  // mobile check-in/out state must always be fresh
   'audit-logs',  // audit trail
+  'assets',      // action-critical (roster download button) — a persisted
+                 // empty list once disabled the banner's "Tải file" until the
+                 // next successful refetch; these must never restore stale
 ];
 
 /**

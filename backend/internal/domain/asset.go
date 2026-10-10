@@ -40,6 +40,8 @@ type AssetRepository interface {
 	Update(ctx context.Context, asset *Asset) error
 	UpdateMetadata(ctx context.Context, id uint, metadata string) error
 	FindOrphaned(ctx context.Context, olderThan time.Time) ([]*Asset, error)
+	FindByUploadTypeOlderThan(ctx context.Context, uploadType string, olderThan time.Time) ([]*Asset, error)
+	Delete(ctx context.Context, id uint) error
 }
 
 type AssetFilters struct {

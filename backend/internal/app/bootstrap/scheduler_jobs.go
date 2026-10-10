@@ -24,6 +24,12 @@ import (
 	"api-server/internal/pkg/utils"
 )
 
+// checkInRosterRetentionDays is how long the day-9 check-in roster workbook is
+// kept before the cleanup job deletes it (file + row). Long enough for the
+// partner billing cycle that starts on day 9, short enough that monthly
+// workbooks do not accumulate on disk.
+const checkInRosterRetentionDays = 7
+
 func registerSchedulerJobs(
 	s *scheduler.Scheduler,
 	notificationService *notification.NotificationService,
@@ -415,6 +421,40 @@ func registerSchedulerJobs(
 				return
 			}
 			logger.Info("Check-in roster prepared", "month", forMonth, "employees", count, "asset_id", assetRecord.ID)
+		},
+	})
+
+	// 10c. Check-in roster retention cleanup - daily at 09:40
+	// The roster workbook is a month-scoped billing helper, not an archive:
+	// delete checkin_roster assets older than 7 days (physical file + row) and
+	// mark any still-unread roster notifications read, so the Tổng quan banner
+	// can never dangle over a file that no longer exists.
+	s.AddJob(scheduler.Job{
+		Name:    "cleanup_check_in_roster",
+		Cron:    "40 9 * * *",
+		Enabled: true,
+		Handler: func() {
+			ctx := context.Background()
+			cutoff := clock.Now().AddDate(0, 0, -checkInRosterRetentionDays)
+
+			deleted, err := assetSvc.CleanupExpiredByUploadType(ctx, domain.UploadTypeCheckInRoster, cutoff)
+			if err != nil {
+				logger.Error("Failed to clean up expired check-in roster assets", "error", err)
+				return
+			}
+			if deleted == 0 {
+				return
+			}
+
+			markedRead, err := notificationService.MarkTypeAsRead(ctx, domain.NotificationTypeCheckInRoster)
+			if err != nil {
+				logger.Error("Check-in roster assets cleaned but notification sweep failed",
+					"deleted", deleted, "error", err)
+				return
+			}
+			logger.Info("Expired check-in roster assets cleaned",
+				"deleted", deleted, "notifications_marked_read", markedRead,
+				"retention_days", checkInRosterRetentionDays)
 		},
 	})
 

@@ -215,3 +215,30 @@ func (s *AssetService) CleanupOrphanedAssets(ctx context.Context, olderThan time
 
 	return cleanedCount, nil
 }
+
+// CleanupExpiredByUploadType enforces retention for one upload type: every
+// asset of that type older than the cutoff loses its physical file and its DB
+// row. Used for the day-9 check-in roster workbooks so monthly files do not
+// accumulate forever on disk.
+func (s *AssetService) CleanupExpiredByUploadType(ctx context.Context, uploadType string, olderThan time.Time) (int, error) {
+	expired, err := s.AssetRepo.FindByUploadTypeOlderThan(ctx, uploadType, olderThan)
+	if err != nil {
+		return 0, fmt.Errorf("failed to find expired %s assets: %w", uploadType, err)
+	}
+
+	deleted := 0
+	for _, asset := range expired {
+		if err := s.FileStorage.Delete(asset.FilePath); err != nil {
+			// Physical file already gone (or storage hiccup) — the row must
+			// still go so the download button cannot point at a ghost.
+			observability.GetLogger().Warn("failed to delete expired asset file",
+				"asset_id", asset.ID, "filePath", asset.FilePath, "error", err)
+		}
+		if err := s.AssetRepo.Delete(ctx, asset.ID); err != nil {
+			return deleted, fmt.Errorf("failed to delete expired asset %d: %w", asset.ID, err)
+		}
+		deleted++
+	}
+
+	return deleted, nil
+}

@@ -153,6 +153,13 @@ func (s *NotificationService) MarkOldNotificationsAsRead(ctx context.Context, ol
 	return s.notificationRepo.MarkOldNotificationsAsRead(ctx, olderThanDays)
 }
 
+// MarkTypeAsRead marks every unread notification of the given type as read for
+// all users. Used by cleanup jobs after the artifact a notification points at
+// has been removed, so UI surfaces keyed off unread notices cannot dangle.
+func (s *NotificationService) MarkTypeAsRead(ctx context.Context, notificationType domain.NotificationType) (int64, error) {
+	return s.notificationRepo.MarkTypeAsRead(ctx, string(notificationType))
+}
+
 // NotifyUsersByRole sends notifications to all users with a specific role
 func (s *NotificationService) NotifyUsersByRole(ctx context.Context, role domain.UserRole, notificationType domain.NotificationType, title, message string) error {
 	// Get all active users with the specified role

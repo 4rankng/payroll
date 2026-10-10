@@ -99,5 +99,6 @@ type NotificationRepository interface {
 	MarkAsRead(ctx context.Context, id uint) error
 	MarkAllAsReadForUser(ctx context.Context, userID uint) error
 	MarkOldNotificationsAsRead(ctx context.Context, olderThanDays int) (int64, error)
+	MarkTypeAsRead(ctx context.Context, typeName string) (int64, error)
 	UpdateMetadata(ctx context.Context, id uint, metadata string) error
 }

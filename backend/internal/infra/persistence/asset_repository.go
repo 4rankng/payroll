@@ -185,6 +185,32 @@ func (r *AssetRepository) FindOrphaned(ctx context.Context, olderThan time.Time)
 	return assets, nil
 }
 
+// FindByUploadTypeOlderThan returns assets of one upload type created before
+// the cutoff — the retention-cleanup candidate set (e.g. expired check-in
+// roster workbooks).
+func (r *AssetRepository) FindByUploadTypeOlderThan(ctx context.Context, uploadType string, olderThan time.Time) ([]*domain.Asset, error) {
+	var assets []*domain.Asset
+	err := r.DB.WithContext(ctx).
+		Where("upload_type = ? AND created_at < ?", uploadType, olderThan).
+		Find(&assets).Error
+	if err != nil {
+		return nil, domain.NewInternalError("failed to find expired assets", err)
+	}
+	return assets, nil
+}
+
+// Delete permanently removes the asset row. Callers must delete the physical
+// file first (or accept it becoming orphaned in storage).
+func (r *AssetRepository) Delete(ctx context.Context, id uint) error {
+	err := r.DB.WithContext(ctx).
+		Unscoped().
+		Delete(&domain.Asset{}, id).Error
+	if err != nil {
+		return domain.NewInternalError("failed to delete asset", err)
+	}
+	return nil
+}
+
 // applyAssetFilters applies common filter conditions to a GORM query.
 // Returns the filtered query for safe chaining (GORM Where() may return a new instance).
 func applyAssetFilters(query *gorm.DB, filters domain.AssetFilters) *gorm.DB {

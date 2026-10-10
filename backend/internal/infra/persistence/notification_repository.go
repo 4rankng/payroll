@@ -129,6 +129,23 @@ func (r *NotificationRepository) MarkOldNotificationsAsRead(ctx context.Context,
 	return result.RowsAffected, nil
 }
 
+// MarkTypeAsRead marks every unread notification of the given type as read for
+// all users. Used when the artifact a notification points at (e.g. the
+// check-in roster workbook) is cleaned up, so no UI banner can keep promising
+// a file that no longer exists.
+func (r *NotificationRepository) MarkTypeAsRead(ctx context.Context, typeName string) (int64, error) {
+	result := r.DB.WithContext(ctx).
+		Model(&domain.Notification{}).
+		Where("type = ? AND read_at IS NULL", typeName).
+		Update("read_at", clock.Now())
+
+	if result.Error != nil {
+		return 0, result.Error
+	}
+
+	return result.RowsAffected, nil
+}
+
 // UpdateMetadata updates the metadata JSON column for a notification.
 func (r *NotificationRepository) UpdateMetadata(ctx context.Context, id uint, metadata string) error {
 	return r.DB.WithContext(ctx).
