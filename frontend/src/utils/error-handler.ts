@@ -410,7 +410,10 @@ export const showErrorNotification = (error: unknown, customTitle?: string): voi
   const title = customTitle || details.title || 'Thất bại';
   const description = details.message;
   const duration = description.length <= 80 ? 3000 : 6000;
-  toast({ title, description, duration });
+  // closeButton: a rejected upload (e.g. "Mẫu file chấm công không đúng") must
+  // stay readable until the user dismisses it — the toast is the only surface
+  // that carries the server's reason for a refused file.
+  toast({ title, description, duration, closeButton: true });
 };
 
 /**
