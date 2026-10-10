@@ -293,6 +293,47 @@ export function getAdvanceQuotaSummaryForMonth(
 }
 
 /**
+ * Payment latency text: elapsed time from request creation to payment
+ * completion, seconds-precise. Returns null when the request has not been
+ * paid yet.
+ *
+ * Example: "42s", "2m 15s", "1h 05m"
+ */
+export function formatPaymentLatency(
+  createdAt: string,
+  paidAt?: string,
+  completedAt?: string,
+): string | null {
+  const paid = paidAt ?? completedAt;
+  if (!paid) return null;
+
+  const totalSecs = Math.max(
+    0,
+    Math.round((new Date(paid).getTime() - new Date(createdAt).getTime()) / 1000),
+  );
+  const mins = Math.floor(totalSecs / 60);
+  const secs = totalSecs % 60;
+
+  if (mins < 1) return `${totalSecs}s`;
+  if (mins < 60) return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  const remainMins = mins % 60;
+  return remainMins > 0 ? `${hours}h ${String(remainMins).padStart(2, '0')}m` : `${hours}h`;
+}
+
+/**
+ * Latency color class mirroring the dashboard latency buckets
+ * (<30s / 30s–2m / 2m–15m / over 15m) so a row and the summary strip agree
+ * on what "slow" means.
+ */
+export function getPaymentLatencyColor(totalSeconds: number): string {
+  if (totalSeconds < 30) return 'text-emerald-600';
+  if (totalSeconds < 120) return 'text-foreground';
+  if (totalSeconds < 900) return 'text-amber-600';
+  return 'text-red-600';
+}
+
+/**
  * Format month string to short Vietnamese format
  * Example: "2026-03" → "03/2026"
  */

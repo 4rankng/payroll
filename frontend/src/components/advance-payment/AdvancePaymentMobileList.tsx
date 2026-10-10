@@ -8,6 +8,8 @@ import { formatCurrency } from "@/utils/formatters";
 import {
   getVietnameseAdvancePaymentStatus,
   getAdvancePaymentStatusColor,
+  formatPaymentLatency,
+  getPaymentLatencyColor,
 } from "@/utils/advancePaymentHelpers";
 import { cn } from "@/lib/utils";
 import { AccentStripCard, type AccentColor } from "@/components/shared/AccentStripCard";
@@ -71,6 +73,12 @@ const RequestCard = memo(function RequestCard({
     setShowConfirm(false);
   }, []);
 
+  const paidAt = item.paidAt ?? item.completedAt;
+  const latency = formatPaymentLatency(item.createdAt, item.paidAt, item.completedAt);
+  const latencySecs = paidAt
+    ? Math.max(0, Math.round((new Date(paidAt).getTime() - new Date(item.createdAt).getTime()) / 1000))
+    : null;
+
   return (
     <AccentStripCard accentColor={statusAccentColorMap[item.status] ?? "gray"}>
       <div className="px-4 pt-3.5 pb-3">
@@ -111,6 +119,14 @@ const RequestCard = memo(function RequestCard({
               {formatCurrency(item.netAmount)}
             </span>
           </div>
+          {latency && latencySecs !== null && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span className={cn("tabular-nums", getPaymentLatencyColor(latencySecs))}>
+                Độ trễ: {latency}
+              </span>
+            </div>
+          )}
         </div>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

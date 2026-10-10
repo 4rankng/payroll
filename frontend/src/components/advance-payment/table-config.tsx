@@ -22,7 +22,44 @@ import {
 import {
   getVietnameseAdvancePaymentStatus,
   getAdvancePaymentStatusColor,
+  formatPaymentLatency,
+  getPaymentLatencyColor,
 } from "@/utils/advancePaymentHelpers";
+
+/** Latency seconds from createdAt to paidAt/completedAt, or null if unpaid. */
+function latencySeconds(row: AdvancePaymentListItem): number | null {
+  const paidAt = row.paidAt ?? row.completedAt;
+  if (!paidAt) return null;
+  return Math.max(
+    0,
+    Math.round((new Date(paidAt).getTime() - new Date(row.createdAt).getTime()) / 1000),
+  );
+}
+
+/** Shared "Độ trễ" cell so the desktop column and mobile card cannot drift. */
+function LatencyCell({ row, mobile = false }: { row: AdvancePaymentListItem; mobile?: boolean }) {
+  const secs = latencySeconds(row);
+  if (secs === null) {
+    return (
+      <span className={mobile ? "text-[13px] text-muted-foreground" : "text-xs text-muted-foreground"}>
+        —
+      </span>
+    );
+  }
+  const text = formatPaymentLatency(row.createdAt, row.paidAt, row.completedAt);
+  return (
+    <span
+      className={cn(
+        "tabular-nums",
+        mobile ? "text-[13px]" : "text-xs",
+        getPaymentLatencyColor(secs),
+      )}
+      title={`Tạo: ${format(new Date(row.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })} · Thanh toán: ${format(new Date(row.paidAt ?? row.completedAt!), "dd/MM/yyyy HH:mm", { locale: vi })}`}
+    >
+      {text}
+    </span>
+  );
+}
 
 export interface ActionContext {
   onCancel: (id: number) => void;
@@ -117,6 +154,13 @@ export function getAdvancePaymentColumns(
       },
     },
     {
+      id: "latency",
+      header: "Độ trễ",
+      size: 80,
+      meta: { align: "right" },
+      cell: ({ row }) => <LatencyCell row={row.original} />,
+    },
+    {
       accessorKey: "paidAt",
       header: "Thanh toán",
       size: 130,
@@ -133,14 +177,7 @@ export function getAdvancePaymentColumns(
             </span>
           );
         }
-        const diffMs = new Date(paidAt).getTime() - new Date(createdAt).getTime();
-        const totalSecs = Math.max(0, Math.round(diffMs / 1000));
-        const mins = Math.floor(totalSecs / 60);
-        const latency = mins < 1
-          ? `${totalSecs} giây`
-          : mins < 60
-            ? `${mins} phút`
-            : `${Math.floor(mins / 60)} giờ ${mins % 60} phút`;
+        const latency = formatPaymentLatency(createdAt, paidAt);
         return (
           <div
             className="text-xs text-muted-foreground tabular-nums whitespace-nowrap cursor-help"
@@ -397,18 +434,7 @@ export const requestMobileFields: MobileField<AdvancePaymentListItem>[] = [
     key: "latency",
     label: "Độ trễ",
     priority: 3,
-    render: (row) => {
-      const paidAt = row.paidAt ?? row.completedAt;
-      if (!paidAt) return <span className="text-[13px] text-muted-foreground">—</span>;
-      const diffMs = new Date(paidAt).getTime() - new Date(row.createdAt).getTime();
-      const totalSecs = Math.round(diffMs / 1000);
-      const mins = Math.floor(totalSecs / 60);
-      if (mins < 1) return <span className="text-[13px]">{totalSecs}s</span>;
-      if (mins < 60) return <span className="text-[13px]">{mins} phút</span>;
-      const hours = Math.floor(mins / 60);
-      const remainMins = mins % 60;
-      return <span className="text-[13px]">{hours}g {remainMins}p</span>;
-    },
+    render: (row) => <LatencyCell row={row} mobile />,
   },
 ];
 
