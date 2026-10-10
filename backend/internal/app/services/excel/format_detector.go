@@ -1,7 +1,6 @@
 package excel
 
 import (
-	"errors"
 	"strings"
 
 	"github.com/xuri/excelize/v2"
@@ -50,7 +49,7 @@ func DetectFormat(f *excelize.File) (*FormatDetectionResult, error) {
 			return formatDetectionResult(entry.format, sheets), nil
 		}
 	}
-	return nil, errors.New(unknownBCCFormatMsg)
+	return nil, ErrUnknownBCCFormat
 }
 
 // isPositionSheet checks if a sheet has the expected header pattern in row 4:

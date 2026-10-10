@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/json"
@@ -12,8 +13,10 @@ import (
 	"strings"
 	"time"
 
+	excelparser "api-server/internal/app/services/excel"
 	"api-server/internal/domain"
 	"api-server/internal/pkg/clock"
+	"api-server/internal/pkg/excelkit"
 )
 
 // maxBCCUploadSize bounds the durable-accept read of an uploaded BCC file.
@@ -21,6 +24,39 @@ import (
 // the guard rejects at the door, this is the defense-in-depth re-check on
 // the stored/replayed read.
 const maxBCCUploadSize = 20 << 20
+
+// bccTemplateMismatchMessage is the uploader-facing rejection when a workbook
+// matches none of the supported BCC templates. Kept in the service (not the
+// parser) because it is a product message, and phrased as a statement the
+// uploader can act on: the file itself is the problem, not their data.
+const bccTemplateMismatchMessage = "Mẫu file chấm công không đúng. Vui lòng tải lên tệp Excel theo đúng mẫu chấm công của dự án."
+
+// validateBCCWorkbookTemplate rejects a workbook that follows none of the
+// supported BCC templates. It runs on the bytes already read for the
+// idempotency fingerprint, BEFORE the file is stored and queued, so the
+// uploader gets the reason immediately instead of watching a background job
+// fail (and without leaving a rejected file behind in storage).
+//
+// Detection is the fast path (sheet fingerprints). A workbook that matches no
+// fingerprint still gets the legacy strategy chain, which parses for real: some
+// partner layouts ship under sheet names the detector does not key on, and only
+// the strategy chain can tell those apart from an unrelated spreadsheet.
+func validateBCCWorkbookTemplate(data []byte) error {
+	xf, err := excelkit.OpenReader(bytes.NewReader(data))
+	if err != nil {
+		// Not a readable workbook at all (wrong file type, corrupt archive).
+		return domain.NewValidationError(bccTemplateMismatchMessage)
+	}
+	defer func() { _ = xf.Close() }()
+
+	if _, err := excelparser.DetectFormat(xf); err == nil {
+		return nil
+	}
+	if _, _, err := excelparser.ParseBCCData(xf); err == nil {
+		return nil
+	}
+	return domain.NewValidationError(bccTemplateMismatchMessage)
+}
 
 type deferBCCTerminalMetadataKey struct{}
 
@@ -54,6 +90,9 @@ func (s *BCCImportService) AcceptUpload(
 	}
 	if _, _, err := parseForMonth(forMonth); err != nil {
 		return nil, fmt.Errorf("tháng không hợp lệ: %w", err)
+	}
+	if err := validateBCCWorkbookTemplate(data); err != nil {
+		return nil, err
 	}
 
 	fingerprint := bccRequestFingerprint(projectID, forMonth, includeFlexibleEmployees, data)

@@ -1,7 +1,6 @@
 package excel
 
 import (
-	"errors"
 	"log/slog"
 	"unicode"
 
@@ -71,7 +70,7 @@ func ParseBCCData(f *excelize.File) (data *BCCImportData, format BCCFormat, err 
 	if lastErr != nil {
 		return nil, 0, lastErr
 	}
-	return nil, 0, errors.New(unknownBCCFormatMsg)
+	return nil, 0, ErrUnknownBCCFormat
 }
 
 // legacyBCCStrategy parses the original single-"BCC"-sheet format: day-number

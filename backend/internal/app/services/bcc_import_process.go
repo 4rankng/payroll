@@ -3,6 +3,7 @@ package services
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -43,7 +44,11 @@ func (s *BCCImportService) processAssetData(
 	// 4a. Detect format: legacy BCC vs multi-position
 	formatResult, detectErr := excelparser.DetectFormat(xf)
 	if detectErr != nil {
-		return fail(fmt.Sprintf("không nhận diện được định dạng file: %v", detectErr))
+		// Uploads are pre-validated (validateBCCWorkbookTemplate), so reaching
+		// here means the stored bytes differ from what was accepted. Show the
+		// uploader-facing wording and keep the internal detail in the log.
+		slog.Warn("BCCImport: format detection failed after acceptance", "filename", filename, "error", detectErr)
+		return fail(bccTemplateMismatchMessage)
 	}
 
 	var parsed *excelparser.BCCImportData
@@ -62,6 +67,12 @@ func (s *BCCImportService) processAssetData(
 		parsed, err = parseLegacyRoute(xf, formatResult, filename)
 	}
 	if err != nil {
+		if errors.Is(err, excelparser.ErrUnknownBCCFormat) {
+			// No template family and no legacy strategy read the workbook: the
+			// uploader-facing wording, not the parser's internal sentence.
+			slog.Warn("BCCImport: no strategy parsed the workbook", "filename", filename, "error", err)
+			return fail(bccTemplateMismatchMessage)
+		}
 		return fail(fmt.Sprintf("lỗi phân tích file BCC: %v", err))
 	}
 

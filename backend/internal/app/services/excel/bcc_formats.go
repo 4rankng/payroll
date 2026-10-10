@@ -1,6 +1,7 @@
 package excel
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/xuri/excelize/v2"
@@ -9,6 +10,11 @@ import (
 // unknownBCCFormatMsg is the single source of the no-format-matched error,
 // shared by DetectFormat and ParseBCCData so callers see one message shape.
 const unknownBCCFormatMsg = "không nhận diện được định dạng file BCC"
+
+// ErrUnknownBCCFormat is the sentinel for "no supported template matched".
+// Callers use errors.Is on it to replace the internal wording with the
+// uploader-facing rejection message.
+var ErrUnknownBCCFormat = errors.New(unknownBCCFormatMsg)
 
 // bccSheetClassification is one pass over a workbook's sheets, collecting the
 // sheets carrying each format family's fingerprint. Detection then picks a
