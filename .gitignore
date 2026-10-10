@@ -103,3 +103,4 @@ frontend/coverage/
 .code-review-graph/
 kanban/
 
+.codewhale/

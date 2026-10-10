@@ -33,9 +33,14 @@ RUN corepack enable
 # Copy package files first for better layer caching
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
-# Install dependencies with cache mount for faster rebuilds
+# Install dependencies with cache mount for faster rebuilds.
+# mkdir node_modules/.vite: the builder stage bind-mounts this node_modules
+# read-only and overlays a writable cache mount at node_modules/.vite (Vite's
+# dep-optimizer cacheDir) — runc needs the mountpoint to already exist in the
+# read-only source, so it is created here, after install (pnpm leaves unknown
+# dot-dirs in node_modules alone, same as a local dev checkout).
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+    pnpm install --frozen-lockfile && mkdir -p node_modules/.vite
 
 # Builder stage - runs the Vite/Workbox toolchain natively ($BUILDPLATFORM) to
 # avoid the QEMU-emulation SIGSEGV. Output (dist/) is static, copied into the
@@ -57,15 +62,22 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 ENV VITE_API_VERSION=${VITE_API_VERSION}
 ENV VITE_API_TIMEOUT=${VITE_API_TIMEOUT}
 
-# Copy dependencies from deps stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package.json /app/pnpm-lock.yaml ./
-
-# Copy source code (excluding files in .dockerignore)
+# Copy source code (excluding files in .dockerignore). package.json /
+# pnpm-lock.yaml come from the context too; the deps stage owns installs.
 COPY . .
 
-# Build the application with build cache
-RUN --mount=type=cache,target=/app/.vite \
+# Build with node_modules bind-mounted from the deps stage — NOT copied.
+#
+# `COPY --from=deps /app/node_modules` materializes ~100k files into a fresh
+# layer and re-exports it via --cache-to mode=max through Docker Desktop's
+# VM→host share on every builder-stage cache miss (~6 min per build, the
+# single slowest step of the deploy). A stage bind mount creates no layer and
+# exports nothing — pnpm/vite only need to READ node_modules. The one thing
+# vite writes there is its dep-optimizer cache, whose real default cacheDir is
+# node_modules/.vite (the previous /app/.vite mount was never used); it gets a
+# writable cache mount overlaid on the read-only bind.
+RUN --mount=type=bind,from=deps,source=/app/node_modules,target=/app/node_modules \
+    --mount=type=cache,target=/app/node_modules/.vite \
     pnpm build
 
 # Production stage - static files only.
@@ -76,21 +88,22 @@ FROM ghcr.io/4rankng/node:22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857
 # Create app directory
 WORKDIR /app
 
-# Copy built assets from builder stage
-COPY --from=builder /app/dist ./dist
+# Install serve and create the runtime user BEFORE copying dist. dist changes
+# on every build, so layers that never change (pinned base → serve install,
+# users, serve.json) sit above it and stay cached across builds.
+RUN npm install -g serve
 
-# Copy serve config into dist (adds Permissions-Policy headers for geolocation and FedCM / Google Sign-In)
 COPY serve.json ./dist/serve.json
 
-# Install serve to serve static files
-RUN npm install -g serve
+RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
+
+# Copy built assets from builder stage
+COPY --from=builder /app/dist ./dist
 
 # Expose port 3000
 EXPOSE 3000
 
 # Use non-root user for security
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
 USER nextjs
 
 # Serve the built app
