@@ -395,6 +395,28 @@ export const useImportEmployees = () => {
   });
 };
 
+// Backfill missing employee mobile numbers from an .xlsx upload. The caller
+// owns result display — no toast here so the modal can render the per-row
+// summary itself.
+export const useBackfillEmployeeMobiles = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      file,
+      onProgress,
+    }: {
+      file: File;
+      onProgress?: (progress: number) => void;
+    }) => employeeService.backfillMobiles(file, onProgress),
+    onSuccess: () => {
+      // Mobile numbers changed — refresh all employee queries
+      queryClient.invalidateQueries({ queryKey: QueryKeys.employees.all });
+    },
+    // Error handling is now done globally in React Query
+  });
+};
+
 // Export employees to Excel
 export const useExportEmployees = () => {
   return useMutation({

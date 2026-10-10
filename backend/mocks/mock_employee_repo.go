@@ -348,6 +348,21 @@ func (mr *MockEmployeeRepositoryMockRecorder) GetByUserID(ctx, userID interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserID", reflect.TypeOf((*MockEmployeeRepository)(nil).GetByUserID), ctx, userID)
 }
 
+// GetDuplicateIdentities mocks base method.
+func (m *MockEmployeeRepository) GetDuplicateIdentities(ctx context.Context) ([]*domain.DuplicateIdentityGroup, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDuplicateIdentities", ctx)
+	ret0, _ := ret[0].([]*domain.DuplicateIdentityGroup)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDuplicateIdentities indicates an expected call of GetDuplicateIdentities.
+func (mr *MockEmployeeRepositoryMockRecorder) GetDuplicateIdentities(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDuplicateIdentities", reflect.TypeOf((*MockEmployeeRepository)(nil).GetDuplicateIdentities), ctx)
+}
+
 // GetEmployeesSummary mocks base method.
 func (m *MockEmployeeRepository) GetEmployeesSummary(ctx context.Context) (*domain.EmployeesSummary, error) {
 	m.ctrl.T.Helper()
@@ -391,21 +406,6 @@ func (m *MockEmployeeRepository) GetEmployeesWithMissingBankDetails(ctx context.
 func (mr *MockEmployeeRepositoryMockRecorder) GetEmployeesWithMissingBankDetails(ctx, filters interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeesWithMissingBankDetails", reflect.TypeOf((*MockEmployeeRepository)(nil).GetEmployeesWithMissingBankDetails), ctx, filters)
-}
-
-// GetDuplicateIdentities mocks base method.
-func (m *MockEmployeeRepository) GetDuplicateIdentities(ctx context.Context) ([]*domain.DuplicateIdentityGroup, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetDuplicateIdentities", ctx)
-	ret0, _ := ret[0].([]*domain.DuplicateIdentityGroup)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetDuplicateIdentities indicates an expected call of GetDuplicateIdentities.
-func (mr *MockEmployeeRepositoryMockRecorder) GetDuplicateIdentities(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDuplicateIdentities", reflect.TypeOf((*MockEmployeeRepository)(nil).GetDuplicateIdentities), ctx)
 }
 
 // GetPaidWithoutMobile mocks base method.
@@ -512,6 +512,21 @@ func (mr *MockEmployeeRepositoryMockRecorder) ListAccessibleIDs(ctx, userID inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAccessibleIDs", reflect.TypeOf((*MockEmployeeRepository)(nil).ListAccessibleIDs), ctx, userID)
 }
 
+// ListByCCCDs mocks base method.
+func (m *MockEmployeeRepository) ListByCCCDs(ctx context.Context, cccds []string) ([]*domain.Employee, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByCCCDs", ctx, cccds)
+	ret0, _ := ret[0].([]*domain.Employee)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByCCCDs indicates an expected call of ListByCCCDs.
+func (mr *MockEmployeeRepositoryMockRecorder) ListByCCCDs(ctx, cccds interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByCCCDs", reflect.TypeOf((*MockEmployeeRepository)(nil).ListByCCCDs), ctx, cccds)
+}
+
 // ListByMobile mocks base method.
 func (m *MockEmployeeRepository) ListByMobile(ctx context.Context, mobile string) ([]*domain.Employee, error) {
 	m.ctrl.T.Helper()
@@ -525,6 +540,21 @@ func (m *MockEmployeeRepository) ListByMobile(ctx context.Context, mobile string
 func (mr *MockEmployeeRepositoryMockRecorder) ListByMobile(ctx, mobile interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByMobile", reflect.TypeOf((*MockEmployeeRepository)(nil).ListByMobile), ctx, mobile)
+}
+
+// ListByMobiles mocks base method.
+func (m *MockEmployeeRepository) ListByMobiles(ctx context.Context, mobiles []string) ([]*domain.Employee, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByMobiles", ctx, mobiles)
+	ret0, _ := ret[0].([]*domain.Employee)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByMobiles indicates an expected call of ListByMobiles.
+func (mr *MockEmployeeRepositoryMockRecorder) ListByMobiles(ctx, mobiles interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByMobiles", reflect.TypeOf((*MockEmployeeRepository)(nil).ListByMobiles), ctx, mobiles)
 }
 
 // ListWithAllProjects mocks base method.

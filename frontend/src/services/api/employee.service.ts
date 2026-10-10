@@ -18,6 +18,7 @@ import type {
   EmployeeTimesheetEntry,
   EmployeeImportStatus,
   EmployeeImportResponse,
+  MobileBackfillResult,
   CurrentProjectWithTimesheets,
   EmployeeCurrentProjectsResponse,
   EmployeeCurrentProjectsFilters,
@@ -316,6 +317,29 @@ class EmployeeService {
     );
     if (!response.data) {
       throw new Error('API response missing import status');
+    }
+    return response.data;
+  }
+
+  /**
+   * Backfill missing employee mobile numbers from the "NV chưa có SĐT"
+   * export with the Mobile column filled in. Matches employees by CCCD and
+   * only fills blank mobile fields.
+   */
+  async backfillMobiles(
+    file: File,
+    onProgress?: (progress: number) => void
+  ): Promise<MobileBackfillResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.upload<MobileBackfillResult>(
+      API_ENDPOINTS.employees.importMobiles,
+      formData,
+      onProgress
+    );
+    if (!response.data) {
+      throw new Error('API response missing mobile backfill result');
     }
     return response.data;
   }

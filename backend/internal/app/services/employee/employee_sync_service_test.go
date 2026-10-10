@@ -242,6 +242,16 @@ func (m *MockEmployeeRepository) ListByMobile(ctx context.Context, mobile string
 	return args.Get(0).([]*domain.Employee), args.Error(1)
 }
 
+func (m *MockEmployeeRepository) ListByCCCDs(ctx context.Context, cccds []string) ([]*domain.Employee, error) {
+	args := m.Called(ctx, cccds)
+	return args.Get(0).([]*domain.Employee), args.Error(1)
+}
+
+func (m *MockEmployeeRepository) ListByMobiles(ctx context.Context, mobiles []string) ([]*domain.Employee, error) {
+	args := m.Called(ctx, mobiles)
+	return args.Get(0).([]*domain.Employee), args.Error(1)
+}
+
 func (m *MockEmployeeRepository) GetByEmail(ctx context.Context, email string) (*domain.Employee, error) {
 	args := m.Called(ctx, email)
 	return args.Get(0).(*domain.Employee), args.Error(1)

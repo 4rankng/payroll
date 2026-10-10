@@ -1,5 +1,5 @@
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Plus, Download, PhoneOff, Users } from 'lucide-react';
+import { Plus, Download, PhoneOff, PhoneIncoming, Users } from 'lucide-react';
 import { useAuth } from '@/contexts';
 
 interface EmployeePageHeaderProps {
@@ -7,6 +7,7 @@ interface EmployeePageHeaderProps {
   onAddEmployeeClick: () => void;
   onExportClick?: () => void;
   onExportNoMobileClick?: () => void;
+  onImportMobilesClick?: () => void;
   onSearchFocus?: () => void;
   isExporting?: boolean;
 }
@@ -16,6 +17,7 @@ export const EmployeePageHeader = ({
   onAddEmployeeClick,
   onExportClick,
   onExportNoMobileClick,
+  onImportMobilesClick,
   isExporting = false,
 }: EmployeePageHeaderProps) => {
   const { user } = useAuth();
@@ -39,6 +41,12 @@ export const EmployeePageHeader = ({
           icon: PhoneOff,
           variant: 'outline' as const,
           className: isExporting ? 'opacity-50 pointer-events-none' : '',
+        }] : []),
+        ...(onImportMobilesClick && user?.role === 'admin' ? [{
+          label: 'Nhập SĐT',
+          onClick: onImportMobilesClick,
+          icon: PhoneIncoming,
+          variant: 'outline' as const,
         }] : []),
         {
           label: 'Thêm nhân viên',

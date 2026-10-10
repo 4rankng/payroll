@@ -161,6 +161,11 @@ type EmployeeRepository interface {
 	GetByIDForUpdate(ctx context.Context, id uint) (*Employee, error)
 	GetByUserID(ctx context.Context, userID uint) (*Employee, error)
 	GetByCCCD(ctx context.Context, cccd string) (*Employee, error)
+	// ListByCCCDs returns active employees whose CCCD is in the list. CCCD is
+	// unique among active rows (unique_cccd_deleted_at), so each CCCD matches
+	// at most one row; the list shape keeps batch imports honest about that
+	// invariant without per-CCCD queries.
+	ListByCCCDs(ctx context.Context, cccds []string) ([]*Employee, error)
 	// GetByMobile resolves a single employee by mobile number. Duplicate numbers
 	// are permitted by the schema, so it fails closed (conflict error) when more
 	// than one employee shares the number instead of returning an arbitrary row.
@@ -169,6 +174,10 @@ type EmployeeRepository interface {
 	// ordered by id. Used by callers that must react to duplicates instead of
 	// resolving one employee.
 	ListByMobile(ctx context.Context, mobile string) ([]*Employee, error)
+	// ListByMobiles is the batch form of ListByMobile: every active employee
+	// carrying any of the given numbers. Used by the mobile-backfill import to
+	// reject numbers already owned by another employee before writing.
+	ListByMobiles(ctx context.Context, mobiles []string) ([]*Employee, error)
 	GetByEmail(ctx context.Context, email string) (*Employee, error)
 	ExistsByCCCD(ctx context.Context, cccd string) (bool, error)
 	ExistsByEmail(ctx context.Context, email string) (bool, error)

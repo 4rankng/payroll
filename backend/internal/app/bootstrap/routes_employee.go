@@ -17,6 +17,8 @@ func setupEmployeeRoutes(protected *gin.RouterGroup, container *Container) {
 		employees.GET("/export", container.Handlers.Employee.ExportEmployees)
 		// Admin-only: employees paid (salary or FlexPay) in the last N months without a mobile number
 		employees.POST("/export-paid-without-mobile", container.Handlers.Employee.ExportEmployeesPaidWithoutMobile)
+		// Admin-only: upload the filled workbook back — fills EMPTY mobiles by CCCD, never overwrites
+		employees.POST("/import-mobiles", container.Handlers.Employee.ImportMobiles)
 		employees.GET("/summary", container.Handlers.Employee.GetEmployeesSummary)
 		employees.GET("/unassigned", container.Handlers.Employee.GetUnassignedEmployees)
 		employees.GET("/missing-bank-details", container.Handlers.Employee.GetEmployeesMissingBankDetails)

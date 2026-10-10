@@ -126,6 +126,36 @@ func (r *EmployeeRepository) ListByMobile(ctx context.Context, mobile string) ([
 	return employees, nil
 }
 
+// ListByCCCDs returns active employees whose CCCD is in cccds, ordered by id.
+// CCCD is unique among active rows (unique_cccd_deleted_at), so each CCCD
+// matches at most one employee; the batch form serves bulk imports.
+func (r *EmployeeRepository) ListByCCCDs(ctx context.Context, cccds []string) ([]*domain.Employee, error) {
+	if len(cccds) == 0 {
+		return nil, nil
+	}
+	var employees []*domain.Employee
+	err := r.DB.WithContext(ctx).Where("cccd IN ?", cccds).Order("id").Find(&employees).Error
+	if err != nil {
+		return nil, err
+	}
+	return employees, nil
+}
+
+// ListByMobiles returns every active employee carrying any of the given mobile
+// numbers, ordered by id. The schema permits duplicate numbers, so callers get
+// a list per number and must handle multi-owner data explicitly.
+func (r *EmployeeRepository) ListByMobiles(ctx context.Context, mobiles []string) ([]*domain.Employee, error) {
+	if len(mobiles) == 0 {
+		return nil, nil
+	}
+	var employees []*domain.Employee
+	err := r.DB.WithContext(ctx).Where("mobile IN ?", mobiles).Order("id").Find(&employees).Error
+	if err != nil {
+		return nil, err
+	}
+	return employees, nil
+}
+
 // GetByMobile resolves exactly one employee by mobile number. When several
 // employees share the number it returns a conflict instead of the first row:
 // the mobile number is a credential for password reset (Zalo OTP) and login, so

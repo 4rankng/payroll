@@ -23,6 +23,7 @@ import { useEmployeeExport } from "@/hooks/employees/useEmployeeExport";
 import { useAssignableProjects } from "@/hooks/api/useProjects";
 import { ExportEmployeesModal } from "@/components/modals/ExportEmployeesModal";
 import { ExportPaidNoMobileModal } from "@/components/modals/ExportPaidNoMobileModal";
+import { ImportMobilesModal } from "@/components/modals/ImportMobilesModal";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { useTableSorting } from "@/utils/sorting";
@@ -64,6 +65,7 @@ const EmployeesPage = () => {
   const { data: projectsData } = useAssignableProjects();
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [paidNoMobileModalOpen, setPaidNoMobileModalOpen] = useState(false);
+  const [importMobilesModalOpen, setImportMobilesModalOpen] = useState(false);
 
   const { openEmployeeDetails, openAddEmployee } = useEmployeeModals();
 
@@ -192,6 +194,7 @@ const EmployeesPage = () => {
             onAddEmployeeClick={() => openAddEmployee()}
             onExportClick={handleExportEmployees}
             onExportNoMobileClick={() => setPaidNoMobileModalOpen(true)}
+            onImportMobilesClick={() => setImportMobilesModalOpen(true)}
             onSearchFocus={handleSearchFocus}
             isExporting={isExporting}
           />
@@ -282,6 +285,11 @@ const EmployeesPage = () => {
         onClose={() => setPaidNoMobileModalOpen(false)}
         onExport={handleExportPaidNoMobile}
         isExporting={isExporting}
+      />
+
+      <ImportMobilesModal
+        open={importMobilesModalOpen}
+        onClose={() => setImportMobilesModalOpen(false)}
       />
     </div>
   );

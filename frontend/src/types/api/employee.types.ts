@@ -506,6 +506,24 @@ export interface EmployeeImportResponse {
   message: string;
 }
 
+// Mobile backfill import — fills blank employee mobile numbers from the
+// "NV chưa có SĐT" export with the Mobile column filled in. Rows are matched
+// by CCCD; existing mobile numbers are never overwritten.
+export interface MobileBackfillRowError {
+  row_number: number;
+  cccd?: string;
+  message: string;
+}
+
+export interface MobileBackfillResult {
+  total_rows: number;
+  updated: number;
+  skipped_existing: number;
+  not_found: number;
+  error_count: number;
+  errors: MobileBackfillRowError[];
+}
+
 // Vietnamese translations
 export const VIETNAMESE_EMPLOYEE_LABELS = {
   statuses: {

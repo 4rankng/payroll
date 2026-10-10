@@ -73,3 +73,15 @@ type EmployeeImportResult struct {
 	ErrorCount   int        `json:"error_count"`
 	Errors       []RowError `json:"errors"`
 }
+
+// MobileBackfillResult is the synchronous summary of a mobile-number backfill
+// import: per-classification counts plus row errors, in the same RowError
+// shape as the async employee import.
+type MobileBackfillResult struct {
+	TotalRows       int        `json:"total_rows"`
+	Updated         int        `json:"updated"`
+	SkippedExisting int        `json:"skipped_existing"`
+	NotFound        int        `json:"not_found"`
+	ErrorCount      int        `json:"error_count"`
+	Errors          []RowError `json:"errors"`
+}
