@@ -390,7 +390,7 @@ export default function TimesheetsPage() {
       <div className="mx-auto max-w-[1320px] space-y-4">
 
         {/* Header */}
-        <div className="rounded-xl border border-input bg-card p-3 shadow-xs opacity-0 motion-safe:animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] sm:p-4">
+        <div className="rounded-xl border border-input bg-card p-3 shadow-xs motion-safe:animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:both] sm:p-4">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
               <h1 className="font-display text-display-sm font-semibold tracking-tight text-fg-primary flex items-center gap-2 sm:text-display-md">
@@ -410,7 +410,7 @@ export default function TimesheetsPage() {
 
         {/* Stats — watermark-style stat tiles. 5 cells: 2-col on mobile, 5-col on lg+ */}
         {summaryStats && (
-          <div className="opacity-0 motion-safe:animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:forwards]">
+          <div className="motion-safe:animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:both]">
             <TimesheetStatsRow
               isLoading={timesheetStats.isLoading}
               employeeCount={summaryStats.employeeCount}
@@ -424,7 +424,7 @@ export default function TimesheetsPage() {
           </div>
         )}
 
-        <div className="opacity-0 motion-safe:animate-fade-in-up [animation-delay:120ms] [animation-fill-mode:forwards]">
+        <div className="motion-safe:animate-fade-in-up [animation-delay:120ms] [animation-fill-mode:both]">
           <PartnerTimesheetActions
             onAddTimesheet={() => openTimesheetEntry()}
             onOpenPaymentHistory={() => setPaymentHistorySheetOpen(true)}
@@ -455,7 +455,7 @@ export default function TimesheetsPage() {
           onExportExcel={() => timesheetManagement.handleExportExcel()}
         >
           <div className="space-y-3">
-            <div className="opacity-0 motion-safe:animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
+            <div className="motion-safe:animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:both]">
               <div className="flex flex-wrap items-center gap-2 rounded-xl border border-input bg-card px-3 py-2 shadow-xs">
                 <div className="hidden items-center gap-2 border-r border-border pr-3 lg:flex">
                   <FilterLines className="h-4 w-4 text-primary" aria-hidden="true" />
@@ -465,7 +465,7 @@ export default function TimesheetsPage() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-input bg-card shadow-xs opacity-0 motion-safe:animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+            <div className="overflow-hidden rounded-xl border border-input bg-card shadow-xs motion-safe:animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:both]">
               <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-3 py-2 sm:px-4">
                 <div>
                   <p className="text-[12px] font-bold text-foreground">Chi tiết bảng công</p>

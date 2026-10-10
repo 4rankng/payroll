@@ -35,6 +35,7 @@ Links to journals, commits, ADRs, or code.
 
 | Lesson | Date | Topic |
 |--------|------|-------|
+| [Reduced-motion users saw blank partner pages](2026-10-10-reduced-motion-blanked-partner-pages.md) | 2026-10-10 | `opacity-0` + `motion-safe:animate-*` blanks the page under `prefers-reduced-motion: reduce` |
 | [Statistical forecast over ML](2026-07-11-statistical-forecast-over-ml.md) | 2026-07-11 | Simple statistical methods beat ML for short-horizon, near-constant series |
 | [Google OAuth no-OTP residual risk](2026-07-04-google-oauth-no-otp-residual-risk.md) | 2026-07-04 | OAuth no-OTP convenience trade-off and replay/issuer hardening |
 | [Security: IDOR, spray, token revocation](2026-07-04-security-idor-spray-token-revocation.md) | 2026-07-04 | Red-team findings: ownership validation, rate limiting, token blacklist |

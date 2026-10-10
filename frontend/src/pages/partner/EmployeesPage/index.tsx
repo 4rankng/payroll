@@ -469,7 +469,7 @@ const EmployeesPage = () => {
     <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_29rem)] px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-4">
 
-        <div className="rounded-xl border border-input bg-card p-5 shadow-xs opacity-0 motion-safe:animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:forwards] md:p-6">
+        <div className="rounded-xl border border-input bg-card p-5 shadow-xs motion-safe:animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:both] md:p-6">
           <PageHeader
             title="Nhân viên dự án"
             description="Danh sách nhân viên trong các dự án được phân quyền"
@@ -493,7 +493,7 @@ const EmployeesPage = () => {
         </div>
 
         <div className={cn(
-          "rounded-xl border border-input bg-card p-2 shadow-xs opacity-0 motion-safe:animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:forwards]",
+          "rounded-xl border border-input bg-card p-2 shadow-xs motion-safe:animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:both]",
           poolView === "global" && "hidden",
         )}>
           <InlineStatStrip
@@ -546,7 +546,7 @@ const EmployeesPage = () => {
           />
         </div>
 
-        <div className="opacity-0 motion-safe:animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:forwards]">
+        <div className="motion-safe:animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:both]">
           <div className="flex items-center gap-2.5 flex-wrap rounded-xl border border-input bg-card px-3 py-3 shadow-xs">
             <div className="inline-flex items-center rounded-lg border border-border/70 bg-muted/40 p-0.5">
               <button
@@ -633,7 +633,7 @@ const EmployeesPage = () => {
 
         {poolView !== "global" && <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />}
 
-        <div className="overflow-hidden rounded-xl border border-input bg-card shadow-xs opacity-0 motion-safe:animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:forwards]">
+        <div className="overflow-hidden rounded-xl border border-input bg-card shadow-xs motion-safe:animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:both]">
           <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-4 py-3 sm:px-5">
             <div className="flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10 text-success"><UserCheck01 className="h-3.5 w-3.5" aria-hidden="true" /></span>
