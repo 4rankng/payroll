@@ -42,8 +42,30 @@ if (typeof window !== 'undefined') {
 // VitePWA's `injectManifest` strategy does NOT auto-register — we have to
 // call this ourselves. Safe in both dev and prod once `devOptions.enabled`
 // is set in vite.config.ts.
+//
+// registerType: 'autoUpdate' reloads the page when the new worker activates
+// (workbox-window 'activated' with isUpdate). The browser itself only
+// re-checks /sw.js on navigation — and at most about once a day for a tab
+// that stays open — so an idle tab can sit on a stale bundle long after a
+// deploy. Re-check on focus/visibility and hourly so a long-lived tab picks
+// the new build up on its own instead of needing a manual hard refresh.
 if ('serviceWorker' in navigator) {
-  registerSW({ immediate: true });
+  registerSW({
+    immediate: true,
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+      const checkForUpdate = () => {
+        void registration.update().catch(() => {
+          /* offline or transient failure — the next trigger retries */
+        });
+      };
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkForUpdate();
+      });
+      window.addEventListener('focus', checkForUpdate);
+      setInterval(checkForUpdate, 60 * 60 * 1000);
+    },
+  });
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
