@@ -166,7 +166,7 @@ export function TimesheetEntryMobileForm({ onClose }: TimesheetEntryMobileFormPr
         {/* Header */}
         <MobileFormHeader />
         {payRateForbidden && (
-          <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">
+          <p className="text-xs text-red-700 bg-red-50 rounded-xl px-3 py-2">
             Bạn không có quyền truy cập bảng lương của dự án này.
           </p>
         )}

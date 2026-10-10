@@ -339,7 +339,7 @@ const AdminDashboardMobile = () => {
           </button>
           <button
             onClick={() => setSelectedMonth(format(subMonths(selectedDate, 1), 'yyyy-MM'))}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-fg-quaternary transition-colors duration-100 ease-linear hover:bg-utility-gray-100 hover:text-fg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-fg-tertiary transition-colors duration-100 ease-linear hover:bg-utility-gray-100 hover:text-fg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
             aria-label="Tháng trước"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -347,7 +347,7 @@ const AdminDashboardMobile = () => {
           <Popover open={monthPickerOpen} onOpenChange={setMonthPickerOpen}>
             <PopoverTrigger asChild>
               <button type="button" aria-label="Chọn tháng" className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-full bg-utility-gray-100 px-2 text-xs font-semibold text-fg-primary transition-colors duration-100 ease-linear hover:bg-utility-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
-                <CalendarCheck01 className="h-3 w-3 shrink-0 text-fg-quaternary" aria-hidden="true" />
+                <CalendarCheck01 className="h-3 w-3 shrink-0 text-fg-tertiary" aria-hidden="true" />
                 {selectedMonth === 'all' ? 'Chọn tháng' : format(selectedDate, 'MM/yyyy', { locale: vi })}
               </button>
             </PopoverTrigger>
@@ -357,7 +357,7 @@ const AdminDashboardMobile = () => {
           </Popover>
           <button
             onClick={() => setSelectedMonth(format(addMonths(selectedDate, 1), 'yyyy-MM'))}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-fg-quaternary transition-colors duration-100 ease-linear hover:bg-utility-gray-100 hover:text-fg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-fg-tertiary transition-colors duration-100 ease-linear hover:bg-utility-gray-100 hover:text-fg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
             aria-label="Tháng sau"
           >
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -367,7 +367,7 @@ const AdminDashboardMobile = () => {
             onClick={handleRefresh}
             disabled={isDashboardRefreshing}
             aria-busy={isDashboardRefreshing}
-            className="flex h-11 w-11 items-center justify-center rounded-full text-fg-quaternary transition-colors duration-100 ease-linear hover:bg-utility-gray-100 hover:text-fg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:opacity-50"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-fg-tertiary transition-colors duration-100 ease-linear hover:bg-utility-gray-100 hover:text-fg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:opacity-50"
             aria-label="Làm mới số liệu"
           >
             <RefreshCcw01 className={cn('h-4 w-4', isDashboardRefreshing && 'animate-spin motion-reduce:animate-none')} aria-hidden="true" />

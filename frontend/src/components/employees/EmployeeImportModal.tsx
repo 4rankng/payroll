@@ -378,7 +378,7 @@ export function EmployeeImportModal({
                   <CardTitle className="flex items-center gap-2">
                     {importStatus.status === 'processing' && <Loader2 className="h-5 w-5 animate-spin" />}
                     {importStatus.status === 'completed' && <CheckCircle className="h-5 w-5 text-green-700" />}
-                    {importStatus.status === 'failed' && <XCircle className="h-5 w-5 text-red-600" />}
+                    {importStatus.status === 'failed' && <XCircle className="h-5 w-5 text-red-700" />}
                     {importStatus.status === 'pending' && <AlertCircle className="h-5 w-5 text-yellow-700" />}
                     Trạng thái import
                   </CardTitle>
@@ -417,8 +417,8 @@ export function EmployeeImportModal({
                     <div className="text-sm text-yellow-700">Cập nhật</div>
                   </div>
                   <div className="p-3 bg-red-50 rounded-xl">
-                    <div className="text-2xl font-bold text-red-600">{importStatus.error_count}</div>
-                    <div className="text-sm text-red-600">Lỗi</div>
+                    <div className="text-2xl font-bold text-red-700">{importStatus.error_count}</div>
+                    <div className="text-sm text-red-700">Lỗi</div>
                   </div>
                 </div>
 

@@ -227,13 +227,13 @@ function HistoryRecord({ item, isOpen, onToggle }: { item: BankTransferHistory; 
               <p className="break-words font-display text-[13px] font-bold leading-snug text-fg-primary xl:truncate">
                 {item.employee_name}
               </p>
-              <span className="hidden text-utility-gray-300 xl:inline" aria-hidden="true">·</span>
+              <span className="hidden text-utility-gray-500 xl:inline" aria-hidden="true">·</span>
               <p className="mt-0.5 font-financial text-xs font-semibold tabular-nums tracking-[0.02em] text-fg-secondary xl:mt-0">
                 CCCD {item.employee_cccd || '—'}
               </p>
               {item.project_names.length > 0 && (
                 <>
-                  <span className="hidden text-utility-gray-300 xl:inline" aria-hidden="true">·</span>
+                  <span className="hidden text-utility-gray-500 xl:inline" aria-hidden="true">·</span>
                   <p className="mt-0.5 truncate text-xs text-fg-tertiary xl:mt-0" title={item.project_names.join(', ')}>
                     {item.project_names.join(', ')}
                   </p>

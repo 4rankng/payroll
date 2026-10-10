@@ -61,7 +61,7 @@ export function BankAccountWarningProvider({ children }: { children: React.React
           overlayClassName="bg-slate-950/85 backdrop-blur-sm"
         >
           <AlertDialogHeader className="flex-row items-start gap-3 space-y-0 pb-4 text-left sm:px-6">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600 ring-8 ring-rose-50/60">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 ring-8 ring-rose-50/60">
               <AlertTriangle className="h-5 w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0 pt-0.5">

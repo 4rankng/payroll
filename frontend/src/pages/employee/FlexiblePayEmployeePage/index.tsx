@@ -319,7 +319,7 @@ const FlexiblePayEmployeePage = () => {
             className="scroll-mt-24 rounded-2xl border border-[var(--employee-border)] bg-[var(--employee-surface)] px-5 py-6 text-center shadow-[var(--employee-shadow)] lg:col-start-1 lg:row-start-1"
             role="alert"
           >
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--employee-error-soft)] text-utility-error-400">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--employee-error-soft)] text-utility-error-600">
               <AlertCircle className="h-6 w-6" aria-hidden="true" />
             </div>
             <h2 className="mt-3 text-[1rem] font-semibold text-fg-secondary">Chưa tải được hạn mức ứng lương</h2>

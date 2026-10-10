@@ -132,7 +132,7 @@ export function TimesheetEntryMobile({
     return (
       <div className="mx-2 sm:mx-4 p-2 sm:p-3 border border-red-200 bg-red-50 rounded-xl">
         <div className="flex items-center gap-2">
-          <div className="h-4 w-4 text-red-600 flex-shrink-0">⚠️</div>
+          <div className="h-4 w-4 text-red-700 flex-shrink-0">⚠️</div>
           <div className="typography-body-medium text-red-700">
             Dự án chưa có cấu hình lương. Vui lòng thiết lập cấu hình lương trước khi nhập bảng công.
           </div>

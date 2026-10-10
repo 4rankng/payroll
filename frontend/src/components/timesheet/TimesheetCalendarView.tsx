@@ -301,7 +301,7 @@ export function TimesheetCalendarView({
   if (error || timesheetError) {
     return (
       <div className="text-center py-12">
-        <Calendar className="mx-auto h-12 w-12 text-destructive/50" />
+        <Calendar className="mx-auto h-12 w-12 text-destructive" />
         <h3 className="mt-4 typography-title-large text-destructive">Lỗi tải dữ liệu</h3>
         <p className="mt-2 typography-body-medium text-muted-foreground">
           Không thể tải dữ liệu bảng công. Vui lòng thử lại sau.

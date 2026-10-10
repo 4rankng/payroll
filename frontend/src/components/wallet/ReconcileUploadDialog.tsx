@@ -296,7 +296,7 @@ export default function ReconcileUploadDialog({
                 </>
               ) : job?.status === "failed" ? (
                 <>
-                  <FileX2 className="h-3.5 w-3.5 text-rose-600" />
+                  <FileX2 className="h-3.5 w-3.5 text-rose-700" />
                   <span className="text-xs font-medium text-rose-700">
                     Đối soát thất bại
                   </span>

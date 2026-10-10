@@ -57,7 +57,7 @@ const EmployeeRow = memo(function EmployeeRow({
             ) : (
               <Badge
                 variant="outline"
-                className="text-xs px-1 py-0 h-3.5 border-rose-300 text-rose-600 bg-rose-50 shrink-0"
+                className="text-xs px-1 py-0 h-3.5 border-rose-300 text-rose-700 bg-rose-50 shrink-0"
               >
                 <UserX className="w-2.5 h-2.5 mr-0.5" />
                 Nghỉ

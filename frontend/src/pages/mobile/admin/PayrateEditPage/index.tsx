@@ -305,7 +305,7 @@ export default function PayrateEditPageMobile() {
                       <Label htmlFor="fromDate" className={cn(
                         'flex items-center gap-1 text-xs font-medium',
                         fromDateLocked && !fromDateIsActionable ? 'text-muted-foreground' : 'text-foreground',
-                        sf?.effective_from.status === 'error' && !fromDateIsActionable && 'text-utility-error-600',
+                        sf?.effective_from.status === 'error' && !fromDateIsActionable && 'text-utility-error-700',
                         fromDateIsActionable && 'font-semibold text-fg-warning-primary',
                       )}>
                         Từ ngày <span className="text-destructive">*</span>
@@ -406,7 +406,7 @@ export default function PayrateEditPageMobile() {
               {sf?.rates.status === 'error' && sf.rates.message && !fromDateIsActionable && (
                 <div className="mx-4 mt-3 space-y-1.5 rounded-xl border border-utility-error-200 bg-utility-error-50 px-3 py-2.5 text-xs">
                   <p className="font-semibold text-fg-error-primary">{sf.rates.message}</p>
-                  {sf.rates.hint && <p className="text-utility-error-600">{sf.rates.hint}</p>}
+                  {sf.rates.hint && <p className="text-utility-error-700">{sf.rates.hint}</p>}
                 </div>
               )}
 

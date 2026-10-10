@@ -80,7 +80,7 @@ export function EmployeeMonthNavigator({
           className={cn(
             "flex h-12 w-12 items-center justify-center justify-self-center rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current",
             isCanopy
-              ? "text-white/70 hover:bg-white/15 hover:text-white disabled:hover:text-white/70"
+              ? "text-white/90 hover:bg-white/15 hover:text-white disabled:hover:text-white/90"
               : "text-fg-tertiary hover:bg-[var(--employee-accent-soft)] hover:text-[var(--employee-accent)] disabled:hover:text-fg-tertiary"
           )}
         >
@@ -184,7 +184,7 @@ export function EmployeeMonthNavigator({
           className={cn(
             "flex h-12 w-12 items-center justify-center justify-self-center rounded-xl transition-all duration-150 active:scale-95 disabled:opacity-30 disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current",
             isCanopy
-              ? "text-white/70 hover:bg-white/15 hover:text-white disabled:hover:text-white/70"
+              ? "text-white/90 hover:bg-white/15 hover:text-white disabled:hover:text-white/90"
               : "text-fg-tertiary hover:bg-[var(--employee-accent-soft)] hover:text-[var(--employee-accent)] disabled:hover:text-fg-tertiary"
           )}
         >

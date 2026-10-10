@@ -107,9 +107,9 @@ const ForgotPassword = () => {
                 <div className="relative">
                   {/* Swap icon based on detected input type */}
                   {isEmailMode ? (
-                    <Mail01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+                    <Mail01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-tertiary" aria-hidden="true" />
                   ) : (
-                    <PhoneCall01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+                    <PhoneCall01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-tertiary" aria-hidden="true" />
                   )}
                   <Input
                     id="identifier"

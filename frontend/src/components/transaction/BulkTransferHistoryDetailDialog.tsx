@@ -196,14 +196,14 @@ export const BulkTransferHistoryDetailDialog = memo(function BulkTransferHistory
                 <span className="text-muted-foreground">
                   Tổng: <span className="font-semibold text-slate-800">{historyDetail.total_txn}</span>
                 </span>
-                <span className="text-slate-300">|</span>
+                <span className="text-slate-500">|</span>
                 <span className="text-muted-foreground flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3 text-emerald-700" />
                   Thành công: <span className="font-semibold text-emerald-700 ml-0.5">{historyDetail.completed_txn}</span>
                 </span>
-                <span className="text-slate-300">|</span>
+                <span className="text-slate-500">|</span>
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <XCircle className="w-3 h-3 text-red-400" />
+                  <XCircle className="w-3 h-3 text-red-500" />
                   Thất bại: <span className={cn('font-semibold ml-0.5', historyDetail.failed_txn > 0 ? 'text-red-600' : 'text-muted-foreground')}>
                     {historyDetail.failed_txn}
                   </span>

@@ -334,7 +334,7 @@ export function AdvancePaymentHistoryCard({
         </div>
       ) : isError ? (
         <div className="px-5 py-10 text-center" role="alert">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--employee-error-soft)] text-utility-error-400">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--employee-error-soft)] text-utility-error-600">
             <RefreshCw05 className="h-6 w-6" aria-hidden="true" />
           </div>
           <p className="mt-4 text-[1rem] font-semibold text-fg-secondary">

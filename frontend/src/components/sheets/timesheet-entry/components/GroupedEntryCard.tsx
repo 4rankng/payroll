@@ -124,7 +124,7 @@ export const GroupedEntryCard = memo(({
             <div className={cn(
               "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium shrink-0 ml-1",
               totalEarnings > 3500000
-                ? "bg-red-100 text-red-600"
+                ? "bg-red-100 text-red-700"
                 : "bg-emerald-100 text-emerald-700"
             )}>
               {totalEarnings > 3500000 && <AlertTriangle className="h-3 w-3" />}
@@ -167,10 +167,10 @@ export const GroupedEntryCard = memo(({
         if (globalErrors.length === 0) return null;
         return (
           <div className="px-3 py-2 bg-red-50 border-b border-red-100 flex items-start gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />
+            <AlertTriangle className="h-3.5 w-3.5 text-red-700 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
               {globalErrors.map((err, i) => (
-                <p key={i} className="text-xs text-red-600">{err}</p>
+                <p key={i} className="text-xs text-red-700">{err}</p>
               ))}
             </div>
           </div>

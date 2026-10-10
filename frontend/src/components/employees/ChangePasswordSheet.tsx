@@ -318,7 +318,7 @@ export function ChangePasswordSheet({
           <DialogTitle className="employee-type-card-title text-white">
             Đổi mật khẩu
           </DialogTitle>
-          <DialogDescription className="employee-type-body-sm text-white/80">Mật khẩu mới sẽ dùng cho lần đăng nhập sau.</DialogDescription>
+          <DialogDescription className="employee-type-body-sm text-white/90">Mật khẩu mới sẽ dùng cho lần đăng nhập sau.</DialogDescription>
         </DialogHeader>
         <div className="min-h-0 overflow-y-auto">{formContent}</div>
       </DialogContent>

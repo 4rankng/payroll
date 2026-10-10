@@ -124,7 +124,7 @@ const SaoKeRow = memo(function SaoKeRow({ record, onSettle, isSettling, localSet
             {!settled && (
               <Button
                 size="sm"
-                className="h-6 gap-1 bg-emerald-600 px-2.5 text-xs text-white hover:bg-emerald-700"
+                className="h-6 gap-1 bg-emerald-700 px-2.5 text-xs text-white hover:bg-emerald-800"
                 onClick={() => onSettle(record.id)}
                 disabled={isSettling}
               >
@@ -292,7 +292,7 @@ export const SaoKeHistoryDialog = memo(function SaoKeHistoryDialog({
 
               {!isLoading && isError && (
                 <div className="flex flex-col items-center gap-2 py-10 text-center">
-                  <AlertCircle className="h-7 w-7 text-destructive/60" />
+                  <AlertCircle className="h-7 w-7 text-destructive" />
                   <p className="text-sm text-muted-foreground">Không thể tải dữ liệu</p>
                   <Button variant="outline" size="sm" className="min-h-11 gap-1.5" onClick={() => refetch()}>
                     <RefreshCw className="h-3.5 w-3.5" /> Thử lại

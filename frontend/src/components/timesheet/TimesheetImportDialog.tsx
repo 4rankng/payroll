@@ -97,7 +97,7 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
   // Results display helpers
   const getStatusIcon = useCallback((hasError: boolean) => {
     return hasError ? (
-      <XCircle className="w-4 h-4 text-red-600" />
+      <XCircle className="w-4 h-4 text-red-700" />
     ) : (
       <CheckCircle className="w-4 h-4 text-green-700" />
     );
@@ -143,7 +143,7 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
               </div>
               <div className="w-px h-6 bg-slate-200"></div>
               <div className="typography-body-medium text-muted-foreground">
-                <span className="typography-data-large font-semibold text-red-600">{uploadResult.error_count}</span>
+                <span className="typography-data-large font-semibold text-red-700">{uploadResult.error_count}</span>
                 <span className="ml-2">Lỗi</span>
               </div>
             </div>
@@ -158,7 +158,7 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
                   {uploadResult.failed_entries.map((entry, index) => (
                     <div key={index} className="border rounded-xl p-4 bg-red-50 border-red-200">
                       <div className="flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="w-5 h-5 text-red-700 flex-shrink-0 mt-0.5" />
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center gap-2">
                             <span className="typography-body-small font-medium text-muted-foreground">
@@ -233,7 +233,7 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
           {/* File Upload Section */}
           <div className="space-y-4">
             <Label className="typography-body-medium">
-              FILE EXCEL <span className="text-red-600">*</span>
+              FILE EXCEL <span className="text-red-700">*</span>
             </Label>
 
             {!selectedFile ? (
@@ -288,7 +288,7 @@ export const TimesheetImportDialog = memo(function TimesheetImportDialog({
                     size="sm"
                     onClick={() => setSelectedFile(null)}
                     disabled={uploadMutation.isPending}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-700 hover:text-red-700 hover:bg-red-50"
                   >
                     <X className="w-4 h-4" />
                   </Button>

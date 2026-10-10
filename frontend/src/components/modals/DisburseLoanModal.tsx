@@ -112,7 +112,7 @@ export function DisburseLoanModal({
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <Banknote className="h-5 w-5 text-blue-600" />
+              <Banknote className="h-5 w-5 text-blue-700" />
             </div>
             <div>
               <AlertDialogTitle className="text-lg font-semibold">
@@ -141,7 +141,7 @@ export function DisburseLoanModal({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Số tiền vay:</span>
-                  <span className="font-semibold text-blue-600">{formatVND(loan.principal_amount)}</span>
+                  <span className="font-semibold text-blue-700">{formatVND(loan.principal_amount)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Lãi suất:</span>
@@ -242,7 +242,7 @@ export function DisburseLoanModal({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Số tiền:</span>
-                  <span className="font-semibold text-blue-600">{formatVND(loan.principal_amount)}</span>
+                  <span className="font-semibold text-blue-700">{formatVND(loan.principal_amount)}</span>
                 </div>
               </div>
             </div>

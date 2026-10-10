@@ -148,7 +148,7 @@ function EmployeeDetailHeader({ employee: emp }: { employee: FlexPayEmployeeList
         </div>
         <SheetClose asChild>
           <button
-            className="shrink-0 mt-0.5 h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
+            className="shrink-0 mt-0.5 h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors"
             aria-label="Đóng"
           >
             <X className="h-3.5 w-3.5" />
@@ -327,7 +327,7 @@ function RequestCard({ request: req }: { request: AdvancePaymentListItem }) {
             {getVietnameseAdvancePaymentStatus(req.status)}
           </Badge>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+        <div className="flex items-center gap-2 text-xs text-slate-600 flex-wrap">
           <span className="tabular-nums">
             {format(new Date(req.createdAt), "dd/MM/yyyy HH:mm", { locale: vi })}
           </span>

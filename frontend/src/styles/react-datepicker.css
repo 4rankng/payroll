@@ -35,7 +35,7 @@
 .react-datepicker__day-name {
   font-size: 0.6875rem;
   font-weight: 600;
-  color: hsl(var(--muted-foreground) / 0.7);
+  color: hsl(var(--muted-foreground));
   width: 1.75rem;
   line-height: 1.75rem;
   text-align: center;
@@ -93,7 +93,7 @@
 }
 
 .react-datepicker__day--outside-month {
-  color: hsl(var(--muted-foreground) / 0.25);
+  color: hsl(var(--muted-foreground));
 }
 
 .react-datepicker__triangle {

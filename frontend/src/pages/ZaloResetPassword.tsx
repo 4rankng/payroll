@@ -176,7 +176,7 @@ const ZaloResetPassword = () => {
 
         {apiError && (
           <div role="alert" className="mb-4 flex items-start gap-2 rounded-lg border border-utility-error-300 bg-utility-error-50 p-3 text-sm">
-            <AlertCircle className="size-4 shrink-0 text-utility-error-600" aria-hidden="true" />
+            <AlertCircle className="size-4 shrink-0 text-utility-error-700" aria-hidden="true" />
             <p className="text-sm leading-5 text-fg-error-primary">
               {apiError.message || "Mã đặt lại không đúng hoặc đã hết hạn. Vui lòng yêu cầu mã mới."}
             </p>
@@ -211,7 +211,7 @@ const ZaloResetPassword = () => {
           <div>
             <Label htmlFor="zalo-new-pwd">Mật khẩu mới</Label>
             <div className="relative mt-1.5">
-              <Lock01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+              <Lock01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-tertiary" aria-hidden="true" />
               <Input
                 id="zalo-new-pwd"
                 type={showPassword ? "text" : "password"}
@@ -227,7 +227,7 @@ const ZaloResetPassword = () => {
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                className="absolute inset-y-0 right-0 flex h-11 w-11 items-center justify-center rounded-lg text-fg-quaternary outline-brand transition duration-100 ease-linear hover:text-fg-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 sm:h-9 sm:w-9"
+                className="absolute inset-y-0 right-0 flex h-11 w-11 items-center justify-center rounded-lg text-fg-tertiary outline-brand transition duration-100 ease-linear hover:text-fg-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 sm:h-9 sm:w-9"
               >
                 {showPassword ? <EyeOff className="size-5" aria-hidden="true" /> : <Eye className="size-5" aria-hidden="true" />}
               </button>
@@ -239,7 +239,7 @@ const ZaloResetPassword = () => {
           <div>
             <Label htmlFor="zalo-confirm-pwd">Xác nhận mật khẩu mới</Label>
             <div className="relative mt-1.5">
-              <Lock01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+              <Lock01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-tertiary" aria-hidden="true" />
               <Input
                 id="zalo-confirm-pwd"
                 type={showPassword ? "text" : "password"}

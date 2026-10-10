@@ -107,7 +107,7 @@ function ColHead({
   return (
     <th className="px-4 py-3 text-left text-xs font-semibold text-fg-tertiary bg-utility-gray-50 whitespace-nowrap">
       <span className="inline-flex items-center gap-1.5">
-        {Icon && <Icon className="size-3.5 text-fg-quaternary" aria-hidden="true" />}
+        {Icon && <Icon className="size-3.5 text-fg-tertiary" aria-hidden="true" />}
         {children}
       </span>
     </th>
@@ -160,29 +160,29 @@ function EmployeeCard({
           )}
         </div>
 
-        <ChevronRight className="size-4 text-fg-quaternary shrink-0" aria-hidden="true" />
+        <ChevronRight className="size-4 text-fg-tertiary shrink-0" aria-hidden="true" />
       </div>
 
       {/* Info strip — project · bank · account */}
       <div className="border-t border-utility-gray-100 bg-utility-gray-25 px-4 py-2 flex items-center gap-0 flex-wrap min-h-[34px]">
         {/* Project */}
         <span className="inline-flex items-center gap-1 text-xs font-medium text-fg-brand-secondary pr-2.5">
-          <Building02 className="size-3 shrink-0 text-fg-brand-secondary/80" aria-hidden="true" />
+          <Building02 className="size-3 shrink-0 text-fg-brand-secondary" aria-hidden="true" />
           {emp.project?.name || "—"}
         </span>
 
         {/* Bank */}
         {hasBank ? (
           <>
-            <span className="text-utility-gray-300 mr-2.5" aria-hidden>·</span>
+            <span className="text-utility-gray-400 mr-2.5" aria-hidden>·</span>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-fg-secondary pr-2.5">
-              <CreditCard01 className="size-3 shrink-0 text-fg-quaternary" aria-hidden="true" />
+              <CreditCard01 className="size-3 shrink-0 text-fg-tertiary" aria-hidden="true" />
               {emp.bank!.bankName}
             </span>
           </>
         ) : (
           <>
-            <span className="text-utility-gray-300 mr-2.5" aria-hidden>·</span>
+            <span className="text-utility-gray-400 mr-2.5" aria-hidden>·</span>
             <span className="text-xs text-fg-tertiary italic">
               Chưa có ngân hàng
             </span>
@@ -192,7 +192,7 @@ function EmployeeCard({
         {/* Account number */}
         {emp.bank?.accountNumber && (
           <>
-            <span className="text-utility-gray-300 mr-2.5" aria-hidden>·</span>
+            <span className="text-utility-gray-400 mr-2.5" aria-hidden>·</span>
             <span className="break-all font-mono text-xs text-fg-tertiary tabular-nums">
               {emp.bank.accountNumber}
             </span>
@@ -289,7 +289,7 @@ const AdvPartnerUsersPage = () => {
 
         {/* ── Search bar ──────────────────────────────────────────────────── */}
         <div className="relative w-full sm:max-w-[380px]">
-          <SearchLg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-fg-quaternary pointer-events-none" aria-hidden="true" />
+          <SearchLg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-fg-tertiary pointer-events-none" aria-hidden="true" />
           <Input
             type="search"
             aria-label="Tìm nhân viên theo tên hoặc CCCD"

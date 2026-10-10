@@ -80,7 +80,7 @@ const SettingsPageMobile = () => {
             className="space-y-4 rounded-2xl border border-utility-error-300 bg-utility-error-50 p-5"
           >
             <div className="flex min-w-0 items-start gap-3">
-              <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-utility-error-600" />
+              <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-utility-error-700" />
               <p className="min-w-0 break-words text-sm leading-relaxed text-fg-error-primary">{form.loadError}</p>
             </div>
             <Button

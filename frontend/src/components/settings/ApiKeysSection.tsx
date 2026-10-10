@@ -102,7 +102,7 @@ const APIKeyRow = ({
               className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               {isCopied ? (
-                <Check className="size-3 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                <Check className="size-3 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
               ) : (
                 <Copy className="size-3" aria-hidden="true" />
               )}
@@ -112,17 +112,17 @@ const APIKeyRow = ({
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <Calendar className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden="true" />
+            <Calendar className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
             <span>Tạo {formatDateTime(apiKey.created_at)}</span>
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Clock className="size-3.5 shrink-0 text-muted-foreground/70" aria-hidden="true" />
+            <Clock className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
             <span>
               Dùng lần cuối {apiKey.last_used_at ? formatDateTime(apiKey.last_used_at) : 'Chưa dùng'}
             </span>
           </span>
           {revoked && apiKey.revoked_at ? (
-            <span className="inline-flex items-center gap-1.5 text-destructive/80">
+            <span className="inline-flex items-center gap-1.5 text-destructive">
               <ShieldAlert className="size-3.5 shrink-0" aria-hidden="true" />
               <span>Thu hồi {formatDateTime(apiKey.revoked_at)}</span>
             </span>
@@ -148,7 +148,7 @@ const APIKeyRow = ({
           </Button>
         </div>
       ) : (
-        <div className="shrink-0 self-start text-xs text-muted-foreground/60 italic md:self-center">
+        <div className="shrink-0 self-start text-xs text-muted-foreground italic md:self-center">
           Vô hiệu hoá
         </div>
       )}
@@ -276,7 +276,7 @@ export const ApiKeysSection = () => {
         <div className="bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-3.5">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shadow-sm">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 shadow-sm">
                 <KeyRound className="size-5.5" aria-hidden="true" />
               </div>
               <div className="min-w-0">
@@ -327,7 +327,7 @@ export const ApiKeysSection = () => {
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Đang hoạt động
             </p>
-            <p className="mt-1 flex items-center justify-center gap-1.5 text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+            <p className="mt-1 flex items-center justify-center gap-1.5 text-xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
               <span className="size-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
               {activeKeysCount}
             </p>
@@ -346,7 +346,7 @@ export const ApiKeysSection = () => {
               Tích hợp Claude
             </p>
             <p className="mt-1 flex items-center justify-center gap-1 text-xs font-semibold text-primary">
-              <Sparkles className="size-3.5 text-amber-500" aria-hidden="true" />
+              <Sparkles className="size-3.5 text-amber-700" aria-hidden="true" />
               <span>SKILL.md sẵn sàng</span>
             </p>
           </div>
@@ -388,14 +388,14 @@ export const ApiKeysSection = () => {
                       className="min-h-11 pr-14 text-sm sm:min-h-9"
                       disabled={createKey.isPending}
                     />
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground/60 select-none">
+                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground select-none">
                       {name.length}/100
                     </span>
                   </div>
                 </div>
                 <Button
                   type="submit"
-                  className="min-h-11 sm:min-h-9 gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700 font-medium"
+                  className="min-h-11 sm:min-h-9 gap-1.5 bg-emerald-700 text-white hover:bg-emerald-800 font-medium"
                   disabled={createKey.isPending || !name.trim()}
                 >
                   {createKey.isPending ? (
@@ -454,7 +454,7 @@ export const ApiKeysSection = () => {
                     onClick={handleCopy}
                   >
                     {copied ? (
-                      <Check className="size-4 text-emerald-600" aria-hidden="true" />
+                      <Check className="size-4 text-emerald-700" aria-hidden="true" />
                     ) : (
                       <Copy className="size-4" aria-hidden="true" />
                     )}
@@ -511,7 +511,7 @@ export const ApiKeysSection = () => {
               </div>
             ) : isError ? (
               <div className="flex flex-col items-center justify-center gap-3 p-8 text-center text-sm text-muted-foreground">
-                <ShieldAlert className="size-8 text-destructive/80" aria-hidden="true" />
+                <ShieldAlert className="size-8 text-destructive" aria-hidden="true" />
                 <p className="font-medium text-foreground">Không thể tải danh sách khoá API</p>
                 <p className="text-xs text-muted-foreground max-w-sm">
                   Đã xảy ra lỗi khi truy vấn danh sách khoá từ máy chủ. Vui lòng thử lại.
@@ -560,7 +560,7 @@ export const ApiKeysSection = () => {
           <CardHeader className="border-b bg-muted/20 p-4 sm:p-5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400">
                   <Bot className="size-4" aria-hidden="true" />
                 </div>
                 <div>
@@ -636,7 +636,7 @@ export const ApiKeysSection = () => {
                   onClick={handleCopyPath}
                 >
                   {pathCopied ? (
-                    <Check className="size-3.5 text-emerald-600" aria-hidden="true" />
+                    <Check className="size-3.5 text-emerald-700" aria-hidden="true" />
                   ) : (
                     <Copy className="size-3.5" aria-hidden="true" />
                   )}
@@ -682,7 +682,7 @@ export const ApiKeysSection = () => {
               <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4 transition-all">
                 <div className="flex items-center justify-between pb-2 border-b">
                   <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                    <FileCode className="size-4 text-violet-500" aria-hidden="true" />
+                    <FileCode className="size-4 text-violet-700" aria-hidden="true" />
                     <span>Nội dung tệp: SKILL.md</span>
                   </div>
                   <Button
@@ -693,7 +693,7 @@ export const ApiKeysSection = () => {
                     onClick={handleCopySkillText}
                   >
                     {skillTextCopied ? (
-                      <Check className="size-3 text-emerald-600" aria-hidden="true" />
+                      <Check className="size-3 text-emerald-700" aria-hidden="true" />
                     ) : (
                       <Copy className="size-3" aria-hidden="true" />
                     )}

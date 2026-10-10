@@ -24,13 +24,13 @@ export function CronSummaryCards({ total, enabled, failed }: CronSummaryCardsPro
       </div>
       {failed > 0 ? (
         <div className="bg-utility-error-50 rounded-xl border border-utility-error-100 px-3 py-2.5 flex items-center gap-2 shadow-sm">
-          <AlertCircle className="h-4 w-4 text-utility-error-600 shrink-0" />
-          <span className="text-base font-bold text-utility-error-600">{failed}</span>
+          <AlertCircle className="h-4 w-4 text-utility-error-700 shrink-0" />
+          <span className="text-base font-bold text-utility-error-700">{failed}</span>
           <span className="text-xs text-fg-error-primary">Lỗi</span>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-utility-gray-200 px-3 py-2.5 flex items-center gap-2 shadow-sm">
-          <Power01 className="h-4 w-4 text-utility-gray-300 shrink-0" />
+          <Power01 className="h-4 w-4 text-utility-gray-500 shrink-0" />
           <span className="text-base font-bold text-utility-gray-600">{disabled}</span>
           <span className="text-xs text-muted-foreground">Tắt</span>
         </div>

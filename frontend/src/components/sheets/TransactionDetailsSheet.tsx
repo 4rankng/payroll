@@ -334,7 +334,7 @@ function TransactionDetailsSheetComponent({
           custom: (
             <div className="flex items-center gap-4 flex-1 min-w-0">
               <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <Receipt className="h-6 w-6 text-blue-600" />
+                <Receipt className="h-6 w-6 text-blue-700" />
               </div>
               <div className="space-y-1 flex-1 min-w-0">
                 <h1 className="typography-headline-medium text-base sm:text-lg font-medium">
@@ -567,7 +567,7 @@ function TransactionDetailsSheetComponent({
                   href={transaction?.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-blue-700 hover:underline"
                 >
                   {transaction?.url}
                 </a>

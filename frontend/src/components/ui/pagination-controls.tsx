@@ -47,7 +47,7 @@ export function PaginationControls({
     >
       <p className="text-xs text-fg-tertiary tabular-nums shrink-0 min-w-[68px]">
         <span className="font-medium text-fg-secondary">{from}–{to}</span>
-        <span className="mx-1 text-fg-quaternary">/</span>
+        <span className="mx-1 text-fg-tertiary">/</span>
         {totalRecords.toLocaleString('vi-VN')}
       </p>
 
@@ -82,7 +82,7 @@ export function PaginationControls({
           p === '…' ? (
             <span
               key={`e${i}`}
-              className="hidden h-9 w-9 items-center justify-center text-xs text-fg-quaternary select-none sm:flex"
+              className="hidden h-9 w-9 items-center justify-center text-xs text-fg-tertiary select-none sm:flex"
             >
               …
             </span>

@@ -298,7 +298,7 @@ const ResultErrorDetails = memo(function ResultErrorDetails({
                     >
                       {group.reason}
                       {detail && (
-                        <span className="font-normal text-rose-600/90 dark:text-rose-300/70">
+                        <span className="font-normal text-rose-700 dark:text-rose-300/70">
                           {detail}
                         </span>
                       )}
@@ -713,7 +713,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
             <button
               onClick={handleUpload}
               disabled={!canUpload || isPending}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm leading-5 font-semibold text-white transition-colors hover:border-emerald-600 hover:bg-emerald-600 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:text-white"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm leading-5 font-semibold text-white transition-colors hover:border-emerald-800 hover:bg-emerald-800 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:text-white"
             >
               {isPending ? (
                 <>
@@ -732,7 +732,7 @@ export const BCCUploadModal = memo(function BCCUploadModal({
           {result && !isImportActive && (
             <button
               onClick={handleReset}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm leading-5 font-semibold text-white transition-colors hover:border-emerald-600 hover:bg-emerald-600"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm leading-5 font-semibold text-white transition-colors hover:border-emerald-800 hover:bg-emerald-800"
             >
               <Upload className="h-4 w-4" />
               Upload khác

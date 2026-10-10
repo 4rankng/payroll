@@ -63,7 +63,7 @@ export function DeleteEmployeeModal({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <XCircle className="h-5 w-5 text-red-600" />
+            <XCircle className="h-5 w-5 text-red-700" />
             Xác nhận xóa nhân viên
           </DialogTitle>
           <DialogDescription>
@@ -88,7 +88,7 @@ export function DeleteEmployeeModal({
           {!timesheetLoading && hasTimesheets && (
             <div className="p-4 border border-red-200 bg-red-50 rounded-xl">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-red-700 flex-shrink-0 mt-0.5" />
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-red-800">
                     Không thể xóa nhân viên này
@@ -108,7 +108,7 @@ export function DeleteEmployeeModal({
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-red-600 mt-2">
+                  <p className="text-xs text-red-700 mt-2">
                     Vui lòng gỡ bỏ tất cả dữ liệu chấm công trước khi xóa nhân viên.
                   </p>
                 </div>

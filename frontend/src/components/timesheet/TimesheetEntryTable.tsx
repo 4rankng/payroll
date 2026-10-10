@@ -554,7 +554,7 @@ export function TimesheetEntryTable({
                       openProjectDetails(selectedProject.id.toString(), 'payrates');
                     }
                   }}
-                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  className="bg-amber-700 hover:bg-amber-800 text-white"
                 >
                   Thiết lập cấu hình lương
                 </Button>
@@ -607,7 +607,7 @@ export function TimesheetEntryTable({
                       openProjectDetails(selectedProject.id.toString(), 'payrates');
                     }
                   }}
-                  className="bg-orange-600 hover:bg-orange-700 text-white"
+                  className="bg-orange-700 hover:bg-orange-800 text-white"
                 >
                   Cập nhật cấu hình lương
                 </Button>

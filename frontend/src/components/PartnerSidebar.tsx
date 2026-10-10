@@ -214,7 +214,7 @@ const PartnerSidebar = () => {
                   <span className={cn(
                     "absolute h-4 min-w-4 flex items-center justify-center px-1",
                     isCollapsed ? "-top-0.5 -right-0.5" : "-top-1.5 -right-1.5",
-                    "text-xs font-semibold rounded-full bg-red-500 text-white",
+                    "text-xs font-semibold rounded-full bg-red-600 text-white",
                     "animate-badge-pulse"
                   )}>
                     {unreadCount > 99 ? '99+' : unreadCount}

@@ -88,7 +88,7 @@ const SettingsPage = () => {
           className="flex flex-col gap-4 rounded-xl border border-utility-error-300 bg-utility-error-50 p-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="flex min-w-0 items-start gap-3">
-            <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-utility-error-600" />
+            <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-utility-error-700" />
             <p className="text-sm text-fg-error-primary">{form.loadError}</p>
           </div>
           <Button type="button" variant="outline" onClick={form.retryLoading} className="h-11 gap-2">

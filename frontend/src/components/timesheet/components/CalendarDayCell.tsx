@@ -34,24 +34,16 @@ export function CalendarDayCell({
   const paymentLimit = hasEntries ? day.totalAmount * bulkTransferPercentage : 0;
 
   // Calculate gradient intensity based on week position (0 = lightest, 1 = darkest)
-  const gradientIntensity = totalWeeks > 1 ? weekIndex / (totalWeeks - 1) : 0;
 
   // Generate slate background color based on gradient intensity
   const getSundayBackgroundClass = () => {
     if (!isSundayColumn) return '';
 
-    // Predefined slate color classes for reliable Tailwind compilation
-    const slateGradients = [
-      'bg-slate-400 border-border hover:bg-slate-300', // Week 0 (lightest)
-      'bg-muted/500 border-border hover:bg-slate-400', // Week 1
-      'bg-slate-600 border-border hover:bg-muted/500', // Week 2
-      'bg-slate-700 border-border hover:bg-slate-600', // Week 3
-      'bg-slate-800 border-border hover:bg-slate-700', // Week 4 (darkest)
-    ];
-
-    // Ensure we don't exceed array bounds
-    const safeWeekIndex = Math.min(weekIndex, slateGradients.length - 1);
-    return slateGradients[safeWeekIndex];
+    // Sunday columns carry white text and light indicator icons, so every
+    // rung of the week gradient stays dark enough for 4.5:1 (white/90) —
+    // flattening the ramp to slate-600 was cheaper than per-rung text colors.
+    // (bg-muted/500 was never a valid Tailwind class and rendered transparent.)
+    return 'bg-slate-600 border-border hover:bg-slate-500';
   };
 
   const handleDayClick = () => {
@@ -92,8 +84,8 @@ export function CalendarDayCell({
         <span
           className={cn(
             "typography-label-large font-medium",
-            !isCurrentMonth && !isSundayColumn && "text-white/70",
-            !isCurrentMonth && isSundayColumn && "text-white/60",
+            !isCurrentMonth && !isSundayColumn && "text-slate-900",
+            !isCurrentMonth && isSundayColumn && "text-white/90",
             isCurrentMonth && !hasEntries && isToday && !isSundayColumn && "text-primary font-semibold",
             isCurrentMonth && !hasEntries && isToday && isSundayColumn && "text-white font-semibold",
             isCurrentMonth && !hasEntries && !isToday && !isSundayColumn && "text-foreground",
@@ -107,7 +99,7 @@ export function CalendarDayCell({
         {/* Force Payroll Icon */}
         {day.hasForcePayroll && (
           <span className="inline-flex items-center" aria-label="Đánh dấu xuất hiện trong kỳ trả lương tiếp theo">
-            <Star className="h-4 w-4 text-yellow-700 fill-yellow-600" />
+            <Star className={cn('h-4 w-4', isSundayColumn && !hasEntries ? 'text-yellow-400 fill-yellow-400' : 'text-yellow-800 fill-yellow-800')} />
           </span>
         )}
       </div>
@@ -182,24 +174,16 @@ export function CalendarDayCellMobile({
   const paymentLimit = hasEntries ? day.totalAmount * bulkTransferPercentage : 0;
 
   // Calculate gradient intensity based on week position (0 = lightest, 1 = darkest)
-  const gradientIntensity = totalWeeks > 1 ? weekIndex / (totalWeeks - 1) : 0;
 
   // Generate slate background color based on gradient intensity
   const getSundayBackgroundClass = () => {
     if (!isSundayColumn) return '';
 
-    // Predefined slate color classes for reliable Tailwind compilation
-    const slateGradients = [
-      'bg-slate-400 border-border hover:bg-slate-300', // Week 0 (lightest)
-      'bg-muted/500 border-border hover:bg-slate-400', // Week 1
-      'bg-slate-600 border-border hover:bg-muted/500', // Week 2
-      'bg-slate-700 border-border hover:bg-slate-600', // Week 3
-      'bg-slate-800 border-border hover:bg-slate-700', // Week 4 (darkest)
-    ];
-
-    // Ensure we don't exceed array bounds
-    const safeWeekIndex = Math.min(weekIndex, slateGradients.length - 1);
-    return slateGradients[safeWeekIndex];
+    // Sunday columns carry white text and light indicator icons, so every
+    // rung of the week gradient stays dark enough for 4.5:1 (white/90) —
+    // flattening the ramp to slate-600 was cheaper than per-rung text colors.
+    // (bg-muted/500 was never a valid Tailwind class and rendered transparent.)
+    return 'bg-slate-600 border-border hover:bg-slate-500';
   };
 
   const handleDayClick = () => {
@@ -240,8 +224,8 @@ export function CalendarDayCellMobile({
         <span
           className={cn(
             "typography-label-medium font-medium",
-            !isCurrentMonth && !isSundayColumn && "text-white/70",
-            !isCurrentMonth && isSundayColumn && "text-white/60",
+            !isCurrentMonth && !isSundayColumn && "text-slate-900",
+            !isCurrentMonth && isSundayColumn && "text-white/90",
             isCurrentMonth && !hasEntries && isToday && !isSundayColumn && "text-primary font-semibold",
             isCurrentMonth && !hasEntries && isToday && isSundayColumn && "text-white font-semibold",
             isCurrentMonth && !hasEntries && !isToday && !isSundayColumn && "text-foreground",
@@ -255,7 +239,7 @@ export function CalendarDayCellMobile({
         {/* Force Payroll Icon */}
         {day.hasForcePayroll && (
           <span className="inline-flex items-center" aria-label="Đánh dấu xuất hiện trong kỳ trả lương tiếp theo">
-            <Star className="h-3 w-3 text-yellow-700 fill-yellow-600" />
+            <Star className={cn('h-3 w-3', isSundayColumn && !hasEntries ? 'text-yellow-400 fill-yellow-400' : 'text-yellow-800 fill-yellow-800')} />
           </span>
         )}
       </div>

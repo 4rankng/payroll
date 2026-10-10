@@ -226,7 +226,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 {showFeeRail ? (
                   <div className="grid grid-cols-2 gap-2">
                     <div className="min-w-0">
-                      <div className="text-xs font-semibold uppercase tracking-[0.1em] text-white/45">
+                      <div className="text-xs font-semibold uppercase tracking-[0.1em] text-white/60">
                         Tổng phí trả
                       </div>
                       <div className="mt-1 break-words font-financial text-[13px] font-medium leading-snug text-white tabular-nums">
@@ -234,7 +234,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                       </div>
                     </div>
                     <div className="min-w-0">
-                      <div className="text-xs font-semibold uppercase tracking-[0.1em] text-white/45">
+                      <div className="text-xs font-semibold uppercase tracking-[0.1em] text-white/60">
                         Phí tháng này
                       </div>
                       <div className="mt-1 break-words font-financial text-[13px] font-medium leading-snug text-white tabular-nums">
@@ -244,7 +244,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                   </div>
                 ) : (
                   <div className="flex items-baseline justify-between gap-3">
-                    <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/45">
+                    <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/60">
                       Chờ chi trả
                     </span>
                     <span className="break-words font-financial text-[13px] font-medium leading-snug tabular-nums text-white">
@@ -302,7 +302,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                       </p>
                     )}
                     <p className={cn("flex items-baseline gap-2", walletBalance?.as_of && "mt-1")}>
-                      <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/45">
+                      <span className="text-xs font-semibold uppercase tracking-[0.1em] text-white/60">
                         Chờ chi trả
                       </span>
                       <span className="font-financial text-[15px] font-medium leading-snug tabular-nums text-white">

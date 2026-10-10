@@ -37,7 +37,7 @@ function ChangedFieldsDiff({ fields }: { fields: Record<string, AuditFieldChange
             {entries.map(([key, change]) => (
               <tr key={key} className="border-b border-border last:border-0 odd:bg-muted/20">
                 <td className="px-3 py-2 text-foreground font-medium">{formatFieldName(key)}</td>
-                <td className="px-3 py-2 text-utility-error-600 line-through opacity-70">
+                <td className="px-3 py-2 text-utility-error-700 line-through">
                   {formatAuditValue(key, change.before)}
                 </td>
                 <td className="px-3 py-2 text-fg-success-primary font-medium">

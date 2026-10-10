@@ -120,8 +120,8 @@ export const MIXED_STATUS_COLORS: StatusColors = {
  */
 export const TIMESHEET_STRIP_COLORS: Partial<Record<TimesheetStatus, StripColors>> = {
   draft: {
-    bg: 'bg-muted/500',
-    indicator: 'before:bg-muted/500',
+    bg: 'bg-muted',
+    indicator: 'before:bg-muted',
   },
   pending_approval: {
     bg: 'bg-yellow-500',
@@ -151,8 +151,8 @@ export const PAYMENT_STRIP_COLORS: Partial<Record<PaymentStatus, StripColors>> =
     indicator: 'before:bg-red-500',
   },
   cancelled: {
-    bg: 'bg-muted/500',
-    indicator: 'before:bg-muted/500',
+    bg: 'bg-muted',
+    indicator: 'before:bg-muted',
   },
 };
 

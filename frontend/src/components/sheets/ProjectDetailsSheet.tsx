@@ -551,7 +551,7 @@ function ProjectDetailsSheet({
             {project?.status === 'completed' ? (
               <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-red-600 font-medium">🚫 Không thể xóa:</span>
+                  <span className="text-red-700 font-medium">🚫 Không thể xóa:</span>
                 </div>
                 <ul className="text-sm text-red-800 space-y-1">
                   <li>• Dự án đã hoàn thành không thể xóa</li>
@@ -561,7 +561,7 @@ function ProjectDetailsSheet({
             ) : hasApprovedTimesheets ? (
               <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-red-600 font-medium">🚫 Không thể xóa:</span>
+                  <span className="text-red-700 font-medium">🚫 Không thể xóa:</span>
                 </div>
                 <ul className="text-sm text-red-800 space-y-1">
                   <li>• Dự án có bảng công đã duyệt</li>

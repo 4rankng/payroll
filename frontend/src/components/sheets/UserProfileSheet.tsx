@@ -215,7 +215,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                 </div>
               </div>
               <div className="min-w-0">
-                <p className="employee-type-label-caps text-white/70">Tài khoản của bạn</p>
+                <p className="employee-type-label-caps text-white/90">Tài khoản của bạn</p>
                 <h2 className="employee-type-section-title mt-0.5 break-words text-white">{displayUser.name}</h2>
                 <span className="mt-2 inline-flex h-4 items-center justify-center rounded-full border border-white/20 bg-white/15 px-2.5 text-xs leading-4 text-white">
                   {getRoleText(displayUser.role)}

@@ -22,7 +22,7 @@ interface ProjectFormFieldsProps {
 }
 
 const projectStatuses = [
-  { value: 'draft', label: getVietnameseProjectStatus('draft'), color: 'bg-muted/500', icon: Clock },
+  { value: 'draft', label: getVietnameseProjectStatus('draft'), color: 'bg-muted', icon: Clock },
   { value: 'active', label: getVietnameseProjectStatus('active'), color: 'bg-green-500', icon: TrendingUp },
   { value: 'paused', label: getVietnameseProjectStatus('paused'), color: 'bg-orange-500', icon: Pause },
   { value: 'completed', label: getVietnameseProjectStatus('completed'), color: 'bg-blue-600', icon: CheckCircle },

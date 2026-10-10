@@ -248,7 +248,7 @@ const Login = () => {
                   data-testid="error-message"
                   className="mb-5 flex items-start gap-2.5 rounded-lg border border-utility-error-300 bg-utility-error-50 p-3 text-sm motion-safe:animate-fade-in-up"
                 >
-                  <AlertCircle className="size-5 shrink-0 text-utility-error-600" aria-hidden="true" />
+                  <AlertCircle className="size-5 shrink-0 text-utility-error-700" aria-hidden="true" />
                   <span className="font-semibold leading-5 text-fg-error-primary">
                     {(((loginMutation.error as unknown) as ApiError)?.http_status === 429
                       ? (((loginMutation.error as unknown) as ApiError)?.message || "Quá nhiều lần đăng nhập. Vui lòng thử lại sau ít phút.")
@@ -264,7 +264,7 @@ const Login = () => {
                   <div className="space-y-1.5">
                     <Label htmlFor="emailOrUsername">Tên đăng nhập</Label>
                     <div className="relative">
-                      <User01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+                      <User01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-tertiary" aria-hidden="true" />
                       <Input
                         id="emailOrUsername"
                         type="text"
@@ -284,7 +284,7 @@ const Login = () => {
                   <div className="space-y-1.5">
                     <Label htmlFor="password">Mật khẩu</Label>
                     <div className="relative">
-                      <Lock01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-quaternary" aria-hidden="true" />
+                      <Lock01 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-fg-tertiary" aria-hidden="true" />
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
@@ -303,7 +303,7 @@ const Login = () => {
                         type="button"
                         onClick={togglePassword}
                         aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                        className="absolute inset-y-0 right-0 flex h-11 w-11 items-center justify-center rounded-lg text-fg-quaternary outline-brand transition duration-100 ease-linear hover:text-fg-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 sm:h-9 sm:w-9"
+                        className="absolute inset-y-0 right-0 flex h-11 w-11 items-center justify-center rounded-lg text-fg-tertiary outline-brand transition duration-100 ease-linear hover:text-fg-tertiary focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 sm:h-9 sm:w-9"
                       >
                         {showPassword ? <EyeOff className="size-5" aria-hidden="true" /> : <Eye className="size-5" aria-hidden="true" />}
                       </button>
@@ -331,7 +331,7 @@ const Login = () => {
                           </button>
                         ) : (
                           <div className="flex h-11 min-w-24 items-center justify-center rounded-lg border border-input bg-muted sm:h-9" aria-hidden="true">
-                            <AuthSpinner className="size-4 text-fg-quaternary" />
+                            <AuthSpinner className="size-4 text-fg-tertiary" />
                           </div>
                         )}
                         <Input

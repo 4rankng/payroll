@@ -56,11 +56,11 @@ const LoanMobileCard = ({ loan, onClick }: { loan: Loan; onClick: (loan: Loan) =
       {/* Line 2: lender · principal · next payment */}
       <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5">
         <span className="min-w-0 break-words text-xs text-muted-foreground">{loan.lender.name}</span>
-        <span className="text-utility-gray-300 shrink-0">·</span>
+        <span className="text-utility-gray-500 shrink-0">·</span>
         <span className="break-words text-xs font-medium text-foreground">{formatVND(loan.principal_amount)}</span>
         {loan.next_payment_date && (
           <>
-            <span className="text-utility-gray-300 shrink-0">·</span>
+            <span className="text-utility-gray-500 shrink-0">·</span>
             <span className={cn("break-words text-xs font-medium", urgencyColor)}>{format(new Date(loan.next_payment_date), 'dd/MM/yyyy')}</span>
           </>
         )}

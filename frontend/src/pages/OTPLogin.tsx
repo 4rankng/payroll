@@ -135,7 +135,7 @@ const OTPLogin = () => {
 
           {error && (
             <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-utility-error-300 bg-utility-error-50 p-3 text-sm">
-              <AlertCircle className="size-5 shrink-0 text-utility-error-600" aria-hidden="true" />
+              <AlertCircle className="size-5 shrink-0 text-utility-error-700" aria-hidden="true" />
               <span className="font-semibold leading-5 text-fg-error-primary">{error}</span>
             </div>
           )}

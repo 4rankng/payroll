@@ -82,7 +82,7 @@ export function EmployeeCanopy({
         {/* Identity row */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="employee-type-header-date text-white/80">{todayLabel}</p>
+            <p className="employee-type-header-date text-white/90">{todayLabel}</p>
             <h1
               className="employee-type-header-name mt-0.5 break-words text-white"
               title={employeeName}
@@ -143,7 +143,7 @@ export function EmployeeCanopy({
         {/* Wallet section */}
         {wallet && (
           <div className="mt-6">
-            <p className="employee-type-label text-white/80">{wallet.model.amountLabel}</p>
+            <p className="employee-type-label text-white/90">{wallet.model.amountLabel}</p>
             <div className="mt-2 flex items-end justify-between gap-3">
               <p className="employee-type-hero-amount min-w-0 break-words text-white tabular-nums">
                 {amountVisible ? wallet.model.amount : MASKED_AMOUNT}
@@ -151,7 +151,7 @@ export function EmployeeCanopy({
               <button
                 type="button"
                 onClick={() => setAmountVisible((visible) => !visible)}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/15 text-white/80 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--employee-accent)]"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/15 text-white/90 backdrop-blur-md transition-all duration-200 hover:bg-white/25 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--employee-accent)]"
                 aria-label={amountVisible ? "Ẩn số tiền" : "Hiện số tiền"}
                 aria-pressed={!amountVisible}
               >
@@ -175,13 +175,13 @@ export function EmployeeCanopy({
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <div className="min-w-0">
-                    <span className="employee-type-label block text-white/80">Đã nhận</span>
+                    <span className="employee-type-label block text-white/90">Đã nhận</span>
                     <span className="employee-type-action mt-1 block break-words tabular-nums text-white">
                       {amountVisible ? formatCurrency(paidAmount) : MASKED_AMOUNT}
                     </span>
                   </div>
                   <div className="min-w-0 text-right">
-                    <span className="employee-type-label block text-white/80">Còn lại</span>
+                    <span className="employee-type-label block text-white/90">Còn lại</span>
                     <span className="employee-type-action mt-1 block break-words tabular-nums text-white">
                       {amountVisible ? formatCurrency(remainingAmount) : MASKED_AMOUNT}
                     </span>

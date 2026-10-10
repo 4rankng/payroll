@@ -46,7 +46,7 @@ export const NotificationRecipientSection = memo(function NotificationRecipientS
             'data-[state=off]:bg-muted/40 data-[state=off]:border-border/50 data-[state=off]:text-muted-foreground',
             'data-[state=off]:hover:bg-emerald-50 data-[state=off]:hover:border-emerald-200 data-[state=off]:hover:text-emerald-700',
             'data-[state=on]:bg-emerald-100 data-[state=on]:border-emerald-300 data-[state=on]:text-emerald-700',
-            'dark:data-[state=on]:bg-emerald-950/50[state=on]:border-emerald-700[state=on]:text-emerald-300'
+            'dark:data-[state=on]:bg-emerald-950/50 dark:data-[state=on]:border-emerald-700 dark:data-[state=on]:text-emerald-300'
           )}
           aria-label="Gửi đến tất cả Admin"
         >
@@ -61,7 +61,7 @@ export const NotificationRecipientSection = memo(function NotificationRecipientS
             'data-[state=off]:bg-muted/40 data-[state=off]:border-border/50 data-[state=off]:text-muted-foreground',
             'data-[state=off]:hover:bg-blue-50 data-[state=off]:hover:border-blue-200 data-[state=off]:hover:text-blue-700',
             'data-[state=on]:bg-blue-100 data-[state=on]:border-blue-300 data-[state=on]:text-blue-700',
-            'dark:data-[state=on]:bg-blue-950/50[state=on]:border-blue-700[state=on]:text-blue-300'
+            'dark:data-[state=on]:bg-blue-950/50 dark:data-[state=on]:border-blue-700 dark:data-[state=on]:text-blue-300'
           )}
           aria-label="Gửi đến tất cả Quản lý"
         >
@@ -76,7 +76,7 @@ export const NotificationRecipientSection = memo(function NotificationRecipientS
             'data-[state=off]:bg-muted/40 data-[state=off]:border-border/50 data-[state=off]:text-muted-foreground',
             'data-[state=off]:hover:bg-green-50 data-[state=off]:hover:border-green-200 data-[state=off]:hover:text-green-700',
             'data-[state=on]:bg-green-100 data-[state=on]:border-green-300 data-[state=on]:text-green-700',
-            'dark:data-[state=on]:bg-green-950/50[state=on]:border-green-700[state=on]:text-green-300'
+            'dark:data-[state=on]:bg-green-950/50 dark:data-[state=on]:border-green-700 dark:data-[state=on]:text-green-300'
           )}
           aria-label="Gửi đến tất cả Nhân viên"
         >
@@ -97,7 +97,7 @@ export const NotificationRecipientSection = memo(function NotificationRecipientS
       </div>
 
       {recipientError && (
-        <div className="flex items-center gap-1.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+        <div className="flex items-center gap-1.5 text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
           <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
           <span>{recipientError}</span>
         </div>

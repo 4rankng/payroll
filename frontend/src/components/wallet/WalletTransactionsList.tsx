@@ -351,7 +351,7 @@ function PaymentDetail({ payment, tx }: { payment: WalletPayment; tx: UnifiedTra
         <DetailRow
           label="Lỗi"
           value={
-            <span className="inline-flex items-center gap-1.5 text-rose-600">
+            <span className="inline-flex items-center gap-1.5 text-rose-700">
               <SlashCircle01 className="h-3.5 w-3.5 shrink-0" />
               {payment.error_message || "Giao dịch thất bại"}
             </span>
@@ -676,7 +676,7 @@ function DesktopTable({
                   <StatusBadge status={tx.status} />
                 </TableCell>
                 <TableCell className="pr-3">
-                  <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-fg-tertiary transition-colors" />
+                  <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-fg-tertiary transition-colors" />
                 </TableCell>
               </TableRow>
             );
@@ -734,7 +734,7 @@ function MobileTransactionList({
               <span className={`text-[13.5px] font-bold tabular-nums tracking-tight ${isInflow ? "text-fg-success-primary" : "text-red-600"}`}>
                 {formatAmount(tx.amount)}
               </span>
-              <ChevronRight className="h-4 w-4 text-slate-300" />
+              <ChevronRight className="h-4 w-4 text-slate-500" />
             </div>
           </button>
         );
@@ -817,7 +817,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-14 text-center">
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 mb-3">
-        <AlertCircle className="h-5 w-5 text-rose-600" />
+        <AlertCircle className="h-5 w-5 text-rose-700" />
       </div>
       <p className="text-sm font-medium text-rose-700">Không thể tải lịch sử giao dịch</p>
       <p className="text-xs text-fg-tertiary mt-1 mb-4">Đã xảy ra lỗi khi gọi API. Vui lòng thử lại.</p>

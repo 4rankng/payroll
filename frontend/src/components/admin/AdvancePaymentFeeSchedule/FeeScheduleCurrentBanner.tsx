@@ -164,9 +164,9 @@ const UpcomingCard = ({
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
-            <CalendarClock className="h-4 w-4 text-amber-700" />
+            <CalendarClock className="h-4 w-4 text-amber-800" />
           </div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-amber-800 dark:text-amber-400">
             Đang chờ
           </span>
         </div>
@@ -212,7 +212,7 @@ const UpcomingCard = ({
             type="button"
             onClick={onToggleAdditional}
             aria-expanded={showAdditional}
-            className="min-h-11 text-left text-xs text-amber-700 dark:text-amber-400 hover:underline"
+            className="min-h-11 text-left text-xs text-amber-800 dark:text-amber-400 hover:underline"
           >
             {showAdditional
               ? "Ẩn các cấu hình khác"

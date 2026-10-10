@@ -369,7 +369,7 @@ export function ManualDisbursementForm(props: Props) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="rounded-lg border border-amber-200/70 bg-white px-3 py-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-amber-700/70 mb-0.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-0.5">
                 Bạn nhập
               </p>
               <p className="font-mono text-xs font-semibold text-foreground break-words leading-snug">
@@ -377,7 +377,7 @@ export function ManualDisbursementForm(props: Props) {
               </p>
             </div>
             <div className="rounded-lg border border-emerald-200 bg-white px-3 py-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700/70 mb-0.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-0.5">
                 Ngân hàng xác nhận
               </p>
               <p className="font-mono text-xs font-semibold text-foreground break-words leading-snug">

@@ -120,7 +120,7 @@ function ImportCard({ item, projectMap, onDownload }: {
           {item.skipped_count} bỏ qua
         </span>
         {item.error_count > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 border border-red-100">
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 border border-red-100">
             <AlertCircle className="h-3 w-3" />
             {item.error_count} lỗi
           </span>
@@ -141,7 +141,7 @@ function ErrorDetail({ detail }: { detail?: string | null }) {
     <div>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 text-xs text-destructive/70 hover:text-destructive transition-colors"
+        className="flex items-center gap-1 text-xs text-destructive hover:text-destructive transition-colors"
       >
         <ChevronRight className={`h-3 w-3 transition-transform duration-150 ${open ? 'rotate-90' : ''}`} />
         {open
@@ -157,7 +157,7 @@ function ErrorDetail({ detail }: { detail?: string | null }) {
                 {group.employee ? <strong>{group.employee}: </strong> : ''}
                 {group.reason}
                 {describeGroupedError(group) && (
-                  <span className="text-destructive/80">{describeGroupedError(group)}</span>
+                  <span className="text-destructive">{describeGroupedError(group)}</span>
                 )}
               </span>
             </li>

@@ -152,7 +152,7 @@ function ProjectPill({ project }: { project: CurrentProject }) {
         {project.name}
       </span>
       {project.code && (
-        <span className="text-fg-brand-secondary/70 font-mono">
+        <span className="text-fg-brand-secondary font-mono">
           {project.code}
         </span>
       )}
@@ -329,7 +329,7 @@ export default function EditAdvPartnerUserSheet({
             <button
               onClick={onClose}
               aria-label="Đóng chỉnh sửa nhân viên"
-              className="w-11 h-11 rounded-lg flex items-center justify-center text-fg-quaternary hover:text-fg-secondary hover:bg-utility-gray-100 outline-brand transition duration-100 ease-linear focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 shrink-0 mt-0.5"
+              className="w-11 h-11 rounded-lg flex items-center justify-center text-fg-tertiary hover:text-fg-secondary hover:bg-utility-gray-100 outline-brand transition duration-100 ease-linear focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 shrink-0 mt-0.5"
             >
               <XClose className="size-4" aria-hidden="true" />
             </button>
@@ -525,7 +525,7 @@ export default function EditAdvPartnerUserSheet({
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                        className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-fg-quaternary hover:text-fg-secondary outline-brand transition duration-100 ease-linear focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
+                        className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-fg-tertiary hover:text-fg-secondary outline-brand transition duration-100 ease-linear focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
                       >
                         {showPassword ? (
                           <EyeOff className="size-4" aria-hidden="true" />

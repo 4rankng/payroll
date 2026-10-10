@@ -68,9 +68,9 @@ const HistoryItemCard = ({ item, onCancel }: { item: AdvancePaymentHistoryItem; 
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
             <span className="shrink-0">{safeDate(item.createdAt)}</span>
-            <span className="text-slate-300">·</span>
+            <span className="text-slate-500">·</span>
             <span className="shrink-0">Nhận <span className="font-semibold text-foreground">{safeFormat(item.netAmount)}</span></span>
-            <span className="text-slate-300">·</span>
+            <span className="text-slate-500">·</span>
             <span className="shrink-0">Phí {safeFormat(item.fee)}</span>
           </div>
           {showConfirmCancel && item.status === "PENDING" && (
@@ -197,11 +197,11 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                   <>
                     <div className="flex items-end justify-between mb-3">
                       <div>
-                        <p className="text-xs text-slate-500 mb-0.5">Còn lại</p>
+                        <p className="text-xs text-slate-600 mb-0.5">Còn lại</p>
                         <p className="text-2xl font-bold text-sky-700">{formatCurrency(info.remainingAmount)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-slate-500 mb-0.5">Tối đa</p>
+                        <p className="text-xs text-slate-600 mb-0.5">Tối đa</p>
                         <p className="text-sm font-semibold text-muted-foreground">{formatCurrency(info.maxAdvanceAmount)}</p>
                       </div>
                     </div>
@@ -210,11 +210,11 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="bg-emerald-50/80 rounded-xl px-3 py-2 border border-emerald-100">
-                        <p className="text-xs text-slate-500 mb-0.5">Đã ứng</p>
+                        <p className="text-xs text-slate-600 mb-0.5">Đã ứng</p>
                         <p className="text-xs font-bold text-emerald-700">{formatCurrency(info.completedAmount)}</p>
                       </div>
                       <div className="bg-amber-50/80 rounded-xl px-3 py-2 border border-amber-100">
-                        <p className="text-xs text-slate-500 mb-0.5">Đang chờ</p>
+                        <p className="text-xs text-slate-600 mb-0.5">Đang chờ</p>
                         <p className="text-xs font-bold text-amber-700">{formatCurrency(info.pendingAmount)}</p>
                       </div>
                     </div>
@@ -237,7 +237,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                         className={`w-full h-11 px-4 pr-14 text-sm font-medium rounded-xl border bg-card/80 focus:bg-card focus:outline-none focus:ring-2 transition-all ${
                           error ? "border-red-300 focus:ring-red-200" : "border-border focus:ring-sky-200 focus:border-border"                        }`}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-medium">₫</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-600 font-medium">₫</span>
                     </div>
 
                     {error && (
@@ -246,7 +246,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                       </p>
                     )}
                     {isTouched && numericAmount > 0 && numericAmount < ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT && (
-                      <p className="text-xs text-slate-500">Tối thiểu: {formatCurrency(ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT)}</p>
+                      <p className="text-xs text-slate-600">Tối thiểu: {formatCurrency(ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT)}</p>
                     )}
 
                     {feeDetails && numericAmount >= ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT && (
@@ -301,7 +301,7 @@ export const AdvancePaymentSheet = ({ isOpen, onClose }: AdvancePaymentSheetProp
                 ) : history.length === 0 ? (
                   <div className="text-center py-8 rounded-xl border border-dashed border-border" style={{ background: "rgba(255,255,255,0.50)" }}>
                     <div className="w-10 h-10 bg-sky-100/80 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <History className="h-5 w-5 text-sky-400" />
+                      <History className="h-5 w-5 text-sky-600" />
                     </div>
                     <p className="text-sm text-muted-foreground">Chưa có yêu cầu nào</p>
                   </div>

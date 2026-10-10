@@ -44,7 +44,7 @@ const ProjectCard = React.memo(function ProjectCard({
           {project.code && (
             <>
               <span className="text-xs font-mono text-muted-foreground shrink-0">{project.code}</span>
-              <span className="text-gray-300 shrink-0">·</span>
+              <span className="text-gray-500 shrink-0">·</span>
             </>
           )}
           <Users className="h-3 w-3 text-muted-foreground shrink-0" />

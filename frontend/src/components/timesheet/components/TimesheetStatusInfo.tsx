@@ -13,12 +13,12 @@ export function TimesheetStatusInfo({ timesheet }: TimesheetStatusInfoProps) {
       {timesheet.status === 'rejected' && timesheet.rejection_reason && (
         <div className="bg-red-50 rounded-xl p-3">
           <div className="flex items-center gap-2 mb-2">
-            <XCircle className="w-4 h-4 text-red-600" />
+            <XCircle className="w-4 h-4 text-red-700" />
             <span className="typography-body-medium text-red-700">
               Lý do loại
             </span>
           </div>
-          <p className="typography-body-medium text-red-600">
+          <p className="typography-body-medium text-red-700">
             {timesheet.rejection_reason}
           </p>
         </div>
