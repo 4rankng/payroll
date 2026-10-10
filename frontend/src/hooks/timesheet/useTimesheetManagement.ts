@@ -28,10 +28,10 @@ export function useTimesheetManagement(config: TimesheetManagementConfig = {}) {
   const [searchTerm, setSearchTerm] = useState('');
   // Default to the month the WEEKLY payroll screen should open on, not the
   // calendar month. Weekly batches are imported a week at a time (weeks of
-  // 1-7, 8-14, 15-21, 22-28) and approved after the fact, so on the 1st-3rd the
-  // unapproved batch is still the previous month's 22-28 week; from the 4th the
-  // current month is live. Defaulting to the calendar month opened the screen
-  // on an empty window for the first days of every month.
+  // 1-7, 8-14, 15-21, 22-month end) and approved after the fact, so on the
+  // 1st-3rd the unapproved batch is still the previous month's final week;
+  // from the 4th the current month is live. Defaulting to the calendar month
+  // opened the screen on an empty window for the first days of every month.
   const [selectedMonth, setSelectedMonth] = useState(() => getWeeklyPayrollDefaultMonth());
   const [selectedProject, setSelectedProject] = useState('all');
   const [selectedEmployee, setSelectedEmployee] = useState('all');

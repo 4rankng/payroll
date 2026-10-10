@@ -31,6 +31,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useBankTransferHistories } from '@/hooks/api/usePayrolls';
 import type { BankTransferHistory } from '@/types/api/payroll.types';
 import {
+  BANK_TRANSFER_CYCLE_LABELS,
   formatBankTransferDate,
   formatBankTransferDateTime,
   formatBankTransferPeriod,
@@ -42,12 +43,12 @@ import { formatCurrency } from '@/utils/formatters';
 // never drift apart.
 const RECORD_GRID_COLS = 'xl:grid-cols-[minmax(220px,1.25fr)_minmax(180px,0.9fr)_minmax(150px,0.72fr)_minmax(150px,0.65fr)_36px]';
 
-const CYCLE_OPTIONS = [
-  { value: '1', label: 'Kỳ 1 · ngày 1–7' },
-  { value: '2', label: 'Kỳ 2 · ngày 8–14' },
-  { value: '3', label: 'Kỳ 3 · ngày 15–21' },
-  { value: '4', label: 'Kỳ 4 · ngày 22–28' },
-];
+// Derived from the shared labels so the filter options can never drift from
+// BANK_TRANSFER_CYCLE_LABELS.
+const CYCLE_OPTIONS = ([1, 2, 3, 4] as const).map(cycle => ({
+  value: String(cycle),
+  label: BANK_TRANSFER_CYCLE_LABELS[cycle],
+}));
 
 interface PayrollMonthPickerProps {
   value: string;

@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { getAvailableWeekPeriods, formatWeekPeriodDisplay, type WeekPeriod, type WeekPeriodsResult } from '@/utils/weekPeriodHelpers';
 import { getAvailableMonthPeriods, type MonthPeriod, type MonthPeriodsResult } from '@/utils/monthPeriodHelpers';
 import { getCustomDateRanges, type CustomDateRange } from '@/utils/weekPeriodHelpers';
@@ -22,19 +21,21 @@ interface UseBulkTransferExportFormProps {
   initialProjectIds?: number[];
 }
 
-function getDefaultWeeklyDates() {
-  const currentWeekPeriods = getAvailableWeekPeriods();
-  const currentCustomRanges = getCustomDateRanges();
+export function getDefaultWeeklyDates(now: Date = new Date()) {
+  const currentWeekPeriods = getAvailableWeekPeriods(now);
+  const currentCustomRanges = getCustomDateRanges(now);
 
   if (currentCustomRanges.length > 0) {
-    const today = new Date();
-    const monthNumber = format(today, 'MM', { locale: vi });
     let defaultRange;
 
-    if (today.getDate() >= 28) {
-      defaultRange = currentCustomRanges.find(r => r.label === `22 - 28 Tháng ${monthNumber}`);
-    } else if (today.getDate() <= 10) {
-      // 01-07 current month is closer to today than 22-28 previous month
+    if (now.getDate() >= 28) {
+      // Late month: prep the ky 4 transfer (day 22 to month end) that pays on
+      // day 1 of the next month. Select by index — the label's end day varies
+      // with the month length, and on day >= 28 the dialog only renders these
+      // custom-range buttons.
+      defaultRange = currentCustomRanges[1];
+    } else if (now.getDate() <= 10) {
+      // 01-07 current month is closer to today than 22-end-of-month previous month
       defaultRange = currentCustomRanges[1];
     }
 
