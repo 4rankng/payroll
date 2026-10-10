@@ -34,13 +34,18 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 # Install dependencies with cache mount for faster rebuilds.
-# mkdir node_modules/.vite: the builder stage bind-mounts this node_modules
-# read-only and overlays a writable cache mount at node_modules/.vite (Vite's
-# dep-optimizer cacheDir) — runc needs the mountpoint to already exist in the
-# read-only source, so it is created here, after install (pnpm leaves unknown
-# dot-dirs in node_modules alone, same as a local dev checkout).
+# mkdir node_modules/.vite node_modules/.vite-temp: the builder stage
+# bind-mounts this node_modules read-only and overlays writable cache mounts at
+# both paths — runc needs each mountpoint to already exist in the read-only
+# source, so they are created here, after install (pnpm leaves unknown dot-dirs
+# in node_modules alone, same as a local dev checkout).
+#   - .vite      = Vite dep-optimizer cacheDir
+#   - .vite-temp = where Vite bundles vite.config.ts before importing it
+#                  (loadConfigFromBundledFile mkdirs it and throws on failure;
+#                  without the mount it dies with
+#                  "ENOENT: mkdir '/app/node_modules/.vite-temp'").
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile && mkdir -p node_modules/.vite
+    pnpm install --frozen-lockfile && mkdir -p node_modules/.vite node_modules/.vite-temp
 
 # Builder stage - runs the Vite/Workbox toolchain natively ($BUILDPLATFORM) to
 # avoid the QEMU-emulation SIGSEGV. Output (dist/) is static, copied into the
@@ -72,12 +77,16 @@ COPY . .
 # layer and re-exports it via --cache-to mode=max through Docker Desktop's
 # VM→host share on every builder-stage cache miss (~6 min per build, the
 # single slowest step of the deploy). A stage bind mount creates no layer and
-# exports nothing — pnpm/vite only need to READ node_modules. The one thing
-# vite writes there is its dep-optimizer cache, whose real default cacheDir is
-# node_modules/.vite (the previous /app/.vite mount was never used); it gets a
-# writable cache mount overlaid on the read-only bind.
+# exports nothing — pnpm/vite only need to READ node_modules. The two places
+# vite must WRITE there each get a writable cache mount overlaid on the
+# read-only bind (both mountpoints pre-created in the deps stage):
+#   - node_modules/.vite      — dep-optimizer cacheDir (the previous
+#                               /app/.vite mount was never used)
+#   - node_modules/.vite-temp — config-file bundle target; without it the
+#                               build fails before compiling anything
 RUN --mount=type=bind,from=deps,source=/app/node_modules,target=/app/node_modules \
     --mount=type=cache,target=/app/node_modules/.vite \
+    --mount=type=cache,target=/app/node_modules/.vite-temp \
     pnpm build
 
 # Production stage - static files only.
