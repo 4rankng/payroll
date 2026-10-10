@@ -107,9 +107,14 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	importErrors = append(importErrors, autoErrors...)
 	assignments = append(assignments, createdAssignments...)
 
+	// 6.6. Name index for rows whose "Mã nhân viên" cell is blank (see
+	// bccNameIndex). Built after auto-creation so a hire created from this file
+	// is matchable too.
+	assignmentsByName := newBCCNameIndex(assignments)
+
 	// 7. Build timesheet entries for each shift-type sheet.
 	entries, flexibleEmployeeIDs, totalRows, entryErrors := s.buildWeeklyBCCEntries(
-		ctx, parsed, year, month, loc, byCCCD, empNames, stkNameByCCCD,
+		ctx, parsed, year, month, loc, byCCCD, assignmentsByName, empNames, stkNameByCCCD,
 		blockedEmployeeCCCDs, rates.forDate, projectID, includeFlexibleEmployees)
 	importErrors = append(importErrors, entryErrors...)
 
@@ -562,6 +567,7 @@ func (s *BCCImportService) buildWeeklyBCCEntries(
 	parsed *excelparser.WeeklyBCCImportData,
 	year int, month time.Month, loc *time.Location,
 	byCCCD map[string]*domain.ProjectEmployee,
+	assignmentsByName bccNameIndex,
 	empNames map[uint]string,
 	stkNameByCCCD map[string]string,
 	blockedEmployeeCCCDs map[string]struct{},
@@ -570,7 +576,7 @@ func (s *BCCImportService) buildWeeklyBCCEntries(
 	includeFlexibleEmployees bool,
 ) (entries []domainservices.BulkCreateTimesheetEntry, flexibleEmployeeIDs map[uint]struct{}, totalRows int, importErrors []domain.ImportError) {
 	flexibleEmployeeIDs = make(map[uint]struct{})
-	reportedMissingCCCDs := make(map[string]struct{})
+	reportedMissingRows := make(map[string]struct{})
 
 	for _, sheet := range parsed.Sheets {
 		shiftType := sheet.ShiftType
@@ -594,21 +600,37 @@ func (s *BCCImportService) buildWeeklyBCCEntries(
 			if isWeeklyBCCEmployeeBlocked(blockedEmployeeCCCDs, emp.EmployeeCode) {
 				continue
 			}
-			assignment := byCCCD[emp.EmployeeCode]
+			assignment := (*domain.ProjectEmployee)(nil)
+			ambiguousName := false
+			if emp.EmployeeCode == "" {
+				// Blank "Mã nhân viên" (e.g. a person added to the template
+				// after it was generated): the name must identify exactly one
+				// active assignment. A map lookup on "" is not an option — it
+				// would match a CCCD-less assignment and route every blank row
+				// to that single employee.
+				assignment, ambiguousName = assignmentsByName.lookup(emp.FullName)
+				if assignment != nil && isWeeklyBCCEmployeeBlocked(blockedEmployeeCCCDs, assignment.EmployeeCCCD) {
+					continue // a failed STK row must not be re-processed under its name
+				}
+			} else {
+				assignment = byCCCD[emp.EmployeeCode]
+			}
 			if assignment == nil {
 				if missingErr := weeklyBCCMissingAssignmentError(
 					emp.EmployeeCode,
 					emp.FullName,
+					ambiguousName,
 					blockedEmployeeCCCDs,
-					reportedMissingCCCDs,
+					reportedMissingRows,
 				); missingErr != nil {
 					importErrors = append(importErrors, *missingErr)
 				}
 				continue
 			}
 
-			// STK cross-check (same as legacy).
-			if mismatch := weeklyCrossCheckSTKName(emp.EmployeeCode, emp.FullName, stkNameByCCCD, " — có thể sai CCCD"); mismatch != nil {
+			// STK cross-check (same as legacy). The assignment supplies the
+			// CCCD so name-resolved rows are validated too.
+			if mismatch := weeklyCrossCheckSTKName(assignment.EmployeeCCCD, emp.FullName, stkNameByCCCD, " — có thể sai CCCD"); mismatch != nil {
 				importErrors = append(importErrors, *mismatch)
 				continue
 			}

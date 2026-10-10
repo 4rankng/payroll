@@ -20,22 +20,49 @@ type wbccRateKey struct {
 	dayType  string
 }
 
+// weeklyBCCMissingAssignmentError builds the (once-per-employee) row error for a
+// weekly sheet row that could not be matched to a project assignment. When the
+// row's "Mã nhân viên" (CCCD) cell is blank the reason names the blank cell
+// instead of quoting an empty CCCD, because that cell is the actionable defect
+// — the name alone only resolves when exactly one active assignment matches it
+// (ambiguousName reports that several do, which must stay an error).
+//
+// reportedKeys dedupes one error per employee: keyed by CCCD when the row has
+// one, by normalized name otherwise, so two different name-only rows do not
+// collapse into a single reported error.
 func weeklyBCCMissingAssignmentError(
 	cccd string,
 	fullName string,
+	ambiguousName bool,
 	blockedCCCDs map[string]struct{},
-	reportedCCCDs map[string]struct{},
+	reportedKeys map[string]struct{},
 ) *domain.ImportError {
 	if isWeeklyBCCEmployeeBlocked(blockedCCCDs, cccd) {
 		return nil
 	}
-	if _, reported := reportedCCCDs[cccd]; reported {
+	dedupeKey := cccd
+	if dedupeKey == "" {
+		dedupeKey = "name:" + bccNormName(fullName)
+	}
+	if _, reported := reportedKeys[dedupeKey]; reported {
 		return nil
 	}
-	reportedCCCDs[cccd] = struct{}{}
+	reportedKeys[dedupeKey] = struct{}{}
+
+	reason := fmt.Sprintf("không tìm thấy nhân viên với CCCD \"%s\" trong dự án", cccd)
+	if cccd == "" {
+		switch {
+		case strings.TrimSpace(fullName) == "":
+			reason = "dòng thiếu cả mã CCCD và tên nhân viên"
+		case ambiguousName:
+			reason = fmt.Sprintf("dòng thiếu mã CCCD và có nhiều nhân viên tên \"%s\" trong dự án", fullName)
+		default:
+			reason = fmt.Sprintf("dòng thiếu mã CCCD và không có nhân viên tên \"%s\" trong dự án", fullName)
+		}
+	}
 	return &domain.ImportError{
 		Employee: fullName,
-		Reason:   fmt.Sprintf("không tìm thấy nhân viên với CCCD \"%s\" trong dự án", cccd),
+		Reason:   reason,
 	}
 }
 

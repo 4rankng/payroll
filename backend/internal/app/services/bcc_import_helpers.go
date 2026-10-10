@@ -309,6 +309,43 @@ func dateRowEmployeeToSTKRows(employees []excelparser.BCCEmployeeData) []excelpa
 	return rows
 }
 
+// bccNameIndex indexes the project's active assignments by normalized employee
+// name. Partner templates occasionally ship a row whose "Mã nhân viên" (CCCD)
+// cell is blank for a person added to the template after it was generated; the
+// name column still identifies them, so such a row is resolvable when exactly
+// one active assignment in the project carries that name.
+type bccNameIndex map[string][]*domain.ProjectEmployee
+
+// newBCCNameIndex builds the name index from the project's active assignments.
+func newBCCNameIndex(assignments []*domain.ProjectEmployee) bccNameIndex {
+	idx := make(bccNameIndex, len(assignments))
+	for _, a := range assignments {
+		name := bccNormName(a.EmployeeName)
+		if name == "" {
+			continue
+		}
+		idx[name] = append(idx[name], a)
+	}
+	return idx
+}
+
+// lookup returns the single assignment whose employee name matches fullName
+// (NFC-normalized, case- and whitespace-insensitive). ambiguous reports that
+// several assignments share the name: a row carrying no identifier must never
+// pick one of two employees, because the assignment decides the stored
+// position and therefore the payrate.
+func (idx bccNameIndex) lookup(fullName string) (assignment *domain.ProjectEmployee, ambiguous bool) {
+	matches := idx[bccNormName(fullName)]
+	switch len(matches) {
+	case 0:
+		return nil, false
+	case 1:
+		return matches[0], false
+	default:
+		return nil, true
+	}
+}
+
 // mergeSTKRows folds rows parsed from a real STK sheet into the BCC-derived
 // rows. STK is the bank-dedicated sheet, so for the same CCCD its account,
 // bank, and mobile win over the BCC sheet's columns; STK-only rows (hires
