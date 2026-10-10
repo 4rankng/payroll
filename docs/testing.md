@@ -175,24 +175,23 @@ pnpm type-check        # TypeScript compiler check
 pnpm build             # Production build (includes type-check)
 ```
 
-## CI Pipeline
+## Gates (run locally)
 
-**Config:** `.github/workflows/ci-cd.yml`
+The GitHub Actions pipeline was removed — it could not push images (`GITHUB_TOKEN`
+is capped at read by the repo's workflow-permission setting) and every run on
+`main` failed at `docker push`, so deploys run from this machine with
+`make deploy` (see [deployment-guide.md](deployment-guide.md)).
 
-**Triggers:** Push to `main`, PR to `main`.
+Run the same gates before pushing:
 
-| Job | What it does | Blocks deploy? |
-|-----|-------------|----------------|
-| `backend-lint` | `gofmt -l`, `go vet`, `golangci-lint v2.12.2` | Yes |
-| `frontend-lint` | `yarn install --frozen-lockfile`, `eslint --max-warnings=0`, `tsc -b`, `vite build` | Yes |
-| `backend-test` | `go test` with coverage, uploads `coverage.out` artifact | Yes |
-| `frontend-test` | `vitest run --coverage`, uploads `coverage/` artifact | Yes |
-| `security` | `gosec` (SARIF), `npm audit --audit-level=high` | Yes |
-| `docker-backend` | Build + push `linux/amd64` backend image to DockerHub | Only on push to main |
-| `docker-frontend` | Build + push `linux/amd64` frontend image to DockerHub | Only on push to main |
-| `deploy` | SSH to `tingting.vip`, pull images, recreate containers | Only on push to main |
-
-**Concurrency:** `deploy-${{ github.ref }}` — cancels in-progress PR runs.
+| Gate | Command | Scope |
+|------|---------|-------|
+| Backend lint | `cd backend && gofmt -l . && go vet ./... && golangci-lint run --timeout=5m` | Go formatting, vet, linters |
+| Backend tests | `cd backend && go test -race ./...` | Go unit tests + coverage |
+| Frontend lint | `cd frontend && npx eslint . --max-warnings=0 && npx tsc -b` | ESLint, TypeScript |
+| Frontend tests | `cd frontend && npx vitest run --coverage` | Vitest + coverage |
+| Security | `cd backend && govulncheck ./...`; `cd frontend && pnpm audit --prod --audit-level=high` | Known CVEs in Go deps/stdlib and npm deps |
+| Bundle size | `du -sb frontend/dist` (limit 15MB) | Build weight |
 
 ## Known Test Issues
 

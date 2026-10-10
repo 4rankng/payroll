@@ -84,14 +84,19 @@ func (h *Handler) GetTimesheet(c *gin.Context) {
 - **Never log:** JWT tokens, passwords, bank account numbers, payment provider API keys.
 - Log rotation via `lumberjack.v2`.
 
-## CI Security Scanning
+## Security Scanning (run locally)
 
-The CI pipeline (`.github/workflows/ci-cd.yml`) includes a `security` job:
+The GitHub Actions pipeline was removed, so these run locally before pushing:
 
-| Tool | Scope | Action |
-|------|-------|--------|
-| `gosec` | Backend Go code | SARIF report uploaded to GitHub Security tab |
-| `npm audit --audit-level=high` | Frontend dependencies | Fails on high-severity vulnerabilities |
+| Tool | Scope | Command |
+|------|-------|---------|
+| `govulncheck` | Backend Go deps + stdlib | `cd backend && govulncheck ./...` |
+| `gosec` | Backend Go code | `cd backend && gosec ./...` |
+| `pnpm audit` | Frontend dependencies | `cd frontend && pnpm audit --prod --audit-level=high` |
+
+`govulncheck` fails on confirmed reachable vulnerabilities: bump the module (or
+the Go patch level, both the CI toolchain and the `backend/Dockerfile` base
+image) rather than ignoring it.
 
 ## Zero-Trust for External Repositories
 

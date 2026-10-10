@@ -120,19 +120,20 @@ Update relevant documentation when the change:
 
 See [UI Guidelines](standards/ui-guidelines.md).
 
-## CI Gates
+## Gates
 
-The CI pipeline (`.github/workflows/ci-cd.yml`) automatically enforces gates 1-8 on every PR and push to `main`:
+The GitHub Actions pipeline was removed (it could not push images — `GITHUB_TOKEN`
+is capped at read by the repo's workflow-permission setting — so every run on
+`main` failed at `docker push`). Gates 1-8 are now run locally before pushing and
+before `make deploy`; the commands are listed in [testing.md](testing.md).
 
-| CI Job | Gates Enforced |
-|--------|----------------|
-| `backend-lint` | 3 (Go formatting, vet, golangci-lint) |
-| `frontend-lint` | 3, 4 (ESLint, TypeScript, Vite build) |
-| `backend-test` | 2 (Go tests with coverage) |
-| `frontend-test` | 2 (Vitest with coverage) |
-| `security` | 8 (gosec, npm audit) |
-| `docker-*` | Builds amd64 images (only on push to main) |
-| `deploy` | SSH deploy to production (only on push to main) |
+| Gate | How it is enforced |
+|------|--------------------|
+| 2 (tests) | `go test -race ./...`, `npx vitest run` |
+| 3 (lint) | `gofmt -l .`, `go vet ./...`, `golangci-lint run`, `npx eslint . --max-warnings=0` |
+| 4 (build/type-check) | `npx tsc -b`, `npx vite build`, `go build ./...` |
+| 8 (security) | `govulncheck ./...`, `pnpm audit --prod --audit-level=high` |
+| Deploy | `make deploy` from the repo root (buildx push to GHCR + SSH to `tingting.vip`) |
 
 ## Summary Checklist
 
