@@ -91,19 +91,29 @@ export default defineConfig(({ mode }) => ({
         entryFileNames: `assets/[name].[hash].js`,
         chunkFileNames: `assets/[name].[hash].js`,
         assetFileNames: `assets/[name].[hash].[ext]`,
-        manualChunks: {
-          // Vendor chunk for large libraries
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
-          icons: ['lucide-react'],
-          utils: ['axios', '@tanstack/react-query'],
-          charts: ['chart.js', 'recharts'],
+        // Object-form manualChunks misses CommonJS-wrapped modules (react,
+        // react-dom): it emitted an empty "vendor" chunk while react-dom merged
+        // into ui. Match module paths instead — this also survives pnpm's
+        // .pnpm/ directory layout and package subpaths like react/jsx-runtime.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (/[\\/]node_modules[\\/](react|react-dom)[\\/]/.test(id)) return 'vendor';
+          if (/[\\/]node_modules[\\/]@radix-ui[\\/]react-(dialog|dropdown-menu|select)[\\/]/.test(id)) return 'ui';
+          if (/[\\/]node_modules[\\/]lucide-react[\\/]/.test(id)) return 'icons';
+          if (/[\\/]node_modules[\\/](axios|@tanstack[\\/]react-query)[\\/]/.test(id)) return 'utils';
+          if (/[\\/]node_modules[\\/](chart\.js|recharts)[\\/]/.test(id)) return 'charts';
           // cspell:disable-next-line
-          pdfmake: ['pdfmake/build/pdfmake', 'pdfmake/build/vfs_fonts'],
+          if (/[\\/]node_modules[\\/]pdfmake[\\/]/.test(id)) return 'pdfmake';
+          return undefined;
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    // Warn only when a chunk would exceed the SW precache budget
+    // (maximumFileSizeToCacheInBytes above): past that size a file silently
+    // drops out of precaching. pdfmake (engine + fonts) is ~2.2 MB by design
+    // and lazy-loaded; splitting the 1.5 MB entry chunk is a separate
+    // route-level follow-up.
+    chunkSizeWarningLimit: 3072,
     // Generate source maps for better debugging
     sourcemap: mode !== 'production',
   },
