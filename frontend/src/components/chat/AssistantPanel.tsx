@@ -41,6 +41,10 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
   // flooded the backend with thousands of empty conversations.
 
   const messages = detail.data?.messages ?? [];
+  // The polled detail may land the user message before the turn settles —
+  // hide the optimistic copy then, or the thread shows it twice.
+  const fetchedContent = new Set(messages.filter((m) => m.role === 'user').map((m) => m.content));
+  const visibleOptimistic = optimistic.filter((m) => !fetchedContent.has(m.content));
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
   }, [messages.length, optimistic.length, sendMessage.isPending]);
@@ -89,7 +93,6 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
     });
   };
 
-  const toolCalls = detail.data?.tool_calls ?? [];
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
@@ -124,7 +127,7 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
             </div>
           ) : null}
 
-          {optimistic.map((message) => (
+          {visibleOptimistic.map((message) => (
             <div
               key={message.id}
               className="ml-auto max-w-[85%] rounded-2xl bg-primary/80 px-3.5 py-2.5 text-sm leading-5 whitespace-pre-line text-primary-foreground"
@@ -161,12 +164,6 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
           ) : null}
         </div>
 
-        {toolCalls.length > 0 ? (
-          <p className="border-t px-4 py-1.5 text-xs text-muted-foreground">
-            Trợ lý đã dùng {toolCalls.length} thao tác dữ liệu để trả lời.
-          </p>
-        ) : null}
-
         {pendingImage ? (
           <div className="flex items-center gap-2 border-t px-3 py-2 text-xs text-muted-foreground">
             <span className="truncate">Đính kèm: {pendingImage.name}</span>
@@ -200,14 +197,14 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
             rows={1}
             placeholder="Nhập câu hỏi…"
             aria-label="Nội dung tin nhắn"
-            disabled={sendMessage.isPending || conversationId === 0}
-            className="max-h-32 min-h-11 flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            disabled={sendMessage.isPending}
+            className="max-h-32 h-11 flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
-          <label className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-input text-muted-foreground transition-colors hover:bg-muted/50">
+          <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-input bg-background text-foreground transition-colors hover:bg-muted/50" aria-label="Đính kèm ảnh">
             {uploadAttachment.isPending ? (
               <Loader2 aria-hidden="true" className="size-4 animate-spin" />
             ) : (
-              <Paperclip aria-hidden="true" className="size-4" />
+              <Paperclip aria-hidden="true" className="size-5" />
             )}
             <input
               type="file"
@@ -224,14 +221,14 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
           <Button
             type="submit"
             size="icon"
-            className="size-11 shrink-0"
+            className="h-11 w-11 shrink-0"
             aria-label="Gửi"
             disabled={sendMessage.isPending || input.trim().length === 0}
           >
             {sendMessage.isPending ? (
               <Loader2 aria-hidden="true" className="size-4 animate-spin" />
             ) : (
-              <SendHorizontal aria-hidden="true" className="size-4" />
+              <SendHorizontal aria-hidden="true" className="size-5" />
             )}
           </Button>
         </form>
