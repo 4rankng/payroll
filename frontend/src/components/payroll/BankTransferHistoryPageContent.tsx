@@ -1,15 +1,6 @@
-import { useMemo, useRef, useState, type MouseEvent } from 'react';
-// W13c + W-final: lucide → verified @untitledui/icons; slate neutrals →
-// UU bridge tokens (fg-* roles, utility-gray ladder).
-import {
-  Calendar,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Receipt,
-  UserCircle,
-} from '@untitledui/icons';
+import { useMemo, useState } from 'react';
+// UU PRO surface (ADR-012): @untitledui/icons + UU bridge tokens throughout.
+import { Calendar, ChevronLeft, ChevronRight, Receipt } from '@untitledui/icons';
 
 import { PageHeader } from '@/components/shared/PageHeader';
 import { FilterBar } from '@/components/shared/FilterBar';
@@ -19,29 +10,29 @@ import {
   AdminPageHeaderCard,
 } from '@/components/shared/AdminPageFrame';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { InlineStatStrip, type InlineStatItem } from '@/components/shared/InlineStatStrip';
 import { MobilePagination } from '@/components/shared/MobilePagination';
 import { SearchBar } from '@/components/shared/SearchBar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useBankTransferHistories } from '@/hooks/api/usePayrolls';
-import type { BankTransferHistory } from '@/types/api/payroll.types';
 import {
   BANK_TRANSFER_CYCLE_LABELS,
-  formatBankTransferDate,
-  formatBankTransferDateTime,
-  formatBankTransferPeriod,
   getCurrentMonthValue,
 } from '@/utils/bankTransferHistoryHelpers';
 import { formatCurrency } from '@/utils/formatters';
-
-// Shared by the column header and every record summary so the two grids can
-// never drift apart.
-const RECORD_GRID_COLS = 'xl:grid-cols-[minmax(220px,1.25fr)_minmax(180px,0.9fr)_minmax(150px,0.72fr)_minmax(150px,0.65fr)_36px]';
+import { buildLedgerRows, LEDGER_COLUMNS } from './bankTransferLedger';
+import { LedgerMobileRecord, LedgerTableRow } from './BankTransferLedgerRow';
 
 // Derived from the shared labels so the filter options can never drift from
 // BANK_TRANSFER_CYCLE_LABELS.
@@ -134,172 +125,62 @@ function PayrollMonthPicker({ value, onValueChange, className }: PayrollMonthPic
   );
 }
 
-function TransferReferences({ item }: { item: BankTransferHistory }) {
+/**
+ * One slim summary line instead of KPI cards — the month's answer at a glance
+ * without spending vertical space the ledger needs.
+ */
+function SummaryBand({
+  totalAmount,
+  transferCount,
+  employeeCount,
+  monthLabel,
+  isLoading,
+}: {
+  totalAmount?: number;
+  transferCount?: number;
+  employeeCount?: number;
+  monthLabel: string;
+  isLoading: boolean;
+}) {
   return (
-    <div className="border-t border-utility-gray-300 bg-utility-gray-50/80">
-      <div className="hidden grid-cols-[36px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] gap-4 border-b border-utility-gray-300 px-4 py-1.5 xl:grid">
-        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary">STT</span>
-        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary">Ghi chú chuyển khoản</span>
-        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary">Mã giao dịch ngân hàng</span>
-        <span className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary">Thời gian xử lý</span>
-        <span className="text-right font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary">Số tiền</span>
-      </div>
-
-      <div className="divide-y divide-utility-gray-300 px-1 pb-1 xl:px-0 xl:pb-0" aria-label={`${item.transfers.length} chi tiết thanh toán`} role="list">
-        {item.transfers.map((transfer, index) => (
-          <div
-            key={`${transfer.transfer_code}-${transfer.bank_reference}-${transfer.amount}`}
-            className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1.5 px-2 py-2.5 xl:min-h-10 xl:grid-cols-[36px_minmax(160px,0.8fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(130px,auto)] xl:items-center xl:gap-4 xl:px-4 xl:py-1.5"
-            role="listitem"
-          >
-            <span className="inline-flex h-6 items-center justify-center rounded-md border border-utility-gray-300 bg-white px-2 font-display text-xs font-bold uppercase tracking-[0.08em] text-fg-tertiary xl:h-6 xl:w-6 xl:px-0 xl:font-financial xl:text-xs xl:tracking-normal">
-              <span className="mr-1 xl:hidden">Giao dịch</span>
-              {String(index + 1).padStart(2, '0')}
-            </span>
-
-            <div className="min-w-0 text-right xl:col-start-5 xl:row-start-1">
-              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary xl:hidden">Số tiền</p>
-              <p className="mt-0.5 whitespace-nowrap font-financial text-[14px] font-bold tabular-nums text-emerald-700 xl:mt-0 xl:text-[13px]">
-                {formatCurrency(transfer.amount)}
-              </p>
-            </div>
-
-            <div className="col-span-2 min-w-0 xl:col-span-1 xl:col-start-2 xl:row-start-1">
-              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary xl:hidden">Ghi chú chuyển khoản</p>
-              <p className="mt-1 break-all font-financial text-xs font-bold text-fg-primary xl:mt-0">{transfer.transfer_code || '—'}</p>
-            </div>
-
-            <div className="col-span-2 min-w-0 sm:col-span-1 xl:col-start-3 xl:row-start-1">
-              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary xl:hidden">Mã giao dịch ngân hàng</p>
-              <p className="mt-1 break-all font-financial text-xs font-semibold text-fg-primary xl:mt-0">{transfer.bank_reference}</p>
-            </div>
-
-            <div className="col-span-2 min-w-0 sm:col-span-1 xl:col-start-4 xl:row-start-1">
-              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary xl:hidden">Thời gian xử lý</p>
-              <p className="mt-1 flex items-center gap-1.5 xl:mt-0">
-                <Clock className="h-3.5 w-3.5 shrink-0 text-fg-tertiary" aria-hidden="true" />
-                <time className="font-financial text-xs font-semibold tabular-nums text-fg-secondary" dateTime={transfer.paid_at}>
-                  {formatBankTransferDateTime(transfer.paid_at)}
-                </time>
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div
+      data-slot="payment-history-summary"
+      className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-utility-gray-300 bg-utility-gray-50/60 px-3 py-1.5"
+    >
+      <span className="font-display text-[11px] font-bold uppercase tracking-[0.06em] text-fg-tertiary">
+        Tổng đã chuyển
+      </span>
+      {isLoading ? (
+        <Skeleton className="h-4 w-24 rounded-none" />
+      ) : totalAmount === undefined ? (
+        <span className="font-financial text-[13px] font-bold tabular-nums text-fg-tertiary">—</span>
+      ) : (
+        <span className="font-financial text-[13px] font-bold tabular-nums text-emerald-700">
+          {formatCurrency(totalAmount)}
+        </span>
+      )}
+      <span className="text-fg-tertiary" aria-hidden="true">·</span>
+      <span className="font-financial text-xs font-semibold tabular-nums text-fg-primary">
+        {isLoading || transferCount === undefined ? '—' : transferCount}
+      </span>
+      <span className="text-xs text-fg-tertiary">bút toán ngân hàng</span>
+      <span className="text-fg-tertiary" aria-hidden="true">·</span>
+      <span className="font-financial text-xs font-semibold tabular-nums text-fg-primary">
+        {isLoading || employeeCount === undefined ? '—' : employeeCount}
+      </span>
+      <span className="text-xs text-fg-tertiary">nhân viên</span>
+      <span className="ml-auto font-financial text-xs font-semibold tabular-nums text-fg-tertiary">
+        {monthLabel}
+      </span>
     </div>
-  );
-}
-
-function HistoryRecord({ item, isOpen, onToggle }: { item: BankTransferHistory; isOpen: boolean; onToggle: () => void }) {
-  const detailsId = `payment-details-${item.employee_id}-${item.work_month}-${item.cycle}`;
-  const detailsRef = useRef<HTMLDetailsElement | null>(null);
-
-  // The accordion state is controlled so only one record can stay open; the
-  // native toggle is suppressed to keep React the single source of truth.
-  const handleSummaryClick = (event: MouseEvent) => {
-    event.preventDefault();
-    const willOpen = !isOpen;
-    onToggle();
-    // Short rows + tall panels push the anchor below the fold on mobile, so
-    // snap the freshly opened record to the top of the viewport.
-    if (willOpen && typeof window.matchMedia === 'function' && !window.matchMedia('(min-width: 1280px)').matches) {
-      detailsRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  return (
-    <article>
-      <details
-        ref={detailsRef}
-        open={isOpen}
-        className="group/record scroll-mt-3 open:shadow-[inset_4px_0_0_0_#059669]"
-      >
-        <summary
-          aria-controls={detailsId}
-          aria-label={`Chi tiết giao dịch của ${item.employee_name}`}
-          onClick={handleSummaryClick}
-          className={`group/summary relative grid cursor-pointer list-none grid-cols-2 gap-x-3 gap-y-2.5 p-3 outline-none transition-colors marker:content-none hover:bg-utility-gray-50/70 group-open/record:hover:bg-transparent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600 xl:min-h-[48px] ${RECORD_GRID_COLS} xl:items-center xl:gap-4 xl:px-4 xl:py-1.5 [&::-webkit-details-marker]:hidden`}
-        >
-          <div className="col-span-2 flex min-w-0 items-center gap-2.5 pr-12 xl:col-span-1 xl:gap-2 xl:pr-0">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-200/80 bg-emerald-50 text-emerald-700 xl:h-5 xl:w-5 xl:rounded-md">
-              <UserCircle className="h-4 w-4 xl:h-3 xl:w-3" aria-hidden="true" />
-            </div>
-            <div className="min-w-0 xl:flex xl:min-w-0 xl:flex-wrap xl:items-baseline xl:gap-x-1.5">
-              <p className="break-words font-display text-[13px] font-bold leading-snug text-fg-primary xl:truncate">
-                {item.employee_name}
-              </p>
-              <span className="hidden text-utility-gray-500 xl:inline" aria-hidden="true">·</span>
-              <p className="mt-0.5 font-financial text-xs font-semibold tabular-nums tracking-[0.02em] text-fg-secondary xl:mt-0">
-                CCCD {item.employee_cccd || '—'}
-              </p>
-              {item.project_names.length > 0 && (
-                <>
-                  <span className="hidden text-utility-gray-500 xl:inline" aria-hidden="true">·</span>
-                  <p className="mt-0.5 truncate text-xs text-fg-tertiary xl:mt-0" title={item.project_names.join(', ')}>
-                    {item.project_names.join(', ')}
-                  </p>
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="order-3 min-w-0 border-l-2 border-utility-gray-200 pl-2.5 xl:order-none xl:border-0 xl:pl-0">
-            <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary xl:hidden">Kỳ thanh toán</p>
-            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs font-semibold tabular-nums text-fg-primary xl:mt-0">
-              <span className="flex min-w-0 items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 shrink-0 text-fg-tertiary" aria-hidden="true" />
-                <span
-                  className="whitespace-nowrap"
-                  aria-label={`Từ ${formatBankTransferDate(item.from_date)} đến ${formatBankTransferDate(item.to_date)}`}
-                >
-                  {formatBankTransferPeriod(item.from_date, item.to_date)}
-                </span>
-              </span>
-              <Badge className="shrink-0 rounded-full border border-utility-gray-300 bg-utility-gray-50 px-1.5 py-0 font-display text-xs font-bold text-fg-secondary hover:bg-utility-gray-50">
-                Kỳ {item.cycle}
-              </Badge>
-            </div>
-          </div>
-
-          <div className="order-3 min-w-0 border-l-2 border-utility-gray-200 pl-2.5 xl:order-none xl:border-0 xl:pl-0">
-            <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary xl:hidden">Ngày thanh toán</p>
-            <time dateTime={item.payment_date} className="mt-1 block font-financial text-xs font-bold tabular-nums text-fg-primary xl:mt-0 xl:text-right">
-              {formatBankTransferDate(item.payment_date)}
-            </time>
-          </div>
-
-          <div className="order-2 col-span-2 flex items-end justify-between border-y border-utility-gray-200 py-2.5 xl:order-none xl:col-span-1 xl:block xl:border-0 xl:py-0 xl:text-right">
-            <div>
-              <p className="font-display text-xs font-bold uppercase tracking-[0.1em] text-fg-tertiary xl:hidden">Thực nhận</p>
-              <p className="mt-0.5 whitespace-nowrap font-financial text-[20px] font-bold tabular-nums tracking-[-0.03em] text-emerald-700 xl:mt-0 xl:text-[13px] xl:tracking-normal">
-                {formatCurrency(item.total_amount)}
-              </p>
-            </div>
-            <p className="pb-0.5 text-right text-xs leading-snug text-fg-tertiary xl:mt-0.5 xl:pb-0">
-              {item.transfers.length} bút toán ngân hàng
-            </p>
-          </div>
-
-          <div className="absolute right-3 top-3 flex items-center justify-end xl:static">
-            <span className="flex h-11 w-11 items-center justify-center rounded-lg text-fg-tertiary transition-[color,background-color] group-hover/summary:bg-emerald-50 group-hover/summary:text-emerald-700 xl:h-8 xl:w-8">
-              <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open/record:rotate-180 group-open/record:text-emerald-700" aria-hidden="true" />
-            </span>
-          </div>
-        </summary>
-
-        <div id={detailsId} className="border-t border-utility-gray-300 group-open/record:border-t-0">
-          <TransferReferences item={item} />
-        </div>
-      </details>
-    </article>
   );
 }
 
 function HistorySkeleton() {
   return (
     <div className="divide-y divide-utility-gray-300" aria-label="Đang tải lịch sử trả lương" aria-busy="true">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <Skeleton key={index} className="h-36 w-full rounded-none xl:h-16" />
+      {Array.from({ length: 8 }).map((_, index) => (
+        <Skeleton key={index} className="h-16 w-full rounded-none xl:h-10" />
       ))}
     </div>
   );
@@ -316,8 +197,6 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
-  // Controlled accordion key — exactly one record can be expanded at a time.
-  const [openRecordKey, setOpenRecordKey] = useState<string | null>(null);
 
   const filters = useMemo(() => ({
     month,
@@ -328,28 +207,21 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
   }), [cycle, month, page, pageSize, search]);
 
   const { data, isLoading, isError, refetch } = useBankTransferHistories(filters);
-  const records = data?.data ?? [];
+  const records = useMemo(() => data?.data ?? [], [data]);
   const pagination = data?.pagination;
   const summary = data?.summary;
 
-  const resetPage = () => {
-    setPage(1);
-    setOpenRecordKey(null);
-  };
+  const ledgerRows = useMemo(() => buildLedgerRows(records), [records]);
 
-  const handlePageChange = (nextPage: number) => {
-    setPage(nextPage);
-    setOpenRecordKey(null);
-  };
+  const [yearPart, monthPart] = month.split('-');
+  const monthLabel = `${monthPart}/${yearPart}`;
 
-  const statItems: InlineStatItem[] = [
-    { label: 'Tổng đã chuyển', value: formatCurrency(summary?.total_amount ?? 0), highlight: true },
-    { label: 'Bút toán ngân hàng', value: summary?.transfer_count ?? 0 },
-    { label: 'Nhân viên', value: summary?.employee_count ?? 0 },
-  ];
+  const resetPage = () => setPage(1);
 
-  // The records workspace (filters + accordion rows + pagination) is shared by
-  // both variants; only the page shell and the card treatment differ.
+  const handlePageChange = (nextPage: number) => setPage(nextPage);
+
+  // The records workspace (filters + summary + ledger + pagination) is shared
+  // by both variants; only the page shell and the card treatment differ.
   const workspace = (
     <Card
       data-slot="payment-history-workspace"
@@ -359,91 +231,118 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
           : 'overflow-hidden rounded-xl border-utility-gray-300 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.42)] xl:overflow-visible xl:rounded-none'
       }
     >
-        <div className="border-b border-utility-gray-300 p-2.5 sm:p-3 xl:py-1.5">
-          <FilterBar className="gap-2">
-            <PayrollMonthPicker
-              value={month}
-              onValueChange={(value) => { setMonth(value); resetPage(); }}
-              className="sm:w-[128px]"
-            />
-            <FilterPill
-              value={cycle}
-              onChange={(value) => { setCycle(value); resetPage(); }}
-              placeholder="Tất cả kỳ lương"
-              options={CYCLE_OPTIONS}
-              className="w-full sm:w-auto"
-            />
-            <SearchBar
-              searchTerm={search}
-              onSearchChange={(value) => { setSearch(value); resetPage(); }}
-              placeholder="Tên nhân viên, mã chuyển khoản hoặc mã ngân hàng"
-              className="w-full min-w-0 sm:min-w-[220px] sm:flex-1"
-            />
-          </FilterBar>
-        </div>
-
-        {isLoading && <HistorySkeleton />}
-
-        {isError && (
-          <div className="bg-rose-50/70">
-            <EmptyState
-              title="Không thể tải lịch sử trả lương"
-              description="Vui lòng kiểm tra kết nối và thử lại."
-              action={{ label: 'Thử lại', onClick: () => refetch() }}
-            />
-          </div>
-        )}
-
-        {!isLoading && !isError && records.length === 0 && (
-          <EmptyState
-            title="Chưa có giao dịch đã hoàn tất"
-            description="Chọn tháng hoặc kỳ lương khác để xem lịch sử."
+      <div className="border-b border-utility-gray-300 p-2.5 sm:p-3 xl:py-1.5">
+        <FilterBar className="gap-2">
+          <PayrollMonthPicker
+            value={month}
+            onValueChange={(value) => { setMonth(value); resetPage(); }}
+            className="sm:w-[128px]"
           />
-        )}
+          <FilterPill
+            value={cycle}
+            onChange={(value) => { setCycle(value); resetPage(); }}
+            placeholder="Tất cả kỳ lương"
+            options={CYCLE_OPTIONS}
+            className="w-full sm:w-auto"
+          />
+          <SearchBar
+            searchTerm={search}
+            onSearchChange={(value) => { setSearch(value); resetPage(); }}
+            placeholder="Tên nhân viên, mã chuyển khoản hoặc mã ngân hàng"
+            className="w-full min-w-0 sm:min-w-[220px] sm:flex-1"
+          />
+        </FilterBar>
+      </div>
 
-        {!isLoading && !isError && records.length > 0 && (
-          <>
-            <div
-              data-slot="payment-history-header"
-              className={`hidden gap-4 border-b border-utility-gray-300 bg-utility-gray-50/80 px-4 py-2 xl:sticky xl:top-0 xl:z-10 xl:grid xl:bg-utility-gray-50/95 xl:backdrop-blur ${RECORD_GRID_COLS}`}
-            >
-              <span className="font-display text-xs font-bold uppercase tracking-[0.11em] text-fg-tertiary">Nhân viên</span>
-              <span className="font-display text-xs font-bold uppercase tracking-[0.11em] text-fg-tertiary">Kỳ thanh toán</span>
-              <span className="font-display text-xs font-bold uppercase tracking-[0.11em] text-fg-tertiary xl:text-right">Ngày thanh toán</span>
-              <span className="text-right font-display text-xs font-bold uppercase tracking-[0.11em] text-fg-tertiary">Thực nhận</span>
-              <span className="sr-only">Chi tiết</span>
-            </div>
-            <div data-slot="payment-history-records" aria-label="Giao dịch đã hoàn tất" className="divide-y divide-utility-gray-300">
-              {records.map((item) => {
-                const recordKey = `${item.work_month}-${item.cycle}-${item.employee_id}`;
-                return (
-                  <HistoryRecord
-                    key={recordKey}
-                    item={item}
-                    isOpen={openRecordKey === recordKey}
-                    onToggle={() => setOpenRecordKey((current) => (current === recordKey ? null : recordKey))}
-                  />
-                );
-              })}
-            </div>
-          </>
-        )}
+      <SummaryBand
+        totalAmount={summary?.total_amount}
+        transferCount={summary?.transfer_count}
+        employeeCount={summary?.employee_count}
+        monthLabel={monthLabel}
+        isLoading={isLoading}
+      />
 
-        {pagination && pagination.totalPages > 1 && (
-          <div className="border-t border-utility-gray-300 px-2.5 sm:px-3">
-            <div className="hidden sm:block">
-              <PaginationControls
-                pagination={pagination}
-                onPageChange={handlePageChange}
-                onPageSizeChange={(size) => { setPageSize(size); resetPage(); }}
-              />
-            </div>
-            <div className="sm:hidden">
-              <MobilePagination pagination={pagination} onPageChange={handlePageChange} />
-            </div>
+      {isLoading && <HistorySkeleton />}
+
+      {isError && (
+        <div className="bg-rose-50/70">
+          <EmptyState
+            title="Không thể tải lịch sử trả lương"
+            description="Vui lòng kiểm tra kết nối và thử lại."
+            action={{ label: 'Thử lại', onClick: () => refetch() }}
+          />
+        </div>
+      )}
+
+      {!isLoading && !isError && records.length === 0 && (
+        <EmptyState
+          title="Chưa có giao dịch đã hoàn tất"
+          description="Chọn tháng hoặc kỳ lương khác để xem lịch sử."
+        />
+      )}
+
+      {!isLoading && !isError && records.length > 0 && (
+        <>
+          {/* Wide screens: semantic ledger table, sticky column header. */}
+          <div data-slot="payment-history-records" className="hidden xl:block">
+            <Table className="w-full table-fixed">
+              <colgroup>
+                {LEDGER_COLUMNS.map((column) => (
+                  <col key={column.id} style={column.width === 'auto' ? undefined : { width: column.width }} />
+                ))}
+              </colgroup>
+              <TableHeader className="sticky top-0 z-10">
+                <TableRow className="border-b border-utility-gray-300 bg-utility-gray-50/95 hover:bg-transparent">
+                  {LEDGER_COLUMNS.map((column) => (
+                    <TableHead
+                      key={column.id}
+                      scope="col"
+                      className={`whitespace-normal px-2 font-display text-[11px] font-bold uppercase leading-tight tracking-[0.06em] text-fg-tertiary ${column.alignRight ? 'text-right' : ''}`}
+                    >
+                      {column.label}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody className="[&_tr:last-child]:border-0">
+                {ledgerRows.map((row) => (
+                  <LedgerTableRow key={row.key} row={row} />
+                ))}
+              </TableBody>
+            </Table>
           </div>
-        )}
-      </Card>
+
+          {/* Narrow screens: dense record blocks, same data, nothing hidden. */}
+          <div
+            data-slot="payment-history-mobile-records"
+            className="divide-y divide-utility-gray-300 xl:hidden"
+            aria-label="Giao dịch đã hoàn tất"
+          >
+            {records.map((item) => (
+              <LedgerMobileRecord
+                key={`${item.work_month}-${item.cycle}-${item.employee_id}`}
+                record={item}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {pagination && pagination.totalPages > 1 && (
+        <div className="border-t border-utility-gray-300 px-2.5 sm:px-3">
+          <div className="hidden sm:block">
+            <PaginationControls
+              pagination={pagination}
+              onPageChange={handlePageChange}
+              onPageSizeChange={(size) => { setPageSize(size); resetPage(); }}
+            />
+          </div>
+          <div className="sm:hidden">
+            <MobilePagination pagination={pagination} onPageChange={handlePageChange} />
+          </div>
+        </div>
+      )}
+    </Card>
   );
 
   // Admin variant rides the standard admin shell (ambient canvas + glass
@@ -458,7 +357,6 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
             description="Lịch sử trả lương theo nhân viên và kỳ lương."
           />
         </AdminPageHeaderCard>
-        <InlineStatStrip items={statItems} isLoading={isLoading} />
         {workspace}
       </AdminPageCanvas>
     );
@@ -474,7 +372,6 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
           description="Bút toán ngân hàng theo nhân viên và kỳ lương."
         />
       </header>
-      <InlineStatStrip items={statItems} isLoading={isLoading} />
       {workspace}
     </div>
   );

@@ -52,45 +52,89 @@ describe('BankTransferHistoryPageContent', () => {
     });
   });
 
-  it('shows every bank posting and the employee-cycle total', () => {
+  it('shows every bank posting and the record total with no expansion step', () => {
     render(<BankTransferHistoryPageContent />);
 
-    expect(screen.getAllByText(/1\.998\.000\s*₫/)).toHaveLength(2);
-    expect(screen.getByText('2 bút toán ngân hàng')).toBeInTheDocument();
-    expect(screen.getByText('FT26198846619959')).not.toBeVisible();
+    // Flat ledger: both postings are plain table content — nothing behind a
+    // disclosure, no hidden panels.
+    expect(screen.queryByLabelText(/Chi tiết giao dịch/i)).not.toBeInTheDocument();
 
-    const disclosure = screen.getByLabelText(/Chi tiết giao dịch/i);
-    expect(disclosure.closest('details')).not.toHaveAttribute('open');
+    for (const reference of ['FT26198846619959', 'FT26198940380850']) {
+      expect(screen.getAllByText(reference).length).toBeGreaterThan(0);
+    }
+    for (const code of ['VFIC6d037214', 'VFIC7a193042']) {
+      expect(screen.getAllByText(code).length).toBeGreaterThan(0);
+    }
+    // Posting amounts + the record total are all rendered.
+    expect(screen.getAllByText(/1\.548\.000\s*₫/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/450\.000\s*₫/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/1\.998\.000\s*₫/).length).toBeGreaterThan(0);
 
-    fireEvent.click(disclosure);
-
-    expect(screen.getByText('FT26198846619959')).toBeInTheDocument();
-    expect(screen.getByText('FT26198940380850')).toBeInTheDocument();
-    expect(screen.getByText('VFIC6d037214')).toBeInTheDocument();
-    expect(screen.getByText('VFIC7a193042')).toBeInTheDocument();
-    expect(screen.getAllByText('Ghi chú chuyển khoản')).toHaveLength(3);
-    expect(screen.getAllByText('Mã giao dịch ngân hàng')).toHaveLength(3);
-    expect(screen.getAllByText('Thời gian xử lý')).toHaveLength(3);
-    expect(screen.getByText('17/07/2026 · 20:24')).toHaveAttribute('datetime', '2026-07-17T20:24:00+07:00');
-    expect(screen.getByText('17/07/2026 · 20:31')).toHaveAttribute('datetime', '2026-07-17T20:31:00+07:00');
-    expect(screen.getByText('CCCD 031189014251')).toBeInTheDocument();
-    expect(screen.getByText(/1\.548\.000\s*₫/)).toBeInTheDocument();
-    expect(screen.getByText(/450\.000\s*₫/)).toBeInTheDocument();
+    // Record identity renders once per record on the desktop ledger.
+    expect(screen.getAllByText('LÒ THỊ MINH THU')).toHaveLength(2); // desktop + mobile block
+    expect(screen.getAllByText(/17\/07\/2026 · 20:24/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Kỳ 2').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Chọn tháng kỳ lương, hiện tại 07/2026' })).toHaveTextContent('07/2026');
-    expect(screen.queryByText('July 2026')).not.toBeInTheDocument();
-    expect(screen.getByText('Kỳ 2')).toBeInTheDocument();
-    expect(screen.getByText('08–14/07/2026')).toHaveAttribute('aria-label', 'Từ 08/07/2026 đến 14/07/2026');
-    expect(screen.getByText('17/07/2026')).toBeInTheDocument();
-    const expandedCard = screen.getByLabelText(/Chi tiết giao dịch/i);
-    expect(expandedCard.closest('details')).toHaveAttribute('open');
-
-    fireEvent.click(expandedCard);
-
-    expect(screen.getByText('FT26198846619959')).not.toBeVisible();
-    expect(expandedCard.closest('details')).not.toHaveAttribute('open');
   });
 
-  it('shows an empty-note fallback when a legacy payment has no transfer code', () => {
+  it('spans record identity across its postings and numbers every ledger line', () => {
+    const { container } = render(<BankTransferHistoryPageContent />);
+
+    const ledger = container.querySelector('[data-slot="payment-history-records"]')!;
+    const bodyRows = Array.from(ledger.querySelectorAll('tbody tr'));
+
+    // Two postings → two ledger lines.
+    expect(bodyRows).toHaveLength(2);
+
+    const [first, second] = bodyRows;
+    // First line anchors the identity cells for the whole record…
+    const identityCells = Array.from(first.querySelectorAll('td[rowspan]'));
+    expect(identityCells).toHaveLength(4); // nhân viên, kỳ, ngày TT, thực nhận
+    for (const cell of identityCells) {
+      expect(cell).toHaveAttribute('rowspan', '2');
+    }
+    expect(within(first as HTMLElement).getByText('LÒ THỊ MINH THU')).toBeInTheDocument();
+    expect(within(first as HTMLElement).getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
+
+    // …continuation lines carry only posting cells, never repeated identity.
+    expect(second.querySelectorAll('td[rowspan]')).toHaveLength(0);
+    expect(within(second as HTMLElement).queryByText('LÒ THỊ MINH THU')).not.toBeInTheDocument();
+
+    // STT numbers each ledger line.
+    expect(within(first as HTMLElement).getByText('01')).toBeInTheDocument();
+    expect(within(second as HTMLElement).getByText('02')).toBeInTheDocument();
+  });
+
+  it('renders the API summary aggregate even when it differs from the page rows', () => {
+    const result = useBankTransferHistories();
+    // Summary covers the full filtered set; page rows are only a slice.
+    result.data.summary = { total_amount: 2_367_588_332, transfer_count: 827, employee_count: 816 };
+    useBankTransferHistories.mockReturnValue(result);
+
+    const { container } = render(<BankTransferHistoryPageContent />);
+
+    const summary = within(container.querySelector('[data-slot="payment-history-summary"]')!);
+    expect(summary.getByText(/2\.367\.588\.332\s*₫/)).toBeInTheDocument();
+    expect(summary.getByText('827')).toBeInTheDocument();
+    expect(summary.getByText('816')).toBeInTheDocument();
+  });
+
+  it('keeps a legacy record with no postings on the ledger with em-dash cells', () => {
+    const result = useBankTransferHistories();
+    result.data.data[0].transfers = [];
+    useBankTransferHistories.mockReturnValue(result);
+
+    const { container } = render(<BankTransferHistoryPageContent />);
+
+    const ledger = container.querySelector('[data-slot="payment-history-records"]')!;
+    const rows = ledger.querySelectorAll('tbody tr');
+    expect(rows).toHaveLength(1);
+    expect(within(rows[0] as HTMLElement).getByText('LÒ THỊ MINH THU')).toBeInTheDocument();
+    // No posting to show — every posting cell falls back to —.
+    expect(within(rows[0] as HTMLElement).getAllByText('—').length).toBeGreaterThan(2);
+  });
+
+  it('shows an em-dash fallback when a legacy posting lacks code, bank ref time, or CCCD', () => {
     const result = useBankTransferHistories();
     result.data.data[0].employee_cccd = '';
     result.data.data[0].transfers = [
@@ -99,13 +143,11 @@ describe('BankTransferHistoryPageContent', () => {
     useBankTransferHistories.mockReturnValue(result);
 
     render(<BankTransferHistoryPageContent />);
-    fireEvent.click(screen.getByLabelText(/Chi tiết giao dịch/i));
 
-    expect(screen.getByText('FT-LEGACY-001')).toBeInTheDocument();
-    expect(screen.getAllByText('Ghi chú chuyển khoản')).toHaveLength(2);
-    expect(screen.getAllByText('Mã giao dịch ngân hàng')).toHaveLength(2);
-    expect(screen.getAllByText('—')).toHaveLength(2);
-    expect(screen.getByText('CCCD —')).toBeInTheDocument();
+    expect(screen.getAllByText('FT-LEGACY-001').length).toBeGreaterThan(0);
+    // Missing transfer code and paid_at fall back to —, CCCD shows — inline.
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('CCCD —').length).toBeGreaterThan(0);
   });
 
   it('selects a month directly without asking for a day', () => {
@@ -139,51 +181,21 @@ describe('BankTransferHistoryPageContent', () => {
     expect(screen.getByRole('textbox')).toHaveAttribute('placeholder', 'Tên nhân viên, mã chuyển khoản hoặc mã ngân hàng');
   });
 
-  it('groups completed payments into one compact comparison workspace on wide screens', () => {
-    const { container } = render(<BankTransferHistoryPageContent />);
-
-    const workspace = container.querySelector('[data-slot="payment-history-workspace"]');
-    const records = container.querySelector('[data-slot="payment-history-records"]');
-    const disclosure = screen.getByLabelText(/Chi tiết giao dịch/i);
-
-    expect(workspace).toHaveClass('overflow-hidden', 'bg-white', 'rounded-xl', 'xl:overflow-visible', 'xl:rounded-none');
-    // Records are flat hairline rows of the workspace module at every
-    // breakpoint — no nested per-record cards.
-    expect(records).toHaveClass('divide-y', 'divide-utility-gray-300');
-    expect(records.className).not.toContain('space-y-');
-    expect(records.className).not.toContain('gap-');
-    expect(records.className).not.toContain('p-2');
-    const recordRow = disclosure.closest('details')!;
-    expect(recordRow.className).not.toContain('rounded-');
-    expect(recordRow.className).not.toContain('bg-white');
-    expect(recordRow.className).not.toContain('border-');
-    expect(recordRow.className).not.toContain('shadow-[0_');
-    expect(disclosure).toHaveClass('xl:min-h-[48px]', 'xl:px-4', 'xl:py-1.5');
-    // Sticky column header keeps the dense table scannable mid-scroll.
-    expect(container.querySelector('[data-slot="payment-history-header"]')).toHaveClass(
-      'xl:sticky',
-      'xl:top-0',
-      'xl:z-10',
-      'xl:bg-utility-gray-50/95',
-      'xl:backdrop-blur',
-    );
-    // The identity badge shrinks from a card-style avatar to a table-style dot.
-    expect(disclosure.firstElementChild!.firstElementChild).toHaveClass('xl:h-5', 'xl:w-5');
-  });
-
-  it('answers the month total at a glance and paginates without leaving the module', () => {
+  it('answers the month total in one slim band and paginates without leaving the module', () => {
     const result = useBankTransferHistories();
     result.data.pagination = { page: 1, pageSize: 20, totalPages: 11, totalRecords: 207 };
     useBankTransferHistories.mockReturnValue(result);
 
     const { container } = render(<BankTransferHistoryPageContent />);
 
-    const statStrip = within(container.querySelector('.shadow-soft')!);
-    expect(statStrip.getByText('Tổng đã chuyển')).toBeInTheDocument();
-    expect(statStrip.getByText('Bút toán ngân hàng')).toBeInTheDocument();
-    expect(statStrip.getByText('Nhân viên')).toBeInTheDocument();
-    expect(statStrip.getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
-    expect(within(container.querySelector('[data-slot="payment-history-records"]')!).getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
+    // Summary is one slim line inside the workspace — no KPI cards.
+    const summary = within(container.querySelector('[data-slot="payment-history-summary"]')!);
+    expect(summary.getByText('Tổng đã chuyển')).toBeInTheDocument();
+    expect(summary.getByText('bút toán ngân hàng')).toBeInTheDocument();
+    expect(summary.getByText('nhân viên')).toBeInTheDocument();
+    expect(summary.getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
+    expect(summary.getByText('07/2026')).toBeInTheDocument();
+    expect(container.querySelector('.shadow-soft')).not.toBeInTheDocument();
 
     // The toolbar lives inside the workspace module, not on a floating card.
     const toolbar = container.querySelector('[data-slot="filter-bar"]');
@@ -200,73 +212,46 @@ describe('BankTransferHistoryPageContent', () => {
     expect(screen.getAllByText(/207/)).toHaveLength(2);
   });
 
-  it('marks the expanded record with a single restrained accent, not a green wash', () => {
+  it('renders a semantic ledger table with a sticky header and flat hairline rows', () => {
     const { container } = render(<BankTransferHistoryPageContent />);
 
-    const record = container.querySelector('details');
-    const disclosure = screen.getByLabelText(/Chi tiết giao dịch/i);
-    const detailsBody = document.getElementById(
-      disclosure.getAttribute('aria-controls')!,
-    );
-    const chevron = Array.from(disclosure.querySelectorAll('svg')).find((icon) =>
-      icon.classList.contains('group-open/record:rotate-180'),
-    );
-    const panel = detailsBody!.firstElementChild;
+    const ledger = container.querySelector('[data-slot="payment-history-records"]')!;
+    const table = ledger.querySelector('table')!;
 
-    // Ownership is signaled by one left accent bar on a flat row, not a
-    // full-row/panel green wash or a per-record card.
-    expect(record).toHaveClass('open:shadow-[inset_4px_0_0_0_#059669]');
-    expect(record.className).not.toContain('open:bg-emerald-50/80');
-    expect(record.className).not.toContain('open:border-emerald-300');
-    expect(record.className).not.toContain('open:border-slate-300');
-    expect(record.className).not.toContain('rounded-');
-    expect(disclosure).toHaveClass('group-open/record:hover:bg-transparent');
-    // The wrapper drops its border-t when open so the panel's own hairline is
-    // the only seam — summary and expanded rows keep exactly one divider.
-    expect(detailsBody).toHaveClass('group-open/record:border-t-0');
-    // The expanded panel is a flat neutral surface, not a nested card or a green slab.
-    expect(panel).toHaveClass('bg-utility-gray-50/80', 'border-t', 'border-utility-gray-300');
-    expect(panel!.firstElementChild).toHaveClass('xl:grid', 'border-utility-gray-300');
-    expect(panel!.querySelector('[role="list"]')).toHaveClass('divide-y', 'divide-utility-gray-300');
-    // Emerald is reserved for the money value and the open-state chevron.
-    expect(chevron).toHaveClass('group-open/record:text-emerald-700');
+    // Real table semantics — not a grid of divs.
+    expect(table).toBeInTheDocument();
+    expect(table.querySelector('thead')).toBeInTheDocument();
+    expect(table.querySelector('thead')!).toHaveClass('sticky', 'top-0', 'z-10');
+
+    // Every column header is scoped and labeled.
+    const headers = Array.from(table.querySelectorAll<HTMLTableCellElement>('thead th'));
+    expect(headers.map((th) => th.textContent)).toEqual([
+      'STT', 'Nhân viên', 'Kỳ thanh toán', 'Ngày thanh toán',
+      'Ghi chú CK', 'Mã GD ngân hàng', 'Thời gian xử lý', 'Số tiền', 'Thực nhận (kỳ)',
+    ]);
+    for (const th of headers) {
+      expect(th).toHaveAttribute('scope', 'col');
+    }
+
+    // Rows are hairline ledger lines — no per-record cards, no accordion.
+    const firstRow = table.querySelector('tbody tr')!;
+    expect(firstRow.className).not.toContain('rounded-');
+    expect(firstRow.className).not.toContain('shadow-');
+    expect(ledger.querySelector('details')).not.toBeInTheDocument();
   });
 
-  it('keeps employee identity readable on narrow screens', () => {
-    render(<BankTransferHistoryPageContent />);
+  it('mirrors the ledger as dense record blocks below the table breakpoint', () => {
+    const { container } = render(<BankTransferHistoryPageContent />);
 
-    const name = screen.getByText('LÒ THỊ MINH THU');
-    expect(name).toHaveClass('break-words', 'xl:truncate');
-    // Desktop runs name, CCCD and projects on a single baseline row.
-    expect(name.parentElement).toHaveClass('xl:flex', 'xl:items-baseline', 'xl:gap-x-1.5');
-    expect(screen.getByText('CCCD 031189014251')).toHaveClass('xl:mt-0');
-  });
+    const mobile = container.querySelector<HTMLElement>('[data-slot="payment-history-mobile-records"]')!;
+    expect(mobile).toHaveClass('xl:hidden');
 
-  it('expands only one record at a time and collapses it on page change', () => {
-    const result = useBankTransferHistories();
-    result.data.data.push({
-      ...result.data.data[0],
-      employee_id: 83,
-      employee_name: 'TRẦN VĂN B',
-      employee_cccd: '031199001234',
-    });
-    result.data.pagination = { page: 1, pageSize: 50, totalPages: 2, totalRecords: 2 };
-    useBankTransferHistories.mockReturnValue(result);
-
-    render(<BankTransferHistoryPageContent />);
-
-    const [first, second] = screen.getAllByLabelText(/Chi tiết giao dịch/i);
-    fireEvent.click(first);
-    expect(first.closest('details')).toHaveAttribute('open');
-    expect(second.closest('details')).not.toHaveAttribute('open');
-
-    fireEvent.click(second);
-    expect(second.closest('details')).toHaveAttribute('open');
-    expect(first.closest('details')).not.toHaveAttribute('open');
-
-    // Leaving the page collapses the open record instead of stranding it.
-    fireEvent.click(screen.getByRole('button', { name: 'Trang 2' }));
-    expect(second.closest('details')).not.toHaveAttribute('open');
+    // Same data as the table: name+total line, metadata line, posting lines.
+    expect(within(mobile).getByText('LÒ THỊ MINH THU')).toBeInTheDocument();
+    expect(within(mobile).getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
+    expect(within(mobile).getByText('FT26198846619959')).toBeInTheDocument();
+    expect(within(mobile).getByText('FT26198940380850')).toBeInTheDocument();
+    expect(within(mobile).getByText(/031189014251/)).toBeInTheDocument();
   });
 
   it('requests a denser default page now that rows are compact', () => {
@@ -277,7 +262,7 @@ describe('BankTransferHistoryPageContent', () => {
     );
   });
 
-  it('renders loading placeholders as flat rows of the workspace module', () => {
+  it('renders loading placeholders as flat ledger lines', () => {
     useBankTransferHistories.mockReturnValue({
       data: undefined,
       isLoading: true,
@@ -289,12 +274,12 @@ describe('BankTransferHistoryPageContent', () => {
 
     const skeleton = container.querySelector('[aria-label="Đang tải lịch sử trả lương"]');
     expect(skeleton).toHaveClass('divide-y', 'divide-utility-gray-300');
-    // rounded-none is load-bearing: it overrides the Skeleton base rounded-md
-    // so placeholder rows match the flat record rows they stand in for.
+    // rounded-none is load-bearing: it overrides the Skeleton base rounding so
+    // placeholder rows match the flat ledger lines they stand in for.
     const rows = Array.from(skeleton!.children);
-    expect(rows).toHaveLength(6);
+    expect(rows).toHaveLength(8);
     for (const row of rows) {
-      expect(row).toHaveClass('h-36', 'rounded-none', 'xl:h-16');
+      expect(row).toHaveClass('h-16', 'rounded-none', 'xl:h-10');
     }
   });
 

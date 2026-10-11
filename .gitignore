@@ -90,6 +90,8 @@ venv/
 qa/*
 frontend/test-results/
 frontend/playwright-report/
+# QA browser artifacts — full-page screenshots of the real dataset (employee PII)
+frontend/qa/payment-history-ledger/
 frontend/coverage/
 .agentkit
 

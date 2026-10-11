@@ -48,3 +48,12 @@ export function formatBankTransferDateTime(value?: string): string {
 
   return `${bankTransferDateFormatter.format(date)} · ${bankTransferTimeFormatter.format(date)}`;
 }
+
+export function formatBankTransferTime(value?: string): string {
+  if (!value) return '—';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  return bankTransferTimeFormatter.format(date);
+}
