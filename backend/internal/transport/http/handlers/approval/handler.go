@@ -142,7 +142,7 @@ func (h *Handler) Approve(c *gin.Context) {
 	}
 	req, err := h.service.Approve(c.Request.Context(), id, actor)
 	if err != nil {
-		writeErrorReq(c, err, req, h.service.ViewFor(c.Request.Context(), req))
+		h.writeDecisionError(c, err, req)
 		return
 	}
 	response.Success(c, newRequestResponseWithView(req, h.service.ViewFor(c.Request.Context(), req)), "Đã duyệt và thực thi yêu cầu")
@@ -162,7 +162,7 @@ func (h *Handler) Reject(c *gin.Context) {
 	_ = c.ShouldBindJSON(&body) // note optional
 	req, err := h.service.Reject(c.Request.Context(), id, actor, body.Note)
 	if err != nil {
-		writeErrorReq(c, err, req, h.service.ViewFor(c.Request.Context(), req))
+		h.writeDecisionError(c, err, req)
 		return
 	}
 	response.Success(c, newRequestResponseWithView(req, h.service.ViewFor(c.Request.Context(), req)), "Đã từ chối — sẽ chuẩn bị lại theo lịch")
@@ -232,13 +232,6 @@ func splitComma(s string) []string {
 // writeErrorReq is writeError for decision paths where the engine may return
 // a nil request together with the error (e.g. not found): render the row only
 // when it exists.
-func writeErrorReq(c *gin.Context, err error, req *domain.ApprovalRequest, view appapproval.View) {
-	if req != nil {
-		writeError(c, err, newRequestResponseWithView(req, view))
-		return
-	}
-	writeError(c, err)
-}
 
 // writeError maps engine errors onto HTTP responses. extra (may be nil-valued
 // response) lets a decision that executed-with-failure still return the row.
@@ -271,4 +264,15 @@ func writeError(c *gin.Context, err error, partial ...requestResponse) {
 
 func h_logger(c *gin.Context) *slog.Logger {
 	return observability.GetLogger().With("component", "approval-handler")
+}
+
+// writeDecisionError renders a decision failure. The engine returns a nil
+// request together with validation errors (e.g. deciding a closed request),
+// so the view is computed only when the row exists — never eagerly on nil.
+func (h *Handler) writeDecisionError(c *gin.Context, err error, req *domain.ApprovalRequest) {
+	if req == nil {
+		writeError(c, err)
+		return
+	}
+	writeError(c, err, newRequestResponseWithView(req, h.service.ViewFor(c.Request.Context(), req)))
 }
