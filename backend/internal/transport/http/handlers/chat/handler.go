@@ -201,6 +201,8 @@ func writeError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, llmchat.ErrForbiddenRole):
 		response.Forbidden(c, "Trợ lý AI chỉ dành cho quản trị viên và đối tác")
+	case errors.Is(err, llmchat.ErrChatDisabled):
+		response.Forbidden(c, "Trợ lý AI đã bị tắt cho vai trò của bạn")
 	case errors.Is(err, llmchat.ErrRateLimited):
 		response.TooManyRequests(c, "Bạn gửi tin nhắn quá nhanh — vui lòng chờ ít giây rồi thử lại.", 30)
 	case errors.Is(err, llmchat.ErrTurnTimeout):

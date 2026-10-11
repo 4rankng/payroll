@@ -53,6 +53,35 @@ var ErrRateLimited = errors.New("vượt giới hạn gửi tin nhắn")
 // (model calls + tool execution end to end). The handler maps it to HTTP 504.
 var ErrTurnTimeout = errors.New("hết thời gian xử lý lượt chat")
 
+// ErrChatDisabled is returned when the admin has switched the chat surface
+// off for the caller's role (settings mimo.chat_enabled_*).
+var ErrChatDisabled = errors.New("trợ lý AI đã bị tắt cho vai trò của bạn")
+
+// RoleGate reports whether the chat surface is currently enabled for a role
+// (admin-controlled per-role switches). Implemented over the settings store;
+// nil means "no gate wired" — the static RoleAllowed roles apply unchanged.
+type RoleGate interface {
+	ChatEnabled(ctx context.Context, role string) bool
+}
+
+// RoleSettings is the settings surface RoleGate needs (satisfied by
+// *config.SettingsConfigService without importing it here).
+type RoleSettings interface {
+	GetMimoChatEnabledForRole(ctx context.Context, role string) bool
+}
+
+type settingsRoleGate struct{ settings RoleSettings }
+
+// NewSettingsRoleGate gates the chat surface on the admin-controlled
+// per-role switches.
+func NewSettingsRoleGate(settings RoleSettings) RoleGate {
+	return settingsRoleGate{settings: settings}
+}
+
+func (g settingsRoleGate) ChatEnabled(ctx context.Context, role string) bool {
+	return g.settings.GetMimoChatEnabledForRole(ctx, role)
+}
+
 // ErrForbiddenRole is returned for roles outside the chat surface.
 var ErrForbiddenRole = errors.New("vai trò không được dùng trợ lý AI")
 

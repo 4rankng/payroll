@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 import {
   useCreateSetting,
   useSettings,
@@ -135,6 +136,9 @@ export const MimoConnectionSection = () => {
   const [defaultModel, setDefaultModel] = useState<string>(MIMO_MODELS[0]);
   const [fallbackModel, setFallbackModel] = useState<string>(MIMO_MODELS[1]);
   const [testState, setTestState] = useState<TestState | null>(null);
+  const [chatAdmin, setChatAdmin] = useState(true);
+  const [chatPartner, setChatPartner] = useState(true);
+  const [togglingRole, setTogglingRole] = useState(false);
 
   const apiKeySetting = useMemo(
     () => (Array.isArray(settings) ? settings.find((s) => s?.key === MIMO_SETTING_KEYS.apiKey) : undefined),
@@ -149,12 +153,21 @@ export const MimoConnectionSection = () => {
     [settings],
   );
 
+  const findSetting = (key: string) =>
+    Array.isArray(settings) ? settings.find((s) => s?.key === key) : undefined;
+  const chatAdminSetting = findSetting(MIMO_SETTING_KEYS.chatEnabledAdmin);
+  const chatPartnerSetting = findSetting(MIMO_SETTING_KEYS.chatEnabledPartner);
+
   const keyConfigured = Boolean(apiKeySetting?.masked ? apiKeySetting.configured : apiKeySetting?.value);
 
   useEffect(() => {
     if (defaultModelSetting?.value) setDefaultModel(defaultModelSetting.value);
     if (fallbackModelSetting?.value) setFallbackModel(fallbackModelSetting.value);
   }, [defaultModelSetting?.value, fallbackModelSetting?.value]);
+  useEffect(() => {
+    setChatAdmin(chatAdminSetting?.value !== 'false');
+    setChatPartner(chatPartnerSetting?.value !== 'false');
+  }, [chatAdminSetting?.value, chatPartnerSetting?.value]);
 
   const isSaving = updateSetting.isPending || createSetting.isPending;
   const hasUnsavedKey = apiKeyInput.trim().length > 0;
@@ -166,12 +179,7 @@ export const MimoConnectionSection = () => {
   // Upserts one string setting: the row may not exist yet on environments
   // where the key was never saved, so a miss creates it.
   const upsertSetting = async (key: string, value: string) => {
-    const existing =
-      key === MIMO_SETTING_KEYS.apiKey
-        ? apiKeySetting
-        : key === MIMO_SETTING_KEYS.defaultModel
-          ? defaultModelSetting
-          : fallbackModelSetting;
+    const existing = findSetting(key);
     if (existing?.id) {
       await updateSetting.mutateAsync({ id: existing.id, data: { value } });
     } else {
@@ -211,6 +219,25 @@ export const MimoConnectionSection = () => {
         code: 'error',
         message: 'Không thể kiểm tra kết nối — kiểm tra kết nối mạng và thử lại.',
       });
+    }
+  };
+
+  // Per-role switches apply immediately (optimistic flip, revert on failure).
+  const handleRoleToggle = async (role: 'admin' | 'partner', next: boolean) => {
+    const key =
+      role === 'admin' ? MIMO_SETTING_KEYS.chatEnabledAdmin : MIMO_SETTING_KEYS.chatEnabledPartner;
+    const setter = role === 'admin' ? setChatAdmin : setChatPartner;
+    const roleLabel = role === 'admin' ? 'quản trị viên' : 'đối tác';
+    setter(next);
+    setTogglingRole(true);
+    try {
+      await upsertSetting(key, next ? 'true' : 'false');
+      toast.success(`${next ? 'Đã bật' : 'Đã tắt'} trợ lý AI cho ${roleLabel}`);
+    } catch {
+      setter(!next);
+      toast.error('Không thể lưu thiết lập — thử lại.');
+    } finally {
+      setTogglingRole(false);
     }
   };
 
@@ -406,6 +433,49 @@ export const MimoConnectionSection = () => {
             </p>
           </div>
         </form>
+      </SettingsSection>
+
+      <SettingsSection
+        id="mimo-chat-roles"
+        title="Quyền sử dụng trợ lý AI"
+        description="Bật hoặc tắt riêng cho từng vai trò. Tắt sẽ ẩn trợ lý AI với vai trò đó kể từ yêu cầu tiếp theo."
+      >
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-4 rounded-lg border bg-background px-4 py-3.5">
+            <div className="min-w-0">
+              <Label htmlFor="mimo-chat-admin" className="text-sm font-medium">
+                Quản trị viên
+              </Label>
+              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                Cho phép quản trị viên dùng trợ lý AI trong giao diện quản trị.
+              </p>
+            </div>
+            <Switch
+              id="mimo-chat-admin"
+              checked={chatAdmin}
+              onCheckedChange={(checked) => void handleRoleToggle('admin', checked)}
+              disabled={togglingRole}
+              aria-label="Bật trợ lý AI cho quản trị viên"
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-lg border bg-background px-4 py-3.5">
+            <div className="min-w-0">
+              <Label htmlFor="mimo-chat-partner" className="text-sm font-medium">
+                Đối tác
+              </Label>
+              <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                Cho phép đối tác dùng trợ lý AI để tra cứu và gửi yêu cầu phê duyệt.
+              </p>
+            </div>
+            <Switch
+              id="mimo-chat-partner"
+              checked={chatPartner}
+              onCheckedChange={(checked) => void handleRoleToggle('partner', checked)}
+              disabled={togglingRole}
+              aria-label="Bật trợ lý AI cho đối tác"
+            />
+          </div>
+        </div>
       </SettingsSection>
 
       {effectiveState ? (

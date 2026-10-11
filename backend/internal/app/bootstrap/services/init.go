@@ -614,6 +614,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		Scope:      llmchat.NewScopeResolver(partnerScopeResolver),
 		Audit:      llmchat.NewAuditSink(asynqClient),
 		MsgLimiter: llmport.NewFixedWindowLimiter(redis.Client, time.Minute, 30, "llmchat:rate:"),
+		RoleGate:   llmchat.NewSettingsRoleGate(settingsConfigService),
 	})
 
 	// Create payroll service (which contains the bulk transfer module)

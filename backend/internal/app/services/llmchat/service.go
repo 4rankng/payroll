@@ -29,6 +29,7 @@ type Service struct {
 	registry   *ToolRegistry
 	executor   *ToolExecutor
 	msgLimit   Limiter
+	roleGate   RoleGate
 	logger     *slog.Logger
 }
 
@@ -46,6 +47,7 @@ type Deps struct {
 	Scope      ScopeResolver
 	Audit      AuditSink
 	MsgLimiter Limiter
+	RoleGate   RoleGate
 }
 
 // NewService constructs the chat service with the full tool manifest.
@@ -64,6 +66,7 @@ func NewService(deps Deps) *Service {
 		registry:   registry,
 		executor:   executor,
 		msgLimit:   deps.MsgLimiter,
+		roleGate:   deps.RoleGate,
 		logger:     observability.GetLogger(),
 	}
 }
@@ -72,6 +75,10 @@ func NewService(deps Deps) *Service {
 func (s *Service) CreateConversation(ctx context.Context, caller Caller, title string) (*domain.ChatConversation, error) {
 	if !RoleAllowed(caller.Role) {
 		return nil, ErrForbiddenRole
+	}
+
+	if s.roleGate != nil && !s.roleGate.ChatEnabled(ctx, caller.Role) {
+		return nil, ErrChatDisabled
 	}
 	conv := &domain.ChatConversation{
 		UserID: caller.UserID,
@@ -88,6 +95,10 @@ func (s *Service) CreateConversation(ctx context.Context, caller Caller, title s
 func (s *Service) ListConversations(ctx context.Context, caller Caller, offset, limit int) ([]*domain.ChatConversation, int64, error) {
 	if !RoleAllowed(caller.Role) {
 		return nil, 0, ErrForbiddenRole
+	}
+
+	if s.roleGate != nil && !s.roleGate.ChatEnabled(ctx, caller.Role) {
+		return nil, 0, ErrChatDisabled
 	}
 	return s.convRepo.ListByUser(ctx, caller.UserID, offset, limit)
 }
@@ -108,6 +119,10 @@ type ConversationView struct {
 func (s *Service) GetConversation(ctx context.Context, caller Caller, id uint, msgOffset, msgLimit int) (*ConversationView, error) {
 	if !RoleAllowed(caller.Role) {
 		return nil, ErrForbiddenRole
+	}
+
+	if s.roleGate != nil && !s.roleGate.ChatEnabled(ctx, caller.Role) {
+		return nil, ErrChatDisabled
 	}
 	conv, err := s.ownedConversation(ctx, caller, id)
 	if err != nil {
@@ -131,6 +146,10 @@ func (s *Service) GetConversation(ctx context.Context, caller Caller, id uint, m
 func (s *Service) SendMessage(ctx context.Context, caller Caller, conversationID uint, content string) (*TurnResult, error) {
 	if !RoleAllowed(caller.Role) {
 		return nil, ErrForbiddenRole
+	}
+
+	if s.roleGate != nil && !s.roleGate.ChatEnabled(ctx, caller.Role) {
+		return nil, ErrChatDisabled
 	}
 
 	// Per-user fixed window on message POST (shared Redis limiter infra).

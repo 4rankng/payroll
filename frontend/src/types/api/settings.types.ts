@@ -82,6 +82,8 @@ export const MIMO_SETTING_KEYS = {
   baseUrl: 'mimo.base_url',
   defaultModel: 'mimo.default_model',
   fallbackModel: 'mimo.fallback_model',
+  chatEnabledAdmin: 'mimo.chat_enabled_admin',
+  chatEnabledPartner: 'mimo.chat_enabled_partner',
 } as const;
 
 /** Allowed MiMo model IDs — mirror backend llm.AllowedModels. */

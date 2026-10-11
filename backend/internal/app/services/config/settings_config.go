@@ -47,6 +47,10 @@ const (
 	SettingKeyMimoBaseURL       = "mimo.base_url"
 	SettingKeyMimoDefaultModel  = "mimo.default_model"
 	SettingKeyMimoFallbackModel = "mimo.fallback_model"
+	// Per-role chat surface toggles (admin-controlled): missing rows mean
+	// ENABLED — the switches exist to turn a role off, not to require opt-in.
+	SettingKeyMimoChatEnabledAdmin   = "mimo.chat_enabled_admin"
+	SettingKeyMimoChatEnabledPartner = "mimo.chat_enabled_partner"
 )
 
 // TransferBankInfo carries the beneficiary identity printed on payroll
@@ -772,6 +776,36 @@ func (s *SettingsConfigService) GetMimoBaseURL(ctx context.Context) string {
 // or retired values (e.g. a leftover mimo-v2.5* row) fall back to the built-in
 // default so stale config can never route production traffic to a retired
 // family.
+// GetMimoChatEnabledForRole reports whether the chat surface is enabled for
+// the role. Missing or unreadable rows default to enabled; unknown roles are
+// always denied. Reads the authoritative path (no cache) so an admin toggle
+// applies on the next request.
+func (s *SettingsConfigService) GetMimoChatEnabledForRole(ctx context.Context, role string) bool {
+	switch role {
+	case "admin":
+		return s.mimoChatEnabled(ctx, SettingKeyMimoChatEnabledAdmin)
+	case "partner":
+		return s.mimoChatEnabled(ctx, SettingKeyMimoChatEnabledPartner)
+	default:
+		return false
+	}
+}
+
+func (s *SettingsConfigService) mimoChatEnabled(ctx context.Context, key string) bool {
+	if s.settingsService == nil {
+		return true
+	}
+	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, key)
+	if err != nil || setting.Value == nil {
+		return true
+	}
+	switch strings.ToLower(strings.TrimSpace(*setting.Value)) {
+	case "false", "0", "off", "no":
+		return false
+	}
+	return true
+}
+
 func (s *SettingsConfigService) GetMimoDefaultModel(ctx context.Context) string {
 	return s.getMimoModel(ctx, SettingKeyMimoDefaultModel, llmport.DefaultModel)
 }
