@@ -97,14 +97,6 @@ func (s *walletService) GetBalance(ctx context.Context) (*wallet.WalletBalance, 
 	}, nil
 }
 
-// syncGuardRecentFailureWindow bounds how long an unreconciled failed payment
-// can block auto-adjustment. Failures inside the window may still be settling
-// at the provider (transient balance); older ones are stale rows whose funds
-// settled long ago — on prod they accumulated for months (126 rows / 354M VND)
-// and froze the sync permanently. The periodic sync self-corrects in both
-// directions afterwards, so the guard only needs to cover the transient.
-const syncGuardRecentFailureWindow = 7 * 24 * time.Hour
-
 func (s *walletService) SyncBalance(ctx context.Context, userID uint64) (*wallet.SyncBalanceResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -132,32 +124,15 @@ func (s *walletService) SyncBalance(ctx context.Context, userID uint64) (*wallet
 		LocalBalance:    localBalance.Available,
 	}
 
-	// Guard: don't auto-adjust when payments are in flight or when failures
-	// from the recent window are still unreconciled. The provider balance is
-	// transient during these states — creating topups would double-count when
-	// payments reach terminal status (completed → Available adjusts via
-	// completedPayments, but the stale SYNC topup remains). Unreconciled
-	// failures older than syncGuardRecentFailureWindow no longer block: their
-	// funds settled long ago, and counting them froze the sync forever.
-	inFlight, err := s.paymentRepo.SumByStatuses(ctx, []string{"pending", "authorised"})
-	if err != nil {
-		return nil, fmt.Errorf("lỗi kiểm tra giao dịch đang xử lý: %w", err)
-	}
-	unreconciledFailed, err := s.paymentRepo.SumUnreconciledByStatusesSince(ctx, []string{"failed"}, clock.Now().Add(-syncGuardRecentFailureWindow))
-	if err != nil {
-		return nil, fmt.Errorf("lỗi kiểm tra giao dịch thất bại chưa đối soát: %w", err)
-	}
-
-	if inFlight > 0 || unreconciledFailed > 0 {
-		s.logger.Info("wallet balance sync skipped: payments in flight or unreconciled failures",
-			"in_flight", inFlight,
-			"unreconciled_failed", unreconciledFailed,
-			"provider_balance", providerBalance,
-			"local_balance", localBalance.Available,
-		)
-		return result, nil
-	}
-
+	// No sync guard (owner decision 2026-10-11): the provider balance is the
+	// source of truth and the sync cron re-converges every 5 minutes, so a
+	// topup written against a transient mid-transaction snapshot is corrected
+	// by the next tick. The old guard (skip while payments are in flight or
+	// failures are unreconciled) assumed syncs were rare and errors permanent;
+	// in practice stale unreconciled rows froze the sync for months and the
+	// balance only moved via the manual dialog. Do not re-introduce blocking
+	// here without an owner decision — noise SYNC rows during payment windows
+	// are accepted.
 	diff := providerBalance - localBalance.Available
 	if diff != 0 {
 		now := clock.Now()

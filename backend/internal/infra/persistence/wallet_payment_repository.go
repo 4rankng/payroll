@@ -209,28 +209,6 @@ func (r *walletPaymentRepository) SumUnreconciledByStatuses(ctx context.Context,
 	return total, nil
 }
 
-func (r *walletPaymentRepository) SumUnreconciledByStatusesSince(ctx context.Context, statuses []string, since time.Time) (int64, error) {
-	placeholders := make([]string, len(statuses))
-	args := make([]any, 0, len(statuses)+1)
-	for i, s := range statuses {
-		placeholders[i] = "?"
-		args = append(args, s)
-	}
-
-	query := fmt.Sprintf(
-		"SELECT COALESCE(SUM(requested_amount + fee), 0) FROM wallet_payments WHERE status IN (%s) AND reconciled_at IS NULL AND created_at >= ?",
-		strings.Join(placeholders, ","),
-	)
-	args = append(args, since)
-
-	var total int64
-	err := r.db.QueryRowContext(ctx, query, args...).Scan(&total)
-	if err != nil {
-		return 0, fmt.Errorf("failed to sum recent unreconciled wallet payments by statuses: %w", err)
-	}
-	return total, nil
-}
-
 func (r *walletPaymentRepository) HasPendingForRecipient(ctx context.Context, accountNo, bank, provider string) (bool, error) {
 	var exists bool
 	err := r.db.QueryRowContext(ctx,

@@ -27,12 +27,6 @@ type WalletPaymentRepository interface {
 	List(ctx context.Context, filter WalletPaymentFilter) ([]*WalletPayment, int64, error)
 	SumByStatuses(ctx context.Context, statuses []string) (int64, error)
 	SumUnreconciledByStatuses(ctx context.Context, statuses []string) (int64, error)
-	// SumUnreconciledByStatusesSince sums unreconciled payments in the given
-	// statuses created at or after `since`. The balance-sync guard uses it so
-	// only recent failures — whose funds may still be settling at the
-	// provider — block auto-adjustment; months-old unreconciled rows must
-	// not freeze the sync forever.
-	SumUnreconciledByStatusesSince(ctx context.Context, statuses []string, since time.Time) (int64, error)
 	// GetCompletedUnsettled returns completed wallet payments whose linked
 	// advance_payment_requests have NOT yet been ledger-settled
 	// (settlement_transaction_id IS NULL). Payments are bucketed by completion

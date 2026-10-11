@@ -43,37 +43,26 @@ type fakeSyncPaymentRepo struct {
 	rows []fakePaymentRow
 }
 
-func (f *fakeSyncPaymentRepo) sumWhere(statuses []string, unreconciledOnly bool, since *time.Time) int64 {
+func (f *fakeSyncPaymentRepo) sumWhere(statuses []string, unreconciledOnly bool) int64 {
 	want := map[string]bool{}
 	for _, s := range statuses {
 		want[s] = true
 	}
 	var total int64
 	for _, r := range f.rows {
-		if !want[r.status] {
-			continue
+		if want[r.status] && (!unreconciledOnly || !r.reconciled) {
+			total += r.amount
 		}
-		if unreconciledOnly && r.reconciled {
-			continue
-		}
-		if since != nil && r.createdAt.Before(*since) {
-			continue
-		}
-		total += r.amount
 	}
 	return total
 }
 
 func (f *fakeSyncPaymentRepo) SumByStatuses(_ context.Context, statuses []string) (int64, error) {
-	return f.sumWhere(statuses, false, nil), nil
+	return f.sumWhere(statuses, false), nil
 }
 
 func (f *fakeSyncPaymentRepo) SumUnreconciledByStatuses(_ context.Context, statuses []string) (int64, error) {
-	return f.sumWhere(statuses, true, nil), nil
-}
-
-func (f *fakeSyncPaymentRepo) SumUnreconciledByStatusesSince(_ context.Context, statuses []string, since time.Time) (int64, error) {
-	return f.sumWhere(statuses, true, &since), nil
+	return f.sumWhere(statuses, true), nil
 }
 
 type fakeSyncRegistry struct {
@@ -100,21 +89,46 @@ func newSyncTestService(topupSum, providerBalance int64, rows ...fakePaymentRow)
 
 // ── Tests ──────────────────────────────────────────────────────────────────
 
-func TestSyncBalanceAdjustsDespiteStaleUnreconciledFailures(t *testing.T) {
-	// Prod regression (2026-10): 126 unreconciled failed rows dating back to
-	// June froze the 5-minute sync forever — the provider showed 1,070,300
-	// more than local and only the manual dialog could reconcile. Failures
-	// older than the guard window must not block the auto-adjustment.
-	stale := fakePaymentRow{status: "failed", amount: 354_071_140, createdAt: clock.Now().AddDate(0, 0, -30)}
-	svc, topups := newSyncTestService(100_000_000, 101_070_300, stale)
+// SyncBalance is unguarded by design (owner decision 2026-10-11): the provider
+// balance is the source of truth and the 5-minute cron re-converges, so
+// nothing — in-flight payments or unreconciled failures, fresh or stale — may
+// block the adjustment. The 2026-10 prod incident (126 stale unreconciled rows
+// freezing the sync for months) is the reason these tests exist.
+
+func TestSyncBalanceAdjustsDuringInFlightPayments(t *testing.T) {
+	inFlight := fakePaymentRow{status: "authorised", amount: 5_000_000, createdAt: clock.Now()}
+	svc, topups := newSyncTestService(100_000_000, 101_070_300, inFlight)
 
 	result, err := svc.SyncBalance(context.Background(), 1)
 	if err != nil {
 		t.Fatalf("SyncBalance: %v", err)
 	}
 	if !result.Adjusted {
-		t.Fatalf("expected auto-adjust with only stale failures, got adjusted=%v provider=%d local=%d",
-			result.Adjusted, result.ProviderBalance, result.LocalBalance)
+		t.Fatalf("in-flight payments must not block the adjustment, got adjusted=%v", result.Adjusted)
+	}
+	// local = 100M topups − 5M in-flight = 95M; provider 101,070,300 → +6,070,300.
+	if len(topups.created) != 1 {
+		t.Fatalf("expected 1 sync topup, got %d", len(topups.created))
+	}
+	if got := topups.created[0].Amount; got != 6_070_300 {
+		t.Fatalf("topup amount = %d, want 6070300", got)
+	}
+	if result.LocalBalance != 101_070_300 {
+		t.Fatalf("refreshed local balance = %d, want 101070300", result.LocalBalance)
+	}
+}
+
+func TestSyncBalanceAdjustsDespiteUnreconciledFailures(t *testing.T) {
+	stale := fakePaymentRow{status: "failed", amount: 354_071_140, createdAt: clock.Now().AddDate(0, 0, -30)}
+	recent := fakePaymentRow{status: "failed", amount: 2_499_000, createdAt: clock.Now().AddDate(0, 0, -1)}
+	svc, topups := newSyncTestService(100_000_000, 101_070_300, stale, recent)
+
+	result, err := svc.SyncBalance(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("SyncBalance: %v", err)
+	}
+	if !result.Adjusted {
+		t.Fatal("unreconciled failures (stale or recent) must not block the adjustment")
 	}
 	if len(topups.created) != 1 {
 		t.Fatalf("expected 1 sync topup, got %d", len(topups.created))
@@ -124,39 +138,6 @@ func TestSyncBalanceAdjustsDespiteStaleUnreconciledFailures(t *testing.T) {
 	}
 	if result.LocalBalance != 101_070_300 {
 		t.Fatalf("refreshed local balance = %d, want 101070300", result.LocalBalance)
-	}
-}
-
-func TestSyncBalanceSkipsWhenRecentFailureUnreconciled(t *testing.T) {
-	stale := fakePaymentRow{status: "failed", amount: 354_071_140, createdAt: clock.Now().AddDate(0, 0, -30)}
-	recent := fakePaymentRow{status: "failed", amount: 2_499_000, createdAt: clock.Now().AddDate(0, 0, -1)}
-	svc, topups := newSyncTestService(100_000_000, 101_070_300, stale, recent)
-
-	result, err := svc.SyncBalance(context.Background(), 1)
-	if err != nil {
-		t.Fatalf("SyncBalance: %v", err)
-	}
-	if result.Adjusted {
-		t.Fatal("a recent unreconciled failure must block the adjustment")
-	}
-	if len(topups.created) != 0 {
-		t.Fatalf("no topup expected while a recent failure is unreconciled, got %d", len(topups.created))
-	}
-}
-
-func TestSyncBalanceSkipsWhenPaymentsInFlight(t *testing.T) {
-	inFlight := fakePaymentRow{status: "authorised", amount: 5_000_000, createdAt: clock.Now()}
-	svc, topups := newSyncTestService(100_000_000, 101_070_300, inFlight)
-
-	result, err := svc.SyncBalance(context.Background(), 1)
-	if err != nil {
-		t.Fatalf("SyncBalance: %v", err)
-	}
-	if result.Adjusted {
-		t.Fatal("in-flight payments must block the adjustment")
-	}
-	if len(topups.created) != 0 {
-		t.Fatalf("no topup expected while payments are in flight, got %d", len(topups.created))
 	}
 }
 
