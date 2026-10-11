@@ -10,6 +10,10 @@ created: 2026-10-11
 
 # MiMo Assistant — Approval Engine, Sao Kê Automation & AI Chatbot
 
+## Status 2026-10-11 (all phases implemented; Excel dry-run gated)
+
+Phases 1–7 implemented and live on dev: engine, cards/decisions, sao kê automation (background flash draft → custom-body send → reject-redraft loop), chat with tools + per-role toggles, screenshot vision diagnosis, daily insight digest. Extra rulings shipped mid-build: per-role chatbot switches (settings), no internal IDs anywhere — every surface shows requestor name / summary / approve-effect, and the chat tool feeds the model labels only. api-test 378/0 failures. The ONE remaining gated item: bcc_import dry-run extraction (phase 6) — 20-file payroll-feeding pipeline, equivalence-suite hard gate stands.
+
 ## Overview
 
 Adds an AI-assisted operations layer to the payroll app without touching deterministic payroll math. Three deliverables: (1) a durable **approval-request engine** (state machine + reject-with-note → scheduled retry → escalation), (2) **sao kê email automation** (LLM-drafted, human-approved, idempotently sent via the existing email worker), (3) a **chatbot** for Admin+Partner (Q&A, import-failure diagnosis with Excel/screenshot attachments, request filing). LLM writes language and calls tools; all numbers come from deterministic services (boundary of ADR-010 preserved).
