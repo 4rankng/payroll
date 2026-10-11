@@ -25,6 +25,8 @@ type WalletService interface {
 	GetBalance(ctx context.Context) (*WalletBalance, error)
 
 	// SyncBalance fetches provider balance, compares with local, auto-adjusts if mismatch.
+	// The adjustment is skipped while payments are in flight or while failed
+	// payments from the recent window (7 days) are still unreconciled.
 	SyncBalance(ctx context.Context, userID uint64) (*SyncBalanceResult, error)
 
 	// Unified transaction view
