@@ -19,6 +19,7 @@ type View struct {
 }
 
 type payloadForView struct {
+	Ask            string   `json:"summary"`
 	EmployeeName   string   `json:"employeeName"`
 	ProjectName    string   `json:"projectName"`
 	Position       string   `json:"position"`
@@ -76,6 +77,14 @@ func BuildView(req *domain.ApprovalRequest, requester *domain.User) View {
 			v.Summary += fmt.Sprintf(" — lý do: %s", reason)
 		}
 		v.ApproveEffect = "Quyết định huỷ bảng công được ghi nhận kèm lịch sử kiểm toán (chưa có bước thực thi tự động)"
+	case domain.ApprovalTypeGeneralRequest:
+		// The ask IS the summary — show what the person actually wants.
+		ask := strings.TrimSpace(p.Ask)
+		if ask == "" {
+			ask = "(không có mô tả)"
+		}
+		v.Summary = ask
+		v.ApproveEffect = "Quản trị viên xem và quyết định trực tiếp — phê duyệt ghi nhận quyết định, việc thực thi thủ công."
 	default:
 		v.Summary = domain.ApprovalTypeLabelVN(req.Type)
 		v.ApproveEffect = "Thao tác được ghi nhận kèm lịch sử kiểm toán"

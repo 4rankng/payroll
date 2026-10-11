@@ -178,6 +178,40 @@ func runApprovalRequests(ctx context.Context, tc *ToolContext, _ json.RawMessage
 	return strings.TrimSpace(b.String()), nil
 }
 
+func runListEmployees(ctx context.Context, tc *ToolContext, raw json.RawMessage) (string, error) {
+	var args struct {
+		Limit int `json:"limit"`
+	}
+	if err := parseArgs(raw, &args); err != nil {
+		return "", err
+	}
+	employees, total, err := tc.Store.EmployeeDirectory(ctx, tc.Scope, args.Limit)
+	if err != nil {
+		return "", err
+	}
+	if total == 0 {
+		return "Không có nhân viên nào trong phạm vi của bạn.", nil
+	}
+	names := make([]string, 0, len(employees))
+	for _, e := range employees {
+		if e == nil {
+			continue
+		}
+		label := e.FullName
+		if label == "" {
+			label = e.EmployeeCode
+		}
+		if label != "" {
+			names = append(names, label)
+		}
+	}
+	shown := strings.Join(names, ", ")
+	if total > int64(len(names)) {
+		return fmt.Sprintf("Tổng cộng %d nhân viên trong phạm vi của bạn. Một số người: %s…", total, shown), nil
+	}
+	return fmt.Sprintf("Tổng cộng %d nhân viên trong phạm vi của bạn: %s.", total, shown), nil
+}
+
 func runAdvanceSummary(ctx context.Context, tc *ToolContext, raw json.RawMessage) (string, error) {
 	var args monthArgs
 	if err := parseArgs(raw, &args); err != nil {

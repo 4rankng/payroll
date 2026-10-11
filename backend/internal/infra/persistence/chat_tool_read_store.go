@@ -210,3 +210,33 @@ func (s *ChatToolReadStore) AdvanceSummary(ctx context.Context, scope domain.Cha
 	out.FailedRequests = req.FailedRequests
 	return &out, nil
 }
+
+// EmployeeDirectory lists employees visible in the caller's scope with the
+// total count — the read-model mirror of the partner employees endpoint.
+// Admin sees everyone; a partner sees employees attached to their projects;
+// an empty partner scope yields zero rows (fail closed).
+func (s *ChatToolReadStore) EmployeeDirectory(ctx context.Context, scope domain.ChatDataScope, limit int) ([]*domain.ChatEmployeeEntry, int64, error) {
+	if limit <= 0 || limit > 50 {
+		limit = 10
+	}
+	where, args := chatScopeSQL("pe", scope)
+	db := s.DB.WithContext(ctx)
+	var total int64
+	if err := db.Raw(
+		"SELECT COUNT(DISTINCT pe.employee_id) FROM project_employees pe WHERE pe.deleted_at IS NULL AND "+where,
+		args...,
+	).Scan(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	rows := []*domain.ChatEmployeeEntry{}
+	listArgs := append(append([]interface{}{}, args...), limit)
+	if err := db.Raw(
+		"SELECT DISTINCT pe.employee_id AS id, e.fullname AS full_name, e.cccd AS employee_code "+
+			"FROM project_employees pe JOIN employees e ON e.id = pe.employee_id AND e.deleted_at IS NULL "+
+			"WHERE pe.deleted_at IS NULL AND "+where+" LIMIT ?",
+		listArgs...,
+	).Scan(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+	return rows, total, nil
+}

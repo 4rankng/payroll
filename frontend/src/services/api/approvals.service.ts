@@ -2,6 +2,7 @@ import { apiClient, buildQueryString } from './client';
 import { API_ENDPOINTS } from '@/config/api.config';
 import type {
   ApprovalListFilters,
+  ApprovalPagination,
   ApprovalListResult,
   ApprovalRequest,
   FileApprovalData,
@@ -39,8 +40,11 @@ class ApprovalsService {
     const response = await apiClient.get<ApprovalEnvelope>(url);
     const raw = unwrap<ApprovalRequest[]>(response.data);
     const items = Array.isArray(raw) ? raw : raw ? [raw] : [];
-    const body = response.data as { pagination?: ApprovalListResult['pagination'] } | undefined;
-    return { items, pagination: body?.pagination ?? null };
+    // apiClient resolves to the payload; pagination rides on the client
+    // result itself, NOT inside data — reading it from data silently nulls
+    // every count (the Tong Quan row needs totalRecords).
+    const paginated = response as unknown as { pagination?: ApprovalPagination };
+    return { items, pagination: paginated.pagination ?? null };
   }
 
   async getApproval(id: number): Promise<ApprovalRequest> {

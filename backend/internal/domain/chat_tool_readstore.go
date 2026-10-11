@@ -82,4 +82,13 @@ type ChatToolReadStore interface {
 	// AdvanceSummary aggregates advance payments for the scope. month is
 	// "YYYY-MM" or "" for the current month.
 	AdvanceSummary(ctx context.Context, scope ChatDataScope, month string) (*ChatAdvanceSummary, error)
+	// EmployeeDirectory lists scope-visible employees with the total count.
+	EmployeeDirectory(ctx context.Context, scope ChatDataScope, limit int) ([]*ChatEmployeeEntry, int64, error)
+}
+
+// ChatEmployeeEntry is one employee row in the chat employee-directory tool.
+type ChatEmployeeEntry struct {
+	ID           uint   `json:"id"`
+	FullName     string `json:"full_name"`
+	EmployeeCode string `json:"employee_code"`
 }

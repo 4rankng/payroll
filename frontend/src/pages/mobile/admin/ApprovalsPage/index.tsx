@@ -255,15 +255,6 @@ const ApprovalsPageMobile = () => {
                   >
                     Từ chối
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-11 flex-1 text-red-700 hover:bg-red-50"
-                    disabled={activeMutation}
-                    onClick={() => setModal({ mode: 'cancel', request: item })}
-                  >
-                    Huỷ
-                  </Button>
                 </div>
               ) : null}
             </article>

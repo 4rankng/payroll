@@ -282,16 +282,6 @@ const ApprovalsPage = () => {
                     >
                       Từ chối
                     </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-9 text-red-700 hover:bg-red-50"
-                      disabled={activeMutation}
-                      onClick={() => setModal({ mode: 'cancel', request: item })}
-                    >
-                      Huỷ
-                    </Button>
                   </div>
                 ) : null}
               </div>

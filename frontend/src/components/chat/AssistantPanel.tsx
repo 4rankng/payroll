@@ -122,7 +122,7 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
         side={isMobile ? 'bottom' : 'right'}
         aria-label="Trợ lý AI"
         className={cn(
-          'flex flex-col gap-0 p-0',
+          'flex flex-col gap-0 border-0 p-0',
           isMobile ? 'h-[85dvh] rounded-t-2xl' : 'w-[26rem] sm:max-w-[26rem]'
         )}
       >
@@ -238,13 +238,13 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
             placeholder="Nhập câu hỏi…"
             aria-label="Nội dung tin nhắn"
             disabled={sendMessage.isPending}
-            className="max-h-32 h-11 flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="max-h-32 h-9 flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
-          <label className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-input bg-background text-foreground transition-colors hover:bg-muted/50" aria-label="Đính kèm ảnh">
+          <label className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-input bg-background text-foreground transition-colors hover:bg-muted/50" aria-label="Đính kèm ảnh">
             {uploadAttachment.isPending ? (
               <Loader2 aria-hidden="true" className="size-4 animate-spin" />
             ) : (
-              <Paperclip aria-hidden="true" className="size-5" />
+              <Paperclip aria-hidden="true" className="size-4" />
             )}
             <input
               type="file"
@@ -261,14 +261,14 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
           <Button
             type="submit"
             size="icon"
-            className="h-11 w-11 shrink-0"
+            className="h-9 w-9 shrink-0"
             aria-label="Gửi"
             disabled={sendMessage.isPending || input.trim().length === 0}
           >
             {sendMessage.isPending ? (
               <Loader2 aria-hidden="true" className="size-4 animate-spin" />
             ) : (
-              <SendHorizontal aria-hidden="true" className="size-5" />
+              <SendHorizontal aria-hidden="true" className="size-4" />
             )}
           </Button>
         </form>

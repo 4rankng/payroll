@@ -85,6 +85,14 @@ func NewToolRegistry() *ToolRegistry {
 			run:         runApprovalRequests,
 		},
 		{
+			Name:        "list_employees",
+			Description: "Danh sách nhân viên trong phạm vi của bạn (đối tác: nhân viên các dự án được gán), kèm tổng số. Dùng khi người dùng hỏi về nhân viên/số lượng nhân viên.",
+			Parameters:  json.RawMessage(`{"type":"object","properties":{"limit":{"type":"integer","description":"Số dòng hiển thị (mặc định 10, tối đa 50)"}},"additionalProperties":false}`),
+			Kind:        ToolKindRead,
+			Roles:       []string{RoleAdmin, RolePartner},
+			run:         runListEmployees,
+		},
+		{
 			Name:        "get_advance_summary",
 			Description: "Tổng hợp ứng lương theo phạm vi của người dùng: quỹ lương, hạn mức, số tiền đã yêu cầu/đã chi, số yêu cầu theo trạng thái. Tham số month dạng YYYY-MM.",
 			Parameters:  json.RawMessage(`{"type":"object","properties":{"month":{"type":"string","description":"Tháng YYYY-MM"}},"additionalProperties":false}`),
