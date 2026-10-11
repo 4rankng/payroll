@@ -27,13 +27,17 @@ const (
 	// ApprovalTypeVoidTimesheet requests voiding a timesheet. The actual void
 	// ships in a later phase; approving records the decision only.
 	ApprovalTypeVoidTimesheet ApprovalRequestType = "void_timesheet"
+	// ApprovalTypeGeneralRequest is the chat assistant's catch-all: permission
+	// grants, config asks, anything needing an admin decision without a
+	// dedicated flow. Approving records the decision; execution stays manual.
+	ApprovalTypeGeneralRequest ApprovalRequestType = "general_request"
 )
 
 // ValidApprovalRequestType reports whether t is a known request type.
 func ValidApprovalRequestType(t ApprovalRequestType) bool {
 	switch t {
 	case ApprovalTypeSendSaoKeEmail, ApprovalTypeSendPayrollEmail,
-		ApprovalTypeSendReminder, ApprovalTypeVoidTimesheet:
+		ApprovalTypeSendReminder, ApprovalTypeVoidTimesheet, ApprovalTypeGeneralRequest:
 		return true
 	}
 	return false

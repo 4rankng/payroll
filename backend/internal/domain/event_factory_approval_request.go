@@ -36,6 +36,8 @@ func ApprovalTypeLabelVN(t ApprovalRequestType) string {
 		return "gửi email bảng lương"
 	case ApprovalTypeSendReminder:
 		return "gửi nhắc nhở"
+	case ApprovalTypeGeneralRequest:
+		return "yêu cầu khác cần quản trị viên"
 	case ApprovalTypeVoidTimesheet:
 		return "đề xuất huỷ bảng công"
 	}

@@ -37,6 +37,11 @@ type VoidTimesheetParams struct {
 
 // --- Server-derived payloads (stored on the request row) --------------------
 
+// GeneralRequestParams carries the requester's free-text ask (chat "other").
+type GeneralRequestParams struct {
+	Summary string `json:"summary"`
+}
+
 // SaoKeEmailPayload is the server-derived payload for send_sao_ke_email.
 type SaoKeEmailPayload struct {
 	ReportAtDate   string   `json:"reportAtDate"`

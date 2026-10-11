@@ -32,6 +32,7 @@ func NewPayloadBuilderRegistry(cycle CycleReader, projectUsers ProjectUserDirect
 	r.builders[domain.ApprovalTypeSendPayrollEmail] = buildStatementEmailPayload(cycle, projectUsers, users, "bang-luong")
 	r.builders[domain.ApprovalTypeSendReminder] = buildReminderPayload(projectUsers, users)
 	r.builders[domain.ApprovalTypeVoidTimesheet] = buildVoidTimesheetPayload(timesheets, employees, projects)
+	r.builders[domain.ApprovalTypeGeneralRequest] = buildGeneralRequestPayload()
 	return r
 }
 
@@ -297,5 +298,24 @@ func dayTypeLabel(date time.Time) string {
 		return "Thứ bảy"
 	default:
 		return "Ngày thường"
+	}
+}
+
+// buildGeneralRequestPayload snapshots the chat "other" ask.
+func buildGeneralRequestPayload() BuildFunc {
+	return func(_ context.Context, raw json.RawMessage) (*BuiltPayload, error) {
+		var params GeneralRequestParams
+		if err := decodeParams(raw, &params); err != nil {
+			return nil, err
+		}
+		summary := strings.TrimSpace(params.Summary)
+		if summary == "" {
+			return nil, domain.NewValidationError("cần mô tả nội dung yêu cầu")
+		}
+		return &BuiltPayload{
+			Payload:  map[string]any{"summary": summary},
+			CycleKey: summary,
+			Title:    "Yêu cầu khác: " + summary,
+		}, nil
 	}
 }

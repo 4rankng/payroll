@@ -35,7 +35,8 @@ const (
 // partners may request timesheet corrections, never the send_* family — an
 // approved partner-filed send_* would be a relay through the company mailbox.
 var partnerFileableTypes = map[domain.ApprovalRequestType]bool{
-	domain.ApprovalTypeVoidTimesheet: true,
+	domain.ApprovalTypeVoidTimesheet:  true,
+	domain.ApprovalTypeGeneralRequest: true,
 }
 
 // ErrAlreadyFiled is returned when the (type, cycle) idempotency key already

@@ -7,7 +7,28 @@ import { cn } from '@/lib/utils';
 import { useChatConversation, useEnsureChatConversation, useSendChatMessage, useUploadChatAttachment } from '@/hooks/api/useChat';
 import type { ChatMessage } from '@/services/api/chat.service';
 import { useIsMobile } from '@/hooks/useBreakpoint';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+
+// Internal paths the assistant may deep-link to. Anything outside this list
+// (a model-invented path like /admin/sao-ke) stays plain text.
+const LINKABLE = /^\/(admin|partner|employee)\/(timesheet|approvals|payment-history|advance-payments|wallet|settings|dashboard|employees|projects|users)(\/[a-z0-9-]+)*$/;
+
+const splitPaths = (text: string): Array<{ path?: string; text: string }> => {
+  const out: Array<{ path?: string; text: string }> = [];
+  const re = /\/(admin|partner|employee)\/[a-z0-9\/-]+/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    if (LINKABLE.test(m[0])) {
+      if (m.index > last) out.push({ text: text.slice(last, m.index) });
+      out.push({ text: m[0], path: m[0] });
+      last = m.index + m[0].length;
+    }
+  }
+  if (last < text.length) out.push({ text: text.slice(last) });
+  return out;
+};
 
 const QUICK_ACTIONS = [
   'Sao kê tháng này thế nào?',
@@ -24,6 +45,7 @@ interface AssistantPanelProps {
  * composer. The reply polls in while the panel is open. */
 export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const [conversationId, setConversationId] = useState<number>(0);
   const [input, setInput] = useState('');
   const [pendingImage, setPendingImage] = useState<{ id: number; name: string } | null>(null);
@@ -146,7 +168,25 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
                   : 'mr-auto border bg-background text-foreground'
               )}
             >
-              {message.content}
+              {message.role === 'user'
+                ? message.content
+                : splitPaths(message.content).map((part, i) =>
+                    part.path ? (
+                      <button
+                        key={i}
+                        type="button"
+                        className="font-medium text-indigo-600 underline underline-offset-2 hover:text-indigo-800"
+                        onClick={() => {
+                          onClose();
+                          navigate(part.path!);
+                        }}
+                      >
+                        {part.text}
+                      </button>
+                    ) : (
+                      <span key={i}>{part.text}</span>
+                    )
+                  )}
             </div>
           ))}
 

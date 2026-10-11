@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"api-server/internal/app/services/approval"
 	"api-server/internal/domain"
@@ -30,6 +31,8 @@ func chatTypeToDomain(t string) (domain.ApprovalRequestType, bool) {
 		return domain.ApprovalTypeSendReminder, true
 	case "void_timesheet":
 		return domain.ApprovalTypeVoidTimesheet, true
+	case "other":
+		return domain.ApprovalTypeGeneralRequest, true
 	}
 	return "", false
 }
@@ -63,6 +66,11 @@ func (a *ApprovalEngine) FileRequest(ctx context.Context, req ApprovalFileReques
 // required param is a user-facing error, not a guess.
 func buildFileParams(t domain.ApprovalRequestType, req ApprovalFileRequest) (json.RawMessage, error) {
 	switch t {
+	case domain.ApprovalTypeGeneralRequest:
+		if strings.TrimSpace(req.Summary) == "" {
+			return nil, errors.New("cần mô tả nội dung yêu cầu")
+		}
+		return json.Marshal(map[string]any{"summary": req.Summary})
 	case domain.ApprovalTypeVoidTimesheet:
 		if req.TimesheetID == nil {
 			return nil, errors.New("cần cung cấp ID timesheet (timesheet_id) để gửi yêu cầu void")
