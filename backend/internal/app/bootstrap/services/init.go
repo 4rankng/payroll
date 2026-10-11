@@ -23,6 +23,7 @@ import (
 	infraServices "api-server/internal/app/services/infrastructure"
 	"api-server/internal/app/services/integration"
 	"api-server/internal/app/services/ledger"
+	llmsvc "api-server/internal/app/services/llm"
 	"api-server/internal/app/services/loan"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/otp"
@@ -48,6 +49,7 @@ import (
 	"api-server/internal/infra/disbursement/onepay"
 	"api-server/internal/infra/email"
 	"api-server/internal/infra/events"
+	llmport "api-server/internal/infra/llm"
 	"api-server/internal/infra/persistence"
 	"api-server/internal/infra/persistence/repositories"
 	"api-server/internal/infra/storage"
@@ -101,6 +103,7 @@ type Services struct {
 	EmployeeNotifier                  notification.EmployeeNotifier
 	Settings                          *config.SettingsService
 	SettingsConfig                    *config.SettingsConfigService
+	LLM                               *llmsvc.Service
 	ExcelConverter                    *reporting.ExcelConverterService
 	Asset                             *asset.AssetService
 	Cache                             domain.CacheServiceUseCase
@@ -164,6 +167,18 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// cache immediately: statement emails and Excel exports read the beneficiary
 	// bank details from it, and a stale value would print the previous account.
 	settingsService.SetConfigCacheInvalidator(settingsConfigService)
+
+	// MiMo LLM foundation. Shared-key guards bound the blast radius of a
+	// runaway loop across the future consumers (drafting, chat, vision,
+	// digest): 4 concurrent calls for the key as a whole, 20 calls/minute per
+	// user (Redis fixed window). The service depends only on the llm.Client
+	// port — the concrete OpenAI-compatible client is built per call from the
+	// admin-managed settings (key rotation applies on the next request).
+	llmGuard := llmport.NewGuard(
+		llmport.NewSemaphore(4),
+		llmport.NewFixedWindowLimiter(redis.Client, time.Minute, 20, "llm:rate:"),
+	)
+	llmService := llmsvc.NewService(settingsConfigService, llmGuard, nil)
 	excelConverterService := reporting.NewExcelConverterService()
 	pdfService := reporting.NewPDFService("fonts/Roboto-Regular.ttf")
 	fileStorage := storage.NewLocalFileStorage(cfg.Asset.StoragePath, cfg.Asset.BaseURL)
@@ -785,6 +800,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		EmployeeNotifier:                  employeeNotificationService,
 		Settings:                          settingsService,
 		SettingsConfig:                    settingsConfigService,
+		LLM:                               llmService,
 		ExcelConverter:                    excelConverterService,
 		Asset:                             assetService,
 		Cache:                             cacheService,

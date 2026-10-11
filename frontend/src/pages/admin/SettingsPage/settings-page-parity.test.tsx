@@ -91,6 +91,9 @@ vi.mock('@/components/settings/SendNotificationComposer', () => ({
 vi.mock('@/components/settings/ZaloConnectionSection', () => ({
   ZaloConnectionSection: () => <div>Quy trình cấu hình Zalo ZNS</div>,
 }));
+vi.mock('@/components/settings/MimoConnectionSection', () => ({
+  MimoConnectionSection: () => <div>Cấu hình trợ lý AI MiMo</div>,
+}));
 vi.mock('@/components/settings/AdBannerSection', () => ({
   AdBannerSection: () => <div>Chiến dịch quảng cáo</div>,
 }));
@@ -198,6 +201,17 @@ describe.each([
 
     expect(screen.getByRole('tab', { name: /Zalo ZNS/ })).toHaveAttribute('data-state', 'active');
     expect(screen.getByText('Quy trình cấu hình Zalo ZNS')).toBeInTheDocument();
+  });
+
+  it('keeps the MiMo AI assistant settings available', () => {
+    render(
+      <MemoryRouter initialEntries={['/admin/settings?tab=mimo']}>
+        <PageComponent />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('tab', { name: /Trợ lý AI/ })).toHaveAttribute('data-state', 'active');
+    expect(screen.getByText('Cấu hình trợ lý AI MiMo')).toBeInTheDocument();
   });
 
   it('keeps the ad campaign management available', () => {

@@ -65,6 +65,21 @@ export const useCreateSetting = () => {
   });
 };
 
+/**
+ * useTestMimoConnection — validates the sealed MiMo API key against the MiMo
+ * API (Admin only). Provider-side failure is a designed outcome of a
+ * connection test and resolves with success=false + a stable outcome code, so
+ * callers render one designed Vietnamese error state per code; only transport
+ * failures throw. Global error toasts are suppressed (meta.skipGlobalError) —
+ * the section owns the messaging.
+ */
+export const useTestMimoConnection = () => {
+  return useMutation({
+    mutationFn: () => settingsService.testMimoConnection(),
+    meta: { skipGlobalError: true },
+  });
+};
+
 // Get multiple settings by keys. Missing keys (never-configured rows) resolve
 // to undefined instead of failing the whole query. A total failure is different:
 // it means the API or the session is unavailable, and silently rendering empty

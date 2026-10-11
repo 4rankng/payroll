@@ -25,6 +25,7 @@ import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementF
 import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
 import { SendNotificationComposer } from '@/components/settings/SendNotificationComposer';
 import { ZaloConnectionSection } from '@/components/settings/ZaloConnectionSection';
+import { MimoConnectionSection } from '@/components/settings/MimoConnectionSection';
 import { AdBannerSection } from '@/components/settings/AdBannerSection';
 import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
 
@@ -135,6 +136,10 @@ const SettingsPage = () => {
 
         <TabsContent value={SETTINGS_TABS.zalo} className="mt-0">
           <ZaloConnectionSection />
+        </TabsContent>
+
+        <TabsContent value={SETTINGS_TABS.mimo} className="mt-0">
+          <MimoConnectionSection />
         </TabsContent>
 
         <TabsContent value={SETTINGS_TABS.ads} className="mt-0">

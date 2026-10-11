@@ -324,6 +324,9 @@ export const API_ENDPOINTS = {
     base: '/settings',
     byId: (id: number) => `/settings/${id}`,
     byKey: (key: string) => `/settings/key/${key}`,
+    // Validates the sealed MiMo API key against the MiMo API and reports
+    // latency. Admin only (server-side enforced); never returns the key.
+    mimoTestConnection: '/settings/mimo/test-connection',
   },
   adBanners: {
     base: '/ad-banners',

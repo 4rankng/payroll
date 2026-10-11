@@ -69,3 +69,36 @@ type ListSettingsResponse struct {
 type GetActiveSettingsResponse struct {
 	Settings []SettingResponse `json:"settings"`
 }
+
+// Mimo test-connection outcome codes. These drive the designed Vietnamese
+// error states in the admin settings UI (missing key / invalid key / timeout /
+// rate limited / unavailable) — keep them stable.
+const (
+	MimoTestOK          = "ok"
+	MimoTestMissingKey  = "missing_key"
+	MimoTestInvalidKey  = "invalid_key"
+	MimoTestTimeout     = "timeout"
+	MimoTestRateLimited = "rate_limited"
+	MimoTestUnavailable = "unavailable"
+	MimoTestBusy        = "busy"
+	MimoTestError       = "error"
+)
+
+// MimoTestConnectionResponse is the result of POST
+// /api/v1/settings/mimo/test-connection. Failure is a designed outcome of a
+// connection test (bad key, provider outage, timeout), so it is reported in
+// the payload with success=false + a stable code + Vietnamese message instead
+// of only as an HTTP error — the admin UI renders one panel per code.
+type MimoTestConnectionResponse struct {
+	Success bool `json:"success"`
+	// Code is one of the MimoTest* outcome codes above.
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	// LatencyMS is the provider round-trip latency on success.
+	LatencyMS int64 `json:"latency_ms,omitempty"`
+	// ModelCount is how many models the provider reports.
+	ModelCount int `json:"model_count,omitempty"`
+	// DefaultModelPresent reports whether the configured default model is
+	// offered by the provider (early warning for a model-family rename).
+	DefaultModelPresent bool `json:"default_model_present,omitempty"`
+}

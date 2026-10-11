@@ -283,6 +283,12 @@ func validateBusinessSetting(setting *domain.Settings) error {
 	case SettingKeyWalletBalanceAlert:
 		_, err := parseWalletBalanceAlertThreshold(setting)
 		return err
+	case SettingKeyMimoAPIKey:
+		return parseMimoAPIKey(setting)
+	case SettingKeyMimoBaseURL:
+		return parseMimoBaseURL(setting)
+	case SettingKeyMimoDefaultModel, SettingKeyMimoFallbackModel:
+		return parseMimoModel(setting)
 	default:
 		return nil
 	}

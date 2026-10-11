@@ -97,6 +97,11 @@ func setupSettingsRoutes(v1 *gin.RouterGroup, container *Container) {
 		settings.POST("", container.Middleware.Authorization.Authorize(), container.Handlers.Settings.CreateSetting)
 		settings.PUT("/:id", container.Middleware.Authorization.Authorize(), container.Handlers.Settings.UpdateSetting)
 		settings.DELETE("/:id", container.Middleware.Authorization.Authorize(), container.Handlers.Settings.DeleteSetting)
+
+		// MiMo LLM connection test - admin only (same policy as writes; the
+		// partner/employee grants are GET-only). Validates the sealed API key
+		// against the provider and reports latency; never returns the key.
+		settings.POST("/mimo/test-connection", container.Middleware.Authorization.Authorize(), container.Handlers.Settings.TestMimoConnection)
 	}
 }
 

@@ -465,7 +465,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Transaction:          handlers.NewTransactionHandler(services.Transaction, repos.BulkTransferFile, repos.Timesheet, services.Notification, eventBus, clk),
 		Health:               handlers.NewHealthHandler(healthCheckers, version),
 		Notification:         handlers.NewNotificationHandler(services.Notification),
-		Settings:             handlers.NewSettingsHandler(services.Settings),
+		Settings:             handlers.NewSettingsHandler(services.Settings, services.LLM),
 		Asset:                handlers.NewAssetHandler(services.Asset),
 		Cache:                handlers.NewCacheHandler(services.Cache, logger),
 		Lender:               handlers.NewLenderHandler(services.Lender),
