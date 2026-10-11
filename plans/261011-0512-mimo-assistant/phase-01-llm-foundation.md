@@ -41,7 +41,7 @@ Provider-agnostic LLM client + admin-managed Xiaomi MiMo API key + model selecti
 - [x] Key saved + masked on desktop and mobile settings (both verified) — UI-driven 2026-10-11, see `reports/2026-10-11-phase-01-llm-foundation.md` (screenshots `qa/screenshots/mimo-*.png`)
 - [x] Test connection returns success/failure with Vietnamese messaging — live MiMo API rejected the QA fake key with `Invalid API Key` → designed `invalid_key` state rendered
 - [x] Unit tests: client request/response parsing, masked GET, model validation
-- [ ] Spike verdict recorded: ☐ flash-only (collapse) ☐ keep flash/pro split — **PENDING USER INPUT: real MiMo API key required to run the flash-vs-pro spike**
+- [x] Spike verdict recorded: flash-only (collapse) for text surfaces — vision/pro deferred to phase-6 vision spike (evidence: reports/2026-10-11-model-spike.md)
 
 ## Risks
 

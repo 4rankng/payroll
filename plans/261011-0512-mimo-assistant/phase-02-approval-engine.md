@@ -38,10 +38,12 @@ Durable approval-request state machine with reject-with-note → scheduled retry
 - Create: `internal/domain/approval_request.go`, `internal/app/services/approval/`, `internal/app/workers/approval_retry_worker.go`, `internal/transport/http/handlers/approval/`, `internal/app/bootstrap/routes_approvals.go`, `backend/tests/integration/flow_approval.go`
 - Modify: `internal/infra/asynq/{client,handlers,mux}.go`, `configs/casbin_policy.csv`, `internal/app/bootstrap/container.go`, `internal/app/services/init.go`, `tests/integration/main.go`
 
+> **Status 2026-10-11 (wave-1 recovery):** engine live end-to-end — unit lifecycle suite green, live smoke (file→approve→executed, idempotent 409) green, `make api-test` 362/0 failures. Remaining for full phase closure: `flow_approval.go` integration test incl. live Casbin partner-403, staggered 08:00 burst — tracked below unticked.
+
 ## Success Criteria
 
-- [ ] All transitions guarded — invalid transitions return domain errors (property/unit tests)
-- [ ] Retry fires at 08:00 ICT next day in tests (clock advanced); escalation after 3
+- [x] All transitions guarded — invalid transitions return domain errors (property/unit tests)
+- [x] Retry fires at 08:00 ICT next day in tests (clock advanced); escalation after 3
 - [ ] Partner cannot approve (403) — Casbin verified
 - [ ] `make api-test` green for `flow_approval.go`
 
