@@ -16,7 +16,7 @@ import (
 	"api-server/internal/pkg/clock"
 )
 
-const API_SERVER_VERSION = "v1.10.0"
+const API_SERVER_VERSION = "v1.10.1"
 
 // @title API Server
 // @version 1.0

@@ -17,6 +17,7 @@ type SuccessResponse struct {
 	Data       interface{} `json:"data"`
 	Message    string      `json:"message"`
 	Pagination *Pagination `json:"pagination,omitempty"`
+	Summary    interface{} `json:"summary,omitempty"`
 }
 
 type ErrorResponse struct {
@@ -56,6 +57,18 @@ func SuccessWithPagination(c *gin.Context, data interface{}, message string, pag
 		Data:       data,
 		Message:    message,
 		Pagination: &pagination,
+	})
+}
+
+// SuccessWithPaginationAndSummary also carries an aggregate summary for the
+// full filtered set (not just the current page).
+func SuccessWithPaginationAndSummary(c *gin.Context, data interface{}, message string, pagination Pagination, summary interface{}) {
+	c.JSON(http.StatusOK, SuccessResponse{
+		Status:     "success",
+		Data:       data,
+		Message:    message,
+		Pagination: &pagination,
+		Summary:    summary,
 	})
 }
 

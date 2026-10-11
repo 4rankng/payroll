@@ -511,12 +511,12 @@ func (h *PayrollHandler) GetBankTransferHistories(c *gin.Context) {
 		response.HandleDomainError(c, err)
 		return
 	}
-	response.SuccessWithPagination(c, result.Data, constants.MsgDataRetrievedSuccessfullyVN, response.Pagination{
+	response.SuccessWithPaginationAndSummary(c, result.Data, constants.MsgDataRetrievedSuccessfullyVN, response.Pagination{
 		Page:         result.Pagination.Page,
 		PageSize:     result.Pagination.PageSize,
 		TotalPages:   result.Pagination.TotalPages,
 		TotalRecords: int(result.Pagination.TotalRecords),
-	})
+	}, result.Summary)
 }
 
 // ExportPayrollHistories exports payroll histories to Excel with multiple sheets
