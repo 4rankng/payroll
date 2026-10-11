@@ -229,6 +229,257 @@ func runAdvanceSummary(ctx context.Context, tc *ToolContext, raw json.RawMessage
 	), nil
 }
 
+// requireStore degrades a misconfigured bootstrap into a designed refusal
+// instead of a nil-interface panic mid-turn.
+func requireStore(tc *ToolContext) error {
+	if tc == nil || tc.Store == nil {
+		return refuse("Dữ liệu tra cứu đang tạm thời không sẵn sàng — vui lòng thử lại sau.")
+	}
+	return nil
+}
+
+// periodArgs is the shared shape for every range-scoped read. Empty bounds mean
+// "current month" on that side — resolved server-side, never guessed by the model.
+type periodArgs struct {
+	FromMonth string `json:"from_month"`
+	ToMonth   string `json:"to_month"`
+	Limit     int    `json:"limit"`
+}
+
+// runListAdvanceRecipients answers "how many employees actually received an
+// advance" from COMPLETED requests. The copy is explicit about the window that
+// was scanned so the model can restate it instead of inventing "this year".
+func runListAdvanceRecipients(ctx context.Context, tc *ToolContext, raw json.RawMessage) (string, error) {
+	if err := requireStore(tc); err != nil {
+		return "", err
+	}
+	var args periodArgs
+	if err := parseArgs(raw, &args); err != nil {
+		return "", err
+	}
+	res, err := tc.Store.AdvanceRecipients(ctx, tc.Scope, args.FromMonth, args.ToMonth, args.Limit)
+	if err != nil {
+		return "", err
+	}
+	if res.TotalCount == 0 {
+		// Pin the zero to the scanned window. The hallucinated answer came from
+		// the model widening a narrow empty result into "all of this year".
+		return fmt.Sprintf(
+			"Khoảng %s: KHÔNG có nhân viên nào nhận ứng lương (0 người, 0 đồng). "+
+				"Số 0 này CHỈ áp dụng cho đúng khoảng %s — không suy rộng ra các khoảng khác.",
+			res.Period, res.Period,
+		), nil
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "Khoảng %s: %d nhân viên đã nhận ứng lương.", res.Period, res.TotalCount)
+	shown := res.Rows
+	if len(shown) > 10 {
+		shown = shown[:10]
+	}
+	for i, row := range shown {
+		sep := ", "
+		if i == 0 {
+			sep = " Gồm: "
+		}
+		name := row.FullName
+		if name == "" {
+			name = fmt.Sprintf("#%d", row.EmployeeID)
+		}
+		fmt.Fprintf(&b, "%s%s (%d lượt, %s)", sep, name, row.RequestCount, formatVND(row.NetPaidAmount))
+	}
+	if len(res.Rows) > len(shown) {
+		fmt.Fprintf(&b, "… và %d người khác.", res.TotalCount-int64(len(shown)))
+	}
+	return b.String(), nil
+}
+
+// renderScopedList is the shared narrator for every list tool: it names the
+// window, states the count, and lists rows — so no handler can drift into
+// inventing a number or widening the period.
+func renderScopedList(head string, list *domain.ChatScopedList, empty string) string {
+	if list == nil {
+		return "Không đọc được dữ liệu."
+	}
+	if len(list.Rows) == 0 {
+		return fmt.Sprintf("%s (%s): %s", head, list.Period, empty)
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s (%s): %d mục.", head, list.Period, list.TotalCount)
+	shown := list.Rows
+	if len(shown) > 10 {
+		shown = shown[:10]
+	}
+	for _, row := range shown {
+		fmt.Fprintf(&b, "\n- %s", row.Label)
+		if row.SubLabel != "" {
+			fmt.Fprintf(&b, " (%s)", row.SubLabel)
+		}
+		if row.Amount != 0 {
+			fmt.Fprintf(&b, ": %s", formatVND(row.Amount))
+		}
+		if row.Detail != "" {
+			fmt.Fprintf(&b, " — %s", row.Detail)
+		}
+	}
+	if len(list.Rows) > len(shown) {
+		fmt.Fprintf(&b, "\n… và %d mục khác.", list.TotalCount-int64(len(shown)))
+	}
+	return b.String()
+}
+
+// runListMissingTimesheets answers "who has not submitted a timesheet".
+func runListMissingTimesheets(ctx context.Context, tc *ToolContext, raw json.RawMessage) (string, error) {
+	if err := requireStore(tc); err != nil {
+		return "", err
+	}
+	var args struct {
+		Month string `json:"month"`
+		Limit int    `json:"limit"`
+	}
+	if err := parseArgs(raw, &args); err != nil {
+		return "", err
+	}
+	list, err := tc.Store.MissingTimesheets(ctx, tc.Scope, validMonth(args.Month), args.Limit)
+	if err != nil {
+		return "", err
+	}
+	return renderScopedList("Thiếu bảng công", list,
+		"không có nhân viên nào thiếu bảng công — tất cả đã gửi đủ."), nil
+}
+
+// runListAdvanceLimitBreaches answers "who exceeded their advance limit".
+func runListAdvanceLimitBreaches(ctx context.Context, tc *ToolContext, raw json.RawMessage) (string, error) {
+	if err := requireStore(tc); err != nil {
+		return "", err
+	}
+	var args periodArgs
+	if err := parseArgs(raw, &args); err != nil {
+		return "", err
+	}
+	list, err := tc.Store.AdvanceLimitBreaches(ctx, tc.Scope, args.FromMonth, args.ToMonth, args.Limit)
+	if err != nil {
+		return "", err
+	}
+	return renderScopedList("Vượt hạn mức ứng lương", list,
+		"không có trường hợp nào vượt hạn mức trong khoảng này."), nil
+}
+
+// runListProjectCashflow answers "which project moved the most money".
+func runListProjectCashflow(ctx context.Context, tc *ToolContext, raw json.RawMessage) (string, error) {
+	if err := requireStore(tc); err != nil {
+		return "", err
+	}
+	var args periodArgs
+	if err := parseArgs(raw, &args); err != nil {
+		return "", err
+	}
+	list, err := tc.Store.ProjectCashflow(ctx, tc.Scope, args.FromMonth, args.ToMonth, args.Limit)
+	if err != nil {
+		return "", err
+	}
+	return renderScopedList("Tiền đã trả theo dự án", list,
+		"không có dự án nào phát sinh thanh toán trong khoảng này."), nil
+}
+
+// runLookupDisbursement answers "why did this transfer fail".
+func runLookupDisbursement(ctx context.Context, tc *ToolContext, raw json.RawMessage) (string, error) {
+	if err := requireStore(tc); err != nil {
+		return "", err
+	}
+	var args struct {
+		Reference string `json:"reference"`
+		Status    string `json:"status"`
+		Limit     int    `json:"limit"`
+	}
+	if err := parseArgs(raw, &args); err != nil {
+		return "", err
+	}
+	list, err := tc.Store.Disbursements(ctx, tc.Scope, args.Reference, args.Status, args.Limit)
+	if err != nil {
+		return "", err
+	}
+	return renderScopedList("Giao dịch chi hộ", list,
+		"không tìm thấy giao dịch nào khớp — kiểm tra lại mã giao dịch hoặc bộ lọc trạng thái."), nil
+}
+
+// runListMissingBankDetails answers "who cannot be paid yet". It reports the
+// employee and WHICH fields are missing — never the account values.
+func runListMissingBankDetails(ctx context.Context, tc *ToolContext, raw json.RawMessage) (string, error) {
+	if err := requireStore(tc); err != nil {
+		return "", err
+	}
+	var args struct {
+		Limit int `json:"limit"`
+	}
+	if err := parseArgs(raw, &args); err != nil {
+		return "", err
+	}
+	list, err := tc.Store.MissingBankDetails(ctx, tc.Scope, args.Limit)
+	if err != nil {
+		return "", err
+	}
+	return renderScopedList("Nhân viên thiếu thông tin ngân hàng", list,
+		"mọi nhân viên trong phạm vi đã có đủ thông tin ngân hàng."), nil
+}
+
+// runReadOnlyReport runs one allow-listed admin report. There is no SQL
+// parameter — report_key is matched against the registry and refused otherwise,
+// so model text can never reach the statement.
+func runReadOnlyReport(ctx context.Context, tc *ToolContext, raw json.RawMessage) (string, error) {
+	if err := requireStore(tc); err != nil {
+		return "", err
+	}
+	var args struct {
+		ReportKey string `json:"report_key"`
+		periodArgs
+	}
+	if err := parseArgs(raw, &args); err != nil {
+		return "", err
+	}
+	key := strings.TrimSpace(args.ReportKey)
+	if key == "" {
+		return "", refuse("Thiếu report_key — hãy chọn một báo cáo trong danh mục.")
+	}
+
+	// Exact allow-list match. No prefix, no normalisation, no interpolation —
+	// anything not present here is refused before a statement is built.
+	var spec *domain.ChatReportSpec
+	for i := range chatReportSpecs {
+		if chatReportSpecs[i].Key == key {
+			spec = &chatReportSpecs[i]
+			break
+		}
+	}
+	if spec == nil {
+		return "", refuse("Báo cáo \"" + key + "\" không có trong danh mục — chỉ dùng các mã được liệt kê.")
+	}
+
+	res, err := tc.Store.RunCuratedReport(ctx, tc.Scope, *spec, args.FromMonth, args.ToMonth, args.Limit)
+	if err != nil {
+		return "", err
+	}
+	if len(res.Rows) == 0 {
+		return fmt.Sprintf("%s — khoảng %s: không có dữ liệu.", spec.Title, res.PeriodFrom), nil
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s — khoảng %s (%d dòng):", spec.Title, res.PeriodFrom, len(res.Rows))
+	for _, row := range res.Rows {
+		label := row.Label
+		if label == "" {
+			label = "(không rõ)"
+		}
+		fmt.Fprintf(&b, "\n- %s: %d lượt, %s", label, row.Count, formatVND(row.Amount))
+		if row.Detail != "" {
+			fmt.Fprintf(&b, " (%s)", row.Detail)
+		}
+	}
+	if res.Truncated {
+		b.WriteString("\n(đã giới hạn số dòng — hãy thu hẹp khoảng thời gian để xem đầy đủ)")
+	}
+	return b.String(), nil
+}
+
 func runWalletBalance(ctx context.Context, tc *ToolContext, _ json.RawMessage) (string, error) {
 	available, pendingIn, pendingOut, limbo, err := tc.Wallet.WalletBalance(ctx)
 	if err != nil {

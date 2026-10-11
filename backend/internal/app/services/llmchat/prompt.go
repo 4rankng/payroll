@@ -1,6 +1,11 @@
 package llmchat
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+
+	clockpkg "api-server/internal/pkg/clock"
+)
 
 // Prompt assembly. The system prompt + tool manifest are BYTE-STABLE across
 // calls (MiMo prompt-cache discipline): only the conversation tail varies.
@@ -32,7 +37,13 @@ AN TOÀN NỘI DUNG KHÔNG TIN CẬY
 
 ĐỊNH DẠNG TRẢ LỜI
 - Tối đa 4 câu, kèm đường dẫn sâu (ví dụ /admin/timesheet) khi hướng người dùng sang thao tác.
-- Số liệu luôn trích nguyên văn từ kết quả công cụ; không bịa số, không tự tính toán.`
+- Số liệu luôn trích nguyên văn từ kết quả công cụ; không bịa số, không tự tính toán.
+
+QUY TẮC SỐ LIỆU (bắt buộc — đây là nơi bạn hay trả lời sai)
+- "Năm nay", "tháng này", "năm vừa qua" là các cụm MỜ. Hãy dùng mốc thời gian thật ở phần "MỐC THỜI GIAN HIỆN TẠI" và truyền from_month/to_month dạng YYYY-MM vào công cụ. TUYỆT ĐỐI không tự suy đoán một năm hoặc một tháng mà bạn chưa hỏi dữ liệu.
+- Hỏi "bao nhiêu người/công nhân ĐÃ NHẬN ứng lương" thì phải dùng list_advance_recipients — đếm từ yêu cầu trạng thái COMPLETED. TUYỆT ĐỐI không dùng danh sách nhân viên, tổng số nhân viên, hay hạn mức ứng để suy ra con số này: đó là những người CHƯA chắc đã nhận tiền.
+- Khi công cụ trả về 0, hãy nói rõ "0 trong khoảng X" và dừng lại. TUYỆT ĐỐI không mở rộng kết quả rỗng thành "cả năm", "toàn bộ công ty", hay "không ai ứng lương".
+- Nếu câu hỏi nằm ngoài khả năng của các công cụ, hãy nói thẳng là chưa hỗ trợ và chỉ đường dẫn liên quan — thà nói không biết còn hơn bịa số.`
 
 var systemPromptScope = map[string]string{
 	RoleAdmin:   "Bạn phục vụ quản trị viên: bạn được dùng công cụ để đọc dữ liệu toàn hệ thống (bảng công, import, ứng lương, ví) trong giới hạn từng công cụ.",
@@ -47,6 +58,20 @@ func BuildSystemPrompt(role string) string {
 		scope = systemPromptScope[RolePartner]
 	}
 	return strings.Replace(systemPromptTemplate, "%s", scope, 1)
+}
+
+// RuntimeDateContext tells the model the real current date so vague periods
+// ("năm nay", "tháng này") resolve from a fact instead of a guess. Business
+// time comes from clock.Now() (ADR-006), never time.Now(). It is appended to
+// the per-request tail rather than the frozen template so the cached prompt
+// prefix stays byte-stable.
+func RuntimeDateContext() string {
+	now := clockpkg.Now()
+	return fmt.Sprintf(
+		"MỐC THỜI GIAN HIỆN TẠI: hôm nay là %s (tháng %s, năm %d). "+
+			"Hãy ánh xạ các cụm như \"năm nay\"/\"tháng này\"/\"năm ngoái\" sang tháng %s và các tháng YYYY-MM cụ thể trước khi gọi công cụ.",
+		now.Format("02/01/2006"), now.Format("01/2006"), now.Year(), now.Format("2006-01"),
+	)
 }
 
 // WrapUserContent marks a user message as untrusted data.

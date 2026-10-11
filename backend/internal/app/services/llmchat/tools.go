@@ -53,9 +53,18 @@ type ToolRegistry struct {
 	byName map[string]*ToolDef
 }
 
+// chatReportSpecs is the curated read-only report allow-list, injected at
+// bootstrap from infra (which owns the SQL). run_readonly_report matches the
+// model's report_key against this list; an unmatched key is refused, so model
+// text can never reach a statement.
+var chatReportSpecs []domain.ChatReportSpec
+
 // NewToolRegistry builds the registry with the full manifest. Order is fixed
-// and load-bearing for prompt-cache stability.
-func NewToolRegistry() *ToolRegistry {
+// and load-bearing for prompt-cache stability. reports is the curated
+// read-only report allow-list surfaced by run_readonly_report; the SQL itself
+// stays in infra and is never passed through here.
+func NewToolRegistry(reports []domain.ChatReportSpec) *ToolRegistry {
+	chatReportSpecs = reports
 	defs := []ToolDef{
 		{
 			Name:        "get_timesheet_summary",
@@ -118,6 +127,69 @@ func NewToolRegistry() *ToolRegistry {
 			Roles:       []string{RoleAdmin, RolePartner},
 			topic:       "import",
 			run:         runLookupImportError,
+		},
+		{
+			Name:        "list_advance_recipients",
+			Description: "Danh sách nhân viên ĐÃ NHẬN tiền ứng lương (yêu cầu trạng thái COMPLETED) trong một khoảng thời gian, kèm TỔNG SỐ người và tổng tiền. Dùng công cụ này khi người dùng hỏi 'bao nhiêu người/công nhân đã ứng lương trong năm nay/tháng này' — KHÔNG suy đoán từ danh sách hạn mức. from_month/to_month dạng YYYY-MM; bỏ trống = tháng hiện tại; truyền from_month='YYYY-01', to_month='YYYY-12' cho cả năm.",
+			Parameters:  json.RawMessage(`{"type":"object","properties":{"from_month":{"type":"string","description":"Tháng bắt đầu YYYY-MM"},"to_month":{"type":"string","description":"Tháng kết thúc YYYY-MM"}},"additionalProperties":false}`),
+			Kind:        ToolKindRead,
+			Roles:       []string{RoleAdmin, RolePartner},
+			topic:       "advance",
+			run:         runListAdvanceRecipients,
+		},
+		{
+			Name:        "run_readonly_report",
+			Description: "Chạy một báo cáo CHỈ ĐỌC có sẵn trong danh mục (chỉ dành cho quản trị viên). Chọn đúng report_key trong danh sách, không tự viết SQL. Dùng khi câu hỏi cần tổng hợp theo dự án/tháng mà các công cụ khác chưa đáp ứng. from_month/to_month dạng YYYY-MM; bỏ trống = tháng hiện tại.",
+			Parameters:  json.RawMessage(`{"type":"object","properties":{"report_key":{"type":"string","description":"Mã báo cáo: advance_paid_by_month | timesheet_paid_by_project | employee_payment_activity"},"from_month":{"type":"string","description":"Tháng bắt đầu YYYY-MM"},"to_month":{"type":"string","description":"Tháng kết thúc YYYY-MM"},"limit":{"type":"integer","description":"Số dòng tối đa (mặc định 25, tối đa 100)"}},"required":["report_key"],"additionalProperties":false}`),
+			Kind:        ToolKindRead,
+			Roles:       []string{RoleAdmin},
+			topic:       "advance",
+			run:         runReadOnlyReport,
+		},
+		{
+			Name:        "list_missing_timesheets",
+			Description: "Danh sách nhân viên ĐÃ ĐƯỢC GÁN dự án nhưng CHƯA có bảng công trong tháng (thiếu hoàn toàn, không phải bảng công chờ duyệt). Dùng khi người dùng hỏi 'ai chưa gửi bảng công', 'còn ai thiếu bảng công'. Tham số month dạng YYYY-MM, bỏ trống = tháng hiện tại.",
+			Parameters:  json.RawMessage(`{"type":"object","properties":{"month":{"type":"string","description":"Tháng YYYY-MM"},"limit":{"type":"integer","description":"Số dòng tối đa (mặc định 50, tối đa 100)"}},"additionalProperties":false}`),
+			Kind:        ToolKindRead,
+			Roles:       []string{RoleAdmin, RolePartner},
+			topic:       "timesheet",
+			run:         runListMissingTimesheets,
+		},
+		{
+			Name:        "list_advance_limit_breaches",
+			Description: "Danh sách hạn mức ứng lương bị VƯỢT (tổng yêu cầu còn hiệu lực > hạn mức cho phép) trong khoảng thời gian, kèm số tiền vượt. Dùng khi người dùng hỏi 'ai ứng quá hạn mức', 'vượt hạn mức'. from_month/to_month dạng YYYY-MM; bỏ trống = tháng hiện tại.",
+			Parameters:  json.RawMessage(`{"type":"object","properties":{"from_month":{"type":"string","description":"Tháng bắt đầu YYYY-MM"},"to_month":{"type":"string","description":"Tháng kết thúc YYYY-MM"},"limit":{"type":"integer","description":"Số dòng tối đa (mặc định 25, tối đa 100)"}},"additionalProperties":false}`),
+			Kind:        ToolKindRead,
+			Roles:       []string{RoleAdmin, RolePartner},
+			topic:       "advance",
+			run:         runListAdvanceLimitBreaches,
+		},
+		{
+			Name:        "list_missing_bank_details",
+			Description: "Danh sách nhân viên còn THIẾU thông tin ngân hàng (chưa có ngân hàng / số tài khoản / tên chủ tài khoản) nên chưa thể chi trả. Công cụ chỉ cho biết AI và THIẾU MỘT TRƯỜNG NÀO — không trả về số tài khoản. Dùng khi người dùng hỏi 'ai chưa cập nhật ngân hàng', 'ai chưa thể trả tiền'.",
+			Parameters:  json.RawMessage(`{"type":"object","properties":{"limit":{"type":"integer","description":"Số dòng tối đa (mặc định 50, tối đa 100)"}},"additionalProperties":false}`),
+			Kind:        ToolKindRead,
+			Roles:       []string{RoleAdmin, RolePartner},
+			topic:       "advance",
+			run:         runListMissingBankDetails,
+		},
+		{
+			Name:        "list_project_cashflow",
+			Description: "Tổng hợp tiền lương ĐÃ THANH TOÁN theo từng dự án trong khoảng thời gian (xếp giảm dần). Dùng khi người dùng hỏi 'dự án nào chi nhiều tiền nhất', 'tiền trả theo dự án'. from_month/to_month dạng YYYY-MM; bỏ trống = tháng hiện tại.",
+			Parameters:  json.RawMessage(`{"type":"object","properties":{"from_month":{"type":"string","description":"Tháng bắt đầu YYYY-MM"},"to_month":{"type":"string","description":"Tháng kết thúc YYYY-MM"},"limit":{"type":"integer","description":"Số dòng tối đa (mặc định 25, tối đa 100)"}},"additionalProperties":false}`),
+			Kind:        ToolKindRead,
+			Roles:       []string{RoleAdmin, RolePartner},
+			topic:       "payment",
+			run:         runListProjectCashflow,
+		},
+		{
+			Name:        "lookup_disbursement",
+			Description: "Tra cứu giao dịch chi hộ (chuyển tiền cho nhân viên) theo mã giao dịch/mã hoá đơn, kèm trạng thái và lý do lỗi nếu thất bại. Dùng khi người dùng hỏi 'giao dịch này lỗi gì', 'tiền chuyển thất bại vì sao'. reference = mã giao dịch; status = pending|completed|failed|reversed (bỏ trống = tất cả).",
+			Parameters:  json.RawMessage(`{"type":"object","properties":{"reference":{"type":"string","description":"Mã giao dịch (txn_id), mã yêu cầu (request_id) hoặc số hoá đơn"},"status":{"type":"string","description":"Trạng thái: pending | completed | failed | reversed"},"limit":{"type":"integer","description":"Số dòng tối đa (mặc định 20, tối đa 50)"}},"additionalProperties":false}`),
+			Kind:        ToolKindRead,
+			Roles:       []string{RoleAdmin},
+			topic:       "payment",
+			run:         runLookupDisbursement,
 		},
 		{
 			Name:        "file_approval_request",

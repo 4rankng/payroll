@@ -69,6 +69,79 @@ type ChatAdvanceSummary struct {
 	FailedRequests    int64
 }
 
+// ChatAdvanceRecipient is one employee that actually RECEIVED an advance
+// payment (a COMPLETED request) inside the queried period. The bot answers
+// "how many employees took an advance this year" from this list — never from
+// a roster count, which would over-report people who only had a limit set.
+type ChatAdvanceRecipient struct {
+	EmployeeID     uint   `json:"employee_id"`
+	FullName       string `json:"full_name"`
+	RequestCount   int64  `json:"request_count"`
+	NetPaidAmount  int64  `json:"net_paid_amount"`
+	FirstPaidMonth string `json:"first_paid_month"`
+	LastPaidMonth  string `json:"last_paid_month"`
+}
+
+// ChatAdvanceRecipients is the deterministic answer to "who took an advance in
+// <period>" — the distinct employee list plus the period actually scanned.
+type ChatAdvanceRecipients struct {
+	Period     string
+	From       string // "YYYY-MM" inclusive
+	To         string // "YYYY-MM" inclusive
+	TotalCount int64
+	Rows       []*ChatAdvanceRecipient
+}
+
+// ChatReportRow is one row of a curated admin report. Column names come from a
+// fixed allow-list in the infra implementation — never from model text.
+type ChatReportRow struct {
+	Label    string `json:"label"`
+	Count    int64  `json:"count"`
+	Amount   int64  `json:"amount"`
+	Detail   string `json:"detail"`
+	PeriodAt string `json:"period_at"`
+}
+
+// ChatReportResult is the bounded result of a curated read-only report.
+type ChatReportResult struct {
+	ReportKey  string
+	PeriodFrom string
+	PeriodTo   string
+	Rows       []*ChatReportRow
+	Truncated  bool
+}
+
+// ChatReportSpec is one entry of the curated allow-list. SQL is a constant in
+// infra; the model may only CHOOSE a key and pass bounded filters.
+type ChatReportSpec struct {
+	Key         string
+	Title       string
+	Description string
+}
+
+// ChatListRow is one row of a scoped operational list. A single shape backs
+// every list tool so the handlers stay uniform and the SQL stays auditable.
+type ChatListRow struct {
+	Label      string
+	SubLabel   string
+	EmployeeID uint
+	ProjectID  uint
+	Count      int64
+	Amount     int64
+	Status     string
+	Detail     string
+	PeriodAt   string
+}
+
+// ChatScopedList is a bounded, scope-filtered list plus the window it covers.
+type ChatScopedList struct {
+	Period     string
+	From       string
+	To         string
+	TotalCount int64
+	Rows       []*ChatListRow
+}
+
 // ChatToolReadStore is the read-only data seam behind the assistant tools. Every
 // method receives the caller-derived scope and MUST apply it to every row it
 // returns; implementations live in infra/persistence.
@@ -84,6 +157,29 @@ type ChatToolReadStore interface {
 	AdvanceSummary(ctx context.Context, scope ChatDataScope, month string) (*ChatAdvanceSummary, error)
 	// EmployeeDirectory lists scope-visible employees with the total count.
 	EmployeeDirectory(ctx context.Context, scope ChatDataScope, limit int) ([]*ChatEmployeeEntry, int64, error)
+	// AdvanceRecipients lists DISTINCT employees with a COMPLETED advance
+	// request in [fromMonth, toMonth] (inclusive, "YYYY-MM"). Both bounds empty
+	// means the current month; from > to is normalised.
+	AdvanceRecipients(ctx context.Context, scope ChatDataScope, fromMonth, toMonth string, limit int) (*ChatAdvanceRecipients, error)
+	// RunCuratedReport executes one allow-listed read-only report. The key MUST
+	// exist in the registry; unknown keys are refused, never interpolated.
+	RunCuratedReport(ctx context.Context, scope ChatDataScope, spec ChatReportSpec, fromMonth, toMonth string, limit int) (*ChatReportResult, error)
+	// MissingTimesheets lists active project assignments with no timesheet row
+	// at all in the given month. month is "YYYY-MM" or "" for the current month.
+	MissingTimesheets(ctx context.Context, scope ChatDataScope, month string, limit int) (*ChatScopedList, error)
+	// AdvanceLimitBreaches lists advance rows whose summed live requests exceed
+	// the configured max_adv_amount in [fromMonth, toMonth].
+	AdvanceLimitBreaches(ctx context.Context, scope ChatDataScope, fromMonth, toMonth string, limit int) (*ChatScopedList, error)
+	// ProjectCashflow aggregates paid timesheet amount and paid advance amount
+	// per project over [fromMonth, toMonth].
+	ProjectCashflow(ctx context.Context, scope ChatDataScope, fromMonth, toMonth string, limit int) (*ChatScopedList, error)
+	// Disbursements lists wallet payment rows matching an optional txn/request
+	// id and optional status. Admin-scoped (company-wide by definition).
+	Disbursements(ctx context.Context, scope ChatDataScope, reference, status string, limit int) (*ChatScopedList, error)
+	// MissingBankDetails lists scope-visible employees missing any of bank id,
+	// account number, or account name. It reports ONLY the employee — never the
+	// account values themselves.
+	MissingBankDetails(ctx context.Context, scope ChatDataScope, limit int) (*ChatScopedList, error)
 }
 
 // ChatEmployeeEntry is one employee row in the chat employee-directory tool.

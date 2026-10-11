@@ -43,6 +43,7 @@ type Deps struct {
 	ToolCalls  domain.ChatToolCallRepository
 	Timings    domain.ChatTurnTimingRepository
 	Store      domain.ChatToolReadStore
+	Reports    []domain.ChatReportSpec
 	Wallet     WalletInfoSource
 	Filer      ApprovalFiler
 	Reader     ApprovalReader
@@ -56,7 +57,7 @@ type Deps struct {
 
 // NewService constructs the chat service with the full tool manifest.
 func NewService(deps Deps) *Service {
-	registry := NewToolRegistry()
+	registry := NewToolRegistry(deps.Reports)
 	executor := NewToolExecutor(registry, deps.Store, deps.Wallet, deps.Filer, deps.Reader, deps.Scope, deps.ToolCalls, deps.Audit)
 	if deps.Filer == nil {
 		deps.Filer = NewNotConfiguredFiler()

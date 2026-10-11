@@ -14,15 +14,36 @@ import { toast } from 'sonner';
 // (a model-invented path like /admin/sao-ke) stays plain text.
 const LINKABLE = /^\/(admin|partner|employee)\/(timesheet|approvals|payment-history|advance-payments|wallet|settings|dashboard|employees|projects|users)(\/[a-z0-9-]+)*$/;
 
+// The model abbreviates routes the way people speak ("/admin/advance",
+// "/admin/timesheets"). Without a mapping those fail LINKABLE and render as
+// dead plain text, so the reader has nowhere to click. Only map names that
+// resolve unambiguously to a real route.
+const PATH_ALIASES: Record<string, string> = {
+  'advance': 'advance-payments',
+  'timesheets': 'timesheet',
+};
+
+const resolveAlias = (path: string): string => {
+  const segments = path.split('/');
+  const last = segments[segments.length - 1];
+  const alias = PATH_ALIASES[last];
+  if (!alias) return path;
+  return [...segments.slice(0, -1), alias].join('/');
+};
+
 const splitPaths = (text: string): Array<{ path?: string; text: string }> => {
   const out: Array<{ path?: string; text: string }> = [];
-  const re = /\/(admin|partner|employee)\/[a-z0-9\/-]+/g;
+  const re = /\/(admin|partner|employee)\/[a-z0-9/-]+/g;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
-    if (LINKABLE.test(m[0])) {
+    // Alias first, then whitelist: "/admin/advance" resolves to the real
+    // "/admin/advance-payments" and only then passes the safety check.
+    const resolved = resolveAlias(m[0]);
+    if (LINKABLE.test(resolved)) {
       if (m.index > last) out.push({ text: text.slice(last, m.index) });
-      out.push({ text: m[0], path: m[0] });
+      // Link text keeps what the model wrote; the href is the real route.
+      out.push({ text: m[0], path: resolved });
       last = m.index + m[0].length;
     }
   }
@@ -51,6 +72,10 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
   const [pendingImage, setPendingImage] = useState<{ id: number; name: string } | null>(null);
   const [optimistic, setOptimistic] = useState<ChatMessage[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
+  // Set synchronously on send so a burst of clicks cannot slip past the
+  // mutation's own pending state.
+  const sendingRef = useRef(false);
+  const optimisticCounter = useRef(0);
 
   const chatEnsure = useEnsureChatConversation(setConversationId);
   const sendMessage = useSendChatMessage();
@@ -73,28 +98,41 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
 
   const handleSend = async (text?: string) => {
     const content = (text ?? input).trim();
-    if (!content || sendMessage.isPending) return;
-    // Conversation is created AT SEND TIME: one code path, immune to remounts
-    // (an open-time create lost its state across FAB remounts and silently
-    // swallowed sends).
-    const convId = await chatEnsure();
-    if (!convId) {
-      toast.error('Không tạo được hội thoại — thử lại.');
-      return;
+    if (!content) return;
+    // Synchronous lock, set BEFORE the first await. `sendMessage.isPending`
+    // only flips once mutate() runs, which is after chatEnsure() resolves —
+    // guarding on it let a second click slip through the gap and duplicate
+    // the message.
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+    try {
+      // Conversation is created AT SEND TIME: one code path, immune to remounts
+      // (an open-time create lost its state across FAB remounts and silently
+      // swallowed sends).
+      const convId = await chatEnsure();
+      if (!convId) {
+        toast.error('Không tạo được hội thoại — thử lại.');
+        return;
+      }
+      setInput('');
+      const attachmentIds = pendingImage ? [pendingImage.id] : undefined;
+      setPendingImage(null);
+      // Optimistic user bubble: the click is ALWAYS visibly acknowledged,
+      // even before the round trip lands. Keyed by a monotonic counter —
+      // -Date.now() collides when two sends land in the same millisecond,
+      // which React then drops as a duplicate key.
+      const optimisticId = -++optimisticCounter.current;
+      setOptimistic((prev) => [
+        ...prev,
+        { id: optimisticId, role: 'user', content, created_at: new Date().toISOString() },
+      ]);
+      sendMessage.mutate(
+        { id: convId, content, attachmentIds },
+        { onSettled: () => setOptimistic((prev) => prev.filter((m) => m.id !== optimisticId)) }
+      );
+    } finally {
+      sendingRef.current = false;
     }
-    setInput('');
-    const attachmentIds = pendingImage ? [pendingImage.id] : undefined;
-    setPendingImage(null);
-    // Optimistic user bubble: the click is ALWAYS visibly acknowledged,
-    // even before the round trip lands.
-    setOptimistic((prev) => [
-      ...prev,
-      { id: -Date.now(), role: 'user', content, created_at: new Date().toISOString() },
-    ]);
-    sendMessage.mutate(
-      { id: convId, content, attachmentIds },
-      { onSettled: () => setOptimistic((prev) => prev.filter((m) => m.content !== content)) }
-    );
   };
 
   const handlePickImage = (file: File | undefined) => {

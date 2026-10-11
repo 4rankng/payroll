@@ -169,6 +169,14 @@ func (s *Service) buildPromptMessages(ctx context.Context, caller Caller, conver
 		Role:    llmport.RoleSystem,
 		Content: []llmport.ContentPart{llmport.TextPart(BuildSystemPrompt(caller.Role))},
 	}}
+	// Runtime date anchor lives in the per-request tail, NOT the frozen system
+	// prompt, so the byte-stable prefix keeps its prompt-cache hit. Without it
+	// the model resolves "năm nay" by guessing — the observed failure where it
+	// claimed a year it had never queried.
+	msgs = append(msgs, llmport.Message{
+		Role:    llmport.RoleSystem,
+		Content: []llmport.ContentPart{llmport.TextPart(RuntimeDateContext())},
+	})
 	for _, m := range tail {
 		text := truncateRunes(m.Content, MaxMessageContent)
 		if m.Role == domain.ChatMessageRoleUser {

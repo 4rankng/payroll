@@ -612,13 +612,17 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	})
 	approvalEngine := llmchat.NewApprovalEngine(approvalService)
 	partnerScopeResolver := dashboard.NewPartnerScopeResolver(db.DB, cacheService, logger)
+	// The store owns the report SQL; the app layer only receives the allow-list
+	// of keys/titles the model is permitted to pick.
+	chatToolStore := persistence.NewChatToolReadStore(db)
 	llmchatService := llmchat.NewService(llmchat.Deps{
 		LLM:        llmService,
 		Convs:      repos.ChatConversation,
 		Messages:   repos.ChatMessage,
 		ToolCalls:  repos.ChatToolCall,
 		Timings:    repos.ChatTurnTiming,
-		Store:      persistence.NewChatToolReadStore(db),
+		Store:      chatToolStore,
+		Reports:    persistence.CuratedReportSpecs(),
 		Wallet:     llmchat.NewWalletInfoSource(walletService),
 		Filer:      approvalEngine,
 		Reader:     approvalEngine,
