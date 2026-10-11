@@ -20,7 +20,7 @@ import (
 // forever.
 const (
 	// DefaultBaseURL is the Xiaomi MiMo OpenAI-compatible endpoint.
-	DefaultBaseURL = "https://api.xiaomimimo.com/v1"
+	DefaultBaseURL = "https://token-plan-sgp.xiaomimimo.com/v1" // TokenPlan dedicated endpoint (api.xiaomimimo.com rejects TokenPlan keys)
 	// DefaultHTTPTimeout bounds one HTTP attempt.
 	DefaultHTTPTimeout = 30 * time.Second
 	// DefaultMaxRetries is the number of retries after the first attempt, for

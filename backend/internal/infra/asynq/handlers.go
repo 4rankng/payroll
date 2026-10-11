@@ -46,6 +46,8 @@ const (
 	// TaskAuditLogWrite is the asynq task type for persisting audit log entries.
 	// Replaces the in-process event-bus goroutine to add durable retries and bounded concurrency.
 	TaskAuditLogWrite = "audit:log:write"
+	// TaskApprovalRetry fires the scheduled 08:00 approval retry.
+	TaskApprovalRetry = "approval:retry"
 	// TaskPayrollReportEmail is the task type for async payroll statement emails.
 	TaskPayrollReportEmail = "email:payroll_report"
 	// TaskAutoRejectCheckout is the one-shot task scheduled at an attendance's
@@ -129,6 +131,7 @@ type Handlers struct {
 	autoRejectSweepWorker           *workers.AutoRejectSweepWorker
 	creditQuotaWorker               *workers.CreditQuotaWorker
 	creditQuotaSweepWorker          *workers.CreditQuotaSweepWorker
+	approvalRetryProcessor          ApprovalRetryProcessor
 	// wallet_bulk: per-row worker + the service (which hosts the ledger
 	// booking + sweeper handlers — they share the same batch_repo/txnSvc).
 	walletBulkRowWorker *workers.WalletBulkTransferRowWorker
@@ -510,4 +513,34 @@ func (h *Handlers) HandleCreditQuotaSweep(ctx context.Context, _ *asynqlib.Task)
 		return fmt.Errorf("attendance:credit_quota_sweep: %w", err)
 	}
 	return nil
+}
+
+// approvalRetryPayload is the asynq task payload for approval:retry.
+type approvalRetryPayload struct {
+	RequestID uint `json:"request_id"`
+}
+
+// ApprovalRetryProcessor is the seam to the approval engine's scheduled-retry
+// entry point (app/services/approval), wired after service construction.
+type ApprovalRetryProcessor interface {
+	HandleScheduledRetry(ctx context.Context, requestID uint) error
+}
+
+// SetApprovalRetryProcessor wires the processor (the engine depends on the
+// asynq client, so it is constructed after the Handlers struct itself).
+func (h *Handlers) SetApprovalRetryProcessor(p ApprovalRetryProcessor) {
+	h.approvalRetryProcessor = p
+}
+
+// HandleApprovalRetry fires the scheduled 08:00 approval retry. Unparseable
+// payloads or a missing processor skip retry — the scheduler job sweeps.
+func (h *Handlers) HandleApprovalRetry(ctx context.Context, t *asynqlib.Task) error {
+	var p approvalRetryPayload
+	if err := json.Unmarshal(t.Payload(), &p); err != nil {
+		return fmt.Errorf("approval retry: bad payload: %v: %w", err, asynqlib.SkipRetry)
+	}
+	if h.approvalRetryProcessor == nil {
+		return fmt.Errorf("approval retry processor not wired: %w", asynqlib.SkipRetry)
+	}
+	return h.approvalRetryProcessor.HandleScheduledRetry(ctx, p.RequestID)
 }

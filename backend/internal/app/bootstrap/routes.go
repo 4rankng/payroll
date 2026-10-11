@@ -85,4 +85,6 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, container *Container) {
 	setupDBExportRoutes(protected, container)
 	setupCronRoutes(protected, container)
 	setupAdvPartnerRoutes(protected, container)
+	setupApprovalRoutes(protected, container)
+	setupChatRoutes(protected, container)
 }

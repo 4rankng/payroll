@@ -24,6 +24,10 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 	srv.Mux().Handle(TaskCreditQuota, asynqlib.HandlerFunc(h.HandleCreditQuota))
 	srv.Mux().Handle(TaskCreditQuotaSweep, asynqlib.HandlerFunc(h.HandleCreditQuotaSweep))
 
+	if h.approvalRetryProcessor != nil {
+		srv.Mux().Handle(TaskApprovalRetry, asynqlib.HandlerFunc(h.HandleApprovalRetry))
+	}
+
 	if h.disbursementPollerWorker != nil {
 		srv.Mux().Handle(TaskDisbursementPoller, asynqlib.HandlerFunc(h.HandleDisbursementPoller))
 		srv.Mux().Handle(TaskDisbursementExecute, asynqlib.HandlerFunc(h.HandleDisbursementExecute))

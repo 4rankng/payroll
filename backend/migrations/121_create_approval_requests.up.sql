@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS approval_requests (
+    id bigint unsigned NOT NULL AUTO_INCREMENT,
+    request_type varchar(64) NOT NULL COMMENT 'send_sao_ke_email | send_payroll_email | send_reminder | void_timesheet',
+    status enum('pending','approved','executed','rejected','rescheduled','escalated','expired','cancelled') NOT NULL DEFAULT 'pending' COMMENT 'guarded lifecycle state',
+    payload json NOT NULL COMMENT 'server-derived request payload; never free-form client input',
+    idempotency_key varchar(191) NOT NULL COMMENT 'unique per (type, cycle) — see domain.BuildApprovalIdempotencyKey',
+    requester_id bigint unsigned NOT NULL COMMENT 'user who filed the request',
+    approver_id bigint unsigned DEFAULT NULL COMMENT 'user who made the latest decision (approve or reject)',
+    decision_note text COMMENT 'reject guidance / decision comment',
+    outcome text COMMENT 'recorded execution outcome',
+    retry_count int unsigned NOT NULL DEFAULT 0 COMMENT 'consumed retry attempts (max 3, then escalated)',
+    scheduled_at datetime(3) DEFAULT NULL COMMENT 'next automatic retry time (08:00 ICT + stagger offset in queue)',
+    executed_at datetime(3) DEFAULT NULL,
+    created_at datetime(3) DEFAULT NULL,
+    updated_at datetime(3) DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE INDEX idx_approval_requests_idempotency_key (idempotency_key),
+    INDEX idx_approval_requests_status (status),
+    INDEX idx_approval_requests_request_type (request_type),
+    INDEX idx_approval_requests_requester_id (requester_id),
+    INDEX idx_approval_requests_scheduled_at (scheduled_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

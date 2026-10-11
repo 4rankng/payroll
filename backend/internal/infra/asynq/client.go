@@ -464,3 +464,32 @@ type importJobPayload struct {
 	JobID    uint   `json:"job_id"`
 	ForMonth string `json:"for_month"`
 }
+
+// EnqueueApprovalRetry schedules the 08:00 approval retry for one request.
+// The TaskID is attempt-scoped (request:attempt): a retained per-request TaskID
+// collides once asynq keeps the first attempt inside its retention window and
+// silently swallows later retries — attempt-scoping avoids exactly that.
+func (c *Client) EnqueueApprovalRetry(requestID uint, attempt int, at time.Time) error {
+	payload, _ := json.Marshal(approvalRetryPayload{RequestID: requestID})
+	task := asynqlib.NewTask(TaskApprovalRetry, payload,
+		asynqlib.Queue(QueueDefault),
+		asynqlib.MaxRetry(c.cfg.RetryMax),
+		asynqlib.ProcessAt(at),
+		asynqlib.TaskID(fmt.Sprintf("approval-retry:%d:%d", requestID, attempt)),
+	)
+	info, err := c.client.Enqueue(task)
+	if err != nil {
+		if errors.Is(err, asynqlib.ErrDuplicateTask) || errors.Is(err, asynqlib.ErrTaskIDConflict) {
+			return nil
+		}
+		return fmt.Errorf("failed to enqueue approval retry task: %w", err)
+	}
+	logger.Info("Enqueued approval retry task",
+		"task_id", info.ID,
+		"request_id", requestID,
+		"attempt", attempt,
+		"fire_at", at.Format(time.RFC3339),
+		"queue", info.Queue,
+	)
+	return nil
+}

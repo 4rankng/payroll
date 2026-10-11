@@ -221,3 +221,30 @@ p, *, /api/v1/push/unsubscribe, POST, allow
 p, partner, /api/v1/wallet/bulk-transfer/*, *, deny
 p, adv_partner, /api/v1/wallet/bulk-transfer/*, *, deny
 p, employee, /api/v1/wallet/bulk-transfer/*, *, deny
+
+# MiMo assistant chat (admin + partner only; admin covered by /api/* wildcard).
+# adv_partner reuses the admin layout — explicit denies keep the assistant off
+# external operator screens. accountant/employee never see the surface.
+p, partner, /api/v1/chat/conversations, POST, allow
+p, partner, /api/v1/chat/conversations, GET, allow
+p, partner, /api/v1/chat/conversations/*, GET, allow
+p, partner, /api/v1/chat/conversations/*/messages, POST, allow
+p, adv_partner, /api/v1/chat/*, *, deny
+p, adv_partner, /api/v1/chat/*/*, *, deny
+p, accountant, /api/v1/chat/*, *, deny
+p, accountant, /api/v1/chat/*/*, *, deny
+p, employee, /api/v1/chat/*, *, deny
+p, employee, /api/v1/chat/*/*, *, deny
+
+# Approval-request engine. Partner: list-own + file (void_timesheet only —
+# re-enforced in the service per-type allowlist). Decision paths carry an
+# explicit partner deny (keyMatch2 defense in depth, bulk-transfer pattern).
+p, partner, /api/v1/approvals, GET, allow
+p, partner, /api/v1/approvals, POST, allow
+p, partner, /api/v1/approvals/*, *, deny
+p, adv_partner, /api/v1/approvals, *, deny
+p, adv_partner, /api/v1/approvals/*, *, deny
+p, accountant, /api/v1/approvals, *, deny
+p, accountant, /api/v1/approvals/*, *, deny
+p, employee, /api/v1/approvals, *, deny
+p, employee, /api/v1/approvals/*, *, deny

@@ -1,6 +1,6 @@
 // Package llm is the LLM provider seam. It holds the narrow port application
 // services depend on (Client) next to the concrete OpenAI-compatible HTTP
-// client for Xiaomi MiMo (https://api.xiaomimimo.com/v1 chat.completions).
+// client for Xiaomi MiMo (https://token-plan-sgp.xiaomimimo.com/v1 chat.completions).
 // Keeping both here mirrors internal/infra/zalo: the port is small, the
 // protocol details (auth header, error bodies, retries) stay inside the
 // package, and swapping providers is a bootstrap wiring change — the app
@@ -236,7 +236,7 @@ type TestConnectionResult struct {
 // cheap values built around a shared http.Transport.
 type Config struct {
 	// BaseURL is the OpenAI-compatible root including the version segment,
-	// e.g. https://api.xiaomimimo.com/v1. Empty means DefaultBaseURL.
+	// e.g. https://token-plan-sgp.xiaomimimo.com/v1. Empty means DefaultBaseURL.
 	BaseURL string
 	// APIKey is sent as `Authorization: Bearer <key>`.
 	APIKey string

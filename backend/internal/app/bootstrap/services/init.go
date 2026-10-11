@@ -11,6 +11,7 @@ import (
 	"api-server/internal/app/services/ad_banner"
 	"api-server/internal/app/services/advance_payment"
 	"api-server/internal/app/services/apikey"
+	"api-server/internal/app/services/approval"
 	"api-server/internal/app/services/asset"
 	"api-server/internal/app/services/attendance"
 	"api-server/internal/app/services/auth"
@@ -24,6 +25,7 @@ import (
 	"api-server/internal/app/services/integration"
 	"api-server/internal/app/services/ledger"
 	llmsvc "api-server/internal/app/services/llm"
+	"api-server/internal/app/services/llmchat"
 	"api-server/internal/app/services/loan"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/otp"
@@ -104,6 +106,8 @@ type Services struct {
 	Settings                          *config.SettingsService
 	SettingsConfig                    *config.SettingsConfigService
 	LLM                               *llmsvc.Service
+	Approval                          *approval.Service
+	Chat                              *llmchat.Service
 	ExcelConverter                    *reporting.ExcelConverterService
 	Asset                             *asset.AssetService
 	Cache                             domain.CacheServiceUseCase
@@ -578,6 +582,40 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		repos.CashForecastSnapshot,
 	).WithCacheService(cacheService)
 
+	// Approval engine (phase 2) and the MiMo assistant chat core (phase 5).
+	// The chat service wires the REAL approval adapters — the NotConfigured
+	// stubs are gone from this point on.
+	approvalService := approval.NewService(approval.Deps{
+		Repo:          repos.ApprovalRequest,
+		Payloads:      approval.NewPayloadBuilderRegistry(payrollReportByProjectService, repos.ProjectUser, repos.User, repos.Timesheet),
+		Preconditions: approval.NewPreconditionRegistry(payrollReportByProjectService, repos.Timesheet),
+		Users:         repos.User,
+		Notifier:      notificationService,
+		Retry:         approval.NewAsynqRetryScheduler(asynqClient),
+		Audit:         approval.NewAsynqEventWriter(asynqClient),
+		Executers: map[domain.ApprovalRequestType]approval.Executer{
+			domain.ApprovalTypeSendSaoKeEmail:   approval.NewEmailExecuter(asynqClient),
+			domain.ApprovalTypeSendPayrollEmail: approval.NewEmailExecuter(asynqClient),
+		},
+		Clock: clk,
+	})
+	approvalEngine := llmchat.NewApprovalEngine(approvalService)
+	partnerScopeResolver := dashboard.NewPartnerScopeResolver(db.DB, cacheService, logger)
+	llmchatService := llmchat.NewService(llmchat.Deps{
+		LLM:        llmService,
+		Convs:      repos.ChatConversation,
+		Messages:   repos.ChatMessage,
+		ToolCalls:  repos.ChatToolCall,
+		Timings:    repos.ChatTurnTiming,
+		Store:      persistence.NewChatToolReadStore(db),
+		Wallet:     llmchat.NewWalletInfoSource(walletService),
+		Filer:      approvalEngine,
+		Reader:     approvalEngine,
+		Scope:      llmchat.NewScopeResolver(partnerScopeResolver),
+		Audit:      llmchat.NewAuditSink(asynqClient),
+		MsgLimiter: llmport.NewFixedWindowLimiter(redis.Client, time.Minute, 30, "llmchat:rate:"),
+	})
+
 	// Create payroll service (which contains the bulk transfer module)
 	payrollSvc := payroll.NewPayrollService(db.DB, repos.Timesheet, repos.Employee, repos.EmployeeUser, repos.Project, repos.ProjectEmployee, repos.User, ledgerService, transactionService, assetService, excelConverterService, settingsConfigService, repos.BulkTransferFile, repos.TransactionCode, pdfService, notificationService, eventBus, asynqClient)
 	payrollSvc.SetWalletBulkPaymentReader(repos.TxWalletPayment)
@@ -801,6 +839,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		Settings:                          settingsService,
 		SettingsConfig:                    settingsConfigService,
 		LLM:                               llmService,
+		Approval:                          approvalService,
+		Chat:                              llmchatService,
 		ExcelConverter:                    excelConverterService,
 		Asset:                             assetService,
 		Cache:                             cacheService,

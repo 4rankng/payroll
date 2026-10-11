@@ -35,7 +35,9 @@ import (
 	adminHandlers "api-server/internal/transport/http/handlers/admin"
 	advPartnerHandlers "api-server/internal/transport/http/handlers/adv_partner"
 	advancePaymentHandlers "api-server/internal/transport/http/handlers/advance_payment"
+	approvalHandlers "api-server/internal/transport/http/handlers/approval"
 	attendanceHandlers "api-server/internal/transport/http/handlers/attendance"
+	chatHandlers "api-server/internal/transport/http/handlers/chat"
 	disbursementHandlers "api-server/internal/transport/http/handlers/disbursement"
 	employeeHandlers "api-server/internal/transport/http/handlers/employee"
 	integrationHandlers "api-server/internal/transport/http/handlers/integration"
@@ -103,6 +105,8 @@ type Handlers struct {
 	EmployeeImport         *employeeHandlers.ImportHandler
 	DBExport               *handlers.DBExportHandler
 	Push                   *pushHandlers.Handler
+	Chat                   *chatHandlers.Handler
+	Approval               *approvalHandlers.Handler
 	Cron                   *handlers.CronHandler
 	DisbursementWebhook    *disbursementHandlers.WebhookHandler
 	DisbursementFee        *disbursementHandlers.FeeScheduleHandler
@@ -358,6 +362,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		walletBulkRowWorker,
 		walletBulkSvc,
 	)
+	asynqHandlers.SetApprovalRetryProcessor(services.Approval)
 	asynqinfra.RegisterHandlers(asynqServer, asynqHandlers)
 	if err := asynqinfra.RegisterPeriodicTasks(asynqServer, asynqClient); err != nil {
 		return nil, err
@@ -466,6 +471,8 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Health:               handlers.NewHealthHandler(healthCheckers, version),
 		Notification:         handlers.NewNotificationHandler(services.Notification),
 		Settings:             handlers.NewSettingsHandler(services.Settings, services.LLM),
+		Chat:                 chatHandlers.NewHandler(services.Chat),
+		Approval:             approvalHandlers.NewHandler(services.Approval),
 		Asset:                handlers.NewAssetHandler(services.Asset),
 		Cache:                handlers.NewCacheHandler(services.Cache, logger),
 		Lender:               handlers.NewLenderHandler(services.Lender),
