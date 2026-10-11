@@ -120,6 +120,12 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 
 	var totalMax, totalComp, totalPend uint64
 
+	// Check-in-only months cannot back a regular advance request (the create
+	// endpoint refuses them); track them so CanRequest reflects that instead
+	// of showing an enabled button that always errors.
+	checkInOnlyMonths := map[string]bool{}
+	regularRemaining := uint64(0)
+
 	for _, m := range validMonths {
 		maxAdv, err := s.config.AdvancePaymentRepo.SumMaxAdvByEmployeeMonth(ctx, employeeID, m)
 		if err != nil {
@@ -141,6 +147,13 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		}
 
 		if maxAdv > 0 {
+			if rows, rerr := s.config.AdvancePaymentRepo.GetByEmployeeAndMonth(ctx, employeeID, m); rerr != nil {
+				s.logger.Warn("failed to check period source", "error", rerr, "employee_id", employeeID, "month", m)
+			} else if periodHasCheckInEarnings(rows) {
+				checkInOnlyMonths[m] = true
+			} else {
+				regularRemaining += remUint
+			}
 			info.Quotas = append(info.Quotas, domain.AdvancePaymentQuota{
 				ForMonth:         m,
 				MaxAdvanceAmount: maxAdv,
@@ -182,6 +195,20 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		if !info.CanRequest && info.TotalMaxAdvance == 0 && len(info.Quotas) == 0 {
 			info.CanRequestTitle = fmt.Sprintf(constants.MsgAdvanceCutoffTitleVN, FormatMonthDisplay(prevCalMonth))
 			info.CanRequestReason = fmt.Sprintf(constants.MsgAdvanceCutoffWaitingUploadVN, FormatMonthDisplay(currentCalMonth))
+		}
+	}
+
+	// Every quota month is served by the self-check-in flow: the regular
+	// request path is structurally closed, so the button must say so instead
+	// of letting the employee hit a guaranteed error on submit.
+	if info.CanRequest && regularRemaining == 0 && len(checkInOnlyMonths) > 0 {
+		info.CanRequest = false
+		info.CanRequestTitle = constants.MsgAdvanceCheckInOnlyTitleVN
+		for _, m := range validMonths {
+			if checkInOnlyMonths[m] {
+				info.CanRequestReason = fmt.Sprintf(constants.MsgAdvancePeriodCheckInOnlyVN, FormatMonthDisplay(m))
+				break
+			}
 		}
 	}
 

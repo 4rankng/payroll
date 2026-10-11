@@ -771,6 +771,7 @@ const (
 	// refusals below point at the single correct surface.
 	MsgAdvancePeriodMixedSourcesVN   = "Kỳ lương %s đang có dữ liệu từ cả bảng lương và tự chấm công. Vui lòng liên hệ quản lý để được xử lý."
 	MsgAdvancePeriodCheckInOnlyVN    = "Kỳ lương %s được tính bằng tự chấm công. Vui lòng xin ứng lương tại mục Tự chấm công."
+	MsgAdvanceCheckInOnlyTitleVN     = "Ứng lương qua tự chấm công"
 	MsgCheckInEnableUploadConflictVN = "Tháng %s đã có hạn mức ứng lương từ bảng lương. Vui lòng chọn tháng sau để bật tự chấm công từ tháng này."
 
 	// Auth Business Errors - Vietnamese

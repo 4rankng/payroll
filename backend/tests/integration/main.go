@@ -132,6 +132,9 @@ func main() {
 	runTimesheetExtendedTests(client, testData, reporter, cfg)
 	runAdBannerTests(client, testData, reporter, cfg)
 
+	// Approvals flow (MiMo assistant wave 1)
+	runApprovalsTests(client, testData, reporter, cfg)
+
 	// Summary
 	reporter.PrintSummary()
 	os.Exit(reporter.ExitCode())

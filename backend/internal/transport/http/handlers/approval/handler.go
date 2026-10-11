@@ -137,7 +137,7 @@ func (h *Handler) Approve(c *gin.Context) {
 	}
 	req, err := h.service.Approve(c.Request.Context(), id, actor)
 	if err != nil {
-		writeError(c, err, newRequestResponse(req))
+		writeErrorReq(c, err, req)
 		return
 	}
 	response.Success(c, newRequestResponse(req), "Đã duyệt và thực thi yêu cầu")
@@ -157,7 +157,7 @@ func (h *Handler) Reject(c *gin.Context) {
 	_ = c.ShouldBindJSON(&body) // note optional
 	req, err := h.service.Reject(c.Request.Context(), id, actor, body.Note)
 	if err != nil {
-		writeError(c, err, newRequestResponse(req))
+		writeErrorReq(c, err, req)
 		return
 	}
 	response.Success(c, newRequestResponse(req), "Đã từ chối — sẽ chuẩn bị lại theo lịch")
@@ -222,6 +222,17 @@ func splitComma(s string) []string {
 		out = append(out, s[start:])
 	}
 	return out
+}
+
+// writeErrorReq is writeError for decision paths where the engine may return
+// a nil request together with the error (e.g. not found): render the row only
+// when it exists.
+func writeErrorReq(c *gin.Context, err error, req *domain.ApprovalRequest) {
+	if req != nil {
+		writeError(c, err, newRequestResponse(req))
+		return
+	}
+	writeError(c, err)
 }
 
 // writeError maps engine errors onto HTTP responses. extra (may be nil-valued
