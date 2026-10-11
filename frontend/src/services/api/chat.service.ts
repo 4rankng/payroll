@@ -65,10 +65,21 @@ class ChatService {
     return response.data.data;
   }
 
-  async sendMessage(id: number, content: string): Promise<ChatConversationDetail> {
+  async uploadAttachment(file: File): Promise<number> {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await apiClient.post<ChatEnvelope<{ id: number }>>(
+      API_ENDPOINTS.chat.attachments,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data.data.id;
+  }
+
+  async sendMessage(id: number, content: string, attachmentIds: number[] = []): Promise<ChatConversationDetail> {
     const response = await apiClient.post<ChatEnvelope<ChatConversationDetail>>(
       `${API_ENDPOINTS.chat.conversations}/${id}/messages`,
-      { content }
+      { content, attachmentIds }
     );
     return response.data.data;
   }

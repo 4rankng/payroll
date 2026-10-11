@@ -4,6 +4,11 @@
 package chat
 
 import (
+	"fmt"
+	"io"
+	"time"
+
+	"api-server/internal/app/services/asset"
 	"errors"
 	"net/http"
 	"strconv"
@@ -21,10 +26,61 @@ import (
 // Handler serves the chat routes.
 type Handler struct {
 	service *llmchat.Service
+	assets  *asset.AssetService
 }
 
-func NewHandler(service *llmchat.Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *llmchat.Service, assets *asset.AssetService) *Handler {
+	return &Handler{service: service, assets: assets}
+}
+
+// UploadAttachment handles POST /api/v1/chat/attachments — one screenshot per
+// request, PNG/JPG enforced by content sniffing (never the extension), 5MB
+// cap, stored via the asset service under the caller's ownership.
+func (h *Handler) UploadAttachment(c *gin.Context) {
+	caller, ok := callerFromRequest(c)
+	if !ok {
+		return
+	}
+	if h.assets == nil {
+		c.JSON(http.StatusServiceUnavailable, response.ErrorResponse{
+			Status: "error", Message: "Không thể lưu tệp đính kèm.", HTTPStatus: http.StatusServiceUnavailable, Code: "CHAT_ATTACHMENTS_UNAVAILABLE",
+		})
+		return
+	}
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		response.BadRequest(c, "Thiếu tệp đính kèm (trường 'file')")
+		return
+	}
+	defer func() { _ = file.Close() }()
+	if header.Size <= 0 || header.Size > llmchat.MaxImageBytes {
+		response.BadRequest(c, "Ảnh tối đa 5MB")
+		return
+	}
+	buf := make([]byte, 512)
+	n, _ := file.Read(buf)
+	sniff := http.DetectContentType(buf[:n])
+	if sniff != "image/png" && sniff != "image/jpeg" {
+		response.BadRequest(c, "Chỉ nhận ảnh PNG hoặc JPG — ảnh HEIC/định dạng khác vui lòng chuyển đổi trước khi gửi")
+		return
+	}
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		response.BadRequest(c, "Không thể đọc tệp đính kèm")
+		return
+	}
+	ext := ".png"
+	if sniff == "image/jpeg" {
+		ext = ".jpg"
+	}
+	header.Filename = "chat-" + fmt.Sprintf("%d-%d", caller.UserID, time.Now().Unix()) + ext
+	uploaded, err := h.assets.UploadAsset(c.Request.Context(), file, header, domain.AssetUploadRequest{
+		UploadType: "chat",
+	}, caller.UserID)
+	if err != nil {
+		response.BadRequest(c, "Không thể lưu ảnh — thử lại")
+		return
+	}
+	response.SuccessCreated(c, gin.H{"id": uploaded.ID}, "Đã tải ảnh lên")
 }
 
 // callerFromRequest extracts the authenticated caller. The JWT role gates the
@@ -144,7 +200,7 @@ func (h *Handler) SendMessage(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.SendMessage(c.Request.Context(), caller, id, req.Content)
+	result, err := h.service.SendMessage(c.Request.Context(), caller, id, req.Content, req.AttachmentIds)
 	if err != nil {
 		writeError(c, err)
 		return
@@ -203,6 +259,10 @@ func writeError(c *gin.Context, err error) {
 		response.Forbidden(c, "Trợ lý AI chỉ dành cho quản trị viên và đối tác")
 	case errors.Is(err, llmchat.ErrChatDisabled):
 		response.Forbidden(c, "Trợ lý AI đã bị tắt cho vai trò của bạn")
+	case errors.Is(err, llmchat.ErrAttachmentRejected):
+		response.BadRequest(c, "Tệp đính kèm không hợp lệ hoặc không còn tồn tại — chỉ nhận ảnh PNG/JPG tối đa 5MB do chính bạn tải lên.")
+	case errors.Is(err, llmchat.ErrNotWired):
+		response.BadRequest(c, "Tính năng này chưa được kết nối — vui lòng liên hệ quản trị viên.")
 	case errors.Is(err, llmchat.ErrRateLimited):
 		response.TooManyRequests(c, "Bạn gửi tin nhắn quá nhanh — vui lòng chờ ít giây rồi thử lại.", 30)
 	case errors.Is(err, llmchat.ErrTurnTimeout):

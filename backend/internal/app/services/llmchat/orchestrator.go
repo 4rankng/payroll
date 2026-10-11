@@ -15,7 +15,9 @@ import (
 // model + tools end to end, bounded context (last N turns), capped tool
 // rounds, and a per-turn timing row so the p95 budget is measurable in
 // production. A var so tests can shorten it.
-var TurnTimeout = 20 * time.Second
+// Vision turns are multi-round (each round re-sends the image for context:
+// ~20s per provider call + tool execution). Text-only turns answer in <10s.
+var TurnTimeout = 120 * time.Second
 
 const (
 	// ContextMaxMessages bounds the prompt tail. Running-summary generation
@@ -42,7 +44,7 @@ type TurnResult struct {
 // runTurn executes one full assistant turn: prompt assembly, model loop with
 // parallel tool dispatch, persistence, and timing. The caller has already
 // persisted the user message and passed ownership + rate checks.
-func (s *Service) runTurn(ctx context.Context, caller Caller, conv *domain.ChatConversation, userText string) (*TurnResult, error) {
+func (s *Service) runTurn(ctx context.Context, caller Caller, conv *domain.ChatConversation, userText string, images []llmport.ContentPart) (*TurnResult, error) {
 	turnCtx, cancel := context.WithTimeout(ctx, TurnTimeout)
 	defer cancel()
 	start := time.Now()
@@ -54,7 +56,7 @@ func (s *Service) runTurn(ctx context.Context, caller Caller, conv *domain.ChatC
 		Model:          llmport.ModelFlash,
 	}
 
-	msgs, err := s.buildPromptMessages(turnCtx, caller, conv.ID, userText)
+	msgs, err := s.buildPromptMessages(turnCtx, caller, conv.ID, userText, images)
 	if err != nil {
 		s.recordTiming(turnCtx, timing, start, false)
 		return nil, err
@@ -82,6 +84,15 @@ func (s *Service) runTurn(ctx context.Context, caller Caller, conv *domain.ChatC
 		}
 
 		content, toolCalls := firstChoice(resp)
+
+		// Vision cost control: the image rides only the FIRST model call —
+		// by now the model has read it and incorporated it into its tool
+		// choice. Later rounds carry tool results, not re-visioned pixels,
+		// cutting each subsequent round from ~20s to text-only latency.
+		if round == 0 {
+			msgs = stripImageParts(msgs)
+		}
+
 		finalRound := round >= MaxToolRounds
 
 		if len(toolCalls) == 0 || finalRound {
@@ -142,7 +153,7 @@ func (s *Service) runTurn(ctx context.Context, caller Caller, conv *domain.ChatC
 // buildPromptMessages assembles the model request: byte-stable system prompt +
 // the bounded conversation tail, every externally sourced string wrapped as
 // untrusted data.
-func (s *Service) buildPromptMessages(ctx context.Context, caller Caller, conversationID uint, userText string) ([]llmport.Message, error) {
+func (s *Service) buildPromptMessages(ctx context.Context, caller Caller, conversationID uint, userText string, images []llmport.ContentPart) ([]llmport.Message, error) {
 	tail, err := s.msgRepo.RecentTail(ctx, conversationID, ContextMaxMessages)
 	if err != nil {
 		return nil, err
@@ -166,9 +177,13 @@ func (s *Service) buildPromptMessages(ctx context.Context, caller Caller, conver
 			})
 		}
 	}
+	currentContent := append(
+		[]llmport.ContentPart{llmport.TextPart(WrapUserContent(truncateRunes(userText, MaxMessageContent)))},
+		images...,
+	)
 	msgs = append(msgs, llmport.Message{
 		Role:    llmport.RoleUser,
-		Content: []llmport.ContentPart{llmport.TextPart(WrapUserContent(truncateRunes(userText, MaxMessageContent)))},
+		Content: currentContent,
 	})
 	return msgs, nil
 }
@@ -236,4 +251,32 @@ func (s *Service) recentToolCalls(ctx context.Context, conversationID uint) []*d
 		return nil
 	}
 	return calls
+}
+
+// stripImageParts removes image content parts from every message (text-only
+// replay for tool-result rounds).
+func stripImageParts(msgs []llmport.Message) []llmport.Message {
+	out := make([]llmport.Message, 0, len(msgs))
+	for _, m := range msgs {
+		hasImage := false
+		for _, part := range m.Content {
+			if part.Type == llmport.ContentPartImageURL {
+				hasImage = true
+				break
+			}
+		}
+		if !hasImage {
+			out = append(out, m)
+			continue
+		}
+		texts := make([]llmport.ContentPart, 0, len(m.Content))
+		for _, part := range m.Content {
+			if part.Type == llmport.ContentPartText {
+				texts = append(texts, part)
+			}
+		}
+		m.Content = texts
+		out = append(out, m)
+	}
+	return out
 }

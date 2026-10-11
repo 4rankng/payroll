@@ -337,6 +337,7 @@ export const API_ENDPOINTS = {
     conversations: '/chat/conversations',
     conversation: (id: number) => `/chat/conversations/${id}`,
     messages: (id: number) => `/chat/conversations/${id}/messages`,
+    attachments: '/chat/attachments',
   },
   approvals: {
     base: '/approvals',

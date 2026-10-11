@@ -626,6 +626,16 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		Audit:      llmchat.NewAuditSink(asynqClient),
 		MsgLimiter: llmport.NewFixedWindowLimiter(redis.Client, time.Minute, 30, "llmchat:rate:"),
 		RoleGate:   llmchat.NewSettingsRoleGate(settingsConfigService),
+		Images: llmchat.NewAssetImages(
+			llmchatAssetReader{svc: assetService},
+			func(filePath string) (string, error) {
+				exists, fullPath, err := assetService.CheckFileExists(filePath)
+				if err != nil || !exists {
+					return "", err
+				}
+				return fullPath, nil
+			},
+		),
 	})
 
 	// Daily ops insight digest (phase 7): deterministic DB collectors, hard
@@ -936,4 +946,15 @@ func asAutoBulkTransfer(svc *bulktransfer.NinePayBulkTransferService) bulktransf
 		return nil
 	}
 	return svc
+}
+
+// llmchatAssetReader adapts the asset service onto llmchat's narrow reader.
+type llmchatAssetReader struct{ svc *asset.AssetService }
+
+func (r llmchatAssetReader) GetAsset(ctx context.Context, id uint) (llmchat.AssetMeta, error) {
+	a, err := r.svc.GetAsset(ctx, id)
+	if err != nil {
+		return llmchat.AssetMeta{}, err
+	}
+	return llmchat.AssetMeta{FilePath: a.FilePath, UploadedBy: a.UploadedBy}, nil
 }

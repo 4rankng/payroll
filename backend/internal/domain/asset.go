@@ -79,6 +79,7 @@ const (
 	UploadTypePartnerBCCImport          = "partner_bcc_import"
 	UploadTypeSaoKe                     = "sao_ke"           // sao kê reminder email attachments
 	UploadTypeSettlementProof           = "settlement_proof" // settlement evidence uploads
+	UploadTypeChat                      = "chat"             // chat assistant screenshot attachments (PNG/JPG only)
 	UploadTypeEmployeeImports           = "employee_imports" // bulk employee import files
 	// UploadTypeCheckInRoster holds the day-9 prepared self check-in roster
 	// the admin downloads from Tổng quan (dashboard). One file per period.
@@ -90,6 +91,7 @@ const (
 // path segment when storing files, so only these fixed (traversal-free)
 // constants are permitted.
 var allowedUploadTypes = map[string]bool{
+	UploadTypeChat:                      true,
 	UploadTypeLedgerEvidence:            true,
 	UploadTypeBulkTransferResult:        true,
 	UploadTypeAdvancePaymentResult:      true,

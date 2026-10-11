@@ -46,10 +46,13 @@ func (s *Server) Start() error {
 	router := s.setupRouter()
 
 	s.httpSrv = &http.Server{
-		Addr:         ":" + s.config.App.Port,
-		Handler:      router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		Addr:        ":" + s.config.App.Port,
+		Handler:     router,
+		ReadTimeout: 15 * time.Second,
+		// WriteTimeout must exceed the longest legitimate handler: chat
+		// vision turns run up to 120s (their own per-turn deadline). Normal
+		// requests stay bounded by the RequestTimeout middleware (10s).
+		WriteTimeout: 150 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 

@@ -12,6 +12,9 @@ const request: ApprovalRequest = {
   status_label: 'chờ duyệt',
   retry_count: 0,
   requester_id: 2,
+  requester_name: 'Trần Thị B',
+  summary: 'Huỷ bảng công ngày 05/10',
+  approve_effect: 'Quyết định huỷ bảng công được ghi nhận',
   created_at: '2026-10-11T10:00:00+07:00',
 };
 

@@ -21,8 +21,10 @@ import (
 const (
 	// DefaultBaseURL is the Xiaomi MiMo OpenAI-compatible endpoint.
 	DefaultBaseURL = "https://token-plan-sgp.xiaomimimo.com/v1" // TokenPlan dedicated endpoint (api.xiaomimimo.com rejects TokenPlan keys)
-	// DefaultHTTPTimeout bounds one HTTP attempt.
-	DefaultHTTPTimeout = 30 * time.Second
+	// DefaultHTTPTimeout bounds one HTTP attempt. Vision/drafting turns on
+	// flash legitimately exceed 30s end-to-end (image parts + thinking), so
+	// the per-attempt bound sits above the llmchat per-turn deadline.
+	DefaultHTTPTimeout = 90 * time.Second
 	// DefaultMaxRetries is the number of retries after the first attempt, for
 	// transient failures only (transport errors, 429, 5xx).
 	DefaultMaxRetries = 2
@@ -42,11 +44,15 @@ var sharedTransport http.RoundTripper = &http.Transport{
 	// silently diverges from curl/browsers on machines that route external
 	// API traffic through a proxy — connections reset mid-body. Honor the
 	// environment; without proxy vars this is a no-op.
+	// HTTP/1.1 only on purpose: h2 streams over this ALB stalled on large
+	// multimodal requests (first vision turn fine, every later one hung on
+	// the pooled connection until the deadline).
 	Proxy:               http.ProxyFromEnvironment,
 	MaxIdleConns:        16,
 	MaxIdleConnsPerHost: 8,
 	IdleConnTimeout:     90 * time.Second,
-	ForceAttemptHTTP2:   true,
+	ForceAttemptHTTP2:   false,
+	DisableCompression:  true,
 }
 
 // HTTPClient is the concrete OpenAI-compatible client (MiMo chat.completions).

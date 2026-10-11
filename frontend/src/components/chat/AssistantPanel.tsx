@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Loader2, SendHorizontal, Sparkles } from 'lucide-react';
+import { Loader2, Paperclip, SendHorizontal, Sparkles, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -8,8 +8,10 @@ import {
   useChatConversation,
   useCreateChatConversation,
   useSendChatMessage,
+  useUploadChatAttachment,
 } from '@/hooks/api/useChat';
 import { useIsMobile } from '@/hooks/useBreakpoint';
+import { toast } from 'sonner';
 
 const QUICK_ACTIONS = [
   'Sao kê tháng này thế nào?',
@@ -28,10 +30,12 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
   const isMobile = useIsMobile();
   const [conversationId, setConversationId] = useState<number>(0);
   const [input, setInput] = useState('');
+  const [pendingImage, setPendingImage] = useState<{ id: number; name: string } | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const createConversation = useCreateChatConversation();
   const sendMessage = useSendChatMessage();
+  const uploadAttachment = useUploadChatAttachment();
   const detail = useChatConversation(conversationId, open && conversationId > 0);
 
   useEffect(() => {
@@ -51,7 +55,27 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
     const content = (text ?? input).trim();
     if (!content || conversationId === 0 || sendMessage.isPending) return;
     setInput('');
-    sendMessage.mutate({ id: conversationId, content });
+    const attachmentIds = pendingImage ? [pendingImage.id] : undefined;
+    setPendingImage(null);
+    sendMessage.mutate({ id: conversationId, content, attachmentIds });
+  };
+
+  const handlePickImage = (file: File | undefined) => {
+    if (!file) return;
+    // HEIC camera-roll screenshots and other formats are rejected server-side
+    // by content sniffing — reject them here with clear copy instead.
+    if (file.type !== 'image/png' && file.type !== 'image/jpeg') {
+      toast.error('Chỉ nhận ảnh PNG hoặc JPG — ảnh HEIC vui lòng chuyển đổi trước khi gửi.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ảnh tối đa 5MB.');
+      return;
+    }
+    uploadAttachment.mutate(file, {
+      onSuccess: (id) => setPendingImage({ id, name: file.name }),
+      onError: () => toast.error('Không thể tải ảnh lên — thử lại.'),
+    });
   };
 
   const toolCalls = detail.data?.tool_calls ?? [];
@@ -127,6 +151,20 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
           </p>
         ) : null}
 
+        {pendingImage ? (
+          <div className="flex items-center gap-2 border-t px-3 py-2 text-xs text-muted-foreground">
+            <span className="truncate">Đính kèm: {pendingImage.name}</span>
+            <button
+              type="button"
+              className="ml-auto shrink-0 rounded p-1 hover:bg-muted"
+              aria-label="Bỏ đính kèm"
+              onClick={() => setPendingImage(null)}
+            >
+              <X aria-hidden="true" className="size-3.5" />
+            </button>
+          </div>
+        ) : null}
+
         <form
           className="flex items-end gap-2 border-t px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           onSubmit={(event) => {
@@ -149,6 +187,24 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
             disabled={sendMessage.isPending || conversationId === 0}
             className="max-h-32 min-h-11 flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
+          <label className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-input text-muted-foreground transition-colors hover:bg-muted/50">
+            {uploadAttachment.isPending ? (
+              <Loader2 aria-hidden="true" className="size-4 animate-spin" />
+            ) : (
+              <Paperclip aria-hidden="true" className="size-4" />
+            )}
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              aria-label="Đính kèm ảnh chụp màn hình"
+              disabled={uploadAttachment.isPending}
+              onChange={(event) => {
+                handlePickImage(event.target.files?.[0]);
+                event.target.value = '';
+              }}
+            />
+          </label>
           <Button
             type="submit"
             size="icon"

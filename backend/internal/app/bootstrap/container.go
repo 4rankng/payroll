@@ -475,7 +475,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Health:               handlers.NewHealthHandler(healthCheckers, version),
 		Notification:         handlers.NewNotificationHandler(services.Notification),
 		Settings:             handlers.NewSettingsHandler(services.Settings, services.LLM),
-		Chat:                 chatHandlers.NewHandler(services.Chat),
+		Chat:                 chatHandlers.NewHandler(services.Chat, services.Asset),
 		Approval:             approvalHandlers.NewHandler(services.Approval),
 		Insights:             insightsHandlers.NewHandler(services.Insights),
 		Asset:                handlers.NewAssetHandler(services.Asset),

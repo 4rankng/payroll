@@ -248,3 +248,9 @@ p, accountant, /api/v1/approvals, *, deny
 p, accountant, /api/v1/approvals/*, *, deny
 p, employee, /api/v1/approvals, *, deny
 p, employee, /api/v1/approvals/*, *, deny
+
+# Chat attachments (screenshots for the vision path) — same role surface as chat.
+p, partner, /api/v1/chat/attachments, POST, allow
+p, adv_partner, /api/v1/chat/attachments, *, deny
+p, accountant, /api/v1/chat/attachments, *, deny
+p, employee, /api/v1/chat/attachments, *, deny

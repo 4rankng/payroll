@@ -14,7 +14,8 @@ type createConversationRequest struct {
 }
 
 type sendMessageRequest struct {
-	Content string `json:"content"`
+	Content       string `json:"content"`
+	AttachmentIds []uint `json:"attachmentIds"`
 }
 
 type conversationResponse struct {

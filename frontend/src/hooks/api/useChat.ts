@@ -20,6 +20,9 @@ export const useChatConversation = (id: number, active: boolean) =>
     refetchInterval: active ? 5_000 : false,
   });
 
+export const useUploadChatAttachment = () =>
+  useMutation({ mutationFn: (file: File) => chatService.uploadAttachment(file) });
+
 export const useCreateChatConversation = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -33,8 +36,8 @@ export const useCreateChatConversation = () => {
 export const useSendChatMessage = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, content }: { id: number; content: string }) =>
-      chatService.sendMessage(id, content),
+    mutationFn: ({ id, content, attachmentIds }: { id: number; content: string; attachmentIds?: number[] }) =>
+      chatService.sendMessage(id, content, attachmentIds ?? []),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QueryKeys.chat.all });
     },

@@ -22,5 +22,6 @@ func setupChatRoutes(protected *gin.RouterGroup, container *Container) {
 		g.GET("/conversations", container.Handlers.Chat.ListConversations)
 		g.GET("/conversations/:id", container.Handlers.Chat.GetConversation)
 		g.POST("/conversations/:id/messages", container.Handlers.Chat.SendMessage)
+		g.POST("/attachments", container.Handlers.Chat.UploadAttachment)
 	}
 }

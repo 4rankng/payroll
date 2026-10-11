@@ -30,6 +30,7 @@ type Service struct {
 	executor   *ToolExecutor
 	msgLimit   Limiter
 	roleGate   RoleGate
+	images     AttachmentLoader
 	logger     *slog.Logger
 }
 
@@ -48,6 +49,7 @@ type Deps struct {
 	Audit      AuditSink
 	MsgLimiter Limiter
 	RoleGate   RoleGate
+	Images     AttachmentLoader
 }
 
 // NewService constructs the chat service with the full tool manifest.
@@ -67,6 +69,7 @@ func NewService(deps Deps) *Service {
 		executor:   executor,
 		msgLimit:   deps.MsgLimiter,
 		roleGate:   deps.RoleGate,
+		images:     deps.Images,
 		logger:     observability.GetLogger(),
 	}
 }
@@ -143,7 +146,7 @@ func (s *Service) GetConversation(ctx context.Context, caller Caller, id uint, m
 
 // SendMessage runs one assistant turn: rate limit → ownership → persist the
 // user message → orchestrate model + tools → persist the assistant answer.
-func (s *Service) SendMessage(ctx context.Context, caller Caller, conversationID uint, content string) (*TurnResult, error) {
+func (s *Service) SendMessage(ctx context.Context, caller Caller, conversationID uint, content string, attachmentIDs []uint) (*TurnResult, error) {
 	if !RoleAllowed(caller.Role) {
 		return nil, ErrForbiddenRole
 	}
@@ -196,7 +199,26 @@ func (s *Service) SendMessage(ctx context.Context, caller Caller, conversationID
 		}
 	}
 
-	return s.runTurn(ctx, caller, conv, text)
+	// Screenshot vision: <=2 validated images ride the CURRENT turn only —
+	// history replays as text, so storage and prompts stay bounded.
+	var images []llmport.ContentPart
+	if len(attachmentIDs) > 0 {
+		if len(attachmentIDs) > MaxImageAttachments {
+			return nil, domain.NewValidationError("tối đa 2 ảnh mỗi tin nhắn")
+		}
+		if s.images == nil {
+			return nil, ErrNotWired
+		}
+		for _, id := range attachmentIDs {
+			dataURL, err := s.images.LoadImageDataURL(ctx, caller, id)
+			if err != nil {
+				return nil, err
+			}
+			images = append(images, llmport.ImagePart(dataURL))
+		}
+	}
+
+	return s.runTurn(ctx, caller, conv, text, images)
 }
 
 // ownedConversation loads a conversation and enforces per-record ownership.

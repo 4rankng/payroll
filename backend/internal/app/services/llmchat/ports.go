@@ -161,6 +161,19 @@ func (r *NotConfiguredReader) ListForUser(_ context.Context, caller Caller) ([]A
 	return nil, ErrNotWired
 }
 
+// ErrAttachmentRejected is returned when an attachment fails validation
+// (not an image, too large, foreign upload, missing file).
+var ErrAttachmentRejected = errors.New("tệp đính kèm không hợp lệ")
+
+// MaxImageAttachments bounds images per message.
+const MaxImageAttachments = 2
+
+// AttachmentLoader reads one uploaded image as a data URL for the vision
+// path. Ownership is enforced by the implementation (uploader or admin).
+type AttachmentLoader interface {
+	LoadImageDataURL(ctx context.Context, caller Caller, assetID uint) (string, error)
+}
+
 // WalletInfoSource is the narrow read seam over the wallet service for the
 // admin-only get_wallet_balance tool (adapter in wallet_source.go).
 type WalletInfoSource interface {
