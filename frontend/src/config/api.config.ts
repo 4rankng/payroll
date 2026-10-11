@@ -329,6 +329,15 @@ export const API_ENDPOINTS = {
     mimoTestConnection: '/settings/mimo/test-connection',
   },
   // Approval-request engine (admin decides; partner files within allowlist)
+  insights: {
+    digest: '/insights/digest',
+    dismiss: (id: number) => `/insights/${id}/dismiss`,
+  },
+  chat: {
+    conversations: '/chat/conversations',
+    conversation: (id: number) => `/chat/conversations/${id}`,
+    messages: (id: number) => `/chat/conversations/${id}/messages`,
+  },
   approvals: {
     base: '/approvals',
     byId: (id: number) => `/approvals/${id}`,

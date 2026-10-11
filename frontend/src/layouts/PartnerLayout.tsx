@@ -4,6 +4,7 @@ import PartnerSidebar from "@/components/PartnerSidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { NotificationFAB } from "@/components/notifications/NotificationFAB";
+import { AssistantFAB } from "@/components/chat/AssistantFAB";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
 import { Briefcase01, Calendar, Grid01, Users01 } from "@untitledui/icons";
@@ -57,6 +58,7 @@ const PartnerLayout = () => {
         <PartnerLayoutInner isPartner={isPartner} />
         <MobileBottomNav groups={PARTNER_NAV_GROUPS} />
         <NotificationFAB />
+          <AssistantFAB />
       </SidebarProvider>
     </ProtectedRoute>
   );

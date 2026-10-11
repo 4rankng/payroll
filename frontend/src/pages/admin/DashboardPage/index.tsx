@@ -36,6 +36,7 @@ import {
   type DashboardPriorityItem,
 } from '@/components/admin-dashboard/DashboardOverview';
 import { useApprovalsList } from '@/hooks/api/useApprovals';
+import { InsightDigestCard } from '@/components/admin-dashboard/InsightDigestCard';
 import { useDashboardData } from '@/hooks/admin-dashboard/useDashboardData';
 import { useDashboardActions } from '@/hooks/admin-dashboard/useDashboardActions';
 import { useDashboardStats } from '@/hooks/admin-dashboard/useDashboardStats';
@@ -256,12 +257,13 @@ const AdminDashboard = () => {
           data-slot="admin-dashboard-bento"
           className="admin-dashboard-bento grid grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start"
         >
-          <div className="min-w-0 xl:col-span-7">
+          <div className="min-w-0 space-y-4 xl:col-span-7">
             <DashboardPriorityList
               items={priorityItems}
               isRefreshing={isDashboardRefreshing}
               onRefresh={handleRefresh}
             />
+            <InsightDigestCard />
           </div>
 
           <div className="min-w-0 xl:col-span-5">

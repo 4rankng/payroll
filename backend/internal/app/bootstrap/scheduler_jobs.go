@@ -12,6 +12,7 @@ import (
 	"api-server/internal/app/services/advance_payment"
 	"api-server/internal/app/services/asset"
 	"api-server/internal/app/services/cleanup"
+	"api-server/internal/app/services/insights"
 	"api-server/internal/app/services/ledger"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/project"
@@ -46,6 +47,7 @@ func registerSchedulerJobs(
 	aggregateRecomputeService *project.AggregateRecomputeService,
 	walletBalanceAlertService *notification.WalletBalanceAlertService,
 	assetSvc *asset.AssetService,
+	insightsService *insights.Service,
 	logger *slog.Logger,
 ) {
 	// Helper for template rendering
@@ -106,6 +108,21 @@ func registerSchedulerJobs(
 	}
 
 	// 1. Apply pending payment schedule changes
+	s.AddJob(scheduler.Job{
+		Name:    "daily_insight_digest",
+		Cron:    "30 7 * * *",
+		Enabled: true,
+		Handler: func() {
+			ctx := context.Background()
+			logger.Info("Starting daily insight digest")
+			if err := insightsService.RunDailyDigest(ctx); err != nil {
+				logger.Error("Daily insight digest failed", "error", err)
+			} else {
+				logger.Info("Daily insight digest complete")
+			}
+		},
+	})
+
 	s.AddJob(scheduler.Job{
 		Name:    "apply_payment_schedule_changes",
 		Cron:    "0 1 * * *",

@@ -40,6 +40,7 @@ import { useDashboardActions } from '@/hooks/admin-dashboard/useDashboardActions
 import { useDashboardStats } from '@/hooks/admin-dashboard/useDashboardStats';
 import { useTimesheets } from '@/hooks/api/useTimesheets';
 import { useApprovalsList } from '@/hooks/api/useApprovals';
+import { InsightDigestCard } from '@/components/admin-dashboard/InsightDigestCard';
 import { useBankUsageAllProjects, useEmployeeActivityStats } from '@/hooks/api/useDashboard';
 import { useDashboardNavigation } from '@/hooks/useDashboardNavigation';
 import { useEmployeeModals, useTimesheetModals } from '@/hooks/useModalNavigation';
@@ -413,6 +414,8 @@ const AdminDashboardMobile = () => {
         title="Cần xử lý"
         items={priorityRows}
       />
+
+      <InsightDigestCard compact />
 
       <Accordion
         type="multiple"

@@ -20,10 +20,11 @@ const (
 	NotificationTypePaymentScheduleChange        NotificationType = "payment_schedule_change"
 	NotificationTypePaymentScheduleChangeSummary NotificationType = "payment_schedule_change_summary"
 	NotificationTypeTimesheetPaid                NotificationType = "timesheet_paid"
-	NotificationTypeAdvancePaymentStatusChanged  NotificationType = "advance_payment_status_changed"
-	NotificationTypeAdvancePaymentReport         NotificationType = "advance_payment_report"
-	NotificationTypeWalletBalanceLow             NotificationType = "wallet_balance_low"
-	NotificationTypeCustom                       NotificationType = "custom"
+	NotificationTypeSystemAlert
+	NotificationTypeAdvancePaymentStatusChanged NotificationType = "advance_payment_status_changed"
+	NotificationTypeAdvancePaymentReport        NotificationType = "advance_payment_report"
+	NotificationTypeWalletBalanceLow            NotificationType = "wallet_balance_low"
+	NotificationTypeCustom                      NotificationType = "custom"
 	// NotificationTypeCheckInRoster is the day-9 reminder that the self
 	// check-in roster for the previous month is prepared and waiting on
 	// Tổng quan. The dashboard card keys off this type (unread = pending),

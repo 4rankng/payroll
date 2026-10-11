@@ -271,6 +271,15 @@ export const QueryKeys = {
   },
 
   // ========== SETTINGS ==========
+  insights: {
+    all: ['insights'] as const,
+    digest: (date?: string) => [...QueryKeys.insights.all, 'digest', date ?? 'today'] as const,
+  },
+  chat: {
+    all: ['chat'] as const,
+    conversations: () => [...QueryKeys.chat.all, 'conversations'] as const,
+    conversation: (id: number) => [...QueryKeys.chat.all, 'conversation', id] as const,
+  },
   approvals: {
     all: ['approvals'] as const,
     lists: () => [...QueryKeys.approvals.all, 'list'] as const,

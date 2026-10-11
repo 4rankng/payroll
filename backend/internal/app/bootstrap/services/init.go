@@ -22,6 +22,7 @@ import (
 	"api-server/internal/app/services/employee"
 	"api-server/internal/app/services/flex_pay"
 	infraServices "api-server/internal/app/services/infrastructure"
+	"api-server/internal/app/services/insights"
 	"api-server/internal/app/services/integration"
 	"api-server/internal/app/services/ledger"
 	llmsvc "api-server/internal/app/services/llm"
@@ -108,6 +109,7 @@ type Services struct {
 	LLM                               *llmsvc.Service
 	Approval                          *approval.Service
 	Chat                              *llmchat.Service
+	Insights                          *insights.Service
 	ExcelConverter                    *reporting.ExcelConverterService
 	Asset                             *asset.AssetService
 	Cache                             domain.CacheServiceUseCase
@@ -626,6 +628,19 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		RoleGate:   llmchat.NewSettingsRoleGate(settingsConfigService),
 	})
 
+	// Daily ops insight digest (phase 7): deterministic DB collectors, hard
+	// anti-spam filters, flash-written narratives, critical-only push.
+	insightsService := insights.NewService(
+		insights.Deps{
+			Findings: repos.DailyFinding,
+			Clk:      clk,
+			LLM:      insights.LLMNarrativeWriter{Service: llmService},
+			Notifier: notificationService,
+		},
+		repos.User,
+		insights.NewDBCollectors(db.DB),
+	)
+
 	// Create payroll service (which contains the bulk transfer module)
 	payrollSvc := payroll.NewPayrollService(db.DB, repos.Timesheet, repos.Employee, repos.EmployeeUser, repos.Project, repos.ProjectEmployee, repos.User, ledgerService, transactionService, assetService, excelConverterService, settingsConfigService, repos.BulkTransferFile, repos.TransactionCode, pdfService, notificationService, eventBus, asynqClient)
 	payrollSvc.SetWalletBulkPaymentReader(repos.TxWalletPayment)
@@ -851,6 +866,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		LLM:                               llmService,
 		Approval:                          approvalService,
 		Chat:                              llmchatService,
+		Insights:                          insightsService,
 		ExcelConverter:                    excelConverterService,
 		Asset:                             assetService,
 		Cache:                             cacheService,
