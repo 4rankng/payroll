@@ -590,6 +590,24 @@ func (r *TxWalletPaymentRepository) ListByBatchIDOrdered(ctx context.Context, ba
 	return rows, nil
 }
 
+// ListCompletedBulkPaymentsBetween returns completed wallet_payments rows
+// linked to any bulk-transfer batch whose settlement time (settled_at,
+// falling back to created_at) falls in [from, to], ordered by id. The caller
+// (payment-history read model) re-filters by work-month attribution via the
+// transaction-code WeeklyPay data, so the window may over-fetch by design.
+func (r *TxWalletPaymentRepository) ListCompletedBulkPaymentsBetween(ctx context.Context, from, to time.Time) ([]*domaintx.WalletPayment, error) {
+	var rows []*domaintx.WalletPayment
+	err := r.DB.WithContext(ctx).
+		Where("bulk_transfer_batch_id IS NOT NULL AND status = ?", domaintx.StateCompleted).
+		Where("COALESCE(settled_at, created_at) BETWEEN ? AND ?", from, to).
+		Order("id ASC").
+		Find(&rows).Error
+	if err != nil {
+		return nil, fmt.Errorf("wallet_payments: list completed bulk payments between: %w", err)
+	}
+	return rows, nil
+}
+
 // IncrementSweeperRetry bumps sweeper_retry_count and returns the new value.
 // Used by the stale-enqueue sweeper to cap per-row retries at 3.
 func (r *TxWalletPaymentRepository) IncrementSweeperRetry(ctx context.Context, rowID uint64) (uint, error) {

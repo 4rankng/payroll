@@ -8,6 +8,7 @@ import (
 
 	"api-server/internal/app/dto"
 	"api-server/internal/domain"
+	domaintx "api-server/internal/domain/transactions"
 	"api-server/internal/pkg/clock"
 	"api-server/mocks"
 
@@ -48,6 +49,30 @@ func (s bankHistoryTransactionCodeRepoStub) FindByCodes(context.Context, []strin
 
 func (s bankHistoryFileRepoStub) ListWeeklyForWorkMonth(context.Context, time.Time, time.Time) ([]*domain.BulkTransferFile, error) {
 	return s.files, nil
+}
+
+type bankHistoryWalletPaymentStub struct {
+	payments []*domaintx.WalletPayment
+	from     time.Time
+	to       time.Time
+}
+
+func (s *bankHistoryWalletPaymentStub) ListCompletedBulkPaymentsBetween(_ context.Context, from, to time.Time) ([]*domaintx.WalletPayment, error) {
+	s.from, s.to = from, to
+	return s.payments, nil
+}
+
+// historyWeeklyCodeData marshals transaction-code data resolving one VFIC code
+// to the given employee/project/cycle window.
+func historyWeeklyCodeData(t *testing.T, employeeID, projectID uint, from time.Time) []byte {
+	t.Helper()
+	to := from.AddDate(0, 0, 6)
+	data, err := json.Marshal(domain.TransactionCodeData{WeeklyPay: &domain.CyclePayData{
+		TimesheetIDs: []uint{1}, EmployeeID: employeeID, ProjectID: projectID,
+		FromDate: &from, ToDate: &to, CycleNum: 2,
+	}})
+	require.NoError(t, err)
+	return data
 }
 
 func historyDate(year int, month time.Month, day int) time.Time {
@@ -369,4 +394,178 @@ func TestGetBankTransferHistoriesSummaryZeroWhenEmpty(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, result.Data)
 	require.Equal(t, dto.BankTransferHistorySummary{}, result.Summary)
+}
+
+// TestGetBankTransferHistoriesIncludesOnePayBulkPayments covers the seamless
+// merge decision: a month paid only through the OnePay wallet bulk-transfer
+// flow (no bank-statement file) still renders payment-history records, with
+// the OnePay FT number as the bank reference and the settlement time as
+// PaidAt.
+func TestGetBankTransferHistoriesIncludesOnePayBulkPayments(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	timesheetRepo := mocks.NewMockTimesheetRepository(ctrl)
+	employeeRepo := mocks.NewMockEmployeeRepository(ctrl)
+
+	settledAt := time.Date(2026, time.July, 12, 9, 30, 0, 0, clock.DefaultLocation)
+	invoice := "FT270000111"
+	payments := []*domaintx.WalletPayment{{
+		RequestID: "VFIC1", InvoiceNo: &invoice, Status: domaintx.StateCompleted,
+		RequestedAmount: 465_000, SettledAt: &settledAt, CreatedAt: historyDate(2026, time.July, 12),
+	}}
+
+	timesheetRepo.EXPECT().GetTimesheetDatesByIDs(gomock.Any(), gomock.Any()).Times(0)
+	employeeRepo.EXPECT().GetByIDs(gomock.Any(), []int64{82}).Return([]*domain.Employee{
+		{ID: 82, Fullname: "NGUYEN TUAN ANH", CCCD: "031000002222"},
+	}, nil).AnyTimes()
+	projectRepo := bankHistoryProjectRepoStub{
+		accessible: []*domain.Project{{ID: 1, Name: "Dự án A"}},
+		byID:       map[uint]*domain.Project{1: {ID: 1, Name: "Dự án A"}},
+	}
+	walletRepo := &bankHistoryWalletPaymentStub{payments: payments}
+
+	service := &PayrollService{
+		timesheetRepo:           timesheetRepo,
+		employeeRepo:            employeeRepo,
+		projectRepo:             projectRepo,
+		transactionCodeRepo:     bankHistoryTransactionCodeRepoStub{rows: []*domain.TransactionCode{{Code: "VFIC1", Data: historyWeeklyCodeData(t, 82, 1, historyDate(2026, time.July, 8))}}},
+		bankTransferHistoryRepo: bankHistoryFileRepoStub{},
+		walletBulkPayments:      walletRepo,
+	}
+
+	result, err := service.GetBankTransferHistories(context.Background(), &dto.ListBankTransferHistoriesRequest{
+		Month: "2026-07", Page: 1, PageSize: 20,
+	}, 44, "partner")
+	require.NoError(t, err)
+	require.Len(t, result.Data, 1)
+	item := result.Data[0]
+	require.Equal(t, uint(82), item.EmployeeID)
+	require.Equal(t, 2, item.Cycle)
+	require.Equal(t, "2026-07-08", item.FromDate)
+	require.Equal(t, int64(465_000), item.TotalAmount)
+	require.Len(t, item.Transfers, 1)
+	require.Equal(t, "VFIC1", item.Transfers[0].TransferCode)
+	require.Equal(t, "FT270000111", item.Transfers[0].BankReference)
+	require.Equal(t, settledAt.Format(time.RFC3339), item.Transfers[0].PaidAt)
+	require.Equal(t, int64(465_000), result.Summary.TotalAmount)
+	require.Equal(t, 1, result.Summary.EmployeeCount)
+
+	// Window: whole work month plus the 14-day Ky4 settlement tail.
+	require.Equal(t, historyDate(2026, time.July, 1), walletRepo.from)
+	require.True(t, walletRepo.to.Equal(time.Date(2026, time.July, 28, 23, 59, 59, 0, clock.DefaultLocation).AddDate(0, 0, 14)))
+}
+
+// TestGetBankTransferHistoriesMergesBankAndOnePaySameCycle proves a
+// partly-bank/partly-OnePay employee-cycle aggregates into ONE record with
+// two transfer lines, matching the seamless-merge decision.
+func TestGetBankTransferHistoriesMergesBankAndOnePaySameCycle(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	timesheetRepo := mocks.NewMockTimesheetRepository(ctrl)
+	employeeRepo := mocks.NewMockEmployeeRepository(ctrl)
+
+	uploadedAt := time.Date(2026, time.July, 17, 20, 24, 0, 0, clock.DefaultLocation)
+	rows := []dto.BulkTransferFileData{
+		{EmployeeID: 82, ProjectID: 1, TransactionCode: "TX-B", Amount: 1_548_000, TransferStatus: "completed", BankTxnRef: "FT26198846619959"},
+	}
+	data, err := json.Marshal(rows)
+	require.NoError(t, err)
+	assetID := uint(7)
+	cycle := "weekly"
+	file := &domain.BulkTransferFile{ID: 5, Cycle: &cycle, AssetID: &assetID, Data: string(data), UploadedAt: &uploadedAt, CreatedAt: historyDate(2026, time.September, 1)}
+
+	settledAt := time.Date(2026, time.July, 12, 9, 30, 0, 0, clock.DefaultLocation)
+	invoice := "FT270000111"
+	payments := []*domaintx.WalletPayment{{
+		RequestID: "VFIC2", InvoiceNo: &invoice, Status: domaintx.StateCompleted,
+		RequestedAmount: 450_000, SettledAt: &settledAt, CreatedAt: historyDate(2026, time.July, 12),
+	}}
+
+	timesheetRepo.EXPECT().GetTimesheetDatesByIDs(gomock.Any(), gomock.Any()).Times(0)
+	employeeRepo.EXPECT().GetByIDs(gomock.Any(), []int64{82}).Return([]*domain.Employee{
+		{ID: 82, Fullname: "LÒ THỊ MINH THU", CCCD: "031189014251"},
+	}, nil).AnyTimes()
+	projectRepo := bankHistoryProjectRepoStub{
+		accessible: []*domain.Project{{ID: 1, Name: "Dự án A"}},
+		byID:       map[uint]*domain.Project{1: {ID: 1, Name: "Dự án A"}},
+	}
+	transactionRows := []*domain.TransactionCode{
+		{Code: "TX-B", Data: historyWeeklyCodeData(t, 82, 1, historyDate(2026, time.July, 8))},
+		{Code: "VFIC2", Data: historyWeeklyCodeData(t, 82, 1, historyDate(2026, time.July, 8))},
+	}
+
+	service := &PayrollService{
+		timesheetRepo:           timesheetRepo,
+		employeeRepo:            employeeRepo,
+		projectRepo:             projectRepo,
+		transactionCodeRepo:     bankHistoryTransactionCodeRepoStub{rows: transactionRows},
+		bankTransferHistoryRepo: bankHistoryFileRepoStub{files: []*domain.BulkTransferFile{file}},
+		walletBulkPayments:      &bankHistoryWalletPaymentStub{payments: payments},
+	}
+
+	result, err := service.GetBankTransferHistories(context.Background(), &dto.ListBankTransferHistoriesRequest{
+		Month: "2026-07", Page: 1, PageSize: 20,
+	}, 1, "admin")
+	require.NoError(t, err)
+	require.Len(t, result.Data, 1)
+	item := result.Data[0]
+	require.Equal(t, uint(82), item.EmployeeID)
+	require.Equal(t, 2, item.Cycle)
+	require.Equal(t, int64(1_998_000), item.TotalAmount)
+	require.Len(t, item.Transfers, 2)
+	// Transfers are sorted by bank reference.
+	require.Equal(t, "FT26198846619959", item.Transfers[0].BankReference)
+	require.Equal(t, "FT270000111", item.Transfers[1].BankReference)
+	require.Equal(t, "VFIC2", item.Transfers[1].TransferCode)
+	require.Equal(t, int64(1_998_000), result.Summary.TotalAmount)
+	require.Equal(t, 2, result.Summary.TransferCount)
+}
+
+// TestGetBankTransferHistoriesOnePayExclusionsAndFallback covers the payment
+// merge guards: partner project scoping, other-month WeeklyPay attribution,
+// and the request_id fallback when OnePay never returned an FT number.
+func TestGetBankTransferHistoriesOnePayExclusionsAndFallback(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	timesheetRepo := mocks.NewMockTimesheetRepository(ctrl)
+	employeeRepo := mocks.NewMockEmployeeRepository(ctrl)
+
+	settledAt := time.Date(2026, time.July, 12, 9, 30, 0, 0, clock.DefaultLocation)
+	payments := []*domaintx.WalletPayment{
+		// Project 2 is not accessible to partner 44 → excluded.
+		{RequestID: "VFIC-SCOPE", Status: domaintx.StateCompleted, RequestedAmount: 100_000, SettledAt: &settledAt, CreatedAt: historyDate(2026, time.July, 12)},
+		// Weekly window belongs to August → excluded from the July view.
+		{RequestID: "VFIC-MONTH", Status: domaintx.StateCompleted, RequestedAmount: 200_000, SettledAt: &settledAt, CreatedAt: historyDate(2026, time.July, 12)},
+		// Accessible, July, but no FT number → falls back to the VFIC code.
+		{RequestID: "VFIC-NOINV", Status: domaintx.StateCompleted, RequestedAmount: 300_000, SettledAt: &settledAt, CreatedAt: historyDate(2026, time.July, 12)},
+	}
+
+	timesheetRepo.EXPECT().GetTimesheetDatesByIDs(gomock.Any(), gomock.Any()).Times(0)
+	employeeRepo.EXPECT().GetByIDs(gomock.Any(), []int64{82}).Return([]*domain.Employee{
+		{ID: 82, Fullname: "NGUYEN TUAN ANH", CCCD: "031000002222"},
+	}, nil).AnyTimes()
+	projectRepo := bankHistoryProjectRepoStub{
+		accessible: []*domain.Project{{ID: 1, Name: "Dự án A"}},
+		byID:       map[uint]*domain.Project{1: {ID: 1, Name: "Dự án A"}},
+	}
+	transactionRows := []*domain.TransactionCode{
+		{Code: "VFIC-SCOPE", Data: historyWeeklyCodeData(t, 82, 2, historyDate(2026, time.July, 8))},
+		{Code: "VFIC-MONTH", Data: historyWeeklyCodeData(t, 82, 1, historyDate(2026, time.August, 3))},
+		{Code: "VFIC-NOINV", Data: historyWeeklyCodeData(t, 82, 1, historyDate(2026, time.July, 8))},
+	}
+
+	service := &PayrollService{
+		timesheetRepo:           timesheetRepo,
+		employeeRepo:            employeeRepo,
+		projectRepo:             projectRepo,
+		transactionCodeRepo:     bankHistoryTransactionCodeRepoStub{rows: transactionRows},
+		bankTransferHistoryRepo: bankHistoryFileRepoStub{},
+		walletBulkPayments:      &bankHistoryWalletPaymentStub{payments: payments},
+	}
+
+	result, err := service.GetBankTransferHistories(context.Background(), &dto.ListBankTransferHistoriesRequest{
+		Month: "2026-07", Page: 1, PageSize: 20,
+	}, 44, "partner")
+	require.NoError(t, err)
+	require.Len(t, result.Data, 1)
+	require.Len(t, result.Data[0].Transfers, 1)
+	require.Equal(t, "VFIC-NOINV", result.Data[0].Transfers[0].BankReference)
+	require.Equal(t, int64(300_000), result.Data[0].TotalAmount)
 }

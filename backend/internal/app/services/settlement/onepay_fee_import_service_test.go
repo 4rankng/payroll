@@ -496,6 +496,9 @@ func (r *fakeOnePayFeeWalletPayments) SumFeeByBatchAndStatuses(context.Context, 
 func (r *fakeOnePayFeeWalletPayments) ListByBatchIDOrdered(context.Context, uint64) ([]*domaintx.WalletPayment, error) {
 	return nil, nil
 }
+func (r *fakeOnePayFeeWalletPayments) ListCompletedBulkPaymentsBetween(context.Context, time.Time, time.Time) ([]*domaintx.WalletPayment, error) {
+	return nil, nil
+}
 func (r *fakeOnePayFeeWalletPayments) IncrementSweeperRetry(context.Context, uint64) (uint, error) {
 	return 0, nil
 }

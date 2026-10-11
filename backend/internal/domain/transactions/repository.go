@@ -102,6 +102,13 @@ type WalletPaymentRepository interface {
 	// by bulk_transfer_order ASC. Used by KQ generation.
 	ListByBatchIDOrdered(ctx context.Context, batchID uint64) ([]*WalletPayment, error)
 
+	// ListCompletedBulkPaymentsBetween returns completed wallet_payments rows
+	// linked to any bulk-transfer batch whose settlement time (settled_at,
+	// falling back to created_at) falls in [from, to], ordered by id. Used by
+	// the payment-history read model to merge OnePay bulk transfers into the
+	// weekly bank-transfer history view.
+	ListCompletedBulkPaymentsBetween(ctx context.Context, from, to time.Time) ([]*WalletPayment, error)
+
 	// IncrementSweeperRetry bumps sweeper_retry_count and returns the new value.
 	// Used by the stale-enqueue sweeper to cap retries at 3 per row.
 	IncrementSweeperRetry(ctx context.Context, rowID uint64) (uint, error)

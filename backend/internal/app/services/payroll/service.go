@@ -22,6 +22,7 @@ import (
 	"api-server/internal/app/services/payroll/pdf"
 	"api-server/internal/app/services/reporting"
 	"api-server/internal/domain"
+	domaintx "api-server/internal/domain/transactions"
 
 	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
@@ -32,6 +33,13 @@ type bankTransferHistoryFileRepository interface {
 	ListWeeklyForWorkMonth(ctx context.Context, monthStart, monthEnd time.Time) ([]*domain.BulkTransferFile, error)
 }
 
+// walletBulkPaymentReader reads completed OnePay bulk-transfer payments
+// (wallet_payments rows linked to a bulk_transfer_batch) for the
+// payment-history merge. Satisfied by domaintx.WalletPaymentRepository.
+type walletBulkPaymentReader interface {
+	ListCompletedBulkPaymentsBetween(ctx context.Context, from, to time.Time) ([]*domaintx.WalletPayment, error)
+}
+
 type PayrollService struct {
 	bulkTransferService     *bulktransfer.Service
 	excelService            *excel.Service
@@ -40,6 +48,7 @@ type PayrollService struct {
 	projectRepo             domain.ProjectRepository
 	bankTransferHistoryRepo bankTransferHistoryFileRepository
 	transactionCodeRepo     domain.TransactionCodeRepository
+	walletBulkPayments      walletBulkPaymentReader
 	simulationService       *SettlementSimulationService
 	events                  domain.EventBus
 }
@@ -49,6 +58,13 @@ type PayrollService struct {
 // constructed (avoids bloating the NewPayrollService constructor signature).
 func (s *PayrollService) SetSimulationService(sim *SettlementSimulationService) {
 	s.simulationService = sim
+}
+
+// SetWalletBulkPaymentReader wires the OnePay bulk-payment reader used by the
+// payment-history merge. Called from bootstrap after construction (avoids
+// bloating the NewPayrollService constructor signature).
+func (s *PayrollService) SetWalletBulkPaymentReader(reader walletBulkPaymentReader) {
+	s.walletBulkPayments = reader
 }
 
 // NewPayrollService creates a new PayrollService with only bulk transfer functionality
@@ -323,6 +339,18 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 		return nil, err
 	}
 
+	// OnePay wallet bulk transfers never write bulk_transfer_files; merge the
+	// completed batch payments in here. The window adds a 14-day tail so Ky4
+	// batches settled early next month are still fetched; month attribution is
+	// enforced per-payment by resolveWeeklyHistoryCycle via WeeklyPay.FromDate.
+	var walletPayments []*domaintx.WalletPayment
+	if s.walletBulkPayments != nil {
+		walletPayments, err = s.walletBulkPayments.ListCompletedBulkPaymentsBetween(ctx, monthStart, monthEnd.AddDate(0, 0, 14))
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	type aggregate struct {
 		item       dto.BankTransferHistoryItem
 		projectSet map[uint]struct{}
@@ -343,6 +371,13 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 			if entry.TransactionCode != "" {
 				transactionCodes = append(transactionCodes, entry.TransactionCode)
 			}
+		}
+	}
+	// Wallet bulk payments carry the VFIC code in request_id, so they resolve
+	// through the same shared code lookup + timesheet-date fetch below.
+	for _, payment := range walletPayments {
+		if payment.RequestID != "" {
+			transactionCodes = append(transactionCodes, payment.RequestID)
 		}
 	}
 	codeRows, err := s.transactionCodeRepo.FindByCodes(ctx, transactionCodes)
@@ -473,6 +508,80 @@ func (s *PayrollService) GetBankTransferHistories(ctx context.Context, req *dto.
 			projectIDs[entryProjectID] = struct{}{}
 		}
 	}
+
+	// OnePay wallet bulk payments: request_id carries the VFIC code, so each
+	// completed payment resolves its employee/project/cycle through the same
+	// transaction-code data and aggregates into the SAME employee-cycle record
+	// as bank-statement entries (a partly-bank/partly-OnePay cycle shows as
+	// one record with two transfer lines).
+	for _, payment := range walletPayments {
+		weeklyData := codeData[payment.RequestID].WeeklyPay
+		if weeklyData == nil || weeklyData.EmployeeID == 0 || weeklyData.ProjectID == 0 {
+			continue
+		}
+		cycle, fromDate, toDate, ok := resolveWeeklyHistoryCycle(nil, weeklyData, timesheetDates, monthStart)
+		if !ok || (req.Cycle != 0 && req.Cycle != cycle) {
+			continue
+		}
+		if userRole != "admin" {
+			if _, allowed := allowedProjects[weeklyData.ProjectID]; !allowed {
+				continue
+			}
+		}
+		if len(requestedProjects) > 0 {
+			if _, wanted := requestedProjects[weeklyData.ProjectID]; !wanted {
+				continue
+			}
+		}
+		if len(requestedEmployees) > 0 {
+			if _, wanted := requestedEmployees[weeklyData.EmployeeID]; !wanted {
+				continue
+			}
+		}
+
+		ref := payment.GetInvoiceNo()
+		if ref == "" {
+			ref = payment.RequestID
+		}
+		key := fmt.Sprintf("%s:%d:%d", monthStart.Format("2006-01"), cycle, weeklyData.EmployeeID)
+		agg := aggregates[key]
+		if agg == nil {
+			payDate := clock.PayDate(cycle, monthStart.Year(), monthStart.Month())
+			agg = &aggregate{
+				item: dto.BankTransferHistoryItem{
+					EmployeeID:  weeklyData.EmployeeID,
+					WorkMonth:   monthStart.Format("2006-01"),
+					Cycle:       cycle,
+					FromDate:    fromDate.Format("2006-01-02"),
+					ToDate:      toDate.Format("2006-01-02"),
+					PaymentDate: payDate.Format("2006-01-02"),
+					Transfers:   []dto.BankTransferHistoryTransfer{},
+				},
+				projectSet: make(map[uint]struct{}),
+				refSet:     make(map[string]struct{}),
+			}
+			aggregates[key] = agg
+		}
+		transferKey := strings.ToUpper(ref)
+		if _, duplicate := agg.refSet[transferKey]; duplicate {
+			continue
+		}
+		agg.refSet[transferKey] = struct{}{}
+		agg.projectSet[weeklyData.ProjectID] = struct{}{}
+		agg.item.TotalAmount += payment.RequestedAmount
+		paidAt := payment.CreatedAt.In(clock.DefaultLocation).Format(time.RFC3339)
+		if payment.SettledAt != nil {
+			paidAt = payment.SettledAt.In(clock.DefaultLocation).Format(time.RFC3339)
+		}
+		agg.item.Transfers = append(agg.item.Transfers, dto.BankTransferHistoryTransfer{
+			TransferCode:  payment.RequestID,
+			BankReference: ref,
+			Amount:        payment.RequestedAmount,
+			PaidAt:        paidAt,
+		})
+		employeeIDs[weeklyData.EmployeeID] = struct{}{}
+		projectIDs[weeklyData.ProjectID] = struct{}{}
+	}
 	if len(aggregates) == 0 {
 		return emptyBankTransferHistory(req), nil
 	}
@@ -596,7 +705,7 @@ func resolveWeeklyHistoryCycle(file *domain.BulkTransferFile, weeklyData *domain
 		// FromDate present but out of range / zero-value (red-team F-MEDIUM-1):
 		// fall through to the file-dates and timesheet paths rather than fail.
 	}
-	if file.FromDate != nil && file.ToDate != nil {
+	if file != nil && file.FromDate != nil && file.ToDate != nil {
 		if cycle, ok := fixedWeeklyCycle(*file.FromDate, *file.ToDate); ok && file.FromDate.Year() == workMonth.Year() && file.FromDate.Month() == workMonth.Month() {
 			return cycle, file.FromDate.In(clock.DefaultLocation), file.ToDate.In(clock.DefaultLocation), true
 		}
