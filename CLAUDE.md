@@ -107,7 +107,6 @@ make adminer          # SSH tunnel to production DB UI at localhost:18081
 - **Run `make api-test` after every feature change** to catch regressions.
 - **Review agent output at architectural boundaries**, not line by line.
 - **Use the [review checklist](docs/standards/review-checklist.md) before submitting changes.**
-- **Graphify is available:** `graphify query "<question>"` for codebase navigation when `graphify-out/graph.json` exists.
 
 <!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph

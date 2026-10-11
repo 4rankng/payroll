@@ -8,7 +8,7 @@ Use when fixing a specific issue. Follows the **Locate → Repair → Validate**
 Goal: Fix [BUG_DESCRIPTION] — [EXPECTED_BEHAVIOR vs ACTUAL_BEHAVIOR]
 
 Phase 1: LOCATE
-- Search for the relevant code using graphify query "<question>" if available
+- Search for the relevant code using the project's standard search tools
 - Read the AGENTS.md in the affected module
 - Identify the root cause — don't guess, verify by reading the code
 - Check git log for recent changes to the affected files:

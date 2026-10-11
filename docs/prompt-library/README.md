@@ -36,7 +36,7 @@ unknown requires them, and preserve decisions/evidence instead of raw output.
 
 ## Usage Tips
 
-1. **Scout first.** Read the root and nearest applicable `AGENTS.md`, then use `graphify query` to locate the owning path.
+1. **Scout first.** Read the root and nearest applicable `AGENTS.md`, then locate the owning path.
 2. **Adapt, don't copy.** Replace placeholders with your specific context. Remove sections that don't apply.
 3. **Verify after.** Every prompt includes a verification step. Don't skip it.
 4. **Use with `/ck:cook`.** These prompts pair well with the cook skill — pass the prompt as the task description.

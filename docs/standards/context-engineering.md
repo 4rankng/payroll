@@ -82,11 +82,9 @@ Move down this ladder only when the previous step leaves a concrete unknown.
 
 ### 2. Locate the active path
 
-- Run `graphify query "<focused question>"` when the graph is available.
-- For relationships, prefer `graphify path` or `graphify explain`.
 - Identify the owner, entry point, persisted contract, consumers, and affected
   role or responsive variants.
-- Read the narrow source slices and tests returned by that investigation.
+- Read the narrow source slices and tests that cover that path.
 
 ### 3. Retrieve governing contracts
 
