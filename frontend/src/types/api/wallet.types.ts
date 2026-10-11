@@ -128,8 +128,3 @@ export interface SyncBalanceResponse {
   adjusted: boolean;
   currency: string;
 }
-
-export interface AdjustBalanceRequest {
-  amount: number;
-  reason: string;
-}

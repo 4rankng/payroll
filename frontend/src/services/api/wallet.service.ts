@@ -12,7 +12,6 @@ import type {
   UnifiedTransactionFilter,
   ReconciliationJob,
   SyncBalanceResponse,
-  AdjustBalanceRequest,
 } from '../../types/api/wallet.types';
 
 const WALLET_BASE_PATH = '/wallet';
@@ -149,11 +148,6 @@ export const walletService = {
   // ── Balance sync ────────────────────────────────────────────────────────
   async syncBalance(): Promise<SyncBalanceResponse> {
     const r = await apiClient.post<SyncBalanceResponse>(`${WALLET_BASE_PATH}/balance/sync`);
-    return r.data!;
-  },
-
-  async adjustBalance(data: AdjustBalanceRequest): Promise<WalletTopup> {
-    const r = await apiClient.post<WalletTopup>(`${WALLET_BASE_PATH}/balance/adjust`, data);
     return r.data!;
   },
 };
