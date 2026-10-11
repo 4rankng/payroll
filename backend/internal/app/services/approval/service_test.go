@@ -242,7 +242,7 @@ func newTestService(t *testing.T) (*Service, *fakeCycle, *fakeTimesheets, *fakeR
 	exec := &fakeExecuter{}
 	svc := NewService(Deps{
 		Repo:          repo,
-		Payloads:      NewPayloadBuilderRegistry(cycle, pu, users, ts),
+		Payloads:      NewPayloadBuilderRegistry(cycle, pu, users, ts, nil, nil),
 		Preconditions: NewPreconditionRegistry(cycle, ts),
 		Users:         users,
 		Notifier:      notifier,

@@ -41,20 +41,31 @@ interface ChatEnvelope<T> {
   message?: string;
 }
 
+
+// The repo's apiClient resolves to the response body, and some endpoints wrap
+// payloads in a {status, data} envelope while others return them bare —
+// normalize once here so callers never guess the shape.
+function unwrap<T>(body: unknown): T {
+  if (body && typeof body === 'object' && 'data' in (body as Record<string, unknown>)) {
+    return ((body as Record<string, unknown>).data as T) ?? (body as T);
+  }
+  return body as T;
+}
+
 class ChatService {
   async createConversation(title = ''): Promise<ChatConversation> {
     const response = await apiClient.post<ChatEnvelope<ChatConversation>>(
       API_ENDPOINTS.chat.conversations,
       title ? { title } : {}
     );
-    return response.data.data;
+    return unwrap<ChatConversation>(response.data);
   }
 
   async listConversations(page = 1, pageSize = 20): Promise<ChatConversation[]> {
     const response = await apiClient.get<ChatEnvelope<ChatConversation[]>>(
       `${API_ENDPOINTS.chat.conversations}${buildQueryString({ page, pageSize })}`
     );
-    const raw = response.data?.data;
+    const raw = unwrap<ChatConversation[]>(response.data);
     return Array.isArray(raw) ? raw : [];
   }
 
@@ -62,7 +73,7 @@ class ChatService {
     const response = await apiClient.get<ChatEnvelope<ChatConversationDetail>>(
       `${API_ENDPOINTS.chat.conversations}/${id}${buildQueryString({ messagePage, messagePageSize })}`
     );
-    return response.data.data;
+    return unwrap<ChatConversationDetail>(response.data);
   }
 
   async uploadAttachment(file: File): Promise<number> {
@@ -73,7 +84,7 @@ class ChatService {
       form,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );
-    return response.data.data.id;
+    return unwrap<{ id: number }>(response.data).id;
   }
 
   async sendMessage(id: number, content: string, attachmentIds: number[] = []): Promise<ChatConversationDetail> {
@@ -81,7 +92,7 @@ class ChatService {
       `${API_ENDPOINTS.chat.conversations}/${id}/messages`,
       { content, attachmentIds }
     );
-    return response.data.data;
+    return unwrap<ChatConversationDetail>(response.data);
   }
 }
 

@@ -4,12 +4,8 @@ import { Loader2, Paperclip, SendHorizontal, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
-import {
-  useChatConversation,
-  useCreateChatConversation,
-  useSendChatMessage,
-  useUploadChatAttachment,
-} from '@/hooks/api/useChat';
+import { useChatConversation, useEnsureChatConversation, useSendChatMessage, useUploadChatAttachment } from '@/hooks/api/useChat';
+import type { ChatMessage } from '@/services/api/chat.service';
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { toast } from 'sonner';
 
@@ -31,33 +27,48 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
   const [conversationId, setConversationId] = useState<number>(0);
   const [input, setInput] = useState('');
   const [pendingImage, setPendingImage] = useState<{ id: number; name: string } | null>(null);
+  const [optimistic, setOptimistic] = useState<ChatMessage[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const createConversation = useCreateChatConversation();
+  const chatEnsure = useEnsureChatConversation(setConversationId);
   const sendMessage = useSendChatMessage();
   const uploadAttachment = useUploadChatAttachment();
   const detail = useChatConversation(conversationId, open && conversationId > 0);
 
-  useEffect(() => {
-    if (open && conversationId === 0 && !createConversation.isPending) {
-      createConversation.mutate(undefined, {
-        onSuccess: (conv) => setConversationId(conv.id),
-      });
-    }
-  }, [open, conversationId, createConversation]);
+  // Auto-open ONE conversation per panel session. The ref guard makes this
+  // idempotent across re-renders and remounts — an unstable mutation object
+  // in the dependency array previously re-fired creation every render and
+  // flooded the backend with thousands of empty conversations.
 
   const messages = detail.data?.messages ?? [];
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight });
-  }, [messages.length, sendMessage.isPending]);
+  }, [messages.length, optimistic.length, sendMessage.isPending]);
 
-  const handleSend = (text?: string) => {
+  const handleSend = async (text?: string) => {
     const content = (text ?? input).trim();
-    if (!content || conversationId === 0 || sendMessage.isPending) return;
+    if (!content || sendMessage.isPending) return;
+    // Conversation is created AT SEND TIME: one code path, immune to remounts
+    // (an open-time create lost its state across FAB remounts and silently
+    // swallowed sends).
+    const convId = await chatEnsure();
+    if (!convId) {
+      toast.error('Không tạo được hội thoại — thử lại.');
+      return;
+    }
     setInput('');
     const attachmentIds = pendingImage ? [pendingImage.id] : undefined;
     setPendingImage(null);
-    sendMessage.mutate({ id: conversationId, content, attachmentIds });
+    // Optimistic user bubble: the click is ALWAYS visibly acknowledged,
+    // even before the round trip lands.
+    setOptimistic((prev) => [
+      ...prev,
+      { id: -Date.now(), role: 'user', content, created_at: new Date().toISOString() },
+    ]);
+    sendMessage.mutate(
+      { id: convId, content, attachmentIds },
+      { onSettled: () => setOptimistic((prev) => prev.filter((m) => m.content !== content)) }
+    );
   };
 
   const handlePickImage = (file: File | undefined) => {
@@ -92,7 +103,7 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
       >
 
         <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4" role="log" aria-label="Hội thoại với trợ lý AI">
-          {messages.length === 0 && !sendMessage.isPending ? (
+          {messages.length === 0 && optimistic.length === 0 && !sendMessage.isPending ? (
             <div className="space-y-3 pt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Xin chào! Tôi có thể tra cứu thông tin, giải thích lỗi import bảng công và gửi yêu cầu phê duyệt giúp bạn.
@@ -102,8 +113,9 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
                   <button
                     key={action}
                     type="button"
-                    onClick={() => handleSend(action)}
-                    className="block w-full rounded-full border bg-background px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted/50"
+                    onClick={() => void handleSend(action)}
+                    disabled={sendMessage.isPending}
+                    className="block w-full rounded-full border bg-background px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted/50 disabled:opacity-60"
                   >
                     {action}
                   </button>
@@ -111,6 +123,15 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
               </div>
             </div>
           ) : null}
+
+          {optimistic.map((message) => (
+            <div
+              key={message.id}
+              className="ml-auto max-w-[85%] rounded-2xl bg-primary/80 px-3.5 py-2.5 text-sm leading-5 whitespace-pre-line text-primary-foreground"
+            >
+              {message.content}
+            </div>
+          ))}
 
           {messages.map((message) => (
             <div
@@ -164,7 +185,7 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
           className="flex items-end gap-2 border-t px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
           onSubmit={(event) => {
             event.preventDefault();
-            handleSend();
+            void handleSend();
           }}
         >
           <textarea

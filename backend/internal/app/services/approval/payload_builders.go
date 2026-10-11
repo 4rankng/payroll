@@ -26,12 +26,12 @@ type PayloadBuilderRegistry struct {
 
 // NewPayloadBuilderRegistry wires the default per-type builders over the
 // deterministic data sources.
-func NewPayloadBuilderRegistry(cycle CycleReader, projectUsers ProjectUserDirectory, users UserDirectory, timesheets TimesheetReader) *PayloadBuilderRegistry {
+func NewPayloadBuilderRegistry(cycle CycleReader, projectUsers ProjectUserDirectory, users UserDirectory, timesheets TimesheetReader, employees EmployeeDirectory, projects ProjectDirectory) *PayloadBuilderRegistry {
 	r := &PayloadBuilderRegistry{builders: make(map[domain.ApprovalRequestType]BuildFunc)}
 	r.builders[domain.ApprovalTypeSendSaoKeEmail] = buildStatementEmailPayload(cycle, projectUsers, users, "sao-ke")
 	r.builders[domain.ApprovalTypeSendPayrollEmail] = buildStatementEmailPayload(cycle, projectUsers, users, "bang-luong")
 	r.builders[domain.ApprovalTypeSendReminder] = buildReminderPayload(projectUsers, users)
-	r.builders[domain.ApprovalTypeVoidTimesheet] = buildVoidTimesheetPayload(timesheets)
+	r.builders[domain.ApprovalTypeVoidTimesheet] = buildVoidTimesheetPayload(timesheets, employees, projects)
 	return r
 }
 
@@ -213,7 +213,7 @@ func buildReminderPayload(projectUsers ProjectUserDirectory, users UserDirectory
 }
 
 // buildVoidTimesheetPayload snapshots the timesheet facts at filing time.
-func buildVoidTimesheetPayload(timesheets TimesheetReader) BuildFunc {
+func buildVoidTimesheetPayload(timesheets TimesheetReader, employees EmployeeDirectory, projects ProjectDirectory) BuildFunc {
 	return func(ctx context.Context, raw json.RawMessage) (*BuiltPayload, error) {
 		var params VoidTimesheetParams
 		if err := decodeParams(raw, &params); err != nil {
@@ -229,10 +229,29 @@ func buildVoidTimesheetPayload(timesheets TimesheetReader) BuildFunc {
 			}
 			return nil, err
 		}
+		// Human identification: names, position, day type, hours. Raw IDs
+		// stay machine-only — the reviewer must know WHICH work entry this is.
+		employeeName := fmt.Sprintf("nhân viên #%d", ts.EmployeeID)
+		if employees != nil {
+			if emp, err := employees.GetByID(ctx, ts.EmployeeID); err == nil && emp != nil {
+				employeeName = employeeDisplayName(emp)
+			}
+		}
+		projectName := ""
+		if projects != nil {
+			if prj, err := projects.GetByID(ctx, ts.ProjectID); err == nil && prj != nil {
+				projectName = prj.Name
+			}
+		}
 		payload := VoidTimesheetPayload{
 			TimesheetID:    ts.ID,
-			ProjectID:      ts.ProjectID,
-			EmployeeID:     ts.EmployeeID,
+			EmployeeName:   employeeName,
+			ProjectName:    projectName,
+			Position:       ts.PayType,
+			DayType:        dayTypeLabel(ts.Date),
+			Hours:          ts.HoursWorked,
+			RateVND:        ts.PayRate,
+			AmountVND:      ts.Amount,
 			Date:           ts.Date.Format("2006-01-02"),
 			StatusAtFiling: string(ts.Status),
 			Reason:         strings.TrimSpace(params.Reason),
@@ -240,7 +259,7 @@ func buildVoidTimesheetPayload(timesheets TimesheetReader) BuildFunc {
 		return &BuiltPayload{
 			Payload:  payload,
 			CycleKey: fmt.Sprintf("timesheet=%d", ts.ID),
-			Title:    "Đề xuất huỷ bảng công " + fmt.Sprint(ts.ID),
+			Title:    fmt.Sprintf("Huỷ bảng công ngày %s của %s", payload.Date, employeeName),
 		}, nil
 	}
 }
@@ -255,4 +274,28 @@ func decodeParams(raw json.RawMessage, dest any) error {
 		return domain.NewValidationError("tham số yêu cầu không hợp lệ")
 	}
 	return nil
+}
+
+// employeeDisplayName renders the employee's name with fallbacks.
+func employeeDisplayName(emp *domain.Employee) string {
+	if emp == nil {
+		return "không rõ nhân viên"
+	}
+	name := strings.TrimSpace(emp.Fullname)
+	if name == "" {
+		return "không rõ nhân viên"
+	}
+	return name
+}
+
+// dayTypeLabel derives the day type from the work date.
+func dayTypeLabel(date time.Time) string {
+	switch date.Weekday() {
+	case time.Sunday:
+		return "Chủ nhật"
+	case time.Saturday:
+		return "Thứ bảy"
+	default:
+		return "Ngày thường"
+	}
 }

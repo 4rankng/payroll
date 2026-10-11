@@ -43,3 +43,23 @@ export const useSendChatMessage = () => {
     },
   });
 };
+
+/** Resolves the current conversation id, creating one on first send. Kept as
+ * a hook so the panel owns zero creation effects — remounts can no longer
+ * orphan an in-flight create. */
+export const useEnsureChatConversation = (
+  setConversationId: (id: number) => void
+) => {
+  let cached: number | null = null;
+  return async (): Promise<number | null> => {
+    if (cached && cached > 0) return cached;
+    try {
+      const conv = await chatService.createConversation();
+      cached = conv.id;
+      setConversationId(conv.id);
+      return conv.id;
+    } catch {
+      return null;
+    }
+  };
+}

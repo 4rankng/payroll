@@ -19,6 +19,12 @@ type View struct {
 }
 
 type payloadForView struct {
+	EmployeeName   string   `json:"employeeName"`
+	ProjectName    string   `json:"projectName"`
+	Position       string   `json:"position"`
+	DayType        string   `json:"dayType"`
+	Hours          float64  `json:"hours"`
+	AmountVND      int64    `json:"amountVnd"`
 	ReportAtDate   string   `json:"reportAtDate"`
 	PeriodFrom     string   `json:"periodFrom"`
 	PeriodTo       string   `json:"periodTo"`
@@ -58,7 +64,14 @@ func BuildView(req *domain.ApprovalRequest, requester *domain.User) View {
 		v.ApproveEffect = "Lời nhắc sẽ được gửi đến: " + strings.Join(p.Recipients, ", ")
 	case domain.ApprovalTypeVoidTimesheet:
 		reason := strings.TrimSpace(p.Reason)
-		v.Summary = fmt.Sprintf("Huỷ bảng công ngày %s", p.Date)
+		// Full human identification: who, which project, position, day type,
+		// hours, amount — the reviewer must never guess which entry this is.
+		details := fmt.Sprintf("%s · %s · %s · %s · %.2fg",
+			p.EmployeeName, p.ProjectName, p.Position, p.DayType, p.Hours)
+		if p.AmountVND > 0 {
+			details += fmt.Sprintf(" · %s", formatDraftAmount(p.AmountVND))
+		}
+		v.Summary = fmt.Sprintf("Huỷ bảng công ngày %s — %s", p.Date, details)
 		if reason != "" {
 			v.Summary += fmt.Sprintf(" — lý do: %s", reason)
 		}

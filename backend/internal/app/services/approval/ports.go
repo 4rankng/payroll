@@ -45,6 +45,16 @@ type ProjectUserDirectory interface {
 	GetProjectUsers(ctx context.Context, projectID uint) ([]*domain.ProjectUser, error)
 }
 
+// EmployeeDirectory resolves employee display names for payload snapshots.
+type EmployeeDirectory interface {
+	GetByID(ctx context.Context, id uint) (*domain.Employee, error)
+}
+
+// ProjectDirectory resolves project display names for payload snapshots.
+type ProjectDirectory interface {
+	GetByID(ctx context.Context, id uint) (*domain.Project, error)
+}
+
 // TimesheetReader reads timesheet facts for void requests and preconditions.
 // Implemented by domain.TimesheetRepository.
 type TimesheetReader interface {

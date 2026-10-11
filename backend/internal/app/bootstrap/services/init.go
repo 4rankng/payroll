@@ -589,7 +589,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// stubs are gone from this point on.
 	approvalService := approval.NewService(approval.Deps{
 		Repo:          repos.ApprovalRequest,
-		Payloads:      approval.NewPayloadBuilderRegistry(payrollReportByProjectService, repos.ProjectUser, repos.User, repos.Timesheet),
+		Payloads:      approval.NewPayloadBuilderRegistry(payrollReportByProjectService, repos.ProjectUser, repos.User, repos.Timesheet, repos.Employee, repos.Project),
 		Preconditions: approval.NewPreconditionRegistry(payrollReportByProjectService, repos.Timesheet),
 		Users:         repos.User,
 		Notifier:      notificationService,

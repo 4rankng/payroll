@@ -79,6 +79,15 @@ func NewService(deps Deps) *Service {
 
 // CreateConversation opens a new conversation for the caller.
 func (s *Service) CreateConversation(ctx context.Context, caller Caller, title string) (*domain.ChatConversation, error) {
+
+	// Creation backstop: the same per-user fixed window as messages. A
+	// runaway client loop must not be able to mint thousands of rows.
+	if s.msgLimit != nil {
+		allowed, err := s.msgLimit.Allow(ctx, callerKey(caller))
+		if err == nil && !allowed {
+			return nil, ErrRateLimited
+		}
+	}
 	if !RoleAllowed(caller.Role) {
 		return nil, ErrForbiddenRole
 	}

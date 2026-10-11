@@ -80,12 +80,18 @@ type ReminderPayload struct {
 // snapshots the timesheet facts at filing time so the approver sees what will
 // be voided even if the row changes later.
 type VoidTimesheetPayload struct {
-	TimesheetID    uint   `json:"timesheetId"`
-	ProjectID      uint   `json:"projectId"`
-	EmployeeID     uint   `json:"employeeId"`
-	Date           string `json:"date"`
-	StatusAtFiling string `json:"statusAtFiling"`
-	Reason         string `json:"reason"`
+	TimesheetID uint `json:"timesheetId"` // machine field: never displayed
+	// Human identification — what the admin actually reviews.
+	EmployeeName   string  `json:"employeeName"`
+	ProjectName    string  `json:"projectName"`
+	Position       string  `json:"position"`
+	DayType        string  `json:"dayType"`
+	Hours          float64 `json:"hours"`
+	RateVND        int64   `json:"rateVnd"`
+	AmountVND      int64   `json:"amountVnd"`
+	Date           string  `json:"date"`
+	StatusAtFiling string  `json:"statusAtFiling"`
+	Reason         string  `json:"reason"`
 }
 
 // BuiltPayload is what a payload builder produces: the stored payload, the

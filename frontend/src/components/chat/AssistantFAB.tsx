@@ -25,7 +25,10 @@ export const AssistantFAB = () => {
   const bellVisible = (unreadData?.count ?? 0) > 0;
 
   if (role !== 'admin' && role !== 'partner') return null;
-  if (isLoading || setting?.value === 'false') return null;
+  // Render during settings load: the loading-null flip remounts the panel
+  // (and previously re-triggered conversation creation). The backend still
+  // enforces the toggle; the UI simply defaults to visible.
+  if (setting?.value === 'false') return null;
 
   return (
     <>
