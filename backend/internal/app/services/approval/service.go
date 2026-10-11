@@ -26,6 +26,9 @@ const (
 
 	// retryHourICT is the hour (Asia/Ho_Chi_Minh) scheduled retries fire at.
 	retryHourICT = 8
+
+	// draftTimeout bounds one background LLM drafting run.
+	draftTimeout = 60 * time.Second
 )
 
 // partnerFileableTypes is the per-type filer allowlist (red-team constraint):
@@ -81,6 +84,7 @@ type Deps struct {
 	Retry         RetryScheduler
 	Audit         EventWriter
 	Executers     map[domain.ApprovalRequestType]Executer
+	Drafter       Drafter
 	Clock         clock.Clock
 }
 
@@ -95,6 +99,7 @@ type Service struct {
 	retry         RetryScheduler
 	audit         EventWriter
 	executers     map[domain.ApprovalRequestType]Executer
+	drafter       Drafter
 	clk           clock.Clock
 	logger        *slog.Logger
 }
@@ -110,6 +115,7 @@ func NewService(deps Deps) *Service {
 		retry:         deps.Retry,
 		audit:         deps.Audit,
 		executers:     deps.Executers,
+		drafter:       deps.Drafter,
 		clk:           deps.Clock,
 		logger:        observability.GetLogger(),
 	}
@@ -155,6 +161,11 @@ func (s *Service) File(ctx context.Context, params CreateParams) (*domain.Approv
 	s.writeEvent(ctx, domain.NewApprovalRequestCreatedEvent(ctx, req, params.ActorID, params.ActorName))
 	s.notifyAdmins(ctx, domain.NotificationTypeApprovalRequest,
 		"Yêu cầu phê duyệt mới", fmt.Sprintf("%s — đang chờ duyệt trên Tổng Quan.", built.Title))
+	// Statement emails carry an LLM draft (review aid + sent body). The draft
+	// completes in the background: drafting takes seconds, must not run on the
+	// HTTP request deadline (RequestTimeout cancels mid-body) and must not
+	// delay the filing response. Filing without a draft is the degraded state.
+	s.completeDraftAsync(req)
 	return req, nil
 }
 
@@ -327,6 +338,13 @@ func (s *Service) HandleScheduledRetry(ctx context.Context, id uint) error {
 		s.writeEvent(ctx, domain.NewApprovalRequestRescheduledEvent(ctx, req, req.RequesterID, "hệ thống", attempt, at))
 		return nil
 	}
+	// Unattended redraft with the rejection note as guidance — runs BEFORE
+	// the requeue persists, so the reviewer sees the updated draft immediately.
+	guidance := ""
+	if req.DecisionNote != nil {
+		guidance = *req.DecisionNote
+	}
+	s.attachDraft(ctx, req, guidance)
 	if err := req.RequeueForReview(); err != nil {
 		return err
 	}
@@ -371,6 +389,103 @@ func (s *Service) Get(ctx context.Context, id uint, actor Actor) (*domain.Approv
 		return nil, domain.NewNotFoundError("không tìm thấy yêu cầu")
 	}
 	return req, nil
+}
+
+// attachDraft writes the LLM draft into a statement-email request's payload.
+// It is best-effort by design: on any drafting failure the payload keeps its
+// deterministic form and the request still files/requeues.
+func (s *Service) attachDraft(ctx context.Context, req *domain.ApprovalRequest, guidance string) {
+	if s.drafter == nil {
+		return
+	}
+	switch req.Type {
+	case domain.ApprovalTypeSendSaoKeEmail, domain.ApprovalTypeSendPayrollEmail:
+	default:
+		return
+	}
+	var p struct {
+		ReportAtDate   string   `json:"reportAtDate"`
+		PeriodFrom     string   `json:"periodFrom"`
+		PeriodTo       string   `json:"periodTo"`
+		TotalAmount    int64    `json:"totalAmount"`
+		TimesheetCount int      `json:"timesheetCount"`
+		Recipients     []string `json:"recipients"`
+	}
+	if err := json.Unmarshal([]byte(req.Payload), &p); err != nil {
+		s.logger.Warn("approval: draft skipped — payload unreadable", "request_type", req.Type)
+		return
+	}
+	subject, body, err := s.drafter.DraftStatementEmail(ctx, StatementDraftFacts{
+		ReportAtDate:   p.ReportAtDate,
+		PeriodLabel:    fmt.Sprintf("%s → %s", p.PeriodFrom, p.PeriodTo),
+		TotalAmount:    formatDraftAmount(p.TotalAmount),
+		TimesheetCount: p.TimesheetCount,
+		RecipientCount: len(p.Recipients),
+	}, guidance)
+	if err != nil {
+		s.logger.Warn("approval: LLM draft failed — filing continues without draft", "error", err)
+		return
+	}
+	merged := map[string]any{}
+	if json.Unmarshal([]byte(req.Payload), &merged) == nil {
+		merged["llmDraftSubject"] = subject
+		merged["llmDraftBody"] = body
+		if out, merr := json.Marshal(merged); merr == nil {
+			req.Payload = string(out)
+		}
+	}
+}
+
+// completeDraftAsync finishes the LLM draft after the request has been filed:
+// detached context (no HTTP deadline), bounded, unattended-safe — it only
+// writes draft text onto a pending request, never decides and never sends.
+// Works on a copy: the handler may still be serializing the original.
+func (s *Service) completeDraftAsync(req *domain.ApprovalRequest) {
+	if s.drafter == nil || req.ID == 0 {
+		return
+	}
+	switch req.Type {
+	case domain.ApprovalTypeSendSaoKeEmail, domain.ApprovalTypeSendPayrollEmail:
+	default:
+		return
+	}
+	clone := *req
+	go func(r *domain.ApprovalRequest) {
+		ctx, cancel := context.WithTimeout(context.Background(), draftTimeout)
+		defer cancel()
+		s.attachDraft(ctx, r, "")
+		if err := s.repo.SaveTransition(ctx, r, []domain.ApprovalRequestStatus{domain.ApprovalStatusPending}); err != nil {
+			// The request was decided before the draft landed — the reviewer
+			// decided on the deterministic payload; dropping is safe.
+			s.logger.Info("approval: background draft not persisted", "request_id", r.ID, "error", err)
+		}
+	}(&clone)
+}
+
+// formatDraftAmount renders a VND amount with dot thousand separators.
+func formatDraftAmount(v int64) string {
+	negative := v < 0
+	if negative {
+		v = -v
+	}
+	digits := fmt.Sprintf("%d", v)
+	var parts []string
+	for len(digits) > 3 {
+		parts = append([]string{digits[len(digits)-3:]}, parts...)
+		digits = digits[:len(digits)-3]
+	}
+	parts = append([]string{digits}, parts...)
+	out := ""
+	for i, part := range parts {
+		if i > 0 {
+			out += "."
+		}
+		out += part
+	}
+	if negative {
+		return "-" + out + " đ"
+	}
+	return out + " đ"
 }
 
 // nextRetryAt returns 08:00 ICT on the day after now. clk.Now() is

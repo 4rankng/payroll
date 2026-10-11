@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { AlertTriangle, ChevronLeft, ChevronRight, ClipboardCheck, Loader2, RefreshCw } from 'lucide-react';
 
 import { ApprovalDecisionModal, type ApprovalDecisionMode } from '@/components/approvals/ApprovalDecisionModal';
@@ -9,6 +10,7 @@ import { cn } from '@/lib/utils';
 import {
   useApprovalsList,
   useApproveApproval,
+  useFileApproval,
   useCancelApproval,
   useRejectApproval,
 } from '@/hooks/api/useApprovals';
@@ -50,6 +52,26 @@ const ApprovalsPage = () => {
   const [filterKey, setFilterKey] = useState('waiting');
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState<{ mode: ApprovalDecisionMode; request: ApprovalRequest } | null>(null);
+  const [prepareDate, setPrepareDate] = useState('');
+  const fileApproval = useFileApproval();
+
+  const handlePrepareSaoKe = () => {
+    const reportAtDate = prepareDate.trim();
+    if (!reportAtDate) {
+      toast.error('Chọn ngày sao kê trước khi chuẩn bị.');
+      return;
+    }
+    fileApproval.mutate(
+      { type: 'send_sao_ke_email', params: { reportAtDate } },
+      {
+        onSuccess: (filed) => {
+          toast.success(`Đã gửi yêu cầu #${filed.id} chờ duyệt — bản thảo email đính kèm yêu cầu.`);
+          setPrepareDate('');
+        },
+        onError: () => toast.error('Không thể chuẩn bị yêu cầu — kiểm tra ngày sao kê (ngày 11–23 không hợp lệ).'),
+      }
+    );
+  };
 
   const filter = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0];
   const waitingQuery = useApprovalsList({ statuses: ['pending', 'rescheduled'], pageSize: 1 });
@@ -111,6 +133,37 @@ const ApprovalsPage = () => {
           Làm mới
         </Button>
       </header>
+
+      <section
+        aria-label="Chuẩn bị sao kê"
+        className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border bg-card px-4 py-3.5"
+      >
+        <div className="min-w-0">
+          <label htmlFor="sao-ke-date" className="block text-sm font-medium text-foreground">
+            Chuẩn bị sao kê
+          </label>
+          <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+            Chọn ngày sao kê — hệ thống kiểm tra dữ liệu, soạn bản thảo email bằng AI và gửi vào hàng chờ duyệt.
+          </p>
+        </div>
+        <input
+          id="sao-ke-date"
+          type="date"
+          value={prepareDate}
+          onChange={(event) => setPrepareDate(event.target.value)}
+          disabled={fileApproval.isPending}
+          className="h-11 rounded-md border border-input bg-background px-3 text-sm"
+          aria-label="Ngày sao kê"
+        />
+        <Button
+          type="button"
+          className="h-11 gap-2"
+          disabled={fileApproval.isPending}
+          onClick={handlePrepareSaoKe}
+        >
+          {fileApproval.isPending ? 'Đang chuẩn bị…' : 'Chuẩn bị sao kê'}
+        </Button>
+      </section>
 
       {escalatedCount ? (
         <div
@@ -188,6 +241,19 @@ const ApprovalsPage = () => {
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
                       Kết quả: <span className="text-foreground">{item.outcome}</span>
                     </p>
+                  ) : null}
+                  {typeof item.payload?.llmDraftBody === 'string' && item.payload.llmDraftBody ? (
+                    <details className="mt-2 rounded-lg border bg-background px-3 py-2">
+                      <summary className="cursor-pointer text-xs font-medium text-foreground">
+                        Bản thảo email sẽ gửi
+                        {typeof item.payload?.llmDraftSubject === 'string' && item.payload.llmDraftSubject
+                          ? ` — ${item.payload.llmDraftSubject}`
+                          : ''}
+                      </summary>
+                      <p className="mt-2 whitespace-pre-line text-xs leading-5 text-muted-foreground">
+                        {String(item.payload.llmDraftBody)}
+                      </p>
+                    </details>
                   ) : null}
                 </div>
                 {canDecide(item) ? (

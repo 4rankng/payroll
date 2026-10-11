@@ -34,6 +34,8 @@ func (e *EmailExecuter) Execute(ctx context.Context, req *domain.ApprovalRequest
 		ReportAtDate string   `json:"reportAtDate"`
 		Recipients   []string `json:"recipients"`
 		Cc           []string `json:"cc"`
+		DraftSubject string   `json:"llmDraftSubject"`
+		DraftBody    string   `json:"llmDraftBody"`
 	}
 	if err := json.Unmarshal([]byte(req.Payload), &payload); err != nil {
 		return "", fmt.Errorf("payload không hợp lệ: %w", err)
@@ -46,6 +48,10 @@ func (e *EmailExecuter) Execute(ctx context.Context, req *domain.ApprovalRequest
 			ReportAtDate: payload.ReportAtDate,
 			Recipients:   payload.Recipients,
 			Cc:           payload.Cc,
+			// The reviewed draft is the sent content — empty falls back to the
+			// worker template (draft never existed or provider failed).
+			CustomSubject: payload.DraftSubject,
+			CustomBody:    payload.DraftBody,
 		},
 		req.RequesterID,
 		req.IdempotencyKey,

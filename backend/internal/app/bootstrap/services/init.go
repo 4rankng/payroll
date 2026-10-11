@@ -597,6 +597,15 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 			domain.ApprovalTypeSendSaoKeEmail:   approval.NewEmailExecuter(asynqClient),
 			domain.ApprovalTypeSendPayrollEmail: approval.NewEmailExecuter(asynqClient),
 		},
+		Drafter: approval.DrafterFunc(func(ctx context.Context, facts approval.StatementDraftFacts, guidance string) (string, string, error) {
+			return llmService.DraftSaoKeEmail(ctx, 0, llmsvc.SaoKeDraftFacts{
+				ReportAtDate:   facts.ReportAtDate,
+				PeriodLabel:    facts.PeriodLabel,
+				TotalAmount:    facts.TotalAmount,
+				TimesheetCount: facts.TimesheetCount,
+				RecipientCount: facts.RecipientCount,
+			}, guidance)
+		}),
 		Clock: clk,
 	})
 	approvalEngine := llmchat.NewApprovalEngine(approvalService)

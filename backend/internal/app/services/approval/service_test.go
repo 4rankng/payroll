@@ -2,10 +2,14 @@ package approval
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
+
+	"api-server/internal/app/dto"
 
 	"api-server/internal/domain"
 	domainServices "api-server/internal/domain/services"
@@ -71,6 +75,7 @@ func (f *fakeTimesheets) GetByID(_ context.Context, id uint) (*domain.Timesheet,
 }
 
 type fakeRepo struct {
+	mu      sync.Mutex
 	rows    map[uint]*domain.ApprovalRequest
 	byKey   map[string]*domain.ApprovalRequest
 	status  map[uint]domain.ApprovalRequestStatus
@@ -84,6 +89,8 @@ func newFakeRepo() *fakeRepo {
 }
 
 func (f *fakeRepo) Create(_ context.Context, r *domain.ApprovalRequest) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if _, dup := f.byKey[r.IdempotencyKey]; dup {
 		return errors.New("duplicate entry")
 	}
@@ -96,6 +103,8 @@ func (f *fakeRepo) Create(_ context.Context, r *domain.ApprovalRequest) error {
 }
 
 func (f *fakeRepo) GetByID(_ context.Context, id uint) (*domain.ApprovalRequest, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	r, ok := f.rows[id]
 	if !ok {
 		return nil, domain.NewNotFoundError("approval request")
@@ -104,6 +113,8 @@ func (f *fakeRepo) GetByID(_ context.Context, id uint) (*domain.ApprovalRequest,
 }
 
 func (f *fakeRepo) GetByIdempotencyKey(_ context.Context, key string) (*domain.ApprovalRequest, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if r, ok := f.byKey[key]; ok {
 		return r, nil
 	}
@@ -111,6 +122,8 @@ func (f *fakeRepo) GetByIdempotencyKey(_ context.Context, key string) (*domain.A
 }
 
 func (f *fakeRepo) List(_ context.Context, filters domain.ApprovalRequestFilters) ([]*domain.ApprovalRequest, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	var out []*domain.ApprovalRequest
 	for _, r := range f.rows {
 		if filters.RequesterID != nil && r.RequesterID != *filters.RequesterID {
@@ -127,6 +140,8 @@ func (f *fakeRepo) Count(_ context.Context, filters domain.ApprovalRequestFilter
 }
 
 func (f *fakeRepo) SaveTransition(_ context.Context, r *domain.ApprovalRequest, expected []domain.ApprovalRequestStatus) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	current, ok := f.status[r.ID]
 	if !ok {
 		return errors.New("missing row")
@@ -450,5 +465,144 @@ func TestVoidPreconditionBlocksPaidTimesheet(t *testing.T) {
 	_, err := svc.File(ctx, CreateParams{Type: domain.ApprovalTypeVoidTimesheet, Params: []byte(`{"timesheetId":55}`), ActorID: 2, ActorRole: RolePartner})
 	if err == nil {
 		t.Fatal("filing void on a paid timesheet must be blocked by the precondition")
+	}
+}
+
+// ---- phase 4: drafting + custom send ----
+
+type fakeDrafter struct {
+	mu       sync.Mutex
+	calls    int
+	guidance []string
+	subject  string
+	body     string
+	err      error
+}
+
+func (f *fakeDrafter) DraftStatementEmail(_ context.Context, _ StatementDraftFacts, guidance string) (string, string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls++
+	f.guidance = append(f.guidance, guidance)
+	return f.subject, f.body, f.err
+}
+
+func newDraftingService(t *testing.T, drafter Drafter) (*Service, *fakeRepo, *fakeExecuter) {
+	t.Helper()
+	svc, _, _, repo, _, _, exec := newTestService(t)
+	if drafter != nil {
+		svc.drafter = drafter
+	}
+	return svc, repo, exec
+}
+
+func TestCompleteDraftAttachesAndPersists(t *testing.T) {
+	drafter := &fakeDrafter{subject: "Sao kê tuần 05/10", body: "Kính gửi Quý đối tác, …"}
+	svc, repo, _ := newDraftingService(t, drafter)
+	req, err := svc.File(context.Background(), CreateParams{
+		Type: domain.ApprovalTypeSendSaoKeEmail, Params: saoKeParams(), ActorID: 1, ActorRole: RoleAdmin,
+	})
+	if err != nil {
+		t.Fatalf("File: %v", err)
+	}
+	// File returns without a draft; the background completion writes it.
+	clone := *req
+	svc.attachDraft(context.Background(), &clone, "")
+	if err := svc.repo.SaveTransition(context.Background(), &clone, []domain.ApprovalRequestStatus{domain.ApprovalStatusPending}); err != nil {
+		t.Fatalf("persist draft: %v", err)
+	}
+	var payload struct {
+		DraftSubject string `json:"llmDraftSubject"`
+		DraftBody    string `json:"llmDraftBody"`
+	}
+	if err := json.Unmarshal([]byte(clone.Payload), &payload); err != nil {
+		t.Fatalf("payload: %v", err)
+	}
+	if payload.DraftSubject != drafter.subject || payload.DraftBody != drafter.body {
+		t.Fatalf("draft not merged: %+v", payload)
+	}
+	if repo.saves < 1 {
+		t.Fatal("draft transition must persist")
+	}
+}
+
+func TestFileSurvivesDraftFailure(t *testing.T) {
+	drafter := &fakeDrafter{err: errors.New("provider down")}
+	svc, _, _ := newDraftingService(t, drafter)
+	req, err := svc.File(context.Background(), CreateParams{
+		Type: domain.ApprovalTypeSendSaoKeEmail, Params: saoKeParams(), ActorID: 1, ActorRole: RoleAdmin,
+	})
+	if err != nil {
+		t.Fatalf("filing must survive a drafting outage: %v", err)
+	}
+	var payload map[string]any
+	_ = json.Unmarshal([]byte(req.Payload), &payload)
+	if _, has := payload["llmDraftSubject"]; has {
+		t.Fatal("no draft expected on provider failure")
+	}
+}
+
+func TestRetryRedraftUsesRejectionNote(t *testing.T) {
+	drafter := &fakeDrafter{subject: "s", body: "b"}
+	svc, _, _ := newDraftingService(t, drafter)
+	ctx := context.Background()
+	req, _ := svc.File(ctx, CreateParams{Type: domain.ApprovalTypeSendSaoKeEmail, Params: saoKeParams(), ActorID: 1, ActorRole: RoleAdmin})
+	if _, err := svc.Reject(ctx, req.ID, admin(), "gửi mai, dữ liệu chưa đủ"); err != nil {
+		t.Fatalf("reject: %v", err)
+	}
+	if err := svc.HandleScheduledRetry(ctx, req.ID); err != nil {
+		t.Fatalf("retry: %v", err)
+	}
+	// File drafts asynchronously; the retry redraft runs synchronously in the
+	// worker — assert the rejection note reached the drafter, order-independently.
+	drafter.mu.Lock()
+	sawNote := false
+	for _, g := range drafter.guidance {
+		if g == "gửi mai, dữ liệu chưa đủ" {
+			sawNote = true
+		}
+	}
+	calls := drafter.calls
+	drafter.mu.Unlock()
+	if !sawNote {
+		t.Fatalf("redraft guidance = %v, want the rejection note present", drafter.guidance)
+	}
+	if calls < 1 {
+		t.Fatalf("drafter calls = %d, want >= 1", calls)
+	}
+}
+
+type fakeDispatch struct {
+	last dto.SendPayrollReportEmailRequest
+	key  string
+}
+
+func (f *fakeDispatch) EnqueuePayrollReportEmail(req dto.SendPayrollReportEmailRequest, _ uint, requestKey string) (string, bool, error) {
+	f.last = req
+	f.key = requestKey
+	return "task-1", false, nil
+}
+
+func TestEmailExecuterSendsReviewedDraft(t *testing.T) {
+	dispatch := &fakeDispatch{}
+	exec := NewEmailExecuter(dispatch)
+	req := &domain.ApprovalRequest{
+		Type:           domain.ApprovalTypeSendSaoKeEmail,
+		IdempotencyKey: "approval:send_sao_ke_email:abc",
+		RequesterID:    1,
+		Payload:        `{"reportAtDate":"2026-10-05","recipients":["a@test.vn"],"llmDraftSubject":"Sao kê tuần","llmDraftBody":"Kính gửi,"}`,
+	}
+	outcome, err := exec.Execute(context.Background(), req)
+	if err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+	if dispatch.last.CustomSubject != "Sao kê tuần" || dispatch.last.CustomBody != "Kính gửi," {
+		t.Fatalf("custom draft not passed: %+v", dispatch.last)
+	}
+	if dispatch.last.Recipients[0] != "a@test.vn" {
+		t.Fatalf("recipients lost: %+v", dispatch.last)
+	}
+	if outcome == "" {
+		t.Fatal("outcome must be human-readable")
 	}
 }

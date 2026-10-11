@@ -141,6 +141,16 @@ func (f *employeeInfoAdvanceRepo) HasDataForMonth(_ context.Context, forMonth st
 	return f.hasDataByMonth[forMonth], nil
 }
 
+// GetByEmployeeAndMonth backs the info path's period-source check with
+// workbook-only rows (no check-in earnings) — this fixture describes a
+// regular FlexPay period, so CanRequest keeps its window-based meaning.
+func (f *employeeInfoAdvanceRepo) GetByEmployeeAndMonth(_ context.Context, _ uint64, forMonth string) ([]*domain.AdvancePayment, error) {
+	if f.maxByMonth[forMonth] == 0 {
+		return nil, nil
+	}
+	return []*domain.AdvancePayment{{ForMonth: forMonth}}, nil
+}
+
 type employeeInfoAdvanceRequestRepo struct {
 	domain.AdvancePaymentRequestRepository
 	completedByMonth map[string]uint64

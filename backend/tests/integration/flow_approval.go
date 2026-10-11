@@ -24,8 +24,11 @@ type approvalFlowRequest struct {
 
 // voidableTimesheetIDs fetches unpaid timesheet ids for void filings.
 func voidableTimesheetIDs(n int) []uint {
+	// Excludes timesheets already referenced by an approval request: void
+	// idempotency keys are consumed forever (even after cancel), so prior runs
+	// permanently shrink an unfiltered pool.
 	raw, err := queryPayrollScalar(
-		fmt.Sprintf("SELECT GROUP_CONCAT(id ORDER BY id DESC) FROM (SELECT id FROM timesheets WHERE payment_status NOT IN ('paid','failed','cancelled') ORDER BY id DESC LIMIT %d) t", n))
+		fmt.Sprintf("SELECT GROUP_CONCAT(id ORDER BY id DESC) FROM (SELECT t.id FROM timesheets t WHERE t.payment_status NOT IN ('paid','failed','cancelled') AND t.id NOT IN (SELECT CAST(JSON_EXTRACT(payload,'$.timesheetId') AS UNSIGNED) FROM approval_requests WHERE JSON_EXTRACT(payload,'$.timesheetId') IS NOT NULL) ORDER BY t.id DESC LIMIT %d) x", n))
 	if err != nil || raw == "" {
 		return nil
 	}

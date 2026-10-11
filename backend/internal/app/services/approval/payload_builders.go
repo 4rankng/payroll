@@ -132,6 +132,7 @@ func buildStatementEmailPayload(cycle CycleReader, projectUsers ProjectUserDirec
 
 		projectIDs := make([]uint, 0, len(rows))
 		timesheetCount := 0
+		var totalAmount int64
 		periodFrom, periodTo := rows[0].SalaryPeriodFrom, rows[0].SalaryPeriodTo
 		for _, row := range rows {
 			if row == nil || row.Project == nil {
@@ -139,6 +140,7 @@ func buildStatementEmailPayload(cycle CycleReader, projectUsers ProjectUserDirec
 			}
 			projectIDs = append(projectIDs, row.Project.ID)
 			timesheetCount += len(row.Timesheets)
+			totalAmount += row.TotalAmount
 			if row.SalaryPeriodFrom.Before(periodFrom) {
 				periodFrom = row.SalaryPeriodFrom
 			}
@@ -163,6 +165,7 @@ func buildStatementEmailPayload(cycle CycleReader, projectUsers ProjectUserDirec
 			PeriodTo:       periodTo.Format("2006-01-02"),
 			ProjectIDs:     projectIDs,
 			TimesheetCount: timesheetCount,
+			TotalAmount:    totalAmount,
 			Recipients:     recipients,
 			Cc:             []string{},
 		}

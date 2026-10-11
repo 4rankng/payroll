@@ -38,9 +38,15 @@ const (
 // sharedTransport is reused across clients so per-call client construction
 // (the API key is read from settings per call) keeps connection pooling.
 var sharedTransport http.RoundTripper = &http.Transport{
+	// ProxyFromEnvironment: a bare Transport defaults to NO proxy, which
+	// silently diverges from curl/browsers on machines that route external
+	// API traffic through a proxy — connections reset mid-body. Honor the
+	// environment; without proxy vars this is a no-op.
+	Proxy:               http.ProxyFromEnvironment,
 	MaxIdleConns:        16,
 	MaxIdleConnsPerHost: 8,
 	IdleConnTimeout:     90 * time.Second,
+	ForceAttemptHTTP2:   true,
 }
 
 // HTTPClient is the concrete OpenAI-compatible client (MiMo chat.completions).
@@ -119,15 +125,25 @@ func (c *HTTPClient) Chat(ctx context.Context, req ChatRequest) (*ChatResponse, 
 		return nil, &APIError{Kind: KindInternal, Message: "Không thể đóng gói yêu cầu tới MiMo."}
 	}
 
-	resp, err := c.doWithRetry(ctx, http.MethodPost, "/chat/completions", payload)
+	resp, cancelAttempt, err := c.doWithRetry(ctx, http.MethodPost, "/chat/completions", payload)
 	if err != nil {
 		return nil, err
 	}
+	// Keep the attempt context alive until the body is fully drained.
+	defer cancelAttempt()
 	defer func() { _ = resp.Body.Close() }()
 
+	raw, readErr := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody))
+	if readErr != nil {
+		return nil, &APIError{Kind: KindInternal, Message: "Không thể đọc phản hồi từ MiMo: " + readErr.Error()}
+	}
 	var out ChatResponse
-	if err := json.NewDecoder(io.LimitReader(resp.Body, maxResponseBody)).Decode(&out); err != nil {
-		return nil, &APIError{Kind: KindInternal, Message: "MiMo trả về dữ liệu không hợp lệ."}
+	if err := json.Unmarshal(raw, &out); err != nil {
+		snippet := len(raw)
+		if snippet > 200 {
+			snippet = 200
+		}
+		return nil, &APIError{Kind: KindInternal, Message: fmt.Sprintf("MiMo trả về dữ liệu không hợp lệ (HTTP %d): %s", resp.StatusCode, string(raw[:snippet]))}
 	}
 	if len(out.Choices) == 0 {
 		return nil, &APIError{Kind: KindInternal, Message: "MiMo không trả về kết quả nào."}
@@ -139,10 +155,11 @@ func (c *HTTPClient) Chat(ctx context.Context, req ChatRequest) (*ChatResponse, 
 // a read-only call that never spends completion tokens.
 func (c *HTTPClient) TestConnection(ctx context.Context) (*TestConnectionResult, error) {
 	start := time.Now()
-	resp, err := c.doWithRetry(ctx, http.MethodGet, "/models", nil)
+	resp, cancelAttempt, err := c.doWithRetry(ctx, http.MethodGet, "/models", nil)
 	if err != nil {
 		return nil, err
 	}
+	defer cancelAttempt()
 	defer func() { _ = resp.Body.Close() }()
 
 	var body modelsResponseBody
@@ -167,7 +184,7 @@ func (c *HTTPClient) TestConnection(ctx context.Context) (*TestConnectionResult,
 // doWithRetry performs one HTTP attempt per call with bounded retries. Each
 // attempt gets its own timeout so one slow provider response cannot consume the
 // whole retry budget in a single read.
-func (c *HTTPClient) doWithRetry(ctx context.Context, method, path string, payload []byte) (*http.Response, error) {
+func (c *HTTPClient) doWithRetry(ctx context.Context, method, path string, payload []byte) (*http.Response, context.CancelFunc, error) {
 	attempts := 1 + c.cfg.MaxRetries
 	var lastErr error
 
@@ -176,28 +193,30 @@ func (c *HTTPClient) doWithRetry(ctx context.Context, method, path string, paylo
 			delay := c.backoff(attempt)
 			select {
 			case <-ctx.Done():
-				return nil, ContextError(ctx)
+				return nil, nil, ContextError(ctx)
 			case <-time.After(delay):
 			}
 		}
 
-		resp, retryable, err := c.doOnce(ctx, method, path, payload)
+		resp, cancel, retryable, err := c.doOnce(ctx, method, path, payload)
 		if err == nil {
-			return resp, nil
+			return resp, cancel, nil
 		}
 		lastErr = err
 		if !retryable {
-			return nil, err
+			return nil, nil, err
 		}
 	}
-	return nil, lastErr
+	return nil, nil, lastErr
 }
 
 // doOnce performs a single HTTP attempt. retryable reports whether the failure
-// is transient (a later attempt could succeed).
-func (c *HTTPClient) doOnce(ctx context.Context, method, path string, payload []byte) (*http.Response, bool, error) {
+// is transient (a later attempt could succeed). The returned cancel keeps the
+// attempt context alive for the response body: canceling before the body is
+// fully read invalidates the stream (a canceled request context aborts the
+// in-flight body mid-read), so the CALLER must defer it after draining.
+func (c *HTTPClient) doOnce(ctx context.Context, method, path string, payload []byte) (*http.Response, context.CancelFunc, bool, error) {
 	attemptCtx, cancel := context.WithTimeout(ctx, c.cfg.HTTPTimeout)
-	defer cancel()
 
 	var body io.Reader
 	if payload != nil {
@@ -205,7 +224,8 @@ func (c *HTTPClient) doOnce(ctx context.Context, method, path string, payload []
 	}
 	req, err := http.NewRequestWithContext(attemptCtx, method, c.cfg.BaseURL+path, body)
 	if err != nil {
-		return nil, false, &APIError{Kind: KindInternal, Message: "Không thể tạo yêu cầu tới MiMo."}
+		cancel()
+		return nil, nil, false, &APIError{Kind: KindInternal, Message: "Không thể tạo yêu cầu tới MiMo."}
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
@@ -215,23 +235,25 @@ func (c *HTTPClient) doOnce(ctx context.Context, method, path string, payload []
 
 	resp, err := c.client.Do(req)
 	if err != nil {
+		cancel()
 		if errors.Is(attemptCtx.Err(), context.DeadlineExceeded) && ctx.Err() == nil {
-			return nil, true, &APIError{Kind: KindTimeout, Message: MessageFor(KindTimeout)}
+			return nil, nil, true, &APIError{Kind: KindTimeout, Message: MessageFor(KindTimeout)}
 		}
 		if ctx.Err() != nil {
-			return nil, false, ContextError(ctx)
+			return nil, nil, false, ContextError(ctx)
 		}
 		// Transport-level failure (DNS, connection reset, …) — transient.
-		return nil, true, &APIError{Kind: KindUnavailable, Message: MessageFor(KindUnavailable)}
+		return nil, nil, true, &APIError{Kind: KindUnavailable, Message: MessageFor(KindUnavailable)}
 	}
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return resp, false, nil
+		return resp, cancel, false, nil
 	}
 
+	cancel()
 	apiErr := parseErrorBody(resp)
 	retryable := resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500
-	return nil, retryable, apiErr
+	return nil, nil, retryable, apiErr
 }
 
 // parseErrorBody drains the error response into a classified APIError and

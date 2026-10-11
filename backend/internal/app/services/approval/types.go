@@ -44,8 +44,13 @@ type SaoKeEmailPayload struct {
 	PeriodTo       string   `json:"periodTo"`
 	ProjectIDs     []uint   `json:"projectIds"`
 	TimesheetCount int      `json:"timesheetCount"`
+	TotalAmount    int64    `json:"totalAmount"`
 	Recipients     []string `json:"recipients"`
 	Cc             []string `json:"cc"`
+	// LLM draft (review aid + the exact body sent on approve). Empty when the
+	// drafter is unwired or the provider fails — filing degrades gracefully.
+	DraftSubject string `json:"llmDraftSubject,omitempty"`
+	DraftBody    string `json:"llmDraftBody,omitempty"`
 }
 
 // PayrollEmailPayload is the server-derived payload for send_payroll_email.
@@ -55,8 +60,13 @@ type PayrollEmailPayload struct {
 	PeriodTo       string   `json:"periodTo"`
 	ProjectIDs     []uint   `json:"projectIds"`
 	TimesheetCount int      `json:"timesheetCount"`
+	TotalAmount    int64    `json:"totalAmount"`
 	Recipients     []string `json:"recipients"`
 	Cc             []string `json:"cc"`
+	// LLM draft (review aid + the exact body sent on approve). Empty when the
+	// drafter is unwired or the provider fails — filing degrades gracefully.
+	DraftSubject string `json:"llmDraftSubject,omitempty"`
+	DraftBody    string `json:"llmDraftBody,omitempty"`
 }
 
 // ReminderPayload is the server-derived payload for send_reminder.

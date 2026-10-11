@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { AlertTriangle, ClipboardCheck, Loader2, RefreshCw } from 'lucide-react';
 
 import { ApprovalDecisionModal, type ApprovalDecisionMode } from '@/components/approvals/ApprovalDecisionModal';
@@ -8,6 +9,7 @@ import { cn } from '@/lib/utils';
 import {
   useApprovalsList,
   useApproveApproval,
+  useFileApproval,
   useCancelApproval,
   useRejectApproval,
 } from '@/hooks/api/useApprovals';
@@ -47,6 +49,26 @@ const formatDateTime = (iso?: string | null) => {
 const ApprovalsPageMobile = () => {
   const [filterKey, setFilterKey] = useState('waiting');
   const [modal, setModal] = useState<{ mode: ApprovalDecisionMode; request: ApprovalRequest } | null>(null);
+  const [prepareDate, setPrepareDate] = useState('');
+  const fileApproval = useFileApproval();
+
+  const handlePrepareSaoKe = () => {
+    const reportAtDate = prepareDate.trim();
+    if (!reportAtDate) {
+      toast.error('Chọn ngày sao kê trước khi chuẩn bị.');
+      return;
+    }
+    fileApproval.mutate(
+      { type: 'send_sao_ke_email', params: { reportAtDate } },
+      {
+        onSuccess: (filed) => {
+          toast.success(`Đã gửi yêu cầu #${filed.id} chờ duyệt.`);
+          setPrepareDate('');
+        },
+        onError: () => toast.error('Không thể chuẩn bị — kiểm tra ngày sao kê.'),
+      }
+    );
+  };
 
   const filter = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0];
   const listQuery = useApprovalsList({ statuses: filter.statuses, page: 1, pageSize: PAGE_SIZE });
@@ -126,6 +148,31 @@ const ApprovalsPageMobile = () => {
       </header>
 
       <div className="flex-1 space-y-3 p-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
+        <section aria-label="Chuẩn bị sao kê" className="flex items-end gap-2 rounded-xl border bg-card px-3.5 py-3">
+          <div className="min-w-0 flex-1">
+            <label htmlFor="sao-ke-date-mobile" className="block text-sm font-medium text-foreground">
+              Chuẩn bị sao kê
+            </label>
+            <input
+              id="sao-ke-date-mobile"
+              type="date"
+              value={prepareDate}
+              onChange={(event) => setPrepareDate(event.target.value)}
+              disabled={fileApproval.isPending}
+              className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+              aria-label="Ngày sao kê"
+            />
+          </div>
+          <Button
+            type="button"
+            className="h-11 shrink-0"
+            disabled={fileApproval.isPending}
+            onClick={handlePrepareSaoKe}
+          >
+            {fileApproval.isPending ? 'Đang…' : 'Chuẩn bị'}
+          </Button>
+        </section>
+
         {escalatedCount ? (
           <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
             <AlertTriangle aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-red-700" />
@@ -175,6 +222,14 @@ const ApprovalsPageMobile = () => {
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
                   Kết quả: <span className="text-foreground">{item.outcome}</span>
                 </p>
+              ) : null}
+              {typeof item.payload?.llmDraftBody === 'string' && item.payload.llmDraftBody ? (
+                <details className="mt-2 rounded-lg border bg-background px-3 py-2">
+                  <summary className="cursor-pointer text-xs font-medium text-foreground">Bản thảo email sẽ gửi</summary>
+                  <p className="mt-2 whitespace-pre-line text-xs leading-5 text-muted-foreground">
+                    {String(item.payload.llmDraftBody)}
+                  </p>
+                </details>
               ) : null}
               {canDecide(item) ? (
                 <div className="mt-3 flex gap-2">
