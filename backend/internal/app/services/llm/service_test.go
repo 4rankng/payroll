@@ -18,10 +18,11 @@ type fakeSettings struct {
 	fallback     string
 }
 
-func (f *fakeSettings) GetMimoAPIKey(context.Context) string        { return f.key }
-func (f *fakeSettings) GetMimoBaseURL(context.Context) string       { return f.baseURL }
-func (f *fakeSettings) GetMimoDefaultModel(context.Context) string  { return f.defaultModel }
-func (f *fakeSettings) GetMimoFallbackModel(context.Context) string { return f.fallback }
+func (f *fakeSettings) GetMimoAPIKey(context.Context) string                    { return f.key }
+func (f *fakeSettings) GetMimoBaseURL(context.Context) string                   { return f.baseURL }
+func (f *fakeSettings) GetMimoDefaultModel(context.Context) string              { return f.defaultModel }
+func (f *fakeSettings) GetMimoFallbackModel(context.Context) string             { return f.fallback }
+func (f *fakeSettings) GetMimoModelForRoute(_ context.Context, _ string) string { return "" }
 
 // fakeClient records calls and plays back scripted outcomes. Call recording is
 // mutex-guarded — the busy-path test drives concurrent calls.

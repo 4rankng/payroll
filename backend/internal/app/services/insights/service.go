@@ -213,7 +213,7 @@ func (w LLMNarrativeWriter) WriteFindingNarrative(ctx context.Context, findingTy
 		"CHỈ dùng nguyên văn các con số trong dữ kiện — tuyệt đối không tính toán hay bịa số. " +
 		"Mỗi phát hiện phải có một câu 'vì sao đáng chú ý'. Không thêm tiêu đề hay định dạng markdown."
 	user := fmt.Sprintf("Loại phát hiện: %s\nDữ kiện (nguyên văn): %s", findingType, string(factsJSON))
-	resp, err := w.Service.Chat(ctx, 0, chatRequest(system, user))
+	resp, err := w.Service.Chat(ctx, 0, chatRequest(system, user, w.Service.ModelForRoute(ctx, "deliverable")))
 	if err != nil {
 		return "", err
 	}
@@ -224,9 +224,12 @@ func (w LLMNarrativeWriter) WriteFindingNarrative(ctx context.Context, findingTy
 }
 
 // chatRequest builds the minimal narrative request.
-func chatRequest(system, user string) llmport.ChatRequest {
+func chatRequest(system, user, model string) llmport.ChatRequest {
+	if model == "" {
+		model = narrativeModel
+	}
 	return llmport.ChatRequest{
-		Model: narrativeModel,
+		Model: model,
 		Messages: []llmport.Message{
 			{Role: "system", Content: []llmport.ContentPart{llmport.TextPart(system)}},
 			{Role: "user", Content: []llmport.ContentPart{llmport.TextPart(user)}},

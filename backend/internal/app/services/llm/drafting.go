@@ -8,9 +8,20 @@ import (
 	llmport "api-server/internal/infra/llm"
 )
 
-// draftModel is fixed by the model-selection spike (2026-10-11): flash won
-// every text surface (pro was 2.4x slower with no quality gain).
+// draftModel is the flash default from the model-selection spike (2026-10-11);
+// the admin "deliverable" route setting (mimo.model_deliverable) overrides it.
 const draftModel = "mimo-v2.6-flash"
+
+// modelForDraft resolves the deliverable-route model per call (empty = default).
+func (s *Service) modelForDraft(ctx context.Context) string {
+	if s.settings == nil {
+		return draftModel
+	}
+	if m := s.settings.GetMimoModelForRoute(ctx, "deliverable"); m != "" {
+		return m
+	}
+	return draftModel
+}
 
 // SaoKeDraftFacts is the frozen fact sheet a draft must be built from. Every
 // number appears verbatim in the output; the model never computes.
@@ -41,7 +52,7 @@ func (s *Service) DraftSaoKeEmail(ctx context.Context, userID uint, facts SaoKeD
 		fmt.Fprintf(&b, "\nLưu ý từ người duyệt cho lần soạn này: %s\n", g)
 	}
 	resp, err := s.Chat(ctx, userID, llmport.ChatRequest{
-		Model: draftModel,
+		Model: s.modelForDraft(ctx),
 		Messages: []llmport.Message{
 			{Role: "system", Content: []llmport.ContentPart{llmport.TextPart(system)}},
 			{Role: "user", Content: []llmport.ContentPart{llmport.TextPart(b.String())}},

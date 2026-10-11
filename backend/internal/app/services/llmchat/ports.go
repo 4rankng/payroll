@@ -174,6 +174,18 @@ type AttachmentLoader interface {
 	LoadImageDataURL(ctx context.Context, caller Caller, assetID uint) (string, error)
 }
 
+// ModelRouter resolves the admin-configured model for the interactive chat
+// route (settings mimo.model_chat; empty = runtime default = flash).
+type ModelRouter interface {
+	ChatModel(ctx context.Context) string
+}
+
+// ModelRouterFunc adapts a function onto ModelRouter.
+type ModelRouterFunc func(ctx context.Context) string
+
+// ChatModel implements ModelRouter.
+func (f ModelRouterFunc) ChatModel(ctx context.Context) string { return f(ctx) }
+
 // WalletInfoSource is the narrow read seam over the wallet service for the
 // admin-only get_wallet_balance tool (adapter in wallet_source.go).
 type WalletInfoSource interface {

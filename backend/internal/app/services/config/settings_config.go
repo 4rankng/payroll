@@ -49,6 +49,9 @@ const (
 	SettingKeyMimoFallbackModel = "mimo.fallback_model"
 	// Per-role chat surface toggles (admin-controlled): missing rows mean
 	// ENABLED — the switches exist to turn a role off, not to require opt-in.
+	SettingKeyMimoModelChat        = "mimo.model_chat"
+	SettingKeyMimoModelDeliverable = "mimo.model_deliverable"
+
 	SettingKeyMimoChatEnabledAdmin   = "mimo.chat_enabled_admin"
 	SettingKeyMimoChatEnabledPartner = "mimo.chat_enabled_partner"
 )
@@ -780,6 +783,34 @@ func (s *SettingsConfigService) GetMimoBaseURL(ctx context.Context) string {
 // the role. Missing or unreadable rows default to enabled; unknown roles are
 // always denied. Reads the authoritative path (no cache) so an admin toggle
 // applies on the next request.
+// GetMimoModelForRoute resolves the model for one routing surface.
+// route is "chat" (interactive turns) or "deliverable" (email drafts,
+// digest narratives). Empty or invalid rows fall back to the runtime default
+// model — the route override exists to differ from the default, not to break.
+func (s *SettingsConfigService) GetMimoModelForRoute(ctx context.Context, route string) string {
+	var key string
+	switch route {
+	case "chat":
+		key = SettingKeyMimoModelChat
+	case "deliverable":
+		key = SettingKeyMimoModelDeliverable
+	default:
+		return ""
+	}
+	if s.settingsService == nil {
+		return ""
+	}
+	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, key)
+	if err != nil || setting.Value == nil {
+		return ""
+	}
+	model := strings.TrimSpace(*setting.Value)
+	if !llmport.IsAllowedModel(model) {
+		return ""
+	}
+	return model
+}
+
 func (s *SettingsConfigService) GetMimoChatEnabledForRole(ctx context.Context, role string) bool {
 	switch role {
 	case "admin":

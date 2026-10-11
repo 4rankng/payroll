@@ -135,6 +135,8 @@ export const MimoConnectionSection = () => {
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [defaultModel, setDefaultModel] = useState<string>(MIMO_MODELS[0]);
   const [fallbackModel, setFallbackModel] = useState<string>(MIMO_MODELS[1]);
+  const [chatModel, setChatModel] = useState<string>('');
+  const [deliverableModel, setDeliverableModel] = useState<string>('');
   const [testState, setTestState] = useState<TestState | null>(null);
   const [chatAdmin, setChatAdmin] = useState(true);
   const [chatPartner, setChatPartner] = useState(true);
@@ -146,6 +148,14 @@ export const MimoConnectionSection = () => {
   );
   const defaultModelSetting = useMemo(
     () => (Array.isArray(settings) ? settings.find((s) => s?.key === MIMO_SETTING_KEYS.defaultModel) : undefined),
+    [settings],
+  );
+  const chatModelSetting = useMemo(
+    () => (Array.isArray(settings) ? settings.find((s) => s?.key === MIMO_SETTING_KEYS.modelChat) : undefined),
+    [settings],
+  );
+  const deliverableModelSetting = useMemo(
+    () => (Array.isArray(settings) ? settings.find((s) => s?.key === MIMO_SETTING_KEYS.modelDeliverable) : undefined),
     [settings],
   );
   const fallbackModelSetting = useMemo(
@@ -161,6 +171,11 @@ export const MimoConnectionSection = () => {
   const keyConfigured = Boolean(apiKeySetting?.masked ? apiKeySetting.configured : apiKeySetting?.value);
 
   useEffect(() => {
+    setChatModel(chatModelSetting?.value ?? '');
+    setDeliverableModel(deliverableModelSetting?.value ?? '');
+  }, [chatModelSetting?.value, deliverableModelSetting?.value]);
+
+  useEffect(() => {
     if (defaultModelSetting?.value) setDefaultModel(defaultModelSetting.value);
     if (fallbackModelSetting?.value) setFallbackModel(fallbackModelSetting.value);
   }, [defaultModelSetting?.value, fallbackModelSetting?.value]);
@@ -174,7 +189,9 @@ export const MimoConnectionSection = () => {
   const hasUnsavedChanges =
     hasUnsavedKey ||
     defaultModel !== (defaultModelSetting?.value ?? MIMO_MODELS[0]) ||
-    fallbackModel !== (fallbackModelSetting?.value ?? MIMO_MODELS[1]);
+    fallbackModel !== (fallbackModelSetting?.value ?? MIMO_MODELS[1]) ||
+    chatModel !== (chatModelSetting?.value ?? '') ||
+    deliverableModel !== (deliverableModelSetting?.value ?? '');
 
   // Upserts one string setting: the row may not exist yet on environments
   // where the key was never saved, so a miss creates it.
@@ -195,6 +212,14 @@ export const MimoConnectionSection = () => {
       }
       await upsertSetting(MIMO_SETTING_KEYS.defaultModel, defaultModel);
       await upsertSetting(MIMO_SETTING_KEYS.fallbackModel, fallbackModel);
+      // Route overrides: persist only when set or clearing a stored row —
+      // an untouched "theo mặc định" must not create an empty row.
+      if (chatModel || chatModelSetting?.id) {
+        await upsertSetting(MIMO_SETTING_KEYS.modelChat, chatModel);
+      }
+      if (deliverableModel || deliverableModelSetting?.id) {
+        await upsertSetting(MIMO_SETTING_KEYS.modelDeliverable, deliverableModel);
+      }
       setApiKeyInput('');
       toast.success('Đã lưu cấu hình MiMo');
       // A fresh key invalidates the previous test verdict.
@@ -395,6 +420,52 @@ export const MimoConnectionSection = () => {
               </select>
               <p className="text-xs leading-5 text-muted-foreground">
                 Tự động dùng thay thế nếu mô hình mặc định không khả dụng.
+              </p>
+            </div>
+
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="mimo-chat-model" className="block text-sm font-medium">
+                Mô hình hội thoại (trợ lý AI)
+              </Label>
+              <select
+                id="mimo-chat-model"
+                value={chatModel}
+                onChange={(event) => setChatModel(event.target.value)}
+                disabled={isSaving}
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="">Theo mô hình mặc định</option>
+                {MIMO_MODELS.map((model) => (
+                  <option key={model} value={model}>
+                    {MODEL_LABELS[model] ?? model}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs leading-5 text-muted-foreground">
+                Dùng cho các lượt hội thoại trong trợ lý AI.
+              </p>
+            </div>
+
+            <div className="min-w-0 space-y-2">
+              <Label htmlFor="mimo-deliverable-model" className="block text-sm font-medium">
+                Mô hình soạn thảo (email, tóm tắt)
+              </Label>
+              <select
+                id="mimo-deliverable-model"
+                value={deliverableModel}
+                onChange={(event) => setDeliverableModel(event.target.value)}
+                disabled={isSaving}
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <option value="">Theo mô hình mặc định</option>
+                {MIMO_MODELS.map((model) => (
+                  <option key={model} value={model}>
+                    {MODEL_LABELS[model] ?? model}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs leading-5 text-muted-foreground">
+                Dùng cho bản thảo email sao kê và tóm tắt hàng ngày.
               </p>
             </div>
           </div>

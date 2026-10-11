@@ -31,6 +31,7 @@ type Service struct {
 	msgLimit   Limiter
 	roleGate   RoleGate
 	images     AttachmentLoader
+	models     ModelRouter
 	logger     *slog.Logger
 }
 
@@ -50,6 +51,7 @@ type Deps struct {
 	MsgLimiter Limiter
 	RoleGate   RoleGate
 	Images     AttachmentLoader
+	Models     ModelRouter
 }
 
 // NewService constructs the chat service with the full tool manifest.
@@ -70,6 +72,7 @@ func NewService(deps Deps) *Service {
 		msgLimit:   deps.MsgLimiter,
 		roleGate:   deps.RoleGate,
 		images:     deps.Images,
+		models:     deps.Models,
 		logger:     observability.GetLogger(),
 	}
 }

@@ -97,9 +97,16 @@ func (s *PushService) SendToUser(ctx context.Context, userID uint, title, body s
 		})
 
 		if err != nil {
-			s.logger.Error("Failed to send push notification",
+			// Transport-level failure (endpoint unreachable). Not an error
+			// worth paging on: expired dev/test endpoints fail this way until
+			// their push service answers 410/404 and the removal branch fires.
+			endpointTail := sub.Endpoint
+			if len(endpointTail) > 24 {
+				endpointTail = "…" + endpointTail[len(endpointTail)-24:]
+			}
+			s.logger.Warn("Push send failed (endpoint unreachable, will be dropped on 410/404)",
 				"user_id", userID,
-				"endpoint", sub.Endpoint,
+				"endpoint_tail", endpointTail,
 				"error", err)
 			continue
 		}

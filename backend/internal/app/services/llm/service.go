@@ -32,6 +32,8 @@ type SettingsSource interface {
 	GetMimoBaseURL(ctx context.Context) string
 	GetMimoDefaultModel(ctx context.Context) string
 	GetMimoFallbackModel(ctx context.Context) string
+
+	GetMimoModelForRoute(ctx context.Context, route string) string
 }
 
 // ClientFactory builds a provider client from runtime settings. Injectable so
@@ -129,6 +131,15 @@ func (s *Service) Chat(ctx context.Context, userID uint, req llmport.ChatRequest
 }
 
 // fallbackModel resolves the configured fallback through the same allowlist as
+// ModelForRoute resolves the admin-configured model for a routing surface
+// ("chat" | "deliverable"); empty means the runtime default.
+func (s *Service) ModelForRoute(ctx context.Context, route string) string {
+	if s.settings == nil {
+		return ""
+	}
+	return s.settings.GetMimoModelForRoute(ctx, route)
+}
+
 // the primary route, so a retired family can never be configured as fallback.
 func (s *Service) fallbackModel(ctx context.Context) (string, error) {
 	return llmport.ResolveModel(s.settings.GetMimoFallbackModel(ctx), "")

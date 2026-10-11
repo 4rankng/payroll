@@ -69,8 +69,14 @@ func (s *Service) runTurn(ctx context.Context, caller Caller, conv *domain.ChatC
 		timing.RoundTrips++
 
 		modelStart := time.Now()
+		chatModel := llmport.ModelFlash
+		if s.models != nil {
+			if m := s.models.ChatModel(turnCtx); m != "" {
+				chatModel = m
+			}
+		}
 		resp, err := s.llm.Chat(turnCtx, caller.UserID, llmport.ChatRequest{
-			Model:       llmport.ModelFlash,
+			Model:       chatModel,
 			Messages:    msgs,
 			Tools:       manifest,
 			ToolChoice:  "auto",

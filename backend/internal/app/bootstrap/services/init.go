@@ -636,6 +636,9 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 				return fullPath, nil
 			},
 		),
+		Models: llmchat.ModelRouterFunc(func(ctx context.Context) string {
+			return settingsConfigService.GetMimoModelForRoute(ctx, "chat")
+		}),
 	})
 
 	// Daily ops insight digest (phase 7): deterministic DB collectors, hard

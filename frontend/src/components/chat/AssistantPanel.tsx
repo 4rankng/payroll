@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Loader2, Paperclip, SendHorizontal, Sparkles, X } from 'lucide-react';
+import { Loader2, Paperclip, SendHorizontal, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import {
   useChatConversation,
@@ -84,17 +84,12 @@ export const AssistantPanel = ({ open, onClose }: AssistantPanelProps) => {
     <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
       <SheetContent
         side={isMobile ? 'bottom' : 'right'}
+        aria-label="Trợ lý AI"
         className={cn(
           'flex flex-col gap-0 p-0',
           isMobile ? 'h-[85dvh] rounded-t-2xl' : 'w-[26rem] sm:max-w-[26rem]'
         )}
       >
-        <SheetHeader className="border-b px-4 py-3">
-          <SheetTitle className="flex items-center gap-2 text-sm font-semibold">
-            <Sparkles aria-hidden="true" className="size-4 text-indigo-600" />
-            Trợ lý AI
-          </SheetTitle>
-        </SheetHeader>
 
         <div ref={listRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4" role="log" aria-label="Hội thoại với trợ lý AI">
           {messages.length === 0 && !sendMessage.isPending ? (
