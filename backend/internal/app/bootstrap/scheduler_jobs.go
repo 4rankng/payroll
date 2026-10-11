@@ -291,6 +291,14 @@ func registerSchedulerJobs(
 					"provider_balance", result.ProviderBalance,
 					"local_balance", result.LocalBalance,
 				)
+			} else if result.ProviderBalance != result.LocalBalance {
+				// The guard skipped the adjustment (payments in flight or
+				// recent unreconciled failures) — the divergence persists, so
+				// do not log this state as "in sync".
+				logger.Warn("Wallet balance sync skipped with divergence (payments in flight or recent unreconciled failures)",
+					"provider_balance", result.ProviderBalance,
+					"local_balance", result.LocalBalance,
+				)
 			} else {
 				logger.Info("Wallet balance in sync",
 					"balance", result.LocalBalance,
