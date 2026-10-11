@@ -39,6 +39,7 @@ import { useDashboardData } from '@/hooks/admin-dashboard/useDashboardData';
 import { useDashboardActions } from '@/hooks/admin-dashboard/useDashboardActions';
 import { useDashboardStats } from '@/hooks/admin-dashboard/useDashboardStats';
 import { useTimesheets } from '@/hooks/api/useTimesheets';
+import { useApprovalsList } from '@/hooks/api/useApprovals';
 import { useBankUsageAllProjects, useEmployeeActivityStats } from '@/hooks/api/useDashboard';
 import { useDashboardNavigation } from '@/hooks/useDashboardNavigation';
 import { useEmployeeModals, useTimesheetModals } from '@/hooks/useModalNavigation';
@@ -256,6 +257,12 @@ const AdminDashboardMobile = () => {
     ];
   }, [dashboardNav, data.dashboardSummary, monthLabel]);
 
+  const approvalsQueue = useApprovalsList({ statuses: ['pending', 'rescheduled'], pageSize: 1 });
+  const approvalsEscalated = useApprovalsList({ statuses: ['escalated'], pageSize: 1 });
+  const approvalsCount =
+    (approvalsQueue.data?.pagination?.totalRecords ?? 0) +
+    (approvalsEscalated.data?.pagination?.totalRecords ?? 0);
+
   const priorityRows = useMemo<MobileTaskRow[]>(() => {
     return [
       {
@@ -280,6 +287,21 @@ const AdminDashboardMobile = () => {
             ? dashboardNav.navigateToPendingApprovals
             : undefined,
       },
+      ...(approvalsCount > 0
+        ? [
+            {
+              title: 'Yêu cầu phê duyệt (trợ lý AI)',
+              description:
+                (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0
+                  ? 'Có yêu cầu đã leo thang — cần quyết định'
+                  : 'Yêu cầu từ trợ lý AI đang chờ duyệt',
+              value: approvalsCount.toLocaleString('vi-VN'),
+              icon: AlertCircle,
+              tone: (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0 ? 'warning' : 'primary',
+              onClick: () => navigate('/admin/approvals'),
+            } satisfies MobileTaskRow,
+          ]
+        : []),
       {
         title: 'Đối soát ví trả lương',
         description: 'Kiểm tra số dư và lịch chuyển tiền',

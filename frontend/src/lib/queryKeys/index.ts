@@ -271,6 +271,13 @@ export const QueryKeys = {
   },
 
   // ========== SETTINGS ==========
+  approvals: {
+    all: ['approvals'] as const,
+    lists: () => [...QueryKeys.approvals.all, 'list'] as const,
+    list: (filters?: Record<string, unknown>) => [...QueryKeys.approvals.lists(), filters] as const,
+    details: () => [...QueryKeys.approvals.all, 'detail'] as const,
+    detail: (id: number) => [...QueryKeys.approvals.details(), id] as const,
+  },
   settings: {
     all: ['settings'] as const,
     lists: () => [...QueryKeys.settings.all, 'list'] as const,

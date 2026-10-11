@@ -18,6 +18,8 @@ const NOTIFICATION_STYLES: Record<string, NotificationStyle> = {
   project_update:       { iconColor: 'text-green-700',   bgColor: 'bg-green-100'  },
   password_change:      { iconColor: 'text-red-700',     bgColor: 'bg-red-100'    },
   custom:               { iconColor: 'text-gray-600',    bgColor: 'bg-gray-100'   },
+  approval_request:     { iconColor: 'text-indigo-700',   bgColor: 'bg-indigo-100'  },
+  approval_result:      { iconColor: 'text-teal-700',     bgColor: 'bg-teal-100'    },
 };
 
 const DEFAULT_STYLE: NotificationStyle = { iconColor: 'text-muted-foreground', bgColor: 'bg-slate-100' };
@@ -37,6 +39,8 @@ const NOTIFICATION_ACCENT_COLORS: Record<string, string> = {
   project_update:     '#22C55E',
   password_change:    '#EF4444',
   custom:             '#9CA3AF',
+  approval_request:   '#6366F1',
+  approval_result:    '#14B8A6',
 };
 
 export function getNotificationAccentColor(type: Notification['type']): string {

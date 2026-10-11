@@ -15,6 +15,7 @@ import {
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
 import { PartnerWorkforceOverviewCard } from '@/components/partner-dashboard/PartnerWorkforceOverviewCard';
+import { PartnerApprovalRequestsCard } from '@/components/partner-dashboard/PartnerApprovalRequestsCard';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/shared/EmptyState';
 import type {
@@ -308,6 +309,8 @@ const PartnerDashboardPage = () => {
             />
           </div>
         )}
+
+        <PartnerApprovalRequestsCard />
 
         {/* ── Analytics grid: workforce donut + leaderboard ── */}
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(280px,0.8fr)_minmax(0,2.2fr)]">

@@ -23,6 +23,7 @@ import {
   type MobileOperationMetric,
   type MobileTaskRow,
 } from '@/components/shared/MobileOperationsPanel';
+import { PartnerApprovalRequestsCard } from '@/components/partner-dashboard/PartnerApprovalRequestsCard';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
 import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSelector';
@@ -250,6 +251,8 @@ const PartnerDashboardMobile = () => {
         title="Việc cần theo dõi"
         items={taskRows}
       />
+
+      <PartnerApprovalRequestsCard compact />
 
       <MobileSurface className="p-4">
         <div className="mb-3 flex items-center gap-2">

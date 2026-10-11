@@ -328,6 +328,14 @@ export const API_ENDPOINTS = {
     // latency. Admin only (server-side enforced); never returns the key.
     mimoTestConnection: '/settings/mimo/test-connection',
   },
+  // Approval-request engine (admin decides; partner files within allowlist)
+  approvals: {
+    base: '/approvals',
+    byId: (id: number) => `/approvals/${id}`,
+    approve: (id: number) => `/approvals/${id}/approve`,
+    reject: (id: number) => `/approvals/${id}/reject`,
+    cancel: (id: number) => `/approvals/${id}/cancel`,
+  },
   adBanners: {
     base: '/ad-banners',
     byId: (id: number) => `/ad-banners/${id}`,

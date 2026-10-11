@@ -41,6 +41,8 @@ const UsersPageMobile = lazy(() => import("./pages/mobile/admin/UsersPage"));
 const ProjectsPageMobile = lazy(() => import("./pages/mobile/admin/ProjectsPage"));
 const EmployeesPageMobile = lazy(() => import("./pages/mobile/admin/EmployeesPage"));
 const TimesheetPageMobile = lazy(() => import("./pages/mobile/admin/TimesheetPage"));
+const ApprovalsPage = lazy(() => import("./pages/admin/ApprovalsPage"));
+const ApprovalsPageMobile = lazy(() => import("./pages/mobile/admin/ApprovalsPage"));
 const LedgerEntriesPageMobile = lazy(() => import("./pages/mobile/admin/LedgerEntriesPage"));
 const LoansPageMobile = lazy(() => import("./pages/mobile/admin/LoansPage"));
 const AdvancePaymentsPageMobile = lazy(() => import("./pages/mobile/admin/AdvancePaymentsPage"));
@@ -275,7 +277,7 @@ const AppContent = () => {
           <Route path="advance-payments/check-in-settings" element={<CheckInSettingsPage />} />
           <Route path="advance-payments/employees" element={<AdvancePaymentsEmployeeListPageMobile />} />
           <Route path="advance-payment-fees" element={<Navigate to="/admin/settings?tab=fee-config" replace />} />
-          <Route path="approvals" element={<ResponsivePage desktopComponent={TimesheetPage} mobileComponent={TimesheetPageMobile} />} />
+          <Route path="approvals" element={<ResponsivePage desktopComponent={ApprovalsPage} mobileComponent={ApprovalsPageMobile} />} />
           <Route path="settings" element={<ResponsivePage desktopComponent={SettingsPage} mobileComponent={SettingsPageMobile} />} />
           <Route path="wallet" element={<ResponsivePage desktopComponent={WalletPage} mobileComponent={WalletPageMobile} />} />
           <Route path="system" element={<Navigate to="/admin/system-health" replace />} />

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth } from 'date-fns';
 // UU PRO restyle (W13a): lucide → verified @untitledui/icons. The shared
 // admin-dashboard icon slots are widened to ComponentType<SVGProps> (W13a
@@ -34,6 +35,7 @@ import {
   type DashboardMetricItem,
   type DashboardPriorityItem,
 } from '@/components/admin-dashboard/DashboardOverview';
+import { useApprovalsList } from '@/hooks/api/useApprovals';
 import { useDashboardData } from '@/hooks/admin-dashboard/useDashboardData';
 import { useDashboardActions } from '@/hooks/admin-dashboard/useDashboardActions';
 import { useDashboardStats } from '@/hooks/admin-dashboard/useDashboardStats';
@@ -79,7 +81,12 @@ const AdminDashboard = () => {
     isFetching: isActivityFetching,
     refetch: refetchActivity,
   } = useEmployeeActivityStats(monthParam);
+  const navigate = useNavigate();
   const dashboardNav = useDashboardNavigation();
+  // Approval-engine queue counts (pending + rescheduled + escalated). The
+  // priority row renders only when non-zero (row law: no zero-value rows).
+  const approvalsQueue = useApprovalsList({ statuses: ['pending', 'rescheduled'], pageSize: 1 });
+  const approvalsEscalated = useApprovalsList({ statuses: ['escalated'], pageSize: 1 });
 
   const pendingApprovals = pendingData?.pagination?.totalRecords ?? null;
 
@@ -197,8 +204,34 @@ const AdminDashboard = () => {
         tone: data.dashboardSummary.pending_salary_this_month > 0 ? 'primary' : 'success',
         onClick: dashboardNav.navigateToSalaryLedger,
       },
+      ...(approvalsQueue.data && (approvalsQueue.data.pagination?.totalRecords ?? 0) + (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0
+        ? [
+            {
+              title: 'Yêu cầu phê duyệt (trợ lý AI)',
+              detail: 'Yêu cầu từ trợ lý AI và tự động hóa đang chờ duyệt hoặc đã leo thang.',
+              value: (
+                (approvalsQueue.data.pagination?.totalRecords ?? 0) +
+                (approvalsEscalated.data?.pagination?.totalRecords ?? 0)
+              ).toLocaleString('vi-VN'),
+              statusLabel:
+                (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0 ? 'Có leo thang' : 'Cần duyệt',
+              icon: FolderCheck,
+              tone: (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0 ? 'warning' : 'primary',
+              onClick: () => navigate('/admin/approvals'),
+            } satisfies DashboardPriorityItem,
+          ]
+        : []),
     ];
-  }, [dashboardNav, data.dashboardSummary, hasPendingError, monthLabel, pendingApprovals]);
+  }, [
+    dashboardNav,
+    data.dashboardSummary,
+    hasPendingError,
+    monthLabel,
+    pendingApprovals,
+    approvalsQueue.data,
+    approvalsEscalated.data,
+    navigate,
+  ]);
 
   if (loading) {
     return (
