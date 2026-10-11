@@ -37,12 +37,14 @@ describe('PartnerApprovalRequestsCard', () => {
         status_label: 'đã lên lịch thử lại',
         retry_count: 1,
         decision_note: 'gửi mai, dữ liệu chưa đủ',
+        summary: 'Huỷ bảng công ngày 05/10',
+        requester_name: 'Nguyễn Văn B',
         requester_id: 9,
         created_at: '2026-10-11T09:00:00+07:00',
       },
     ];
     render(<PartnerApprovalRequestsCard />);
-    expect(screen.getByText(/#3 · đề xuất huỷ bảng công/)).toBeInTheDocument();
+    expect(screen.getByText('Huỷ bảng công ngày 05/10')).toBeInTheDocument();
     expect(screen.getByText('đã lên lịch thử lại')).toBeInTheDocument();
     expect(screen.getByText(/gửi mai, dữ liệu chưa đủ/)).toBeInTheDocument();
   });

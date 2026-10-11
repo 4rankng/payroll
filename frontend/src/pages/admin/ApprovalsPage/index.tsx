@@ -217,7 +217,7 @@ const ApprovalsPage = () => {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-medium text-foreground">
-                      #{item.id} · {item.type_label}
+                      {item.summary || item.type_label}
                     </span>
                     <Badge variant="outline" className={cn('h-6 px-2 text-xs', STATUS_BADGE[item.status] ?? '')}>
                       {item.status_label}
@@ -229,9 +229,14 @@ const ApprovalsPage = () => {
                     ) : null}
                   </div>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    Gửi lúc {formatDateTime(item.created_at)}
+                    Người gửi: <span className="text-foreground">{item.requester_name || '—'}</span> · {formatDateTime(item.created_at)}
                     {item.scheduled_at ? ` · thử lại lúc ${formatDateTime(item.scheduled_at)}` : ''}
                   </p>
+                  {item.approve_effect ? (
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                      Khi duyệt: <span className="text-foreground">{item.approve_effect}</span>
+                    </p>
+                  ) : null}
                   {item.decision_note ? (
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">
                       Ghi chú: <span className="text-foreground">{item.decision_note}</span>

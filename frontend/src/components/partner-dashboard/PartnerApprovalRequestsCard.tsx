@@ -49,7 +49,7 @@ export const PartnerApprovalRequestsCard = ({ compact = false }: { compact?: boo
           <li key={item.id} className="flex flex-wrap items-center justify-between gap-1.5 rounded-lg border bg-background px-3 py-2">
             <div className="min-w-0">
               <p className="truncate text-sm text-foreground">
-                #{item.id} · {item.type_label}
+                {item.summary || item.type_label}
               </p>
               <p className="text-xs text-muted-foreground">
                 {formatDateTime(item.created_at)}

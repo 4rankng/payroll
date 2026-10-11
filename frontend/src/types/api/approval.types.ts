@@ -24,6 +24,9 @@ export interface ApprovalRequest {
   retry_count: number;
   scheduled_at?: string | null;
   requester_id: number;
+  requester_name: string;
+  summary: string;
+  approve_effect: string;
   created_at: string;
 }
 

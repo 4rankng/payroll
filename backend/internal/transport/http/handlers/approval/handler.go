@@ -69,7 +69,12 @@ func (h *Handler) List(c *gin.Context) {
 		writeError(c, err)
 		return
 	}
-	response.SuccessWithPagination(c, newRequestResponses(items), "Danh sách yêu cầu phê duyệt",
+	views := h.service.ViewsFor(c.Request.Context(), items)
+	rendered := make([]requestResponse, 0, len(items))
+	for _, item := range items {
+		rendered = append(rendered, newRequestResponseWithView(item, views[item.ID]))
+	}
+	response.SuccessWithPagination(c, rendered, "Danh sách yêu cầu phê duyệt",
 		helpers.CalculatePagination(pagination.Page, pagination.PageSize, total))
 }
 
@@ -88,7 +93,7 @@ func (h *Handler) Get(c *gin.Context) {
 		writeError(c, err)
 		return
 	}
-	response.Success(c, newRequestResponse(req), "Chi tiết yêu cầu")
+	response.Success(c, newRequestResponseWithView(req, h.service.ViewFor(c.Request.Context(), req)), "Chi tiết yêu cầu")
 }
 
 // File handles POST /api/v1/approvals — identifying params only.
@@ -122,7 +127,7 @@ func (h *Handler) File(c *gin.Context) {
 		writeError(c, err)
 		return
 	}
-	response.SuccessCreated(c, newRequestResponse(req), "Đã gửi yêu cầu phê duyệt")
+	response.SuccessCreated(c, newRequestResponseWithView(req, h.service.ViewFor(c.Request.Context(), req)), "Đã gửi yêu cầu phê duyệt")
 }
 
 // Approve handles POST /api/v1/approvals/:id/approve (admin-only).
@@ -137,10 +142,10 @@ func (h *Handler) Approve(c *gin.Context) {
 	}
 	req, err := h.service.Approve(c.Request.Context(), id, actor)
 	if err != nil {
-		writeErrorReq(c, err, req)
+		writeErrorReq(c, err, req, h.service.ViewFor(c.Request.Context(), req))
 		return
 	}
-	response.Success(c, newRequestResponse(req), "Đã duyệt và thực thi yêu cầu")
+	response.Success(c, newRequestResponseWithView(req, h.service.ViewFor(c.Request.Context(), req)), "Đã duyệt và thực thi yêu cầu")
 }
 
 // Reject handles POST /api/v1/approvals/:id/reject — "Thử lại ngày mai".
@@ -157,10 +162,10 @@ func (h *Handler) Reject(c *gin.Context) {
 	_ = c.ShouldBindJSON(&body) // note optional
 	req, err := h.service.Reject(c.Request.Context(), id, actor, body.Note)
 	if err != nil {
-		writeErrorReq(c, err, req)
+		writeErrorReq(c, err, req, h.service.ViewFor(c.Request.Context(), req))
 		return
 	}
-	response.Success(c, newRequestResponse(req), "Đã từ chối — sẽ chuẩn bị lại theo lịch")
+	response.Success(c, newRequestResponseWithView(req, h.service.ViewFor(c.Request.Context(), req)), "Đã từ chối — sẽ chuẩn bị lại theo lịch")
 }
 
 // Cancel handles POST /api/v1/approvals/:id/cancel — terminal "Huỷ".
@@ -180,7 +185,7 @@ func (h *Handler) Cancel(c *gin.Context) {
 		writeError(c, err)
 		return
 	}
-	response.Success(c, newRequestResponse(req), "Đã huỷ yêu cầu")
+	response.Success(c, newRequestResponseWithView(req, h.service.ViewFor(c.Request.Context(), req)), "Đã huỷ yêu cầu")
 }
 
 func marshalParams(params map[string]any) ([]byte, error) {
@@ -227,9 +232,9 @@ func splitComma(s string) []string {
 // writeErrorReq is writeError for decision paths where the engine may return
 // a nil request together with the error (e.g. not found): render the row only
 // when it exists.
-func writeErrorReq(c *gin.Context, err error, req *domain.ApprovalRequest) {
+func writeErrorReq(c *gin.Context, err error, req *domain.ApprovalRequest, view appapproval.View) {
 	if req != nil {
-		writeError(c, err, newRequestResponse(req))
+		writeError(c, err, newRequestResponseWithView(req, view))
 		return
 	}
 	writeError(c, err)

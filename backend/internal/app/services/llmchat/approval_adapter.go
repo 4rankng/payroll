@@ -84,22 +84,19 @@ func buildFileParams(t domain.ApprovalRequestType, req ApprovalFileRequest) (jso
 
 // ListForUser narrates the caller's own requests for the status tool.
 func (a *ApprovalEngine) ListForUser(ctx context.Context, caller Caller) ([]ApprovalRequestStatus, error) {
-	items, _, err := a.svc.List(ctx,
-		approval.Actor{ID: caller.UserID, Role: caller.Role, Name: caller.FullName},
-		domain.ApprovalRequestFilters{Limit: 20},
-	)
+	digest, err := a.svc.ChatDigest(ctx, approval.Actor{ID: caller.UserID, Role: caller.Role, Name: caller.FullName})
 	if err != nil {
 		return nil, err
 	}
-	out := make([]ApprovalRequestStatus, 0, len(items))
-	for _, r := range items {
+	out := make([]ApprovalRequestStatus, 0, len(digest))
+	for _, d := range digest {
 		out = append(out, ApprovalRequestStatus{
-			ID:          r.ID,
-			Type:        string(r.Type),
-			Status:      string(r.Status),
-			RetryCount:  r.RetryCount,
-			ScheduledAt: r.ScheduledAt,
-			CreatedAt:   r.CreatedAt,
+			RequesterName: d.RequesterName,
+			TypeLabel:     d.TypeLabel,
+			Summary:       d.Summary,
+			StatusLabel:   d.StatusLabel,
+			RetryCount:    d.RetryCount,
+			ScheduledAt:   d.ScheduledAt,
 		})
 	}
 	return out, nil

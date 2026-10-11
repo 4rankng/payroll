@@ -164,9 +164,14 @@ func runApprovalRequests(ctx context.Context, tc *ToolContext, _ json.RawMessage
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("%d yêu cầu phê duyệt gần nhất:\n", len(requests)))
 	for _, req := range requests {
-		line := fmt.Sprintf("• #%d %s — %s", req.ID, req.Type, req.Status)
+		// Names and summaries only — internal IDs never reach the model, so
+		// replies cannot quote them back at users.
+		line := fmt.Sprintf("• %s — %s (người gửi: %s)", req.Summary, req.StatusLabel, req.RequesterName)
 		if req.RetryCount > 0 {
-			line += fmt.Sprintf(" (đã thử lại %d lần)", req.RetryCount)
+			line += fmt.Sprintf(", đã thử lại %d lần", req.RetryCount)
+		}
+		if req.ScheduledAt != "" {
+			line += fmt.Sprintf(", thử lại lúc %s", req.ScheduledAt)
 		}
 		b.WriteString(line + "\n")
 	}
@@ -265,7 +270,9 @@ func runFileApprovalRequest(ctx context.Context, tc *ToolContext, raw json.RawMe
 		return "", err
 	}
 	return fmt.Sprintf(
-		"Đã ghi nhận yêu cầu phê duyệt #%d (loại %s, trạng thái %s) — thao tác chỉ được thực hiện sau khi được duyệt: %s",
-		result.RequestID, requestType, result.Status, DeepLink(tc.Caller.Role, "approval"),
+		"Đã ghi nhận yêu cầu phê duyệt: %s (trạng thái: %s) — thao tác chỉ được thực hiện sau khi quản trị viên duyệt: %s",
+		domain.ApprovalTypeLabelVN(domain.ApprovalRequestType(requestType)),
+		domain.ApprovalRequestStatus(result.Status).LabelVN(),
+		DeepLink(tc.Caller.Role, "approval"),
 	), nil
 }

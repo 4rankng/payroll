@@ -13,7 +13,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"time"
 
 	"api-server/internal/infra/observability"
 )
@@ -119,12 +118,12 @@ type ApprovalFiler interface {
 // ApprovalRequestStatus is one approval request as narrated by the
 // get_approval_requests tool.
 type ApprovalRequestStatus struct {
-	ID          uint
-	Type        string
-	Status      string
-	RetryCount  int
-	ScheduledAt *time.Time
-	CreatedAt   time.Time
+	RequesterName string
+	TypeLabel     string
+	Summary       string
+	StatusLabel   string
+	RetryCount    int
+	ScheduledAt   string
 }
 
 // ApprovalReader is the read seam for "my approval requests status". Same

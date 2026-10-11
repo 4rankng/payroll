@@ -5,6 +5,8 @@ package approval
 
 import (
 	"encoding/json"
+
+	"api-server/internal/app/services/approval"
 	"time"
 
 	"api-server/internal/domain"
@@ -36,22 +38,34 @@ type requestResponse struct {
 	RetryCount   int            `json:"retry_count"`
 	ScheduledAt  *string        `json:"scheduled_at,omitempty"`
 	RequesterID  uint           `json:"requester_id"`
-	CreatedAt    string         `json:"created_at"`
+	// Human-facing projection: requestor name, what the request is, and what
+	// approving changes. The UI renders THESE, never the ids above.
+	RequesterName string `json:"requester_name"`
+	Summary       string `json:"summary"`
+	ApproveEffect string `json:"approve_effect"`
+	CreatedAt     string `json:"created_at"`
 }
 
 func newRequestResponse(r *domain.ApprovalRequest) requestResponse {
+	return newRequestResponseWithView(r, approval.View{})
+}
+
+func newRequestResponseWithView(r *domain.ApprovalRequest, view approval.View) requestResponse {
 	out := requestResponse{
-		ID:           r.ID,
-		Type:         string(r.Type),
-		TypeLabel:    domain.ApprovalTypeLabelVN(r.Type),
-		Status:       string(r.Status),
-		StatusLabel:  r.Status.LabelVN(),
-		DecisionNote: r.DecisionNote,
-		Outcome:      r.Outcome,
-		RetryCount:   r.RetryCount,
-		ScheduledAt:  nil,
-		RequesterID:  r.RequesterID,
-		CreatedAt:    r.CreatedAt.Format(time.RFC3339),
+		ID:            r.ID,
+		Type:          string(r.Type),
+		TypeLabel:     domain.ApprovalTypeLabelVN(r.Type),
+		Status:        string(r.Status),
+		StatusLabel:   r.Status.LabelVN(),
+		DecisionNote:  r.DecisionNote,
+		Outcome:       r.Outcome,
+		RetryCount:    r.RetryCount,
+		ScheduledAt:   nil,
+		RequesterID:   r.RequesterID,
+		RequesterName: view.RequesterName,
+		Summary:       view.Summary,
+		ApproveEffect: view.ApproveEffect,
+		CreatedAt:     r.CreatedAt.Format(time.RFC3339),
 	}
 	if r.ScheduledAt != nil {
 		s := r.ScheduledAt.Format(time.RFC3339)

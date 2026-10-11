@@ -92,12 +92,15 @@ export const ApprovalDecisionModal = ({
         {request ? (
           <div className="rounded-lg border bg-muted/30 px-3 py-2.5 text-sm">
             <p className="font-medium text-foreground">
-              #{request.id} · {request.type_label}
+              {request.summary || request.type_label}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Trạng thái: {request.status_label}
+              Người gửi: {request.requester_name || '—'} · Trạng thái: {request.status_label}
               {request.retry_count > 0 ? ` · đã thử lại ${request.retry_count} lần` : ''}
             </p>
+            {request.approve_effect ? (
+              <p className="mt-0.5 text-xs text-muted-foreground">Khi duyệt: {request.approve_effect}</p>
+            ) : null}
           </div>
         ) : null}
 
