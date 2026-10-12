@@ -16,6 +16,15 @@ const (
 	// CtxMCPKeyID carries the authenticated MCP API key id for requests that
 	// arrive with an X-API-Key machine credential.
 	CtxMCPKeyID = "mcp_key_id"
+
+	// Ops agent identity (pk_ops_* keys): key fields published by the
+	// ops-key auth branch. The authorization subject is the creating admin's
+	// own role — there is no separate Casbin role for this channel.
+	CtxOpsKeyID    = "ops_key_id"
+	CtxOpsKeyAgent = "ops_key_agent"
+	// CtxOpsKeyScope carries the ops key's EFFECTIVE scope at request time
+	// (a lapsed write window reads as read_only).
+	CtxOpsKeyScope = "ops_key_scope"
 )
 
 // System User ID - used for automated/system operations

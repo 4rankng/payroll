@@ -10,6 +10,8 @@ import (
 	auditservice "api-server/internal/app/services/audit"
 	authservice "api-server/internal/app/services/auth"
 	"api-server/internal/app/services/mcpapikey"
+	"api-server/internal/app/services/opsapikey"
+	"api-server/internal/config"
 	"api-server/internal/constants"
 	"api-server/internal/transport/http/response"
 
@@ -19,14 +21,20 @@ import (
 type AuthMiddleware struct {
 	authService *authservice.AuthService
 	mcpKeys     *mcpapikey.Service
+	opsKeys     *opsapikey.Service
+	opsCfg      config.OpsMCPConfig
+	opsLimiter  *opsRateLimiter
 }
 
-// NewAuthMiddleware constructs the middleware. mcpKeys may be nil in tests —
-// the machine-key branch then fails closed with 401.
-func NewAuthMiddleware(authService *authservice.AuthService, mcpKeys *mcpapikey.Service) *AuthMiddleware {
+// NewAuthMiddleware constructs the middleware. mcpKeys and opsKeys may be
+// nil in tests — each machine-key branch then fails closed with 401.
+func NewAuthMiddleware(authService *authservice.AuthService, mcpKeys *mcpapikey.Service, opsKeys *opsapikey.Service, opsCfg config.OpsMCPConfig) *AuthMiddleware {
 	return &AuthMiddleware{
 		authService: authService,
 		mcpKeys:     mcpKeys,
+		opsKeys:     opsKeys,
+		opsCfg:      opsCfg,
+		opsLimiter:  newOpsRateLimiter(opsCfg.RatePerMin),
 	}
 }
 
@@ -35,9 +43,15 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 		// Machine credential first: an MCP API key (minted in the admin
 		// settings) authenticates as its creating admin. The credential types
 		// are mutually exclusive per request — X-API-Key present means the
-		// caller is a machine agent, not a browser session.
-		if c.GetHeader("X-API-Key") != "" {
-			m.authenticateMCPKey(c)
+		// caller is a machine agent, not a browser session. The pk_ops_*
+		// namespace routes to the ops channel (agent_ops role); every other
+		// key is a chat-integration credential.
+		if raw := c.GetHeader("X-API-Key"); raw != "" {
+			if strings.HasPrefix(raw, opsapikey.KeyPrefix) {
+				m.authenticateOpsKey(c)
+			} else {
+				m.authenticateMCPKey(c)
+			}
 			return
 		}
 
@@ -104,11 +118,14 @@ func (m *AuthMiddleware) authenticateMCPKey(c *gin.Context) {
 	}
 
 	// Path deny-list: authentication and credential management must never be
-	// reachable with a machine key, however broad its scope.
+	// reachable with a machine key, however broad its scope. This includes
+	// the ops key management surface — an integration key has no business
+	// touching the ops channel (wrong-scope isolation).
 	path := c.Request.URL.Path
 	if strings.HasPrefix(path, "/api/v1/auth") ||
 		strings.HasPrefix(path, "/api/v1/admin/api-keys") ||
-		strings.HasPrefix(path, "/api/v1/admin/mcp-api-keys") {
+		strings.HasPrefix(path, "/api/v1/admin/mcp-api-keys") ||
+		strings.HasPrefix(path, "/api/v1/admin/ops-api-keys") {
 		response.Forbidden(c, constants.MsgMCPKeyPathDeniedVN)
 		c.Abort()
 		return

@@ -1,7 +1,7 @@
 ---
 title: "payroll-ops-mcp — Admin-Scope MCP Server for AI Agent Management"
 description: "A second, separate MCP server (payroll-ops-mcp) exposing the full payroll Admin API to trusted AI agents (Hermes, omp/Paseo agents) via an Admin API Key with an admin-controlled read_only/read_write scope toggle. Strictly isolated from the TingTing OA chatbot MCP (payroll-integration-mcp) — different key namespace, different API scopes, different blast radius."
-status: pending
+status: in-progress
 priority: P1
 effort: "3 phases — backend scope model (~3 days), MCP server + tools (~3 days), hardening/tests (~2 days)"
 tags: [feature, backend, mcp, security, agents]
@@ -9,6 +9,31 @@ created: 2026-10-12
 ---
 
 # payroll-ops-mcp — Admin-Scope MCP Server for AI Agent Management
+
+> ## SCOPE CHANGE — 2026-10-12 (user override, binding)
+>
+> The design below was changed mid-implementation by explicit user decision:
+>
+> - **The ops key is ADMIN-EQUIVALENT.** It executes as its creating admin (the app's
+>   own RBAC applies exactly as for an admin user). There is NO `agent_ops` Casbin role
+>   and NO "file-request-only" mutation ceiling — `read_write` may call ANY API verb
+>   (GET/POST/PUT/PATCH/DELETE). The breadth limiter is the scope toggle alone:
+>   `read_only` (default) → GET/HEAD only; `read_write` → full mutation.
+> - **Generic proxy tooling** replaces the curated 6-tool list: one tool
+>   `payroll_api_request(method, path, body, query)` forwarding to the /api/v1 admin
+>   surface, plus a thin `payroll_get(path, query)` helper. Scope is enforced BOTH in
+>   the MCP server (read_only rejects non-GET before forwarding) AND in the backend
+>   key middleware (defense in depth).
+> - **PII default-masking is DROPPED** (admin parity — the agent sees what an admin
+>   sees).
+>
+> Unchanged: `pk_ops_*` namespace + strict isolation from the chatbot `mcp/` server,
+> read_only/read_write toggle with audit + OTP-gated toggle endpoint, 8h default
+> write window with per-request (stale-proof) evaluation, per-call audit rows
+> (key id + agent + scope-at-time + method/path + payload hash), per-key ops rate
+> tier, kill switch `PAYROLL_OPS_MCP_DISABLED`, secrets-file key (mode 600), negative
+> tests (wrong-scope 403; read_only POST blocked at MCP layer AND backend;
+> read_write POST succeeds; kill switch; stale scope).
 
 ## Overview
 

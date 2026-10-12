@@ -234,3 +234,10 @@ p, accountant, /api/v1/approvals, *, deny
 p, accountant, /api/v1/approvals/*, *, deny
 p, employee, /api/v1/approvals, *, deny
 p, employee, /api/v1/approvals/*, *, deny
+
+# NOTE — pk_ops_* machine keys (payroll-ops-mcp): there is deliberately NO
+# separate Casbin role. An ops key executes as its creating admin (role
+# resolved at request time, deactivated creator disables the key), so the
+# admin policy above applies verbatim. The read_only/read_write breadth gate
+# lives in the auth middleware (verb gate) — scope is access, never an RBAC
+# bypass; business rules and the approval engine apply unchanged.

@@ -26,6 +26,7 @@ import (
 	"api-server/internal/app/services/loan"
 	"api-server/internal/app/services/mcpapikey"
 	"api-server/internal/app/services/notification"
+	"api-server/internal/app/services/opsapikey"
 	"api-server/internal/app/services/otp"
 	"api-server/internal/app/services/passwordreset"
 	"api-server/internal/app/services/payroll"
@@ -66,12 +67,13 @@ import (
 type Services struct {
 	User                              *user.UserService
 	PasswordResetJobManager           *user.PasswordResetJobManager
-	EmailPasswordReset                *passwordreset.Service          // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
-	ZaloPasswordReset                 *zaloreset.Service              // Employee mobile-channel OTP reset (Phase 2)
-	ZaloConnect                       *zaloconnect.Service            // Admin-managed OA connection + runtime toggle (Phase 4)
-	APIKey                            *apikey.Service                 // Machine API keys for the vendor integration API
-	MCPAPIKey                         *mcpapikey.Service              // Machine API keys for the MCP agent surface
-	FlexPayZNS                        *zaloconnect.FlexPayZNSService  // ZNS notifications for FlexPay salary notifications
+	EmailPasswordReset                *passwordreset.Service         // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
+	ZaloPasswordReset                 *zaloreset.Service             // Employee mobile-channel OTP reset (Phase 2)
+	ZaloConnect                       *zaloconnect.Service           // Admin-managed OA connection + runtime toggle (Phase 4)
+	APIKey                            *apikey.Service                // Machine API keys for the vendor integration API
+	MCPAPIKey                         *mcpapikey.Service             // Machine API keys for the MCP agent surface
+	OpsAPIKey                         *opsapikey.Service             // Machine API keys for the payroll-ops-mcp channel (pk_ops_*)
+	FlexPayZNS                        *zaloconnect.FlexPayZNSService // ZNS notifications for FlexPay salary notifications
 	FlexPaySalaryDelivery             *zaloconnect.SalaryNotificationDeliveryService
 	Auth                              *auth.AuthService
 	Authorization                     *auth.AuthorizationService
@@ -537,20 +539,20 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 
 	// Create employee service config (11 params → 1)
 	employeeConfig := &employee.Config{
-		EmployeeRepo:          repos.Employee,
-		TimesheetRepo:         repos.Timesheet,
-		AttendanceRepo:        repos.Attendance,
-		BankRepo:              repos.Bank,
-		ProjectEmployeeRepo:   repos.ProjectEmployee,
-		EmployeeUserRepo:      repos.EmployeeUser,
-		UserRepo:              repos.User,
-		EmployeeDomainService: domainServices.NewEmployeeDomainService(repos.Employee, repos.ProjectEmployee, repos.Timesheet),
-		UserService:           userService,
-		TransactionManager:    transactionManager,
-		Events:                eventBus,
-		Cache:                 cacheService,
-		Logger:                logger,
-		BankAccountValidator:  employee.NewBankAccountValidator(disbursementRegistry, repos.Bank, cacheService, logger),
+		EmployeeRepo:             repos.Employee,
+		TimesheetRepo:            repos.Timesheet,
+		AttendanceRepo:           repos.Attendance,
+		BankRepo:                 repos.Bank,
+		ProjectEmployeeRepo:      repos.ProjectEmployee,
+		EmployeeUserRepo:         repos.EmployeeUser,
+		UserRepo:                 repos.User,
+		EmployeeDomainService:    domainServices.NewEmployeeDomainService(repos.Employee, repos.ProjectEmployee, repos.Timesheet),
+		UserService:              userService,
+		TransactionManager:       transactionManager,
+		Events:                   eventBus,
+		Cache:                    cacheService,
+		Logger:                   logger,
+		BankAccountValidator:     employee.NewBankAccountValidator(disbursementRegistry, repos.Bank, cacheService, logger),
 		IsEmployeeMobileRequired: settingsConfigService.IsEmployeeMobileRequired,
 	}
 
@@ -703,9 +705,12 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		cfg.Zalo.TemplateID, cfg.Zalo.CodeTTL, zaloConnectSvc, eventBus, clk, logger,
 	)
 
-	// Machine API keys for the vendor integration API and the MCP agent surface.
+	// Machine API keys for the vendor integration API, the MCP agent surface,
+	// and the payroll-ops-mcp agent channel (pk_ops_*). The ops service also
+	// owns per-call auditing onto the audit:log:write pipeline.
 	apiKeyService := apikey.NewService(repos.APIKey, clk)
 	mcpAPIKeyService := mcpapikey.NewService(repos.MCPAPIKey, repos.User, clk)
+	opsAPIKeyService := opsapikey.NewService(repos.OpsAPIKey, repos.User, asynqClient, clk)
 
 	// FlexPay ZNS service for employee salary notifications
 	flexPayZNSService := zaloconnect.NewFlexPayZNSService(
@@ -743,6 +748,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		ZaloConnect:                       zaloConnectSvc,
 		APIKey:                            apiKeyService,
 		MCPAPIKey:                         mcpAPIKeyService,
+		OpsAPIKey:                         opsAPIKeyService,
 		FlexPayZNS:                        flexPayZNSService,
 		FlexPaySalaryDelivery:             flexPaySalaryDelivery,
 		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, cfg.Google.ClientID, nonceStore, captchaService, logger),

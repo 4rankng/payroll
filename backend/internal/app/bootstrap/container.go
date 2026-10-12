@@ -16,6 +16,7 @@ import (
 	"api-server/internal/app/services/ledger"
 	"api-server/internal/app/services/mcpapikey"
 	"api-server/internal/app/services/notification"
+	"api-server/internal/app/services/opsapikey"
 	"api-server/internal/app/services/project"
 	"api-server/internal/app/services/scheduler"
 	"api-server/internal/app/services/wallet_bulk"
@@ -77,6 +78,7 @@ type Handlers struct {
 	AdminZalo            *adminHandlers.ZaloHandler
 	APIKey               *adminHandlers.APIKeyHandler
 	MCPAPIKey            *adminHandlers.MCPAPIKeyHandler
+	OpsAPIKey            *adminHandlers.OpsAPIKeyHandler
 	VendorTimesheet      *integrationHandlers.VendorTimesheetHandler
 	AdminAttendance      *adminHandlers.AttendanceHandler
 	Bank                 *handlers.BankHandler
@@ -204,7 +206,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 	}
 
 	h := initHandlers(services, repos, infra.DB, infra.Redis, infra.Logger, version, eventBus, cfg, asynqClient, clk, walletBulkSvc)
-	middlewares := initMiddleware(services.Auth, services.Authorization, services.ProjectPermission, services.EmployeePermission, services.APIKey, services.MCPAPIKey, repos.APIMetric, cfg, infra.Logger)
+	middlewares := initMiddleware(services.Auth, services.Authorization, services.ProjectPermission, services.EmployeePermission, services.APIKey, services.MCPAPIKey, services.OpsAPIKey, repos.APIMetric, cfg, infra.Logger)
 	loanRepaymentReminderService := notification.NewLoanRepaymentReminderService(
 		repos.LoanRepaymentSchedule,
 		repos.User,
@@ -507,6 +509,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		AdminZalo:            adminHandlers.NewZaloHandler(services.ZaloConnect),
 		APIKey:               adminHandlers.NewAPIKeyHandler(services.APIKey),
 		MCPAPIKey:            adminHandlers.NewMCPAPIKeyHandler(services.MCPAPIKey),
+		OpsAPIKey:            adminHandlers.NewOpsAPIKeyHandler(services.OpsAPIKey),
 		VendorTimesheet:      integrationHandlers.NewVendorTimesheetHandler(services.Timesheet, repos.Project, repos.Employee, repos.ProjectEmployee),
 		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
 		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, clk),
@@ -517,7 +520,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 	}
 }
 
-func initMiddleware(authService *auth.AuthService, authorizationService *auth.AuthorizationService, projectPermissionService *project.ProjectPermissionService, employeePermissionService *employee.EmployeePermissionService, apiKeyService *apikey.Service, mcpKeyService *mcpapikey.Service, apiMetricRepo domain.APIMetricRepository, cfg *config.Config, logger *slog.Logger) *Middleware {
+func initMiddleware(authService *auth.AuthService, authorizationService *auth.AuthorizationService, projectPermissionService *project.ProjectPermissionService, employeePermissionService *employee.EmployeePermissionService, apiKeyService *apikey.Service, mcpKeyService *mcpapikey.Service, opsKeyService *opsapikey.Service, apiMetricRepo domain.APIMetricRepository, cfg *config.Config, logger *slog.Logger) *Middleware {
 	tenantLimit := 10
 	if cfg.TenantConcurrencyLimit > 0 {
 		tenantLimit = cfg.TenantConcurrencyLimit
@@ -531,7 +534,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 	}
 
 	return &Middleware{
-		Auth:                      middleware.NewAuthMiddleware(authService, mcpKeyService),
+		Auth:                      middleware.NewAuthMiddleware(authService, mcpKeyService, opsKeyService, cfg.OpsMCP),
 		Authorization:             authorizationMiddleware,
 		LoginRateLimit:            middleware.CreateLoginRateLimit(cfg.Redis.Addr),
 		PasswordResetRateLimit:    middleware.CreatePasswordResetRateLimit(cfg.Redis.Addr, cfg.PasswordReset.RateLimitPerHour),
@@ -542,7 +545,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 		AdBannerClickRateLimit:    middleware.CreateAdBannerClickRateLimit(cfg.Redis.Addr),
 		IntegrationRateLimit:      middleware.CreateIntegrationAPIRateLimit(cfg.Redis.Addr),
 		APIKeyAuth:                middleware.NewAPIKeyAuthMiddleware(apiKeyService, logger),
-		MCPKeyAuth:                middleware.NewMCPKeyAuthMiddleware(mcpKeyService),
+		MCPKeyAuth:                middleware.NewMCPKeyAuthMiddleware(mcpKeyService, opsKeyService),
 		TenantSemaphore:           middleware.NewTenantSemaphoreMiddleware(tenantLimit),
 		APIMetrics:                middleware.APIMetrics(apiMetricRepo),
 	}

@@ -134,6 +134,7 @@ func ForbiddenWithCode(c *gin.Context, message, code string) {
 		Status:     "error",
 		Message:    message,
 		HTTPStatus: http.StatusForbidden,
+		Code:       code,
 	}
 
 	c.JSON(http.StatusForbidden, response)
@@ -199,6 +200,18 @@ func TooManyRequests(c *gin.Context, message string, retryAfter int) {
 		"message":     message,
 		"http_status": http.StatusTooManyRequests,
 		"retry_after": retryAfter,
+	})
+}
+
+// ServiceUnavailableWithCode writes a structured 503 (code + message) for
+// fail-closed channels such as a tripped kill switch. The code makes the
+// state machine-consumable for agent callers.
+func ServiceUnavailableWithCode(c *gin.Context, message, code string) {
+	c.JSON(http.StatusServiceUnavailable, ErrorResponse{
+		Status:     "error",
+		Message:    message,
+		HTTPStatus: http.StatusServiceUnavailable,
+		Code:       code,
 	})
 }
 

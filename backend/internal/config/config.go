@@ -32,6 +32,7 @@ type Config struct {
 	PasswordReset PasswordResetConfig
 	Zalo          ZaloConfig
 	CashForecast  CashForecastConfig
+	OpsMCP        OpsMCPConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
 	// Request timeout applied to each incoming HTTP request (e.g. "10s")
@@ -102,6 +103,16 @@ type ZaloConfig struct {
 	SecretKey  string
 	TemplateID string // default "619684" (OTP-ZNS-v2)
 	CodeTTL    time.Duration
+}
+
+// OpsMCPConfig backs the payroll-ops-mcp agent channel (pk_ops_* keys).
+// Disabled is the kill switch: when set, every ops-key call — in-flight at
+// the next request cycle and every new one — fails closed with a structured
+// 503. RatePerMin is the ops-tier per-key budget, deliberately separate from
+// every other rate-limit pool.
+type OpsMCPConfig struct {
+	Disabled   bool // PAYROLL_OPS_MCP_DISABLED (default false)
+	RatePerMin int  // PAYROLL_OPS_MCP_RATE_PER_MIN (default 120)
 }
 
 // GoogleConfig holds Google OIDC settings. GoogleClientID is the OAuth client
@@ -448,6 +459,10 @@ func Load() (*Config, error) {
 			SecretKey:  getEnv("ZALO_SECRET_KEY", ""),
 			TemplateID: getEnv("ZALO_RESET_TEMPLATE_ID", "619684"),
 			CodeTTL:    parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
+		},
+		OpsMCP: OpsMCPConfig{
+			Disabled:   parseBool(getEnv("PAYROLL_OPS_MCP_DISABLED", "false")),
+			RatePerMin: parseInt(getEnv("PAYROLL_OPS_MCP_RATE_PER_MIN", "120")),
 		},
 		Captcha: CaptchaConfig{
 			Enabled:    parseBool(getEnv("CAPTCHA_ENABLE", "false")),

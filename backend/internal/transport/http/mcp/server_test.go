@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"api-server/internal/app/services/mcpapikey"
+	"api-server/internal/config"
 	"api-server/internal/domain"
 	"api-server/internal/transport/http/middleware"
 
@@ -70,7 +71,7 @@ func newTestEngine() (*gin.Engine, *mcpapikey.Service) {
 	keys := mcpapikey.NewService(repo, users, nil)
 
 	engine := gin.New()
-	auth := middleware.NewAuthMiddleware(nil, keys)
+	auth := middleware.NewAuthMiddleware(nil, keys, nil, config.OpsMCPConfig{})
 	v1 := engine.Group("/api/v1")
 	// Stub REST surface behind the real auth chain (mirrors the protected
 	// group in production).
@@ -85,7 +86,7 @@ func newTestEngine() (*gin.Engine, *mcpapikey.Service) {
 	// The MCP endpoint itself carries only the handshake gate — exactly like
 	// production, where it is not mounted on the protected group.
 	g := v1.Group("/mcp")
-	g.Use(middleware.NewMCPKeyAuthMiddleware(keys).Authenticate())
+	g.Use(middleware.NewMCPKeyAuthMiddleware(keys, nil).Authenticate())
 	g.Any("", gin.WrapH(NewHandler(engine, keys, nil)))
 	return engine, keys
 }

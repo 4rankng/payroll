@@ -17,8 +17,9 @@ const maxResponseBytes = 1 << 20 // 1 MiB
 
 // denyPrefixes are the /api/v1 surfaces a machine key may never reach through
 // MCP: authentication, credential management, inbound webhooks, the MCP
-// endpoint itself (recursion), and the vendor key surface (a different key
-// type — it would 401 anyway; deny with a clear message instead).
+// endpoint itself (recursion), the vendor key surface and the ops agent
+// channel (different key types — they would 401/403 anyway; deny with a
+// clear message instead).
 var denyPrefixes = []string{
 	"/api/v1/auth",
 	"/api/v1/admin/api-keys",
@@ -26,6 +27,7 @@ var denyPrefixes = []string{
 	"/api/v1/webhooks",
 	"/api/v1/mcp",
 	"/api/v1/vendor",
+	"/api/v1/ops",
 }
 
 // denyPathMessage is returned to the agent for a guarded path.
