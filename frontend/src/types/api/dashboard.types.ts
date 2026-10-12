@@ -236,11 +236,19 @@ export interface SalaryDistributionResponse {
 }
 
 // Employee Activity Stats
+export interface ProjectActiveCount {
+  project_id: number;
+  project_name: string;
+  count: number;
+}
+
 export interface EmployeeActivityStats {
   active_weekly: number;
   active_monthly: number;
   active_flexible: number;
   active_total: number;
+  /** Per-project active logins. Optional: absent on stale cached responses. */
+  active_by_project?: ProjectActiveCount[];
 }
 
 // Active employee user in activity list

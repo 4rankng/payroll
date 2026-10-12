@@ -72,4 +72,34 @@ describe('DashboardOverview density', () => {
       'sm:min-h-9',
     );
   });
+
+  it('renders per-project active logins and hides the group when empty', () => {
+    const { rerender } = render(
+      <DashboardActivityPanel
+        monthLabel="10/2026"
+        totalActive={158}
+        items={[{ label: 'Lương tuần', value: 73, onClick: vi.fn() }]}
+        projectItems={[
+          { label: 'Nha may VERICO', value: 120 },
+          { label: 'San xuat xa phong', value: 38 },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText('Theo dự án')).toBeInTheDocument();
+    expect(screen.getByText('Nha may VERICO')).toBeInTheDocument();
+    expect(screen.getByText('120')).toBeInTheDocument();
+    expect(screen.getByText('38')).toBeInTheDocument();
+
+    rerender(
+      <DashboardActivityPanel
+        monthLabel="10/2026"
+        totalActive={158}
+        items={[{ label: 'Lương tuần', value: 73, onClick: vi.fn() }]}
+        projectItems={[]}
+      />,
+    );
+
+    expect(screen.queryByText('Theo dự án')).not.toBeInTheDocument();
+  });
 });

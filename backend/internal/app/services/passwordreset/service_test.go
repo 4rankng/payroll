@@ -135,6 +135,9 @@ func (r *fakeUserRepo) CountByRole(context.Context, domain.UserRole) (int64, err
 func (r *fakeUserRepo) CountRecentLogins(context.Context, time.Time) (int64, error) {
 	panic("not impl")
 }
+func (r *fakeUserRepo) CountActiveEmployeesByProject(context.Context, time.Time, time.Time) ([]*domain.ProjectActiveCount, error) {
+	panic("not impl")
+}
 func (r *fakeUserRepo) CountActiveEmployeesBySchedule(context.Context, time.Time, time.Time) (int, int, int, error) {
 	panic("not impl")
 }

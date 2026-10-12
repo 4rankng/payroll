@@ -173,6 +173,17 @@ type EmployeeActivityStatsResponse struct {
 	ActiveMonthly  int `json:"active_monthly"`
 	ActiveFlexible int `json:"active_flexible"`
 	ActiveTotal    int `json:"active_total"`
+	// ActiveByProject groups the same active logins by current project
+	// assignment. Counts are distinct per project; an employee active in
+	// several projects appears in each project's count.
+	ActiveByProject []*ProjectActiveCountResponse `json:"active_by_project"`
+}
+
+// ProjectActiveCountResponse represents active logins for one project
+type ProjectActiveCountResponse struct {
+	ProjectID   uint   `json:"project_id"`
+	ProjectName string `json:"project_name"`
+	Count       int    `json:"count"`
 }
 
 // ActiveEmployeeUserResponse represents a user in the activity list

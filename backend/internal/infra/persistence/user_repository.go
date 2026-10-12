@@ -353,6 +353,45 @@ func (r *UserRepository) CountActiveEmployeesBySchedule(ctx context.Context, sin
 	return weekly, monthly, flexible, nil
 }
 
+// CountActiveEmployeesByProject groups the same active-login population as
+// CountActiveEmployeesBySchedule by the employee's active project assignment.
+// DISTINCT counts are per project: an employee active in several projects is
+// counted in each, so sums may exceed the schedule totals.
+func (r *UserRepository) CountActiveEmployeesByProject(ctx context.Context, since, until time.Time) ([]*domain.ProjectActiveCount, error) {
+	type projectCount struct {
+		ProjectID   uint
+		ProjectName string
+		Count       int
+	}
+
+	var results []projectCount
+	now := clock.Now()
+
+	if err := r.DB.WithContext(ctx).
+		Model(&domain.User{}).
+		Select("p.id as project_id, p.name as project_name, COUNT(DISTINCT e.id) as count").
+		Joins("JOIN employees e ON e.user_id = users.id AND e.deleted_at IS NULL").
+		Joins("JOIN project_employees pe ON pe.employee_id = e.id AND pe.deleted_at IS NULL AND pe.start_date <= ? AND (pe.last_date IS NULL OR pe.last_date >= ?)", now, now).
+		Joins("JOIN projects p ON p.id = pe.project_id AND p.deleted_at IS NULL").
+		Where("users.role = ?", "employee").
+		Where("users.last_login >= ? AND users.last_login < ?", since, until).
+		Group("p.id, p.name").
+		Order("count DESC").
+		Scan(&results).Error; err != nil {
+		return nil, domain.NewInternalError("failed to count active employees by project", err)
+	}
+
+	counts := make([]*domain.ProjectActiveCount, len(results))
+	for i, res := range results {
+		counts[i] = &domain.ProjectActiveCount{
+			ProjectID:   res.ProjectID,
+			ProjectName: res.ProjectName,
+			Count:       res.Count,
+		}
+	}
+	return counts, nil
+}
+
 func (r *UserRepository) GetActiveEmployeesBySchedule(ctx context.Context, since, until time.Time, schedule string) ([]*domain.ActiveEmployeeUser, error) {
 	type row struct {
 		UserID     uint       `gorm:"column:user_id"`

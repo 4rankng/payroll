@@ -126,6 +126,15 @@ const AdminDashboard = () => {
     [activityStats],
   );
 
+  const activityProjectItems = useMemo(
+    () =>
+      (activityData?.active_by_project ?? []).map((project) => ({
+        label: project.project_name,
+        value: project.count,
+      })),
+    [activityData],
+  );
+
   const metricItems = useMemo<DashboardMetricItem[]>(() => {
     if (!data.dashboardSummary) {
       return [];
@@ -270,6 +279,7 @@ const AdminDashboard = () => {
             <DashboardActivityPanel
               monthLabel={monthLabel}
               totalActive={activityData?.active_total}
+              projectItems={activityProjectItems}
               items={activityItems}
               isLoading={isActivityLoading && !activityData}
               hasError={hasActivityError}

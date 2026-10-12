@@ -51,6 +51,21 @@ func (mr *MockUserRepositoryMockRecorder) Count(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Count", reflect.TypeOf((*MockUserRepository)(nil).Count), arg0)
 }
 
+// CountActiveEmployeesByProject mocks base method.
+func (m *MockUserRepository) CountActiveEmployeesByProject(arg0 context.Context, arg1, arg2 time.Time) ([]*domain.ProjectActiveCount, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountActiveEmployeesByProject", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]*domain.ProjectActiveCount)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountActiveEmployeesByProject indicates an expected call of CountActiveEmployeesByProject.
+func (mr *MockUserRepositoryMockRecorder) CountActiveEmployeesByProject(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountActiveEmployeesByProject", reflect.TypeOf((*MockUserRepository)(nil).CountActiveEmployeesByProject), arg0, arg1, arg2)
+}
+
 // CountActiveEmployeesBySchedule mocks base method.
 func (m *MockUserRepository) CountActiveEmployeesBySchedule(arg0 context.Context, arg1, arg2 time.Time) (int, int, int, error) {
 	m.ctrl.T.Helper()

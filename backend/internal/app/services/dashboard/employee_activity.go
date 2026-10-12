@@ -33,18 +33,35 @@ func (s *Service) GetEmployeeActivityStats(ctx context.Context, month string) (*
 		return nil, err
 	}
 
+	byProject, err := s.UserRepo.CountActiveEmployeesByProject(ctx, since, until)
+	if err != nil {
+		s.logger.Error("Failed to count active employees by project", "error", err)
+		return nil, err
+	}
+
+	projectCounts := make([]*dto.ProjectActiveCountResponse, len(byProject))
+	for i, p := range byProject {
+		projectCounts[i] = &dto.ProjectActiveCountResponse{
+			ProjectID:   p.ProjectID,
+			ProjectName: p.ProjectName,
+			Count:       p.Count,
+		}
+	}
+
 	response := &dto.EmployeeActivityStatsResponse{
-		ActiveWeekly:   weekly,
-		ActiveMonthly:  monthly,
-		ActiveFlexible: flexible,
-		ActiveTotal:    weekly + monthly + flexible,
+		ActiveWeekly:    weekly,
+		ActiveMonthly:   monthly,
+		ActiveFlexible:  flexible,
+		ActiveTotal:     weekly + monthly + flexible,
+		ActiveByProject: projectCounts,
 	}
 
 	s.logger.Info("Employee activity stats retrieved",
 		"active_weekly", weekly,
 		"active_monthly", monthly,
 		"active_flexible", flexible,
-		"active_total", response.ActiveTotal)
+		"active_total", response.ActiveTotal,
+		"active_by_project", len(projectCounts))
 
 	return response, nil
 }

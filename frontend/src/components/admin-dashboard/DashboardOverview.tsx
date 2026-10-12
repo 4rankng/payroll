@@ -48,6 +48,8 @@ interface DashboardActivityPanelProps {
   monthLabel: string;
   totalActive?: number;
   items: DashboardActivityItem[];
+  /** Per-project active logins for the same month; hidden when empty. */
+  projectItems?: DashboardActivityItem[];
   isLoading?: boolean;
   hasError?: boolean;
 }
@@ -251,6 +253,7 @@ export function DashboardActivityPanel({
   monthLabel,
   totalActive,
   items,
+  projectItems = [],
   isLoading = false,
   hasError = false,
 }: DashboardActivityPanelProps) {
@@ -313,6 +316,29 @@ export function DashboardActivityPanel({
             </span>
           </button>
         ))}
+        {projectItems.length > 0 && (
+          <div className="border-t border-border/60">
+            <p className="px-3 pb-1 pt-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:px-4">
+              Theo dự án
+            </p>
+            {projectItems.map((item) => (
+              <div
+                key={item.label}
+                className="flex min-h-11 items-center justify-between gap-3 px-3 py-2.5 sm:min-h-9 sm:px-4 sm:py-2"
+              >
+                <span className="flex items-center gap-2 text-sm text-foreground">
+                  <Activity className="h-4 w-4 text-primary" aria-hidden="true" />
+                  {item.label}
+                </span>
+                <span className="font-display text-base font-semibold text-foreground tabular-nums">
+                  {typeof item.value === 'number'
+                    ? item.value.toLocaleString('vi-VN')
+                    : item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

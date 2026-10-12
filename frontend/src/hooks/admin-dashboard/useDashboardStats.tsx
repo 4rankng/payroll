@@ -31,7 +31,13 @@ interface UseDashboardStatsParams {
   dashboardSummary: DashboardSummary | null;
   totalPendingApprovals: number;
   dashboardNav: DashboardNavigation;
-  activityStats?: { active_weekly: number; active_monthly: number; active_flexible: number; active_total: number } | null;
+  activityStats?: {
+    active_weekly: number;
+    active_monthly: number;
+    active_flexible: number;
+    active_total: number;
+    active_by_project?: { project_id: number; project_name: string; count: number }[];
+  } | null;
   onActivityClick?: (schedule: 'weekly' | 'monthly' | 'flexible') => void;
 }
 
@@ -40,6 +46,7 @@ interface UseDashboardStatsReturn {
   salaryStats: StatItem[];
   profitStats: StatItem[];
   activityStats: StatItem[];
+  activityProjectStats: StatItem[];
 }
 
 export const useDashboardStats = ({
@@ -156,10 +163,19 @@ export const useDashboardStats = ({
     ] as StatItem[];
   }, [activityStats, onActivityClick]);
 
+  // Active logins per project (same month/window as the schedule rows).
+  const activityProjectStatItems = useMemo(() => {
+    return (activityStats?.active_by_project ?? []).map((project) => ({
+      label: project.project_name,
+      value: project.count,
+    })) as StatItem[];
+  }, [activityStats]);
+
   return {
     employeeStats,
     salaryStats,
     profitStats,
     activityStats: activityStatItems,
+    activityProjectStats: activityProjectStatItems,
   };
 };

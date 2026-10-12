@@ -179,7 +179,7 @@ const AdminDashboardMobile = () => {
     isPendingFetching ||
     isActivityFetching;
 
-  const { employeeStats, salaryStats, profitStats, activityStats } = useDashboardStats({
+  const { employeeStats, salaryStats, profitStats, activityStats, activityProjectStats } = useDashboardStats({
     dashboardSummary: data.dashboardSummary,
     totalPendingApprovals: pendingApprovals ?? 0,
     dashboardNav,
@@ -443,7 +443,12 @@ const AdminDashboardMobile = () => {
                 Không thể tải hoạt động nhân sự. Hãy làm mới để thử lại.
               </p>
             ) : activityData && activityStats.length > 0 ? (
-              <GroupedStatCard title={`Hoạt động (${monthLabel})`} icon={Activity} stats={activityStats} />
+              <>
+                <GroupedStatCard title={`Hoạt động (${monthLabel})`} icon={Activity} stats={activityStats} />
+                {activityProjectStats.length > 0 && (
+                  <GroupedStatCard title="Hoạt động theo dự án" icon={Activity} stats={activityProjectStats} />
+                )}
+              </>
             ) : null}
           </div>
 

@@ -61,6 +61,16 @@ type ActiveEmployeeUser struct {
 	LastLogin  *time.Time `json:"last_login"`
 }
 
+// ProjectActiveCount counts distinct employees who logged in within a window,
+// grouped by their active project assignment. Counts are distinct per project:
+// an employee active in several projects is counted once in each, so the
+// project counts do not sum to the schedule totals.
+type ProjectActiveCount struct {
+	ProjectID   uint   `json:"project_id"`
+	ProjectName string `json:"project_name"`
+	Count       int    `json:"count"`
+}
+
 // UserRepository defines the interface for user persistence operations
 type UserRepository interface {
 	Create(ctx context.Context, user *User) error
@@ -99,6 +109,7 @@ type UserRepository interface {
 	CountByRole(ctx context.Context, role UserRole) (int64, error)
 	CountRecentLogins(ctx context.Context, since time.Time) (int64, error)
 	CountActiveEmployeesBySchedule(ctx context.Context, since, until time.Time) (weekly, monthly, flexible int, err error)
+	CountActiveEmployeesByProject(ctx context.Context, since, until time.Time) ([]*ProjectActiveCount, error)
 	GetActiveEmployeesBySchedule(ctx context.Context, since, until time.Time, schedule string) ([]*ActiveEmployeeUser, error)
 	FindUsersWithNullLastLogin(ctx context.Context, limit, offset int) ([]*User, error)
 	CountUsersWithNullLastLogin(ctx context.Context) (int64, error)
