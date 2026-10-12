@@ -571,6 +571,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		Cache:                 cacheService,
 		Logger:                logger,
 		BankAccountValidator:  employee.NewBankAccountValidator(disbursementRegistry, repos.Bank, cacheService, logger),
+		IsEmployeeMobileRequired: settingsConfigService.IsEmployeeMobileRequired,
 	}
 
 	walletService := services.NewWalletService(repos.WalletTopup, repos.WalletPayment, disbursementRegistry)

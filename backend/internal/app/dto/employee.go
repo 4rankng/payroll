@@ -140,6 +140,30 @@ type DuplicateIdentitiesResponse struct {
 	Data  []DuplicateIdentityGroupResponse `json:"data"`
 }
 
+// DuplicateMobileMemberResponse is one visible holder in a duplicate-mobile
+// group on the partner dashboard nudge.
+type DuplicateMobileMemberResponse struct {
+	ID       uint   `json:"id"`
+	Fullname string `json:"fullname"`
+}
+
+// DuplicateMobileGroupResponse is one phone number carried by more than one
+// employee. HiddenCount is the number of holders outside the caller's scope —
+// surfaced as a count, never as names.
+type DuplicateMobileGroupResponse struct {
+	Mobile      string                          `json:"mobile"`
+	Employees   []DuplicateMobileMemberResponse `json:"employees"`
+	HiddenCount int                             `json:"hidden_count"`
+}
+
+// DuplicateMobilesResponse is the nudge payload: every collision group the
+// caller can act on, plus how many employees are affected in total (visible
+// members only).
+type DuplicateMobilesResponse struct {
+	Groups         []DuplicateMobileGroupResponse `json:"groups"`
+	TotalEmployees int                            `json:"total_employees"`
+}
+
 // EmployeesSummaryResponse represents the response for employees summary
 type EmployeesSummaryResponse struct {
 	TotalEmployees          int64 `json:"total_employees"`

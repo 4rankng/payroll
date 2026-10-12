@@ -105,6 +105,24 @@ export const useEmployeesWithMissingBankDetails = (
   });
 };
 
+// Get active employees with an empty mobile
+export const useEmployeesWithMissingMobile = (
+  filters?: EmployeeFilters,
+) => {
+  return useQuery({
+    queryKey: QueryKeys.employees.missingMobile(filters),
+    queryFn: () => employeeService.getEmployeesWithMissingMobile(filters),
+  });
+};
+
+// Get duplicate mobile groups (one phone number carried by more than one employee)
+export const useEmployeesWithDuplicateMobiles = () => {
+  return useQuery({
+    queryKey: QueryKeys.employees.duplicateMobiles(),
+    queryFn: () => employeeService.getDuplicateMobiles(),
+  });
+};
+
 // Search employees with debounced search term (500ms delay)
 export const useEmployeeSearch = (
   searchTerm: string,

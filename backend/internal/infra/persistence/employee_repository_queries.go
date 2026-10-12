@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/infra/persistence/query_builders"
 )
 
 func (r *EmployeeRepository) List(ctx context.Context, filters domain.EmployeeFilters) ([]*domain.Employee, error) {
@@ -122,35 +123,7 @@ func (r *EmployeeRepository) GetEmployeesWithMissingBankDetails(ctx context.Cont
 	}
 
 	// Convert to EmployeeWithProjects format
-	projectsByEmployee := r.projectQueryBuilder.GroupAssignmentsByEmployee(assignments)
-
-	var empWithProjects []*domain.EmployeeWithProjects
-	for _, emp := range employees {
-		empWithAllProjects := &domain.EmployeeWithProjects{
-			Employee:        *emp,
-			CurrentProjects: []domain.CurrentProject{},
-		}
-
-		// Add all projects for this employee
-		if projects, exists := projectsByEmployee[emp.ID]; exists {
-			for _, assignment := range projects {
-				project := domain.CurrentProject{
-					ProjectID:  assignment.ProjectID,
-					Name:       assignment.ProjectName,
-					Code:       assignment.ProjectCode,
-					ClientName: assignment.ProjectClientName,
-					Position:   assignment.Position,
-					StartDate:  assignment.StartDate,
-					LastDate:   assignment.LastDate,
-				}
-				empWithAllProjects.CurrentProjects = append(empWithAllProjects.CurrentProjects, project)
-			}
-		}
-
-		empWithProjects = append(empWithProjects, empWithAllProjects)
-	}
-
-	return empWithProjects, nil
+	return r.mapEmployeesWithProjects(employees, assignments), nil
 }
 
 // GetDuplicateIdentities lists phone numbers and CCCDs carried by more than one
@@ -233,6 +206,70 @@ func (r *EmployeeRepository) GetDuplicateIdentities(ctx context.Context) ([]*dom
 func (r *EmployeeRepository) CountEmployeesWithMissingBankDetails(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
 	var count int64
 	err := r.projectQueryBuilder.BuildMissingBankDetailsCountQuery(filters).Count(&count).Error
+	return count, err
+}
+
+// mapEmployeesWithProjects attaches each employee's project assignments in the
+// EmployeeWithProjects shape shared by the list and data-quality queries.
+func (r *EmployeeRepository) mapEmployeesWithProjects(employees []*domain.Employee, assignments []query_builders.ProjectAssignment) []*domain.EmployeeWithProjects {
+	projectsByEmployee := r.projectQueryBuilder.GroupAssignmentsByEmployee(assignments)
+
+	empWithProjects := make([]*domain.EmployeeWithProjects, 0, len(employees))
+	for _, emp := range employees {
+		empWithAllProjects := &domain.EmployeeWithProjects{
+			Employee:        *emp,
+			CurrentProjects: []domain.CurrentProject{},
+		}
+
+		// Add all projects for this employee
+		for _, assignment := range projectsByEmployee[emp.ID] {
+			empWithAllProjects.CurrentProjects = append(empWithAllProjects.CurrentProjects, domain.CurrentProject{
+				ProjectID:  assignment.ProjectID,
+				Name:       assignment.ProjectName,
+				Code:       assignment.ProjectCode,
+				ClientName: assignment.ProjectClientName,
+				Position:   assignment.Position,
+				StartDate:  assignment.StartDate,
+				LastDate:   assignment.LastDate,
+			})
+		}
+
+		empWithProjects = append(empWithProjects, empWithAllProjects)
+	}
+
+	return empWithProjects
+}
+
+// GetEmployeesWithMissingMobile returns active employees with no mobile number
+// on file, with their project assignments — the data behind the partner
+// dashboard "thiếu số điện thoại" nudge. Scoping rides on filters.AccessibleBy.
+func (r *EmployeeRepository) GetEmployeesWithMissingMobile(ctx context.Context, filters domain.EmployeeFilters) ([]*domain.EmployeeWithProjects, error) {
+	var employees []*domain.Employee
+	if err := r.projectQueryBuilder.BuildMissingMobileQuery(filters).Find(&employees).Error; err != nil {
+		return nil, err
+	}
+
+	if len(employees) == 0 {
+		return []*domain.EmployeeWithProjects{}, nil
+	}
+
+	employeeIDs := make([]uint, len(employees))
+	for i, emp := range employees {
+		employeeIDs[i] = emp.ID
+	}
+
+	assignments, err := r.projectQueryBuilder.FetchProjectAssignments(ctx, employeeIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.mapEmployeesWithProjects(employees, assignments), nil
+}
+
+// CountEmployeesWithMissingMobile counts employees with no mobile number on file.
+func (r *EmployeeRepository) CountEmployeesWithMissingMobile(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
+	var count int64
+	err := r.projectQueryBuilder.BuildMissingMobileCountQuery(filters).Count(&count).Error
 	return count, err
 }
 

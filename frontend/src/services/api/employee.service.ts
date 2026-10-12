@@ -25,7 +25,8 @@ import type {
   EmployeeUser,
   EmployeeUsersResponse,
   GrantEmployeeAccessData,
-  DuplicateCheckResponse
+  DuplicateCheckResponse,
+  DuplicateMobilesData
 } from '@/types/api/employee.types';
 
 class EmployeeService {
@@ -110,6 +111,55 @@ class EmployeeService {
       },
       message: response.message || '',
     };
+  }
+
+  /**
+   * Get active employees with an empty mobile (same envelope and item shape
+   * as getEmployeesWithMissingBankDetails). Already partner-scoped server-side.
+   */
+  async getEmployeesWithMissingMobile(filters?: EmployeeFilters): Promise<EmployeesResponse> {
+    // Convert month to date range if provided and no explicit fromDate/toDate
+    let apiFilters = filters;
+    if (filters?.month && !filters.fromDate && !filters.toDate) {
+      const { fromDate, toDate } = this.convertMonthToDateRange(filters.month);
+      apiFilters = {
+        ...filters,
+        fromDate,
+        toDate,
+        month: undefined
+      };
+    }
+
+    const queryString = apiFilters ? buildQueryString(apiFilters as Record<string, unknown>) : '';
+    const response = await apiClient.get<Employee[]>(
+      `${API_ENDPOINTS.employees.missingMobile}${queryString}`
+    );
+
+    return {
+      status: 'success' as const,
+      data: (response.data as Employee[]) || [],
+      pagination: response.pagination || {
+        page: 1,
+        pageSize: 100,
+        totalPages: 1,
+        totalRecords: 0
+      },
+      message: response.message || '',
+    };
+  }
+
+  /**
+   * Get duplicate mobile groups: one group per phone number carried by more
+   * than one employee, with out-of-scope members counted in `hidden_count`.
+   */
+  async getDuplicateMobiles(): Promise<DuplicateMobilesData> {
+    const response = await apiClient.get<DuplicateMobilesData>(
+      API_ENDPOINTS.employees.duplicateMobiles
+    );
+    if (!response.data) {
+      throw new Error('API response missing expected data');
+    }
+    return response.data;
   }
 
   /**

@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
+import { useEmployeeModals } from '@/hooks/useModalNavigation';
+import { MissingMobileSection } from '@/components/employees/MissingMobileSection';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
 import { PartnerWorkforceOverviewCard } from '@/components/partner-dashboard/PartnerWorkforceOverviewCard';
 import { PartnerApprovalRequestsCard } from '@/components/partner-dashboard/PartnerApprovalRequestsCard';
@@ -23,6 +25,7 @@ import type {
   PartnerEmployeeListType,
   PartnerDashboardMoMChange,
 } from '@/types/api/dashboard.types';
+import type { Employee } from '@/types/api/employee.types';
 import { monthOptions, formatVND } from './utils';
 
 const ALL_VALUE = 'all';
@@ -247,6 +250,15 @@ const PartnerDashboardPage = () => {
   const openSheet = useCallback((type: PartnerEmployeeListType) => setSheetType(type), []);
   const closeSheet = useCallback(() => setSheetType(null), []);
 
+  // Employee rows in the mobile-warning section open the employee details
+  // sheet through the URL-driven modal system — same wiring as the partner
+  // EmployeesPage's handleEmployeeClick.
+  const { openEmployeeDetails } = useEmployeeModals();
+  const handleEmployeeClick = useCallback(
+    (employee: Employee) => openEmployeeDetails(employee.id.toString()),
+    [openEmployeeDetails],
+  );
+
   const apiMonth = selectedMonth === ALL_VALUE ? undefined : selectedMonth;
   const { data, isLoading } = usePartnerDashboard({ month: apiMonth });
 
@@ -311,6 +323,9 @@ const PartnerDashboardPage = () => {
         )}
 
         <PartnerApprovalRequestsCard />
+
+        {/* Mobile warnings render nothing when clean (no dead card). */}
+        <MissingMobileSection onEmployeeClick={handleEmployeeClick} />
 
         {/* ── Analytics grid: workforce donut + leaderboard ── */}
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(280px,0.8fr)_minmax(0,2.2fr)]">

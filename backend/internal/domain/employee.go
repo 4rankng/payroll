@@ -208,6 +208,11 @@ type EmployeeRepository interface {
 	ListAccessibleIDs(ctx context.Context, userID uint) ([]uint, error)
 	GetEmployeesWithMissingBankDetails(ctx context.Context, filters EmployeeFilters) ([]*EmployeeWithProjects, error)
 	CountEmployeesWithMissingBankDetails(ctx context.Context, filters EmployeeFilters) (int64, error)
+	// GetEmployeesWithMissingMobile returns employees with no mobile number on
+	// file — the partner-facing data-quality nudge list. filters.AccessibleBy
+	// scopes the result to the caller's set (owned, shared, or project-linked).
+	GetEmployeesWithMissingMobile(ctx context.Context, filters EmployeeFilters) ([]*EmployeeWithProjects, error)
+	CountEmployeesWithMissingMobile(ctx context.Context, filters EmployeeFilters) (int64, error)
 	// UpdateColumns performs a targeted update of specific columns for an employee.
 	// Used by import flows to update bank info or user_id without a full Save.
 	UpdateColumns(ctx context.Context, id uint, columns map[string]any) error

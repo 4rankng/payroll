@@ -125,7 +125,7 @@ func classifyMobileBackfill(
 	ownersByMobile map[string][]*domain.Employee,
 ) ([]mobileBackfillUpdate, *dto.MobileBackfillResult) {
 	result := &dto.MobileBackfillResult{TotalRows: len(rows), Errors: []dto.RowError{}}
-	filled := map[string]string{} // cccd -> mobile already applied by this file
+	filled := map[string]string{}   // cccd -> mobile already applied by this file
 	assigned := map[string]string{} // mobile -> cccd this file already gave it to
 	seen := map[uint]bool{}
 	var updates []mobileBackfillUpdate

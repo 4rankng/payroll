@@ -118,6 +118,12 @@ function invalidateTerminalImportQueries(
   queryClient.invalidateQueries({
     queryKey: QueryKeys.employees.missingBankDetails(),
   });
+  queryClient.invalidateQueries({
+    queryKey: QueryKeys.employees.missingMobile(),
+  });
+  queryClient.invalidateQueries({
+    queryKey: QueryKeys.employees.duplicateMobiles(),
+  });
 
   if (result.status === 'completed') {
     queryClient.invalidateQueries({ queryKey: QueryKeys.timesheets.all });

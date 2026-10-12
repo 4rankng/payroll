@@ -377,6 +377,55 @@ func (h *Handler) GetEmployeesMissingBankDetails(c *gin.Context) {
 	response.SuccessWithPagination(c, employeeResponses, message, pagination)
 }
 
+// GetEmployeesMissingMobile retrieves employees with no mobile number on file
+// @Summary Get employees with missing mobile numbers
+// @Description Get employees who have no phone number on file — the data-quality nudge list (phone login, Zalo OTP password reset and self check-in all key off the number)
+// @Tags employees
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number, starts from 1" default(1)
+// @Param pageSize query int false "Items per page (max: 100)" default(100)
+// @Param sortBy query string false "Field to sort by" default(created_at)
+// @Param sortOrder query string false "Sort direction asc or desc" default(desc)
+// @Param search query string false "Search by name, email, or CCCD"
+// @Success 200 {object} dto.ListEmployeesResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Security ApiKeyAuth
+// @Router /employees/missing-mobile [get]
+func (h *Handler) GetEmployeesMissingMobile(c *gin.Context) {
+	filters, page, pageSize, ok := h.parseEmployeeFilters(c)
+	if !ok {
+		return
+	}
+
+	employees, err := h.employeeService.GetEmployeesWithMissingMobile(c.Request.Context(), filters)
+	if err != nil {
+		response.InternalServerError(c, constants.MsgFailedToListEmployeesVN)
+		return
+	}
+
+	total, err := h.employeeService.CountEmployeesWithMissingMobile(c.Request.Context(), filters)
+	if err != nil {
+		response.InternalServerError(c, constants.MsgFailedToCountEmployeesVN)
+		return
+	}
+
+	employeeResponses := buildEmployeeListResponse(employees, nil, false)
+	pagination := helpers.CalculatePagination(page, pageSize, total)
+
+	if len(employeeResponses) == 0 {
+		response.SuccessEmptyWithPagination(c, "No records found", pagination)
+		return
+	}
+
+	message := "Employees with missing mobile numbers retrieved successfully"
+	if page > 1 {
+		message = "Page " + strconv.Itoa(page) + " of employees with missing mobile numbers retrieved successfully"
+	}
+	response.SuccessWithPagination(c, employeeResponses, message, pagination)
+}
+
 // GetUnassignedEmployees retrieves employees not assigned to any project at a given date
 // @Summary Get unassigned employees
 // @Description Get employees not assigned to any project at a specific date

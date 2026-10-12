@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { SettingsGeneralPanel } from '@/components/settings/SettingsGeneralPanel';
+import { SettingsEmployeePanel } from '@/components/settings/SettingsEmployeePanel';
 import {
   SETTINGS_TABS,
   SettingsTabList,
@@ -116,6 +117,10 @@ const SettingsPage = () => {
 
         <TabsContent value={SETTINGS_TABS.general} className="mt-0">
           <SettingsGeneralPanel form={form} />
+        </TabsContent>
+
+        <TabsContent value={SETTINGS_TABS.employees} className="mt-0">
+          <SettingsEmployeePanel />
         </TabsContent>
 
         <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-8">

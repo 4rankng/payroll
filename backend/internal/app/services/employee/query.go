@@ -28,6 +28,19 @@ func (s *EmployeeService) GetEmployeesWithMissingBankDetails(ctx context.Context
 	return s.EmployeeRepo.GetEmployeesWithMissingBankDetails(ctx, filters)
 }
 
+// GetEmployeesWithMissingMobile returns active employees with no mobile number
+// on file — the partner-facing data-quality nudge list. The filters carry the
+// caller's accessibility scope (parseEmployeeFilters sets AccessibleBy for
+// partners), so a partner never sees another partner's roster.
+func (s *EmployeeService) GetEmployeesWithMissingMobile(ctx context.Context, filters domain.EmployeeFilters) ([]*domain.EmployeeWithProjects, error) {
+	return s.EmployeeRepo.GetEmployeesWithMissingMobile(ctx, filters)
+}
+
+// CountEmployeesWithMissingMobile counts the GetEmployeesWithMissingMobile set.
+func (s *EmployeeService) CountEmployeesWithMissingMobile(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
+	return s.EmployeeRepo.CountEmployeesWithMissingMobile(ctx, filters)
+}
+
 // CountEmployeesWithMissingBankDetails returns count of employees with missing banking information
 func (s *EmployeeService) CountEmployeesWithMissingBankDetails(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
 	return s.EmployeeRepo.CountEmployeesWithMissingBankDetails(ctx, filters)
@@ -47,6 +60,78 @@ func (s *EmployeeService) ListEmployeesPaidWithoutMobile(ctx context.Context, fr
 // Read-only: it reports, it never merges.
 func (s *EmployeeService) GetDuplicateIdentities(ctx context.Context) ([]*domain.DuplicateIdentityGroup, error) {
 	return s.EmployeeRepo.GetDuplicateIdentities(ctx)
+}
+
+// DuplicateMobileMember is one visible holder of a duplicated mobile number.
+type DuplicateMobileMember struct {
+	ID       uint
+	Fullname string
+}
+
+// DuplicateMobileGroupView is one phone number carried by more than one active
+// employee, with only the members the caller may see. HiddenCount is the number
+// of holders outside the caller's scope — the collision still breaks phone
+// login for every holder, so the group is reported even when some names must
+// stay hidden. This is the "which number must change" list behind the partner
+// dashboard nudge; it reports, it never picks a winner.
+type DuplicateMobileGroupView struct {
+	Mobile      string
+	Employees   []DuplicateMobileMember
+	HiddenCount int
+}
+
+// GetDuplicateMobileGroups lists mobile collision groups. scopeIDs restricts
+// the visible members (nil = unscoped, for admins and internal callers); a
+// group with no visible member is dropped because the caller cannot act on it.
+func (s *EmployeeService) GetDuplicateMobileGroups(ctx context.Context, scopeIDs []uint) ([]*DuplicateMobileGroupView, error) {
+	groups, err := s.EmployeeRepo.GetDuplicateIdentities(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	values := make([]string, 0, len(groups))
+	for _, g := range groups {
+		if g.Field == "mobile" {
+			values = append(values, g.Value)
+		}
+	}
+	if len(values) == 0 {
+		return []*DuplicateMobileGroupView{}, nil
+	}
+
+	holders, err := s.EmployeeRepo.ListByMobiles(ctx, values)
+	if err != nil {
+		return nil, err
+	}
+	byMobile := make(map[string][]*domain.Employee, len(values))
+	for _, holder := range holders {
+		byMobile[holder.Mobile] = append(byMobile[holder.Mobile], holder)
+	}
+
+	var scope map[uint]bool
+	if scopeIDs != nil {
+		scope = make(map[uint]bool, len(scopeIDs))
+		for _, id := range scopeIDs {
+			scope[id] = true
+		}
+	}
+
+	views := make([]*DuplicateMobileGroupView, 0, len(values))
+	for _, value := range values {
+		view := &DuplicateMobileGroupView{Mobile: value, Employees: []DuplicateMobileMember{}}
+		for _, holder := range byMobile[value] {
+			if scope == nil || scope[holder.ID] {
+				view.Employees = append(view.Employees, DuplicateMobileMember{ID: holder.ID, Fullname: holder.Fullname})
+			} else {
+				view.HiddenCount++
+			}
+		}
+		if len(view.Employees) == 0 {
+			continue
+		}
+		views = append(views, view)
+	}
+	return views, nil
 }
 
 // ChangeEmployeePassword changes the password for an employee's user account

@@ -83,6 +83,8 @@ export const InvalidationGroups = {
     QueryKeys.employees.lists(),
     QueryKeys.employees.search(),
     QueryKeys.employees.missingBankDetails(),
+    QueryKeys.employees.missingMobile(),
+    QueryKeys.employees.duplicateMobiles(),
   ],
 
   // Timesheet lists

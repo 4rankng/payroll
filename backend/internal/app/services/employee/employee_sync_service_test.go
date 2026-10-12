@@ -382,6 +382,16 @@ func (m *MockEmployeeRepository) GetEmployeesWithMissingBankDetails(ctx context.
 	return args.Get(0).([]*domain.EmployeeWithProjects), args.Error(1)
 }
 
+func (m *MockEmployeeRepository) GetEmployeesWithMissingMobile(ctx context.Context, filters domain.EmployeeFilters) ([]*domain.EmployeeWithProjects, error) {
+	args := m.Called(ctx, filters)
+	return args.Get(0).([]*domain.EmployeeWithProjects), args.Error(1)
+}
+
+func (m *MockEmployeeRepository) CountEmployeesWithMissingMobile(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
+	args := m.Called(ctx, filters)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 func (m *MockEmployeeRepository) CountEmployeesWithMissingBankDetails(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
 	args := m.Called(ctx, filters)
 	return args.Get(0).(int64), args.Error(1)

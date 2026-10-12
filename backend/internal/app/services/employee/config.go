@@ -1,6 +1,7 @@
 package employee
 
 import (
+	"context"
 	"log/slog"
 
 	"api-server/internal/app/services/user"
@@ -34,4 +35,10 @@ type Config struct {
 	// create/update. Nil in environments without a configured provider
 	// (e.g. some tests) — validation is then silently skipped.
 	BankAccountValidator *BankAccountValidator
+
+	// IsEmployeeMobileRequired reports the admin policy toggle that makes the
+	// phone number mandatory on employee creation. Nil (tests, partial wiring)
+	// means the policy is off. Wired at bootstrap to
+	// config.SettingsConfigService.IsEmployeeMobileRequired.
+	IsEmployeeMobileRequired func(ctx context.Context) bool
 }

@@ -30,6 +30,13 @@ const (
 	SettingKeyTransferBankName          = "transfer_bank_name"
 	SettingKeyTransferBankVisible       = "transfer_bank_visible"
 
+	// Employee data-quality policy: when on, every employee CREATE path
+	// (manual form, Excel import, BCC/FlexPay import) must carry a mobile
+	// number. The row is absent until an admin first flips the settings
+	// toggle, so the default is OFF — rollout is an admin decision, not a
+	// deploy artifact. (Duplicate mobiles are rejected regardless.)
+	SettingKeyEmployeeMobileRequired = "employee.mobile_required"
+
 	// FlexPay (OnePay early-salary) reconciliation statements print their own
 	// beneficiary account, configured separately from the weekly payroll
 	// statement account above.
@@ -633,13 +640,13 @@ func (s *SettingsConfigService) getTransferBankInfo(
 		Holder: s.getTransferBankString(ctx, holderKey, fallback.Holder),
 		Number: s.getTransferBankString(ctx, numberKey, fallback.Number),
 		Name:   s.getTransferBankString(ctx, nameKey, fallback.Name),
-		Hidden: !s.getTransferBankBool(ctx, visibleKey, !fallback.Hidden),
+		Hidden: !s.getBoolSetting(ctx, visibleKey, !fallback.Hidden),
 	}
 }
 
-// getTransferBankBool reads one boolean setting with caching, falling back to
+// getBoolSetting reads one boolean setting with caching, falling back to
 // defaultValue when the row is missing or holds an unrecognized value.
-func (s *SettingsConfigService) getTransferBankBool(ctx context.Context, key string, defaultValue bool) bool {
+func (s *SettingsConfigService) getBoolSetting(ctx context.Context, key string, defaultValue bool) bool {
 	if s.settingsService == nil {
 		return defaultValue
 	}
@@ -675,6 +682,15 @@ func (s *SettingsConfigService) getTransferBankBool(ctx context.Context, key str
 	s.setCache(key, value)
 
 	return value
+}
+
+// IsEmployeeMobileRequired reports whether new employees must carry a mobile
+// number on every create path (manual form, Excel import, BCC/FlexPay import).
+// The settings row is absent until an admin first flips the toggle, so the
+// policy is OFF by default. Committed toggles invalidate the shared cache, so
+// this is hot — no redeploy needed.
+func (s *SettingsConfigService) IsEmployeeMobileRequired(ctx context.Context) bool {
+	return s.getBoolSetting(ctx, SettingKeyEmployeeMobileRequired, false)
 }
 
 // GetAdvancePaymentPercentage retrieves the advance payment percentage setting (with caching)

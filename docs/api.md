@@ -47,7 +47,9 @@ Full CRUD. Additional: `POST /:id/reset-password`, `GET /summary`, `GET /:id/act
 
 ### Employees (`/api/v1/employees`)
 
-CRUD, import/export, payroll per employee, summary, `GET /missing-bank-details` (bank_account_status='invalid' rows are listed unconditionally while the employee is assigned to an active project; missing-info rows additionally require pending timesheet/advance), `POST /init-users`, `GET /unassigned`, payment schedule management.
+CRUD, import/export, payroll per employee, summary, `GET /missing-bank-details` (bank_account_status='invalid' rows are listed unconditionally while the employee is assigned to an active project; missing-info rows additionally require pending timesheet/advance), `GET /missing-mobile` (employees with no phone on file — the partner "thiếu SĐT" nudge list, scoped to the caller's accessible set), `GET /duplicate-mobiles` (phone numbers carried by more than one employee with the members the caller may see — out-of-scope holders count as `hidden_count`), `POST /init-users`, `GET /unassigned`, payment schedule management.
+
+Mobile rules on create/update: duplicate mobiles are always rejected (one number identifies one employee — `identity.Resolver` fails closed otherwise); when the admin setting `employee.mobile_required` is on, every create path (manual form, Excel import, BCC/FlexPay import) must carry a mobile number.
 
 ### Projects (`/api/v1/projects`)
 
@@ -186,7 +188,7 @@ CRUD, `POST /:id/disburse`, `POST /:id/repay`.
 
 ### Settings (`/api/v1/settings`)
 
-CRUD. Partner role has read-only access.
+CRUD. Partner role has read-only access. Notable keys: `employee.mobile_required` (boolean, missing row = off) — when on, every employee create path requires a phone number.
 
 ### Notifications (`/api/v1/notifications`)
 

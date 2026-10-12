@@ -45,9 +45,9 @@ func TestParseMobileBackfillExcel(t *testing.T) {
 	rows := [][]interface{}{
 		{1, "Nguyễn Văn A", "031098001111", "02/10/2026", "Dự án 1", "0987 654 321"},
 		{2, "Trần Thị B", "031098002222", "02/10/2026", "Dự án 2", "0908-765-432"},
-		{3, "Lê Văn C", "031098003333", "02/10/2026", "Dự án 3", ""},          // blank mobile: dropped
-		{4, "", "", "", "", ""},                                               // fully blank row
-		{5, "Phạm D", "", "02/10/2026", "Dự án 4", "0912345678"},              // missing CCCD: row error
+		{3, "Lê Văn C", "031098003333", "02/10/2026", "Dự án 3", ""}, // blank mobile: dropped
+		{4, "", "", "", "", ""}, // fully blank row
+		{5, "Phạm D", "", "02/10/2026", "Dự án 4", "0912345678"},                 // missing CCCD: row error
 		{6, "Hoàng E", "031098004444", "02/10/2026", "Dự án 5", " 099.887.766 "}, // separators stripped
 	}
 
@@ -104,7 +104,7 @@ func emp(id uint, cccd, mobile string) *domain.Employee {
 
 func TestClassifyMobileBackfill(t *testing.T) {
 	byCCCD := map[string][]*domain.Employee{
-		"031098001111": {emp(1, "031098001111", "")},          // empty → fill
+		"031098001111": {emp(1, "031098001111", "")},           // empty → fill
 		"031098002222": {emp(2, "031098002222", "0911111222")}, // has one → skip
 		"031098008888": {emp(8, "031098008888", "")},           // candidate for an owned number
 		"031098006666": {emp(6, "031098006666", "")},           // candidate for an invalid number
@@ -115,11 +115,11 @@ func TestClassifyMobileBackfill(t *testing.T) {
 	}
 
 	rows := []MobileBackfillRow{
-		{RowNumber: 2, CCCD: "031098001111", Mobile: "0987654321"}, // fill
-		{RowNumber: 3, CCCD: "031098002222", Mobile: "0988777666"}, // skip existing
-		{RowNumber: 4, CCCD: "031098003333", Mobile: "0987654322"}, // not found
-		{RowNumber: 5, CCCD: "031098008888", Mobile: "0933333333"}, // owned by other → error
-		{RowNumber: 6, CCCD: "031098006666", Mobile: "09ab"},        // invalid → error
+		{RowNumber: 2, CCCD: "031098001111", Mobile: "0987654321"},   // fill
+		{RowNumber: 3, CCCD: "031098002222", Mobile: "0988777666"},   // skip existing
+		{RowNumber: 4, CCCD: "031098003333", Mobile: "0987654322"},   // not found
+		{RowNumber: 5, CCCD: "031098008888", Mobile: "0933333333"},   // owned by other → error
+		{RowNumber: 6, CCCD: "031098006666", Mobile: "09ab"},         // invalid → error
 		{RowNumber: 7, CCCD: "031098007777", Mobile: "031098001111"}, // 12-digit CCCD → error
 	}
 

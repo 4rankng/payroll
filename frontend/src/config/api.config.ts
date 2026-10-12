@@ -37,6 +37,8 @@ export const API_ENDPOINTS = {
     base: '/employees',
     summary: '/employees/summary',
     missingBankDetails: '/employees/missing-bank-details',
+    missingMobile: '/employees/missing-mobile',
+    duplicateMobiles: '/employees/duplicate-mobiles',
     search: '/employees/search',
     export: '/employees/export',
     exportPaidWithoutMobile: '/employees/export-paid-without-mobile',

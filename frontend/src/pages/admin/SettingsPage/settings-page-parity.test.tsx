@@ -97,6 +97,22 @@ vi.mock('@/components/settings/MimoConnectionSection', () => ({
 vi.mock('@/components/settings/AdBannerSection', () => ({
   AdBannerSection: () => <div>Chiến dịch quảng cáo</div>,
 }));
+// SettingsEmployeePanel renders for real in the parity tests below; its data
+// hooks are stubbed so the tab wiring and toggle row are what's under test.
+vi.mock('@/hooks/api/useSettings', () => ({
+  useSettings: () => ({ data: [], isLoading: false, isError: false, refetch: vi.fn() }),
+  useSetting: () => ({ data: undefined, isLoading: false, isError: false, refetch: vi.fn() }),
+  useSettingByKey: () => ({ data: undefined, isLoading: false, isError: false, refetch: vi.fn() }),
+  useMultipleSettings: () => ({
+    data: [undefined],
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  }),
+  useUpdateSetting: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
+  useCreateSetting: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
+  useTestMimoConnection: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
 
 describe.each([
   ['desktop', SettingsPage],
@@ -190,6 +206,20 @@ describe.each([
     expect(screen.queryByLabelText('Giới hạn tổng tiền mỗi file Chuyển lô')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Thử lại' }));
     expect(mocks.retryLoading).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the employee mobile policy settings available', () => {
+    render(
+      <MemoryRouter initialEntries={['/admin/settings?tab=employees']}>
+        <PageComponent />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('tab', { name: /Nhân viên/ })).toHaveAttribute('data-state', 'active');
+    // The same panel renders in both views; a missing settings row is OFF.
+    expect(
+      screen.getByRole('switch', { name: 'Bắt buộc số điện thoại khi thêm nhân viên mới' }),
+    ).not.toBeChecked();
   });
 
   it('keeps the Zalo ZNS workflow available', () => {

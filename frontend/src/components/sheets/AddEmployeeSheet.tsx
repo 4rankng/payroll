@@ -10,6 +10,7 @@ import { X, User, CreditCard, UserPlus, Plus, Loader2, AlertTriangle, Search, Ha
 import { toast } from '@/components/ui/sonner';
 import { CreateEmployeeData, DuplicateCheckMatch } from '@/types/api/employee.types';
 import { useCreateEmployee, useDuplicateCheck, useRequestEmployeeAccess } from '@/hooks/api/useEmployees';
+import { useSettingByKey } from '@/hooks/api/useSettings';
 import { useDebounce } from '@/hooks/useDebounce';
 import { SlideSheetTemplate } from './templates/SlideSheetTemplate';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
@@ -149,6 +150,9 @@ function AddEmployeeSheetComponent({
   const userRole = authManager.getUserRole();
   const isAdmin = userRole === 'admin';
   const requestAccess = useRequestEmployeeAccess();
+  // Missing row = OFF: only a stored 'true' makes mobile mandatory on create.
+  const { data: mobileRequiredSetting } = useSettingByKey('employee.mobile_required');
+  const mobileRequired = mobileRequiredSetting?.value === 'true';
 
   const [formData, setFormData] = useState<CreateEmployeeData>({
     fullname: '',
@@ -167,8 +171,8 @@ function AddEmployeeSheetComponent({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // --- Duplicate detection (global, pre-create) ---
-  // Debounced check on the three stable identifiers; CCCD match is a hard
-  // block (backend 409s anyway), mobile/email matches are soft warnings.
+  // Debounced check on the three stable identifiers; CCCD and mobile matches
+  // are hard blocks (backend 409s anyway), email matches stay soft warnings.
   const debouncedCCCD = useDebounce(formData.cccd?.trim() || '', 500);
   const debouncedMobile = useDebounce(formData.mobile?.replace(/\s/g, '') || '', 500);
   const debouncedEmail = useDebounce(formData.email?.trim() || '', 500);
@@ -192,8 +196,13 @@ function AddEmployeeSheetComponent({
     () => duplicates.some((m) => m.matched_on.includes('cccd')),
     [duplicates],
   );
+  const mobileBlockedMatches = useMemo(
+    () => duplicates.filter((m) => m.matched_on.includes('mobile')),
+    [duplicates],
+  );
+  const mobileBlocked = mobileBlockedMatches.length > 0;
   const softWarnings = useMemo(
-    () => duplicates.filter((m) => !m.matched_on.includes('cccd')),
+    () => duplicates.filter((m) => !m.matched_on.includes('cccd') && !m.matched_on.includes('mobile')),
     [duplicates],
   );
 
@@ -246,7 +255,9 @@ function AddEmployeeSheetComponent({
       newErrors.email = 'Email không hợp lệ';
     }
 
-    if (formData.mobile && !/^\d+$/.test(formData.mobile.replace(/\s/g, ''))) {
+    if (mobileRequired && !formData.mobile?.trim()) {
+      newErrors.mobile = 'Số điện thoại là bắt buộc';
+    } else if (formData.mobile && !/^\d+$/.test(formData.mobile.replace(/\s/g, ''))) {
       newErrors.mobile = 'Số điện thoại chỉ được chứa số';
     } else if (formData.mobile) {
       const cccdGuard = validateMobileNotCCCD(formData.mobile);
@@ -292,8 +303,8 @@ function AddEmployeeSheetComponent({
     if (formData.address?.trim()) {
       requestData.address = formData.address.trim();
     }
-    if (formData.mobile?.trim()) {
-      requestData.mobile = formData.mobile.trim();
+    if (formData.mobile?.trim() || mobileRequired) {
+      requestData.mobile = formData.mobile?.trim() ?? '';
     }
     if (selectedBank) {
       requestData.bank_id = selectedBank.id;
@@ -355,7 +366,7 @@ function AddEmployeeSheetComponent({
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={createEmployee.isPending || cccdBlocked}
+            disabled={createEmployee.isPending || cccdBlocked || mobileBlocked}
             className="min-h-11 px-5 gap-1.5"
           >
             {createEmployee.isPending ? (
@@ -415,7 +426,7 @@ function AddEmployeeSheetComponent({
               {errors.cccd && <p role="alert" className="typography-body-small text-financial-negative">{errors.cccd}</p>}
             </Field>
 
-            <Field id="mobile" label="Số điện thoại">
+            <Field id="mobile" label="Số điện thoại" required={mobileRequired}>
               <Input
                 id="mobile"
                 placeholder="0901234567"
@@ -466,7 +477,34 @@ function AddEmployeeSheetComponent({
           </Alert>
         )}
 
-        {!cccdBlocked && softWarnings.length > 0 && (
+        {mobileBlocked && (
+          <Alert variant="destructive" className="space-y-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="typography-body-medium font-semibold">
+                  Số điện thoại này đã thuộc về nhân viên khác
+                </p>
+                <AlertDescription>
+                  Không thể tạo mới khi trùng số điện thoại. Vui lòng thay đổi số điện thoại.
+                </AlertDescription>
+              </div>
+            </div>
+            <div className="space-y-2 pl-6">
+              {mobileBlockedMatches.map((match) => (
+                <DuplicateMatchCard
+                  key={match.id}
+                  match={match}
+                  onClaim={handleClaim}
+                  isClaiming={requestAccess.isPending}
+                  showClaim={!isAdmin}
+                />
+              ))}
+            </div>
+          </Alert>
+        )}
+
+        {!cccdBlocked && !mobileBlocked && softWarnings.length > 0 && (
           <Alert className="space-y-3 border-warning/40 bg-warning/5 text-foreground">
             <div className="flex items-start gap-2">
               <Search className="h-4 w-4 shrink-0 mt-0.5 text-warning" />

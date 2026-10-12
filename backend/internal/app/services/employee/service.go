@@ -41,6 +41,10 @@ type EmployeeService struct {
 	// bankAccountValidator performs live OnePay account verification.
 	// May be nil when no disbursement provider is configured.
 	bankAccountValidator *BankAccountValidator
+
+	// isEmployeeMobileRequired reports the admin policy toggle that makes the
+	// phone number mandatory on create. Nil (tests, partial wiring) = off.
+	isEmployeeMobileRequired func(ctx context.Context) bool
 }
 
 func NewEmployeeService(cfg *Config) *EmployeeService {
@@ -58,6 +62,8 @@ func NewEmployeeService(cfg *Config) *EmployeeService {
 		events:                cfg.Events,
 		cache:                 cfg.Cache,
 		bankAccountValidator:  cfg.BankAccountValidator,
+
+		isEmployeeMobileRequired: cfg.IsEmployeeMobileRequired,
 	}
 }
 
@@ -155,6 +161,7 @@ func (s *EmployeeService) createEmployeeCore(
 	// Sanitize CCCD and email before persistence
 	// Sanitize identifiers and contact fields
 	employee.CCCD = strings.TrimSpace(employee.CCCD)
+	employee.Mobile = strings.TrimSpace(employee.Mobile)
 	if employee.Email != nil {
 		trimmedEmail := strings.TrimSpace(*employee.Email)
 		if trimmedEmail == "" {
@@ -177,7 +184,27 @@ func (s *EmployeeService) createEmployeeCore(
 		return nil, err
 	}
 
-	// 1b. Live account verification. Manual writes reject confirmed-invalid
+	// 1a. Admin policy: when the settings toggle is on, EVERY create path
+	// (manual form, Excel import, BCC/FlexPay import) must carry a mobile
+	// number — a phone-less record created here would be unfixable by the
+	// bulk backfill that only fills empty numbers on existing rows. Format
+	// rules live in ValidateMobile; this only decides whether empty is legal.
+	if employee.Mobile == "" && s.isEmployeeMobileRequired != nil && s.isEmployeeMobileRequired(ctx) {
+		return nil, domain.NewValidationError(constants.MsgEmployeeMobileRequiredVN)
+	}
+
+	// 1b. Duplicate mobile guard (always on, toggle-independent).
+	if employee.Mobile != "" {
+		holders, err := s.EmployeeRepo.ListByMobile(ctx, employee.Mobile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check duplicate mobile: %w", err)
+		}
+		if len(holders) > 0 {
+			return nil, domain.NewConflictError(constants.MsgEmployeeMobileTakenVN)
+		}
+	}
+
+	// 1c. Live account verification. Manual writes reject confirmed-invalid
 	// accounts before persistence; bulk imports persist the same verdict so the
 	// employee can be corrected without blocking timesheet ingestion.
 	if err := validateBankAccountForCreate(
@@ -259,6 +286,7 @@ func (s *EmployeeService) UpdateEmployee(ctx context.Context, employee *domain.E
 		// Sanitize CCCD and email before persistence
 		// Sanitize identifiers and contact fields
 		employee.CCCD = strings.TrimSpace(employee.CCCD)
+		employee.Mobile = strings.TrimSpace(employee.Mobile)
 		if employee.Email != nil {
 			trimmedEmail := strings.TrimSpace(*employee.Email)
 			if trimmedEmail == "" {
@@ -282,6 +310,22 @@ func (s *EmployeeService) UpdateEmployee(ctx context.Context, employee *domain.E
 		// 1. Validate employee data (domain entity validation)
 		if err := employee.IsValid(); err != nil {
 			return err
+		}
+
+		// 1a. Duplicate mobile guard (self-excluded): only fires when the edit
+		// moves the employee onto a number another active employee holds.
+		// Legacy pairs that already share a number stay editable on unrelated
+		// fields — the partner-facing collision report drives those fixes.
+		if employee.Mobile != "" && employee.Mobile != originalEmployee.Mobile {
+			holders, err := s.EmployeeRepo.ListByMobile(txCtx, employee.Mobile)
+			if err != nil {
+				return fmt.Errorf("failed to check duplicate mobile: %w", err)
+			}
+			for _, holder := range holders {
+				if holder.ID != employee.ID {
+					return domain.NewConflictError(constants.MsgEmployeeMobileTakenVN)
+				}
+			}
 		}
 
 		// 1b. Live OnePay account verification. Only re-validate when the

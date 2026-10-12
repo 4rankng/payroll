@@ -312,9 +312,54 @@ func (b *EmployeeProjectQueryBuilder) BuildMissingBankDetailsQuery(filters domai
 	return query
 }
 
-// BuildMissingBankDetailsCountQuery builds a query for counting employees with missing banking details
+// BuildMissingBankDetailsCountQuery builds a query for counting employees with missing bank details
 func (b *EmployeeProjectQueryBuilder) BuildMissingBankDetailsCountQuery(filters domain.EmployeeFilters) *gorm.DB {
 	return b.buildMissingBankDetailsBaseQuery(filters)
+}
+
+// missingMobilePredicate matches employees with no usable phone number on
+// file. COALESCE+TRIM mirrors the bank predicate: legacy rows may hold NULL or
+// whitespace even though the column default is ''.
+const missingMobilePredicate = `COALESCE(TRIM(employees.mobile), '') = ''`
+
+// BuildMissingMobileQuery lists employees with no mobile number on file. Unlike
+// the missing-bank list there is no pending-work gating: phone login, Zalo OTP
+// password reset and self check-in all key off the number regardless of payroll
+// activity, so every gap the caller can fix must surface.
+func (b *EmployeeProjectQueryBuilder) BuildMissingMobileQuery(filters domain.EmployeeFilters) *gorm.DB {
+	query := b.db.Model(&domain.Employee{})
+	query = b.applyFilters(query, filters)
+	query = query.Where(missingMobilePredicate)
+
+	// Sorting/pagination share the BuildMissingBankDetailsQuery contract.
+	sortBy := "created_at"
+	if filters.SortBy != "" {
+		sortBy = filters.SortBy
+	}
+
+	sortOrder := "DESC"
+	if filters.SortOrder != "" {
+		sortOrder = filters.SortOrder
+	}
+
+	query = query.Order(fmt.Sprintf("%s %s", common.SanitizeSortColumn(sortBy, "created_at"), common.SanitizeSortOrder(sortOrder, "DESC")))
+
+	if filters.Limit > 0 {
+		query = query.Limit(filters.Limit)
+	}
+	if filters.Offset > 0 {
+		query = query.Offset(filters.Offset)
+	}
+
+	return query
+}
+
+// BuildMissingMobileCountQuery builds a query for counting employees with no
+// mobile number on file.
+func (b *EmployeeProjectQueryBuilder) BuildMissingMobileCountQuery(filters domain.EmployeeFilters) *gorm.DB {
+	query := b.db.Model(&domain.Employee{})
+	query = b.applyFilters(query, filters)
+	return query.Where(missingMobilePredicate)
 }
 
 // BuildUnassignedAtDateQuery builds a query for getting unassigned employees at a specific date

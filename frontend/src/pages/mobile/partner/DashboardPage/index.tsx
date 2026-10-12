@@ -24,11 +24,14 @@ import {
   type MobileTaskRow,
 } from '@/components/shared/MobileOperationsPanel';
 import { PartnerApprovalRequestsCard } from '@/components/partner-dashboard/PartnerApprovalRequestsCard';
+import { MissingMobileSection } from '@/components/employees/MissingMobileSection';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
+import { useEmployeeModals } from '@/hooks/useModalNavigation';
 import { PartnerEmployeeListSheet } from '@/components/partner-dashboard/PartnerEmployeeListSheet';
 import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSelector';
 import { cn } from '@/lib/utils';
 import type { TopPaidEmployeeItem, PartnerEmployeeListType } from '@/types/api/dashboard.types';
+import type { Employee } from '@/types/api/employee.types';
 import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 const ALL_VALUE = 'all';
@@ -108,6 +111,15 @@ const PartnerDashboardMobile = () => {
   const handleMonthChange = useCallback((v: string) => setSelectedMonth(v), []);
   const openSheet = useCallback((type: PartnerEmployeeListType) => setSheetType(type), []);
   const closeSheet = useCallback(() => setSheetType(null), []);
+
+  // Employee rows in the mobile-warning section open the employee details
+  // sheet through the URL-driven modal system — same wiring as the mobile
+  // partner EmployeesPage's handleEmployeeClick.
+  const { openEmployeeDetails } = useEmployeeModals();
+  const handleEmployeeClick = useCallback(
+    (employee: Employee) => openEmployeeDetails(employee.id.toString()),
+    [openEmployeeDetails],
+  );
 
   const apiMonth = selectedMonth === ALL_VALUE ? undefined : selectedMonth;
   const { data, isLoading } = usePartnerDashboard({ month: apiMonth });
@@ -253,6 +265,9 @@ const PartnerDashboardMobile = () => {
       />
 
       <PartnerApprovalRequestsCard compact />
+
+      {/* Mobile warnings render nothing when clean (no dead card). */}
+      <MissingMobileSection onEmployeeClick={handleEmployeeClick} />
 
       <MobileSurface className="p-4">
         <div className="mb-3 flex items-center gap-2">

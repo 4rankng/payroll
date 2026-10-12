@@ -80,6 +80,21 @@ func (mr *MockEmployeeRepositoryMockRecorder) CountEmployeesWithMissingBankDetai
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountEmployeesWithMissingBankDetails", reflect.TypeOf((*MockEmployeeRepository)(nil).CountEmployeesWithMissingBankDetails), ctx, filters)
 }
 
+// CountEmployeesWithMissingMobile mocks base method.
+func (m *MockEmployeeRepository) CountEmployeesWithMissingMobile(ctx context.Context, filters domain.EmployeeFilters) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountEmployeesWithMissingMobile", ctx, filters)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountEmployeesWithMissingMobile indicates an expected call of CountEmployeesWithMissingMobile.
+func (mr *MockEmployeeRepositoryMockRecorder) CountEmployeesWithMissingMobile(ctx, filters interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountEmployeesWithMissingMobile", reflect.TypeOf((*MockEmployeeRepository)(nil).CountEmployeesWithMissingMobile), ctx, filters)
+}
+
 // CountRecentEmployees mocks base method.
 func (m *MockEmployeeRepository) CountRecentEmployees(ctx context.Context, startDate, endDate time.Time) (int64, error) {
 	m.ctrl.T.Helper()
@@ -406,6 +421,21 @@ func (m *MockEmployeeRepository) GetEmployeesWithMissingBankDetails(ctx context.
 func (mr *MockEmployeeRepositoryMockRecorder) GetEmployeesWithMissingBankDetails(ctx, filters interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeesWithMissingBankDetails", reflect.TypeOf((*MockEmployeeRepository)(nil).GetEmployeesWithMissingBankDetails), ctx, filters)
+}
+
+// GetEmployeesWithMissingMobile mocks base method.
+func (m *MockEmployeeRepository) GetEmployeesWithMissingMobile(ctx context.Context, filters domain.EmployeeFilters) ([]*domain.EmployeeWithProjects, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEmployeesWithMissingMobile", ctx, filters)
+	ret0, _ := ret[0].([]*domain.EmployeeWithProjects)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEmployeesWithMissingMobile indicates an expected call of GetEmployeesWithMissingMobile.
+func (mr *MockEmployeeRepositoryMockRecorder) GetEmployeesWithMissingMobile(ctx, filters interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEmployeesWithMissingMobile", reflect.TypeOf((*MockEmployeeRepository)(nil).GetEmployeesWithMissingMobile), ctx, filters)
 }
 
 // GetPaidWithoutMobile mocks base method.

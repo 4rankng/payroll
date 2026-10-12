@@ -102,6 +102,28 @@ export interface DuplicateCheckResponse {
   data: DuplicateCheckMatch[];
 }
 
+// Employee Mobile Warning Types (compulsory-mobile nudge)
+/** One in-scope member of a duplicate-mobile group. */
+export interface DuplicateMobileMember {
+  id: number;
+  fullname: string;
+}
+
+/** One phone number carried by more than one employee. */
+export interface DuplicateMobileGroup {
+  mobile: string;
+  /** In-scope members of the group — the ones the caller can act on. */
+  employees: DuplicateMobileMember[];
+  /** Members of the group outside the caller's scope. Never invent names for them. */
+  hidden_count: number;
+}
+
+export interface DuplicateMobilesData {
+  groups: DuplicateMobileGroup[];
+  /** Total distinct employees across groups. */
+  total_employees: number;
+}
+
 export interface EmployeeSummary {
   total_employees: number;
   total_working_employees: number;

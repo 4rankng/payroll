@@ -1,10 +1,11 @@
-import { Bell, Bot, KeyRound, Mail, Megaphone, MessageCircle, Receipt, Settings } from 'lucide-react';
+import { Bell, Bot, KeyRound, Mail, Megaphone, MessageCircle, Receipt, Settings, Users } from 'lucide-react';
 
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const SETTINGS_TABS = {
   general: 'general',
   feeConfig: 'fee-config',
+  employees: 'employees',
   email: 'email',
   notifications: 'notifications',
   zalo: 'zalo',
@@ -18,6 +19,7 @@ export const VALID_SETTINGS_TABS = new Set<string>(Object.values(SETTINGS_TABS))
 const tabs = [
   { value: SETTINGS_TABS.general, label: 'Trả lương', icon: Settings },
   { value: SETTINGS_TABS.feeConfig, label: 'Tạm ứng', icon: Receipt },
+  { value: SETTINGS_TABS.employees, label: 'Nhân viên', icon: Users },
   { value: SETTINGS_TABS.email, label: 'Email', icon: Mail },
   { value: SETTINGS_TABS.notifications, label: 'Thông báo', icon: Bell },
   { value: SETTINGS_TABS.zalo, label: 'Zalo ZNS', icon: MessageCircle },

@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useSettingsForm } from '@/hooks/settings/useSettingsForm';
 import { SettingsGeneralPanel } from '@/components/settings/SettingsGeneralPanel';
+import { SettingsEmployeePanel } from '@/components/settings/SettingsEmployeePanel';
 import {
   SETTINGS_TABS,
   SettingsTabList,
@@ -116,6 +117,10 @@ const SettingsPageMobile = () => {
 
           <TabsContent value={SETTINGS_TABS.general} className="mt-0">
             <SettingsGeneralPanel form={form} />
+          </TabsContent>
+
+          <TabsContent value={SETTINGS_TABS.employees} className="mt-0">
+            <SettingsEmployeePanel />
           </TabsContent>
 
           <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-4">

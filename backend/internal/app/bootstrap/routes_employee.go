@@ -19,6 +19,12 @@ func setupEmployeeRoutes(protected *gin.RouterGroup, container *Container) {
 		employees.POST("/export-paid-without-mobile", container.Handlers.Employee.ExportEmployeesPaidWithoutMobile)
 		// Admin-only: upload the filled workbook back — fills EMPTY mobiles by CCCD, never overwrites
 		employees.POST("/import-mobiles", container.Handlers.Employee.ImportMobiles)
+		// Data-quality nudge: employees with no mobile on file (login/Zalo/check-in
+		// gaps). parseEmployeeFilters scopes the list to the caller's set.
+		employees.GET("/missing-mobile", container.Handlers.Employee.GetEmployeesMissingMobile)
+		// Duplicate mobile collision groups ("which number must change"). Members
+		// are scope-filtered; out-of-scope holders count as hidden_count.
+		employees.GET("/duplicate-mobiles", container.Handlers.Employee.GetDuplicateMobileGroups)
 		employees.GET("/summary", container.Handlers.Employee.GetEmployeesSummary)
 		employees.GET("/unassigned", container.Handlers.Employee.GetUnassignedEmployees)
 		employees.GET("/missing-bank-details", container.Handlers.Employee.GetEmployeesMissingBankDetails)

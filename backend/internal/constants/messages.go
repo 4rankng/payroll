@@ -785,6 +785,13 @@ const (
 	// of guessing which employee the caller is.
 	MsgMobileSharedByEmployeesVN = "Số điện thoại này gắn với nhiều nhân viên nên không thể xác định tài khoản. Vui lòng liên hệ quản trị viên"
 
+	// Employee mobile rules: the required check is admin policy (settings
+	// toggle, default off); the uniqueness check is always on — one phone
+	// number must identify one employee or identity.Resolver fails closed and
+	// every holder loses phone login and Zalo OTP.
+	MsgEmployeeMobileRequiredVN = "Số điện thoại là bắt buộc khi bật chế độ bắt buộc số điện thoại cho nhân viên mới"
+	MsgEmployeeMobileTakenVN    = "Số điện thoại này đã được sử dụng bởi nhân viên khác"
+
 	// Employee Business Errors - Vietnamese
 	MsgEmployeeNoUserAccountVN = "Nhân viên chưa có tài khoản người dùng"
 	MsgFailedToCheckAccessVN   = "Kiểm tra quyền truy cập thất bại"
