@@ -1115,11 +1115,14 @@ type TransactionWithLedgerResponse struct {
 
 type CreateAPIKeyRequest struct {
 	Name string `json:"name"`
+	// Scope binds the key to one integration surface. Omitted = chatbot.
+	Scope string `json:"scope,omitempty"`
 }
 
 type CreateAPIKeyResponse struct {
 	ID        uint   `json:"id"`
 	Name      string `json:"name"`
+	Scope     string `json:"scope"`
 	Key       string `json:"key"`
 	KeyPrefix string `json:"key_prefix"`
 }
@@ -1127,8 +1130,64 @@ type CreateAPIKeyResponse struct {
 type APIKeyListItem struct {
 	ID        uint    `json:"id"`
 	Name      string  `json:"name"`
+	Scope     string  `json:"scope"`
 	KeyPrefix string  `json:"key_prefix"`
 	RevokedAt *string `json:"revoked_at"`
+}
+
+// --- Vendor timesheet read API (/api/v1/vendor/*) ---
+
+// Note: the shared Pagination type (models.go) already models the response
+// envelope, which uses camelCase keys (pageSize / totalPages / totalRecords),
+// not snake_case.
+
+type VendorProjectItem struct {
+	Code       string `json:"code"`
+	Name       string `json:"name"`
+	ClientName string `json:"client_name"`
+	Status     string `json:"status"`
+}
+
+type VendorEmployeeItem struct {
+	CCCD                     string   `json:"cccd"`
+	Fullname                 string   `json:"fullname"`
+	Mobile                   string   `json:"mobile"`
+	Email                    *string  `json:"email"`
+	Address                  string   `json:"address"`
+	DateOfBirth              *string  `json:"date_of_birth"`
+	BankID                   *uint    `json:"bank_id"`
+	BankAccountName          string   `json:"bank_account_name"`
+	BankAccountNumber        string   `json:"bank_account_number"`
+	BankAccountStatus        string   `json:"bank_account_status"`
+	BankAccountInvalidReason *string  `json:"bank_account_invalid_reason"`
+	ProjectCodes             []string `json:"project_codes"`
+}
+
+// VendorTimesheetItem carries the money fields the sister vendor reconciles
+// against. RevenueReceivable/RevenuePaid are intentionally absent.
+type VendorTimesheetItem struct {
+	ProjectCode      string  `json:"project_code"`
+	CCCD             string  `json:"cccd"`
+	EmployeeName     string  `json:"employee_name"`
+	Date             string  `json:"date"`
+	HoursWorked      float64 `json:"hours_worked"`
+	PayType          string  `json:"pay_type"`
+	PayRate          int64   `json:"payrate"`
+	Amount           int64   `json:"amount"`
+	PaidAmount       int64   `json:"paid_amount"`
+	Status           string  `json:"status"`
+	PaymentStatus    string  `json:"payment_status"`
+	PaymentReference *string `json:"payment_reference"`
+	PaidAt           *string `json:"paid_at"`
+	RejectionReason  *string `json:"rejection_reason"`
+}
+
+// VendorListResponse is the raw shape of a paginated vendor response, used to
+// decode into either item slice.
+type VendorListResponse struct {
+	Data       []VendorTimesheetItem `json:"data"`
+	Pagination *Pagination           `json:"pagination"`
+	Message    string                `json:"message"`
 }
 
 type IntegrationOTPRequest struct {

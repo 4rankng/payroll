@@ -1,6 +1,10 @@
 package bootstrap
 
-import "github.com/gin-gonic/gin"
+import (
+	"api-server/internal/domain"
+
+	"github.com/gin-gonic/gin"
+)
 
 // setupAPIKeyAdminRoutes mounts the admin-only API key management endpoints.
 // Casbin grants `admin, /api/*, *, allow`, and no other role holds a rule for
@@ -20,12 +24,17 @@ func setupAPIKeyAdminRoutes(v1 *gin.RouterGroup, container *Container) {
 // setupIntegrationResetRoutes mounts the API-key-authenticated chatbot
 // endpoints. These are mounted on v1 (inheriting APIRateLimit + APIMetrics) but
 // deliberately NOT on the protected group — no JWT, no Casbin.
+//
+// The scope gate is what stops a timesheet_read vendor key from driving the
+// chatbot (password reset, self check-in, Zalo token). Before scopes existed
+// any key could call every route here.
 func setupIntegrationResetRoutes(v1 *gin.RouterGroup, container *Container) {
 	if container == nil || container.Handlers == nil {
 		return
 	}
 	g := v1.Group("/integration")
 	g.Use(container.Middleware.APIKeyAuth.Authenticate())
+	g.Use(container.Middleware.APIKeyAuth.RequireAPIKeyScope(domain.APIKeyScopeChatbot))
 	g.Use(container.Middleware.IntegrationRateLimit)
 	if container.Handlers.IntegrationReset != nil {
 		g.POST("/password-reset/otp", container.Handlers.IntegrationReset.RequestOTP)

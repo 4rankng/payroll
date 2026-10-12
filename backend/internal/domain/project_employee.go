@@ -106,6 +106,11 @@ type ProjectEmployeeRepository interface {
 	GetActiveAssignmentByProjectAndEmployee(ctx context.Context, projectID, employeeID uint) (*ProjectEmployee, error)
 	GetCurrentAssignmentsForProjectForUpdate(ctx context.Context, projectID uint, asOfDate time.Time) ([]*ProjectEmployee, error)
 	GetActiveAssignmentsByProjectsAndEmployees(ctx context.Context, projectIDs []uint, employeeIDs []uint) ([]*ProjectEmployee, error)
+	// GetActiveAssignmentsByEmployeeIDs returns every active assignment for the
+	// given employees, joined against non-deleted projects/employees. Used by
+	// the vendor read API to attach project codes to an employee page in one
+	// query instead of one lookup per row.
+	GetActiveAssignmentsByEmployeeIDs(ctx context.Context, employeeIDs []uint) ([]*ProjectEmployee, error)
 	Update(ctx context.Context, assignment *ProjectEmployee) error
 	// UpdatePosition updates only the position column, avoiding full-row Save() that
 	// could overwrite concurrent changes to other fields (e.g., CheckInEnabled).

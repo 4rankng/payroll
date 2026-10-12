@@ -42,7 +42,7 @@ func (h *APIKeyHandler) Create(c *gin.Context) {
 	actorID, _ := c.Get(constants.CtxUserID)
 	createdBy, _ := actorID.(uint)
 
-	key, plaintext, err := h.service.Create(c.Request.Context(), req.Name, createdBy)
+	key, plaintext, err := h.service.Create(c.Request.Context(), req.Name, req.Scope, createdBy)
 	if err != nil {
 		if domain.IsValidationError(err) {
 			response.BadRequest(c, err.Error())
@@ -109,6 +109,7 @@ func toAPIKeyResponse(key *domain.APIKey, plaintext string) dto.APIKeyResponse {
 	return dto.APIKeyResponse{
 		ID:         key.ID,
 		Name:       key.Name,
+		Scope:      domain.NormalizeAPIKeyScope(key.Scope),
 		Key:        plaintext,
 		KeyPrefix:  key.KeyPrefix,
 		CreatedBy:  key.CreatedBy,

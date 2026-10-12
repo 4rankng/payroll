@@ -1,8 +1,13 @@
 // Package apikey mints, authenticates, and revokes machine API keys for the
-// external chatbot integration API. Keys are 256-bit random values shown once
-// at creation; only their SHA-256 hash is stored. A plain SHA-256 (rather than
-// a password-style KDF) is sufficient because the key is high-entropy random,
-// not a human-chosen secret.
+// external integration APIs (the chatbot channel and the vendor timesheet
+// read surface). Keys are 256-bit random values shown once at creation; only
+// their SHA-256 hash is stored. A plain SHA-256 (rather than a password-style
+// KDF) is sufficient because the key is high-entropy random, not a human-chosen
+// secret.
+//
+// Each key carries a domain.APIKeyScope binding it to exactly one surface, so
+// a chatbot key cannot read timesheets and a vendor key cannot drive the
+// chatbot.
 package apikey
 
 import (
@@ -44,7 +49,11 @@ func NewService(repo domain.APIKeyRepository, clk clock.Clock) *Service {
 
 // Create mints a new key and returns the record plus the plaintext key — the
 // only time the plaintext exists outside the caller's memory.
-func (s *Service) Create(ctx context.Context, name string, createdBy uint) (*domain.APIKey, string, error) {
+//
+// scope binds the key to exactly one integration surface. An empty scope
+// normalises to the chatbot default so an older admin client that omits the
+// field keeps its current behaviour.
+func (s *Service) Create(ctx context.Context, name string, scope domain.APIKeyScope, createdBy uint) (*domain.APIKey, string, error) {
 	plaintext, err := newPlaintextKey()
 	if err != nil {
 		return nil, "", fmt.Errorf("apikey: generate key: %w", err)
@@ -52,11 +61,15 @@ func (s *Service) Create(ctx context.Context, name string, createdBy uint) (*dom
 
 	key := &domain.APIKey{
 		Name:      name,
+		Scope:     domain.NormalizeAPIKeyScope(scope),
 		KeyPrefix: plaintext[:prefixLen],
 		KeyHash:   HashKey(plaintext),
 		CreatedBy: createdBy,
 	}
 	if err := key.ValidateName(); err != nil {
+		return nil, "", err
+	}
+	if err := key.ValidateScope(); err != nil {
 		return nil, "", err
 	}
 	if err := s.repo.Create(ctx, key); err != nil {

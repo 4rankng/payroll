@@ -30,7 +30,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useApiKeys, useCreateAPIKey, useRevokeAPIKey } from '@/hooks/api/useApiKeys';
-import type { APIKey } from '@/services/api/apiKeys.service';
+import type { APIKey, APIKeyScope } from '@/services/api/apiKeys.service';
 import skillMarkdown from '@/assets/skills/payroll-password-reset/SKILL.md?raw';
 
 const DATE_TIME_DISPLAY = 'dd/MM/yyyy HH:mm';
@@ -45,6 +45,35 @@ const RAW_SKILL_TARGET_PATH = '.claude/skills/payroll-password-reset/SKILL.md';
 
 const formatDateTime = (value: string | null): string =>
   value ? format(new Date(value), DATE_TIME_DISPLAY) : '—';
+
+/** Human labels + styling for each key scope. */
+const SCOPE_META: Record<
+  APIKeyScope,
+  { label: string; description: string; badgeClass: string }
+> = {
+  chatbot: {
+    label: 'Chatbot',
+    description:
+      'Dùng cho Zalo chatbot: đặt lại mật khẩu, tra cứu nhân viên, tự chấm công.',
+    badgeClass:
+      'border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300',
+  },
+  timesheet_read: {
+    label: 'Vendor — bảng chấm công',
+    description:
+      'Chỉ đọc, dành cho đối tác bên ngoài: xem danh sách dự án, nhân viên và bảng chấm công. Không thể ghi dữ liệu.',
+    badgeClass:
+      'border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300',
+  },
+};
+
+/**
+ * Resolve a key's scope, defaulting a missing value to 'chatbot'. A key minted
+ * before scopes existed has no scope field, and the backend treats an empty
+ * scope the same way — so the UI must agree or it would label such a key with
+ * an unknown value.
+ */
+const scopeOf = (apiKey: APIKey): APIKeyScope => apiKey.scope ?? 'chatbot';
 
 interface APIKeyRowProps {
   apiKey: APIKey;
@@ -63,6 +92,7 @@ const APIKeyRow = ({
 }: APIKeyRowProps) => {
   const revoked = apiKey.revoked_at != null;
   const isCopied = copiedPrefixId === apiKey.id;
+  const scope = SCOPE_META[scopeOf(apiKey)];
 
   return (
     <li className="flex flex-col gap-3.5 p-4 transition-colors hover:bg-muted/30 sm:gap-4 sm:p-5 md:flex-row md:items-center md:justify-between">
@@ -88,6 +118,9 @@ const APIKeyRow = ({
               Đang hoạt động
             </Badge>
           )}
+          <Badge variant="outline" className={scope.badgeClass}>
+            {scope.label}
+          </Badge>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -163,6 +196,9 @@ export const ApiKeysSection = () => {
   const revokeKey = useRevokeAPIKey();
 
   const [name, setName] = useState('');
+  // Chatbot stays the default so an admin creating a key without thinking
+  // about scope gets the same key they always got.
+  const [scope, setScope] = useState<APIKeyScope>('chatbot');
   const [revealed, setRevealed] = useState<{ key: string; name: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [revokingId, setRevokingId] = useState<number | null>(null);
@@ -183,7 +219,7 @@ export const ApiKeysSection = () => {
       return;
     }
     try {
-      const res = await createKey.mutateAsync({ name: trimmed });
+      const res = await createKey.mutateAsync({ name: trimmed, scope });
       if (res.data?.key) {
         setRevealed({ key: res.data.key, name: res.data.name });
       }
@@ -239,9 +275,14 @@ export const ApiKeysSection = () => {
   };
 
   const handleRevoke = async (apiKey: APIKey) => {
+    const scopeLabel = SCOPE_META[scopeOf(apiKey)].label;
+    const impact =
+      scopeOf(apiKey) === 'chatbot'
+        ? 'Chatbot đang dùng khoá này sẽ ngừng hoạt động ngay.'
+        : 'Đối tác đang dùng khoá này sẽ mất quyền xem bảng chấm công ngay.';
     if (
       !window.confirm(
-        `Thu hồi khoá "${apiKey.name}"? Chatbot đang dùng khoá này sẽ ngừng hoạt động ngay.`,
+        `Thu hồi khoá "${apiKey.name}" (${scopeLabel})? ${impact}`,
       )
     ) {
       return;
@@ -406,6 +447,51 @@ export const ApiKeysSection = () => {
                   <span>Tạo khoá API</span>
                 </Button>
               </div>
+
+              <fieldset className="space-y-1.5">
+                <legend className="text-xs sm:text-sm font-medium text-foreground">
+                  Phạm vi truy cập
+                </legend>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {(Object.keys(SCOPE_META) as APIKeyScope[]).map((value) => {
+                    const meta = SCOPE_META[value];
+                    const inputId = `api-key-scope-${value}`;
+                    return (
+                      <label
+                        key={value}
+                        htmlFor={inputId}
+                        className={cn(
+                          'flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors',
+                          'focus-within:ring-1 focus-within:ring-ring',
+                          scope === value
+                            ? 'border-emerald-500/50 bg-emerald-500/5'
+                            : 'border-border hover:bg-muted/40',
+                        )}
+                      >
+                        <input
+                          id={inputId}
+                          type="radio"
+                          name="api-key-scope"
+                          value={value}
+                          checked={scope === value}
+                          onChange={() => setScope(value)}
+                          disabled={createKey.isPending}
+                          className="mt-0.5 size-4 shrink-0 accent-emerald-700 dark:accent-emerald-400"
+                        />
+                        <span className="min-w-0 space-y-0.5">
+                          <span className="block text-xs sm:text-sm font-medium text-foreground">
+                            {meta.label}
+                          </span>
+                          <span className="block text-[11px] sm:text-xs text-muted-foreground">
+                            {meta.description}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+
               <p className="text-[11px] sm:text-xs text-muted-foreground">
                 Mẹo: Đặt tên mô tả rõ hệ thống hoặc môi trường sử dụng để dễ quản lý và theo dõi nhật ký hoạt động.
               </p>

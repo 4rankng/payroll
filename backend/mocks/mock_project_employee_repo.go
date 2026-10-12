@@ -224,6 +224,21 @@ func (mr *MockProjectEmployeeRepositoryMockRecorder) GetActiveAssignments(ctx, p
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveAssignments", reflect.TypeOf((*MockProjectEmployeeRepository)(nil).GetActiveAssignments), ctx, projectID)
 }
 
+// GetActiveAssignmentsByEmployeeIDs mocks base method.
+func (m *MockProjectEmployeeRepository) GetActiveAssignmentsByEmployeeIDs(ctx context.Context, employeeIDs []uint) ([]*domain.ProjectEmployee, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetActiveAssignmentsByEmployeeIDs", ctx, employeeIDs)
+	ret0, _ := ret[0].([]*domain.ProjectEmployee)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetActiveAssignmentsByEmployeeIDs indicates an expected call of GetActiveAssignmentsByEmployeeIDs.
+func (mr *MockProjectEmployeeRepositoryMockRecorder) GetActiveAssignmentsByEmployeeIDs(ctx, employeeIDs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetActiveAssignmentsByEmployeeIDs", reflect.TypeOf((*MockProjectEmployeeRepository)(nil).GetActiveAssignmentsByEmployeeIDs), ctx, employeeIDs)
+}
+
 // GetActiveAssignmentsByProjectsAndEmployees mocks base method.
 func (m *MockProjectEmployeeRepository) GetActiveAssignmentsByProjectsAndEmployees(ctx context.Context, projectIDs, employeeIDs []uint) ([]*domain.ProjectEmployee, error) {
 	m.ctrl.T.Helper()

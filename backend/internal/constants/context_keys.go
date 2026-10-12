@@ -9,6 +9,10 @@ const (
 	// identity for integration routes (no JWT user exists on those requests).
 	CtxAPIKeyID   = "api_key_id"
 	CtxAPIKeyName = "api_key_name"
+	// CtxAPIKeyScope carries the authenticated key's domain.APIKeyScope as a
+	// string. RequireAPIKeyScope reads it to refuse a valid key whose scope
+	// does not cover the route it is calling.
+	CtxAPIKeyScope = "api_key_scope"
 )
 
 // System User ID - used for automated/system operations

@@ -284,6 +284,33 @@ func (r *ProjectEmployeeRepository) GetActiveAssignmentsByProjectsAndEmployees(c
 	return assignments, nil
 }
 
+// GetActiveAssignmentsByEmployeeIDs returns every active assignment for the
+// given employees, joined against non-deleted projects and employees. Used by
+// the vendor read API to attach project codes to an employee page in one query
+// instead of one lookup per row.
+func (r *ProjectEmployeeRepository) GetActiveAssignmentsByEmployeeIDs(ctx context.Context, employeeIDs []uint) ([]*domain.ProjectEmployee, error) {
+	if len(employeeIDs) == 0 {
+		return []*domain.ProjectEmployee{}, nil
+	}
+
+	var assignments []*domain.ProjectEmployee
+	today := timeutil.StartOfDay(clock.NowUTC())
+
+	// Same join shape as GetActiveAssignmentsByProjectsAndEmployees, minus the
+	// project predicate, so deleted projects/employees never surface a code.
+	query := r.getDB(ctx).
+		Joins("INNER JOIN projects ON project_employees.project_id = projects.id AND projects.deleted_at IS NULL").
+		Joins("INNER JOIN employees ON project_employees.employee_id = employees.id AND employees.deleted_at IS NULL").
+		Where("project_employees.employee_id IN ? AND (project_employees.last_date IS NULL OR project_employees.last_date >= ?)",
+			employeeIDs, today)
+
+	if err := query.Find(&assignments).Error; err != nil {
+		return nil, err
+	}
+
+	return assignments, nil
+}
+
 func (r *ProjectEmployeeRepository) Update(ctx context.Context, assignment *domain.ProjectEmployee) error {
 	// Omit relationship structs to prevent Save() from overwriting foreign keys
 	// with zero values when the assignment was fetched without preloads

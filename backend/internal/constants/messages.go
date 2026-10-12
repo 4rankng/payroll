@@ -395,6 +395,7 @@ const (
 	// Integration API (machine-key authenticated chatbot channel).
 	MsgAPIKeyMissingVN                = "Thiếu API key. Vui lòng gửi header X-API-Key."
 	MsgAPIKeyInvalidVN                = "API key không hợp lệ hoặc đã bị thu hồi."
+	MsgAPIKeyScopeDeniedVN            = "API key không có quyền truy cập chức năng này. Vui lòng kiểm tra phạm vi (scope) của khoá."
 	MsgAPIKeyCreatedVN                = "Đã tạo API key. Hãy sao chép và lưu lại ngay — khoá chỉ hiển thị một lần."
 	MsgAPIKeyRevokedVN                = "Đã thu hồi API key."
 	MsgAPIKeyNotFoundVN               = "Không tìm thấy API key."
@@ -411,6 +412,17 @@ const (
 	// Zalo OA access-token delivery to the chatbot: payroll is the sole rotator
 	// of the shared OA token pair and serves GET /integration/zalo/token.
 	MsgIntegrationZaloTokenVN = "Token Zalo OA hiện tại."
+
+	// Vendor timesheet read API (/api/v1/vendor/*, API keys with the
+	// timesheet_read scope). The whole surface is read-only; these messages
+	// describe request-shape errors only.
+	MsgVendorProjectsRetrievedVN   = "Lấy danh sách dự án thành công."
+	MsgVendorEmployeesRetrievedVN  = "Lấy danh sách nhân viên thành công."
+	MsgVendorTimesheetsRetrievedVN = "Lấy danh sách bảng chấm công thành công."
+	MsgVendorProjectCodeNotFoundVN = "Không tìm thấy dự án với mã: %s"
+	MsgVendorCCCDNotFoundVN        = "Không tìm thấy nhân viên với CCCD: %s"
+	MsgVendorFilterRequiredVN      = "Vui lòng cung cấp ít nhất một trong: project_code, cccd, from_date."
+	MsgVendorInvalidScopeVN        = "Phạm vi (scope) của khoá API không hợp lệ. Chỉ hỗ trợ: chatbot, timesheet_read."
 
 	// Self check-in via chatbot (TingTing OA integration endpoints).
 	MsgSelfCheckinProjectNotSupportedVN = "Dự án này chưa hỗ trợ bật/tắt tự chấm công qua chatbot."

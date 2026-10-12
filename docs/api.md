@@ -229,6 +229,37 @@ API performance: latency trends, slowest endpoints, error breakdown, browser sta
 | GET | `/healthz` | Health check |
 | GET | `/ready` | Readiness check |
 
+### Machine-to-Machine Integrations (`X-API-Key`)
+
+Two API-key surfaces exist outside the JWT/Casbin chain. Both are mounted on `v1` (so they inherit `APIRateLimit` + `APIMetrics`) but are **not** on the protected group, so neither JWT nor Casbin applies. Every key carries a `scope` column that binds it to exactly one surface.
+
+| Group | Scope | Purpose |
+|-------|-------|---------|
+| `/api/v1/integration` | `chatbot` | Zalo chatbot: password reset, employee lookup, self check-in, Zalo OA token |
+| `/api/v1/vendor` | `timesheet_read` | Read-only vendor timesheet surface (sister company) |
+
+`RequireAPIKeyScope` refuses a valid-but-under-scoped key with **403**; an absent/invalid key is **401** from `Authenticate()` before the guard runs. That ordering keeps the two failure modes distinguishable to a caller holding no valid credential.
+
+Admin management lives at `/api/v1/admin/api-keys` (`POST`, `GET`, `DELETE /:id`). `scope` defaults to `chatbot` when omitted, so pre-existing admin clients and keys keep working unchanged (migration 127 backfills the column).
+
+### Vendor Timesheet Read API (`/api/v1/vendor`, scope `timesheet_read`)
+
+**Read-only by construction.** Only `GET` is registered under `/vendor/*` — there is no mutating handler for the router to dispatch to, so `POST`/`PUT`/`PATCH`/`DELETE` return 404/405. Every write route in the system lives on the JWT-protected group, which an API key cannot satisfy. The payload is deliberately full-fidelity (money + PII) because the caller is a sister company that reconciles against it.
+
+Records are addressed by **business codes, never internal IDs**: `projects.code` (unique) and `employees.cccd` (unique). Internal `id`s are withheld from responses so they cannot be cached as stable identifiers.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/vendor/projects` | Project vocabulary (`search`, `page`, `page_size`≤100) |
+| GET | `/vendor/employees` | Employee vocabulary keyed by CCCD (`project_code`, `search`, `page`, `page_size`≤100) |
+| GET | `/vendor/timesheets` | Timesheets by `project_code` / `cccd` + date range |
+
+`/vendor/timesheets` accepts `project_code` and `cccd` (each repeatable **and** comma-separated), `from_date`/`to_date` (`YYYY-MM-DD`, Vietnam timezone), `status`, `payment_status`, `page`, `page_size`≤200. **At least one of `project_code` / `cccd` / `from_date` is required** — an unfiltered call returns 400 rather than dumping the whole table.
+
+Timesheet rows carry `payrate`, `amount`, `paid_amount`, `payment_reference`, and `paid_at`; employee rows carry mobile, email, address, date of birth, and bank fields. `RevenueReceivable` / `RevenuePaid` are deliberately excluded — those are client-billing figures, not worker payouts.
+
+Error semantics: unknown `project_code` / `cccd` returns **400, not 404** (the request was well-formed, the referenced code simply does not exist). Rate limit is 60/hour per key via `IntegrationRateLimit`.
+
 ## Middleware Chain
 
 **Execution order:** recovery → security headers → request timeout → logging/metrics → auth → RBAC → rate limit → handler
@@ -240,6 +271,9 @@ API performance: latency trends, slowest endpoints, error breakdown, browser sta
 | `RequestTimeout(30s)` | `request_timeout.go` | Maximum request duration |
 | `APIMetrics()` | `api_metrics.go` | Request latency, status codes, endpoint metrics |
 | `Auth(jwtSecret)` | `auth.go` | JWT extraction and validation, sets user context |
+| `APIKeyAuth.Authenticate()` | `api_key_auth.go` | `X-API-Key` → key id/name/scope in context (machine callers only) |
+| `APIKeyAuth.RequireAPIKeyScope()` | `api_key_auth.go` | 403 when the authenticated key's scope does not cover the route |
+| `IntegrationRateLimit` | `rate_limit.go` | 60/hour per API key id for `/integration/*` and `/vendor/*` |
 | `Authorization(casbinEnforcer)` | `authorization.go` | Casbin RBAC enforcement |
 | `APIRateLimit` | `rate_limit.go` | Per-IP and per-account throttling (Redis-backed) |
 | `LoginRateLimit` | (per-login-route) | Account-specific login rate limiting |
@@ -277,6 +311,8 @@ Four roles defined in Casbin policy (`configs/casbin_policy.csv`):
 | `employee` | Self-service only (`/api/v1/me/*`) |
 
 All authenticated users can access notifications and push subscriptions. See [ADR-008](decisions/ADR-008-casbin-rbac-authorization.md).
+
+Machine API keys do **not** go through Casbin at all. They authenticate via `X-API-Key` and are bounded by the `api_keys.scope` column instead (`chatbot` or `timesheet_read`), enforced by `RequireAPIKeyScope`.
 
 ## OpenAPI / Swagger
 

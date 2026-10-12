@@ -46,6 +46,11 @@ func (m *MockProjectEmployeeRepository) GetActiveAssignmentsByProjectsAndEmploye
 	return args.Get(0).([]*domain.ProjectEmployee), args.Error(1)
 }
 
+func (m *MockProjectEmployeeRepository) GetActiveAssignmentsByEmployeeIDs(ctx context.Context, employeeIDs []uint) ([]*domain.ProjectEmployee, error) {
+	args := m.Called(ctx, employeeIDs)
+	return args.Get(0).([]*domain.ProjectEmployee), args.Error(1)
+}
+
 func (m *MockProjectEmployeeRepository) Update(ctx context.Context, assignment *domain.ProjectEmployee) error {
 	args := m.Called(ctx, assignment)
 	return args.Error(0)
