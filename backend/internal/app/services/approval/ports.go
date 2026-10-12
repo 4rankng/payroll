@@ -68,33 +68,8 @@ type EmailDispatch interface {
 	EnqueuePayrollReportEmail(req dto.SendPayrollReportEmailRequest, initiatedBy uint, requestKey string) (string, bool, error)
 }
 
-// Drafter writes the LLM email draft for statement-email requests from the
-// frozen payload facts. Unattended-safe: it only produces text, never sends.
-// A drafting failure NEVER blocks filing — the request degrades to the
-// deterministic payload and the reviewer still decides.
-type Drafter interface {
-	DraftStatementEmail(ctx context.Context, facts StatementDraftFacts, guidance string) (subject, body string, err error)
-}
-
-// StatementDraftFacts is the frozen fact sheet for one statement-email draft.
-type StatementDraftFacts struct {
-	ReportAtDate   string
-	PeriodLabel    string
-	TotalAmount    string
-	TimesheetCount int
-	RecipientCount int
-}
-
 // Notifier delivers in-app/push notifications (escalation fan out).
 // Implemented by *notification.NotificationService.
 type Notifier interface {
 	CreateNotification(ctx context.Context, userID uint, notificationType domain.NotificationType, title, message string) error
-}
-
-// DrafterFunc adapts a drafting function onto the Drafter port.
-type DrafterFunc func(ctx context.Context, facts StatementDraftFacts, guidance string) (string, string, error)
-
-// DraftStatementEmail implements Drafter.
-func (f DrafterFunc) DraftStatementEmail(ctx context.Context, facts StatementDraftFacts, guidance string) (string, string, error) {
-	return f(ctx, facts, guidance)
 }

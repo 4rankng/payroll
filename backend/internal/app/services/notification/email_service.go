@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"html"
 	"log/slog"
 	"os"
 	"regexp"
@@ -611,18 +610,6 @@ func (s *EmailService) buildPayrollReportMessage(ctx context.Context, payload *d
 		return nil, domain.NewInternalError(constants.MsgFailedToRenderPayrollEmailTemplateVN, err)
 	}
 	textBody := htmlToPlainText(htmlBody)
-
-	// Approved-draft override (approval engine path): the admin reviewed this
-	// exact subject/body before approving, so it becomes the sent content.
-	// The attachment and recipients above are untouched.
-	if customSubject := strings.TrimSpace(payload.CustomSubject); customSubject != "" {
-		subject = customSubject
-	}
-	if customBody := strings.TrimSpace(payload.CustomBody); customBody != "" {
-		textBody = customBody
-		htmlBody = "<html><body><p style=\"white-space:pre-line;font-family:Arial,sans-serif;font-size:14px;line-height:1.6\">" +
-			html.EscapeString(customBody) + "</p></body></html>"
-	}
 
 	attachment := domain.EmailAttachment{
 		Filename:    fmt.Sprintf("sao_ke_tt_%s.xlsx", reportAtDate.Format("2006-01-02")),

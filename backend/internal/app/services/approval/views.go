@@ -70,7 +70,7 @@ func BuildView(req *domain.ApprovalRequest, requester *domain.User) View {
 		details := fmt.Sprintf("%s · %s · %s · %s · %.2fg",
 			p.EmployeeName, p.ProjectName, p.Position, p.DayType, p.Hours)
 		if p.AmountVND > 0 {
-			details += fmt.Sprintf(" · %s", formatDraftAmount(p.AmountVND))
+			details += fmt.Sprintf(" · %s", formatAmountVND(p.AmountVND))
 		}
 		v.Summary = fmt.Sprintf("Huỷ bảng công ngày %s — %s", p.Date, details)
 		if reason != "" {

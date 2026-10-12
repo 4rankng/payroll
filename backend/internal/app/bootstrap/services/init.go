@@ -22,11 +22,9 @@ import (
 	"api-server/internal/app/services/employee"
 	"api-server/internal/app/services/flex_pay"
 	infraServices "api-server/internal/app/services/infrastructure"
-	"api-server/internal/app/services/insights"
 	"api-server/internal/app/services/integration"
 	"api-server/internal/app/services/ledger"
 	llmsvc "api-server/internal/app/services/llm"
-	"api-server/internal/app/services/llmchat"
 	"api-server/internal/app/services/loan"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/otp"
@@ -108,8 +106,6 @@ type Services struct {
 	SettingsConfig                    *config.SettingsConfigService
 	LLM                               *llmsvc.Service
 	Approval                          *approval.Service
-	Chat                              *llmchat.Service
-	Insights                          *insights.Service
 	ExcelConverter                    *reporting.ExcelConverterService
 	Asset                             *asset.AssetService
 	Cache                             domain.CacheServiceUseCase
@@ -600,64 +596,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 			domain.ApprovalTypeSendSaoKeEmail:   approval.NewEmailExecuter(asynqClient),
 			domain.ApprovalTypeSendPayrollEmail: approval.NewEmailExecuter(asynqClient),
 		},
-		Drafter: approval.DrafterFunc(func(ctx context.Context, facts approval.StatementDraftFacts, guidance string) (string, string, error) {
-			return llmService.DraftSaoKeEmail(ctx, 0, llmsvc.SaoKeDraftFacts{
-				ReportAtDate:   facts.ReportAtDate,
-				PeriodLabel:    facts.PeriodLabel,
-				TotalAmount:    facts.TotalAmount,
-				TimesheetCount: facts.TimesheetCount,
-				RecipientCount: facts.RecipientCount,
-			}, guidance)
-		}),
 		Clock: clk,
 	})
-	approvalEngine := llmchat.NewApprovalEngine(approvalService)
-	partnerScopeResolver := dashboard.NewPartnerScopeResolver(db.DB, cacheService, logger)
-	// The store owns the report SQL; the app layer only receives the allow-list
-	// of keys/titles the model is permitted to pick.
-	chatToolStore := persistence.NewChatToolReadStore(db)
-	llmchatService := llmchat.NewService(llmchat.Deps{
-		LLM:        llmService,
-		Convs:      repos.ChatConversation,
-		Messages:   repos.ChatMessage,
-		ToolCalls:  repos.ChatToolCall,
-		Timings:    repos.ChatTurnTiming,
-		Store:      chatToolStore,
-		Reports:    persistence.CuratedReportSpecs(),
-		Wallet:     llmchat.NewWalletInfoSource(walletService),
-		Filer:      approvalEngine,
-		Reader:     approvalEngine,
-		Scope:      llmchat.NewScopeResolver(partnerScopeResolver),
-		Audit:      llmchat.NewAuditSink(asynqClient),
-		MsgLimiter: llmport.NewFixedWindowLimiter(redis.Client, time.Minute, 30, "llmchat:rate:"),
-		RoleGate:   llmchat.NewSettingsRoleGate(settingsConfigService),
-		Images: llmchat.NewAssetImages(
-			llmchatAssetReader{svc: assetService},
-			func(filePath string) (string, error) {
-				exists, fullPath, err := assetService.CheckFileExists(filePath)
-				if err != nil || !exists {
-					return "", err
-				}
-				return fullPath, nil
-			},
-		),
-		Models: llmchat.ModelRouterFunc(func(ctx context.Context) string {
-			return settingsConfigService.GetMimoModelForRoute(ctx, "chat")
-		}),
-	})
-
-	// Daily ops insight digest (phase 7): deterministic DB collectors, hard
-	// anti-spam filters, flash-written narratives, critical-only push.
-	insightsService := insights.NewService(
-		insights.Deps{
-			Findings: repos.DailyFinding,
-			Clk:      clk,
-			LLM:      insights.LLMNarrativeWriter{Service: llmService},
-			Notifier: notificationService,
-		},
-		repos.User,
-		insights.NewDBCollectors(db.DB),
-	)
 
 	// Create payroll service (which contains the bulk transfer module)
 	payrollSvc := payroll.NewPayrollService(db.DB, repos.Timesheet, repos.Employee, repos.EmployeeUser, repos.Project, repos.ProjectEmployee, repos.User, ledgerService, transactionService, assetService, excelConverterService, settingsConfigService, repos.BulkTransferFile, repos.TransactionCode, pdfService, notificationService, eventBus, asynqClient)
@@ -883,8 +823,6 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		SettingsConfig:                    settingsConfigService,
 		LLM:                               llmService,
 		Approval:                          approvalService,
-		Chat:                              llmchatService,
-		Insights:                          insightsService,
 		ExcelConverter:                    excelConverterService,
 		Asset:                             assetService,
 		Cache:                             cacheService,
@@ -954,15 +892,4 @@ func asAutoBulkTransfer(svc *bulktransfer.NinePayBulkTransferService) bulktransf
 		return nil
 	}
 	return svc
-}
-
-// llmchatAssetReader adapts the asset service onto llmchat's narrow reader.
-type llmchatAssetReader struct{ svc *asset.AssetService }
-
-func (r llmchatAssetReader) GetAsset(ctx context.Context, id uint) (llmchat.AssetMeta, error) {
-	a, err := r.svc.GetAsset(ctx, id)
-	if err != nil {
-		return llmchat.AssetMeta{}, err
-	}
-	return llmchat.AssetMeta{FilePath: a.FilePath, UploadedBy: a.UploadedBy}, nil
 }

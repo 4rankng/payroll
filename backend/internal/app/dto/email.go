@@ -49,11 +49,6 @@ type SendPayrollReportEmailRequest struct {
 	Recipients   []string `json:"recipients"`
 	Cc           []string `json:"cc"`
 	Bcc          []string `json:"bcc"`
-	// Optional approved-draft override (approval engine path only): when set,
-	// these become the sent subject/body — the Excel attachment, recipients
-	// and metadata stay worker-derived. The manual path never sets them.
-	CustomSubject string `json:"customSubject,omitempty"`
-	CustomBody    string `json:"customBody,omitempty"`
 }
 
 // ParseReportAtDate validates and parses the requested report date using the same rules as the v3 report endpoint.

@@ -2,7 +2,6 @@ package approval
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
@@ -468,109 +467,7 @@ func TestVoidPreconditionBlocksPaidTimesheet(t *testing.T) {
 	}
 }
 
-// ---- phase 4: drafting + custom send ----
-
-type fakeDrafter struct {
-	mu       sync.Mutex
-	calls    int
-	guidance []string
-	subject  string
-	body     string
-	err      error
-}
-
-func (f *fakeDrafter) DraftStatementEmail(_ context.Context, _ StatementDraftFacts, guidance string) (string, string, error) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.calls++
-	f.guidance = append(f.guidance, guidance)
-	return f.subject, f.body, f.err
-}
-
-func newDraftingService(t *testing.T, drafter Drafter) (*Service, *fakeRepo, *fakeExecuter) {
-	t.Helper()
-	svc, _, _, repo, _, _, exec := newTestService(t)
-	if drafter != nil {
-		svc.drafter = drafter
-	}
-	return svc, repo, exec
-}
-
-func TestCompleteDraftAttachesAndPersists(t *testing.T) {
-	drafter := &fakeDrafter{subject: "Sao kê tuần 05/10", body: "Kính gửi Quý đối tác, …"}
-	svc, repo, _ := newDraftingService(t, drafter)
-	req, err := svc.File(context.Background(), CreateParams{
-		Type: domain.ApprovalTypeSendSaoKeEmail, Params: saoKeParams(), ActorID: 1, ActorRole: RoleAdmin,
-	})
-	if err != nil {
-		t.Fatalf("File: %v", err)
-	}
-	// File returns without a draft; the background completion writes it.
-	clone := *req
-	svc.attachDraft(context.Background(), &clone, "")
-	if err := svc.repo.SaveTransition(context.Background(), &clone, []domain.ApprovalRequestStatus{domain.ApprovalStatusPending}); err != nil {
-		t.Fatalf("persist draft: %v", err)
-	}
-	var payload struct {
-		DraftSubject string `json:"llmDraftSubject"`
-		DraftBody    string `json:"llmDraftBody"`
-	}
-	if err := json.Unmarshal([]byte(clone.Payload), &payload); err != nil {
-		t.Fatalf("payload: %v", err)
-	}
-	if payload.DraftSubject != drafter.subject || payload.DraftBody != drafter.body {
-		t.Fatalf("draft not merged: %+v", payload)
-	}
-	if repo.saves < 1 {
-		t.Fatal("draft transition must persist")
-	}
-}
-
-func TestFileSurvivesDraftFailure(t *testing.T) {
-	drafter := &fakeDrafter{err: errors.New("provider down")}
-	svc, _, _ := newDraftingService(t, drafter)
-	req, err := svc.File(context.Background(), CreateParams{
-		Type: domain.ApprovalTypeSendSaoKeEmail, Params: saoKeParams(), ActorID: 1, ActorRole: RoleAdmin,
-	})
-	if err != nil {
-		t.Fatalf("filing must survive a drafting outage: %v", err)
-	}
-	var payload map[string]any
-	_ = json.Unmarshal([]byte(req.Payload), &payload)
-	if _, has := payload["llmDraftSubject"]; has {
-		t.Fatal("no draft expected on provider failure")
-	}
-}
-
-func TestRetryRedraftUsesRejectionNote(t *testing.T) {
-	drafter := &fakeDrafter{subject: "s", body: "b"}
-	svc, _, _ := newDraftingService(t, drafter)
-	ctx := context.Background()
-	req, _ := svc.File(ctx, CreateParams{Type: domain.ApprovalTypeSendSaoKeEmail, Params: saoKeParams(), ActorID: 1, ActorRole: RoleAdmin})
-	if _, err := svc.Reject(ctx, req.ID, admin(), "gửi mai, dữ liệu chưa đủ"); err != nil {
-		t.Fatalf("reject: %v", err)
-	}
-	if err := svc.HandleScheduledRetry(ctx, req.ID); err != nil {
-		t.Fatalf("retry: %v", err)
-	}
-	// File drafts asynchronously; the retry redraft runs synchronously in the
-	// worker — assert the rejection note reached the drafter, order-independently.
-	drafter.mu.Lock()
-	sawNote := false
-	for _, g := range drafter.guidance {
-		if g == "gửi mai, dữ liệu chưa đủ" {
-			sawNote = true
-		}
-	}
-	calls := drafter.calls
-	drafter.mu.Unlock()
-	if !sawNote {
-		t.Fatalf("redraft guidance = %v, want the rejection note present", drafter.guidance)
-	}
-	if calls < 1 {
-		t.Fatalf("drafter calls = %d, want >= 1", calls)
-	}
-}
+// ---- email executer ----
 
 type fakeDispatch struct {
 	last dto.SendPayrollReportEmailRequest
@@ -583,24 +480,24 @@ func (f *fakeDispatch) EnqueuePayrollReportEmail(req dto.SendPayrollReportEmailR
 	return "task-1", false, nil
 }
 
-func TestEmailExecuterSendsReviewedDraft(t *testing.T) {
+func TestEmailExecuterEnqueuesWithIdempotencyKey(t *testing.T) {
 	dispatch := &fakeDispatch{}
 	exec := NewEmailExecuter(dispatch)
 	req := &domain.ApprovalRequest{
 		Type:           domain.ApprovalTypeSendSaoKeEmail,
 		IdempotencyKey: "approval:send_sao_ke_email:abc",
 		RequesterID:    1,
-		Payload:        `{"reportAtDate":"2026-10-05","recipients":["a@test.vn"],"llmDraftSubject":"Sao kê tuần","llmDraftBody":"Kính gửi,"}`,
+		Payload:        `{"reportAtDate":"2026-10-05","recipients":["a@test.vn"]}`,
 	}
 	outcome, err := exec.Execute(context.Background(), req)
 	if err != nil {
 		t.Fatalf("execute: %v", err)
 	}
-	if dispatch.last.CustomSubject != "Sao kê tuần" || dispatch.last.CustomBody != "Kính gửi," {
-		t.Fatalf("custom draft not passed: %+v", dispatch.last)
+	if dispatch.key != req.IdempotencyKey {
+		t.Fatalf("idempotency key lost: %q", dispatch.key)
 	}
-	if dispatch.last.Recipients[0] != "a@test.vn" {
-		t.Fatalf("recipients lost: %+v", dispatch.last)
+	if dispatch.last.ReportAtDate != "2026-10-05" || len(dispatch.last.Recipients) != 1 {
+		t.Fatalf("payload mapping lost: %+v", dispatch.last)
 	}
 	if outcome == "" {
 		t.Fatal("outcome must be human-readable")

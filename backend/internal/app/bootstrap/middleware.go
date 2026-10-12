@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"api-server/internal/config"
 	"api-server/internal/transport/http/middleware"
-	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -18,11 +17,7 @@ func SetupMiddleware(router *gin.Engine, container *Container) {
 
 	// Request timeout middleware
 	if container != nil && container.Config != nil {
-		router.Use(middleware.RequestTimeout(container.Config.RequestTimeout,
-			// Chat turns are bounded by the llmchat per-turn deadline, not the
-			// global request budget — vision turns legitimately run long.
-			middleware.TimeoutOverride{Prefix: "/api/v1/chat/", Timeout: 135 * time.Second},
-		))
+		router.Use(middleware.RequestTimeout(container.Config.RequestTimeout))
 	}
 
 	// Add audit context middleware to capture IP and User-Agent for audit logging

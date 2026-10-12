@@ -228,14 +228,6 @@ const ApprovalsPageMobile = () => {
                   Kết quả: <span className="text-foreground">{item.outcome}</span>
                 </p>
               ) : null}
-              {typeof item.payload?.llmDraftBody === 'string' && item.payload.llmDraftBody ? (
-                <details className="mt-2 rounded-lg border bg-background px-3 py-2">
-                  <summary className="cursor-pointer text-xs font-medium text-foreground">Bản thảo email sẽ gửi</summary>
-                  <p className="mt-2 whitespace-pre-line text-xs leading-5 text-muted-foreground">
-                    {String(item.payload.llmDraftBody)}
-                  </p>
-                </details>
-              ) : null}
               {canDecide(item) ? (
                 <div className="mt-3 flex gap-2">
                   <Button

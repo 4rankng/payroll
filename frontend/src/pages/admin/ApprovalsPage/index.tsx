@@ -247,19 +247,6 @@ const ApprovalsPage = () => {
                       Kết quả: <span className="text-foreground">{item.outcome}</span>
                     </p>
                   ) : null}
-                  {typeof item.payload?.llmDraftBody === 'string' && item.payload.llmDraftBody ? (
-                    <details className="mt-2 rounded-lg border bg-background px-3 py-2">
-                      <summary className="cursor-pointer text-xs font-medium text-foreground">
-                        Bản thảo email sẽ gửi
-                        {typeof item.payload?.llmDraftSubject === 'string' && item.payload.llmDraftSubject
-                          ? ` — ${item.payload.llmDraftSubject}`
-                          : ''}
-                      </summary>
-                      <p className="mt-2 whitespace-pre-line text-xs leading-5 text-muted-foreground">
-                        {String(item.payload.llmDraftBody)}
-                      </p>
-                    </details>
-                  ) : null}
                 </div>
                 {canDecide(item) ? (
                   <div className="flex shrink-0 gap-2">

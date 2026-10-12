@@ -37,18 +37,14 @@ import (
 	advancePaymentHandlers "api-server/internal/transport/http/handlers/advance_payment"
 	approvalHandlers "api-server/internal/transport/http/handlers/approval"
 	attendanceHandlers "api-server/internal/transport/http/handlers/attendance"
-	chatHandlers "api-server/internal/transport/http/handlers/chat"
 	disbursementHandlers "api-server/internal/transport/http/handlers/disbursement"
 	employeeHandlers "api-server/internal/transport/http/handlers/employee"
-	insightsHandlers "api-server/internal/transport/http/handlers/insights"
 	integrationHandlers "api-server/internal/transport/http/handlers/integration"
 	pushHandlers "api-server/internal/transport/http/handlers/push"
 	timesheetHandlers "api-server/internal/transport/http/handlers/timesheet"
 	"api-server/internal/transport/http/middleware"
 
 	"github.com/gin-gonic/gin"
-
-	"api-server/internal/app/services/insights"
 )
 
 type Container struct {
@@ -109,9 +105,7 @@ type Handlers struct {
 	EmployeeImport         *employeeHandlers.ImportHandler
 	DBExport               *handlers.DBExportHandler
 	Push                   *pushHandlers.Handler
-	Chat                   *chatHandlers.Handler
 	Approval               *approvalHandlers.Handler
-	Insights               *insightsHandlers.Handler
 	Cron                   *handlers.CronHandler
 	DisbursementWebhook    *disbursementHandlers.WebhookHandler
 	DisbursementFee        *disbursementHandlers.FeeScheduleHandler
@@ -231,7 +225,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		infra.Logger,
 	)
 	aggregateRecomputeSvc := project.NewAggregateRecomputeService(repos.Project, clock.New(), infra.Logger)
-	sched := initScheduler(services.Notification, services.Email, services.ProjectEmployee, services.APIMetricCleanupService, services.Reconcile, repos.APIMetric, repos.AdvancePaymentRequest, services.Wallet, services.FlexPayReconciliationService, loanRepaymentReminderService, services.ZaloConnect, aggregateRecomputeSvc, walletBalanceAlertSvc, services.Asset, services.Insights, cfg, infra.Logger)
+	sched := initScheduler(services.Notification, services.Email, services.ProjectEmployee, services.APIMetricCleanupService, services.Reconcile, repos.APIMetric, repos.AdvancePaymentRequest, services.Wallet, services.FlexPayReconciliationService, loanRepaymentReminderService, services.ZaloConnect, aggregateRecomputeSvc, walletBalanceAlertSvc, services.Asset, cfg, infra.Logger)
 	sched.SetRepo(repos.CronJobStatus)
 	h.Cron = handlers.NewCronHandler(repos.CronJobStatus, sched)
 	// init tenant queue manager for per-tenant background workers
@@ -476,9 +470,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Health:               handlers.NewHealthHandler(healthCheckers, version),
 		Notification:         handlers.NewNotificationHandler(services.Notification),
 		Settings:             handlers.NewSettingsHandler(services.Settings, services.LLM),
-		Chat:                 chatHandlers.NewHandler(services.Chat, services.Asset),
 		Approval:             approvalHandlers.NewHandler(services.Approval),
-		Insights:             insightsHandlers.NewHandler(services.Insights),
 		Asset:                handlers.NewAssetHandler(services.Asset),
 		Cache:                handlers.NewCacheHandler(services.Cache, logger),
 		Lender:               handlers.NewLenderHandler(services.Lender),
@@ -569,7 +561,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 	}
 }
 
-func initScheduler(notificationService *notification.NotificationService, emailService *notification.EmailService, projectEmployeeService *project.ProjectEmployeeService, apiMetricCleanupService *cleanup.APIMetricCleanupService, reconcileService *ledger.ReconcileService, apiMetricRepo domain.APIMetricRepository, advancePaymentReqRepo domain.AdvancePaymentRequestRepository, walletSvc wallet.WalletService, flexPayReconciliationSvc *domainServices.FlexPayReconciliationService, loanRepaymentReminderService *notification.LoanRepaymentReminderService, zaloConnectSvc *zaloconnect.Service, aggregateRecomputeSvc *project.AggregateRecomputeService, walletBalanceAlertSvc *notification.WalletBalanceAlertService, assetSvc *asset.AssetService, insightsSvc *insights.Service, cfg *config.Config, logger *slog.Logger) *scheduler.Scheduler {
+func initScheduler(notificationService *notification.NotificationService, emailService *notification.EmailService, projectEmployeeService *project.ProjectEmployeeService, apiMetricCleanupService *cleanup.APIMetricCleanupService, reconcileService *ledger.ReconcileService, apiMetricRepo domain.APIMetricRepository, advancePaymentReqRepo domain.AdvancePaymentRequestRepository, walletSvc wallet.WalletService, flexPayReconciliationSvc *domainServices.FlexPayReconciliationService, loanRepaymentReminderService *notification.LoanRepaymentReminderService, zaloConnectSvc *zaloconnect.Service, aggregateRecomputeSvc *project.AggregateRecomputeService, walletBalanceAlertSvc *notification.WalletBalanceAlertService, assetSvc *asset.AssetService, cfg *config.Config, logger *slog.Logger) *scheduler.Scheduler {
 	s := scheduler.NewScheduler(
 		logger,
 		cfg.Scheduler.Timezone,
@@ -592,7 +584,6 @@ func initScheduler(notificationService *notification.NotificationService, emailS
 		aggregateRecomputeSvc,
 		walletBalanceAlertSvc,
 		assetSvc,
-		insightsSvc,
 		logger,
 	)
 

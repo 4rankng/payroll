@@ -53,11 +53,6 @@ type Repositories struct {
 	FlexPaySalaryNotification domain.FlexPaySalaryNotificationRepository
 	AdBanner                  domain.AdBannerRepository
 	ApprovalRequest           domain.ApprovalRequestRepository
-	ChatConversation          domain.ChatConversationRepository
-	ChatMessage               domain.ChatMessageRepository
-	ChatToolCall              domain.ChatToolCallRepository
-	ChatTurnTiming            domain.ChatTurnTimingRepository
-	DailyFinding              domain.DailyFindingRepository
 }
 
 func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositories {
@@ -117,10 +112,5 @@ func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositorie
 	repos.Timesheet = persistence.NewTimesheetRepository(db, repos.ProjectEmployee)
 
 	repos.ApprovalRequest = persistence.NewApprovalRequestRepository(db)
-	repos.ChatConversation = persistence.NewChatConversationRepository(db)
-	repos.ChatMessage = persistence.NewChatMessageRepository(db)
-	repos.ChatToolCall = persistence.NewChatToolCallRepository(db)
-	repos.ChatTurnTiming = persistence.NewChatTurnTimingRepository(db)
-	repos.DailyFinding = persistence.NewDailyFindingRepository(db)
 	return repos
 }

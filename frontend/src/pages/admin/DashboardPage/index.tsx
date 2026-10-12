@@ -36,7 +36,6 @@ import {
   type DashboardPriorityItem,
 } from '@/components/admin-dashboard/DashboardOverview';
 import { useApprovalsList } from '@/hooks/api/useApprovals';
-import { InsightDigestCard } from '@/components/admin-dashboard/InsightDigestCard';
 import { useDashboardData } from '@/hooks/admin-dashboard/useDashboardData';
 import { useDashboardActions } from '@/hooks/admin-dashboard/useDashboardActions';
 import { useDashboardStats } from '@/hooks/admin-dashboard/useDashboardStats';
@@ -272,7 +271,6 @@ const AdminDashboard = () => {
               isRefreshing={isDashboardRefreshing}
               onRefresh={handleRefresh}
             />
-            <InsightDigestCard />
           </div>
 
           <div className="min-w-0 xl:col-span-5">
