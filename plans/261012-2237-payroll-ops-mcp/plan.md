@@ -93,3 +93,27 @@ Dependencies: 1 → 2 → 3. No dependency on the MiMo Assistant phases; this se
 - Metric dashboard for ops keys (calls/day per agent) — fold into Goal 8 console or skip?
 
 <!-- slug: payroll-ops-mcp -->
+
+---
+
+## REVISION 2026-10-12 23:40 — Admin-parity design (user decision, overrides curated tool list)
+
+**User goal:** the agent does whatever an ADMIN can do, gated by the scope toggle:
+- `read_only` ON → agent may call **any GET API**
+- `read_write` ON → agent may call **ANY API** (GET/POST/PUT/PATCH/DELETE — full mutation)
+
+**Tool design (replaces the curated 6-tool list):** one generic admin-API proxy —
+`payroll_api_request(method, path, body, query)` forwarding to the `/api/v1` admin surface
+(+ optional thin `payroll_get` helper). No endpoint allowlist: admin parity.
+
+**Enforcement:** scope gate at BOTH layers — MCP server (read_only rejects non-GET before
+forwarding) AND backend key middleware (defense in depth). Key = admin identity, so the
+app's own RBAC/validation applies exactly as it would for a human admin.
+
+**Dropped from v1 spec:** curated tool list, PII default-masking (admin parity — agent sees
+what admin sees), "file request only" mutation philosophy for this server. Approval-engine
+business rules still apply server-side naturally (the call runs as admin through the app).
+
+**Kept unchanged:** `pk_ops_*` namespace + isolation from chatbot mcp/; secrets-file key;
+audit per call (key id, agent, method, path, status); kill switch; hardening tests now:
+wrong-scope 403; read_only POST blocked at MCP + backend; read_write POST succeeds; kill switch.
