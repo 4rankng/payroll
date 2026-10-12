@@ -121,8 +121,16 @@ export function validatePath(path) {
   return { ok: true };
 }
 
+// buildURL joins BASE_URL with an /api/v1-anchored path, tolerating a BASE_URL
+// that already carries the /api/v1 suffix (the chat server's convention) or
+// one that does not — never doubling the prefix.
+export function buildURL(baseUrl, path, query) {
+  const suffix = path.startsWith("/api/v1") && baseUrl.endsWith("/api/v1") ? path.slice("/api/v1".length) : path;
+  return `${baseUrl}${suffix}${query ? `?${query}` : ""}`;
+}
+
 async function callApi(method, path, { tool, query, body } = {}) {
-  const url = `${BASE_URL}${path}${query ? `?${query}` : ""}`;
+  const url = buildURL(BASE_URL, path, query);
   const headers = {
     "X-API-Key": API_KEY,
     "X-MCP-Tool": tool ?? "payroll_api_request",

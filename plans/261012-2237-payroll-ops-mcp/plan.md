@@ -74,9 +74,9 @@ The core primitive is an **Admin API Key** (`pk_ops_*` namespace) that can invok
 
 | # | Phase | Scope |
 |---|-------|-------|
-| 1 | [Backend scope model](#) — extend API Keys admin (`ccef13a3`) with `pk_ops_*` namespace + scope field + audit-on-toggle + 2FA re-entry; middleware enforcement; Casbin `agent_ops` role (read + file-request only; deny approve/reject/send — same deny rows as partner) | backend |
-| 2 | [MCP server](#) — `payroll-ops-mcp/server.mjs` (stdio), tools per Goal 4/5, secrets-file key loading, scope check at startup + per-call, PII redaction middleware, audit tag `scope=ops` on every call into existing `audit_logs` | mcp |
-| 3 | [Hardening & tests](#) — negative tests in `make api-test` (agent key cannot approve/reject/send; wrong-scope key → 403), PII masking tests, rate-limit + kill-switch tests, docs + README in the mcp folder | qa |
+| 1 | [Backend scope model](#) — ✅ done (commit `feat(opsapikey)`) — `pk_ops_*` keys (separate table/namespace), scope toggle + audit + OTP gate, write window, middleware enforcement (kill switch, wrong-surface 403+alert, per-key rate tier, per-call audit), self-introspection endpoint | backend |
+| 2 | [MCP server](#) — ✅ done (commit `feat(payroll-ops-mcp)`) — `payroll-ops-mcp/server.mjs` (stdio): `payroll_api_request` generic proxy + `payroll_get`/`payroll_key_info` helpers, scope gate at MCP layer + backend, secrets-file key (mode 600), kill switch | mcp |
+| 3 | [Hardening & tests](#) — ✅ done — `flow_ops_mcp.go` integration flow (12 scenarios), unit tests (Go + Node), E2E driver, secrets scan script, README + runbook | qa |
 
 Dependencies: 1 → 2 → 3. No dependency on the MiMo Assistant phases; this server consumes the same Admin APIs regardless of whether the assistant feature ships.
 
@@ -100,15 +100,18 @@ Dependencies: 1 → 2 → 3. No dependency on the MiMo Assistant phases; this se
 
 ## Success Criteria
 
-- [ ] Wrong-scope key → 403 + audit alert (test 1)
-- [ ] Scope flip to `read_only` blocks in-flight mutations within one request cycle (test 2)
-- [ ] `read_write` agent attempting approve/reject/send results in a **filed request only** (test 3)
-- [ ] All PII fields masked by default; unmask events audit-flagged (test 4)
-- [ ] Kill switch verified (test 5)
-- [ ] Zero plaintext key material in repo/config/logs (test 6)
-- [ ] Audit log has exactly one entry per MCP call with key ID + agent identity + scope-at-time
-- [ ] README in `payroll-ops-mcp/` documents setup, key creation, scope toggle, and kill switch
-- [ ] `payroll-integration-mcp` untouched: its tests stay green, its key namespace unmodified
+Verified state after implementation (post scope-change; see the SCOPE CHANGE
+block at the top — criteria 3 and 4 below were superseded by it):
+
+- [x] Wrong-scope key → 403 + audit alert (ops key on `/api/v1/mcp` → 403 `ops_wrong_surface` + `OPS_MCP_SCOPE_PROBE` row; integration flow + E2E)
+- [x] Scope flip to `read_only` blocks the next mutation within one request cycle (integration + unit + E2E; write-window lapse verified in unit tests)
+- [x] ~~`read_write` agent attempting approve/reject/send results in a filed request only~~ — **superseded**: the key is admin-equivalent by explicit user decision; under `read_write` the agent may exercise any admin API. The breadth limiter is the scope verb gate (enforced at MCP layer AND backend).
+- [x] ~~PII masked by default~~ — **superseded**: admin parity (agent sees what an admin sees); masking dropped.
+- [x] Kill switch verified (`PAYROLL_OPS_MCP_DISABLED`: unit test 503 `ops_mcp_disabled` on the backend; E2E structured refusal in the server)
+- [x] Zero plaintext key material in repo/config/logs (`npm run scan-secrets` clean; key only via mode-600 file)
+- [x] Audit log has exactly one entry per MCP call with key ID + agent identity + scope-at-time (+ tool tag + payload hash) — verified by DB query in the integration flow and the E2E run
+- [x] README in `payroll-ops-mcp/` documents setup, key creation, scope toggle, and kill switch (+ ops runbook at `docs/runbooks/payroll-ops-mcp.md`)
+- [x] `payroll-integration-mcp` untouched: the `mcp/` folder is byte-identical to base; its backend tests stay green (call sites updated only for the new middleware constructor signature)
 
 ## Open Questions (defaults proposed, reversible)
 

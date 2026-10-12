@@ -132,6 +132,9 @@ func main() {
 	// Approvals flow (MiMo assistant wave 1)
 	runApprovalsTests(client, testData, reporter, cfg)
 
+	// payroll-ops-mcp flow (pk_ops_* admin-equivalent machine keys)
+	runOpsMCPTests(client, testData, reporter, cfg)
+
 	// Summary
 	reporter.PrintSummary()
 	os.Exit(reporter.ExitCode())

@@ -113,9 +113,22 @@ Cấu hình MCP client (Claude Desktop / Claude Code / Paseo runner):
 ## Kiểm thử
 
 ```bash
-npm test   # scope gate, kill switch, path validation, secrets-file hygiene
+npm test            # scope gate, kill switch, path validation, secrets-file hygiene
+npm run scan-secrets # quét key material trong file được git track (ràng buộc red-team 6)
 ```
 
-Các test tích hợp backend (wrong-scope 403, read_only POST bị chặn ở CẢ hai
-lớp, read_write POST thành công, kill switch, stale scope) nằm trong
+### E2E với backend đang chạy
+
+`e2e-live.mjs` chạy toàn bộ vòng đời qua stdio thật: mint khoá → list tools →
+`payroll_get` → POST bị chặn ở tầng MCP khi `read_only` → bật `read_write` →
+POST thành công → bật lại `read_only` → bị chặn → kill switch → thu hồi.
+Yêu cầu backend chạy ở `http://localhost:8080` (ghi đè bằng
+`PAYROLL_BASE_URL`), admin qua `PAYROLL_ADMIN_USER`/`PAYROLL_ADMIN_PASS`.
+
+```bash
+node e2e-live.mjs
+```
+
+Các test tích hợp backend (wrong-scope 403, read_only POST bị chặn ở backend,
+read_write POST thành công, kill switch, stale scope, audit rows) nằm trong
 `backend/tests/integration/flow_ops_mcp.go` — chạy bằng `make api-test`.

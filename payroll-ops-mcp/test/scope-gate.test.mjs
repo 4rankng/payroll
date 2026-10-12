@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 import {
+  buildURL,
   ensureWriteScope,
   killSwitchActive,
   loadApiKey,
@@ -89,6 +90,13 @@ test("only absolute /api/v1 paths are forwarded", () => {
   assert.equal(validatePath("//evil.example/api/v1").ok, false);
   assert.equal(validatePath("/api/v1/employees foo").ok, false);
   assert.equal(validatePath(123).ok, false);
+});
+
+test("URL building never doubles the /api/v1 prefix", () => {
+  assert.equal(buildURL("http://x/api/v1", "/api/v1/employees"), "http://x/api/v1/employees");
+  assert.equal(buildURL("http://x/api/v1", "/api/v1/employees", "page=1"), "http://x/api/v1/employees?page=1");
+  assert.equal(buildURL("http://x", "/api/v1/employees"), "http://x/api/v1/employees");
+  assert.equal(buildURL("http://x/api", "/api/v1/approvals/5"), "http://x/api/api/v1/approvals/5");
 });
 
 // ── secrets-file hygiene ───────────────────────────────────────────────────
