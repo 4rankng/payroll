@@ -24,6 +24,7 @@ import { ZaloConnectionSection } from '@/components/settings/ZaloConnectionSecti
 import { AdBannerSection } from '@/components/settings/AdBannerSection';
 import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
 import { McpApiKeysSection } from '@/components/settings/McpApiKeysSection';
+import { OpsApiKeysSection } from '@/components/settings/OpsApiKeysSection';
 
 const SettingsPageMobile = () => {
   const form = useSettingsForm();
@@ -148,6 +149,7 @@ const SettingsPageMobile = () => {
           <TabsContent value={SETTINGS_TABS.apiKeys} className="mt-0 space-y-6">
             <ApiKeysSection />
             <McpApiKeysSection />
+            <OpsApiKeysSection />
           </TabsContent>
         </Tabs>
       </div>

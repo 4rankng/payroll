@@ -8,7 +8,45 @@ của app áp dụng y như phiên admin. Độ rộng chỉ do **scope** của 
 `read_only` sau cửa sổ ghi (mặc định 8h, tuỳ chỉnh được).
 
 Đây là runbook vận hành. Hướng dẫn agent và cấu hình MCP client nằm trong
-`payroll-ops-mcp/README.md`.
+`payroll-ops-mcp/README.md` (và cả mục «Cài đặt MCP vào agent của bạn» trên
+trang Settings → API của admin).
+
+## Cài đặt vào agent ( MCP client config )
+
+Dùng cho Hermes, Paseo runner, Claude Desktop, Claude Code — stdio, khoá đọc
+từ file bí mật (mode 600), không bao giờ dán khoá vào config:
+
+```json
+{
+  "mcpServers": {
+    "payroll-ops": {
+      "command": "node",
+      "args": ["/duong/dan/toi/payroll-ops-mcp/server.mjs"],
+      "env": {
+        "PAYROLL_OPS_KEY_FILE": "~/.secrets/payroll-ops-agent.key",
+        "PAYROLL_BASE_URL": "https://tingting.vip/api/v1"
+      }
+    }
+  }
+}
+```
+
+Claude Code:
+
+```bash
+claude mcp add payroll-ops \
+  -e PAYROLL_OPS_KEY_FILE=~/.secrets/payroll-ops-agent.key \
+  -e PAYROLL_BASE_URL=https://tingting.vip/api/v1 \
+  -- node /duong/dan/toi/payroll-ops-mcp/server.mjs
+```
+
+Lưu file bí mật:
+
+```bash
+mkdir -p ~/.secrets
+echo -n "pk_ops_..." > ~/.secrets/payroll-ops-agent.key
+chmod 600 ~/.secrets/payroll-ops-agent.key
+```
 
 ## Tạo khoá cho một agent
 

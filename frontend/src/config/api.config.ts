@@ -363,6 +363,12 @@ export const API_ENDPOINTS = {
     byId: (id: number) => `/admin/mcp-api-keys/${id}`,
   },
 
+  opsApiKeys: {
+    base: '/admin/ops-api-keys',
+    byId: (id: number) => `/admin/ops-api-keys/${id}`,
+    scope: (id: number) => `/admin/ops-api-keys/${id}/scope`,
+  },
+
   // Health Check
   health: {
     base: '../healthz',
