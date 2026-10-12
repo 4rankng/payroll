@@ -265,14 +265,12 @@ func (h *VendorTimesheetHandler) ListTimesheets(c *gin.Context) {
 		filters.ToDate = &to
 	}
 
+	// `status` filters the payment state (pending, paid, failed, cancelled),
+	// which is what the vendor reconciles against. The internal approval
+	// workflow is not part of the vendor contract.
 	if statuses := splitMultiValue(c.QueryArray("status")); len(statuses) > 0 {
-		for _, s := range statuses {
-			filters.TimesheetStatus = append(filters.TimesheetStatus, domain.TimesheetStatus(s))
-		}
-	}
-	if payments := splitMultiValue(c.QueryArray("payment_status")); len(payments) > 0 {
-		for _, p := range payments {
-			filters.PaymentStatus = append(filters.PaymentStatus, domain.PaymentStatus(p))
+		for _, st := range statuses {
+			filters.PaymentStatus = append(filters.PaymentStatus, domain.PaymentStatus(st))
 		}
 	}
 
@@ -375,16 +373,11 @@ func toVendorEmployeeItem(e *domain.Employee, projectCodes []string) dto.VendorE
 		BankID:            e.BankID,
 		BankAccountName:   e.BankAccountName,
 		BankAccountNumber: e.BankAccountNumber,
-		BankAccountStatus: e.BankAccountStatus,
 		ProjectCodes:      projectCodes,
 	}
 	if e.DateOfBirth != nil {
 		formatted := e.DateOfBirth.Format(timeutil.DateFormat)
 		item.DateOfBirth = &formatted
-	}
-	if e.BankAccountInvalidReason != nil {
-		reason := *e.BankAccountInvalidReason
-		item.BankAccountInvalidReason = &reason
 	}
 	return item
 }
@@ -393,11 +386,10 @@ func toVendorTimesheetItem(ts *domain.Timesheet) dto.VendorTimesheetItem {
 	item := dto.VendorTimesheetItem{
 		Date:          ts.Date.Format(timeutil.DateFormat),
 		HoursWorked:   ts.HoursWorked,
-		PayType:       ts.PayType,
+		PayType:       VendorPayType(ts.PayType),
 		PayRate:       ts.PayRate,
 		Amount:        ts.Amount,
 		PaidAmount:    ts.PaidAmount,
-		Status:        string(ts.Status),
 		PaymentStatus: string(ts.PaymentStatus),
 	}
 
@@ -416,11 +408,30 @@ func toVendorTimesheetItem(ts *domain.Timesheet) dto.VendorTimesheetItem {
 		paidAt := ts.PaidAt.Format(time.RFC3339)
 		item.PaidAt = &paidAt
 	}
-	if ts.RejectionReason != "" {
-		reason := ts.RejectionReason
-		item.RejectionReason = &reason
-	}
 	return item
+}
+
+// VendorPayType renders the stored pay_type as `Day_type.shift_type` for the
+// vendor, e.g. the stored "phổ thường.ngày thường.tcn" becomes
+// "ngày_thường.TCN".
+//
+// The stored value is built by the domain as
+// position.dayType.hourType, all lowercased (see paytype_construction_service).
+// The vendor contract exposes only the last two segments — position is an
+// internal skill-level concept the vendor has no use for. This is a
+// presentation-only transform at the API boundary: the stored value, and
+// therefore payroll calculation, is untouched.
+func VendorPayType(stored string) string {
+	parts := strings.Split(strings.TrimSpace(stored), ".")
+	if len(parts) < 2 {
+		return stored
+	}
+	dayType := parts[len(parts)-2]
+	hourType := strings.ToUpper(parts[len(parts)-1])
+	// Day types are human phrases ("ngày thường"); the underscore keeps the
+	// token safe to use in vendor systems.
+	dayType = strings.ReplaceAll(dayType, " ", "_")
+	return dayType + "." + hourType
 }
 
 // splitMultiValue accepts both a repeated query parameter

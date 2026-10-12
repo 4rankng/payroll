@@ -268,14 +268,17 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 		for _, field := range []string{
 			"project_code", "cccd", "employee_name", "date",
 			"hours_worked", "pay_type", "payrate", "amount",
-			"paid_amount", "status", "payment_status",
+			"paid_amount", "payment_status",
 		} {
 			if _, ok := row[field]; !ok {
 				return fmt.Errorf("timesheet row missing field %q", field)
 			}
 		}
-		// Client-billing figures stay internal by design.
-		for _, forbidden := range []string{"revenue_receivable", "revenue_paid"} {
+		// Client-billing figures stay internal by design, as is the internal
+		// approval workflow the vendor contract deliberately omits.
+		for _, forbidden := range []string{
+			"revenue_receivable", "revenue_paid", "status", "rejection_reason",
+		} {
 			if _, ok := row[forbidden]; ok {
 				return fmt.Errorf("timesheet row must not expose %q", forbidden)
 			}
@@ -301,7 +304,7 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 		row := rows[0]
 		for _, field := range []string{
 			"cccd", "fullname", "mobile", "bank_account_name",
-			"bank_account_number", "bank_account_status", "project_codes",
+			"bank_account_number", "project_codes",
 		} {
 			if _, ok := row[field]; !ok {
 				return fmt.Errorf("employee row missing field %q", field)
@@ -309,6 +312,12 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 		}
 		if _, ok := row["id"]; ok {
 			return fmt.Errorf("employee row must not expose internal id")
+		}
+		// OnePay bank-validation state is internal payment-rail detail.
+		for _, forbidden := range []string{"bank_account_status", "bank_account_invalid_reason"} {
+			if _, ok := row[forbidden]; ok {
+				return fmt.Errorf("employee row must not expose %q", forbidden)
+			}
 		}
 		return nil
 	})

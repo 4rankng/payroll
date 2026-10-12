@@ -1149,18 +1149,16 @@ type VendorProjectItem struct {
 }
 
 type VendorEmployeeItem struct {
-	CCCD                     string   `json:"cccd"`
-	Fullname                 string   `json:"fullname"`
-	Mobile                   string   `json:"mobile"`
-	Email                    *string  `json:"email"`
-	Address                  string   `json:"address"`
-	DateOfBirth              *string  `json:"date_of_birth"`
-	BankID                   *uint    `json:"bank_id"`
-	BankAccountName          string   `json:"bank_account_name"`
-	BankAccountNumber        string   `json:"bank_account_number"`
-	BankAccountStatus        string   `json:"bank_account_status"`
-	BankAccountInvalidReason *string  `json:"bank_account_invalid_reason"`
-	ProjectCodes             []string `json:"project_codes"`
+	CCCD              string   `json:"cccd"`
+	Fullname          string   `json:"fullname"`
+	Mobile            string   `json:"mobile"`
+	Email             *string  `json:"email"`
+	Address           string   `json:"address"`
+	DateOfBirth       *string  `json:"date_of_birth"`
+	BankID            *uint    `json:"bank_id"`
+	BankAccountName   string   `json:"bank_account_name"`
+	BankAccountNumber string   `json:"bank_account_number"`
+	ProjectCodes      []string `json:"project_codes"`
 }
 
 // VendorTimesheetItem carries the money fields the sister vendor reconciles
@@ -1175,11 +1173,9 @@ type VendorTimesheetItem struct {
 	PayRate          int64   `json:"payrate"`
 	Amount           int64   `json:"amount"`
 	PaidAmount       int64   `json:"paid_amount"`
-	Status           string  `json:"status"`
 	PaymentStatus    string  `json:"payment_status"`
 	PaymentReference *string `json:"payment_reference"`
 	PaidAt           *string `json:"paid_at"`
-	RejectionReason  *string `json:"rejection_reason"`
 }
 
 // VendorListResponse is the raw shape of a paginated vendor response, used to

@@ -21,19 +21,21 @@ type VendorProjectItem struct {
 // VendorEmployeeItem is one employee in the vendor's vocabulary, keyed by
 // CCCD. ProjectCodes lets the vendor build the project↔employee relationship
 // without a third call.
+//
+// The OnePay bank-validation fields (BankAccountStatus /
+// BankAccountInvalidReason) are deliberately not exposed: they describe our
+// internal payment-rail state, not the vendor's reconciliation view.
 type VendorEmployeeItem struct {
-	CCCD                     string   `json:"cccd"`
-	Fullname                 string   `json:"fullname"`
-	Mobile                   string   `json:"mobile"`
-	Email                    *string  `json:"email"`
-	Address                  string   `json:"address"`
-	DateOfBirth              *string  `json:"date_of_birth"`
-	BankID                   *uint    `json:"bank_id"`
-	BankAccountName          string   `json:"bank_account_name"`
-	BankAccountNumber        string   `json:"bank_account_number"`
-	BankAccountStatus        string   `json:"bank_account_status"`
-	BankAccountInvalidReason *string  `json:"bank_account_invalid_reason"`
-	ProjectCodes             []string `json:"project_codes"`
+	CCCD              string   `json:"cccd"`
+	Fullname          string   `json:"fullname"`
+	Mobile            string   `json:"mobile"`
+	Email             *string  `json:"email"`
+	Address           string   `json:"address"`
+	DateOfBirth       *string  `json:"date_of_birth"`
+	BankID            *uint    `json:"bank_id"`
+	BankAccountName   string   `json:"bank_account_name"`
+	BankAccountNumber string   `json:"bank_account_number"`
+	ProjectCodes      []string `json:"project_codes"`
 }
 
 // VendorTimesheetItem is one timesheet row. Money fields are included because
@@ -41,21 +43,23 @@ type VendorEmployeeItem struct {
 // paid; payment_reference is included so both sides can tie a row to the same
 // bank transaction.
 //
+// Status and RejectionReason (the internal approval workflow) are not
+// exposed — the vendor's reconciliation is a payment concern, not an approval
+// workflow.
+//
 // RevenueReceivable / RevenuePaid are intentionally absent — see the package
 // comment.
 type VendorTimesheetItem struct {
 	ProjectCode      string  `json:"project_code"`
 	CCCD             string  `json:"cccd"`
 	EmployeeName     string  `json:"employee_name"`
-	Date             string  `json:"date"` // YYYY-MM-DD
+	Date             string  `json:"date"`   // YYYY-MM-DD
 	HoursWorked      float64 `json:"hours_worked"`
-	PayType          string  `json:"pay_type"`
-	PayRate          int64   `json:"payrate"`     // VND
-	Amount           int64   `json:"amount"`      // VND, computed total
-	PaidAmount       int64   `json:"paid_amount"` // VND, disbursed
-	Status           string  `json:"status"`
+	PayType          string  `json:"pay_type"` // Day_type.shift_type, e.g. ngày_thường.TCN
+	PayRate          int64   `json:"payrate"`  // VND
+	Amount           int64   `json:"amount"`   // VND, computed total
+	PaidAmount       int64   `json:"paid_amount"`
 	PaymentStatus    string  `json:"payment_status"`
 	PaymentReference *string `json:"payment_reference"` // nil until paid
 	PaidAt           *string `json:"paid_at"`
-	RejectionReason  *string `json:"rejection_reason"`
 }

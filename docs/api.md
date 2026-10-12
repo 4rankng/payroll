@@ -254,9 +254,13 @@ Records are addressed by **business codes, never internal IDs**: `projects.code`
 | GET | `/vendor/employees` | Employee vocabulary keyed by CCCD (`project_code`, `search`, `page`, `page_size`≤100) |
 | GET | `/vendor/timesheets` | Timesheets by `project_code` / `cccd` + date range |
 
-`/vendor/timesheets` accepts `project_code` and `cccd` (each repeatable **and** comma-separated), `from_date`/`to_date` (`YYYY-MM-DD`, Vietnam timezone), `status`, `payment_status`, `page`, `page_size`≤200. **At least one of `project_code` / `cccd` / `from_date` is required** — an unfiltered call returns 400 rather than dumping the whole table.
+`/vendor/timesheets` accepts `project_code` and `cccd` (each repeatable **and** comma-separated), `from_date`/`to_date` (`YYYY-MM-DD`, Vietnam timezone), `status` (the **payment** state: `pending`, `paid`, `failed`, `cancelled`), `page`, `page_size`≤200. **At least one of `project_code` / `cccd` / `from_date` is required** — an unfiltered call returns 400 rather than dumping the whole table.
 
-Timesheet rows carry `payrate`, `amount`, `paid_amount`, `payment_reference`, and `paid_at`; employee rows carry mobile, email, address, date of birth, and bank fields. `RevenueReceivable` / `RevenuePaid` are deliberately excluded — those are client-billing figures, not worker payouts.
+Timesheet rows carry `payrate`, `amount`, `paid_amount`, `payment_reference`, and `paid_at`; employee rows carry mobile, email, address, date of birth, and bank fields.
+
+`pay_type` is rendered at the API boundary as `Day_type.shift_type` (e.g. `ngày_thường.TCN`). The stored value is `position.dayType.hourType` all-lowerercased; only the last two segments are exposed, since position is an internal skill-level concept. This is presentation-only — the stored value and payroll calculation are untouched.
+
+Deliberately excluded: `RevenueReceivable` / `RevenuePaid` (client-billing figures, not worker payouts), the internal approval workflow (`status`, `rejection_reason`), and the OnePay bank-validation fields (`bank_account_status`, `bank_account_invalid_reason`).
 
 Error semantics: unknown `project_code` / `cccd` returns **400, not 404** (the request was well-formed, the referenced code simply does not exist). Rate limit is 60/hour per key via `IntegrationRateLimit`.
 
