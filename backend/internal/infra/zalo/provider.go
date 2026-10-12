@@ -60,11 +60,11 @@ func (p *Provider) SetRefreshCoordinator(coordinator RefreshCoordinator) {
 
 // SetRotationHook registers fn to run after every successful token rotation —
 // a refresh_exchange, a validated admin paste, or a metadata save that persists
-// a new access token. Payroll wires a pusher that hands the fresh access token
-// to the TingTing chatbot, which no longer rotates on its own. fn must bound
-// its own runtime (the pusher uses a 5s HTTP timeout) and must never surface a
-// failure into the send/renew path: fireRotationHook swallows panics, and fn's
-// signature carries no error on purpose.
+// a new access token. A consumer may wire a pusher that hands the fresh access
+// token to its external system. fn must bound its own runtime (a pusher would
+// use a short HTTP timeout) and must never surface a failure into the
+// send/renew path: fireRotationHook swallows panics, and fn's signature
+// carries no error on purpose.
 func (p *Provider) SetRotationHook(fn func(ctx context.Context, accessToken string)) {
 	p.mu.Lock()
 	defer p.mu.Unlock()

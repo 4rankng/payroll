@@ -13,7 +13,7 @@ import (
 )
 
 // APIKeyHandler exposes admin-only endpoints for managing machine API keys used
-// by the external chatbot integration API. All routes live behind the admin
+// by the external integration APIs. All routes live behind the admin
 // authorization middleware.
 type APIKeyHandler struct {
 	service *apikey.Service
@@ -109,7 +109,7 @@ func toAPIKeyResponse(key *domain.APIKey, plaintext string) dto.APIKeyResponse {
 	return dto.APIKeyResponse{
 		ID:         key.ID,
 		Name:       key.Name,
-		Scope:      domain.NormalizeAPIKeyScope(key.Scope),
+		Scope:      key.Scope,
 		Key:        plaintext,
 		KeyPrefix:  key.KeyPrefix,
 		CreatedBy:  key.CreatedBy,

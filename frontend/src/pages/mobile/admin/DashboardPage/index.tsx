@@ -290,11 +290,11 @@ const AdminDashboardMobile = () => {
       ...(approvalsCount > 0
         ? [
             {
-              title: 'Yêu cầu phê duyệt (trợ lý AI)',
+              title: 'Yêu cầu phê duyệt',
               description:
                 (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0
                   ? 'Có yêu cầu đã leo thang — cần quyết định'
-                  : 'Yêu cầu từ trợ lý AI đang chờ duyệt',
+                  : 'Yêu cầu đang chờ duyệt',
               value: approvalsCount.toLocaleString('vi-VN'),
               icon: AlertCircle,
               tone: (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0 ? 'warning' : 'primary',

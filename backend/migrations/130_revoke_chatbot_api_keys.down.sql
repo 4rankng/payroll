@@ -1,0 +1,3 @@
+-- No-op: revoking retired chatbot keys is not reversible. The revoked rows and
+-- their scope values are kept for audit history; re-enabling them would
+-- resurrect an integration surface that no longer exists.

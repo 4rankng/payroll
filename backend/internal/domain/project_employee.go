@@ -596,23 +596,6 @@ func (m CheckInStartMonth) EffectiveFrom(now time.Time) time.Time {
 	return time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, now.Location())
 }
 
-// checkInEnableCutoffDay is the last day of the month on which a chatbot
-// enable may still start in the current month; day 9 or later waits for the
-// next month. Owner ruling 2026-10-07: days 1-8 enable same month, day 9
-// counts as "after".
-const checkInEnableCutoffDay = 9
-
-// ResolveCheckInEnableStartMonth fixes the start month for a chatbot-requested
-// enable: early in the month (days 1-8) the current month still works; from
-// day 9 the enable waits for the next month. The admin keeps an explicit
-// choice via ParseCheckInStartMonth — this only pins the bot's rule.
-func ResolveCheckInEnableStartMonth(now time.Time) CheckInStartMonth {
-	if now.Day() < checkInEnableCutoffDay {
-		return CheckInStartMonthThisMonth
-	}
-	return CheckInStartMonthNextMonth
-}
-
 // HasPendingCheckInEnable returns true if a check-in enable is awaiting activation
 func (pe *ProjectEmployee) HasPendingCheckInEnable() bool {
 	return pe.PendingCheckInEnabled != nil && *pe.PendingCheckInEnabled && pe.CheckInEffectiveFrom != nil

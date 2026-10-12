@@ -3,24 +3,16 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import {
   AlertTriangle,
-  Bot,
   Calendar,
   Check,
-  ChevronDown,
   Clock,
   Copy,
-  Download,
-  Eye,
-  FileCode,
   KeyRound,
   Loader2,
   Plus,
   RefreshCw,
   ShieldAlert,
-  Sparkles,
-  Terminal,
   Trash2,
-  Workflow,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,17 +23,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useApiKeys, useCreateAPIKey, useRevokeAPIKey } from '@/hooks/api/useApiKeys';
 import type { APIKey, APIKeyScope } from '@/services/api/apiKeys.service';
-import skillMarkdown from '@/assets/skills/payroll-password-reset/SKILL.md?raw';
 
 const DATE_TIME_DISPLAY = 'dd/MM/yyyy HH:mm';
-
-// The path the downloaded skill belongs at. A zero-width space after each slash
-// lets the long segment wrap at its separators instead of mid-word on narrow screens.
-const SKILL_TARGET_PATH_DISPLAY = '.claude/skills/payroll-password-reset/SKILL.md'
-  .split('/')
-  .join('/\u200B');
-
-const RAW_SKILL_TARGET_PATH = '.claude/skills/payroll-password-reset/SKILL.md';
 
 const formatDateTime = (value: string | null): string =>
   value ? format(new Date(value), DATE_TIME_DISPLAY) : '—';
@@ -51,13 +34,6 @@ const SCOPE_META: Record<
   APIKeyScope,
   { label: string; description: string; badgeClass: string }
 > = {
-  chatbot: {
-    label: 'Chatbot',
-    description:
-      'Dùng cho Zalo chatbot: đặt lại mật khẩu, tra cứu nhân viên, tự chấm công.',
-    badgeClass:
-      'border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300',
-  },
   timesheet_read: {
     label: 'Vendor — bảng chấm công',
     description:
@@ -68,12 +44,14 @@ const SCOPE_META: Record<
 };
 
 /**
- * Resolve a key's scope, defaulting a missing value to 'chatbot'. A key minted
- * before scopes existed has no scope field, and the backend treats an empty
- * scope the same way — so the UI must agree or it would label such a key with
- * an unknown value.
+ * Resolve a key's scope, defaulting a missing value to 'timesheet_read'. Any
+ * unrecognized stored scope (e.g. a retired legacy value) is flagged
+ * 'unsupported' so the row renders it as no longer supported.
  */
-const scopeOf = (apiKey: APIKey): APIKeyScope => apiKey.scope ?? 'chatbot';
+const scopeOf = (apiKey: APIKey): APIKeyScope | 'unsupported' => {
+  const raw: string | null | undefined = apiKey.scope;
+  return raw == null || raw === '' || raw === 'timesheet_read' ? 'timesheet_read' : 'unsupported';
+};
 
 interface APIKeyRowProps {
   apiKey: APIKey;
@@ -92,7 +70,8 @@ const APIKeyRow = ({
 }: APIKeyRowProps) => {
   const revoked = apiKey.revoked_at != null;
   const isCopied = copiedPrefixId === apiKey.id;
-  const scope = SCOPE_META[scopeOf(apiKey)];
+  const scopeKey = scopeOf(apiKey);
+  const scope = scopeKey === 'unsupported' ? null : SCOPE_META[scopeKey];
 
   return (
     <li className="flex flex-col gap-3.5 p-4 transition-colors hover:bg-muted/30 sm:gap-4 sm:p-5 md:flex-row md:items-center md:justify-between">
@@ -118,9 +97,15 @@ const APIKeyRow = ({
               Đang hoạt động
             </Badge>
           )}
-          <Badge variant="outline" className={scope.badgeClass}>
-            {scope.label}
-          </Badge>
+          {scope ? (
+            <Badge variant="outline" className={scope.badgeClass}>
+              {scope.label}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="border-border bg-muted/60 px-2 py-0.5 text-xs text-muted-foreground">
+              Không còn hỗ trợ
+            </Badge>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -189,23 +174,17 @@ const APIKeyRow = ({
   );
 };
 
-/** Admin control surface for machine API keys used by the chatbot integration. */
+/** Admin control surface for machine API keys used by the vendor integration. */
 export const ApiKeysSection = () => {
   const { data, isLoading, isError, isFetching, refetch } = useApiKeys();
   const createKey = useCreateAPIKey();
   const revokeKey = useRevokeAPIKey();
 
   const [name, setName] = useState('');
-  // Chatbot stays the default so an admin creating a key without thinking
-  // about scope gets the same key they always got.
-  const [scope, setScope] = useState<APIKeyScope>('chatbot');
   const [revealed, setRevealed] = useState<{ key: string; name: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [revokingId, setRevokingId] = useState<number | null>(null);
   const [copiedPrefixId, setCopiedPrefixId] = useState<number | null>(null);
-  const [pathCopied, setPathCopied] = useState(false);
-  const [showSkillPreview, setShowSkillPreview] = useState(false);
-  const [skillTextCopied, setSkillTextCopied] = useState(false);
 
   const keys = data?.data ?? [];
   const activeKeysCount = keys.filter((k) => k.revoked_at == null).length;
@@ -219,7 +198,7 @@ export const ApiKeysSection = () => {
       return;
     }
     try {
-      const res = await createKey.mutateAsync({ name: trimmed, scope });
+      const res = await createKey.mutateAsync({ name: trimmed, scope: 'timesheet_read' });
       if (res.data?.key) {
         setRevealed({ key: res.data.key, name: res.data.name });
       }
@@ -252,34 +231,9 @@ export const ApiKeysSection = () => {
     }
   };
 
-  const handleCopyPath = async () => {
-    try {
-      await navigator.clipboard.writeText(RAW_SKILL_TARGET_PATH);
-      setPathCopied(true);
-      toast.success('Đã sao chép đường dẫn SKILL.md');
-      setTimeout(() => setPathCopied(false), 1800);
-    } catch {
-      toast.error('Không thể sao chép đường dẫn');
-    }
-  };
-
-  const handleCopySkillText = async () => {
-    try {
-      await navigator.clipboard.writeText(skillMarkdown);
-      setSkillTextCopied(true);
-      toast.success('Đã sao chép toàn bộ nội dung SKILL.md');
-      setTimeout(() => setSkillTextCopied(false), 1800);
-    } catch {
-      toast.error('Không thể sao chép nội dung');
-    }
-  };
-
   const handleRevoke = async (apiKey: APIKey) => {
-    const scopeLabel = SCOPE_META[scopeOf(apiKey)].label;
-    const impact =
-      scopeOf(apiKey) === 'chatbot'
-        ? 'Chatbot đang dùng khoá này sẽ ngừng hoạt động ngay.'
-        : 'Đối tác đang dùng khoá này sẽ mất quyền xem bảng chấm công ngay.';
+    const scopeLabel = scopeOf(apiKey) === 'unsupported' ? 'Không còn hỗ trợ' : SCOPE_META.timesheet_read.label;
+    const impact = 'Đối tác đang dùng khoá này sẽ mất quyền xem bảng chấm công ngay.';
     if (
       !window.confirm(
         `Thu hồi khoá "${apiKey.name}" (${scopeLabel})? ${impact}`,
@@ -295,19 +249,6 @@ export const ApiKeysSection = () => {
     } finally {
       setRevokingId(null);
     }
-  };
-
-  const handleDownloadGuide = () => {
-    const blob = new Blob([skillMarkdown], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'payroll-password-reset-SKILL.md';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    toast.success('Đã tải hướng dẫn API cho agent');
   };
 
   return (
@@ -333,7 +274,7 @@ export const ApiKeysSection = () => {
                   </Badge>
                 </div>
                 <p className="mt-1 max-w-2xl text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Cấp và quản lý khoá API bảo mật cho các hệ thống máy (Zalo Chatbot, AI Agent, Webhook) gọi API đặt lại mật khẩu và xác thực nhân viên.
+                  Cấp và quản lý khoá API bảo mật cho các hệ thống máy (vendor, đối tác) tra cứu bảng chấm công.
                 </p>
               </div>
             </div>
@@ -357,7 +298,7 @@ export const ApiKeysSection = () => {
         </div>
 
         {/* Metric Rail */}
-        <div className="grid grid-cols-2 divide-x divide-y border-t bg-muted/15 sm:grid-cols-4 sm:divide-y-0 text-sm">
+        <div className="grid grid-cols-2 divide-x divide-y border-t bg-muted/15 sm:grid-cols-3 sm:divide-y-0 text-sm">
           <div className="p-3.5 sm:p-4 text-center">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Tổng số khoá
@@ -382,15 +323,6 @@ export const ApiKeysSection = () => {
               {revokedKeysCount}
             </p>
           </div>
-          <div className="p-3.5 sm:p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Tích hợp Claude
-            </p>
-            <p className="mt-1 flex items-center justify-center gap-1 text-xs font-semibold text-primary">
-              <Sparkles className="size-3.5 text-amber-700" aria-hidden="true" />
-              <span>SKILL.md sẵn sàng</span>
-            </p>
-          </div>
         </div>
       </div>
 
@@ -407,7 +339,7 @@ export const ApiKeysSection = () => {
                   Tạo khoá API
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                  Cấp một khoá cho hệ thống bên ngoài (ví dụ chatbot Zalo) gọi API đặt lại mật khẩu. Khoá chỉ hiển thị một lần khi tạo.
+                  Cấp khoá cho hệ thống vendor tra cứu bảng chấm công (chỉ đọc). Khoá chỉ hiển thị một lần khi tạo.
                 </CardDescription>
               </div>
             </div>
@@ -424,7 +356,7 @@ export const ApiKeysSection = () => {
                       id="api-key-name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Ví dụ: Zalo Chatbot, Claude Assistant..."
+                      placeholder="Ví dụ: Đối tác chấm công, Hệ thống đối soát..."
                       maxLength={100}
                       className="min-h-11 pr-14 text-sm sm:min-h-9"
                       disabled={createKey.isPending}
@@ -447,50 +379,6 @@ export const ApiKeysSection = () => {
                   <span>Tạo khoá API</span>
                 </Button>
               </div>
-
-              <fieldset className="space-y-1.5">
-                <legend className="text-xs sm:text-sm font-medium text-foreground">
-                  Phạm vi truy cập
-                </legend>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {(Object.keys(SCOPE_META) as APIKeyScope[]).map((value) => {
-                    const meta = SCOPE_META[value];
-                    const inputId = `api-key-scope-${value}`;
-                    return (
-                      <label
-                        key={value}
-                        htmlFor={inputId}
-                        className={cn(
-                          'flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors',
-                          'focus-within:ring-1 focus-within:ring-ring',
-                          scope === value
-                            ? 'border-emerald-500/50 bg-emerald-500/5'
-                            : 'border-border hover:bg-muted/40',
-                        )}
-                      >
-                        <input
-                          id={inputId}
-                          type="radio"
-                          name="api-key-scope"
-                          value={value}
-                          checked={scope === value}
-                          onChange={() => setScope(value)}
-                          disabled={createKey.isPending}
-                          className="mt-0.5 size-4 shrink-0 accent-emerald-700 dark:accent-emerald-400"
-                        />
-                        <span className="min-w-0 space-y-0.5">
-                          <span className="block text-xs sm:text-sm font-medium text-foreground">
-                            {meta.label}
-                          </span>
-                          <span className="block text-[11px] sm:text-xs text-muted-foreground">
-                            {meta.description}
-                          </span>
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </fieldset>
 
               <p className="text-[11px] sm:text-xs text-muted-foreground">
                 Mẹo: Đặt tên mô tả rõ hệ thống hoặc môi trường sử dụng để dễ quản lý và theo dõi nhật ký hoạt động.
@@ -619,7 +507,7 @@ export const ApiKeysSection = () => {
                 </div>
                 <p className="font-medium text-foreground">Chưa có khoá API nào</p>
                 <p className="text-xs text-muted-foreground max-w-sm">
-                  Tạo khoá API đầu tiên ở khung phía trên để cấp quyền truy cập cho chatbot Zalo hoặc agent hỗ trợ nhân viên.
+                  Tạo khoá API đầu tiên ở khung phía trên để cấp quyền truy cập cho hệ thống vendor tra cứu bảng chấm công.
                 </p>
               </div>
             ) : (
@@ -640,160 +528,6 @@ export const ApiKeysSection = () => {
         </Card>
       </section>
 
-      {/* 4. Hướng dẫn cho agent */}
-      <section id="api-keys-guide" aria-labelledby="api-keys-guide-title">
-        <Card className="overflow-hidden border-border shadow-sm">
-          <CardHeader className="border-b bg-muted/20 p-4 sm:p-5">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400">
-                  <Bot className="size-4" aria-hidden="true" />
-                </div>
-                <div>
-                  <CardTitle id="api-keys-guide-title" className="text-sm sm:text-base font-semibold text-foreground">
-                    Hướng dẫn cho agent
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                    Tải hướng dẫn tích hợp API dưới dạng Claude skill để agent (chatbot) biết cách gọi các API này.
-                  </CardDescription>
-                </div>
-              </div>
-              <Badge
-                variant="outline"
-                className="w-fit border-violet-500/30 bg-violet-500/10 text-[11px] font-medium text-violet-700 dark:text-violet-300"
-              >
-                Claude Skill Specification
-              </Badge>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-4 sm:p-5 space-y-4">
-            {/* Quick 3-step feature overview */}
-            <div className="grid gap-3 sm:grid-cols-3 text-xs">
-              <div className="rounded-lg border border-border/80 bg-muted/20 p-3 space-y-1">
-                <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                  <Workflow className="size-3.5 text-primary shrink-0" aria-hidden="true" />
-                  <span>1. Tra cứu nhân sự</span>
-                </div>
-                <p className="text-muted-foreground text-[11px] leading-relaxed">
-                  Gọi <code className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">/lookup</code> để xác thực số điện thoại và tên nhân viên.
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-border/80 bg-muted/20 p-3 space-y-1">
-                <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                  <ShieldAlert className="size-3.5 text-primary shrink-0" aria-hidden="true" />
-                  <span>2. Xác thực OTP ZNS</span>
-                </div>
-                <p className="text-muted-foreground text-[11px] leading-relaxed">
-                  Gửi mã xác thực qua Zalo ZNS và kiểm tra mã OTP với <code className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">/otp</code> &amp; <code className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">/verify</code>.
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-border/80 bg-muted/20 p-3 space-y-1">
-                <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                  <KeyRound className="size-3.5 text-primary shrink-0" aria-hidden="true" />
-                  <span>3. Đặt lại mật khẩu</span>
-                </div>
-                <p className="text-muted-foreground text-[11px] leading-relaxed">
-                  Cấp mật khẩu mới an toàn qua <code className="font-mono text-[10px] bg-muted px-1 py-0.5 rounded">/reset</code> và thông báo cho người dùng.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-xs sm:text-sm leading-5 text-muted-foreground">
-                Tệp <span className="font-mono text-xs font-semibold text-foreground">SKILL.md</span> mô tả 4 endpoint tích hợp, quy trình đặt lại
-                mật khẩu 3 bước và cách xử lý lỗi. Đặt tệp vào thư mục skill của agent:
-              </p>
-
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="flex flex-1 items-center gap-2 rounded-lg border border-border/80 bg-muted/50 px-3 py-2 text-xs">
-                  <Terminal className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-                  <code className="min-w-0 flex-1 break-all font-mono text-xs leading-5 text-foreground">
-                    {SKILL_TARGET_PATH_DISPLAY}
-                  </code>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="min-h-11 sm:min-h-9 shrink-0 gap-1.5 text-xs"
-                  onClick={handleCopyPath}
-                >
-                  {pathCopied ? (
-                    <Check className="size-3.5 text-emerald-700" aria-hidden="true" />
-                  ) : (
-                    <Copy className="size-3.5" aria-hidden="true" />
-                  )}
-                  <span>{pathCopied ? 'Đã sao chép' : 'Sao chép đường dẫn'}</span>
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5 pt-1">
-              <Button
-                type="button"
-                variant="outline"
-                className="min-h-11 sm:min-h-9 gap-1.5 text-xs sm:text-sm font-medium"
-                onClick={handleDownloadGuide}
-              >
-                <Download className="size-4" aria-hidden="true" />
-                <span>Tải hướng dẫn API (SKILL.md)</span>
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="min-h-11 sm:min-h-9 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => setShowSkillPreview((prev) => !prev)}
-                aria-expanded={showSkillPreview}
-              >
-                {showSkillPreview ? (
-                  <Eye className="size-3.5 text-primary" aria-hidden="true" />
-                ) : (
-                  <FileCode className="size-3.5" aria-hidden="true" />
-                )}
-                <span>{showSkillPreview ? 'Thu gọn xem trước' : 'Xem trước nội dung SKILL.md'}</span>
-                <ChevronDown
-                  className={cn('size-3.5 transition-transform duration-200', showSkillPreview && 'rotate-180')}
-                  aria-hidden="true"
-                />
-              </Button>
-            </div>
-
-            {/* Collapsible preview of SKILL.md */}
-            {showSkillPreview ? (
-              <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4 transition-all">
-                <div className="flex items-center justify-between pb-2 border-b">
-                  <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                    <FileCode className="size-4 text-violet-700" aria-hidden="true" />
-                    <span>Nội dung tệp: SKILL.md</span>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-7 gap-1 text-[11px]"
-                    onClick={handleCopySkillText}
-                  >
-                    {skillTextCopied ? (
-                      <Check className="size-3 text-emerald-700" aria-hidden="true" />
-                    ) : (
-                      <Copy className="size-3" aria-hidden="true" />
-                    )}
-                    <span>{skillTextCopied ? 'Đã sao chép' : 'Sao chép văn bản'}</span>
-                  </Button>
-                </div>
-                <pre className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-background/80 p-3 font-mono text-[11px] leading-relaxed text-muted-foreground border">
-                  {skillMarkdown}
-                </pre>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      </section>
     </div>
   );
 };

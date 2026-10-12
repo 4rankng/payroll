@@ -31,7 +31,6 @@ type Config struct {
 	Captcha       CaptchaConfig
 	PasswordReset PasswordResetConfig
 	Zalo          ZaloConfig
-	SelfCheckin   SelfCheckinConfig
 	CashForecast  CashForecastConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
@@ -103,23 +102,6 @@ type ZaloConfig struct {
 	SecretKey  string
 	TemplateID string // default "619684" (OTP-ZNS-v2)
 	CodeTTL    time.Duration
-	// Chatbot token delivery. Payroll is the sole rotator of the shared Zalo OA
-	// token pair; the TingTing chatbot pulls the access token from the
-	// integration endpoint and additionally receives it pushed to this webhook
-	// after every rotation and once at startup. The refresh token never leaves
-	// payroll. Both values are optional — unset disables the push lane.
-	ChatbotTokenWebhookURL string // CHATBOT_OA_TOKEN_WEBHOOK_URL
-	ChatbotTokenWebhookKey string // CHATBOT_OA_TOKEN_WEBHOOK_KEY (sent as X-API-Key)
-}
-
-// SelfCheckinConfig gates the chatbot self check-in flow. SupportedProjectCodes
-// lists the project codes whose employees may enable/disable via the bot, so
-// rollout to a new project is a config change, not a code edit. TemplateID
-// selects a dedicated ZNS template; empty falls back to the reset template
-// until one is approved in the Zalo console.
-type SelfCheckinConfig struct {
-	TemplateID            string
-	SupportedProjectCodes []string
 }
 
 // GoogleConfig holds Google OIDC settings. GoogleClientID is the OAuth client
@@ -460,18 +442,12 @@ func Load() (*Config, error) {
 			ResetURL:         getEnv("PASSWORD_RESET_URL", "https://tingting.vip/reset-password"),
 		},
 		Zalo: ZaloConfig{
-			Enabled:                parseBool(getEnv("ZALO_RESET_ENABLE", "false")),
-			UseSandbox:             parseBool(getEnv("ZALO_USE_SANDBOX", "false")),
-			AppID:                  getEnv("ZALO_APP_ID", ""),
-			SecretKey:              getEnv("ZALO_SECRET_KEY", ""),
-			TemplateID:             getEnv("ZALO_RESET_TEMPLATE_ID", "619684"),
-			CodeTTL:                parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
-			ChatbotTokenWebhookURL: getEnv("CHATBOT_OA_TOKEN_WEBHOOK_URL", ""),
-			ChatbotTokenWebhookKey: getEnv("CHATBOT_OA_TOKEN_WEBHOOK_KEY", ""),
-		},
-		SelfCheckin: SelfCheckinConfig{
-			TemplateID:            getEnv("ZALO_SELFCHECKIN_TEMPLATE_ID", ""),
-			SupportedProjectCodes: splitCSV(getEnv("SELF_CHECKIN_SUPPORTED_PROJECT_CODES", "LGD")),
+			Enabled:    parseBool(getEnv("ZALO_RESET_ENABLE", "false")),
+			UseSandbox: parseBool(getEnv("ZALO_USE_SANDBOX", "false")),
+			AppID:      getEnv("ZALO_APP_ID", ""),
+			SecretKey:  getEnv("ZALO_SECRET_KEY", ""),
+			TemplateID: getEnv("ZALO_RESET_TEMPLATE_ID", "619684"),
+			CodeTTL:    parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
 		},
 		Captcha: CaptchaConfig{
 			Enabled:    parseBool(getEnv("CAPTCHA_ENABLE", "false")),

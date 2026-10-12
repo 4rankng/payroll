@@ -9,9 +9,9 @@ import (
 // CreateAPIKeyRequest is the body for POST /admin/api-keys.
 type CreateAPIKeyRequest struct {
 	Name string `json:"name" binding:"required,max=100"`
-	// Scope binds the key to one integration surface. Omitting it keeps the
-	// chatbot default so older admin clients behave exactly as before.
-	Scope domain.APIKeyScope `json:"scope,omitempty"`
+	// Scope binds the key to one integration surface. Required: there is no
+	// default scope, so an omitted value is rejected.
+	Scope domain.APIKeyScope `json:"scope" binding:"required"`
 }
 
 // APIKeyResponse is the admin view of an API key. Key carries the plaintext

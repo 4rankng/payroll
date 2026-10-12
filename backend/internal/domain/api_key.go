@@ -18,23 +18,14 @@ const APIKeyNameMaxLen = 100
 type APIKeyScope string
 
 const (
-	// APIKeyScopeChatbot is the pre-existing chatbot/self-checkin integration
-	// (password reset, employee lookup, Zalo token).
-	APIKeyScopeChatbot APIKeyScope = "chatbot"
 	// APIKeyScopeTimesheetRead is the vendor read-only timesheet surface:
 	// listing projects, listing employees, and querying timesheets. It covers
 	// no mutating route anywhere in the system.
 	APIKeyScopeTimesheetRead APIKeyScope = "timesheet_read"
 )
 
-// defaultAPIKeyScope is what a key with an empty Scope column means. Rows
-// written before migration 127 (or by a direct insert that skipped the column)
-// resolve to the chatbot surface rather than to a wildcard — an unrecognised
-// scope must never match anything.
-const defaultAPIKeyScope = APIKeyScopeChatbot
-
 // ValidAPIKeyScopes lists every accepted scope value, for admin validation.
-var ValidAPIKeyScopes = []APIKeyScope{APIKeyScopeChatbot, APIKeyScopeTimesheetRead}
+var ValidAPIKeyScopes = []APIKeyScope{APIKeyScopeTimesheetRead}
 
 // IsValidAPIKeyScope reports whether s is one of the known scopes.
 func IsValidAPIKeyScope(s APIKeyScope) bool {
@@ -46,17 +37,6 @@ func IsValidAPIKeyScope(s APIKeyScope) bool {
 	return false
 }
 
-// NormalizeAPIKeyScope maps an empty value to the default scope. An empty
-// scope is never returned as-is: leaving it empty would make HasScope match
-// nothing at all, silently breaking a legacy key instead of granting it its
-// historical behaviour.
-func NormalizeAPIKeyScope(s APIKeyScope) APIKeyScope {
-	if s == "" {
-		return defaultAPIKeyScope
-	}
-	return s
-}
-
 // APIKey is a machine credential for an external integration API.
 // Only the SHA-256 hash of the plaintext key is persisted; the plaintext is
 // shown to the admin exactly once at creation and is unrecoverable afterward.
@@ -65,7 +45,7 @@ func NormalizeAPIKeyScope(s APIKeyScope) APIKeyScope {
 type APIKey struct {
 	ID         uint        `json:"id" gorm:"primarykey;type:bigint unsigned"`
 	Name       string      `json:"name" gorm:"type:varchar(100);not null"`
-	Scope      APIKeyScope `json:"scope" gorm:"type:varchar(32);not null;default:'chatbot'"`
+	Scope      APIKeyScope `json:"scope" gorm:"type:varchar(32);not null"`
 	KeyPrefix  string      `json:"key_prefix" gorm:"type:varchar(20);not null"`
 	KeyHash    string      `json:"-" gorm:"type:char(64);not null;uniqueIndex"`
 	CreatedBy  uint        `json:"created_by" gorm:"type:bigint unsigned;not null"`
@@ -82,10 +62,9 @@ func (APIKey) TableName() string { return "api_keys" }
 func (k *APIKey) IsRevoked() bool { return k.RevokedAt != nil }
 
 // HasScope reports whether this key may authenticate routes guarded by
-// required. An empty stored scope resolves to the chatbot default, never to a
-// match-all.
+// required. An empty or unknown stored scope matches nothing — fail closed.
 func (k *APIKey) HasScope(required APIKeyScope) bool {
-	return NormalizeAPIKeyScope(k.Scope) == NormalizeAPIKeyScope(required)
+	return k.Scope == required
 }
 
 // ValidateName enforces the admin-supplied label rules.
@@ -101,14 +80,11 @@ func (k *APIKey) ValidateName() error {
 }
 
 // ValidateScope rejects a scope outside the closed enum. An empty value is
-// accepted and normalised by the service, so an older client that omits the
-// field keeps the chatbot default.
+// rejected too: with no default scope, a key must be explicitly bound to a
+// surface or it would silently match nothing.
 func (k *APIKey) ValidateScope() error {
-	if k.Scope == "" {
-		return nil
-	}
 	if !IsValidAPIKeyScope(k.Scope) {
-		return NewValidationError("Phạm vi khoá API không hợp lệ. Chỉ hỗ trợ: chatbot, timesheet_read")
+		return NewValidationError("Phạm vi khoá API không hợp lệ. Chỉ hỗ trợ: timesheet_read")
 	}
 	return nil
 }

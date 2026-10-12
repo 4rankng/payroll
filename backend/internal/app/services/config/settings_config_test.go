@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"api-server/internal/domain"
-	llmport "api-server/internal/infra/llm"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -415,95 +414,4 @@ func TestSettingsConfigServiceInvalidateCacheReReadsTransferBank(t *testing.T) {
 	// statement export would print the account the admin just replaced.
 	service.InvalidateCache()
 	assert.Equal(t, "CONG TY MOI", service.GetTransferBankInfo(context.Background()).Holder)
-}
-
-// --- MiMo LLM settings accessors -------------------------------------------
-
-func TestMimoAccessorsFallBackToDefaults(t *testing.T) {
-	service := NewSettingsConfigService(&keyedStubSettingReader{values: map[string]string{}})
-
-	assert.Equal(t, "", service.GetMimoAPIKey(context.Background()))
-	assert.Equal(t, llmport.DefaultBaseURL, service.GetMimoBaseURL(context.Background()))
-	assert.Equal(t, llmport.DefaultModel, service.GetMimoDefaultModel(context.Background()))
-	assert.Equal(t, llmport.DefaultFallbackModel, service.GetMimoFallbackModel(context.Background()))
-}
-
-func TestGetMimoAPIKeyReadsAuthoritativeAndTrims(t *testing.T) {
-	reader := &keyedStubSettingReader{values: map[string]string{
-		SettingKeyMimoAPIKey: "  sk-live-fake-key  ",
-	}}
-	service := NewSettingsConfigService(reader)
-	require.Equal(t, "sk-live-fake-key", service.GetMimoAPIKey(context.Background()))
-
-	// The key must never ride the in-process cache: a rotation governs the
-	// next read, and a decrypted secret must not sit in the cache map.
-	reader.values[SettingKeyMimoAPIKey] = "sk-rotated-fake"
-	require.Equal(t, "sk-rotated-fake", service.GetMimoAPIKey(context.Background()))
-}
-
-func TestMimoModelSettingsRejectRetiredFamilies(t *testing.T) {
-	// A leftover pre-deprecation row must never route production traffic.
-	service := NewSettingsConfigService(&keyedStubSettingReader{values: map[string]string{
-		SettingKeyMimoDefaultModel:  "mimo-v2.5-flash",
-		SettingKeyMimoFallbackModel: "mimo-v2.5-pro",
-	}})
-	assert.Equal(t, llmport.DefaultModel, service.GetMimoDefaultModel(context.Background()))
-	assert.Equal(t, llmport.DefaultFallbackModel, service.GetMimoFallbackModel(context.Background()))
-}
-
-func TestMimoModelSettingsAcceptAllowlistOverrides(t *testing.T) {
-	service := NewSettingsConfigService(&keyedStubSettingReader{values: map[string]string{
-		SettingKeyMimoDefaultModel:  llmport.ModelPro,
-		SettingKeyMimoFallbackModel: llmport.ModelFlash,
-	}})
-	assert.Equal(t, llmport.ModelPro, service.GetMimoDefaultModel(context.Background()))
-	assert.Equal(t, llmport.ModelFlash, service.GetMimoFallbackModel(context.Background()))
-}
-
-func TestMimoBaseURLValidation(t *testing.T) {
-	for _, bad := range []string{"not a url", "ftp://example.com", "example.com", "/relative"} {
-		service := NewSettingsConfigService(&keyedStubSettingReader{values: map[string]string{
-			SettingKeyMimoBaseURL: bad,
-		}})
-		assert.Equal(t, llmport.DefaultBaseURL, service.GetMimoBaseURL(context.Background()),
-			"invalid base URL %q must fall back to the production endpoint", bad)
-	}
-
-	service := NewSettingsConfigService(&keyedStubSettingReader{values: map[string]string{
-		SettingKeyMimoBaseURL: "https://proxy.internal/v1/",
-	}})
-	assert.Equal(t, "https://proxy.internal/v1", service.GetMimoBaseURL(context.Background()))
-}
-
-func TestValidateBusinessSettingMimoKeys(t *testing.T) {
-	// API key: required, bounded.
-	empty := "   "
-	require.Error(t, validateBusinessSetting(&domain.Settings{Key: SettingKeyMimoAPIKey, Value: &empty, ValueType: domain.ValueTypeString}))
-	missing := &domain.Settings{Key: SettingKeyMimoAPIKey, ValueType: domain.ValueTypeString}
-	require.Error(t, validateBusinessSetting(missing))
-	goodKey := "sk-live-fake-key"
-	require.NoError(t, validateBusinessSetting(&domain.Settings{Key: SettingKeyMimoAPIKey, Value: &goodKey, ValueType: domain.ValueTypeString}))
-
-	// Model routing: retired families rejected with a clear Vietnamese error.
-	retired := "mimo-v2.5-flash"
-	err := validateBusinessSetting(&domain.Settings{Key: SettingKeyMimoDefaultModel, Value: &retired, ValueType: domain.ValueTypeString})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "mimo-v2.5")
-	assert.Contains(t, err.Error(), "ngừng hỗ trợ")
-	require.Error(t, validateBusinessSetting(&domain.Settings{Key: SettingKeyMimoFallbackModel, Value: &retired, ValueType: domain.ValueTypeString}))
-
-	pro := llmport.ModelPro
-	require.NoError(t, validateBusinessSetting(&domain.Settings{Key: SettingKeyMimoDefaultModel, Value: &pro, ValueType: domain.ValueTypeString}))
-	flash := llmport.ModelFlash
-	require.NoError(t, validateBusinessSetting(&domain.Settings{Key: SettingKeyMimoFallbackModel, Value: &flash, ValueType: domain.ValueTypeString}))
-
-	// Empty model value resets the override to the built-in default.
-	reset := ""
-	require.NoError(t, validateBusinessSetting(&domain.Settings{Key: SettingKeyMimoDefaultModel, Value: &reset, ValueType: domain.ValueTypeString}))
-
-	// Base URL: optional, but must be absolute HTTP(S) when set.
-	badURL := "not a url"
-	require.Error(t, validateBusinessSetting(&domain.Settings{Key: SettingKeyMimoBaseURL, Value: &badURL, ValueType: domain.ValueTypeString}))
-	goodURL := "https://api.xiaomimimo.com/v1"
-	require.NoError(t, validateBusinessSetting(&domain.Settings{Key: SettingKeyMimoBaseURL, Value: &goodURL, ValueType: domain.ValueTypeString}))
 }

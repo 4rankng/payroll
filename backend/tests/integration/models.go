@@ -1111,11 +1111,11 @@ type TransactionWithLedgerResponse struct {
 	LedgerEntries []LedgerEntryResponse `json:"ledger_entries"`
 }
 
-// --- Integration API (chatbot API-key channel) ---
+// --- Machine API keys (admin management) ---
 
 type CreateAPIKeyRequest struct {
 	Name string `json:"name"`
-	// Scope binds the key to one integration surface. Omitted = chatbot.
+	// Scope binds the key to one integration surface. Required.
 	Scope string `json:"scope,omitempty"`
 }
 
@@ -1184,19 +1184,4 @@ type VendorListResponse struct {
 	Data       []VendorTimesheetItem `json:"data"`
 	Pagination *Pagination           `json:"pagination"`
 	Message    string                `json:"message"`
-}
-
-type IntegrationOTPRequest struct {
-	Phone string `json:"phone"`
-}
-
-type IntegrationOTPResponse struct {
-	Found             bool    `json:"found"`
-	OTPSent           bool    `json:"otp_sent"`
-	SessionID         string  `json:"session_id"`
-	ExpiresIn         int     `json:"expires_in"`
-	OTPLength         int     `json:"otp_length"`
-	EmployeeName      string  `json:"employee_name"`
-	FailureReason     *string `json:"failure_reason"`
-	DeliveryErrorCode int     `json:"delivery_error_code"`
 }

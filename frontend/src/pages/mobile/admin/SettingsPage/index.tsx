@@ -21,9 +21,9 @@ import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
 import { SendNotificationComposer } from '@/components/settings/SendNotificationComposer';
 import { ZaloConnectionSection } from '@/components/settings/ZaloConnectionSection';
-import { MimoConnectionSection } from '@/components/settings/MimoConnectionSection';
 import { AdBannerSection } from '@/components/settings/AdBannerSection';
 import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
+import { McpApiKeysSection } from '@/components/settings/McpApiKeysSection';
 
 const SettingsPageMobile = () => {
   const form = useSettingsForm();
@@ -141,16 +141,13 @@ const SettingsPageMobile = () => {
             <ZaloConnectionSection />
           </TabsContent>
 
-          <TabsContent value={SETTINGS_TABS.mimo} className="mt-0">
-            <MimoConnectionSection />
-          </TabsContent>
-
           <TabsContent value={SETTINGS_TABS.ads} className="mt-0">
             <AdBannerSection />
           </TabsContent>
 
-          <TabsContent value={SETTINGS_TABS.apiKeys} className="mt-0">
+          <TabsContent value={SETTINGS_TABS.apiKeys} className="mt-0 space-y-6">
             <ApiKeysSection />
+            <McpApiKeysSection />
           </TabsContent>
         </Tabs>
       </div>

@@ -3,7 +3,6 @@ package config
 import (
 	"api-server/internal/pkg/clock"
 	"context"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -11,7 +10,6 @@ import (
 
 	"api-server/internal/constants"
 	"api-server/internal/domain"
-	llmport "api-server/internal/infra/llm"
 	"api-server/internal/infra/observability"
 )
 
@@ -42,25 +40,8 @@ const (
 	// statement account above.
 	SettingKeyFlexPayTransferBankHolder  = "flexpay_transfer_bank_account_holder"
 	SettingKeyFlexPayTransferBankNumber  = "flexpay_transfer_bank_account_number"
-	SettingKeyFlexPayTransferBankName    = "flexpay_transfer_bank_name"
+	SettingKeyFlexPayTransferBankName    = "flexpay_transfer_bank_account_name"
 	SettingKeyFlexPayTransferBankVisible = "flexpay_transfer_bank_visible"
-
-	// MiMo LLM assistant settings. SettingKeyMimoAPIKey is sealed at rest and
-	// masked in every API response — its literal twin is secret.MimoAPIKey
-	// (pinned by TestMimoSettingsKeysMatchSecretPackage). The model keys are
-	// runtime overrides over the built-in allowlist so a vendor model rename
-	// costs a settings edit, not a redeploy.
-	SettingKeyMimoAPIKey        = "mimo.api_key"
-	SettingKeyMimoBaseURL       = "mimo.base_url"
-	SettingKeyMimoDefaultModel  = "mimo.default_model"
-	SettingKeyMimoFallbackModel = "mimo.fallback_model"
-	// Per-role chat surface toggles (admin-controlled): missing rows mean
-	// ENABLED — the switches exist to turn a role off, not to require opt-in.
-	SettingKeyMimoModelChat        = "mimo.model_chat"
-	SettingKeyMimoModelDeliverable = "mimo.model_deliverable"
-
-	SettingKeyMimoChatEnabledAdmin   = "mimo.chat_enabled_admin"
-	SettingKeyMimoChatEnabledPartner = "mimo.chat_enabled_partner"
 )
 
 // TransferBankInfo carries the beneficiary identity printed on payroll
@@ -733,211 +714,3 @@ func (s *SettingsConfigService) GetAdvancePaymentFeeMin(ctx context.Context) uin
 	return DefaultAdvancePaymentFeeMin
 }
 
-// --- MiMo LLM assistant settings -------------------------------------------
-//
-// Reads are authoritative (repository, no cache): an admin key rotation or
-// model change must govern the very next LLM call, and the API key must never
-// land in a cache payload — the same rule SettingsService applies to
-// secret.IsProtectedKey rows.
-
-// GetMimoAPIKey returns the MiMo API key, or "" when unconfigured. The value
-// is a secret: never log, never cache, never return in API responses (the DTO
-// masks it); only the LLM client factory consumes it.
-func (s *SettingsConfigService) GetMimoAPIKey(ctx context.Context) string {
-	if s.settingsService == nil {
-		return ""
-	}
-	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, SettingKeyMimoAPIKey)
-	if err != nil {
-		// Not-found is the normal "not configured yet" state — log at info
-		// only when it is something else. Never include the value.
-		if !domain.IsNotFoundError(err) {
-			observability.GetLogger().Warn("failed to get mimo api key setting", "key", SettingKeyMimoAPIKey, "error", err)
-		}
-		return ""
-	}
-	if setting == nil || setting.Value == nil {
-		return ""
-	}
-	return strings.TrimSpace(*setting.Value)
-}
-
-// GetMimoBaseURL returns the provider base URL (version segment included).
-// An unset, malformed, or non-HTTP(S) override falls back to the production
-// endpoint — a typo here must not silently black-hole assistant traffic.
-func (s *SettingsConfigService) GetMimoBaseURL(ctx context.Context) string {
-	if s.settingsService == nil {
-		return llmport.DefaultBaseURL
-	}
-	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, SettingKeyMimoBaseURL)
-	if err != nil {
-		if !domain.IsNotFoundError(err) {
-			observability.GetLogger().Warn("failed to get mimo base url setting, using default", "key", SettingKeyMimoBaseURL, "error", err)
-		}
-		return llmport.DefaultBaseURL
-	}
-	if setting == nil || setting.Value == nil {
-		return llmport.DefaultBaseURL
-	}
-	raw := strings.TrimSpace(strings.TrimRight(*setting.Value, "/"))
-	if raw == "" {
-		return llmport.DefaultBaseURL
-	}
-	parsed, err := url.Parse(raw)
-	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
-		observability.GetLogger().Warn("invalid mimo base url setting, using default", "key", SettingKeyMimoBaseURL)
-		return llmport.DefaultBaseURL
-	}
-	return raw
-}
-
-// GetMimoDefaultModel returns the model routed for ordinary LLM calls. Invalid
-// or retired values (e.g. a leftover mimo-v2.5* row) fall back to the built-in
-// default so stale config can never route production traffic to a retired
-// family.
-// GetMimoChatEnabledForRole reports whether the chat surface is enabled for
-// the role. Missing or unreadable rows default to enabled; unknown roles are
-// always denied. Reads the authoritative path (no cache) so an admin toggle
-// applies on the next request.
-// GetMimoModelForRoute resolves the model for one routing surface.
-// route is "chat" (interactive turns) or "deliverable" (email drafts,
-// digest narratives). Empty or invalid rows fall back to the runtime default
-// model — the route override exists to differ from the default, not to break.
-func (s *SettingsConfigService) GetMimoModelForRoute(ctx context.Context, route string) string {
-	var key string
-	switch route {
-	case "chat":
-		key = SettingKeyMimoModelChat
-	case "deliverable":
-		key = SettingKeyMimoModelDeliverable
-	default:
-		return ""
-	}
-	if s.settingsService == nil {
-		return ""
-	}
-	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, key)
-	if err != nil || setting.Value == nil {
-		return ""
-	}
-	model := strings.TrimSpace(*setting.Value)
-	if !llmport.IsAllowedModel(model) {
-		return ""
-	}
-	return model
-}
-
-func (s *SettingsConfigService) GetMimoChatEnabledForRole(ctx context.Context, role string) bool {
-	switch role {
-	case "admin":
-		return s.mimoChatEnabled(ctx, SettingKeyMimoChatEnabledAdmin)
-	case "partner":
-		return s.mimoChatEnabled(ctx, SettingKeyMimoChatEnabledPartner)
-	default:
-		return false
-	}
-}
-
-func (s *SettingsConfigService) mimoChatEnabled(ctx context.Context, key string) bool {
-	if s.settingsService == nil {
-		return true
-	}
-	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, key)
-	if err != nil || setting.Value == nil {
-		return true
-	}
-	switch strings.ToLower(strings.TrimSpace(*setting.Value)) {
-	case "false", "0", "off", "no":
-		return false
-	}
-	return true
-}
-
-func (s *SettingsConfigService) GetMimoDefaultModel(ctx context.Context) string {
-	return s.getMimoModel(ctx, SettingKeyMimoDefaultModel, llmport.DefaultModel)
-}
-
-// GetMimoFallbackModel returns the model used when the primary model is not
-// found (the vendor renamed its model family). Invalid values fall back to the
-// built-in fallback.
-func (s *SettingsConfigService) GetMimoFallbackModel(ctx context.Context) string {
-	return s.getMimoModel(ctx, SettingKeyMimoFallbackModel, llmport.DefaultFallbackModel)
-}
-
-// getMimoModel reads one model routing setting with the allowlist enforced on
-// the read path.
-func (s *SettingsConfigService) getMimoModel(ctx context.Context, key, defaultValue string) string {
-	if s.settingsService == nil {
-		return defaultValue
-	}
-	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, key)
-	if err != nil {
-		if !domain.IsNotFoundError(err) {
-			observability.GetLogger().Warn("failed to get mimo model setting, using default", "key", key, "error", err)
-		}
-		return defaultValue
-	}
-	if setting == nil || setting.Value == nil {
-		return defaultValue
-	}
-	raw := strings.TrimSpace(*setting.Value)
-	if raw == "" {
-		return defaultValue
-	}
-	if _, err := llmport.ResolveModel(raw, ""); err != nil {
-		observability.GetLogger().Warn("invalid mimo model setting, using default", "key", key, "error", err)
-		return defaultValue
-	}
-	return raw
-}
-
-// parseMimoAPIKey validates a MiMo API key write. The value is required and
-// bounded; it is sealed at rest by the settings repository (secret.MimoAPIKey).
-func parseMimoAPIKey(setting *domain.Settings) error {
-	if setting == nil || setting.Value == nil {
-		return domain.NewValidationError("Khóa bí mật MiMo không được để trống")
-	}
-	raw := strings.TrimSpace(*setting.Value)
-	if raw == "" {
-		return domain.NewValidationError("Khóa bí mật MiMo không được để trống")
-	}
-	if len(raw) > 512 {
-		return domain.NewValidationError("Khóa bí mật MiMo tối đa 512 ký tự")
-	}
-	return nil
-}
-
-// parseMimoBaseURL validates an optional provider base-URL override. Empty
-// means "use the production endpoint"; a set value must be absolute HTTP(S).
-func parseMimoBaseURL(setting *domain.Settings) error {
-	if setting == nil || setting.Value == nil {
-		return nil
-	}
-	raw := strings.TrimSpace(strings.TrimRight(*setting.Value, "/"))
-	if raw == "" {
-		return nil
-	}
-	parsed, err := url.Parse(raw)
-	if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Host == "" {
-		return domain.NewValidationError("URL API MiMo không hợp lệ — phải là địa chỉ http:// hoặc https:// đầy đủ")
-	}
-	return nil
-}
-
-// parseMimoModel validates a model routing write against the allowlist.
-// Empty resets the override to the built-in default. Retired families
-// (mimo-v2.5*) are rejected here — config validation is the last line of
-// defence before a stale value could route production traffic.
-func parseMimoModel(setting *domain.Settings) error {
-	if setting == nil || setting.Value == nil {
-		return nil
-	}
-	raw := strings.TrimSpace(*setting.Value)
-	if raw == "" {
-		return nil
-	}
-	if err := llmport.ValidateModel(raw); err != nil {
-		return domain.NewValidationError(err.Error())
-	}
-	return nil
-}

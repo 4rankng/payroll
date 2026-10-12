@@ -50,9 +50,8 @@ func NewService(repo domain.APIKeyRepository, clk clock.Clock) *Service {
 // Create mints a new key and returns the record plus the plaintext key — the
 // only time the plaintext exists outside the caller's memory.
 //
-// scope binds the key to exactly one integration surface. An empty scope
-// normalises to the chatbot default so an older admin client that omits the
-// field keeps its current behaviour.
+// scope binds the key to exactly one integration surface. It is required: with
+// no default scope, an omitted value is rejected rather than silently bound.
 func (s *Service) Create(ctx context.Context, name string, scope domain.APIKeyScope, createdBy uint) (*domain.APIKey, string, error) {
 	plaintext, err := newPlaintextKey()
 	if err != nil {
@@ -61,7 +60,7 @@ func (s *Service) Create(ctx context.Context, name string, scope domain.APIKeySc
 
 	key := &domain.APIKey{
 		Name:      name,
-		Scope:     domain.NormalizeAPIKeyScope(scope),
+		Scope:     scope,
 		KeyPrefix: plaintext[:prefixLen],
 		KeyHash:   HashKey(plaintext),
 		CreatedBy: createdBy,

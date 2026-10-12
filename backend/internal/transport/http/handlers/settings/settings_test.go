@@ -14,14 +14,12 @@ import (
 	"gorm.io/gorm"
 
 	"api-server/internal/app/services/config"
-	llmsvc "api-server/internal/app/services/llm"
 	"api-server/internal/domain"
-	llmport "api-server/internal/infra/llm"
 	"api-server/internal/infra/persistence"
 	"api-server/internal/pkg/secret"
 )
 
-const fakeMimoKey = "mimo-sk-test-fake-key-never-real"
+const fakeSealedSecret = "zalo-secret-test-fake-key-never-real"
 
 // newSettingsTestHarness builds the real settings service stack over an
 // in-memory SQLite database, exactly as production wires it (repository seals
@@ -56,7 +54,7 @@ func newSettingsTestHarness(t *testing.T) (*Handler, *config.SettingsService, *g
 
 	repo := persistence.NewSettingsRepositoryWithCipher(&persistence.Database{DB: db}, cipher)
 	settingsService := config.NewSettingsService(repo, nil, nil, nil, nil, nil, nil)
-	handler := NewHandler(settingsService, nil)
+	handler := NewHandler(settingsService)
 	return handler, settingsService, db
 }
 
@@ -78,7 +76,6 @@ func newSettingsRouter(handler *Handler) *gin.Engine {
 	router.GET("/api/v1/settings/active", handler.GetActiveSettings)
 	router.GET("/api/v1/settings/:id", handler.GetSetting)
 	router.GET("/api/v1/settings/key/:key", handler.GetSettingByKey)
-	router.POST("/api/v1/settings/mimo/test-connection", handler.TestMimoConnection)
 	return router
 }
 
@@ -94,7 +91,7 @@ func decodeSingle(t *testing.T, body []byte) map[string]any {
 	}
 	var single map[string]any
 	if err := json.Unmarshal(env.Data, &single); err != nil {
-		t.Fatalf("decode data: %v (%s)", err, env.Data)
+		t.Fatalf("decode data: %v (%s)", env.Data, err)
 	}
 	return single
 }
@@ -107,17 +104,17 @@ func decodeList(t *testing.T, body []byte) []map[string]any {
 	}
 	var list []map[string]any
 	if err := json.Unmarshal(env.Data, &list); err != nil {
-		t.Fatalf("decode data: %v (%s)", err, env.Data)
+		t.Fatalf("decode data: %v (%s)", env.Data, err)
 	}
 	return list
 }
 
-// assertMasked asserts the mimo.api_key entry is masked: no value, masked and
+// assertMasked asserts the protected-key entry is masked: no value, masked and
 // configured flags set — and the plaintext appears nowhere in the payload.
 func assertMasked(t *testing.T, entry map[string]any, rawBody string) {
 	t.Helper()
-	if entry["key"] != "mimo.api_key" {
-		t.Fatalf("entry = %v, want the mimo.api_key row", entry)
+	if entry["key"] != secret.ZaloCredentialsKey {
+		t.Fatalf("entry = %v, want the %s row", entry, secret.ZaloCredentialsKey)
 	}
 	if entry["value"] != nil {
 		t.Fatalf("value = %v, want nil for a masked secret", entry["value"])
@@ -128,19 +125,19 @@ func assertMasked(t *testing.T, entry map[string]any, rawBody string) {
 	if entry["configured"] != true {
 		t.Fatalf("configured = %v, want true", entry["configured"])
 	}
-	if strings.Contains(rawBody, fakeMimoKey) {
-		t.Fatal("the response body leaks the raw MiMo API key")
+	if strings.Contains(rawBody, fakeSealedSecret) {
+		t.Fatal("the response body leaks the raw sealed secret")
 	}
 }
 
-// TestSettingsGetShapesMaskMimoAPIKey drives every settings GET shape — list,
-// by id, by key, active — and asserts the sealed MiMo key is masked in all of
+// TestSettingsGetShapesMaskProtectedKeys drives every settings GET shape —
+// list, by id, by key, active — and asserts a sealed key is masked in all of
 // them. This is the red-team exposure fix: those GETs are Authenticate-only and
 // partner/employee hold GET grants on /settings/*.
-func TestSettingsGetShapesMaskMimoAPIKey(t *testing.T) {
+func TestSettingsGetShapesMaskProtectedKeys(t *testing.T) {
 	handler, settingsService, _ := newSettingsTestHarness(t)
-	keyID := seedSetting(t, settingsService, secret.MimoAPIKey, fakeMimoKey, domain.ValueTypeString)
-	seedSetting(t, settingsService, config.SettingKeyMimoDefaultModel, "mimo-v2.6-flash", domain.ValueTypeString)
+	keyID := seedSetting(t, settingsService, secret.ZaloCredentialsKey, fakeSealedSecret, domain.ValueTypeString)
+	seedSetting(t, settingsService, config.SettingKeyPartnerCompany, "CONG TY TEST", domain.ValueTypeString)
 	router := newSettingsRouter(handler)
 
 	// 1. List
@@ -149,19 +146,19 @@ func TestSettingsGetShapesMaskMimoAPIKey(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("list status = %d (%s)", w.Code, w.Body)
 	}
-	var mimoEntry map[string]any
+	var sealedEntry map[string]any
 	for _, entry := range decodeList(t, w.Body.Bytes()) {
-		if entry["key"] == "mimo.api_key" {
-			mimoEntry = entry
+		if entry["key"] == secret.ZaloCredentialsKey {
+			sealedEntry = entry
 		}
-		if entry["key"] == "mimo.default_model" && entry["value"] != "mimo-v2.6-flash" {
+		if entry["key"] == config.SettingKeyPartnerCompany && entry["value"] != "CONG TY TEST" {
 			t.Fatalf("plain setting value = %v, want it untouched", entry["value"])
 		}
 	}
-	if mimoEntry == nil {
-		t.Fatal("list did not include mimo.api_key")
+	if sealedEntry == nil {
+		t.Fatalf("list did not include %s", secret.ZaloCredentialsKey)
 	}
-	assertMasked(t, mimoEntry, w.Body.String())
+	assertMasked(t, sealedEntry, w.Body.String())
 
 	// 2. By ID
 	w = httptest.NewRecorder()
@@ -173,7 +170,7 @@ func TestSettingsGetShapesMaskMimoAPIKey(t *testing.T) {
 
 	// 3. By key
 	w = httptest.NewRecorder()
-	router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/v1/settings/key/mimo.api_key", nil))
+	router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/api/v1/settings/key/"+secret.ZaloCredentialsKey, nil))
 	if w.Code != http.StatusOK {
 		t.Fatalf("by-key status = %d (%s)", w.Code, w.Body)
 	}
@@ -193,148 +190,12 @@ func TestSettingsGetShapesMaskMimoAPIKey(t *testing.T) {
 	found := false
 	for _, raw := range activeData["settings"].([]any) {
 		entry := raw.(map[string]any)
-		if entry["key"] == "mimo.api_key" {
+		if entry["key"] == secret.ZaloCredentialsKey {
 			found = true
 			assertMasked(t, entry, w.Body.String())
 		}
 	}
 	if !found {
-		t.Fatal("active settings did not include mimo.api_key")
-	}
-}
-
-// fakeClient plays back a provider outcome for the handler test.
-type fakeClient struct {
-	result *llmport.TestConnectionResult
-	err    error
-}
-
-func (f *fakeClient) Chat(context.Context, llmport.ChatRequest) (*llmport.ChatResponse, error) {
-	panic("Chat must not be called by the test-connection handler")
-}
-
-func (f *fakeClient) TestConnection(context.Context) (*llmport.TestConnectionResult, error) {
-	return f.result, f.err
-}
-
-func newTestConnectionHandler(t *testing.T, settingsService *config.SettingsService, client llmport.Client) *Handler {
-	t.Helper()
-	mimoService := llmsvc.NewService(
-		config.NewSettingsConfigService(settingsService),
-		nil,
-		func(llmport.Config) (llmport.Client, error) { return client, nil },
-	)
-	return NewHandler(settingsService, mimoService)
-}
-
-func TestTestMimoConnectionSuccess(t *testing.T) {
-	_, settingsService, _ := newSettingsTestHarness(t)
-	seedSetting(t, settingsService, secret.MimoAPIKey, fakeMimoKey, domain.ValueTypeString)
-	handler := newTestConnectionHandler(t, settingsService, &fakeClient{
-		result: &llmport.TestConnectionResult{LatencyMS: 234, ModelCount: 2, DefaultModelPresent: true},
-	})
-	router := newSettingsRouter(handler)
-
-	w := httptest.NewRecorder()
-	router.ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/api/v1/settings/mimo/test-connection", nil))
-	if w.Code != http.StatusOK {
-		t.Fatalf("status = %d (%s)", w.Code, w.Body)
-	}
-	if strings.Contains(w.Body.String(), fakeMimoKey) {
-		t.Fatal("the test-connection response leaks the raw MiMo API key")
-	}
-	body := decodeSingle(t, w.Body.Bytes())
-	if body["success"] != true || body["code"] != "ok" {
-		t.Fatalf("body = %v, want success/ok", body)
-	}
-	if body["latency_ms"] != float64(234) || body["model_count"] != float64(2) {
-		t.Fatalf("body = %v, want latency 234 and 2 models", body)
-	}
-	msg, _ := body["message"].(string)
-	if !strings.Contains(msg, "Kết nối MiMo thành công") || !strings.Contains(msg, "234 ms") {
-		t.Fatalf("message = %q, want the Vietnamese success message with latency", msg)
-	}
-}
-
-func TestTestMimoConnectionDesignedFailures(t *testing.T) {
-	tests := []struct {
-		name     string
-		seedKey  bool
-		client   *fakeClient
-		wantCode string
-		wantMsg  string
-	}{
-		{
-			name:     "missing key",
-			seedKey:  false,
-			client:   &fakeClient{},
-			wantCode: "missing_key",
-			wantMsg:  "Chưa cấu hình Khóa bí mật MiMo",
-		},
-		{
-			name:    "invalid key",
-			seedKey: true,
-			client: &fakeClient{err: &llmport.APIError{
-				Kind: llmport.KindAuth, Message: llmport.MessageFor(llmport.KindAuth),
-			}},
-			wantCode: "invalid_key",
-			wantMsg:  "Khóa API MiMo không hợp lệ",
-		},
-		{
-			name:    "timeout",
-			seedKey: true,
-			client: &fakeClient{err: &llmport.APIError{
-				Kind: llmport.KindTimeout, Message: llmport.MessageFor(llmport.KindTimeout),
-			}},
-			wantCode: "timeout",
-			wantMsg:  "hết thời gian chờ",
-		},
-		{
-			name:    "provider outage",
-			seedKey: true,
-			client: &fakeClient{err: &llmport.APIError{
-				Kind: llmport.KindUnavailable, Message: llmport.MessageFor(llmport.KindUnavailable),
-			}},
-			wantCode: "unavailable",
-			wantMsg:  "gián đoạn",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, settingsService, _ := newSettingsTestHarness(t)
-			if tt.seedKey {
-				seedSetting(t, settingsService, secret.MimoAPIKey, fakeMimoKey, domain.ValueTypeString)
-			}
-			router := newSettingsRouter(newTestConnectionHandler(t, settingsService, tt.client))
-
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/api/v1/settings/mimo/test-connection", nil))
-			// Failure is a designed outcome of a connection test: HTTP 200 with
-			// success=false + a stable outcome code for the UI error state.
-			if w.Code != http.StatusOK {
-				t.Fatalf("status = %d (%s)", w.Code, w.Body)
-			}
-			body := decodeSingle(t, w.Body.Bytes())
-			if body["success"] != false || body["code"] != tt.wantCode {
-				t.Fatalf("body = %v, want success=false code=%s", body, tt.wantCode)
-			}
-			msg, _ := body["message"].(string)
-			if !strings.Contains(msg, tt.wantMsg) {
-				t.Fatalf("message = %q, want Vietnamese fragment %q", msg, tt.wantMsg)
-			}
-		})
-	}
-}
-
-// TestMimoSettingsKeysPinSecretAllowlist pins the settings-key literal to the
-// secret allowlist entry: a rename on either side must fail loudly here rather
-// than silently unsealing the API key.
-func TestMimoSettingsKeysPinSecretAllowlist(t *testing.T) {
-	if config.SettingKeyMimoAPIKey != secret.MimoAPIKey {
-		t.Fatalf("config.SettingKeyMimoAPIKey = %q, secret.MimoAPIKey = %q; must match",
-			config.SettingKeyMimoAPIKey, secret.MimoAPIKey)
-	}
-	if !secret.IsProtectedKey(config.SettingKeyMimoAPIKey) {
-		t.Fatal("mimo.api_key must be sealed at rest (secret.ProtectedKeys)")
+		t.Fatalf("active settings did not include %s", secret.ZaloCredentialsKey)
 	}
 }

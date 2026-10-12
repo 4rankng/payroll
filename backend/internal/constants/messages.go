@@ -392,26 +392,18 @@ const (
 	MsgZaloResetMobileRequiredVN = "Vui lòng nhập số điện thoại."
 	MsgZaloResetResendTooSoonVN  = "Vui lòng đợi một chút trước khi yêu cầu gửi lại mã."
 
-	// Integration API (machine-key authenticated chatbot channel).
-	MsgAPIKeyMissingVN                = "Thiếu API key. Vui lòng gửi header X-API-Key."
-	MsgAPIKeyInvalidVN                = "API key không hợp lệ hoặc đã bị thu hồi."
-	MsgAPIKeyScopeDeniedVN            = "API key không có quyền truy cập chức năng này. Vui lòng kiểm tra phạm vi (scope) của khoá."
-	MsgAPIKeyCreatedVN                = "Đã tạo API key. Hãy sao chép và lưu lại ngay — khoá chỉ hiển thị một lần."
-	MsgAPIKeyRevokedVN                = "Đã thu hồi API key."
-	MsgAPIKeyNotFoundVN               = "Không tìm thấy API key."
-	MsgIntegrationPhoneInvalidVN      = "Số điện thoại không hợp lệ."
-	MsgIntegrationAccountNotFoundVN   = "Không tìm thấy tài khoản với số điện thoại này."
-	MsgIntegrationOTPSentVN           = "Mã đặt lại mật khẩu đã được gửi qua Zalo."
-	MsgIntegrationOTPDisabledVN       = "Tính năng gửi OTP qua Zalo đang tắt. Vui lòng liên hệ quản trị viên."
-	MsgIntegrationOTPSendFailedVN     = "Không gửi được mã OTP. Vui lòng thử lại hoặc liên hệ quản trị viên."
-	MsgIntegrationOTPVerifiedVN       = "Mã xác thực hợp lệ."
-	MsgIntegrationResetTokenInvalidVN = "Phiên đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."
-	MsgIntegrationResetSuccessVN      = "Đặt lại mật khẩu thành công."
-	MsgIntegrationEmployeeFoundVN     = "Tìm thấy nhân viên."
-	MsgIntegrationEmployeeNotFoundVN  = "Không tìm thấy nhân viên với số điện thoại này."
-	// Zalo OA access-token delivery to the chatbot: payroll is the sole rotator
-	// of the shared OA token pair and serves GET /integration/zalo/token.
-	MsgIntegrationZaloTokenVN = "Token Zalo OA hiện tại."
+	// Integration API (machine API key channel).
+	MsgAPIKeyMissingVN     = "Thiếu API key. Vui lòng gửi header X-API-Key."
+	MsgAPIKeyInvalidVN     = "API key không hợp lệ hoặc đã bị thu hồi."
+	MsgAPIKeyScopeDeniedVN = "API key không có quyền truy cập chức năng này. Vui lòng kiểm tra phạm vi (scope) của khoá."
+	MsgAPIKeyCreatedVN     = "Đã tạo API key. Hãy sao chép và lưu lại ngay — khoá chỉ hiển thị một lần."
+	MsgAPIKeyRevokedVN     = "Đã thu hồi API key."
+	MsgAPIKeyNotFoundVN    = "Không tìm thấy API key."
+
+	// MCP agent surface (/api/v1/mcp, machine MCP API keys).
+	MsgMCPKeyInvalidVN    = "Khoá API MCP không hợp lệ hoặc đã bị thu hồi"
+	MsgMCPKeyPathDeniedVN = "Đường dẫn này không được truy cập bằng API key"
+	MsgMCPKeyReadOnlyVN   = "Khoá API MCP chỉ đọc (READ ONLY) không thể thực hiện thao tác thay đổi dữ liệu"
 
 	// Vendor timesheet read API (/api/v1/vendor/*, API keys with the
 	// timesheet_read scope). The whole surface is read-only; these messages
@@ -422,17 +414,6 @@ const (
 	MsgVendorProjectCodeNotFoundVN = "Không tìm thấy dự án với mã: %s"
 	MsgVendorCCCDNotFoundVN        = "Không tìm thấy nhân viên với CCCD: %s"
 	MsgVendorFilterRequiredVN      = "Vui lòng cung cấp ít nhất một trong: project_code, cccd, from_date."
-	MsgVendorInvalidScopeVN        = "Phạm vi (scope) của khoá API không hợp lệ. Chỉ hỗ trợ: chatbot, timesheet_read."
-
-	// Self check-in via chatbot (TingTing OA integration endpoints).
-	MsgSelfCheckinProjectNotSupportedVN = "Dự án này chưa hỗ trợ bật/tắt tự chấm công qua chatbot."
-	MsgSelfCheckinAlreadyEnabledVN      = "Tự chấm công của bạn đang bật rồi."
-	MsgSelfCheckinAlreadyDisabledVN     = "Tự chấm công của bạn đang tắt."
-	MsgSelfCheckinPendingExistsVN       = "Đã có yêu cầu bật tự chấm công đang chờ kích hoạt."
-	MsgSelfCheckinUpdateSuccessVN       = "Cập nhật tự chấm công thành công."
-	MsgSelfCheckinOTPSentVN             = "Mã xác thực đã được gửi qua Zalo."
-	MsgSelfCheckinOTPVerifiedVN         = "Mã xác thực hợp lệ."
-	MsgSelfCheckinTokenInvalidVN        = "Phiên xác thực không hợp lệ hoặc đã hết hạn."
 
 	// Bank Messages - Vietnamese
 	MsgInvalidBankIDVN             = "ID ngân hàng không hợp lệ"

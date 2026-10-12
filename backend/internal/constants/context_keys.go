@@ -13,6 +13,9 @@ const (
 	// string. RequireAPIKeyScope reads it to refuse a valid key whose scope
 	// does not cover the route it is calling.
 	CtxAPIKeyScope = "api_key_scope"
+	// CtxMCPKeyID carries the authenticated MCP API key id for requests that
+	// arrive with an X-API-Key machine credential.
+	CtxMCPKeyID = "mcp_key_id"
 )
 
 // System User ID - used for automated/system operations

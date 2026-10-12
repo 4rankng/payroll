@@ -326,9 +326,6 @@ export const API_ENDPOINTS = {
     base: '/settings',
     byId: (id: number) => `/settings/${id}`,
     byKey: (key: string) => `/settings/key/${key}`,
-    // Validates the sealed MiMo API key against the MiMo API and reports
-    // latency. Admin only (server-side enforced); never returns the key.
-    mimoTestConnection: '/settings/mimo/test-connection',
   },
   // Approval-request engine (admin decides; partner files within allowlist)
   approvals: {
@@ -359,6 +356,11 @@ export const API_ENDPOINTS = {
   apiKeys: {
     base: '/admin/api-keys',
     byId: (id: number) => `/admin/api-keys/${id}`,
+  },
+
+  mcpApiKeys: {
+    base: '/admin/mcp-api-keys',
+    byId: (id: number) => `/admin/mcp-api-keys/${id}`,
   },
 
   // Health Check

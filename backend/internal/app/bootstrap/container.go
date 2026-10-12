@@ -14,6 +14,7 @@ import (
 	dbExportSvc "api-server/internal/app/services/db_export"
 	"api-server/internal/app/services/employee"
 	"api-server/internal/app/services/ledger"
+	"api-server/internal/app/services/mcpapikey"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/project"
 	"api-server/internal/app/services/scheduler"
@@ -64,61 +65,58 @@ type Container struct {
 }
 
 type Handlers struct {
-	User                   *handlers.UserHandler
-	Auth                   *handlers.AuthHandler
-	Dashboard              *handlers.DashboardHandler
-	Project                *handlers.ProjectHandler
-	Employee               *handlers.EmployeeHandler
-	EmployeeUsers          *employeeHandlers.EmployeeUsersHandler
-	EmployeeProfile        *handlers.EmployeeProfileHandler
-	ProjectEmployee        *handlers.ProjectEmployeeHandler
-	AdminClock             *adminHandlers.ClockHandler
-	AdminZalo              *adminHandlers.ZaloHandler
-	APIKey                 *adminHandlers.APIKeyHandler
-	IntegrationReset       *integrationHandlers.PasswordResetHandler
-	IntegrationLookup      *integrationHandlers.EmployeeLookupHandler
-	IntegrationSelfCheckin *integrationHandlers.SelfCheckinHandler
-	IntegrationZaloToken   *integrationHandlers.ZaloTokenHandler
-	VendorTimesheet        *integrationHandlers.VendorTimesheetHandler
-	AdminAttendance        *adminHandlers.AttendanceHandler
-	Bank                   *handlers.BankHandler
-	Timesheet              *handlers.TimesheetHandler
-	TimesheetEditRequest   *handlers.TimesheetEditRequestHandler
-	Payroll                *handlers.PayrollHandler
-	Payrate                *handlers.PayrateHandler
-	Ledger                 *handlers.LedgerHandler
-	Transaction            *handlers.TransactionHandler
-	Health                 *handlers.HealthHandler
-	Notification           *handlers.NotificationHandler
-	Settings               *handlers.SettingsHandler
-	Asset                  *handlers.AssetHandler
-	Cache                  *handlers.CacheHandler
-	Lender                 *handlers.LenderHandler
-	Loan                   *handlers.LoanHandler
-	Email                  *handlers.EmailHandler
-	Settlement             *handlers.SettlementHandler
-	Metric                 *handlers.MetricHandler
-	Audit                  *handlers.AuditHandler
-	AdvancePayment         *advancePaymentHandlers.AdvancePaymentHandler
-	AdvancePaymentFee      *advancePaymentHandlers.FeeScheduleHandler
-	AdBanner               *handlers.AdBannerHandler
-	EmployeeImport         *employeeHandlers.ImportHandler
-	DBExport               *handlers.DBExportHandler
-	Push                   *pushHandlers.Handler
-	Approval               *approvalHandlers.Handler
-	Cron                   *handlers.CronHandler
-	DisbursementWebhook    *disbursementHandlers.WebhookHandler
-	DisbursementFee        *disbursementHandlers.FeeScheduleHandler
-	DisbursementSettings   *disbursementHandlers.SettingsHandler
-	ManualDisbursement     *disbursementHandlers.ManualDisbursementHandler
-	WeeklyPaymentFee       *handlers.WeeklyPaymentFeeHandler
-	ReconciliationExport   *disbursementHandlers.ReconciliationExportHandler
-	ProviderTransactions   *adminHandlers.WalletPaymentStatsHandler
-	Wallet                 *handlers.WalletHandler
-	WalletBulkTransfer     *handlers.WalletBulkTransferHandler
-	AdvPartnerUser         *advPartnerHandlers.UserHandler
-	BCCImport              *timesheetHandlers.BCCImportHandler
-	Attendance             *attendanceHandlers.Handler
+	User                 *handlers.UserHandler
+	Auth                 *handlers.AuthHandler
+	Dashboard            *handlers.DashboardHandler
+	Project              *handlers.ProjectHandler
+	Employee             *handlers.EmployeeHandler
+	EmployeeUsers        *employeeHandlers.EmployeeUsersHandler
+	EmployeeProfile      *handlers.EmployeeProfileHandler
+	ProjectEmployee      *handlers.ProjectEmployeeHandler
+	AdminClock           *adminHandlers.ClockHandler
+	AdminZalo            *adminHandlers.ZaloHandler
+	APIKey               *adminHandlers.APIKeyHandler
+	MCPAPIKey            *adminHandlers.MCPAPIKeyHandler
+	VendorTimesheet      *integrationHandlers.VendorTimesheetHandler
+	AdminAttendance      *adminHandlers.AttendanceHandler
+	Bank                 *handlers.BankHandler
+	Timesheet            *handlers.TimesheetHandler
+	TimesheetEditRequest *handlers.TimesheetEditRequestHandler
+	Payroll              *handlers.PayrollHandler
+	Payrate              *handlers.PayrateHandler
+	Ledger               *handlers.LedgerHandler
+	Transaction          *handlers.TransactionHandler
+	Health               *handlers.HealthHandler
+	Notification         *handlers.NotificationHandler
+	Settings             *handlers.SettingsHandler
+	Asset                *handlers.AssetHandler
+	Cache                *handlers.CacheHandler
+	Lender               *handlers.LenderHandler
+	Loan                 *handlers.LoanHandler
+	Email                *handlers.EmailHandler
+	Settlement           *handlers.SettlementHandler
+	Metric               *handlers.MetricHandler
+	Audit                *handlers.AuditHandler
+	AdvancePayment       *advancePaymentHandlers.AdvancePaymentHandler
+	AdvancePaymentFee    *advancePaymentHandlers.FeeScheduleHandler
+	AdBanner             *handlers.AdBannerHandler
+	EmployeeImport       *employeeHandlers.ImportHandler
+	DBExport             *handlers.DBExportHandler
+	Push                 *pushHandlers.Handler
+	Approval             *approvalHandlers.Handler
+	Cron                 *handlers.CronHandler
+	DisbursementWebhook  *disbursementHandlers.WebhookHandler
+	DisbursementFee      *disbursementHandlers.FeeScheduleHandler
+	DisbursementSettings *disbursementHandlers.SettingsHandler
+	ManualDisbursement   *disbursementHandlers.ManualDisbursementHandler
+	WeeklyPaymentFee     *handlers.WeeklyPaymentFeeHandler
+	ReconciliationExport *disbursementHandlers.ReconciliationExportHandler
+	ProviderTransactions *adminHandlers.WalletPaymentStatsHandler
+	Wallet               *handlers.WalletHandler
+	WalletBulkTransfer   *handlers.WalletBulkTransferHandler
+	AdvPartnerUser       *advPartnerHandlers.UserHandler
+	BCCImport            *timesheetHandlers.BCCImportHandler
+	Attendance           *attendanceHandlers.Handler
 }
 
 type Middleware struct {
@@ -131,8 +129,9 @@ type Middleware struct {
 	APIRateLimit              gin.HandlerFunc
 	StrictRateLimit           gin.HandlerFunc
 	AdBannerClickRateLimit    gin.HandlerFunc
-	IntegrationRateLimit      gin.HandlerFunc // per-api-key cap for /integration/*
+	IntegrationRateLimit      gin.HandlerFunc // per-api-key cap for the /integration and /vendor machine routes
 	APIKeyAuth                *middleware.APIKeyAuthMiddleware
+	MCPKeyAuth                *middleware.MCPKeyAuthMiddleware
 	TenantSemaphore           *middleware.TenantSemaphoreMiddleware
 	APIMetrics                gin.HandlerFunc
 }
@@ -205,7 +204,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 	}
 
 	h := initHandlers(services, repos, infra.DB, infra.Redis, infra.Logger, version, eventBus, cfg, asynqClient, clk, walletBulkSvc)
-	middlewares := initMiddleware(services.Auth, services.Authorization, services.ProjectPermission, services.EmployeePermission, services.APIKey, repos.APIMetric, cfg, infra.Logger)
+	middlewares := initMiddleware(services.Auth, services.Authorization, services.ProjectPermission, services.EmployeePermission, services.APIKey, services.MCPAPIKey, repos.APIMetric, cfg, infra.Logger)
 	loanRepaymentReminderService := notification.NewLoanRepaymentReminderService(
 		repos.LoanRepaymentSchedule,
 		repos.User,
@@ -407,16 +406,6 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		}
 	}
 
-	// Startup push: hand the chatbot the current OA access token the moment the
-	// app boots (owner requirement: "once payroll app start it should call
-	// webhook immediately to provide latest access token to chatbot"), so the
-	// bot holds the latest token even when no rotation runs for another ~24h.
-	// Fail-soft by design — the pusher logs its own failures; this goroutine
-	// must never block or fail container initialization.
-	if services.ZaloTokenPusher != nil {
-		go services.ZaloTokenPusher.PushCurrent(context.Background(), services.ZaloConnect)
-	}
-
 	return &Container{
 		Config:             cfg,
 		Logger:             infra.Logger,
@@ -469,7 +458,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Transaction:          handlers.NewTransactionHandler(services.Transaction, repos.BulkTransferFile, repos.Timesheet, services.Notification, eventBus, clk),
 		Health:               handlers.NewHealthHandler(healthCheckers, version),
 		Notification:         handlers.NewNotificationHandler(services.Notification),
-		Settings:             handlers.NewSettingsHandler(services.Settings, services.LLM),
+		Settings:             handlers.NewSettingsHandler(services.Settings),
 		Approval:             approvalHandlers.NewHandler(services.Approval),
 		Asset:                handlers.NewAssetHandler(services.Asset),
 		Cache:                handlers.NewCacheHandler(services.Cache, logger),
@@ -512,26 +501,23 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 			}
 			return nil
 		}()),
-		ReconciliationExport:   disbursementHandlers.NewReconciliationExportHandler(services.DisbursementRegistry, logger),
-		ProviderTransactions:   adminHandlers.NewWalletPaymentStatsHandler(services.WalletPaymentStats, logger),
-		AdminClock:             adminHandlers.NewClockHandler(clk, cfg.App.Env),
-		AdminZalo:              adminHandlers.NewZaloHandler(services.ZaloConnect),
-		APIKey:                 adminHandlers.NewAPIKeyHandler(services.APIKey),
-		IntegrationReset:       integrationHandlers.NewPasswordResetHandler(services.Integration),
-		IntegrationLookup:      integrationHandlers.NewEmployeeLookupHandler(services.Integration),
-		IntegrationSelfCheckin: integrationHandlers.NewSelfCheckinHandler(services.IntegrationSelfCheckin),
-		IntegrationZaloToken:   integrationHandlers.NewZaloTokenHandler(services.ZaloConnect),
-		VendorTimesheet:        integrationHandlers.NewVendorTimesheetHandler(services.Timesheet, repos.Project, repos.Employee, repos.ProjectEmployee),
-		AdminAttendance:        adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
-		Wallet:                 handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, clk),
-		WalletBulkTransfer:     newWalletBulkTransferHandler(walletBulkSvc, logger),
-		AdvPartnerUser:         advPartnerHandlers.NewUserHandler(services.Employee, services.ProjectEmployee, services.User),
-		BCCImport:              timesheetHandlers.NewBCCImportHandler(services.BCCImport, repos.Asset, fileStorage, services.ProjectPermission, services.Audit),
-		Attendance:             attendanceHandlers.NewHandler(services.Attendance, repos.Employee, repos.AttendanceFailedAttempt, clk, logger),
+		ReconciliationExport: disbursementHandlers.NewReconciliationExportHandler(services.DisbursementRegistry, logger),
+		ProviderTransactions: adminHandlers.NewWalletPaymentStatsHandler(services.WalletPaymentStats, logger),
+		AdminClock:           adminHandlers.NewClockHandler(clk, cfg.App.Env),
+		AdminZalo:            adminHandlers.NewZaloHandler(services.ZaloConnect),
+		APIKey:               adminHandlers.NewAPIKeyHandler(services.APIKey),
+		MCPAPIKey:            adminHandlers.NewMCPAPIKeyHandler(services.MCPAPIKey),
+		VendorTimesheet:      integrationHandlers.NewVendorTimesheetHandler(services.Timesheet, repos.Project, repos.Employee, repos.ProjectEmployee),
+		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
+		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, clk),
+		WalletBulkTransfer:   newWalletBulkTransferHandler(walletBulkSvc, logger),
+		AdvPartnerUser:       advPartnerHandlers.NewUserHandler(services.Employee, services.ProjectEmployee, services.User),
+		BCCImport:            timesheetHandlers.NewBCCImportHandler(services.BCCImport, repos.Asset, fileStorage, services.ProjectPermission, services.Audit),
+		Attendance:           attendanceHandlers.NewHandler(services.Attendance, repos.Employee, repos.AttendanceFailedAttempt, clk, logger),
 	}
 }
 
-func initMiddleware(authService *auth.AuthService, authorizationService *auth.AuthorizationService, projectPermissionService *project.ProjectPermissionService, employeePermissionService *employee.EmployeePermissionService, apiKeyService *apikey.Service, apiMetricRepo domain.APIMetricRepository, cfg *config.Config, logger *slog.Logger) *Middleware {
+func initMiddleware(authService *auth.AuthService, authorizationService *auth.AuthorizationService, projectPermissionService *project.ProjectPermissionService, employeePermissionService *employee.EmployeePermissionService, apiKeyService *apikey.Service, mcpKeyService *mcpapikey.Service, apiMetricRepo domain.APIMetricRepository, cfg *config.Config, logger *slog.Logger) *Middleware {
 	tenantLimit := 10
 	if cfg.TenantConcurrencyLimit > 0 {
 		tenantLimit = cfg.TenantConcurrencyLimit
@@ -545,7 +531,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 	}
 
 	return &Middleware{
-		Auth:                      middleware.NewAuthMiddleware(authService),
+		Auth:                      middleware.NewAuthMiddleware(authService, mcpKeyService),
 		Authorization:             authorizationMiddleware,
 		LoginRateLimit:            middleware.CreateLoginRateLimit(cfg.Redis.Addr),
 		PasswordResetRateLimit:    middleware.CreatePasswordResetRateLimit(cfg.Redis.Addr, cfg.PasswordReset.RateLimitPerHour),
@@ -556,6 +542,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 		AdBannerClickRateLimit:    middleware.CreateAdBannerClickRateLimit(cfg.Redis.Addr),
 		IntegrationRateLimit:      middleware.CreateIntegrationAPIRateLimit(cfg.Redis.Addr),
 		APIKeyAuth:                middleware.NewAPIKeyAuthMiddleware(apiKeyService, logger),
+		MCPKeyAuth:                middleware.NewMCPKeyAuthMiddleware(mcpKeyService),
 		TenantSemaphore:           middleware.NewTenantSemaphoreMiddleware(tenantLimit),
 		APIMetrics:                middleware.APIMetrics(apiMetricRepo),
 	}

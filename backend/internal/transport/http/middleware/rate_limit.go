@@ -362,8 +362,8 @@ func adBannerClickAccountKeyGetter(c *gin.Context) string {
 	return "adclick-ip:" + c.ClientIP()
 }
 
-// CreateIntegrationAPIRateLimit caps the chatbot integration endpoints per API
-// key (the caller is a machine, so per-IP would lump unrelated chatbots behind
+// CreateIntegrationAPIRateLimit caps the machine integration endpoints per API
+// key (the caller is a machine, so per-IP would lump unrelated machines behind
 // one NAT together). Falls back to a namespaced IP bucket when no key id is in
 // context, so it never joins the shared per-IP API counter.
 func CreateIntegrationAPIRateLimit(redisURL string) gin.HandlerFunc {

@@ -11,8 +11,8 @@ const STATUS_BADGE: Record<string, string> = {
   executed: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   approved: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   rejected: 'border-slate-200 bg-slate-50 text-slate-700',
-  cancelled: 'border-slate-200 bg-slate-50 text-slate-500',
-  expired: 'border-slate-200 bg-slate-50 text-slate-500',
+  cancelled: 'border-slate-200 bg-slate-50 text-slate-700',
+  expired: 'border-slate-200 bg-slate-50 text-slate-700',
 };
 
 const formatDateTime = (iso?: string | null) => {

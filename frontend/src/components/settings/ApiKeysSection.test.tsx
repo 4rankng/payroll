@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => {
     {
       id: 1,
       name: 'TingHire',
-      scope: 'chatbot',
+      scope: 'timesheet_read',
       key_prefix: 'ttk_40WjkqjL',
       created_by: 10,
       last_used_at: null,
@@ -19,8 +19,8 @@ const mocks = vi.hoisted(() => {
     },
     {
       id: 2,
-      name: 'Zalo Chatbot Active',
-      scope: 'chatbot',
+      name: 'Vendor Active',
+      scope: 'timesheet_read',
       key_prefix: 'ttk_abc123xy',
       created_by: 10,
       last_used_at: '2026-09-27T08:00:00.000Z',
@@ -100,9 +100,12 @@ describe('ApiKeysSection', () => {
 
     // Keys rendered
     expect(screen.getByText('TingHire')).toBeInTheDocument();
-    expect(screen.getByText('Zalo Chatbot Active')).toBeInTheDocument();
+    expect(screen.getByText('Vendor Active')).toBeInTheDocument();
     expect(screen.getByText('ttk_40WjkqjL••••••••••••')).toBeInTheDocument();
     expect(screen.getByText('ttk_abc123xy••••••••••••')).toBeInTheDocument();
+
+    // Both keys are vendor-scoped and carry that badge.
+    expect(screen.getAllByText('Vendor — bảng chấm công').length).toBe(2);
 
     // Active key has Revoke button, revoked key does not
     expect(screen.getByRole('button', { name: 'Thu hồi' })).toBeInTheDocument();
@@ -112,8 +115,8 @@ describe('ApiKeysSection', () => {
     mocks.createKey.mockResolvedValueOnce({
       data: {
         id: 3,
-        name: 'New Chatbot',
-        scope: 'chatbot',
+        name: 'Đối tác A',
+        scope: 'timesheet_read',
         key_prefix: 'ttk_new12345',
         key: 'ttk_new12345_super_secret_plaintext_key',
         created_by: 10,
@@ -126,20 +129,22 @@ describe('ApiKeysSection', () => {
     render(<ApiKeysSection />);
 
     const input = screen.getByLabelText(/Tên khoá/);
-    fireEvent.change(input, { target: { value: 'New Chatbot' } });
+    fireEvent.change(input, { target: { value: 'Đối tác A' } });
 
     const createButton = screen.getByRole('button', { name: 'Tạo khoá API' });
     fireEvent.click(createButton);
 
     await waitFor(() => {
-      expect(mocks.createKey).toHaveBeenCalledWith({ name: 'New Chatbot', scope: 'chatbot' });
+      // The scope radio is gone: every key is created read-only for the vendor
+      // timesheet surface.
+      expect(mocks.createKey).toHaveBeenCalledWith({ name: 'Đối tác A', scope: 'timesheet_read' });
     });
 
     // Revealed key alert
     expect(
       screen.getByText('Khoá chỉ hiển thị một lần. Hãy sao chép ngay.'),
     ).toBeInTheDocument();
-    const keyInput = screen.getByLabelText('Khoá API cho New Chatbot');
+    const keyInput = screen.getByLabelText('Khoá API cho Đối tác A');
     expect(keyInput).toHaveValue('ttk_new12345_super_secret_plaintext_key');
 
     // Copy revealed key
@@ -170,17 +175,16 @@ describe('ApiKeysSection', () => {
     fireEvent.click(revokeButton);
 
     expect(window.confirm).toHaveBeenCalledWith(
-      'Thu hồi khoá "Zalo Chatbot Active" (Chatbot)? Chatbot đang dùng khoá này sẽ ngừng hoạt động ngay.',
+      'Thu hồi khoá "Vendor Active" (Vendor — bảng chấm công)? Đối tác đang dùng khoá này sẽ mất quyền xem bảng chấm công ngay.',
     );
     await waitFor(() => {
       expect(mocks.revokeKey).toHaveBeenCalledWith(2);
     });
   });
 
-  it('copies prefix and target skill path to clipboard', async () => {
+  it('copies the key prefix to clipboard', async () => {
     render(<ApiKeysSection />);
 
-    // Copy prefix of first key
     const copyPrefixBtn = screen.getByRole('button', {
       name: 'Sao chép tiền tố ttk_40WjkqjL',
     });
@@ -188,41 +192,6 @@ describe('ApiKeysSection', () => {
     await waitFor(() => {
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith('ttk_40WjkqjL');
     });
-
-    // Copy target skill path
-    const copyPathBtn = screen.getByRole('button', {
-      name: 'Sao chép đường dẫn',
-    });
-    fireEvent.click(copyPathBtn);
-    await waitFor(() => {
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        '.claude/skills/payroll-password-reset/SKILL.md',
-      );
-    });
-  });
-
-  it('toggles SKILL.md preview and downloads file', async () => {
-    const createObjectURLMock = vi.fn().mockReturnValue('blob:mock-url');
-    const revokeObjectURLMock = vi.fn();
-    window.URL.createObjectURL = createObjectURLMock;
-    window.URL.revokeObjectURL = revokeObjectURLMock;
-
-    render(<ApiKeysSection />);
-
-    // Toggle preview
-    const previewBtn = screen.getByRole('button', { name: /Xem trước nội dung SKILL.md/ });
-    fireEvent.click(previewBtn);
-
-    expect(screen.getByText('Nội dung tệp: SKILL.md')).toBeInTheDocument();
-    expect(screen.getByText(/Thu gọn xem trước/)).toBeInTheDocument();
-
-    // Download button
-    const downloadBtn = screen.getByRole('button', { name: 'Tải hướng dẫn API (SKILL.md)' });
-    fireEvent.click(downloadBtn);
-
-    expect(createObjectURLMock).toHaveBeenCalled();
-    expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:mock-url');
-    expect(toast.success).toHaveBeenCalledWith('Đã tải hướng dẫn API cho agent');
   });
 
   it('renders empty state when there are no keys', () => {
@@ -232,85 +201,34 @@ describe('ApiKeysSection', () => {
   });
 
   describe('API key scope', () => {
-    it('defaults to the chatbot scope and labels it on each key row', () => {
+    it('labels every key row with its scope badge', () => {
       render(<ApiKeysSection />);
 
-      // Chatbot radio is pre-selected so an admin who does not think about
-      // scope gets exactly the key they always got.
-      const chatbotRadio = screen.getByRole('radio', { name: /^Chatbot/ });
-      expect(chatbotRadio).toBeChecked();
-      expect(screen.getByRole('radio', { name: /^Vendor/ })).not.toBeChecked();
-
-      // Both fixture keys are chatbot-scoped and render that badge. The scope
-      // option is labelled "Chatbot" too, so assert on the badges themselves.
-      const badges = screen.getAllByText('Chatbot');
-      // 2 key-row badges + 1 scope-option label.
-      expect(badges.length).toBe(3);
+      expect(screen.getAllByText('Vendor — bảng chấm công').length).toBe(2);
     });
 
-    it('sends the vendor scope when the vendor option is selected', async () => {
-      mocks.createKey.mockResolvedValueOnce({
-        data: {
-          id: 4,
-          name: 'Vendor A',
-          scope: 'timesheet_read',
-          key_prefix: 'ttk_vendor123',
-          key: 'ttk_vendor123_secret',
-          created_by: 10,
-          last_used_at: null,
-          revoked_at: null,
-          created_at: new Date().toISOString(),
-        },
-      });
-
-      render(<ApiKeysSection />);
-
-      fireEvent.change(screen.getByLabelText(/Tên khoá/), {
-        target: { value: 'Vendor A' },
-      });
-      fireEvent.click(screen.getByRole('radio', { name: /^Vendor/ }));
-      fireEvent.click(screen.getByRole('button', { name: 'Tạo khoá API' }));
-
-      await waitFor(() => {
-        expect(mocks.createKey).toHaveBeenCalledWith({
-          name: 'Vendor A',
-          scope: 'timesheet_read',
-        });
-      });
-    });
-
-    it('uses vendor-specific revoke wording for a vendor-scoped key', async () => {
+    it('renders an unsupported badge for a retired legacy scope', () => {
       mocks.keys = [
         {
-          id: 5,
-          name: 'Vendor A',
-          scope: 'timesheet_read',
-          key_prefix: 'ttk_vend12345',
+          id: 7,
+          name: 'Legacy Chatbot',
+          scope: 'chatbot',
+          key_prefix: 'ttk_legacy02',
           created_by: 10,
           last_used_at: null,
           revoked_at: null,
           created_at: '2026-09-25T10:00:00.000Z',
-        },
+        } as unknown as APIKey,
       ];
-      mocks.revokeKey.mockResolvedValueOnce({ data: undefined });
 
       render(<ApiKeysSection />);
-      // Both the scope option and the row badge carry this label.
-      expect(screen.getAllByText('Vendor — bảng chấm công').length).toBe(2);
 
-      fireEvent.click(screen.getByRole('button', { name: 'Thu hồi' }));
-
-      expect(window.confirm).toHaveBeenCalledWith(
-        'Thu hồi khoá "Vendor A" (Vendor — bảng chấm công)? Đối tác đang dùng khoá này sẽ mất quyền xem bảng chấm công ngay.',
-      );
-      await waitFor(() => {
-        expect(mocks.revokeKey).toHaveBeenCalledWith(5);
-      });
+      expect(screen.getByText('Không còn hỗ trợ')).toBeInTheDocument();
     });
 
-    it('treats a legacy key with no scope as chatbot rather than unknown', () => {
-      // A key minted before scopes existed has no `scope` field. The UI must
-      // agree with the backend, which resolves an empty scope to chatbot.
+    it('treats a legacy key with no scope as the vendor read scope', () => {
+      // scopeOf() falls back to 'timesheet_read' when the server predates the
+      // scope column, matching the backend's fail-closed comparison.
       mocks.keys = [
         {
           id: 6,
@@ -325,9 +243,7 @@ describe('ApiKeysSection', () => {
 
       render(<ApiKeysSection />);
 
-      // The row badge resolves to 'Chatbot'; the scope option carries the same
-      // word, so assert a badge exists rather than a unique text node.
-      expect(screen.getAllByText('Chatbot').length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByText('Vendor — bảng chấm công')).toBeInTheDocument();
     });
   });
 });

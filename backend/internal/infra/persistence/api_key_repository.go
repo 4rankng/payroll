@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// APIKeyRepository persists machine API keys for the chatbot integration API.
+// APIKeyRepository persists machine API keys for the external integration APIs.
 type APIKeyRepository struct {
 	DB *Database
 }

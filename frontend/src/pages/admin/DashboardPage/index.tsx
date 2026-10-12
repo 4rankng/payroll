@@ -216,8 +216,8 @@ const AdminDashboard = () => {
       ...(approvalsQueue.data && (approvalsQueue.data.pagination?.totalRecords ?? 0) + (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0
         ? [
             {
-              title: 'Yêu cầu phê duyệt (trợ lý AI)',
-              detail: 'Yêu cầu từ trợ lý AI và tự động hóa đang chờ duyệt hoặc đã leo thang.',
+              title: 'Yêu cầu phê duyệt',
+              detail: 'Yêu cầu đang chờ duyệt hoặc đã leo thang.',
               value: (
                 (approvalsQueue.data.pagination?.totalRecords ?? 0) +
                 (approvalsEscalated.data?.pagination?.totalRecords ?? 0)

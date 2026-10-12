@@ -1,4 +1,4 @@
-import { Bell, Bot, KeyRound, Mail, Megaphone, MessageCircle, Receipt, Settings, Users } from 'lucide-react';
+import { Bell, KeyRound, Mail, Megaphone, MessageCircle, Receipt, Settings, Users } from 'lucide-react';
 
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -9,7 +9,6 @@ export const SETTINGS_TABS = {
   email: 'email',
   notifications: 'notifications',
   zalo: 'zalo',
-  mimo: 'mimo',
   ads: 'ads',
   apiKeys: 'api',
 } as const;
@@ -23,7 +22,6 @@ const tabs = [
   { value: SETTINGS_TABS.email, label: 'Email', icon: Mail },
   { value: SETTINGS_TABS.notifications, label: 'Thông báo', icon: Bell },
   { value: SETTINGS_TABS.zalo, label: 'Zalo ZNS', icon: MessageCircle },
-  { value: SETTINGS_TABS.mimo, label: 'Trợ lý AI', icon: Bot },
   { value: SETTINGS_TABS.ads, label: 'Quảng cáo', icon: Megaphone },
   { value: SETTINGS_TABS.apiKeys, label: 'API', icon: KeyRound },
 ] as const;

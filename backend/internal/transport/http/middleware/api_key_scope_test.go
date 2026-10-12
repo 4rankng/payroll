@@ -91,23 +91,13 @@ func TestRequireAPIKeyScope_AllowsMatchingScope(t *testing.T) {
 	assert.Equal(t, "reached handler", rec.Body.String())
 }
 
-func TestRequireAPIKeyScope_RejectsCrossScopeKey(t *testing.T) {
+func TestRequireAPIKeyScope_RejectsUnknownScopeKey(t *testing.T) {
 	repo := newFakeKeyRepo()
-	// A chatbot key calling the vendor surface must be refused.
-	key := seedKey(t, repo, domain.APIKeyScopeChatbot)
+	// A key whose stored scope is not the guarded surface (e.g. a legacy
+	// pre-removal row) must be refused — fail closed.
+	key := seedKey(t, repo, domain.APIKeyScope("legacy-unknown"))
 
 	rec := runScopeGate(t, repo, key, domain.APIKeyScopeTimesheetRead)
-
-	assert.Equal(t, http.StatusForbidden, rec.Code)
-	assert.NotContains(t, rec.Body.String(), "reached handler")
-}
-
-func TestRequireAPIKeyScope_VendorKeyCannotReachChatbot(t *testing.T) {
-	repo := newFakeKeyRepo()
-	// A timesheet_read key calling a chatbot-gated route must be refused too.
-	key := seedKey(t, repo, domain.APIKeyScopeTimesheetRead)
-
-	rec := runScopeGate(t, repo, key, domain.APIKeyScopeChatbot)
 
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 	assert.NotContains(t, rec.Body.String(), "reached handler")
@@ -133,19 +123,18 @@ func TestRequireAPIKeyScope_MissingHeaderIs401(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }
 
-// TestRequireAPIKeyScope_LegacyEmptyScopeResolvesToChatbot proves a row
-// written before migration 127 still authenticates against the chatbot
-// surface, so the backfill keeps existing integrations working.
-func TestRequireAPIKeyScope_LegacyEmptyScopeResolvesToChatbot(t *testing.T) {
+// TestRequireAPIKeyScope_LegacyEmptyScopeFailsClosed proves a row with an
+// empty stored scope matches no guarded surface at all.
+func TestRequireAPIKeyScope_LegacyEmptyScopeFailsClosed(t *testing.T) {
 	repo := newFakeKeyRepo()
 	plaintext := "ttk_legacy_empty_scope"
 	repo.byHash[apikey.HashKey(plaintext)] = &domain.APIKey{
 		ID: 7, Name: "legacy", Scope: "", KeyHash: apikey.HashKey(plaintext),
 	}
 
-	rec := runScopeGate(t, repo, plaintext, domain.APIKeyScopeChatbot)
+	rec := runScopeGate(t, repo, plaintext, domain.APIKeyScopeTimesheetRead)
 
-	assert.Equal(t, http.StatusOK, rec.Code, "legacy empty scope must resolve to chatbot")
+	assert.Equal(t, http.StatusForbidden, rec.Code, "legacy empty scope must match nothing")
 }
 
 func TestRequireAPIKeyScope_MissingScopeInContextFailsClosed(t *testing.T) {
@@ -167,13 +156,13 @@ func TestRequireAPIKeyScope_MissingScopeInContextFailsClosed(t *testing.T) {
 }
 
 // TestAuthenticate_PublishesScopeInContext checks the middleware actually
-// writes the normalised scope the guard reads.
+// writes the raw scope the guard reads.
 func TestAuthenticate_PublishesScopeInContext(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	repo := newFakeKeyRepo()
-	plaintext := "ttk_legacy"
+	plaintext := "ttk_vendor"
 	repo.byHash[apikey.HashKey(plaintext)] = &domain.APIKey{
-		ID: 3, Name: "legacy", Scope: "", KeyHash: apikey.HashKey(plaintext),
+		ID: 3, Name: "vendor", Scope: domain.APIKeyScopeTimesheetRead, KeyHash: apikey.HashKey(plaintext),
 	}
 
 	svc := apikey.NewService(repo, nil)
@@ -193,7 +182,7 @@ func TestAuthenticate_PublishesScopeInContext(t *testing.T) {
 	r.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusOK, rec.Code)
-	// Normalised on publish, so a legacy row never lands as an empty string
-	// that would fail every HasScope comparison.
-	assert.Equal(t, string(domain.APIKeyScopeChatbot), got)
+	// Raw on publish: the guard compares the stored scope as-is so an empty or
+	// unknown value fails closed.
+	assert.Equal(t, string(domain.APIKeyScopeTimesheetRead), got)
 }

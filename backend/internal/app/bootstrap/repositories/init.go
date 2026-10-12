@@ -53,6 +53,7 @@ type Repositories struct {
 	FlexPaySalaryNotification domain.FlexPaySalaryNotificationRepository
 	AdBanner                  domain.AdBannerRepository
 	ApprovalRequest           domain.ApprovalRequestRepository
+	MCPAPIKey                 domain.MCPAPIKeyRepository
 }
 
 func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositories {
@@ -77,6 +78,7 @@ func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositorie
 		Notification:              persistence.NewNotificationRepository(db),
 		Settings:                  persistence.NewSettingsRepository(db),
 		APIKey:                    persistence.NewAPIKeyRepository(db),
+		MCPAPIKey:                 persistence.NewMCPAPIKeyRepository(db),
 		Asset:                     persistence.NewAssetRepository(db, eventBus),
 		BulkTransferFile:          persistence.NewBulkTransferFileRepository(db.DB, transactionCodeRepo),
 		Lender:                    persistence.NewLenderRepository(db),

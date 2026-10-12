@@ -43,6 +43,7 @@ func setupAPIRoutes(router *gin.Engine, container *Container) {
 	setupClockRoutes(v1, container)
 	setupWalletRoutes(v1, container)
 	setupTestRoutes(v1)
+	setupMCPRoutes(router, v1, container)
 }
 
 func setupProtectedRoutes(v1 *gin.RouterGroup, container *Container) {
@@ -81,7 +82,7 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, container *Container) {
 	setupSettingsRoutes(v1, container) // Admin-only routes, use v1 directly
 	setupZaloAdminRoutes(v1, container)
 	setupAPIKeyAdminRoutes(v1, container)
-	setupIntegrationResetRoutes(v1, container)
+	setupMCPAPIKeyAdminRoutes(v1, container)
 	setupVendorTimesheetRoutes(v1, container)
 	setupDBExportRoutes(protected, container)
 	setupCronRoutes(protected, container)

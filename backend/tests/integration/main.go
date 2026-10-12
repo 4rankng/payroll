@@ -92,12 +92,8 @@ func main() {
 	// untested PUT /employees/:id/change-password endpoint)
 	runEmployeePasswordAdminTests(client, testData, reporter, cfg)
 
-	// Phase 7.6: Integration API (chatbot API-key channel)
-	runIntegrationResetTests(client, testData, reporter, cfg)
+	// Phase 7.6: Vendor timesheet read API (scoped API-key channel)
 	runVendorTimesheetTests(client, testData, reporter, cfg)
-
-	// Phase 7.65: Integration self check-in (chatbot enable/disable channel)
-	runIntegrationSelfCheckinTests(client, testData, reporter, cfg)
 
 	// Phase 8: CRUD flows
 	runBankCRUDTests(client, testData, reporter, cfg)

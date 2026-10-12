@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// TestProvider_RotationHook_FiresOnRefresh pins the chatbot push contract: a
+// TestProvider_RotationHook_FiresOnRefresh pins the rotation hook contract: a
 // forced refresh (admin "Kiểm tra kết nối", the daily renew job) invokes the
 // hook with exactly the access token that was persisted.
 func TestProvider_RotationHook_FiresOnRefresh(t *testing.T) {
@@ -42,9 +42,10 @@ func TestProvider_RotationHook_FiresOnRefresh(t *testing.T) {
 }
 
 // TestProvider_RotationHook_FiresOnSendRetryRefresh covers the -124 lane: the
-// reactive refresh that rescues a send must push the new token too, since the
-// chatbot keeps sending with whatever it last received. The retry here still
-// draws -124 (business error, Go error nil) — the rotation itself succeeded.
+// reactive refresh that rescues a send must push the new token too, since
+// downstream consumers keep sending with whatever token they last received.
+// The retry here still draws -124 (business error, Go error nil) — the
+// rotation itself succeeded.
 func TestProvider_RotationHook_FiresOnSendRetryRefresh(t *testing.T) {
 	p, mock, creds, _ := newProviderWithMock(t)
 	mock.mu.Lock()

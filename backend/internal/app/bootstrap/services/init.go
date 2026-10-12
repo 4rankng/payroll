@@ -22,10 +22,9 @@ import (
 	"api-server/internal/app/services/employee"
 	"api-server/internal/app/services/flex_pay"
 	infraServices "api-server/internal/app/services/infrastructure"
-	"api-server/internal/app/services/integration"
 	"api-server/internal/app/services/ledger"
-	llmsvc "api-server/internal/app/services/llm"
 	"api-server/internal/app/services/loan"
+	"api-server/internal/app/services/mcpapikey"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/otp"
 	"api-server/internal/app/services/passwordreset"
@@ -50,7 +49,6 @@ import (
 	"api-server/internal/infra/disbursement/onepay"
 	"api-server/internal/infra/email"
 	"api-server/internal/infra/events"
-	llmport "api-server/internal/infra/llm"
 	"api-server/internal/infra/persistence"
 	"api-server/internal/infra/persistence/repositories"
 	"api-server/internal/infra/storage"
@@ -71,10 +69,8 @@ type Services struct {
 	EmailPasswordReset                *passwordreset.Service          // Red Team M2: distinct name (collides with PasswordResetJobManager otherwise)
 	ZaloPasswordReset                 *zaloreset.Service              // Employee mobile-channel OTP reset (Phase 2)
 	ZaloConnect                       *zaloconnect.Service            // Admin-managed OA connection + runtime toggle (Phase 4)
-	APIKey                            *apikey.Service                 // Machine API keys for the chatbot integration API
-	Integration                       *integration.Service            // Chatbot password-reset + employee lookup (API-key auth)
-	IntegrationSelfCheckin            *integration.SelfCheckinService // Chatbot self check-in enable/disable (API-key auth)
-	ZaloTokenPusher                   *zaloconnect.TokenWebhookPusher // Pushes the OA access token to the chatbot webhook (rotation + startup)
+	APIKey                            *apikey.Service                 // Machine API keys for the vendor integration API
+	MCPAPIKey                         *mcpapikey.Service              // Machine API keys for the MCP agent surface
 	FlexPayZNS                        *zaloconnect.FlexPayZNSService  // ZNS notifications for FlexPay salary notifications
 	FlexPaySalaryDelivery             *zaloconnect.SalaryNotificationDeliveryService
 	Auth                              *auth.AuthService
@@ -104,7 +100,6 @@ type Services struct {
 	EmployeeNotifier                  notification.EmployeeNotifier
 	Settings                          *config.SettingsService
 	SettingsConfig                    *config.SettingsConfigService
-	LLM                               *llmsvc.Service
 	Approval                          *approval.Service
 	ExcelConverter                    *reporting.ExcelConverterService
 	Asset                             *asset.AssetService
@@ -170,17 +165,6 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// bank details from it, and a stale value would print the previous account.
 	settingsService.SetConfigCacheInvalidator(settingsConfigService)
 
-	// MiMo LLM foundation. Shared-key guards bound the blast radius of a
-	// runaway loop across the future consumers (drafting, chat, vision,
-	// digest): 4 concurrent calls for the key as a whole, 20 calls/minute per
-	// user (Redis fixed window). The service depends only on the llm.Client
-	// port — the concrete OpenAI-compatible client is built per call from the
-	// admin-managed settings (key rotation applies on the next request).
-	llmGuard := llmport.NewGuard(
-		llmport.NewSemaphore(4),
-		llmport.NewFixedWindowLimiter(redis.Client, time.Minute, 20, "llm:rate:"),
-	)
-	llmService := llmsvc.NewService(settingsConfigService, llmGuard, nil)
 	excelConverterService := reporting.NewExcelConverterService()
 	pdfService := reporting.NewPDFService("fonts/Roboto-Regular.ttf")
 	fileStorage := storage.NewLocalFileStorage(cfg.Asset.StoragePath, cfg.Asset.BaseURL)
@@ -581,9 +565,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		repos.CashForecastSnapshot,
 	).WithCacheService(cacheService)
 
-	// Approval engine (phase 2) and the MiMo assistant chat core (phase 5).
-	// The chat service wires the REAL approval adapters — the NotConfigured
-	// stubs are gone from this point on.
+	// Approval engine.
 	approvalService := approval.NewService(approval.Deps{
 		Repo:          repos.ApprovalRequest,
 		Payloads:      approval.NewPayloadBuilderRegistry(payrollReportByProjectService, repos.ProjectUser, repos.User, repos.Timesheet, repos.Employee, repos.Project),
@@ -699,14 +681,6 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	zaloProvider := zalo.NewProvider(zaloConnectSvc, zalo.DefaultConfig(), logger)
 	zaloProvider.SetRefreshCoordinator(zalo.NewRedisRefreshCoordinator(redis.Client))
 	zaloConnectSvc.SetProvider(zaloProvider)
-	// Push lane to the TingTing chatbot (payroll is the sole OA token rotator):
-	// every persisted rotation — refresh exchange, validated admin paste, or
-	// metadata save — hands the new access token to the chatbot webhook. The
-	// pusher skips itself at debug when CHATBOT_OA_TOKEN_WEBHOOK_URL/KEY are
-	// unset, so wiring is unconditional and unconfigured deploys stay inert.
-	zaloTokenPusher := zaloconnect.NewTokenWebhookPusher(
-		cfg.Zalo.ChatbotTokenWebhookURL, cfg.Zalo.ChatbotTokenWebhookKey, logger)
-	zaloProvider.SetRotationHook(zaloTokenPusher.Push)
 	_ = zaloConnectSvc.SeedFromEnvIfEmpty(context.Background(), zaloconnect.EnvSeed{
 		Enabled:    cfg.Zalo.Enabled,
 		AppID:      cfg.Zalo.AppID,
@@ -729,30 +703,9 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		cfg.Zalo.TemplateID, cfg.Zalo.CodeTTL, zaloConnectSvc, eventBus, clk, logger,
 	)
 
-	// Machine API keys + the chatbot integration service. The integration
-	// service reuses the same Zalo store, sender, and enabled-checker as the
-	// self-service reset, but reports outcomes explicitly to the caller.
+	// Machine API keys for the vendor integration API and the MCP agent surface.
 	apiKeyService := apikey.NewService(repos.APIKey, clk)
-	integrationService := integration.NewService(
-		zaloResetStore, repos.User, repos.Employee, userService, zaloSender,
-		cfg.Zalo.TemplateID, zaloConnectSvc, eventBus, clk, logger,
-	)
-
-	// Self check-in via chatbot shares the OTP machinery but MUST live under
-	// its own Redis key namespace ("zsc"): its sessions and action tokens are
-	// then never consumable at the password-reset endpoints, and a reset token
-	// never unlocks a self check-in update (cross-flow replay defense).
-	selfCheckinStore := cache.NewZaloResetStoreWithPrefix(redis.Client, cfg.Zalo.CodeTTL, "zsc")
-	selfCheckinTemplate := cfg.SelfCheckin.TemplateID
-	if selfCheckinTemplate == "" {
-		selfCheckinTemplate = cfg.Zalo.TemplateID
-	}
-	selfCheckinService := integration.NewSelfCheckinService(
-		selfCheckinStore, repos.User, repos.Employee, repos.Project,
-		repos.ProjectEmployee, repos.Payrate, projectEmployeeSvc, zaloSender,
-		selfCheckinTemplate, zaloConnectSvc, cfg.SelfCheckin.SupportedProjectCodes,
-		clk, logger,
-	)
+	mcpAPIKeyService := mcpapikey.NewService(repos.MCPAPIKey, repos.User, clk)
 
 	// FlexPay ZNS service for employee salary notifications
 	flexPayZNSService := zaloconnect.NewFlexPayZNSService(
@@ -788,10 +741,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		EmailPasswordReset:                emailPasswordResetService,
 		ZaloPasswordReset:                 zaloResetService,
 		ZaloConnect:                       zaloConnectSvc,
-		ZaloTokenPusher:                   zaloTokenPusher,
 		APIKey:                            apiKeyService,
-		Integration:                       integrationService,
-		IntegrationSelfCheckin:            selfCheckinService,
+		MCPAPIKey:                         mcpAPIKeyService,
 		FlexPayZNS:                        flexPayZNSService,
 		FlexPaySalaryDelivery:             flexPaySalaryDelivery,
 		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, cfg.Google.ClientID, nonceStore, captchaService, logger),
@@ -821,7 +772,6 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		EmployeeNotifier:                  employeeNotificationService,
 		Settings:                          settingsService,
 		SettingsConfig:                    settingsConfigService,
-		LLM:                               llmService,
 		Approval:                          approvalService,
 		ExcelConverter:                    excelConverterService,
 		Asset:                             assetService,

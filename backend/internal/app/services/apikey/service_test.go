@@ -72,7 +72,7 @@ func TestCreateReturnsKeyAndStoresHashAndPrefix(t *testing.T) {
 	repo := newFakeRepo()
 	svc := newService(repo)
 
-	key, plaintext, err := svc.Create(context.Background(), "Zalo Chatbot", domain.APIKeyScopeChatbot, 7)
+	key, plaintext, err := svc.Create(context.Background(), "itest vendor", domain.APIKeyScopeTimesheetRead, 7)
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestAuthenticateRoundTripAndFailures(t *testing.T) {
 	svc := newService(repo)
 	ctx := context.Background()
 
-	created, plaintext, err := svc.Create(ctx, "chatbot", domain.APIKeyScopeChatbot, 1)
+	created, plaintext, err := svc.Create(ctx, "vendor", domain.APIKeyScopeTimesheetRead, 1)
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -130,7 +130,7 @@ func TestCreateRejectsEmptyName(t *testing.T) {
 	repo := newFakeRepo()
 	svc := newService(repo)
 
-	_, _, err := svc.Create(context.Background(), "   ", domain.APIKeyScopeChatbot, 1)
+	_, _, err := svc.Create(context.Background(), "   ", domain.APIKeyScopeTimesheetRead, 1)
 	if !domain.IsValidationError(err) {
 		t.Fatalf("err = %v, want validation error", err)
 	}
@@ -141,7 +141,7 @@ func TestTouchLastUsedStamps(t *testing.T) {
 	svc := newService(repo)
 	ctx := context.Background()
 
-	created, _, err := svc.Create(ctx, "chatbot", domain.APIKeyScopeChatbot, 1)
+	created, _, err := svc.Create(ctx, "vendor", domain.APIKeyScopeTimesheetRead, 1)
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -189,18 +189,15 @@ func TestCreateRejectsUnknownScope(t *testing.T) {
 	}
 }
 
-// TestCreateDefaultsEmptyScopeToChatbot keeps older admin clients — which send
-// no scope at all — working exactly as before the column existed.
-func TestCreateDefaultsEmptyScopeToChatbot(t *testing.T) {
+// TestCreateRejectsEmptyScope pins the closed-enum contract: with no default
+// scope, a key must be explicitly bound to a surface or it is refused.
+func TestCreateRejectsEmptyScope(t *testing.T) {
 	repo := newFakeRepo()
 	svc := newService(repo)
 
-	key, _, err := svc.Create(context.Background(), "legacy", domain.APIKeyScope(""), 1)
-	if err != nil {
-		t.Fatalf("Create: %v", err)
-	}
-	if key.Scope != domain.APIKeyScopeChatbot {
-		t.Fatalf("scope = %q, want %q", key.Scope, domain.APIKeyScopeChatbot)
+	_, _, err := svc.Create(context.Background(), "legacy", domain.APIKeyScope(""), 1)
+	if !domain.IsValidationError(err) {
+		t.Fatalf("err = %v, want validation error", err)
 	}
 }
 
@@ -219,27 +216,21 @@ func TestEmptyStoredScopeNeverMatchesVendorSurface(t *testing.T) {
 	if legacy.HasScope(domain.APIKeyScopeTimesheetRead) {
 		t.Fatal("empty scope must not match timesheet_read")
 	}
-	if !legacy.HasScope(domain.APIKeyScopeChatbot) {
-		t.Fatal("empty scope must resolve to chatbot")
-	}
 
 	// An unrecognised non-empty scope matches nothing at all.
 	garbage := &domain.APIKey{Scope: domain.APIKeyScope("nonsense")}
-	if garbage.HasScope(domain.APIKeyScopeChatbot) || garbage.HasScope(domain.APIKeyScopeTimesheetRead) {
+	if garbage.HasScope(domain.APIKeyScopeTimesheetRead) {
 		t.Fatal("unknown scope must not match any surface")
 	}
 }
 
-// TestScopesAreNotInterchangeable is the cross-tenant guard: a chatbot key
-// must never satisfy the vendor gate, and vice versa.
-func TestScopesAreNotInterchangeable(t *testing.T) {
-	chatbot := &domain.APIKey{Scope: domain.APIKeyScopeChatbot}
-	vendor := &domain.APIKey{Scope: domain.APIKeyScopeTimesheetRead}
+// TestLegacyChatbotScopeNeverMatchesVendorGate pins the migration-130 world:
+// rows still carrying the retired 'chatbot' scope must never authenticate the
+// vendor surface, even before their revocation lands.
+func TestLegacyChatbotScopeNeverMatchesVendorGate(t *testing.T) {
+	legacy := &domain.APIKey{Scope: domain.APIKeyScope("chatbot")}
 
-	if chatbot.HasScope(domain.APIKeyScopeTimesheetRead) {
-		t.Fatal("chatbot key must not pass a timesheet_read gate")
-	}
-	if vendor.HasScope(domain.APIKeyScopeChatbot) {
-		t.Fatal("timesheet_read key must not pass a chatbot gate")
+	if legacy.HasScope(domain.APIKeyScopeTimesheetRead) {
+		t.Fatal("legacy chatbot scope must not pass a timesheet_read gate")
 	}
 }

@@ -4,10 +4,8 @@ import (
 	"strconv"
 
 	"api-server/internal/app/dto"
-	llmsvc "api-server/internal/app/services/llm"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
-	llmport "api-server/internal/infra/llm"
 	"api-server/internal/transport/http/response"
 
 	"github.com/gin-gonic/gin"
@@ -17,13 +15,11 @@ import (
 
 type Handler struct {
 	settingsService *config.SettingsService
-	mimoService     *llmsvc.Service
 }
 
-func NewHandler(settingsService *config.SettingsService, mimoService *llmsvc.Service) *Handler {
+func NewHandler(settingsService *config.SettingsService) *Handler {
 	return &Handler{
 		settingsService: settingsService,
-		mimoService:     mimoService,
 	}
 }
 
@@ -360,69 +356,4 @@ func (h *Handler) GetActiveSettings(c *gin.Context) {
 	response.Success(c, dto.GetActiveSettingsResponse{
 		Settings: settingResponses,
 	}, "Active settings retrieved successfully")
-}
-
-// TestMimoConnection validates the stored MiMo API key against the MiMo API
-// (GET /v1/models — read-only, no completion tokens spent) and reports latency
-// (Admin only; mounted with the settings write policy).
-//
-// Failure is a designed outcome of a connection test (missing/invalid key,
-// timeout, provider outage), so it is returned as success=false with a stable
-// outcome code + Vietnamese message — the admin settings UI renders one
-// designed error panel per code and decides which buttons stay enabled.
-// @Summary Test the MiMo LLM connection
-// @Description Validates the stored MiMo API key and reports latency. Never returns the key.
-// @Tags settings
-// @Produce json
-// @Success 200 {object} dto.MimoTestConnectionResponse
-// @Failure 401 {object} dto.ErrorResponse
-// @Failure 403 {object} dto.ErrorResponse
-// @Security ApiKeyAuth
-// @Router /settings/mimo/test-connection [post]
-func (h *Handler) TestMimoConnection(c *gin.Context) {
-	if h.mimoService == nil {
-		response.InternalServerError(c, "Dịch vụ MiMo chưa được khởi tạo")
-		return
-	}
-
-	result, err := h.mimoService.TestConnection(c.Request.Context())
-	if err != nil {
-		response.Success(c, mimoTestFailure(err), "Kiểm tra kết nối MiMo thất bại")
-		return
-	}
-
-	response.Success(c, dto.MimoTestConnectionResponse{
-		Success:             true,
-		Code:                dto.MimoTestOK,
-		Message:             "Kết nối MiMo thành công — độ trễ " + strconv.FormatInt(result.LatencyMS, 10) + " ms, " + strconv.Itoa(result.ModelCount) + " mô hình khả dụng",
-		LatencyMS:           result.LatencyMS,
-		ModelCount:          result.ModelCount,
-		DefaultModelPresent: result.DefaultModelPresent,
-	}, "Kết nối MiMo thành công")
-}
-
-// mimoTestFailure maps a classified LLM error to the UI outcome code. The
-// error's own Vietnamese message is preserved verbatim — it already names the
-// designed state (missing key / invalid key / timeout …).
-func mimoTestFailure(err error) dto.MimoTestConnectionResponse {
-	code := dto.MimoTestError
-	switch llmport.KindOf(err) {
-	case llmport.KindMissingKey:
-		code = dto.MimoTestMissingKey
-	case llmport.KindAuth:
-		code = dto.MimoTestInvalidKey
-	case llmport.KindTimeout:
-		code = dto.MimoTestTimeout
-	case llmport.KindRateLimited:
-		code = dto.MimoTestRateLimited
-	case llmport.KindUnavailable:
-		code = dto.MimoTestUnavailable
-	case llmport.KindBusy:
-		code = dto.MimoTestBusy
-	}
-	return dto.MimoTestConnectionResponse{
-		Success: false,
-		Code:    code,
-		Message: err.Error(),
-	}
 }

@@ -2,13 +2,13 @@ import { apiClient, ApiResponse } from './client';
 import { API_ENDPOINTS } from '@/config/api.config';
 
 /** Scope of a machine API key — which integration surface it may authenticate. */
-export type APIKeyScope = 'chatbot' | 'timesheet_read';
+export type APIKeyScope = 'timesheet_read';
 
 /** Admin view of a machine API key (plaintext key is never included here). */
 export interface APIKey {
   id: number;
   name: string;
-  /** Absent only on a server predating API-key scopes; treated as 'chatbot'. */
+  /** Stored scope; a retired legacy value renders as "Không còn hỗ trợ". */
   scope: APIKeyScope;
   key_prefix: string;
   created_by: number;
@@ -19,8 +19,8 @@ export interface APIKey {
 
 export interface CreateAPIKeyPayload {
   name: string;
-  /** Omit to keep the chatbot default. */
-  scope?: APIKeyScope;
+  /** Required — there is no default scope. */
+  scope: APIKeyScope;
 }
 
 /** Create response includes the one-time plaintext `key`. */

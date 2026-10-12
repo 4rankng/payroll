@@ -7,7 +7,6 @@ import type {
   SettingsFilters,
   SettingsResponse,
   SettingResponse,
-  MimoTestConnectionResult,
 } from '@/types/api/settings.types';
 
 class SettingsService {
@@ -83,24 +82,6 @@ class SettingsService {
     const response = await apiClient.get<{ status: string; data: Setting[]; message: string; pagination?: unknown }>(url);
     const settings = response.data.data || response.data;
     return Array.isArray(settings) ? settings : [];
-  }
-
-  /**
-   * Validate the stored MiMo API key against the MiMo API and report latency
-   * (Admin only). Failure is a designed outcome of a connection test — the
-   * backend answers success=false with a stable outcome code + Vietnamese
-   * message so the UI can render one error state per code (missing key /
-   * invalid key / timeout / rate limited / unavailable).
-   */
-  async testMimoConnection(): Promise<MimoTestConnectionResult> {
-    const response = await apiClient.post<MimoTestConnectionResult>(
-      API_ENDPOINTS.settings.mimoTestConnection,
-      {},
-    );
-    if (!response.data) {
-      throw new Error('API response missing expected data');
-    }
-    return response.data;
   }
 }
 

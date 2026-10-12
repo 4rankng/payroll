@@ -50,9 +50,9 @@ func (m *APIKeyAuthMiddleware) Authenticate() gin.HandlerFunc {
 
 		c.Set(constants.CtxAPIKeyID, key.ID)
 		c.Set(constants.CtxAPIKeyName, key.Name)
-		// The normalised scope — never the raw column — so a legacy row with an
-		// empty scope resolves to the chatbot default instead of matching nothing.
-		c.Set(constants.CtxAPIKeyScope, string(domain.NormalizeAPIKeyScope(key.Scope)))
+		// The raw stored scope: an empty or unknown value must stay as-is so
+		// every scope comparison fails closed instead of matching a default.
+		c.Set(constants.CtxAPIKeyScope, string(key.Scope))
 		// tenant_id is used by tenant-scoped middleware/utilities; a machine
 		// key has no user, so its creator is the closest stable tenant anchor.
 		c.Set("tenant_id", key.CreatedBy)
@@ -77,8 +77,8 @@ func (m *APIKeyAuthMiddleware) Authenticate() gin.HandlerFunc {
 }
 
 // RequireAPIKeyScope refuses a request whose authenticated key was not minted
-// for the surface being called — a chatbot key cannot read the vendor
-// timesheets, and a vendor key cannot drive the chatbot.
+// for the surface being called — only a key bound to exactly that scope may
+// pass.
 //
 // It must always be mounted AFTER Authenticate() so the 401 semantics stay
 // unchanged: an absent/invalid key is 401 from Authenticate, and only a key
@@ -86,8 +86,8 @@ func (m *APIKeyAuthMiddleware) Authenticate() gin.HandlerFunc {
 // it before authentication would also let a caller distinguish "key exists but
 // lacks permission" from "no such key" without holding any valid credential.
 //
-// A missing scope in context fails closed (403) rather than defaulting to a
-// match: if Authenticate() was ever skipped by a routing mistake, the guarded
+// A missing or unrecognised scope fails closed (403) rather than defaulting to
+// a match: if Authenticate() was ever skipped by a routing mistake, the guarded
 // route must not become unprotected.
 func (m *APIKeyAuthMiddleware) RequireAPIKeyScope(required domain.APIKeyScope) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -98,7 +98,7 @@ func (m *APIKeyAuthMiddleware) RequireAPIKeyScope(required domain.APIKeyScope) g
 			return
 		}
 		granted, _ := raw.(string)
-		if domain.NormalizeAPIKeyScope(domain.APIKeyScope(granted)) != required {
+		if domain.APIKeyScope(granted) != required {
 			response.Forbidden(c, constants.MsgAPIKeyScopeDeniedVN)
 			c.Abort()
 			return
