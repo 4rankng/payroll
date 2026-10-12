@@ -80,17 +80,27 @@ export const useTestMimoConnection = () => {
   });
 };
 
-// Get multiple settings by keys. Missing keys (never-configured rows) resolve
-// to undefined instead of failing the whole query. A total failure is different:
-// it means the API or the session is unavailable, and silently rendering empty
-// fields would hide that, so the first error is rethrown for the caller's
-// page-level error state.
+// Get multiple settings by keys. Missing keys (never-configured rows, a 404
+// from the by-key endpoint) resolve to undefined instead of failing the whole
+// query. A total failure is different: it means the API or the session is
+// unavailable, and silently rendering empty fields would hide that, so the
+// first error is rethrown for the caller's page-level error state.
 export const useMultipleSettings = (keys: string[]) => {
   return useQuery({
     queryKey: [...QueryKeys.settings.all, 'multiple', keys],
     queryFn: async () => {
       const results = await Promise.allSettled(
-        keys.map((key) => settingsService.getSettingByKey(key)),
+        keys.map((key) =>
+          settingsService.getSettingByKey(key).catch((error) => {
+            const status =
+              (error as { http_status?: number } | null | undefined)?.http_status ??
+              (error as { response?: { status?: number } } | null | undefined)?.response?.status;
+            if (status === 404) {
+              return undefined;
+            }
+            throw error;
+          }),
+        ),
       );
       const failures = results.filter(
         (result): result is PromiseRejectedResult => result.status === 'rejected',

@@ -71,6 +71,23 @@ describe('useMultipleSettings', () => {
     expect(result.current.data?.[1]).toBeUndefined();
   });
 
+  it('defaults a lone unseeded key to undefined instead of erroring', async () => {
+    const notFound = Object.assign(new Error('setting not found'), { http_status: 404 });
+    vi.mocked(settingsService.getSettingByKey).mockRejectedValue(notFound);
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const wrapper = ({ children }: PropsWithChildren) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { result } = renderHook(() => useMultipleSettings(['employee.mobile_required']), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toEqual([undefined]);
+  });
+
   it('surfaces a total load failure instead of rendering empty settings', async () => {
     vi.mocked(settingsService.getSettingByKey).mockRejectedValue(new Error('settings API down'));
     const queryClient = new QueryClient({
