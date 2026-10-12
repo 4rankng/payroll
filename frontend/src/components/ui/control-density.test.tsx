@@ -17,10 +17,18 @@ import {
 } from '@/components/ui/select';
 
 describe('shared control density', () => {
+  it('renders buttons at one height on every device size', () => {
+    render(<Button>Nút chung</Button>);
+    const el = screen.getByRole('button', { name: 'Nút chung' });
+    // Owner directive 2026-10-12: same component height for all device sizes —
+    // h-9 and no breakpoint height variant.
+    expect(el).toHaveClass('h-9');
+    expect(el.className.split(/\s+/).filter((c) => /(^|:)h-/.test(c))).toEqual(['h-9']);
+  });
+
   it('keeps 44px mobile targets while compacting desktop controls', () => {
     render(
       <>
-        <Button>Nút chung</Button>
         <Input aria-label="Ô nhập chung" />
         <Select defaultValue="all">
           <SelectTrigger aria-label="Bộ chọn chung">
@@ -40,7 +48,6 @@ describe('shared control density', () => {
       </>,
     );
 
-    expect(screen.getByRole('button', { name: 'Nút chung' })).toHaveClass('h-11', 'sm:h-9', 'text-sm');
     expect(screen.getByLabelText('Ô nhập chung')).toHaveClass('h-11', 'sm:h-9');
     expect(screen.getByRole('combobox', { name: 'Bộ chọn chung' })).toHaveClass('h-11', 'sm:h-9');
     expect(screen.getByRole('textbox', { name: 'Tìm kiếm chung' }).parentElement).toHaveClass(

@@ -109,14 +109,15 @@ const buttonVariants = cva(
         // wrapper in this compat surface).
         link: "justify-normal rounded-lg !p-0 h-auto font-normal text-brand-secondary underline-offset-2 hover:underline hover:text-brand-secondary_hover",
       },
-      // Compact scale is contractual (control-density tests pin the class
-      // heights); only radius/weight/surface migrate to UU.
+      // One height at every device size (owner directive 2026-10-12): every
+      // size variant is h-9 and never responds to breakpoints — sizes differ
+      // only in padding/type density. control-density.test.tsx pins this.
       size: {
-        default: "h-11 px-4 py-2 sm:h-9 sm:px-3 sm:py-1.5",
-        sm: "h-11 px-3 text-xs sm:h-8 sm:px-2.5",
-        lg: "h-11 px-6 sm:h-10",
-        xl: "h-12 px-8 sm:h-11",
-        icon: "h-11 w-11 sm:h-9 sm:w-9",
+        default: "h-9 px-4 py-2 sm:px-3 sm:py-1.5",
+        sm: "h-9 px-3 text-xs sm:px-2.5",
+        lg: "h-9 px-6",
+        xl: "h-9 px-8",
+        icon: "h-9 w-9",
       },
     },
     defaultVariants: {

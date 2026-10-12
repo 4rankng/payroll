@@ -46,7 +46,6 @@ export default function WalletPage() {
           variant="outline"
           size="sm"
           onClick={() => setEmployeeAccountLookupOpen(true)}
-          className="h-9 gap-1.5"
         >
           <SearchMd className="size-3.5" aria-hidden="true" />
           Tra cứu
@@ -55,7 +54,6 @@ export default function WalletPage() {
           variant="outline"
           size="sm"
           onClick={() => setBulkTransferDialogOpen(true)}
-          className="gap-1.5 h-9"
         >
           <Upload01 className="h-3.5 w-3.5" aria-hidden="true" />
           Chuyển lô
@@ -63,7 +61,6 @@ export default function WalletPage() {
         <Button
           size="sm"
           onClick={() => setDisbursementOpen(true)}
-          className="gap-1.5 h-9"
         >
           <SwitchHorizontal02 className="h-3.5 w-3.5" aria-hidden="true" />
           Chuyển tiền

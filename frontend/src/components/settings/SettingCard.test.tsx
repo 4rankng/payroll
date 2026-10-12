@@ -125,16 +125,14 @@ describe('SettingCard currency-vnd mode', () => {
     expect(input).toHaveValue('20');
   });
 
-  it('normalizes a valid edit and exposes 44px save controls', () => {
+  it('normalizes a valid edit and saves', () => {
     const onSave = vi.fn();
     const input = renderCurrencyCard({ onSave });
 
     fireEvent.change(input, { target: { value: '500000000' } });
 
     expect(input).toHaveValue('500.000.000');
-    expect(screen.getByRole('button', { name: 'Hoàn tác' })).toHaveClass('h-11');
     const saveButton = screen.getByRole('button', { name: 'Lưu thay đổi' });
-    expect(saveButton).toHaveClass('h-11');
     fireEvent.click(saveButton);
     expect(onSave).toHaveBeenCalledTimes(1);
   });
@@ -161,7 +159,6 @@ describe('SettingCard currency-vnd mode', () => {
 
     expect(screen.getByLabelText('Giới hạn tổng tiền mỗi file Chuyển lô')).toBeDisabled();
     const retryButton = screen.getByRole('button', { name: 'Thử lại' });
-    expect(retryButton).toHaveClass('h-11');
     fireEvent.click(retryButton);
     expect(onRetry).toHaveBeenCalledTimes(1);
   });

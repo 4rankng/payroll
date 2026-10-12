@@ -38,18 +38,23 @@ describe('Button contract', () => {
       const { unmount } = render(<Button variant={variant}>Nhan</Button>);
       const el = screen.getByRole('button', { name: 'Nhan' });
       expect(el).toHaveClass(SIGNATURE[variant]);
-      expect(el).toHaveClass('h-11', 'text-sm', 'rounded-lg');
+      expect(el).toHaveClass('h-9', 'text-sm', 'rounded-lg');
       unmount();
     }
-    for (const size of ['sm', 'lg'] as const) {
-      const { unmount } = render(<Button size={size}>Nhan</Button>);
-      expect(screen.getByRole('button', { name: 'Nhan' })).toHaveClass('h-11');
+    // One height at every device size (owner directive 2026-10-12): every
+    // size variant is h-9 with no breakpoint height variant.
+    for (const size of ['sm', 'lg', 'xl', 'icon'] as const) {
+      const { unmount } = render(
+        <Button size={size} aria-label="Nhan">
+          +
+        </Button>,
+      );
+      const el = screen.getByRole('button', { name: 'Nhan' });
+      expect(el.className.split(/\s+/).filter((c) => /(^|:)h-/.test(c))).toEqual(['h-9']);
       unmount();
     }
-    render(<Button size="xl">Nhan</Button>);
-    expect(screen.getByRole('button', { name: 'Nhan' })).toHaveClass('h-12', 'sm:h-11');
     render(<Button size="icon" aria-label="Icon">+</Button>);
-    expect(screen.getByRole('button', { name: 'Icon' })).toHaveClass('h-11', 'w-11');
+    expect(screen.getByRole('button', { name: 'Icon' })).toHaveClass('w-9');
   });
 
   it('keeps a native button element with the DOM attribute contract', () => {
@@ -112,11 +117,11 @@ describe('Button contract', () => {
   it('keeps buttonVariants callable for pagination and calendar composition', () => {
     const ghost = buttonVariants({ variant: 'ghost', size: 'sm' });
     expect(ghost).toContain('text-tertiary');
-    expect(ghost).toContain('h-11');
+    expect(ghost).toContain('h-9');
 
     const fallback = buttonVariants({});
     expect(fallback).toContain('bg-brand-solid');
-    expect(fallback).toContain('h-11');
+    expect(fallback).toContain('h-9');
 
     const outlined = buttonVariants({ variant: 'outline', className: 'w-full' });
     expect(outlined).toContain('border-border');

@@ -313,21 +313,21 @@ const TimesheetPage = () => {
         <div className="flex items-center gap-px rounded-xl border border-border overflow-hidden">
           <button
             onClick={handleBulkApprove}
-            className="inline-flex items-center gap-1.5 h-8 px-3 bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors border-r border-border"
+            className="inline-flex items-center gap-1.5 h-9 px-3 bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors border-r border-border"
           >
             <CheckDone01 className="h-4 w-4 shrink-0" aria-hidden="true" />
             Duyệt hết
           </button>
           <button
             onClick={handleResetAll}
-            className="inline-flex items-center gap-1.5 h-8 px-3 bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors border-r border-border"
+            className="inline-flex items-center gap-1.5 h-9 px-3 bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors border-r border-border"
           >
             <RefreshCw05 className="h-4 w-4 shrink-0" aria-hidden="true" />
             Bỏ duyệt
           </button>
           <button
             onClick={handleChuyenLo}
-            className="inline-flex items-center gap-1.5 h-8 px-3 bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors border-r border-border"
+            className="inline-flex items-center gap-1.5 h-9 px-3 bg-primary text-primary-foreground text-sm font-medium whitespace-nowrap hover:bg-primary/90 transition-colors border-r border-border"
           >
             <Send01 className="h-4 w-4 shrink-0" aria-hidden="true" />
             Chuyển lô
@@ -336,7 +336,7 @@ const TimesheetPage = () => {
             <DropdownMenuTrigger asChild>
               <button
                 aria-label="Thêm tùy chọn"
-                className="inline-flex items-center justify-center h-8 w-8 bg-card text-foreground hover:bg-muted transition-colors"
+                className="inline-flex items-center justify-center h-9 w-9 bg-card text-foreground hover:bg-muted transition-colors"
               >
                 <DotsVertical className="h-4 w-4" aria-hidden="true" />
               </button>

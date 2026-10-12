@@ -172,8 +172,13 @@
 
 [data-partner-ui] .partner-page-header [data-slot="page-header-controls"] button,
 [data-partner-ui] .partner-page-header [data-slot="page-header-controls"] [role="combobox"] {
-  min-height: 2.75rem;
   border-radius: 0.8rem;
+}
+
+/* Button height is owned by the Button component (h-9 at every device
+   size); only non-button controls keep the 2.75rem floor. */
+[data-partner-ui] .partner-page-header [data-slot="page-header-controls"] [role="combobox"] {
+  min-height: 2.75rem;
 }
 
 /* ============================================================================
@@ -193,8 +198,12 @@
 [data-partner-ui] .partner-filter-bar button,
 [data-partner-ui] .partner-filter-bar input,
 [data-partner-ui] .partner-filter-bar [role="combobox"] {
-  min-height: 2.75rem;
   border-radius: 0.75rem;
+}
+
+[data-partner-ui] .partner-filter-bar input,
+[data-partner-ui] .partner-filter-bar [role="combobox"] {
+  min-height: 2.75rem;
 }
 
 /* ============================================================================
@@ -391,9 +400,7 @@ html.partner-route-active :is([role="menu"], [role="listbox"]) {
 }
 
 @media (min-width: 640px) {
-  [data-partner-ui] .partner-page-header [data-slot="page-header-controls"] button,
   [data-partner-ui] .partner-page-header [data-slot="page-header-controls"] [role="combobox"],
-  [data-partner-ui] .partner-filter-bar button,
   [data-partner-ui] .partner-filter-bar input,
   [data-partner-ui] .partner-filter-bar [role="combobox"] {
     min-height: 2.25rem;

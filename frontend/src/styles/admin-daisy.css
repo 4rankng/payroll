@@ -267,8 +267,13 @@
 
   [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] button,
   [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] [role="combobox"] {
-    min-height: 2.75rem;
     border-radius: 0.8rem;
+  }
+
+  /* Button height is owned by the Button component (h-9 at every device
+     size); only non-button controls keep the 2.75rem floor. */
+  [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] [role="combobox"] {
+    min-height: 2.75rem;
   }
 
   [data-admin-ui] .admin-payment-history-page {
@@ -307,8 +312,12 @@
   [data-admin-ui] .admin-filter-bar button,
   [data-admin-ui] .admin-filter-bar input,
   [data-admin-ui] .admin-filter-bar [role="combobox"] {
-    min-height: 2.75rem;
     border-radius: 0.75rem;
+  }
+
+  [data-admin-ui] .admin-filter-bar input,
+  [data-admin-ui] .admin-filter-bar [role="combobox"] {
+    min-height: 2.75rem;
   }
 
   [data-admin-ui] .admin-empty-state {
@@ -403,7 +412,7 @@
     background: hsl(var(--muted) / 0.42);
   }
 
-  [data-admin-ui] .admin-dashboard-bento :is(button, [role="button"]) {
+  [data-admin-ui] .admin-dashboard-bento [role="button"] {
     min-height: 2.75rem;
   }
 
@@ -447,16 +456,15 @@
     }
   }
 
-  /* Data-dense 36px header/filter controls are a DESKTOP decision (>=1200px).
+  /* Data-dense 36px header/filter inputs are a DESKTOP decision (>=1200px).
      Tablets (768–1199px) keep the 2.75rem touch floor instead — see the
-     tablet touch floor in variables.css. */
+     tablet touch floor in variables.css. Buttons are exempt: the Button
+     component owns one height (h-9) at every device size. */
   @media (min-width: 1200px) {
-    [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] button,
     [data-admin-ui] .admin-page-header [data-slot="page-header-controls"] [role="combobox"],
-    [data-admin-ui] .admin-filter-bar button,
     [data-admin-ui] .admin-filter-bar input,
     [data-admin-ui] .admin-filter-bar [role="combobox"],
-    [data-admin-ui] .admin-dashboard-bento :is(button, [role="button"]) {
+    [data-admin-ui] .admin-dashboard-bento [role="button"] {
       min-height: 2.25rem;
     }
   }
@@ -485,8 +493,11 @@
     [data-admin-ui] .admin-pagination button,
     [data-admin-ui] .admin-pagination [role="combobox"] {
       min-width: 2.75rem;
-      min-height: 2.75rem;
       border-radius: 0.75rem;
+    }
+
+    [data-admin-ui] .admin-pagination [role="combobox"] {
+      min-height: 2.75rem;
     }
 }
 
