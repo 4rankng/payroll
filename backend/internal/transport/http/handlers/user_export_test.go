@@ -23,8 +23,12 @@ type exportUserRepo struct {
 	total int64
 }
 
-func (r *exportUserRepo) ListWithFilters(_ context.Context, _ *domain.UserRole, _ string, _ []uint, _ bool, _ string, _ string, _, _ int) ([]*domain.User, int64, error) {
+func (r *exportUserRepo) ListWithFilters(_ context.Context, _ *domain.UserRole, _ string, _ []uint, _ bool, _ *uint, _ string, _ string, _, _ int) ([]*domain.User, int64, error) {
 	return r.rows, r.total, nil
+}
+
+func (r *exportUserRepo) GetCurrentProjectNamesByUserIDs(_ context.Context, _ []uint) (map[uint][]string, error) {
+	return map[uint][]string{}, nil
 }
 
 func (r *exportUserRepo) Create(context.Context, *domain.User) error { panic("not impl") }
@@ -167,7 +171,7 @@ func TestExportUsers(t *testing.T) {
 	sheet, err := f.GetRows("Users")
 	assert.NoError(t, err)
 	assert.Equal(t,
-		[]string{"STT", "Họ và tên", "Username", "Email", "Vai trò", "Hoạt động cuối", "Ngày tạo"},
+		[]string{"STT", "Họ và tên", "Username", "Email", "SDT", "Vai trò", "Dự án", "Hoạt động cuối", "Ngày tạo"},
 		sheet[0],
 	)
 
@@ -175,12 +179,14 @@ func TestExportUsers(t *testing.T) {
 	assert.Equal(t, "TingHire", sheet[1][1])
 	assert.Equal(t, "tinghire.bot", sheet[1][2])
 	assert.Equal(t, "ops@tinghire.example", sheet[1][3])
-	assert.Equal(t, "Quản lý", sheet[1][4])
-	assert.Contains(t, sheet[1][5], "12/10/2026")
+	assert.Equal(t, "—", sheet[1][4])
+	assert.Equal(t, "Quản lý", sheet[1][5])
+	assert.Equal(t, "—", sheet[1][6])
+	assert.Contains(t, sheet[1][7], "12/10/2026")
 
 	assert.Equal(t, "Người Mới", sheet[2][1])
-	assert.Equal(t, "Nhân viên", sheet[2][4])
-	assert.Equal(t, "Chưa đăng nhập", sheet[2][5])
+	assert.Equal(t, "Nhân viên", sheet[2][5])
+	assert.Equal(t, "Chưa đăng nhập", sheet[2][7])
 
 	assert.Eventually(t, func() bool { return audit.calls == 1 }, time.Second, 5*time.Millisecond)
 	assert.Equal(t, "users", audit.dataType)

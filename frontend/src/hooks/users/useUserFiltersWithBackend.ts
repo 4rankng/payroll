@@ -4,6 +4,7 @@ import type { UserFilters } from '@/services/api/user.service';
 export const useUserFiltersWithBackend = () => {
   const [search, setSearch] = useState('');
   const [role, setRole] = useState<'admin' | 'partner' | 'employee' | 'accountant' | undefined>(undefined);
+  const [projectId, setProjectId] = useState<number | undefined>(undefined);
   const [lastLoginToday, setLastLoginToday] = useState<boolean>(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -26,16 +27,21 @@ export const useUserFiltersWithBackend = () => {
       result.role = role;
     }
 
+    if (projectId) {
+      result.project_id = projectId;
+    }
+
     if (lastLoginToday) {
       result.last_login_today = true;
     }
 
     return result;
-  }, [search, role, lastLoginToday, page, pageSize, sortBy, sortOrder]);
+  }, [search, role, projectId, lastLoginToday, page, pageSize, sortBy, sortOrder]);
 
   const clearFilters = () => {
     setSearch('');
     setRole(undefined);
+    setProjectId(undefined);
     setLastLoginToday(false);
     setSortBy('created_at');
     setSortOrder('desc');
@@ -69,13 +75,21 @@ export const useUserFiltersWithBackend = () => {
     setPage(1);
   }, []);
 
-  const hasActiveFilters = search.trim() !== '' || role !== undefined || lastLoginToday;
+  const handleProjectChange = useCallback((value: number | undefined) => {
+    setProjectId(value);
+    setPage(1);
+  }, []);
+
+  const hasActiveFilters =
+    search.trim() !== '' || role !== undefined || projectId !== undefined || lastLoginToday;
 
   return {
     search,
     setSearch: handleSearchChange,
     role,
     setRole: handleRoleChange,
+    projectId,
+    setProjectId: handleProjectChange,
     lastLoginToday,
     setLastLoginToday,
     filters,

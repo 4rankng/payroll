@@ -104,7 +104,11 @@ type UserRepository interface {
 	Restore(ctx context.Context, id uint) error
 	List(ctx context.Context, limit, offset int) ([]*User, error)
 	ListByRole(ctx context.Context, role UserRole) ([]*User, error)
-	ListWithFilters(ctx context.Context, role *UserRole, search string, ids []uint, lastLoginToday bool, sortBy string, sortOrder string, limit, offset int) ([]*User, int64, error)
+	ListWithFilters(ctx context.Context, role *UserRole, search string, ids []uint, lastLoginToday bool, projectID *uint, sortBy string, sortOrder string, limit, offset int) ([]*User, int64, error)
+	// GetCurrentProjectNamesByUserIDs returns each user's current project
+	// assignment names (active window: started and not yet ended), keyed by
+	// user id. Users without an active assignment are absent from the map.
+	GetCurrentProjectNamesByUserIDs(ctx context.Context, userIDs []uint) (map[uint][]string, error)
 	Count(ctx context.Context) (int64, error)
 	CountByRole(ctx context.Context, role UserRole) (int64, error)
 	CountRecentLogins(ctx context.Context, since time.Time) (int64, error)

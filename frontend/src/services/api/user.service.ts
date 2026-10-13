@@ -11,6 +11,8 @@ export interface UserFilters {
   search?: string;
   ids?: string; // Comma-separated user IDs for batch lookup (e.g., "1,2,3")
   last_login_today?: boolean;
+  /** Current-assignment project filter (0/absent = no filter). */
+  project_id?: number;
 }
 
 export interface UserListResponse {

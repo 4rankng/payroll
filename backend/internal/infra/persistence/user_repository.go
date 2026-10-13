@@ -495,7 +495,37 @@ const (
 	bulkPageSizeMax     = 2000
 )
 
-func (r *UserRepository) ListWithFilters(ctx context.Context, role *domain.UserRole, search string, ids []uint, lastLoginToday bool, sortBy string, sortOrder string, limit, offset int) ([]*domain.User, int64, error) {
+// GetCurrentProjectNamesByUserIDs returns each user's current project
+// assignment names (active window: started and not yet ended), keyed by user
+// id. Users without an active assignment are absent from the map.
+func (r *UserRepository) GetCurrentProjectNamesByUserIDs(ctx context.Context, userIDs []uint) (map[uint][]string, error) {
+	out := make(map[uint][]string, len(userIDs))
+	if len(userIDs) == 0 {
+		return out, nil
+	}
+	type row struct {
+		UserID uint
+		Name   string
+	}
+	var rows []row
+	now := clock.Now()
+	if err := r.DB.WithContext(ctx).Raw(`SELECT DISTINCT e.user_id AS user_id, p.name AS name
+			FROM employees e
+			JOIN project_employees pe ON pe.employee_id = e.id AND pe.deleted_at IS NULL
+				AND pe.start_date <= ? AND (pe.last_date IS NULL OR pe.last_date >= ?)
+			JOIN projects p ON p.id = pe.project_id AND p.deleted_at IS NULL
+			WHERE e.deleted_at IS NULL AND e.user_id IN ?
+			ORDER BY p.name`, now, now, userIDs).
+		Scan(&rows).Error; err != nil {
+		return nil, domain.NewInternalError("failed to load current project names", err)
+	}
+	for _, row := range rows {
+		out[row.UserID] = append(out[row.UserID], row.Name)
+	}
+	return out, nil
+}
+
+func (r *UserRepository) ListWithFilters(ctx context.Context, role *domain.UserRole, search string, ids []uint, lastLoginToday bool, projectID *uint, sortBy string, sortOrder string, limit, offset int) ([]*domain.User, int64, error) {
 	var users []*domain.User
 	var total int64
 
@@ -509,6 +539,19 @@ func (r *UserRepository) ListWithFilters(ctx context.Context, role *domain.UserR
 	// Apply role filter if provided
 	if role != nil {
 		query = query.Where("role = ?", *role)
+	}
+
+	// Apply project filter: only users holding a current assignment to the
+	// project (active window: started and not yet ended).
+	if projectID != nil {
+		now := clock.Now()
+		query = query.Where(`EXISTS (
+			SELECT 1 FROM employees e
+			JOIN project_employees pe ON pe.employee_id = e.id AND pe.deleted_at IS NULL
+				AND pe.start_date <= ? AND (pe.last_date IS NULL OR pe.last_date >= ?)
+			JOIN projects p ON p.id = pe.project_id AND p.deleted_at IS NULL
+			WHERE e.user_id = users.id AND e.deleted_at IS NULL AND pe.project_id = ?
+		)`, now, now, *projectID)
 	}
 
 	// Apply search filter if provided (case-insensitive, partial match, vietnamese normalization)

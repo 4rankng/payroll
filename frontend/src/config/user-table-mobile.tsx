@@ -46,6 +46,26 @@ export const createUserMobileConfig = (
       ),
     },
     {
+      key: "mobile",
+      label: "SDT",
+      priority: 2,
+      render: (user) => (
+        <div className="typography-body-medium text-muted-foreground">
+          {user.mobile || "—"}
+        </div>
+      ),
+    },
+    {
+      key: "current_project_names",
+      label: "Dự án",
+      priority: 2,
+      render: (user) => (
+        <div className="typography-body-medium text-muted-foreground">
+          {(user.current_project_names ?? []).join(", ") || "—"}
+        </div>
+      ),
+    },
+    {
       key: "created_at",
       label: "Ngày tạo",
       priority: 2,

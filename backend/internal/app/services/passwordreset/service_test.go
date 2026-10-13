@@ -125,7 +125,10 @@ func (r *fakeUserRepo) List(context.Context, int, int) ([]*domain.User, error) {
 func (r *fakeUserRepo) ListByRole(context.Context, domain.UserRole) ([]*domain.User, error) {
 	panic("not impl")
 }
-func (r *fakeUserRepo) ListWithFilters(context.Context, *domain.UserRole, string, []uint, bool, string, string, int, int) ([]*domain.User, int64, error) {
+func (r *fakeUserRepo) ListWithFilters(context.Context, *domain.UserRole, string, []uint, bool, *uint, string, string, int, int) ([]*domain.User, int64, error) {
+	panic("not impl")
+}
+func (r *fakeUserRepo) GetCurrentProjectNamesByUserIDs(context.Context, []uint) (map[uint][]string, error) {
 	panic("not impl")
 }
 func (r *fakeUserRepo) Count(context.Context) (int64, error) { panic("not impl") }

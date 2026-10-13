@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime/debug"
+	"strings"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/excel"
@@ -90,7 +91,9 @@ func (h *UserHandler) ExportUsers(c *gin.Context) {
 		"Họ và tên",
 		"Username",
 		"Email",
+		"SDT",
 		"Vai trò",
+		"Dự án",
 		"Hoạt động cuối",
 		"Ngày tạo",
 	}
@@ -104,12 +107,22 @@ func (h *UserHandler) ExportUsers(c *gin.Context) {
 		if u.LastLogin != nil {
 			lastLogin = u.LastLogin.Format("02/01/2006 15:04")
 		}
+		phone := u.Mobile
+		if phone == "" {
+			phone = "—"
+		}
+		projects := "—"
+		if len(u.CurrentProjectNames) > 0 {
+			projects = strings.Join(u.CurrentProjectNames, ", ")
+		}
 		rowData := []interface{}{
 			i + 1,
 			u.Fullname,
 			u.Username,
 			u.Email,
+			phone,
 			userRoleLabel(u.Role),
+			projects,
 			lastLogin,
 			excelService.FormatDateValue(u.CreatedAt),
 		}

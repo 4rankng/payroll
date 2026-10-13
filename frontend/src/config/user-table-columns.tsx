@@ -45,6 +45,15 @@ export const createUserColumns = (
     },
   },
   {
+    accessorKey: "mobile",
+    header: "SDT",
+    cell: ({ row }) => {
+      return (
+        <div className="typography-body-medium">{row.original.mobile || "—"}</div>
+      );
+    },
+  },
+  {
     accessorKey: "role",
     header: "Vai trò",
     cell: ({ row }) => {
@@ -70,6 +79,18 @@ export const createUserColumns = (
       }
 
       return <Badge variant={variant}>{roleLabel}</Badge>;
+    },
+  },
+  {
+    accessorKey: "current_project_names",
+    header: "Dự án",
+    cell: ({ row }) => {
+      const names = row.original.current_project_names ?? [];
+      return (
+        <div className="typography-body-medium">
+          {names.length > 0 ? names.join(", ") : "—"}
+        </div>
+      );
     },
   },
   {

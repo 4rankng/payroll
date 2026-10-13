@@ -8,6 +8,8 @@ export interface User {
   last_login?: string;
   created_at: string;
   updated_at: string;
+  /** Current project assignment names (active window), batched with the list. */
+  current_project_names?: string[];
 }
 
 export type UserFormData = {

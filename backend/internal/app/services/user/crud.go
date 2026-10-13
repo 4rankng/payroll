@@ -344,13 +344,32 @@ func (s *UserService) ListUsers(ctx context.Context, req dto.ListUsersRequest) (
 	}
 
 	// Get users from repository with filters
-	users, total, err := s.UserRepo.ListWithFilters(ctx, roleFilter, req.Search, ids, req.LastLoginToday, req.SortBy, req.SortOrder, pageSize, offset)
+	var projectFilter *uint
+	if req.ProjectID != 0 {
+		projectFilter = &req.ProjectID
+	}
+	users, total, err := s.UserRepo.ListWithFilters(ctx, roleFilter, req.Search, ids, req.LastLoginToday, projectFilter, req.SortBy, req.SortOrder, pageSize, offset)
 	if err != nil {
 		s.logger.Error("Failed to list users", "error", err, "page_size", pageSize, "offset", offset)
 		return nil, 0, err
 	}
 
 	userResponses := dto.ToUserResponseList(users)
+
+	// Attach current project assignments in one batch read so the list can
+	// render a Du an column without N+1 queries.
+	userIDs := make([]uint, len(users))
+	for i, u := range users {
+		userIDs[i] = u.ID
+	}
+	namesByUser, err := s.UserRepo.GetCurrentProjectNamesByUserIDs(ctx, userIDs)
+	if err != nil {
+		s.logger.Error("Failed to load current project names", "error", err)
+		return nil, 0, err
+	}
+	for i := range userResponses {
+		userResponses[i].CurrentProjectNames = namesByUser[userResponses[i].ID]
+	}
 
 	s.logger.Info("Users listed successfully",
 		"returned_count", len(users),

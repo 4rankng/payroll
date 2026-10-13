@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { SearchBar } from '@/components/shared/SearchBar';
 import { FilterPill } from '@/components/shared/FilterPill';
+import { useAllProjects } from '@/hooks/api/useProjects';
 import { cn } from '@/lib/utils';
 
 type UserRoleFilter = 'admin' | 'partner' | 'employee' | 'accountant';
@@ -10,6 +11,8 @@ interface UserFiltersBarProps {
   onSearchChange: (value: string) => void;
   role: UserRoleFilter | undefined;
   onRoleChange: (role: UserRoleFilter | undefined) => void;
+  projectId: number | undefined;
+  onProjectChange: (projectId: number | undefined) => void;
   onClearFilters?: () => void;
   hasActiveFilters?: boolean;
   hideRoleFilter?: boolean;
@@ -22,10 +25,14 @@ export const UserFiltersBar = ({
   onSearchChange,
   role,
   onRoleChange,
+  projectId,
+  onProjectChange,
   hideRoleFilter = false,
   extra,
   className,
 }: UserFiltersBarProps) => {
+  const { data: projects } = useAllProjects();
+
   return (
     <div className={cn('flex items-center gap-1.5 flex-wrap', className)}>
       <SearchBar
@@ -47,6 +54,15 @@ export const UserFiltersBar = ({
           ]}
         />
       )}
+      <FilterPill
+        value={projectId !== undefined ? String(projectId) : 'all'}
+        onChange={(v) => onProjectChange(v === 'all' ? undefined : Number(v))}
+        placeholder="Dự án"
+        options={(projects ?? []).map((project) => ({
+          value: String(project.id),
+          label: project.name,
+        }))}
+      />
       {extra}
     </div>
   );

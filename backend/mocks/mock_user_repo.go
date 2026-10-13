@@ -306,6 +306,21 @@ func (mr *MockUserRepositoryMockRecorder) GetByUsernameIncludingDeleted(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUsernameIncludingDeleted", reflect.TypeOf((*MockUserRepository)(nil).GetByUsernameIncludingDeleted), arg0, arg1)
 }
 
+// GetCurrentProjectNamesByUserIDs mocks base method.
+func (m *MockUserRepository) GetCurrentProjectNamesByUserIDs(arg0 context.Context, arg1 []uint) (map[uint][]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCurrentProjectNamesByUserIDs", arg0, arg1)
+	ret0, _ := ret[0].(map[uint][]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCurrentProjectNamesByUserIDs indicates an expected call of GetCurrentProjectNamesByUserIDs.
+func (mr *MockUserRepositoryMockRecorder) GetCurrentProjectNamesByUserIDs(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentProjectNamesByUserIDs", reflect.TypeOf((*MockUserRepository)(nil).GetCurrentProjectNamesByUserIDs), arg0, arg1)
+}
+
 // GetUsernamesByPrefix mocks base method.
 func (m *MockUserRepository) GetUsernamesByPrefix(arg0 context.Context, arg1 string) ([]string, error) {
 	m.ctrl.T.Helper()
@@ -352,9 +367,9 @@ func (mr *MockUserRepositoryMockRecorder) ListByRole(arg0, arg1 interface{}) *go
 }
 
 // ListWithFilters mocks base method.
-func (m *MockUserRepository) ListWithFilters(arg0 context.Context, arg1 *domain.UserRole, arg2 string, arg3 []uint, arg4 bool, arg5, arg6 string, arg7, arg8 int) ([]*domain.User, int64, error) {
+func (m *MockUserRepository) ListWithFilters(arg0 context.Context, arg1 *domain.UserRole, arg2 string, arg3 []uint, arg4 bool, arg5 *uint, arg6, arg7 string, arg8, arg9 int) ([]*domain.User, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListWithFilters", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+	ret := m.ctrl.Call(m, "ListWithFilters", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
 	ret0, _ := ret[0].([]*domain.User)
 	ret1, _ := ret[1].(int64)
 	ret2, _ := ret[2].(error)
@@ -362,9 +377,9 @@ func (m *MockUserRepository) ListWithFilters(arg0 context.Context, arg1 *domain.
 }
 
 // ListWithFilters indicates an expected call of ListWithFilters.
-func (mr *MockUserRepositoryMockRecorder) ListWithFilters(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) ListWithFilters(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWithFilters", reflect.TypeOf((*MockUserRepository)(nil).ListWithFilters), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWithFilters", reflect.TypeOf((*MockUserRepository)(nil).ListWithFilters), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
 }
 
 // Restore mocks base method.

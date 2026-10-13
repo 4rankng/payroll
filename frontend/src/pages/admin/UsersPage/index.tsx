@@ -135,6 +135,8 @@ const UsersPage = () => {
               onSearchChange={filterState.setSearch}
               role={isAdvPartner ? undefined : filterState.role}
               onRoleChange={handleDropdownRoleChange}
+              projectId={filterState.projectId}
+              onProjectChange={filterState.setProjectId}
               onClearFilters={filterState.clearFilters}
               hasActiveFilters={filterState.hasActiveFilters}
               hideRoleFilter={isAdvPartner}

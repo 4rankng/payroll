@@ -26,16 +26,19 @@ type UpdateUserRequest struct {
 
 // UserResponse represents the response containing user data
 type UserResponse struct {
-	ID        uint       `json:"id"`
-	Email     string     `json:"email"`
-	Username  string     `json:"username"`
-	Fullname  string     `json:"fullname"`
-	Role      string     `json:"role"`
-	CCCD      string     `json:"cccd,omitempty"`
-	Mobile    string     `json:"mobile,omitempty"`
-	LastLogin *time.Time `json:"last_login"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
+	ID       uint   `json:"id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Fullname string `json:"fullname"`
+	Role     string `json:"role"`
+	CCCD     string `json:"cccd,omitempty"`
+	Mobile   string `json:"mobile,omitempty"`
+	// CurrentProjectNames lists the user's current project assignment names
+	// (active window), matching the employee view's current_project_names.
+	CurrentProjectNames []string   `json:"current_project_names"`
+	LastLogin           *time.Time `json:"last_login"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
 	// MustChangePassword is true when this account's current password still
 	// matches the default employee password (employee.DefaultEmployeePassword).
 	// Only populated by /auth/me (GetProfile) for the caller's own profile —
@@ -90,6 +93,7 @@ type ListUsersRequest struct {
 	Search         string `form:"search"`
 	IDs            string `form:"ids"` // Comma-separated list of IDs (e.g., "1,2,3")
 	LastLoginToday bool   `form:"last_login_today"`
+	ProjectID      uint   `form:"project_id"` // Current assignment filter; 0 = no filter
 }
 
 // ToUserResponse converts a domain User to UserResponse
