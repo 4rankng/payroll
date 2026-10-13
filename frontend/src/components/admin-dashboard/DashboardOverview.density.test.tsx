@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { Activity, WalletCards } from 'lucide-react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -73,7 +73,7 @@ describe('DashboardOverview density', () => {
     );
   });
 
-  it('renders per-project active logins and hides the group when empty', () => {
+  it('collapses per-project rows behind a toggle and hides the group when empty', () => {
     const { rerender } = render(
       <DashboardActivityPanel
         monthLabel="10/2026"
@@ -86,7 +86,13 @@ describe('DashboardOverview density', () => {
       />,
     );
 
-    expect(screen.getByText('Theo dự án')).toBeInTheDocument();
+    const toggle = screen.getByRole('button', { name: /Theo dự án/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Nha may VERICO')).not.toBeInTheDocument();
+
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('Nha may VERICO')).toBeInTheDocument();
     expect(screen.getByText('120')).toBeInTheDocument();
     expect(screen.getByText('38')).toBeInTheDocument();
@@ -100,6 +106,6 @@ describe('DashboardOverview density', () => {
       />,
     );
 
-    expect(screen.queryByText('Theo dự án')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Theo dự án/ })).not.toBeInTheDocument();
   });
 });

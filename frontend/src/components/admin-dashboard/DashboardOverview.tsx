@@ -1,7 +1,8 @@
 // W13a follow-up (approved): icon slots widened from LucideIcon so both lucide
 // and @untitledui/icons components fit (UU's are plain FunctionComponents).
+import { useState } from 'react';
 import type { ComponentType, ReactNode, SVGProps } from 'react';
-import { Activity, ArrowUpRight, Loader2, RefreshCcw } from 'lucide-react';
+import { Activity, ArrowUpRight, ChevronDown, Loader2, RefreshCcw } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
@@ -257,6 +258,8 @@ export function DashboardActivityPanel({
   isLoading = false,
   hasError = false,
 }: DashboardActivityPanelProps) {
+  const [projectsExpanded, setProjectsExpanded] = useState(false);
+
   return (
     <section className="overflow-hidden rounded-xl border border-border/80 bg-card">
       <div className="border-b border-border/70 px-3 py-3 sm:px-4">
@@ -318,25 +321,40 @@ export function DashboardActivityPanel({
         ))}
         {projectItems.length > 0 && (
           <div className="border-t border-border/60">
-            <p className="px-3 pb-1 pt-2.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:px-4">
-              Theo dự án
-            </p>
-            {projectItems.map((item) => (
-              <div
-                key={item.label}
-                className="flex min-h-11 items-center justify-between gap-3 px-3 py-2.5 sm:min-h-9 sm:px-4 sm:py-2"
-              >
-                <span className="flex items-center gap-2 text-sm text-foreground">
-                  <Activity className="h-4 w-4 text-primary" aria-hidden="true" />
-                  {item.label}
-                </span>
-                <span className="font-display text-base font-semibold text-foreground tabular-nums">
-                  {typeof item.value === 'number'
-                    ? item.value.toLocaleString('vi-VN')
-                    : item.value}
-                </span>
-              </div>
-            ))}
+            <button
+              type="button"
+              aria-expanded={projectsExpanded}
+              onClick={() => setProjectsExpanded((expanded) => !expanded)}
+              className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-4 sm:py-2"
+            >
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                Theo dự án
+              </span>
+              <span className="flex items-center gap-1.5 text-xs tabular-nums text-muted-foreground">
+                {projectItems.length} dự án
+                <ChevronDown
+                  className={cn('h-4 w-4 transition-transform', projectsExpanded && 'rotate-180')}
+                  aria-hidden="true"
+                />
+              </span>
+            </button>
+            {projectsExpanded &&
+              projectItems.map((item) => (
+                <div
+                  key={item.label}
+                  className="flex min-h-11 items-center justify-between gap-3 px-3 py-2.5 sm:min-h-9 sm:px-4 sm:py-2"
+                >
+                  <span className="flex items-center gap-2 text-sm text-foreground">
+                    <Activity className="h-4 w-4 text-primary" aria-hidden="true" />
+                    {item.label}
+                  </span>
+                  <span className="font-display text-base font-semibold text-foreground tabular-nums">
+                    {typeof item.value === 'number'
+                      ? item.value.toLocaleString('vi-VN')
+                      : item.value}
+                  </span>
+                </div>
+              ))}
           </div>
         )}
       </div>

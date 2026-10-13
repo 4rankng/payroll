@@ -1,4 +1,5 @@
-import { memo } from 'react';
+import { memo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 // W13a follow-up (approved): icon slot widened from LucideIcon so both lucide
 // and @untitledui/icons components fit (UU's are plain FunctionComponents).
@@ -22,9 +23,12 @@ export interface GroupedStatCardProps {
   onClick?: () => void;
   isLoading?: boolean;
   className?: string;
+  /** Collapses the stat strip behind the title toggle (default: open). */
+  defaultCollapsed?: boolean;
 }
 
-export const GroupedStatCard = ({ title, icon: Icon, stats, onClick, isLoading, className }: GroupedStatCardProps) => {
+export const GroupedStatCard = ({ title, icon: Icon, stats, onClick, isLoading, className, defaultCollapsed = false }: GroupedStatCardProps) => {
+  const [expanded, setExpanded] = useState(!defaultCollapsed);
   const stripCls = cn(
     'overflow-hidden rounded-2xl border border-border/40 bg-card shadow-none',
     'grid grid-cols-1 gap-px min-[380px]:grid-cols-2 sm:flex',
@@ -56,24 +60,52 @@ export const GroupedStatCard = ({ title, icon: Icon, stats, onClick, isLoading, 
       className={cn('space-y-1.5', onClick && 'cursor-pointer', className)}
       onClick={onClick}
     >
-      <div className="flex items-center gap-1.5 px-0.5">
-        {Icon && <Icon className="h-3 w-3 text-primary shrink-0" />}
-        <span className="font-display text-[13px] font-bold tracking-tight text-muted-foreground">
-          {title}
-        </span>
-      </div>
+      {defaultCollapsed ? (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={(event) => {
+            event.stopPropagation();
+            setExpanded((value) => !value);
+          }}
+          className="flex w-full items-center gap-1.5 px-0.5 text-left"
+        >
+          <span className="flex min-w-0 items-center gap-1.5">
+            {Icon && <Icon className="h-3 w-3 text-primary shrink-0" />}
+            <span className="font-display text-[13px] font-bold tracking-tight text-muted-foreground">
+              {title}
+            </span>
+          </span>
+          <span className="ml-auto flex items-center gap-1 text-xs tabular-nums text-muted-foreground">
+            {stats.length}
+            <ChevronDown
+              className={cn('h-3.5 w-3.5 transition-transform', expanded && 'rotate-180')}
+              aria-hidden="true"
+            />
+          </span>
+        </button>
+      ) : (
+        <div className="flex items-center gap-1.5 px-0.5">
+          {Icon && <Icon className="h-3 w-3 text-primary shrink-0" />}
+          <span className="font-display text-[13px] font-bold tracking-tight text-muted-foreground">
+            {title}
+          </span>
+        </div>
+      )}
 
-      <div className={stripCls}>
-        {stats.map((stat, i) => (
-          <AnimatedStatCell
-            key={i}
-            stat={stat}
-            // With an odd number of stats the two-column strip would leave a
-            // blank cell in the last row; let the final stat fill it instead.
-            span={stats.length % 2 === 1 && i === stats.length - 1 ? 2 : undefined}
-          />
-        ))}
-      </div>
+      {expanded && (
+        <div className={stripCls}>
+          {stats.map((stat, i) => (
+            <AnimatedStatCell
+              key={i}
+              stat={stat}
+              // With an odd number of stats the two-column strip would leave a
+              // blank cell in the last row; let the final stat fill it instead.
+              span={stats.length % 2 === 1 && i === stats.length - 1 ? 2 : undefined}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

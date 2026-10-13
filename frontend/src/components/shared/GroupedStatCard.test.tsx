@@ -8,6 +8,29 @@ vi.mock('@/hooks/useCountUp', () => ({
 }));
 
 describe('GroupedStatCard', () => {
+  it('collapses the strip behind the title toggle when defaultCollapsed', () => {
+    render(
+      <GroupedStatCard
+        title="Hoạt động theo dự án"
+        stats={[
+          { label: 'LGD', value: 86 },
+          { label: 'Samsung SDS', value: 16 },
+        ]}
+        defaultCollapsed
+      />,
+    );
+
+    const toggle = screen.getByRole('button', { name: /Hoạt động theo dự án/ });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('LGD')).not.toBeInTheDocument();
+
+    fireEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('LGD')).toBeInTheDocument();
+    expect(screen.getByText('Samsung SDS')).toBeInTheDocument();
+  });
+
   it('renders an interactive stat as an accessible toggle button', () => {
     const onClick = vi.fn();
 

@@ -443,7 +443,12 @@ const AdminDashboardMobile = () => {
               <>
                 <GroupedStatCard title={`Hoạt động (${monthLabel})`} icon={Activity} stats={activityStats} />
                 {activityProjectStats.length > 0 && (
-                  <GroupedStatCard title="Hoạt động theo dự án" icon={Activity} stats={activityProjectStats} />
+                  <GroupedStatCard
+                    title="Hoạt động theo dự án"
+                    icon={Activity}
+                    stats={activityProjectStats}
+                    defaultCollapsed
+                  />
                 )}
               </>
             ) : null}
