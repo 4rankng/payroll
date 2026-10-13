@@ -168,4 +168,27 @@ describe("CheckInMarkAttendanceDialog", () => {
 
     expect(screen.getByText("Ca làm việc hôm nay")).toBeInTheDocument();
   });
+
+  it("allows switching work date to yesterday to mark a missed shift", () => {
+    mockUseAdminAttendances.mockReturnValue({
+      data: { data: [] },
+      isLoading: false,
+    });
+
+    render(
+      <CheckInMarkAttendanceDialog
+        open
+        onOpenChange={vi.fn()}
+        employee={defaultEmployee}
+        projectId={defaultProjectId}
+        projectName="LGD"
+      />,
+    );
+
+    const yesterdayBtn = screen.getByRole("button", { name: /Hôm qua/ });
+    expect(yesterdayBtn).toBeInTheDocument();
+
+    fireEvent.click(yesterdayBtn);
+    expect(screen.getByText("Ca làm việc hôm qua")).toBeInTheDocument();
+  });
 });

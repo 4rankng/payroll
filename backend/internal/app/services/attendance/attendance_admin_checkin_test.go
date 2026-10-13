@@ -205,3 +205,94 @@ func TestAdminCreateCheckInOutRejectsUnearnableShift(t *testing.T) {
 		t.Fatalf("no record may be created for an unearnable shift, got %+v", repo.created)
 	}
 }
+
+func TestAdminCreateCheckInWithCheckoutForPastDateSucceeds(t *testing.T) {
+	loc := clock.DefaultLocation
+	// Today is 2026-08-05 10:00
+	now := time.Date(2026, 8, 5, 10, 0, 0, 0, loc)
+	// Past day is yesterday: 2026-08-04
+	yesterday := time.Date(2026, 8, 4, 0, 0, 0, 0, loc)
+	repo := &fakeAttendanceRepo{}
+	svc := newAdminCheckInService(repo, now)
+
+	attendance, err := svc.AdminCreateCheckIn(context.Background(), 123, 55, yesterday, 0, true)
+	if err != nil {
+		t.Fatalf("AdminCreateCheckIn(yesterday, with_checkout=true) returned error: %v", err)
+	}
+	if attendance == nil {
+		t.Fatal("expected attendance record")
+	}
+	wantDate := time.Date(2026, 8, 4, 0, 0, 0, 0, loc)
+	if !attendance.Date.Equal(wantDate) {
+		t.Fatalf("attendance.Date = %v, want %v", attendance.Date, wantDate)
+	}
+	wantIn := time.Date(2026, 8, 4, 8, 0, 0, 0, loc)
+	wantOut := time.Date(2026, 8, 4, 17, 0, 0, 0, loc)
+	if !attendance.CheckInTime.Equal(wantIn) || attendance.CheckOutTime == nil || !attendance.CheckOutTime.Equal(wantOut) {
+		t.Fatalf("times = %v -> %v, want %v -> %v", attendance.CheckInTime, attendance.CheckOutTime, wantIn, wantOut)
+	}
+	if attendance.EarningAmount == nil || *attendance.EarningAmount != 300000 {
+		t.Fatalf("earning = %v, want 300000", attendance.EarningAmount)
+	}
+}
+
+func TestAdminCreateCheckInWithoutCheckoutForPastDateRejected(t *testing.T) {
+	loc := clock.DefaultLocation
+	now := time.Date(2026, 8, 5, 10, 0, 0, 0, loc)
+	yesterday := time.Date(2026, 8, 4, 0, 0, 0, 0, loc)
+	repo := &fakeAttendanceRepo{}
+	svc := newAdminCheckInService(repo, now)
+
+	_, err := svc.AdminCreateCheckIn(context.Background(), 123, 55, yesterday, 0, false)
+	if err == nil || !domain.IsValidationError(err) {
+		t.Fatalf("AdminCreateCheckIn(yesterday, with_checkout=false) error = %v, want validation error", err)
+	}
+}
+
+func TestCheckInAutoRejectsExpiredYesterdayOpenAttendance(t *testing.T) {
+	loc := clock.DefaultLocation
+	// Yesterday shift was 08:00 - 17:00, deadline was 17:00 + 4h = 21:00 on 2026-08-04
+	yesterdayCheckIn := time.Date(2026, 8, 4, 8, 0, 0, 0, loc)
+	yesterdayDate := time.Date(2026, 8, 4, 0, 0, 0, 0, loc)
+	todayDate := time.Date(2026, 8, 5, 0, 0, 0, 0, loc)
+	now := time.Date(2026, 8, 5, 8, 15, 0, 0, loc) // The next morning
+
+	yesterdayOpen := &domain.Attendance{
+		ID:          99,
+		EmployeeID:  123,
+		ProjectID:   55,
+		Date:        yesterdayDate,
+		CheckInTime: yesterdayCheckIn,
+		CheckInGate: "Cổng chính",
+	}
+
+	repo := &fakeAttendanceRepo{
+		byDateByDay: map[string]*domain.Attendance{
+			"2026-08-04": yesterdayOpen,
+			"2026-08-05": nil,
+		},
+	}
+	svc := newAdminCheckInService(repo, now)
+	svc.projectRepo = &fakeProjectRepo{p: &domain.Project{
+		ID:                   55,
+		IsFlexible:           true,
+		GeofenceRadiusMeters: 100,
+		GeofenceGates:        []domain.GeofenceGate{{Name: "Cổng chính", Lat: 10, Lng: 106}},
+	}}
+
+	created, err := svc.CheckIn(context.Background(), 123, 55, domain.GeoReading{Lat: 10, Lng: 106})
+	if err != nil {
+		t.Fatalf("CheckIn returned error: %v", err)
+	}
+	if created == nil || !created.Date.Equal(todayDate) {
+		t.Fatalf("expected today's check-in, got %#v", created)
+	}
+
+	// Verify yesterday's open attendance was automatically rejected
+	if yesterdayOpen.SalaryRejectReason == nil {
+		t.Fatal("expected yesterday's expired open attendance to have salary_reject_reason set")
+	}
+	if yesterdayOpen.EarningAmount == nil || *yesterdayOpen.EarningAmount != 0 {
+		t.Fatalf("expected yesterday's earning to be 0, got %v", yesterdayOpen.EarningAmount)
+	}
+}

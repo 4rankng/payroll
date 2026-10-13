@@ -21,14 +21,20 @@ func (s *AttendanceService) CheckOut(ctx context.Context, employeeID uint, geo d
 		if err != nil {
 			return fmt.Errorf("failed to get today's attendance: %w", err)
 		}
-		if attendance == nil {
+		if attendance == nil || attendance.IsCompleted() || attendance.SalaryRejectReason != nil {
 			yesterday := today.AddDate(0, 0, -1)
-			attendance, err = s.attendanceRepo.GetByEmployeeAndDate(txCtx, employeeID, yesterday)
+			yesterdayAtt, err := s.attendanceRepo.GetByEmployeeAndDate(txCtx, employeeID, yesterday)
 			if err != nil {
 				return fmt.Errorf("failed to get yesterday's attendance: %w", err)
 			}
-			if attendance == nil {
-				return domain.NewValidationError("Không tìm thấy thông tin vào làm hợp lệ")
+			if yesterdayAtt != nil && !yesterdayAtt.IsCompleted() && yesterdayAtt.SalaryRejectReason == nil {
+				attendance = yesterdayAtt
+			} else if attendance == nil {
+				if yesterdayAtt != nil {
+					attendance = yesterdayAtt
+				} else {
+					return domain.NewValidationError("Không tìm thấy thông tin vào làm hợp lệ")
+				}
 			}
 		}
 

@@ -192,11 +192,13 @@ function isGeofenceOutsideMessage(message: string): boolean {
   return message.includes("ngoài khu vực chấm công");
 }
 
-function createOutsideGeofenceLocationIssue(): LocationPermissionIssue {
+function createOutsideGeofenceLocationIssue(isCheckOut = false): LocationPermissionIssue {
   return {
     type: "unknown",
     title: "Ngoài khu vực",
-    description: "Di chuyển vào vùng xanh rồi thử lại.",
+    description: isCheckOut
+      ? "Bạn đang ở ngoài khu vực chấm công. Hãy di chuyển lại gần cổng, hoặc liên hệ quản lý để được hỗ trợ chốt ca."
+      : "Di chuyển vào vùng xanh rồi thử lại.",
     canRetry: true,
     requiresSettings: false,
   };
@@ -570,7 +572,7 @@ export function EmployeeCheckInCard({
           return;
         }
         if (isGeofenceOutsideMessage(message)) {
-          showLocationGuidance(createOutsideGeofenceLocationIssue());
+          showLocationGuidance(createOutsideGeofenceLocationIssue(true));
           toast({ title: "Chưa thể chấm công", variant: "destructive" });
           armCheckoutCooldown();
           return;
@@ -582,7 +584,7 @@ export function EmployeeCheckInCard({
           setShowNoSalaryConfirm(true);
         } else {
           if (hasLocationErrorGuidance(error)) {
-            showLocationGuidance(createOutsideGeofenceLocationIssue());
+            showLocationGuidance(createOutsideGeofenceLocationIssue(true));
             return;
           }
           const timing = getTimingErrorGuidance(error, type);

@@ -31,6 +31,9 @@ func (s *AttendanceService) CheckIn(ctx context.Context, employeeID, projectID u
 		if err := s.completeLegacyApprovedOpenAttendance(txCtx, employeeID, today); err != nil {
 			return err
 		}
+		if err := s.autoRejectExpiredYesterdayOpenAttendance(txCtx, employeeID, now); err != nil {
+			return err
+		}
 
 		// 1. Resolve and validate project (auto-detect if not provided)
 		project, err := s.resolveProject(txCtx, employeeID, projectID)
@@ -166,6 +169,33 @@ func (s *AttendanceService) completeLegacyApprovedOpenAttendance(ctx context.Con
 	return nil
 }
 
+// autoRejectExpiredYesterdayOpenAttendance finalizes any unclosed attendance from
+// yesterday that has passed its checkout grace deadline before creating a new shift.
+func (s *AttendanceService) autoRejectExpiredYesterdayOpenAttendance(ctx context.Context, employeeID uint, now time.Time) error {
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	yesterday := today.AddDate(0, 0, -1)
+	yesterdayAtt, err := s.attendanceRepo.GetByEmployeeAndDate(ctx, employeeID, yesterday)
+	if err != nil {
+		return fmt.Errorf("failed to get yesterday's attendance: %w", err)
+	}
+	if yesterdayAtt == nil || yesterdayAtt.CheckOutTime != nil || yesterdayAtt.SalaryRejectReason != nil || yesterdayAtt.IsReviewed() {
+		return nil
+	}
+	shift := s.resolveShiftForAttendance(ctx, yesterdayAtt)
+	if shift == nil {
+		return nil
+	}
+	if now.After(shift.end.Add(checkOutUpperGrace)) {
+		reason := formatAutoRejectReason(yesterdayAtt.CheckInTime, shift.end)
+		if _, err := s.attendanceRepo.MarkAutoRejected(ctx, yesterdayAtt.ID, reason); err != nil {
+			return fmt.Errorf("failed to auto-reject expired yesterday attendance: %w", err)
+		}
+		observability.GetLogger().Info("auto-rejected expired yesterday attendance before new check-in",
+			"attendance_id", yesterdayAtt.ID, "employee_id", employeeID)
+	}
+	return nil
+}
+
 // AdminCheckInShifts returns today's configured shifts for an employee's active
 // assignment. Admin-created records intentionally stay within today's live
 // checkout window: the employee, not the administrator, must still checkout
@@ -179,8 +209,11 @@ func (s *AttendanceService) adminCheckInShifts(ctx context.Context, employeeID, 
 	now := s.clock.Now()
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	day = time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, now.Location())
-	if !day.Equal(today) {
-		return nil, nil, nil, domain.NewValidationError("Chỉ có thể tạo check-in cho hôm nay để nhân viên tự tan ca.")
+	if day.After(today) {
+		return nil, nil, nil, domain.NewValidationError("Không thể xem ca làm việc trong tương lai.")
+	}
+	if day.Before(today.AddDate(0, 0, -30)) {
+		return nil, nil, nil, domain.NewValidationError("Chỉ có thể xem ca làm việc trong vòng 30 ngày gần nhất.")
 	}
 
 	project, err := s.projectRepo.GetByID(ctx, projectID)
@@ -241,20 +274,16 @@ func (s *AttendanceService) adminCheckInShifts(ctx context.Context, employeeID, 
 	return assignment, payrate, options, nil
 }
 
-// AdminCreateCheckIn records an admin-entered attendance for today. With
-// withCheckout=false it records only the check-in at the selected configured
-// shift start — checkout GPS, earning, and quota stay empty because the
-// employee must use the normal checkout flow to finish the shift. With
-// withCheckout=true the selected shift must already be over: the record is
-// created complete (checkout at the configured shift end, earning from the
-// payrate, quota credit scheduled after the configured hold), serving the
-// "employee worked but never used the app" case that the self-checkout design
-// cannot serve once the checkout window has closed.
+// AdminCreateCheckIn records an admin-entered attendance. With withCheckout=false
+// it records only the check-in at the selected configured shift start for today,
+// leaving checkout to the employee. With withCheckout=true the selected shift must
+// already be over: the record is created complete for today or a recent past day.
 func (s *AttendanceService) AdminCreateCheckIn(ctx context.Context, employeeID, projectID uint, day time.Time, shiftIndex int, withCheckout bool) (*domain.Attendance, error) {
 	var created *domain.Attendance
 	err := s.transactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
 		now := s.clock.Now()
 		today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+		day = time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, now.Location())
 		if err := s.completeLegacyApprovedOpenAttendance(txCtx, employeeID, today); err != nil {
 			return err
 		}
@@ -274,22 +303,30 @@ func (s *AttendanceService) AdminCreateCheckIn(ctx context.Context, employeeID, 
 			if now.Before(shift.End) {
 				return domain.NewValidationError("Ca làm chưa kết thúc; hãy tạo check-in thường và để nhân viên tự tan ca.")
 			}
-		} else if now.After(shift.End.Add(checkOutUpperGrace)) {
-			return domain.NewValidationError("Ca làm đã quá giờ tan ca; không thể tạo check-in để nhân viên tự tan ca.")
+		} else {
+			if !day.Equal(today) {
+				return domain.NewValidationError("Chỉ có thể tạo check-in cho hôm nay để nhân viên tự tan ca.")
+			}
+			if now.After(shift.End.Add(checkOutUpperGrace)) {
+				return domain.NewValidationError("Ca làm đã quá giờ tan ca; không thể tạo check-in để nhân viên tự tan ca.")
+			}
 		}
 
-		existing, err := s.attendanceRepo.GetByEmployeeAndDate(txCtx, employeeID, today)
+		existing, err := s.attendanceRepo.GetByEmployeeAndDate(txCtx, employeeID, day)
 		if err != nil {
 			return fmt.Errorf("failed to check existing attendance: %w", err)
 		}
 		if existing != nil && !isConfirmedNoSalaryCheckout(existing) && !isAutoRejectedNoCheckout(existing) {
-			return domain.NewValidationError("Nhân viên đã có check-in trong ngày hôm nay.")
+			if day.Equal(today) {
+				return domain.NewValidationError("Nhân viên đã có check-in trong ngày hôm nay.")
+			}
+			return domain.NewValidationError("Nhân viên đã có check-in trong ngày này.")
 		}
 
 		attendance := &domain.Attendance{
 			EmployeeID:  employeeID,
 			ProjectID:   projectID,
-			Date:        today,
+			Date:        day,
 			CheckInTime: shift.Start,
 			CheckInGate: "admin",
 		}

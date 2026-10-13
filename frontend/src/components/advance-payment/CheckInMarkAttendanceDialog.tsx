@@ -62,7 +62,9 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
   const [withCheckout, setWithCheckout] = useState(false);
 
   const today = vietnamBusinessDate();
+  const yesterday = getPastDate(1);
   const fromDate = getPastDate(2);
+  const [selectedDate, setSelectedDate] = useState<string>(today);
   const createCheckIn = useAdminCreateCheckIn();
   const approve = useApproveAttendance({ successMessage: "Đã ghi nhận tan ca cho nhân viên." });
   const recordQuery = useAdminAttendances(
@@ -83,7 +85,7 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
   const shiftsQuery = useAdminCheckInShifts(
     employee?.id ?? null,
     projectId ?? null,
-    today,
+    selectedDate,
     { enabled: open && employee !== null && projectId !== null && !record },
   );
   const shifts = shiftsQuery.data?.shifts ?? [];
@@ -95,9 +97,10 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
     if (!open) {
       setShiftIndex("");
       setWithCheckout(false);
+      setSelectedDate(today);
       return;
     }
-  }, [open]);
+  }, [open, today]);
 
   const canCreate = employee !== null && projectId !== null && shiftIndex !== "" && shiftStarted && !createCheckIn.isPending;
   const mutationError = createCheckIn.error instanceof Error ? createCheckIn.error.message : null;
@@ -110,7 +113,7 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
       {
         employee_id: employee.id,
         project_id: projectId,
-        date: today,
+        date: selectedDate,
         shift_index: Number(shiftIndex),
         with_checkout: withCheckout && shiftEnded,
       },
@@ -169,7 +172,39 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
         ) : (
           <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="mark-attendance-shift" className="text-sm font-medium">Ca làm việc hôm nay</Label>
+              <Label className="text-sm font-medium">Ngày làm việc</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant={selectedDate === today ? "default" : "outline"}
+                  size="sm"
+                  className="min-h-10 text-xs sm:text-sm"
+                  onClick={() => {
+                    setSelectedDate(today);
+                    setShiftIndex("");
+                  }}
+                >
+                  Hôm nay ({formatVnDayMonth(new Date().toISOString())})
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedDate === yesterday ? "default" : "outline"}
+                  size="sm"
+                  className="min-h-10 text-xs sm:text-sm"
+                  onClick={() => {
+                    setSelectedDate(yesterday);
+                    setShiftIndex("");
+                  }}
+                >
+                  Hôm qua ({formatVnDayMonth(new Date(Date.now() - 86400000).toISOString())})
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="mark-attendance-shift" className="text-sm font-medium">
+                {selectedDate === today ? "Ca làm việc hôm nay" : "Ca làm việc hôm qua"}
+              </Label>
               <SearchableSelect
                 triggerId="mark-attendance-shift"
                 value={shiftIndex}
