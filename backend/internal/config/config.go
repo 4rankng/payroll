@@ -31,6 +31,7 @@ type Config struct {
 	Captcha       CaptchaConfig
 	PasswordReset PasswordResetConfig
 	Zalo          ZaloConfig
+	SelfCheckin   SelfCheckinConfig
 	CashForecast  CashForecastConfig
 	// Tenant concurrency limit for per-tenant middleware
 	TenantConcurrencyLimit int
@@ -102,6 +103,16 @@ type ZaloConfig struct {
 	SecretKey  string
 	TemplateID string // default "619684" (OTP-ZNS-v2)
 	CodeTTL    time.Duration
+}
+
+// SelfCheckinConfig gates the vendor self check-in flow. SupportedProjectCodes
+// lists the project codes whose employees may enable/disable via the
+// integration API, so rollout to a new project is a config change, not a code
+// edit. TemplateID selects a dedicated ZNS template; empty falls back to the
+// reset template until one is approved in the Zalo console.
+type SelfCheckinConfig struct {
+	TemplateID            string
+	SupportedProjectCodes []string
 }
 
 // GoogleConfig holds Google OIDC settings. GoogleClientID is the OAuth client
@@ -448,6 +459,10 @@ func Load() (*Config, error) {
 			SecretKey:  getEnv("ZALO_SECRET_KEY", ""),
 			TemplateID: getEnv("ZALO_RESET_TEMPLATE_ID", "619684"),
 			CodeTTL:    parseDuration(getEnv("ZALO_RESET_CODE_TTL", "10m")),
+		},
+		SelfCheckin: SelfCheckinConfig{
+			TemplateID:            getEnv("ZALO_SELFCHECKIN_TEMPLATE_ID", ""),
+			SupportedProjectCodes: splitCSV(getEnv("SELF_CHECKIN_SUPPORTED_PROJECT_CODES", "LGD")),
 		},
 		Captcha: CaptchaConfig{
 			Enabled:    parseBool(getEnv("CAPTCHA_ENABLE", "false")),

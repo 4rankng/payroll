@@ -400,6 +400,29 @@ const (
 	MsgAPIKeyRevokedVN     = "Đã thu hồi API key."
 	MsgAPIKeyNotFoundVN    = "Không tìm thấy API key."
 
+	// Vendor integration API (machine-key authenticated TingHire channel).
+	MsgIntegrationPhoneInvalidVN      = "Số điện thoại không hợp lệ."
+	MsgIntegrationAccountNotFoundVN   = "Không tìm thấy tài khoản với số điện thoại này."
+	MsgIntegrationOTPSentVN           = "Mã đặt lại mật khẩu đã được gửi qua Zalo."
+	MsgIntegrationOTPDisabledVN       = "Tính năng gửi OTP qua Zalo đang tắt. Vui lòng liên hệ quản trị viên."
+	MsgIntegrationOTPSendFailedVN     = "Không gửi được mã OTP. Vui lòng thử lại hoặc liên hệ quản trị viên."
+	MsgIntegrationOTPVerifiedVN       = "Mã xác thực hợp lệ."
+	MsgIntegrationResetTokenInvalidVN = "Phiên đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."
+	MsgIntegrationResetSuccessVN      = "Đặt lại mật khẩu thành công."
+	MsgIntegrationEmployeeFoundVN     = "Tìm thấy nhân viên."
+	MsgIntegrationEmployeeNotFoundVN  = "Không tìm thấy nhân viên với số điện thoại này."
+	MsgVendorInvalidScopeVN           = "Phạm vi (scope) của khoá API không hợp lệ. Chỉ hỗ trợ: timesheet_read."
+
+	// Self check-in via the vendor integration API.
+	MsgSelfCheckinProjectNotSupportedVN = "Dự án này chưa hỗ trợ bật/tắt tự chấm công qua chatbot."
+	MsgSelfCheckinAlreadyEnabledVN      = "Tự chấm công của bạn đang bật rồi."
+	MsgSelfCheckinAlreadyDisabledVN     = "Tự chấm công của bạn đang tắt."
+	MsgSelfCheckinPendingExistsVN       = "Đã có yêu cầu bật tự chấm công đang chờ kích hoạt."
+	MsgSelfCheckinUpdateSuccessVN       = "Cập nhật tự chấm công thành công."
+	MsgSelfCheckinOTPSentVN             = "Mã xác thực đã được gửi qua Zalo."
+	MsgSelfCheckinOTPVerifiedVN         = "Mã xác thực hợp lệ."
+	MsgSelfCheckinTokenInvalidVN        = "Phiên xác thực không hợp lệ hoặc đã hết hạn."
+
 	// MCP agent surface (/api/v1/mcp, machine MCP API keys).
 	MsgMCPKeyInvalidVN    = "Khoá API MCP không hợp lệ hoặc đã bị thu hồi"
 	MsgMCPKeyPathDeniedVN = "Đường dẫn này không được truy cập bằng API key"

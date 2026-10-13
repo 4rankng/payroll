@@ -22,6 +22,7 @@ import (
 	"api-server/internal/app/services/employee"
 	"api-server/internal/app/services/flex_pay"
 	infraServices "api-server/internal/app/services/infrastructure"
+	"api-server/internal/app/services/integration"
 	"api-server/internal/app/services/ledger"
 	"api-server/internal/app/services/loan"
 	"api-server/internal/app/services/mcpapikey"
@@ -71,6 +72,8 @@ type Services struct {
 	ZaloConnect                       *zaloconnect.Service            // Admin-managed OA connection + runtime toggle (Phase 4)
 	APIKey                            *apikey.Service                 // Machine API keys for the vendor integration API
 	MCPAPIKey                         *mcpapikey.Service              // Machine API keys for the MCP agent surface
+	Integration                       *integration.Service            // Vendor password-reset + employee lookup (API-key auth)
+	IntegrationSelfCheckin            *integration.SelfCheckinService // Vendor self check-in enable/disable (API-key auth)
 	FlexPayZNS                        *zaloconnect.FlexPayZNSService  // ZNS notifications for FlexPay salary notifications
 	FlexPaySalaryDelivery             *zaloconnect.SalaryNotificationDeliveryService
 	Auth                              *auth.AuthService
@@ -537,20 +540,20 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 
 	// Create employee service config (11 params → 1)
 	employeeConfig := &employee.Config{
-		EmployeeRepo:          repos.Employee,
-		TimesheetRepo:         repos.Timesheet,
-		AttendanceRepo:        repos.Attendance,
-		BankRepo:              repos.Bank,
-		ProjectEmployeeRepo:   repos.ProjectEmployee,
-		EmployeeUserRepo:      repos.EmployeeUser,
-		UserRepo:              repos.User,
-		EmployeeDomainService: domainServices.NewEmployeeDomainService(repos.Employee, repos.ProjectEmployee, repos.Timesheet),
-		UserService:           userService,
-		TransactionManager:    transactionManager,
-		Events:                eventBus,
-		Cache:                 cacheService,
-		Logger:                logger,
-		BankAccountValidator:  employee.NewBankAccountValidator(disbursementRegistry, repos.Bank, cacheService, logger),
+		EmployeeRepo:             repos.Employee,
+		TimesheetRepo:            repos.Timesheet,
+		AttendanceRepo:           repos.Attendance,
+		BankRepo:                 repos.Bank,
+		ProjectEmployeeRepo:      repos.ProjectEmployee,
+		EmployeeUserRepo:         repos.EmployeeUser,
+		UserRepo:                 repos.User,
+		EmployeeDomainService:    domainServices.NewEmployeeDomainService(repos.Employee, repos.ProjectEmployee, repos.Timesheet),
+		UserService:              userService,
+		TransactionManager:       transactionManager,
+		Events:                   eventBus,
+		Cache:                    cacheService,
+		Logger:                   logger,
+		BankAccountValidator:     employee.NewBankAccountValidator(disbursementRegistry, repos.Bank, cacheService, logger),
 		IsEmployeeMobileRequired: settingsConfigService.IsEmployeeMobileRequired,
 	}
 
@@ -707,6 +710,30 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	apiKeyService := apikey.NewService(repos.APIKey, clk)
 	mcpAPIKeyService := mcpapikey.NewService(repos.MCPAPIKey, repos.User, clk)
 
+	// Vendor integration service (TingHire): password-reset OTP + employee
+	// lookup. Reuses the same Zalo store, sender, and enabled-checker as the
+	// self-service reset, but reports outcomes explicitly to the caller.
+	integrationService := integration.NewService(
+		zaloResetStore, repos.User, repos.Employee, userService, zaloSender,
+		cfg.Zalo.TemplateID, zaloConnectSvc, eventBus, clk, logger,
+	)
+
+	// Self check-in shares the OTP machinery but MUST live under its own
+	// Redis key namespace ("zsc"): its sessions and action tokens are then
+	// never consumable at the password-reset endpoints, and a reset token
+	// never unlocks a self check-in update (cross-flow replay defense).
+	selfCheckinStore := cache.NewZaloResetStoreWithPrefix(redis.Client, cfg.Zalo.CodeTTL, "zsc")
+	selfCheckinTemplate := cfg.SelfCheckin.TemplateID
+	if selfCheckinTemplate == "" {
+		selfCheckinTemplate = cfg.Zalo.TemplateID
+	}
+	selfCheckinService := integration.NewSelfCheckinService(
+		selfCheckinStore, repos.User, repos.Employee, repos.Project,
+		repos.ProjectEmployee, repos.Payrate, projectEmployeeSvc, zaloSender,
+		selfCheckinTemplate, zaloConnectSvc, cfg.SelfCheckin.SupportedProjectCodes,
+		clk, logger,
+	)
+
 	// FlexPay ZNS service for employee salary notifications
 	flexPayZNSService := zaloconnect.NewFlexPayZNSService(
 		zaloProvider,
@@ -743,6 +770,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		ZaloConnect:                       zaloConnectSvc,
 		APIKey:                            apiKeyService,
 		MCPAPIKey:                         mcpAPIKeyService,
+		Integration:                       integrationService,
+		IntegrationSelfCheckin:            selfCheckinService,
 		FlexPayZNS:                        flexPayZNSService,
 		FlexPaySalaryDelivery:             flexPaySalaryDelivery,
 		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, cfg.Google.ClientID, nonceStore, captchaService, logger),

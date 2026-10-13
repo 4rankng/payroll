@@ -10,7 +10,7 @@ import (
 const flowVendorTimesheetAPI = "VendorTimesheetAPI"
 
 // runVendorTimesheetTests exercises the read-only vendor surface
-// (/api/v1/vendor/*): the key scope gate, the code-based
+// (/api/v1/vendor/*): scope isolation in both directions, the code-based
 // filtering contract, the required-filter guard, and — most importantly —
 // that nothing on this surface can write.
 //
@@ -23,9 +23,10 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 
 	admin := client.WithToken(data.AdminToken)
 
-	// --- Mint the vendor key ---------------------------------------------
+	// --- Mint one key per scope -------------------------------------------
 	var vendorKeyID uint
 	var vendorKey string
+	var chatbotKey string
 
 	reporter.RunTest(flowVendorTimesheetAPI, "Admin creates a timesheet_read key", func() error {
 		var out CreateAPIKeyResponse
@@ -45,6 +46,22 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 		return nil
 	})
 
+	reporter.RunTest(flowVendorTimesheetAPI, "Admin creates a chatbot key", func() error {
+		var out CreateAPIKeyResponse
+		_, err := admin.PostInto("/api/v1/admin/api-keys",
+			CreateAPIKeyRequest{Name: "itest chatbot scoped"}, &out)
+		if err != nil {
+			return err
+		}
+		// Omitting scope must default to chatbot, so existing admin clients
+		// that never send the field keep working.
+		if out.Scope != "chatbot" {
+			return fmt.Errorf("scope = %q, want chatbot (omitted field must default)", out.Scope)
+		}
+		chatbotKey = out.Key
+		return nil
+	})
+
 	reporter.RunTest(flowVendorTimesheetAPI, "Admin rejects an unknown scope", func() error {
 		_, code, err := admin.PostExpectError("/api/v1/admin/api-keys",
 			CreateAPIKeyRequest{Name: "bad scope", Scope: "time_sheet_read"})
@@ -59,6 +76,8 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 
 	vendor := NewAPIClient(cfg.BaseURL)
 	vendor.Headers = map[string]string{"X-API-Key": vendorKey}
+	chatbot := NewAPIClient(cfg.BaseURL)
+	chatbot.Headers = map[string]string{"X-API-Key": chatbotKey}
 
 	// --- Authentication failures (401) -----------------------------------
 	reporter.RunTest(flowVendorTimesheetAPI, "Vendor call without X-API-Key returns 401", func() error {
@@ -86,22 +105,32 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 		return nil
 	})
 
-	// --- Admin-only key management (403) ---------------------------------
-	if len(data.Partners) == 0 {
-		reporter.Skip(flowVendorTimesheetAPI, "Non-admin cannot create keys", "no partner token discovered")
-	} else {
-		reporter.RunTest(flowVendorTimesheetAPI, "Non-admin cannot create keys (403)", func() error {
-			partner := client.WithToken(data.Partners[0].Token)
-			_, code, err := partner.PostExpectError("/api/v1/admin/api-keys", CreateAPIKeyRequest{Name: "nope", Scope: "timesheet_read"})
+	// --- Scope isolation (403) --------------------------------------------
+	reporter.RunTest(flowVendorTimesheetAPI, "chatbot key is refused on every vendor endpoint (403)", func() error {
+		for _, path := range vendorReadPaths() {
+			_, code, err := chatbot.GetExpectError(path)
 			if err != nil {
-				return err
+				return fmt.Errorf("%s: %w", path, err)
 			}
 			if code != 403 {
-				return fmt.Errorf("status %d, want 403", code)
+				return fmt.Errorf("%s: status %d, want 403", path, code)
 			}
-			return nil
-		})
-	}
+		}
+		return nil
+	})
+
+	reporter.RunTest(flowVendorTimesheetAPI, "timesheet_read key cannot drive the chatbot (403)", func() error {
+		// The cross-scope leak this feature exists to prevent.
+		_, code, err := vendor.PostExpectError("/api/v1/integration/password-reset/otp",
+			IntegrationOTPRequest{Phone: uniqueMobile()})
+		if err != nil {
+			return err
+		}
+		if code != 403 {
+			return fmt.Errorf("status %d, want 403", code)
+		}
+		return nil
+	})
 
 	// --- Happy paths ------------------------------------------------------
 	// Seed a project + employee to filter against; fall back to whatever the

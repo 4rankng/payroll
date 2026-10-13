@@ -287,3 +287,44 @@ func TestZaloResetStore_PrefixedKeysLandUnderTheirNamespace(t *testing.T) {
 		t.Fatal("empty session id")
 	}
 }
+
+// PeekVerified backs the chatbot's read-only status query: it must return the
+// bound userID and leave the single-use token spendable by the update step.
+func TestZaloResetStore_PeekVerifiedDoesNotConsume(t *testing.T) {
+	store, _ := newTestZaloStore(t)
+	ctx := context.Background()
+
+	token, err := store.CreateVerified(ctx, 1621)
+	if err != nil {
+		t.Fatalf("CreateVerified: %v", err)
+	}
+
+	for i := 0; i < 3; i++ {
+		uid, err := store.PeekVerified(ctx, token)
+		if err != nil {
+			t.Fatalf("PeekVerified #%d: %v", i+1, err)
+		}
+		if uid != 1621 {
+			t.Fatalf("PeekVerified #%d uid = %d, want 1621", i+1, uid)
+		}
+	}
+
+	// The token survives the peeks and still consumes exactly once.
+	uid, err := store.ConsumeVerified(ctx, token)
+	if err != nil {
+		t.Fatalf("ConsumeVerified after peeks: %v", err)
+	}
+	if uid != 1621 {
+		t.Fatalf("ConsumeVerified uid = %d, want 1621", uid)
+	}
+	if _, err := store.PeekVerified(ctx, token); err == nil {
+		t.Error("peek after consume must fail — the token is spent")
+	}
+}
+
+func TestZaloResetStore_PeekUnknownVerifiedToken(t *testing.T) {
+	store, _ := newTestZaloStore(t)
+	if _, err := store.PeekVerified(context.Background(), "no-such-token"); err == nil {
+		t.Error("peeking an unknown token must fail")
+	}
+}

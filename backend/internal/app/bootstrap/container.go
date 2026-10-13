@@ -65,58 +65,61 @@ type Container struct {
 }
 
 type Handlers struct {
-	User                 *handlers.UserHandler
-	Auth                 *handlers.AuthHandler
-	Dashboard            *handlers.DashboardHandler
-	Project              *handlers.ProjectHandler
-	Employee             *handlers.EmployeeHandler
-	EmployeeUsers        *employeeHandlers.EmployeeUsersHandler
-	EmployeeProfile      *handlers.EmployeeProfileHandler
-	ProjectEmployee      *handlers.ProjectEmployeeHandler
-	AdminClock           *adminHandlers.ClockHandler
-	AdminZalo            *adminHandlers.ZaloHandler
-	APIKey               *adminHandlers.APIKeyHandler
-	MCPAPIKey            *adminHandlers.MCPAPIKeyHandler
-	VendorTimesheet      *integrationHandlers.VendorTimesheetHandler
-	AdminAttendance      *adminHandlers.AttendanceHandler
-	Bank                 *handlers.BankHandler
-	Timesheet            *handlers.TimesheetHandler
-	TimesheetEditRequest *handlers.TimesheetEditRequestHandler
-	Payroll              *handlers.PayrollHandler
-	Payrate              *handlers.PayrateHandler
-	Ledger               *handlers.LedgerHandler
-	Transaction          *handlers.TransactionHandler
-	Health               *handlers.HealthHandler
-	Notification         *handlers.NotificationHandler
-	Settings             *handlers.SettingsHandler
-	Asset                *handlers.AssetHandler
-	Cache                *handlers.CacheHandler
-	Lender               *handlers.LenderHandler
-	Loan                 *handlers.LoanHandler
-	Email                *handlers.EmailHandler
-	Settlement           *handlers.SettlementHandler
-	Metric               *handlers.MetricHandler
-	Audit                *handlers.AuditHandler
-	AdvancePayment       *advancePaymentHandlers.AdvancePaymentHandler
-	AdvancePaymentFee    *advancePaymentHandlers.FeeScheduleHandler
-	AdBanner             *handlers.AdBannerHandler
-	EmployeeImport       *employeeHandlers.ImportHandler
-	DBExport             *handlers.DBExportHandler
-	Push                 *pushHandlers.Handler
-	Approval             *approvalHandlers.Handler
-	Cron                 *handlers.CronHandler
-	DisbursementWebhook  *disbursementHandlers.WebhookHandler
-	DisbursementFee      *disbursementHandlers.FeeScheduleHandler
-	DisbursementSettings *disbursementHandlers.SettingsHandler
-	ManualDisbursement   *disbursementHandlers.ManualDisbursementHandler
-	WeeklyPaymentFee     *handlers.WeeklyPaymentFeeHandler
-	ReconciliationExport *disbursementHandlers.ReconciliationExportHandler
-	ProviderTransactions *adminHandlers.WalletPaymentStatsHandler
-	Wallet               *handlers.WalletHandler
-	WalletBulkTransfer   *handlers.WalletBulkTransferHandler
-	AdvPartnerUser       *advPartnerHandlers.UserHandler
-	BCCImport            *timesheetHandlers.BCCImportHandler
-	Attendance           *attendanceHandlers.Handler
+	User                   *handlers.UserHandler
+	Auth                   *handlers.AuthHandler
+	Dashboard              *handlers.DashboardHandler
+	Project                *handlers.ProjectHandler
+	Employee               *handlers.EmployeeHandler
+	EmployeeUsers          *employeeHandlers.EmployeeUsersHandler
+	EmployeeProfile        *handlers.EmployeeProfileHandler
+	ProjectEmployee        *handlers.ProjectEmployeeHandler
+	AdminClock             *adminHandlers.ClockHandler
+	AdminZalo              *adminHandlers.ZaloHandler
+	APIKey                 *adminHandlers.APIKeyHandler
+	MCPAPIKey              *adminHandlers.MCPAPIKeyHandler
+	IntegrationReset       *integrationHandlers.PasswordResetHandler
+	IntegrationLookup      *integrationHandlers.EmployeeLookupHandler
+	IntegrationSelfCheckin *integrationHandlers.SelfCheckinHandler
+	VendorTimesheet        *integrationHandlers.VendorTimesheetHandler
+	AdminAttendance        *adminHandlers.AttendanceHandler
+	Bank                   *handlers.BankHandler
+	Timesheet              *handlers.TimesheetHandler
+	TimesheetEditRequest   *handlers.TimesheetEditRequestHandler
+	Payroll                *handlers.PayrollHandler
+	Payrate                *handlers.PayrateHandler
+	Ledger                 *handlers.LedgerHandler
+	Transaction            *handlers.TransactionHandler
+	Health                 *handlers.HealthHandler
+	Notification           *handlers.NotificationHandler
+	Settings               *handlers.SettingsHandler
+	Asset                  *handlers.AssetHandler
+	Cache                  *handlers.CacheHandler
+	Lender                 *handlers.LenderHandler
+	Loan                   *handlers.LoanHandler
+	Email                  *handlers.EmailHandler
+	Settlement             *handlers.SettlementHandler
+	Metric                 *handlers.MetricHandler
+	Audit                  *handlers.AuditHandler
+	AdvancePayment         *advancePaymentHandlers.AdvancePaymentHandler
+	AdvancePaymentFee      *advancePaymentHandlers.FeeScheduleHandler
+	AdBanner               *handlers.AdBannerHandler
+	EmployeeImport         *employeeHandlers.ImportHandler
+	DBExport               *handlers.DBExportHandler
+	Push                   *pushHandlers.Handler
+	Approval               *approvalHandlers.Handler
+	Cron                   *handlers.CronHandler
+	DisbursementWebhook    *disbursementHandlers.WebhookHandler
+	DisbursementFee        *disbursementHandlers.FeeScheduleHandler
+	DisbursementSettings   *disbursementHandlers.SettingsHandler
+	ManualDisbursement     *disbursementHandlers.ManualDisbursementHandler
+	WeeklyPaymentFee       *handlers.WeeklyPaymentFeeHandler
+	ReconciliationExport   *disbursementHandlers.ReconciliationExportHandler
+	ProviderTransactions   *adminHandlers.WalletPaymentStatsHandler
+	Wallet                 *handlers.WalletHandler
+	WalletBulkTransfer     *handlers.WalletBulkTransferHandler
+	AdvPartnerUser         *advPartnerHandlers.UserHandler
+	BCCImport              *timesheetHandlers.BCCImportHandler
+	Attendance             *attendanceHandlers.Handler
 }
 
 type Middleware struct {
@@ -501,19 +504,22 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 			}
 			return nil
 		}()),
-		ReconciliationExport: disbursementHandlers.NewReconciliationExportHandler(services.DisbursementRegistry, logger),
-		ProviderTransactions: adminHandlers.NewWalletPaymentStatsHandler(services.WalletPaymentStats, logger),
-		AdminClock:           adminHandlers.NewClockHandler(clk, cfg.App.Env),
-		AdminZalo:            adminHandlers.NewZaloHandler(services.ZaloConnect),
-		APIKey:               adminHandlers.NewAPIKeyHandler(services.APIKey),
-		MCPAPIKey:            adminHandlers.NewMCPAPIKeyHandler(services.MCPAPIKey),
-		VendorTimesheet:      integrationHandlers.NewVendorTimesheetHandler(services.Timesheet, repos.Project, repos.Employee, repos.ProjectEmployee),
-		AdminAttendance:      adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
-		Wallet:               handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, clk),
-		WalletBulkTransfer:   newWalletBulkTransferHandler(walletBulkSvc, logger),
-		AdvPartnerUser:       advPartnerHandlers.NewUserHandler(services.Employee, services.ProjectEmployee, services.User),
-		BCCImport:            timesheetHandlers.NewBCCImportHandler(services.BCCImport, repos.Asset, fileStorage, services.ProjectPermission, services.Audit),
-		Attendance:           attendanceHandlers.NewHandler(services.Attendance, repos.Employee, repos.AttendanceFailedAttempt, clk, logger),
+		ReconciliationExport:   disbursementHandlers.NewReconciliationExportHandler(services.DisbursementRegistry, logger),
+		ProviderTransactions:   adminHandlers.NewWalletPaymentStatsHandler(services.WalletPaymentStats, logger),
+		AdminClock:             adminHandlers.NewClockHandler(clk, cfg.App.Env),
+		AdminZalo:              adminHandlers.NewZaloHandler(services.ZaloConnect),
+		APIKey:                 adminHandlers.NewAPIKeyHandler(services.APIKey),
+		MCPAPIKey:              adminHandlers.NewMCPAPIKeyHandler(services.MCPAPIKey),
+		IntegrationReset:       integrationHandlers.NewPasswordResetHandler(services.Integration),
+		IntegrationLookup:      integrationHandlers.NewEmployeeLookupHandler(services.Integration),
+		IntegrationSelfCheckin: integrationHandlers.NewSelfCheckinHandler(services.IntegrationSelfCheckin),
+		VendorTimesheet:        integrationHandlers.NewVendorTimesheetHandler(services.Timesheet, repos.Project, repos.Employee, repos.ProjectEmployee),
+		AdminAttendance:        adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
+		Wallet:                 handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, clk),
+		WalletBulkTransfer:     newWalletBulkTransferHandler(walletBulkSvc, logger),
+		AdvPartnerUser:         advPartnerHandlers.NewUserHandler(services.Employee, services.ProjectEmployee, services.User),
+		BCCImport:              timesheetHandlers.NewBCCImportHandler(services.BCCImport, repos.Asset, fileStorage, services.ProjectPermission, services.Audit),
+		Attendance:             attendanceHandlers.NewHandler(services.Attendance, repos.Employee, repos.AttendanceFailedAttempt, clk, logger),
 	}
 }
 

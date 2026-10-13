@@ -253,6 +253,42 @@ func TestProjectEmployee_IsAssignedOnDate(t *testing.T) {
 	assert.True(t, pe.IsAssignedOnDate(now))
 }
 
+// The chatbot enable follows the day-9 rule (owner ruling 2026-10-07): days
+// 1-8 start in the current month, day 9 or later waits for the next month.
+func TestProjectEmployee_ResolveCheckInEnableStartMonth_Day9Boundary(t *testing.T) {
+	tests := []struct {
+		name string
+		day  int
+		want CheckInStartMonth
+	}{
+		{name: "day 1 starts this month", day: 1, want: CheckInStartMonthThisMonth},
+		{name: "day 8 still starts this month", day: 8, want: CheckInStartMonthThisMonth},
+		{name: "day 9 counts as after and waits", day: 9, want: CheckInStartMonthNextMonth},
+		{name: "day 15 waits", day: 15, want: CheckInStartMonthNextMonth},
+		{name: "day 28 waits", day: 28, want: CheckInStartMonthNextMonth},
+		{name: "last day of the month waits", day: 31, want: CheckInStartMonthNextMonth},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			now := time.Date(2026, 10, tt.day, 12, 0, 0, 0, clock.DefaultLocation)
+			startMonth := ResolveCheckInEnableStartMonth(now)
+
+			assert.Equal(t, tt.want, startMonth)
+
+			// The choice always resolves to day 1 of the selected month —
+			// the date the bot quotes as the effective date.
+			effective := startMonth.EffectiveFrom(now)
+			assert.Equal(t, 1, effective.Day())
+			if tt.want == CheckInStartMonthThisMonth {
+				assert.Equal(t, time.October, effective.Month())
+			} else {
+				assert.Equal(t, time.November, effective.Month())
+			}
+		})
+	}
+}
+
 // RequestCheckInDisable refuses every state that may not queue a disable:
 // an ended assignment, a row that is not enabled, and any pending change —
 // in either direction.

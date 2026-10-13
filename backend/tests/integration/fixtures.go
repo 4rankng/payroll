@@ -1,22 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"time"
 
 	"github.com/xuri/excelize/v2"
 )
-
-// uniqueMobile generates a plausible Vietnamese mobile number unique per call.
-func uniqueMobile() string {
-	n := time.Now().UnixNano()
-	d := n % 10
-	if d == 5 {
-		d = 7
-	}
-	return fmt.Sprintf("09%d%07d", d, n%10_000_000)
-}
 
 // buildWeeklyPaymentFixture supplies valid employee identity, bank details,
 // weekday headers and two different shift types for the full import pipeline.
