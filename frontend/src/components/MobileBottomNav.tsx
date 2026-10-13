@@ -163,9 +163,12 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   if (override) {
     return (
       <nav
-        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-card/95 backdrop-blur-xl lg:hidden"
+        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-card/95 lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
+        {/* Blur on an inner layer: a backdrop-filter on the fixed root
+            misplaces the bar during scroll on iOS Safari. */}
+        <div aria-hidden className="admin-mobile-nav-backdrop pointer-events-none absolute inset-0" />
         <div className="flex min-h-[64px] items-center px-4">{override.content}</div>
       </nav>
     );
@@ -174,10 +177,13 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
   return (
     <>
       <nav
-        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-card/95 backdrop-blur-xl lg:hidden"
+        className="admin-mobile-nav fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-card/95 lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Điều hướng chính"
       >
+        {/* Blur on an inner layer: a backdrop-filter on the fixed root
+            misplaces the bar during scroll on iOS Safari. */}
+        <div aria-hidden className="admin-mobile-nav-backdrop pointer-events-none absolute inset-0" />
         <div className="relative flex min-h-[72px] items-stretch px-2 max-[359px]:px-1">
           {groups.map((group) => {
             const isActive = isGroupActive(group);

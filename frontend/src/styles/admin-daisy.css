@@ -177,6 +177,12 @@
     border-top: 1px solid hsl(var(--border) / 0.85);
     background: rgba(255, 255, 255, 0.96);
     box-shadow: none;
+  }
+
+  /* The blur lives on an inner layer, never on the fixed root: a
+     backdrop-filter on a position:fixed bar misplaces it during scroll on
+     iOS Safari (it detaches from the viewport bottom). */
+  [data-admin-ui] .admin-mobile-nav-backdrop {
     backdrop-filter: blur(18px);
   }
 
