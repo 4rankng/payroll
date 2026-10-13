@@ -1,17 +1,25 @@
--- Restore the TingHire vendor key that migration 130 swept up in the chatbot
--- retirement. TingHire is the external payroll vendor integration: its key was
--- created 27/09/2026, before scoped API keys existed, so it carries the legacy
--- 'chatbot' scope label while its actual access is the vendor timesheet read
--- surface. Migration 130 revoked every 'chatbot'/'empty' key when the LLM
--- chatbot was removed, silently cutting the vendor's access mid-use.
+-- Reactivate the EXISTING TingHire credential — no new key is issued, so the
+-- vendor keeps its current secret and nothing needs re-distribution.
 --
--- Only the actively-used TingHire key is restored: the never-used historical
--- TingHire/ChatBot rows were revoked manually in September and stay revoked.
--- The scope is normalised to the vendor read scope because the scope guard
--- matches exactly and fails closed on retired values.
+-- Target: api_keys row id=3 (name 'TingHire', key prefix ttk_70...), created
+-- 27/09/2026 and live (last_used 2026-10-12 14:41) until migration 130
+-- revoked every legacy 'chatbot'-scope key when the LLM chatbot was retired.
+-- That row is the key TingHire uses for password-reset OTP, self check-in,
+-- employee lookup, and the Zalo OA token pull.
+--
+-- 1) clear revoked_at (idempotent — a re-run matches nothing once the scope is
+--    live), 2) move the scope from the retired 'chatbot' value to the live
+--    vendor scope the middleware checks
+--    (RequireAPIKeyScope(timesheet_read) on /api/v1/integration/* including
+--    /api/v1/integration/zalo/token). Rows id=1 and id=2 (the September
+--    ChatBot / superseded TingHire keys, manually revoked) are left revoked.
+--
+-- The name + legacy-scope predicates ride along with the id so the statement
+-- can never revive a different row that happens to hold id=3 in another
+-- environment.
 UPDATE api_keys
 SET revoked_at = NULL,
     scope = 'timesheet_read'
-WHERE name = 'TingHire'
-  AND scope = 'chatbot'
-  AND last_used_at IS NOT NULL;
+WHERE id = 3
+  AND name = 'TingHire'
+  AND scope IN ('chatbot', '');

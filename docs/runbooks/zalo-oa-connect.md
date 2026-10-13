@@ -129,9 +129,10 @@ TingHire authenticates to the integration surface with **one API key**:
 
 | Item | Value |
 | --- | --- |
+| Key id | `3` — the existing row is reactivated; no new key is ever issued |
 | Key name | `TingHire` (key prefix `ttk_70pf1RBT…`; created 27/09/2026) |
-| Scope | `timesheet_read` — the vendor scope |
-| Header | `X-API-Key: <the TingHire key secret>` |
+| Scope | `timesheet_read` — the live vendor scope the middleware checks (`RequireAPIKeyScope(timesheet_read)` on `/api/v1/integration/*`, including the token endpoint) |
+| Header | `X-API-Key: <the TingHire key secret>` — the vendor keeps its existing secret |
 
 The scope authorizes both the vendor read API (`/api/v1/vendor/*`) and the
 integration surface:
@@ -153,10 +154,10 @@ Notes:
   key carries `timesheet_read`. Verify after deploy:
 
 ```sql
-SELECT id, name, scope, revoked_at FROM api_keys WHERE name = 'TingHire';
+SELECT id, name, scope, revoked_at FROM api_keys WHERE id IN (1, 2, 3);
 ```
 
-Expected: one row with `scope = 'timesheet_read'` and `revoked_at IS NULL`
-(the superseded September rows stay revoked). The TingHire side must send
+Expected: row `3` with `name = 'TingHire'`, `scope = 'timesheet_read'` and
+`revoked_at IS NULL`; rows `1` and `2` remain revoked. The TingHire side must send
 exactly this key in `X-API-Key`: a 401 means the key is revoked or unknown, a
 403 means the scope does not match the surface.
