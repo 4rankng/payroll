@@ -80,6 +80,7 @@ type Handlers struct {
 	IntegrationReset       *integrationHandlers.PasswordResetHandler
 	IntegrationLookup      *integrationHandlers.EmployeeLookupHandler
 	IntegrationSelfCheckin *integrationHandlers.SelfCheckinHandler
+	IntegrationZaloToken   *integrationHandlers.ZaloTokenHandler
 	VendorTimesheet        *integrationHandlers.VendorTimesheetHandler
 	AdminAttendance        *adminHandlers.AttendanceHandler
 	Bank                   *handlers.BankHandler
@@ -409,6 +410,16 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		}
 	}
 
+	// Startup push: hand TingHire the current OA access token the moment the
+	// app boots (owner requirement: "once payroll app start it should call
+	// webhook immediately to provide latest access token"), so the vendor holds
+	// the latest token even when no rotation runs for another ~24h. Fail-soft
+	// by design — the pusher logs its own failures; this goroutine must never
+	// block or fail container initialization.
+	if services.ZaloTokenPusher != nil {
+		go services.ZaloTokenPusher.PushCurrent(context.Background(), services.ZaloConnect)
+	}
+
 	return &Container{
 		Config:             cfg,
 		Logger:             infra.Logger,
@@ -513,6 +524,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		IntegrationReset:       integrationHandlers.NewPasswordResetHandler(services.Integration),
 		IntegrationLookup:      integrationHandlers.NewEmployeeLookupHandler(services.Integration),
 		IntegrationSelfCheckin: integrationHandlers.NewSelfCheckinHandler(services.IntegrationSelfCheckin),
+		IntegrationZaloToken:   integrationHandlers.NewZaloTokenHandler(services.ZaloConnect),
 		VendorTimesheet:        integrationHandlers.NewVendorTimesheetHandler(services.Timesheet, repos.Project, repos.Employee, repos.ProjectEmployee),
 		AdminAttendance:        adminHandlers.NewAttendanceHandler(services.Attendance, repos.AttendanceFailedAttempt, repos.Project, clk, logger),
 		Wallet:                 handlers.NewWalletHandler(services.Wallet, services.DisbursementRegistry, clk),

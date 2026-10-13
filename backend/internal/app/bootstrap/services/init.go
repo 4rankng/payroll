@@ -74,6 +74,7 @@ type Services struct {
 	MCPAPIKey                         *mcpapikey.Service              // Machine API keys for the MCP agent surface
 	Integration                       *integration.Service            // Vendor password-reset + employee lookup (API-key auth)
 	IntegrationSelfCheckin            *integration.SelfCheckinService // Vendor self check-in enable/disable (API-key auth)
+	ZaloTokenPusher                   *zaloconnect.TokenWebhookPusher // Pushes the OA access token to the vendor webhook (rotation + startup)
 	FlexPayZNS                        *zaloconnect.FlexPayZNSService  // ZNS notifications for FlexPay salary notifications
 	FlexPaySalaryDelivery             *zaloconnect.SalaryNotificationDeliveryService
 	Auth                              *auth.AuthService
@@ -684,6 +685,14 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	zaloProvider := zalo.NewProvider(zaloConnectSvc, zalo.DefaultConfig(), logger)
 	zaloProvider.SetRefreshCoordinator(zalo.NewRedisRefreshCoordinator(redis.Client))
 	zaloConnectSvc.SetProvider(zaloProvider)
+	// Push lane to TingHire (payroll is the sole OA token rotator): every
+	// persisted rotation — refresh exchange, validated admin paste, or metadata
+	// save — hands the new access token to the vendor webhook. The pusher skips
+	// itself when CHATBOT_OA_TOKEN_WEBHOOK_URL/KEY are unset, so wiring is
+	// unconditional and unconfigured deploys stay inert.
+	zaloTokenPusher := zaloconnect.NewTokenWebhookPusher(
+		cfg.Zalo.ChatbotTokenWebhookURL, cfg.Zalo.ChatbotTokenWebhookKey, logger)
+	zaloProvider.SetRotationHook(zaloTokenPusher.Push)
 	_ = zaloConnectSvc.SeedFromEnvIfEmpty(context.Background(), zaloconnect.EnvSeed{
 		Enabled:    cfg.Zalo.Enabled,
 		AppID:      cfg.Zalo.AppID,
@@ -772,6 +781,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		MCPAPIKey:                         mcpAPIKeyService,
 		Integration:                       integrationService,
 		IntegrationSelfCheckin:            selfCheckinService,
+		ZaloTokenPusher:                   zaloTokenPusher,
 		FlexPayZNS:                        flexPayZNSService,
 		FlexPaySalaryDelivery:             flexPaySalaryDelivery,
 		Auth:                              auth.NewAuthService(userService, repos.Employee, repos.BlacklistedToken, eventBus, cfg.Auth.JWTSecret, cfg.Auth.AccessTTL, otpService, cfg.OTP, cfg.Google.ClientID, nonceStore, captchaService, logger),

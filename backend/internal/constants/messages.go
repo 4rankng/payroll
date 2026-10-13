@@ -411,6 +411,7 @@ const (
 	MsgIntegrationResetSuccessVN      = "Đặt lại mật khẩu thành công."
 	MsgIntegrationEmployeeFoundVN     = "Tìm thấy nhân viên."
 	MsgIntegrationEmployeeNotFoundVN  = "Không tìm thấy nhân viên với số điện thoại này."
+	MsgIntegrationZaloTokenVN         = "Token Zalo OA hiện tại."
 	MsgVendorInvalidScopeVN           = "Phạm vi (scope) của khoá API không hợp lệ. Chỉ hỗ trợ: timesheet_read."
 
 	// Self check-in via the vendor integration API.
