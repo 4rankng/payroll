@@ -18,9 +18,14 @@ const APIKeyNameMaxLen = 100
 type APIKeyScope string
 
 const (
-	// APIKeyScopeTimesheetRead is the vendor read-only timesheet surface:
-	// listing projects, listing employees, and querying timesheets. It covers
-	// no mutating route anywhere in the system.
+	// APIKeyScopeTimesheetRead is the TingHire vendor credential scope. It
+	// covers the read-only timesheet surface (listing projects, listing
+	// employees, querying timesheets) and the vendor integration surface
+	// (/api/v1/integration/*: OA token pull, employee lookup, password-reset
+	// OTP, self check-in management — the latter two mutate state). The name
+	// predates the integration surface and is kept because it is the deployed
+	// vendor credential; the retired 'chatbot' scope is not resurrected. See
+	// docs/runbooks/zalo-oa-connect.md for the operator-facing contract.
 	APIKeyScopeTimesheetRead APIKeyScope = "timesheet_read"
 )
 

@@ -122,3 +122,41 @@ access/refresh pair for Payroll's own Zalo App ID**, save it through Payroll,
 and complete one controlled OTP test. Do not reuse a pair issued for ChatBot or
 another system. This runbook describes the required operator action; it is not
 evidence that a deployment or live Zalo test has occurred.
+
+## TingHire integration credential (X-API-Key)
+
+TingHire authenticates to the integration surface with **one API key**:
+
+| Item | Value |
+| --- | --- |
+| Key name | `TingHire` (key prefix `ttk_70pf1RBT…`; created 27/09/2026) |
+| Scope | `timesheet_read` — the vendor scope |
+| Header | `X-API-Key: <the TingHire key secret>` |
+
+The scope authorizes both the vendor read API (`/api/v1/vendor/*`) and the
+integration surface:
+
+- `GET|POST /api/v1/integration/zalo/token` — current Zalo OA access token
+- `POST /api/v1/integration/employee/lookup`
+- `POST /api/v1/integration/password-reset/{otp,verify,reset}`
+- `POST /api/v1/integration/self-checkin/{otp,verify,update,status}`
+
+Notes:
+
+- The retired `chatbot` scope stays retired: the vendor scope was extended to
+  cover the integration surface instead of resurrecting the old name.
+- The OA **refresh** token never leaves payroll; the pull lane and the webhook
+  push only ever carry the access token.
+- Migration `133_restore_tinghire_vendor_key` restores the key if an older
+  migration revoked it (migration 130 revoked the `chatbot`-era rows on
+  12/10/2026). The migration is idempotent — re-running it is a no-op once the
+  key carries `timesheet_read`. Verify after deploy:
+
+```sql
+SELECT id, name, scope, revoked_at FROM api_keys WHERE name = 'TingHire';
+```
+
+Expected: one row with `scope = 'timesheet_read'` and `revoked_at IS NULL`
+(the superseded September rows stay revoked). The TingHire side must send
+exactly this key in `X-API-Key`: a 401 means the key is revoked or unknown, a
+403 means the scope does not match the surface.
