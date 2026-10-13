@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   users: {
     base: '/users',
     summary: '/users/summary',
+    export: '/users/export',
     byId: (id: number) => `/users/${id}`,
     suspend: (id: number) => `/users/${id}/suspend`,
     activate: (id: number) => `/users/${id}/activate`,

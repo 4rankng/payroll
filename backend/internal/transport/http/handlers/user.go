@@ -13,14 +13,16 @@ import (
 )
 
 type UserHandler struct {
-	userService *user.UserService
-	jobManager  *user.PasswordResetJobManager
+	userService  *user.UserService
+	jobManager   *user.PasswordResetJobManager
+	auditService interface{} // optional; export handlers assert LogFileExport
 }
 
-func NewUserHandler(userService *user.UserService, jobManager *user.PasswordResetJobManager) *UserHandler {
+func NewUserHandler(userService *user.UserService, jobManager *user.PasswordResetJobManager, auditService interface{}) *UserHandler {
 	return &UserHandler{
-		userService: userService,
-		jobManager:  jobManager,
+		userService:  userService,
+		jobManager:   jobManager,
+		auditService: auditService,
 	}
 }
 

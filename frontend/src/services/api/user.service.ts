@@ -157,6 +157,21 @@ class UserService {
     }
     return response.data;
   }
+  /**
+   * Export the current user list to Excel (same filters as the list view).
+   */
+  async exportUsers(filters?: UserFilters): Promise<ApiResponse<void>> {
+    // Paging is the backend's concern here: it pages the filtered list itself.
+    const exportFilters = filters
+      ? { ...filters, page: undefined, pageSize: undefined }
+      : undefined;
+    const queryString = exportFilters ? buildQueryString(exportFilters) : '';
+    await apiClient.download(
+      `${API_ENDPOINTS.users.export}${queryString}`,
+      `users_export_${new Date().toISOString().split('T')[0]}.xlsx`
+    );
+    return { status: 'success' as const, message: 'Export started' };
+  }
 }
 
 export const userService = new UserService();

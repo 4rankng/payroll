@@ -43,6 +43,7 @@ func setupUserRoutes(v1 *gin.RouterGroup, container *Container) {
 		users.POST("", container.Handlers.User.CreateUser)
 		users.GET("", container.Handlers.User.ListUsers)
 		users.GET("/summary", container.Handlers.User.GetUserSummary)
+		users.GET("/export", container.Handlers.User.ExportUsers)
 		users.GET("/:id", container.Handlers.User.GetUser)
 		users.GET("/:id/activities", container.Handlers.User.GetUserActivities)
 		users.PUT("/:id", container.Handlers.User.UpdateUser)

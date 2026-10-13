@@ -455,7 +455,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 	)
 
 	return &Handlers{
-		User:                 handlers.NewUserHandler(services.User, services.PasswordResetJobManager),
+		User:                 handlers.NewUserHandler(services.User, services.PasswordResetJobManager, services.Audit),
 		Auth:                 handlers.NewAuthHandler(services.Auth, services.User, services.EmailPasswordReset, services.ZaloPasswordReset),
 		Dashboard:            handlers.NewDashboardHandler(services.Dashboard),
 		Project:              handlers.NewProjectHandlerWithServices(services.Project, services.Payrate, services.Timesheet, services.ProjectEmployee, services.ProjectPermission, clk),

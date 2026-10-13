@@ -12,6 +12,7 @@ import { UserFiltersBar } from "@/components/users/UserFiltersBar";
 import { useUserDataInfinite } from "@/hooks/users/useUserDataInfinite";
 import { useUserModals } from "@/hooks/useModalNavigation";
 import { useUserFiltersWithBackend } from "@/hooks/users/useUserFiltersWithBackend";
+import { useUserExport } from "@/hooks/users/useUserExport";
 import { useUsersSummary, useResetPassword } from "@/hooks/api/useUsers";
 import { createUserColumns } from "@/config/user-table-columns";
 import { createUserMobileConfig } from "@/config/user-table-mobile";
@@ -28,6 +29,7 @@ const UsersPage = () => {
   const isAdvPartner = user?.role === "adv_partner";
 
   const filterState = useUserFiltersWithBackend();
+  const { exportUsers, isExporting } = useUserExport();
   const userData = useUserDataInfinite({
     pageSize: filterState.filters.pageSize,
     sortBy: filterState.filters.sortBy,
@@ -105,7 +107,11 @@ const UsersPage = () => {
     <AdminPageCanvas>
       {!isAdvPartner && (
         <AdminPageHeaderCard>
-          <UserPageHeader onAddUser={() => openAddUser()} />
+          <UserPageHeader
+            onAddUser={() => openAddUser()}
+            onExportUsers={() => exportUsers(filterState.filters)}
+            isExporting={isExporting}
+          />
         </AdminPageHeaderCard>
       )}
 
