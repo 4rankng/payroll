@@ -8,6 +8,12 @@ import { extendTailwindMerge } from "tailwind-merge"
 const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {
+      // Custom group ids that re-group bare `outline` as outline-style so the
+      // UU focus-ring triplet survives the merge. 'outline-width' is a custom
+      // id (not in tailwind-merge v2's DefaultClassGroupIds typings) — the
+      // cast-free suppression keeps the runtime behaviour the contract tests
+      // pin.
+      // @ts-expect-error custom outline-width group id missing from v2 typings
       "outline-width": ["outline-0", "outline-1", "outline-2", "outline-4", "outline-8"],
       "outline-style": [
         "outline",
