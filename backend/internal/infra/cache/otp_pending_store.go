@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"time"
 
+	"api-server/internal/pkg/clock"
+
 	"github.com/redis/go-redis/v9"
 )
 
@@ -78,6 +80,7 @@ type OTPPendingSession struct {
 type OTPPendingStore struct {
 	client *redis.Client
 	ttl    time.Duration
+	clk    clock.Clock
 }
 
 // NewOTPPendingStore constructs a store using the shared Redis client.
@@ -86,6 +89,19 @@ func NewOTPPendingStore(client *redis.Client, ttl time.Duration) *OTPPendingStor
 		ttl = DefaultSessionTTL
 	}
 	return &OTPPendingStore{client: client, ttl: ttl}
+}
+
+// WithClock binds a clock to the store for predictable testing.
+func (s *OTPPendingStore) WithClock(clk clock.Clock) *OTPPendingStore {
+	s.clk = clk
+	return s
+}
+
+func (s *OTPPendingStore) now() time.Time {
+	if s.clk != nil {
+		return s.clk.Now()
+	}
+	return time.Now().UTC()
 }
 
 // CreateSessionIfAbsent atomically creates a pending session unless the user
@@ -104,7 +120,7 @@ func (s *OTPPendingStore) CreateSessionIfAbsent(ctx context.Context, userID uint
 		CodeHash:  codeHash,
 		IP:        ip,
 		UserAgent: ua,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: s.now(),
 	}
 	payload, err := json.Marshal(session)
 	if err != nil {
@@ -153,7 +169,7 @@ func (s *OTPPendingStore) CreateSession(ctx context.Context, userID uint, codeHa
 		CodeHash:  codeHash,
 		IP:        ip,
 		UserAgent: ua,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: s.now(),
 	}
 	payload, err := json.Marshal(session)
 	if err != nil {

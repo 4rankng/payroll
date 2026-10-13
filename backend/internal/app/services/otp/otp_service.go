@@ -68,6 +68,9 @@ func NewOTPService(
 	if clk == nil {
 		clk = clock.New()
 	}
+	if pendingStore != nil {
+		pendingStore.WithClock(clk)
+	}
 	return &OTPService{
 		pendingStore: pendingStore,
 		userRepo:     userRepo,
@@ -107,16 +110,38 @@ func (s *OTPService) StartLogin(ctx context.Context, user *domain.User, ip, ua s
 		return "", err
 	}
 	if !created {
-		// A live challenge already owns the per-user Redis index. Reuse it
-		// without rotating the code or sending another email; /login/resend is
-		// the sole intentional path for replacing a delivered code.
-		s.logger.Info("otp: reused pending login challenge", "user_id", user.ID)
+		// A live challenge already owns the per-user Redis index.
+		// If the resend cooldown has elapsed, the user legitimately re-authenticated
+		// (e.g. after missing the email or experiencing an IP shift). Refresh the code,
+		// update IP/UA, and send a fresh email.
+		existingSession, err := s.pendingStore.GetSession(ctx, sessionID)
+		if err == nil && existingSession != nil {
+			lastSent := existingSession.CreatedAt
+			if !existingSession.LastResendAt.IsZero() {
+				lastSent = existingSession.LastResendAt
+			}
+			now := s.clock.Now()
+			if now.Sub(lastSent) >= s.cfg.ResendCooldown {
+				existingSession.CodeHash = codeHash
+				existingSession.IP = ip
+				existingSession.UserAgent = ua
+				existingSession.LastResendAt = now
+				if err := s.pendingStore.SaveSession(ctx, sessionID, existingSession); err == nil {
+					s.logger.Info("otp: refreshed existing session and dispatching fresh code", "user_id", user.ID, "session_id", sessionID)
+					s.dispatchOTPEmail(user, code)
+					return sessionID, nil
+				}
+			}
+		}
+		s.logger.Info("otp: reused pending login challenge (cooldown active)", "user_id", user.ID)
 		return sessionID, nil
 	}
 
-	// Dispatch the email asynchronously so the login response returns immediately.
-	// A send failure is logged but does NOT fail StartLogin — the user can hit
-	// /auth/login/resend (Phase 3) if the email never arrives.
+	s.dispatchOTPEmail(user, code)
+	return sessionID, nil
+}
+
+func (s *OTPService) dispatchOTPEmail(user *domain.User, code string) {
 	recEmail, recName := *user.Email, user.Fullname
 	go func() {
 		// Use a fresh background context; the request ctx may be cancelled as
@@ -139,8 +164,6 @@ func (s *OTPService) StartLogin(ctx context.Context, user *domain.User, ip, ua s
 		}
 		s.logger.Info("otp: code emailed", "user_id", user.ID, "provider_message_id", messageID)
 	}()
-
-	return sessionID, nil
 }
 
 // VerifyLogin validates the submitted code against the pending session and, on
@@ -157,9 +180,14 @@ func (s *OTPService) VerifyLogin(ctx context.Context, sessionID, code, ip, ua st
 	if err != nil {
 		return nil, ErrSessionNotFound
 	}
-	// RT-M5: bind to the originating client.
-	if session.IP != ip || session.UserAgent != ua {
+	// RT-M5: bind to originating browser agent if present.
+	// For IP, client egress addresses rotate frequently on mobile networks / cellular CGNAT
+	// and Apple iCloud Private Relay, so log the change rather than failing authentication.
+	if session.UserAgent != "" && ua != "" && session.UserAgent != ua {
 		return nil, ErrSessionBindingMismatch
+	}
+	if session.IP != ip {
+		s.logger.Info("otp: client IP changed during verify", "user_id", session.UserID, "session_ip", session.IP, "request_ip", ip)
 	}
 
 	user, err := s.userRepo.GetByID(ctx, session.UserID)
@@ -229,8 +257,12 @@ func (s *OTPService) ResendCode(ctx context.Context, sessionID, ip, ua string) (
 	if err != nil {
 		return "", ErrSessionNotFound
 	}
-	if session.IP != ip || session.UserAgent != ua {
+	if session.UserAgent != "" && ua != "" && session.UserAgent != ua {
 		return "", ErrSessionBindingMismatch
+	}
+	if session.IP != ip {
+		s.logger.Info("otp: client IP changed during resend", "user_id", session.UserID, "session_ip", session.IP, "request_ip", ip)
+		session.IP = ip
 	}
 
 	user, err := s.userRepo.GetByID(ctx, session.UserID)
@@ -257,26 +289,6 @@ func (s *OTPService) ResendCode(ctx context.Context, sessionID, ip, ua string) (
 		return "", err
 	}
 
-	recEmail, recName := *user.Email, user.Fullname
-	go func() {
-		bg, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-		msg, err := BuildOTPEmailMessage(code, recEmail, recName, s.fromEmail)
-		if err != nil {
-			s.logger.Error("otp: build resend email failed", "error", err, "user_id", user.ID)
-			return
-		}
-		result, err := s.emailSender.Send(bg, msg)
-		if err != nil {
-			s.logger.Error("otp: resend email failed", "error", err, "user_id", user.ID)
-			return
-		}
-		messageID := ""
-		if result != nil {
-			messageID = result.MessageID
-		}
-		s.logger.Info("otp: code resent", "user_id", user.ID, "provider_message_id", messageID)
-	}()
-
+	s.dispatchOTPEmail(user, code)
 	return sessionID, nil
 }

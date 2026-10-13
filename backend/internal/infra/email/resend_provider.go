@@ -50,8 +50,7 @@ func buildResendRequest(msg *domain.EmailMessage) *resend.SendEmailRequest {
 		})
 	}
 
-	const replyToEmail = "frankng.sg@gmail.com"
-	replyTo := replyToEmail
+	var replyTo string
 	if msg.ReplyTo != nil && msg.ReplyTo.String() != "" {
 		replyTo = msg.ReplyTo.String()
 	}
@@ -60,7 +59,9 @@ func buildResendRequest(msg *domain.EmailMessage) *resend.SendEmailRequest {
 	for k, v := range msg.Metadata {
 		headers[k] = v
 	}
-	headers["Reply-To"] = replyTo
+	if replyTo != "" {
+		headers["Reply-To"] = replyTo
+	}
 
 	return &resend.SendEmailRequest{
 		From:        msg.From.String(),

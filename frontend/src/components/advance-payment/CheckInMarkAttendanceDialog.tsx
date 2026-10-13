@@ -21,7 +21,7 @@ import {
   useApproveAttendance,
 } from "@/hooks/api/useAdminAttendance";
 import type { AdminAttendanceResponse, AdminCheckInShift } from "@/types/api/attendance.types";
-import { formatVnTime } from "@/utils/vn-time";
+import { formatVnDayMonth, formatVnTime } from "@/utils/vn-time";
 
 interface CheckInMarkAttendanceDialogProps {
   open: boolean;
@@ -40,6 +40,17 @@ function vietnamBusinessDate(): string {
   }).format(new Date());
 }
 
+function getPastDate(daysAgo: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
 const attendanceStatusLabel: Record<string, string> = {
   checked_in: "Đã điểm danh lúc",
   orphaned: "Quá hạn tan ca (vào lúc)",
@@ -51,19 +62,24 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
   const [withCheckout, setWithCheckout] = useState(false);
 
   const today = vietnamBusinessDate();
+  const fromDate = getPastDate(2);
   const createCheckIn = useAdminCreateCheckIn();
   const approve = useApproveAttendance({ successMessage: "Đã ghi nhận tan ca cho nhân viên." });
   const recordQuery = useAdminAttendances(
     {
       employee_id: employee?.id,
       project_id: projectId ?? undefined,
-      from_date: today,
+      from_date: fromDate,
       to_date: today,
       pageSize: 10,
     },
     { enabled: open && employee !== null && projectId !== null },
   );
-  const record: AdminAttendanceResponse | undefined = recordQuery.data?.data?.[0];
+  const records = recordQuery.data?.data ?? [];
+  const openRecord = records.find((r) => r.status !== "completed");
+  const todayCompletedRecord = records.find((r) => r.date === today && r.status === "completed");
+  const record: AdminAttendanceResponse | undefined = openRecord ?? todayCompletedRecord;
+
   const shiftsQuery = useAdminCheckInShifts(
     employee?.id ?? null,
     projectId ?? null,
@@ -72,6 +88,7 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
   );
   const shifts = shiftsQuery.data?.shifts ?? [];
   const selectedShift: AdminCheckInShift | undefined = shifts.find((s) => String(s.index) === shiftIndex);
+  const shiftStarted = selectedShift ? new Date(selectedShift.start) <= new Date() : false;
   const shiftEnded = selectedShift ? new Date(selectedShift.end) <= new Date() : false;
 
   useEffect(() => {
@@ -82,8 +99,10 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
     }
   }, [open]);
 
-  const canCreate = employee !== null && projectId !== null && shiftIndex !== "" && !createCheckIn.isPending;
-  const errorMessage = shiftsQuery.error instanceof Error ? shiftsQuery.error.message : null;
+  const canCreate = employee !== null && projectId !== null && shiftIndex !== "" && shiftStarted && !createCheckIn.isPending;
+  const mutationError = createCheckIn.error instanceof Error ? createCheckIn.error.message : null;
+  const shiftsError = shiftsQuery.error instanceof Error ? shiftsQuery.error.message : null;
+  const errorMessage = mutationError ?? shiftsError;
 
   const handleCreate = () => {
     if (!employee || !projectId || shiftIndex === "") return;
@@ -125,11 +144,23 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
             <div className="rounded-lg border bg-muted/30 px-3 py-2.5">
               <p className="text-sm font-medium text-foreground">
                 {attendanceStatusLabel[record.status] ?? "Vào lúc"} {formatVnTime(record.check_in_time)}
+                {record.date !== today ? (
+                  <span className="ml-1 text-xs text-muted-foreground font-normal">
+                    (ngày {formatVnDayMonth(record.check_in_time)})
+                  </span>
+                ) : null}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Xác nhận sẽ chốt tan ca theo giờ kết thúc ca cấu hình và tính lương nguyên ca.
               </p>
             </div>
+            {approve.error ? (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {approve.error instanceof Error ? approve.error.message : "Không thể xác nhận tan ca"}
+                </AlertDescription>
+              </Alert>
+            ) : null}
           </div>
         ) : shiftsQuery.isLoading ? (
           <div className="flex flex-1 items-center justify-center py-10">
@@ -153,6 +184,11 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
               />
               {employee && projectId && shifts.length === 0 && !shiftsQuery.isLoading ? (
                 <p className="text-xs text-muted-foreground">Không có ca làm việc hợp lệ cho phân công này.</p>
+              ) : null}
+              {selectedShift && !shiftStarted ? (
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  Ca làm việc chưa bắt đầu. Chỉ có thể tạo check-in khi ca đã bắt đầu.
+                </p>
               ) : null}
             </div>
 
@@ -205,7 +241,7 @@ export function CheckInMarkAttendanceDialog({ open, onOpenChange, employee, proj
               type="button"
               className="min-h-11"
               disabled={approve.isPending}
-              onClick={() => approve.mutate({ id: record.id })}
+              onClick={() => approve.mutate({ id: record.id }, { onSuccess: () => onOpenChange(false) })}
             >
               {approve.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
               Xác nhận đã tan ca

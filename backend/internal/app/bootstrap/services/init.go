@@ -666,7 +666,8 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		otpEmailSender = email.NewResendProvider(cfg.Notification.ResendAPIKey)
 	}
 	otpPendingStore := cache.NewOTPPendingStore(redis.Client, cfg.OTP.CodeTTL)
-	otpService := otp.NewOTPService(otpPendingStore, repos.User, otpEmailSender, constants.DefaultEmailSenderAddress, cfg.OTP, clk, logger)
+	otpFromEmail := constants.DefaultEmailSenderName + " <" + constants.DefaultEmailSenderAddress + ">"
+	otpService := otp.NewOTPService(otpPendingStore, repos.User, otpEmailSender, otpFromEmail, cfg.OTP, clk, logger)
 
 	// Self-service email password-reset (Red Team C4: reuse otpEmailSender so
 	// reset emails reach real inboxes under the same env-gating as OTP).
