@@ -173,6 +173,16 @@ func runAuthUserTests(client *APIClient, data *TestData, reporter *Reporter, cfg
 		return AssertSliceMinLen("users", len(users), 1)
 	})
 
+	reporter.RunTest(flowAuth, "List users sorted by computed field falls back to default", func() error {
+		// Regression: sortBy=current_project_names (the Dự án column) used to
+		// reach ORDER BY and fail with MySQL Error 1054 -> HTTP 500.
+		var users []UserResponse
+		if _, err := admin.GetInto("/api/v1/users?pageSize=10&sortBy=current_project_names&sortOrder=asc", &users); err != nil {
+			return fmt.Errorf("list users with computed-field sort: %w", err)
+		}
+		return AssertSliceMinLen("users", len(users), 1)
+	})
+
 	reporter.RunTest(flowAuth, "Get user by ID", func() error {
 		if testUserID == 0 {
 			return fmt.Errorf("no test user ID")

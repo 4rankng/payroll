@@ -84,6 +84,9 @@ export const createUserColumns = (
   {
     accessorKey: "current_project_names",
     header: "Dự án",
+    // Computed per page after the server query — the backend cannot sort by
+    // it, so the header must not offer sorting (it used to 500 the list).
+    enableSorting: false,
     cell: ({ row }) => {
       const names = row.original.current_project_names ?? [];
       return (

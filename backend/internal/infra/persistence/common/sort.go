@@ -30,6 +30,22 @@ func SanitizeSortColumn(sortBy, defaultColumn string) string {
 	return sortBy
 }
 
+// SanitizeSortColumnAgainst validates a user-supplied sort column against a
+// per-endpoint allowlist of real table columns, returning defaultColumn when
+// the input is not exactly one of them.
+//
+// Shape validation (SanitizeSortColumn) cannot know which columns exist: a
+// syntactically valid identifier naming a computed DTO field or a
+// non-sortable column reaches ORDER BY and fails at query time. Callers that
+// interpolate sort columns into SQL should prefer this allowlist form.
+func SanitizeSortColumnAgainst(sortBy string, allowed map[string]bool, defaultColumn string) string {
+	sortBy = strings.TrimSpace(sortBy)
+	if !allowed[sortBy] {
+		return defaultColumn
+	}
+	return sortBy
+}
+
 // SanitizeSortOrder returns a safe sort direction: exactly "ASC" or "DESC".
 // Any value other than ASC/DESC (case-insensitive) yields defaultDir, which
 // itself falls back to "DESC" when unset or invalid.

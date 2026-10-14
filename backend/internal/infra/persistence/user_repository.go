@@ -525,6 +525,22 @@ func (r *UserRepository) GetCurrentProjectNamesByUserIDs(ctx context.Context, us
 	return out, nil
 }
 
+// userSortableColumns is the exhaustive allowlist of users-table columns the
+// list endpoint may order by. Anything else — including computed response
+// fields like current_project_names — falls back to created_at.
+var userSortableColumns = map[string]bool{
+	"id":         true,
+	"username":   true,
+	"email":      true,
+	"fullname":   true,
+	"role":       true,
+	"mobile":     true,
+	"cccd":       true,
+	"last_login": true,
+	"created_at": true,
+	"updated_at": true,
+}
+
 func (r *UserRepository) ListWithFilters(ctx context.Context, role *domain.UserRole, search string, ids []uint, lastLoginToday bool, projectID *uint, sortBy string, sortOrder string, limit, offset int) ([]*domain.User, int64, error) {
 	var users []*domain.User
 	var total int64
@@ -574,8 +590,11 @@ func (r *UserRepository) ListWithFilters(ctx context.Context, role *domain.UserR
 		return nil, 0, domain.NewInternalError("failed to count users", err)
 	}
 
-	// Apply sorting (sanitize user-controlled sort fields against SQL injection)
-	orderClause := common.SanitizeSortColumn(sortBy, "created_at") + " " + common.SanitizeSortOrder(sortOrder, "DESC")
+	// Apply sorting. The allowlist is the SQL-injection boundary AND the
+	// existence boundary: computed response fields such as
+	// current_project_names (assembled per page after the query) are not
+	// users-table columns and would make ORDER BY fail with Error 1054.
+	orderClause := common.SanitizeSortColumnAgainst(sortBy, userSortableColumns, "created_at") + " " + common.SanitizeSortOrder(sortOrder, "DESC")
 
 	// Apply pagination and fetch results
 	if err := query.Order(orderClause).Limit(limit).Offset(offset).Find(&users).Error; err != nil {
