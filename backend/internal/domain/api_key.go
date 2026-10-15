@@ -18,19 +18,24 @@ const APIKeyNameMaxLen = 100
 type APIKeyScope string
 
 const (
-	// APIKeyScopeTimesheetRead is the TingHire vendor credential scope. It
-	// covers the read-only timesheet surface (listing projects, listing
-	// employees, querying timesheets) and the vendor integration surface
+	// APIKeyScopeTingHire is the TingHire recruitment and employee integration
+	// credential scope. It covers the vendor integration surface
 	// (/api/v1/integration/*: OA token pull, employee lookup, password-reset
-	// OTP, self check-in management — the latter two mutate state). The name
-	// predates the integration surface and is kept because it is the deployed
-	// vendor credential; the retired 'chatbot' scope is not resurrected. See
-	// docs/runbooks/zalo-oa-connect.md for the operator-facing contract.
+	// OTP, self check-in management).
+	APIKeyScopeTingHire APIKeyScope = "tinghire"
+
+	// APIKeyScopeTimesheetRead is the vendor read-only timesheet surface:
+	// listing projects, listing employees, and querying timesheets under
+	// /api/v1/vendor/*. It covers no mutating routes.
 	APIKeyScopeTimesheetRead APIKeyScope = "timesheet_read"
+
+	// APIKeyScopeChatbot is the legacy scope name for TingHire/Zalo integration
+	// before the scope was normalized to 'tinghire'.
+	APIKeyScopeChatbot APIKeyScope = "chatbot"
 )
 
-// ValidAPIKeyScopes lists every accepted scope value, for admin validation.
-var ValidAPIKeyScopes = []APIKeyScope{APIKeyScopeTimesheetRead}
+// ValidAPIKeyScopes lists every accepted scope value for admin key creation.
+var ValidAPIKeyScopes = []APIKeyScope{APIKeyScopeTingHire, APIKeyScopeTimesheetRead}
 
 // IsValidAPIKeyScope reports whether s is one of the known scopes.
 func IsValidAPIKeyScope(s APIKeyScope) bool {
@@ -39,7 +44,7 @@ func IsValidAPIKeyScope(s APIKeyScope) bool {
 			return true
 		}
 	}
-	return false
+	return s == APIKeyScopeChatbot
 }
 
 // APIKey is a machine credential for an external integration API.
@@ -69,7 +74,14 @@ func (k *APIKey) IsRevoked() bool { return k.RevokedAt != nil }
 // HasScope reports whether this key may authenticate routes guarded by
 // required. An empty or unknown stored scope matches nothing — fail closed.
 func (k *APIKey) HasScope(required APIKeyScope) bool {
-	return k.Scope == required
+	if k.Scope == required {
+		return true
+	}
+	// Allow legacy chatbot scope to satisfy TingHire integration surface
+	if required == APIKeyScopeTingHire && k.Scope == APIKeyScopeChatbot {
+		return true
+	}
+	return false
 }
 
 // ValidateName enforces the admin-supplied label rules.
@@ -89,7 +101,7 @@ func (k *APIKey) ValidateName() error {
 // surface or it would silently match nothing.
 func (k *APIKey) ValidateScope() error {
 	if !IsValidAPIKeyScope(k.Scope) {
-		return NewValidationError("Phạm vi khoá API không hợp lệ. Chỉ hỗ trợ: timesheet_read")
+		return NewValidationError("Phạm vi khoá API không hợp lệ. Chỉ hỗ trợ: tinghire, timesheet_read")
 	}
 	return nil
 }

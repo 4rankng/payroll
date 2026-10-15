@@ -12,18 +12,16 @@ import (
 // APIRateLimit + APIMetrics) but deliberately NOT on the protected group — no
 // JWT, no Casbin.
 //
-// The scope gate binds the surface to the vendor key (timesheet_read): the
-// vendor integration credential drives both the read-only timesheet API and
-// these employee-lifecycle operations. The retired chatbot scope originally
-// guarded this surface; the chatbot consumer is gone and the vendor key is
-// the remaining caller.
+// The scope gate binds the surface to TingHire (tinghire): the
+// credential drives employee-lifecycle operations (lookup, OTP reset, self check-in)
+// and Zalo OA token sync.
 func setupIntegrationResetRoutes(v1 *gin.RouterGroup, container *Container) {
 	if container == nil || container.Handlers == nil {
 		return
 	}
 	g := v1.Group("/integration")
 	g.Use(container.Middleware.APIKeyAuth.Authenticate())
-	g.Use(container.Middleware.APIKeyAuth.RequireAPIKeyScope(domain.APIKeyScopeTimesheetRead))
+	g.Use(container.Middleware.APIKeyAuth.RequireAPIKeyScope(domain.APIKeyScopeTingHire))
 	g.Use(container.Middleware.IntegrationRateLimit)
 	if container.Handlers.IntegrationReset != nil {
 		g.POST("/password-reset/otp", container.Handlers.IntegrationReset.RequestOTP)

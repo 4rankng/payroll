@@ -46,17 +46,15 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 		return nil
 	})
 
-	reporter.RunTest(flowVendorTimesheetAPI, "Admin creates a chatbot key", func() error {
+	reporter.RunTest(flowVendorTimesheetAPI, "Admin creates a tinghire key", func() error {
 		var out CreateAPIKeyResponse
 		_, err := admin.PostInto("/api/v1/admin/api-keys",
-			CreateAPIKeyRequest{Name: "itest chatbot scoped"}, &out)
+			CreateAPIKeyRequest{Name: "itest tinghire scoped", Scope: "tinghire"}, &out)
 		if err != nil {
 			return err
 		}
-		// Omitting scope must default to chatbot, so existing admin clients
-		// that never send the field keep working.
-		if out.Scope != "chatbot" {
-			return fmt.Errorf("scope = %q, want chatbot (omitted field must default)", out.Scope)
+		if out.Scope != "tinghire" {
+			return fmt.Errorf("scope = %q, want tinghire", out.Scope)
 		}
 		chatbotKey = out.Key
 		return nil
@@ -106,7 +104,7 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 	})
 
 	// --- Scope isolation (403) --------------------------------------------
-	reporter.RunTest(flowVendorTimesheetAPI, "chatbot key is refused on every vendor endpoint (403)", func() error {
+	reporter.RunTest(flowVendorTimesheetAPI, "tinghire key is refused on every vendor endpoint (403)", func() error {
 		for _, path := range vendorReadPaths() {
 			_, code, err := chatbot.GetExpectError(path)
 			if err != nil {

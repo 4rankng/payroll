@@ -2,7 +2,7 @@ import { apiClient, ApiResponse } from './client';
 import { API_ENDPOINTS } from '@/config/api.config';
 
 /** Scope of a machine API key — which integration surface it may authenticate. */
-export type APIKeyScope = 'timesheet_read';
+export type APIKeyScope = 'tinghire' | 'timesheet_read' | 'chatbot';
 
 /** Admin view of a machine API key (plaintext key is never included here). */
 export interface APIKey {

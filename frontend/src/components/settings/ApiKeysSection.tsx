@@ -34,6 +34,13 @@ const SCOPE_META: Record<
   APIKeyScope,
   { label: string; description: string; badgeClass: string }
 > = {
+  tinghire: {
+    label: 'TingHire',
+    description:
+      'Dành cho hệ thống tuyển dụng TingHire: tra cứu nhân viên, đặt lại mật khẩu OTP qua Zalo, tự chấm công và đồng bộ Zalo OA.',
+    badgeClass:
+      'border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300',
+  },
   timesheet_read: {
     label: 'Vendor — bảng chấm công',
     description:
@@ -41,16 +48,35 @@ const SCOPE_META: Record<
     badgeClass:
       'border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300',
   },
+  chatbot: {
+    label: 'Chatbot (Cũ)',
+    description:
+      'Khoá tích hợp cũ trước khi phân tách phạm vi.',
+    badgeClass:
+      'border-slate-500/30 bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300',
+  },
 };
 
 /**
- * Resolve a key's scope, defaulting a missing value to 'timesheet_read'. Any
- * unrecognized stored scope (e.g. a retired legacy value) is flagged
- * 'unsupported' so the row renders it as no longer supported.
+ * Resolve a key's scope.
+ * TingHire keys are identified as 'tinghire', timesheet_read as 'timesheet_read',
+ * and legacy chatbot as 'chatbot'.
  */
 const scopeOf = (apiKey: APIKey): APIKeyScope | 'unsupported' => {
   const raw: string | null | undefined = apiKey.scope;
-  return raw == null || raw === '' || raw === 'timesheet_read' ? 'timesheet_read' : 'unsupported';
+  if (raw === 'tinghire') return 'tinghire';
+  if (raw === 'timesheet_read') {
+    // If a key was named TingHire during the migration-133 window where it carried
+    // timesheet_read, resolve it to tinghire so it renders with the true TingHire badge.
+    if (apiKey.name?.toLowerCase().includes('tinghire')) {
+      return 'tinghire';
+    }
+    return 'timesheet_read';
+  }
+  if (raw === 'chatbot') return 'chatbot';
+  if (apiKey.name?.toLowerCase().includes('tinghire')) return 'tinghire';
+  if (raw == null || raw === '') return 'timesheet_read';
+  return 'unsupported';
 };
 
 interface APIKeyRowProps {
@@ -181,6 +207,7 @@ export const ApiKeysSection = () => {
   const revokeKey = useRevokeAPIKey();
 
   const [name, setName] = useState('');
+  const [scope, setScope] = useState<APIKeyScope>('tinghire');
   const [revealed, setRevealed] = useState<{ key: string; name: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [revokingId, setRevokingId] = useState<number | null>(null);
@@ -198,7 +225,7 @@ export const ApiKeysSection = () => {
       return;
     }
     try {
-      const res = await createKey.mutateAsync({ name: trimmed, scope: 'timesheet_read' });
+      const res = await createKey.mutateAsync({ name: trimmed, scope });
       if (res.data?.key) {
         setRevealed({ key: res.data.key, name: res.data.name });
       }
@@ -232,8 +259,12 @@ export const ApiKeysSection = () => {
   };
 
   const handleRevoke = async (apiKey: APIKey) => {
-    const scopeLabel = scopeOf(apiKey) === 'unsupported' ? 'Không còn hỗ trợ' : SCOPE_META.timesheet_read.label;
-    const impact = 'Đối tác đang dùng khoá này sẽ mất quyền xem bảng chấm công ngay.';
+    const keyScope = scopeOf(apiKey);
+    const scopeLabel = keyScope === 'unsupported' ? 'Không còn hỗ trợ' : SCOPE_META[keyScope].label;
+    const impact =
+      keyScope === 'tinghire' || keyScope === 'chatbot'
+        ? 'Hệ thống tuyển dụng TingHire đang dùng khoá này sẽ mất kết nối ngay.'
+        : 'Đối tác đang dùng khoá này sẽ mất quyền xem bảng chấm công ngay.';
     if (
       !window.confirm(
         `Thu hồi khoá "${apiKey.name}" (${scopeLabel})? ${impact}`,
@@ -274,7 +305,7 @@ export const ApiKeysSection = () => {
                   </Badge>
                 </div>
                 <p className="mt-1 max-w-2xl text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Cấp và quản lý khoá API bảo mật cho các hệ thống máy (vendor, đối tác) tra cứu bảng chấm công.
+                  Cấp và quản lý khoá API bảo mật cho hệ thống tuyển dụng TingHire và các vendor tra cứu bảng chấm công.
                 </p>
               </div>
             </div>
@@ -339,13 +370,13 @@ export const ApiKeysSection = () => {
                   Tạo khoá API
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                  Cấp khoá cho hệ thống vendor tra cứu bảng chấm công (chỉ đọc). Khoá chỉ hiển thị một lần khi tạo.
+                  Cấp khoá cho hệ thống tuyển dụng TingHire hoặc vendor tra cứu bảng chấm công. Khoá chỉ hiển thị một lần khi tạo.
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-4 sm:p-5 space-y-4">
-            <form onSubmit={handleCreate} className="space-y-3">
+            <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                 <div className="space-y-1.5">
                   <Label htmlFor="api-key-name" className="text-xs sm:text-sm font-medium text-foreground">
@@ -356,7 +387,7 @@ export const ApiKeysSection = () => {
                       id="api-key-name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Ví dụ: Đối tác chấm công, Hệ thống đối soát..."
+                      placeholder="Ví dụ: TingHire Production, Đối tác chấm công..."
                       maxLength={100}
                       className="min-h-11 pr-14 text-sm sm:min-h-9"
                       disabled={createKey.isPending}
@@ -379,6 +410,50 @@ export const ApiKeysSection = () => {
                   <span>Tạo khoá API</span>
                 </Button>
               </div>
+
+              <fieldset className="space-y-2">
+                <legend className="text-xs sm:text-sm font-medium text-foreground">
+                  Phạm vi truy cập (Scope)
+                </legend>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {(['tinghire', 'timesheet_read'] as const).map((value) => {
+                    const meta = SCOPE_META[value];
+                    const inputId = `api-key-scope-${value}`;
+                    return (
+                      <label
+                        key={value}
+                        htmlFor={inputId}
+                        className={cn(
+                          'flex cursor-pointer items-start gap-2.5 rounded-lg border p-3 transition-colors',
+                          'focus-within:ring-1 focus-within:ring-ring',
+                          scope === value
+                            ? 'border-emerald-500/50 bg-emerald-500/5'
+                            : 'border-border hover:bg-muted/40',
+                        )}
+                      >
+                        <input
+                          id={inputId}
+                          type="radio"
+                          name="api-key-scope"
+                          value={value}
+                          checked={scope === value}
+                          onChange={() => setScope(value)}
+                          disabled={createKey.isPending}
+                          className="mt-0.5 size-4 shrink-0 accent-emerald-700 dark:accent-emerald-400"
+                        />
+                        <span className="min-w-0 space-y-0.5">
+                          <span className="block text-xs sm:text-sm font-medium text-foreground">
+                            {meta.label}
+                          </span>
+                          <span className="block text-[11px] sm:text-xs text-muted-foreground">
+                            {meta.description}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
 
               <p className="text-[11px] sm:text-xs text-muted-foreground">
                 Mẹo: Đặt tên mô tả rõ hệ thống hoặc môi trường sử dụng để dễ quản lý và theo dõi nhật ký hoạt động.
@@ -507,7 +582,7 @@ export const ApiKeysSection = () => {
                 </div>
                 <p className="font-medium text-foreground">Chưa có khoá API nào</p>
                 <p className="text-xs text-muted-foreground max-w-sm">
-                  Tạo khoá API đầu tiên ở khung phía trên để cấp quyền truy cập cho hệ thống vendor tra cứu bảng chấm công.
+                  Tạo khoá API đầu tiên ở khung phía trên để cấp quyền truy cập cho hệ thống tuyển dụng TingHire hoặc vendor tra cứu bảng chấm công.
                 </p>
               </div>
             ) : (

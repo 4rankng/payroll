@@ -131,11 +131,10 @@ TingHire authenticates to the integration surface with **one API key**:
 | --- | --- |
 | Key id | `3` — the existing row is reactivated; no new key is ever issued |
 | Key name | `TingHire` (key prefix `ttk_70pf1RBT…`; created 27/09/2026) |
-| Scope | `timesheet_read` — the live vendor scope the middleware checks (`RequireAPIKeyScope(timesheet_read)` on `/api/v1/integration/*`, including the token endpoint) |
+| Scope | `tinghire` — the dedicated recruitment integration scope (`RequireAPIKeyScope(tinghire)` on `/api/v1/integration/*`, including the token endpoint) |
 | Header | `X-API-Key: <the TingHire key secret>` — the vendor keeps its existing secret |
 
-The scope authorizes both the vendor read API (`/api/v1/vendor/*`) and the
-integration surface:
+The scope authorizes the integration surface:
 
 - `GET|POST /api/v1/integration/zalo/token` — current Zalo OA access token
 - `POST /api/v1/integration/employee/lookup`
@@ -144,20 +143,16 @@ integration surface:
 
 Notes:
 
-- The retired `chatbot` scope stays retired: the vendor scope was extended to
-  cover the integration surface instead of resurrecting the old name.
+- The scope is separate from `timesheet_read` (the read-only surface for timesheet partner vendors under `/api/v1/vendor/*`). TingHire is the recruitment/employee integration platform, not the timesheet vendor.
 - The OA **refresh** token never leaves payroll; the pull lane and the webhook
   push only ever carry the access token.
-- Migration `133_restore_tinghire_vendor_key` restores the key if an older
-  migration revoked it (migration 130 revoked the `chatbot`-era rows on
-  12/10/2026). The migration is idempotent — re-running it is a no-op once the
-  key carries `timesheet_read`. Verify after deploy:
+- Migration `134_set_tinghire_scope` sets the scope to `tinghire` for the active TingHire credential. Verify after deploy:
 
 ```sql
 SELECT id, name, scope, revoked_at FROM api_keys WHERE id IN (1, 2, 3);
 ```
 
-Expected: row `3` with `name = 'TingHire'`, `scope = 'timesheet_read'` and
-`revoked_at IS NULL`; rows `1` and `2` remain revoked. The TingHire side must send
-exactly this key in `X-API-Key`: a 401 means the key is revoked or unknown, a
+Expected: row `3` with `name = 'TingHire'`, `scope = 'tinghire'` and
+`revoked_at IS NULL`; rows `1` and `2` remain revoked. The TingHire side sends
+this key in `X-API-Key`: a 401 means the key is revoked or unknown, a
 403 means the scope does not match the surface.

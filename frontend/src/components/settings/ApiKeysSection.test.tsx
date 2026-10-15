@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { toast } from 'sonner';
 
 import { ApiKeysSection } from './ApiKeysSection';
-import type { APIKey } from '@/services/api/apiKeys.service';
+import type { APIKey, APIKeyScope } from '@/services/api/apiKeys.service';
 
 const mocks = vi.hoisted(() => {
   const initialKeys: APIKey[] = [
     {
       id: 1,
       name: 'TingHire',
-      scope: 'timesheet_read',
+      scope: 'tinghire',
       key_prefix: 'ttk_40WjkqjL',
       created_by: 10,
       last_used_at: null,
@@ -99,12 +99,13 @@ describe('ApiKeysSection', () => {
     expect(screen.getAllByText('Đã thu hồi').length).toBeGreaterThanOrEqual(1);
 
     // Keys rendered
-    expect(screen.getByText('TingHire')).toBeInTheDocument();
+    expect(screen.getAllByText('TingHire').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Vendor Active')).toBeInTheDocument();
     expect(screen.getByText('ttk_40WjkqjL••••••••••••')).toBeInTheDocument();
     expect(screen.getByText('ttk_abc123xy••••••••••••')).toBeInTheDocument();
 
-    // Both keys are vendor-scoped and carry that badge.
+    // TingHire carries the TingHire badge, Vendor Active carries the Vendor badge.
+    expect(screen.getAllByText('TingHire').length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText('Vendor — bảng chấm công').length).toBe(2);
 
     // Active key has Revoke button, revoked key does not
@@ -131,12 +132,14 @@ describe('ApiKeysSection', () => {
     const input = screen.getByLabelText(/Tên khoá/);
     fireEvent.change(input, { target: { value: 'Đối tác A' } });
 
+    // Select Vendor - bảng chấm công scope radio
+    const vendorRadio = screen.getByLabelText(/Vendor — bảng chấm công/);
+    fireEvent.click(vendorRadio);
+
     const createButton = screen.getByRole('button', { name: 'Tạo khoá API' });
     fireEvent.click(createButton);
 
     await waitFor(() => {
-      // The scope radio is gone: every key is created read-only for the vendor
-      // timesheet surface.
       expect(mocks.createKey).toHaveBeenCalledWith({ name: 'Đối tác A', scope: 'timesheet_read' });
     });
 
@@ -204,10 +207,11 @@ describe('ApiKeysSection', () => {
     it('labels every key row with its scope badge', () => {
       render(<ApiKeysSection />);
 
+      expect(screen.getAllByText('TingHire').length).toBeGreaterThanOrEqual(2);
       expect(screen.getAllByText('Vendor — bảng chấm công').length).toBe(2);
     });
 
-    it('renders an unsupported badge for a retired legacy scope', () => {
+    it('renders chatbot badge for legacy chatbot scope', () => {
       mocks.keys = [
         {
           id: 7,
@@ -219,6 +223,25 @@ describe('ApiKeysSection', () => {
           revoked_at: null,
           created_at: '2026-09-25T10:00:00.000Z',
         } as unknown as APIKey,
+      ];
+
+      render(<ApiKeysSection />);
+
+      expect(screen.getByText('Chatbot (Cũ)')).toBeInTheDocument();
+    });
+
+    it('renders an unsupported badge for an unknown scope', () => {
+      mocks.keys = [
+        {
+          id: 8,
+          name: 'Unknown Key',
+          scope: 'unknown_scope' as unknown as APIKeyScope,
+          key_prefix: 'ttk_unknown01',
+          created_by: 10,
+          last_used_at: null,
+          revoked_at: null,
+          created_at: '2026-09-25T10:00:00.000Z',
+        } as APIKey,
       ];
 
       render(<ApiKeysSection />);
@@ -243,7 +266,7 @@ describe('ApiKeysSection', () => {
 
       render(<ApiKeysSection />);
 
-      expect(screen.getByText('Vendor — bảng chấm công')).toBeInTheDocument();
+      expect(screen.getAllByText('Vendor — bảng chấm công').length).toBe(2);
     });
   });
 });

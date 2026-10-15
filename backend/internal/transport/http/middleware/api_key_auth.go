@@ -89,7 +89,7 @@ func (m *APIKeyAuthMiddleware) Authenticate() gin.HandlerFunc {
 // A missing or unrecognised scope fails closed (403) rather than defaulting to
 // a match: if Authenticate() was ever skipped by a routing mistake, the guarded
 // route must not become unprotected.
-func (m *APIKeyAuthMiddleware) RequireAPIKeyScope(required domain.APIKeyScope) gin.HandlerFunc {
+func (m *APIKeyAuthMiddleware) RequireAPIKeyScope(required ...domain.APIKeyScope) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		raw, ok := c.Get(constants.CtxAPIKeyScope)
 		if !ok {
@@ -98,11 +98,19 @@ func (m *APIKeyAuthMiddleware) RequireAPIKeyScope(required domain.APIKeyScope) g
 			return
 		}
 		granted, _ := raw.(string)
-		if domain.APIKeyScope(granted) != required {
-			response.Forbidden(c, constants.MsgAPIKeyScopeDeniedVN)
-			c.Abort()
-			return
+		grantedScope := domain.APIKeyScope(granted)
+		for _, req := range required {
+			if grantedScope == req {
+				c.Next()
+				return
+			}
+			// TingHire surface accepts legacy chatbot scope and timesheet_read during rollout transition
+			if req == domain.APIKeyScopeTingHire && (grantedScope == domain.APIKeyScopeChatbot || grantedScope == domain.APIKeyScopeTimesheetRead) {
+				c.Next()
+				return
+			}
 		}
-		c.Next()
+		response.Forbidden(c, constants.MsgAPIKeyScopeDeniedVN)
+		c.Abort()
 	}
 }

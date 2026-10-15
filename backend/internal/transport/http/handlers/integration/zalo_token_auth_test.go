@@ -50,8 +50,8 @@ func seedEndpointKey(repo *endpointKeyRepo, scope domain.APIKeyScope, revoked bo
 }
 
 // TestZaloTokenEndpointAuth pins the pull endpoint's credential contract on
-// the live route chain: only an unrevoked key carrying the vendor scope
-// (timesheet_read — the scope the whole /integration surface shares) may pull
+// the live route chain: only an unrevoked key carrying the TingHire scope
+// (tinghire — the scope the whole /integration surface uses) may pull
 // the OA access token; a foreign-scope key is 403, and a missing or revoked
 // key is 401. The 200 body carries the access token and never the refresh
 // token.
@@ -66,7 +66,7 @@ func TestZaloTokenEndpointAuth(t *testing.T) {
 		r := gin.New()
 		g := r.Group("/api/v1/integration")
 		g.Use(m.Authenticate())
-		g.Use(m.RequireAPIKeyScope(domain.APIKeyScopeTimesheetRead))
+		g.Use(m.RequireAPIKeyScope(domain.APIKeyScopeTingHire))
 		g.GET("/zalo/token", NewZaloTokenHandler(creds).GetToken)
 		return r
 	}
@@ -83,7 +83,7 @@ func TestZaloTokenEndpointAuth(t *testing.T) {
 
 	t.Run("vendor key pulls the access token without leaking the refresh token", func(t *testing.T) {
 		repo := &endpointKeyRepo{byHash: map[string]*domain.APIKey{}}
-		key := seedEndpointKey(repo, domain.APIKeyScopeTimesheetRead, false)
+		key := seedEndpointKey(repo, domain.APIKeyScopeTingHire, false)
 
 		rec := call(newRouter(repo), key)
 
