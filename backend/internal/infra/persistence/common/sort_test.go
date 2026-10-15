@@ -38,6 +38,34 @@ func TestSanitizeSortColumn(t *testing.T) {
 	}
 }
 
+func TestSanitizeSortColumnAgainst(t *testing.T) {
+	allowed := map[string]bool{"created_at": true, "last_login": true, "username": true}
+	const def = "created_at"
+
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"empty uses default", "", def},
+		{"whitespace uses default", "   ", def},
+		{"allowed column kept", "last_login", "last_login"},
+		{"allowed column kept with padding", " username ", "username"},
+		{"computed DTO field rejected", "current_project_names", def},
+		{"shape-valid but not allowlisted", "password", def},
+		{"injection attempt rejected", "username; DROP TABLE users", def},
+		{"qualified name not allowlisted", "users.username", def},
+		{"case-sensitive match rejected", "Username", def},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SanitizeSortColumnAgainst(tt.in, allowed, def); got != tt.want {
+				t.Errorf("SanitizeSortColumnAgainst(%q) = %q, want %q", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSanitizeSortOrder(t *testing.T) {
 	tests := []struct {
 		in         string
