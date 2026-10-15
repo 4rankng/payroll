@@ -54,6 +54,7 @@ type Repositories struct {
 	AdBanner                  domain.AdBannerRepository
 	ApprovalRequest           domain.ApprovalRequestRepository
 	MCPAPIKey                 domain.MCPAPIKeyRepository
+	OpsAPIKey                 domain.OpsAPIKeyRepository
 }
 
 func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositories {
@@ -79,6 +80,7 @@ func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositorie
 		Settings:                  persistence.NewSettingsRepository(db),
 		APIKey:                    persistence.NewAPIKeyRepository(db),
 		MCPAPIKey:                 persistence.NewMCPAPIKeyRepository(db),
+		OpsAPIKey:                 persistence.NewOpsAPIKeyRepository(db),
 		Asset:                     persistence.NewAssetRepository(db, eventBus),
 		BulkTransferFile:          persistence.NewBulkTransferFileRepository(db.DB, transactionCodeRepo),
 		Lender:                    persistence.NewLenderRepository(db),

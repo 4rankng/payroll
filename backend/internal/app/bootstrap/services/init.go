@@ -27,6 +27,7 @@ import (
 	"api-server/internal/app/services/loan"
 	"api-server/internal/app/services/mcpapikey"
 	"api-server/internal/app/services/notification"
+	"api-server/internal/app/services/opsapikey"
 	"api-server/internal/app/services/otp"
 	"api-server/internal/app/services/passwordreset"
 	"api-server/internal/app/services/payroll"
@@ -72,6 +73,7 @@ type Services struct {
 	ZaloConnect                       *zaloconnect.Service            // Admin-managed OA connection + runtime toggle (Phase 4)
 	APIKey                            *apikey.Service                 // Machine API keys for the vendor integration API
 	MCPAPIKey                         *mcpapikey.Service              // Machine API keys for the MCP agent surface
+	OpsAPIKey                         *opsapikey.Service              // Machine API keys for the payroll-ops-mcp channel (pk_ops_*)
 	Integration                       *integration.Service            // Vendor password-reset + employee lookup (API-key auth)
 	IntegrationSelfCheckin            *integration.SelfCheckinService // Vendor self check-in enable/disable (API-key auth)
 	ZaloTokenPusher                   *zaloconnect.TokenWebhookPusher // Pushes the OA access token to the vendor webhook (rotation + startup)
@@ -716,9 +718,12 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		cfg.Zalo.TemplateID, cfg.Zalo.CodeTTL, zaloConnectSvc, eventBus, clk, logger,
 	)
 
-	// Machine API keys for the vendor integration API and the MCP agent surface.
+	// Machine API keys for the vendor integration API, the MCP agent surface,
+	// and the payroll-ops-mcp agent channel (pk_ops_*). The ops service also
+	// owns per-call auditing onto the audit:log:write pipeline.
 	apiKeyService := apikey.NewService(repos.APIKey, clk)
 	mcpAPIKeyService := mcpapikey.NewService(repos.MCPAPIKey, repos.User, clk)
+	opsAPIKeyService := opsapikey.NewService(repos.OpsAPIKey, repos.User, asynqClient, clk)
 
 	// Vendor integration service (TingHire): password-reset OTP + employee
 	// lookup. Reuses the same Zalo store, sender, and enabled-checker as the
@@ -780,6 +785,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		ZaloConnect:                       zaloConnectSvc,
 		APIKey:                            apiKeyService,
 		MCPAPIKey:                         mcpAPIKeyService,
+		OpsAPIKey:                         opsAPIKeyService,
 		Integration:                       integrationService,
 		IntegrationSelfCheckin:            selfCheckinService,
 		ZaloTokenPusher:                   zaloTokenPusher,

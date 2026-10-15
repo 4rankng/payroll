@@ -429,6 +429,13 @@ const (
 	MsgMCPKeyPathDeniedVN = "Đường dẫn này không được truy cập bằng API key"
 	MsgMCPKeyReadOnlyVN   = "Khoá API MCP chỉ đọc (READ ONLY) không thể thực hiện thao tác thay đổi dữ liệu"
 
+	// Ops agent channel (pk_ops_* keys, payroll-ops-mcp).
+	MsgOpsKeyInvalidVN      = "Khoá API ops không hợp lệ hoặc đã bị thu hồi"
+	MsgOpsKeyReadOnlyVN     = "Khoá API ops hiện chỉ đọc (READ ONLY) — không thể thực hiện thao tác thay đổi dữ liệu"
+	MsgOpsKeyWrongSurfaceVN = "Khoá API ops không được dùng trên kênh này"
+	MsgOpsMCPDisabledVN     = "Kênh ops MCP đã bị tắt (PAYROLL_OPS_MCP_DISABLED)"
+	MsgOpsRateLimitVN       = "Vượt giới hạn gọi của kênh ops MCP — thử lại sau"
+
 	// Vendor timesheet read API (/api/v1/vendor/*, API keys with the
 	// timesheet_read scope). The whole surface is read-only; these messages
 	// describe request-shape errors only.

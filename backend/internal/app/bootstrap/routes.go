@@ -84,6 +84,7 @@ func setupProtectedRoutes(v1 *gin.RouterGroup, container *Container) {
 	setupAPIKeyAdminRoutes(v1, container)
 	setupMCPAPIKeyAdminRoutes(v1, container)
 	setupIntegrationResetRoutes(v1, container)
+	setupOpsAPIKeyAdminRoutes(v1, container)
 	setupVendorTimesheetRoutes(v1, container)
 	setupDBExportRoutes(protected, container)
 	setupCronRoutes(protected, container)

@@ -106,3 +106,4 @@ frontend/coverage/
 kanban/
 
 .codewhale/
+frontend/qa/ops-mcp-install/
