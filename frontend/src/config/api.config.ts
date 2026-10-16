@@ -362,6 +362,7 @@ export const API_ENDPOINTS = {
   mcpApiKeys: {
     base: '/admin/mcp-api-keys',
     byId: (id: number) => `/admin/mcp-api-keys/${id}`,
+    scope: (id: number) => `/admin/mcp-api-keys/${id}/scope`,
   },
 
   opsApiKeys: {

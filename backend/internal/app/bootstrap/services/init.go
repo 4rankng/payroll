@@ -719,10 +719,11 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	)
 
 	// Machine API keys for the vendor integration API, the MCP agent surface,
-	// and the payroll-ops-mcp agent channel (pk_ops_*). The ops service also
-	// owns per-call auditing onto the audit:log:write pipeline.
+	// and the payroll-ops-mcp agent channel (pk_ops_*). The MCP and ops
+	// services also own scope-toggle auditing onto the audit:log:write
+	// pipeline.
 	apiKeyService := apikey.NewService(repos.APIKey, clk)
-	mcpAPIKeyService := mcpapikey.NewService(repos.MCPAPIKey, repos.User, clk)
+	mcpAPIKeyService := mcpapikey.NewService(repos.MCPAPIKey, repos.User, asynqClient, clk)
 	opsAPIKeyService := opsapikey.NewService(repos.OpsAPIKey, repos.User, asynqClient, clk)
 
 	// Vendor integration service (TingHire): password-reset OTP + employee

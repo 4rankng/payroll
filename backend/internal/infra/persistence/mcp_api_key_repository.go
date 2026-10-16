@@ -36,6 +36,17 @@ func (r *MCPAPIKeyRepository) GetByHash(ctx context.Context, keyHash string) (*d
 	return &key, nil
 }
 
+func (r *MCPAPIKeyRepository) GetByID(ctx context.Context, id uint) (*domain.MCPAPIKey, error) {
+	var key domain.MCPAPIKey
+	if err := r.DB.WithContext(ctx).Where("id = ?", id).First(&key).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.NewNotFoundError("mcp api key not found")
+		}
+		return nil, err
+	}
+	return &key, nil
+}
+
 // List returns every key, newest first (revoked keys included — the admin list
 // is the audit record).
 func (r *MCPAPIKeyRepository) List(ctx context.Context) ([]*domain.MCPAPIKey, error) {
@@ -69,4 +80,24 @@ func (r *MCPAPIKeyRepository) UpdateLastUsedAt(ctx context.Context, id uint, at 
 		Model(&domain.MCPAPIKey{}).
 		Where("id = ?", id).
 		Update("last_used_at", at).Error
+}
+
+// UpdateScope persists an admin scope decision on a live key. A revoked key
+// affects zero rows and is reported as not-found — revocation is terminal and
+// must never be reachable through a scope toggle.
+func (r *MCPAPIKeyRepository) UpdateScope(ctx context.Context, id uint, scope domain.MCPAPIKeyScope, updatedAt time.Time) error {
+	res := r.DB.WithContext(ctx).
+		Model(&domain.MCPAPIKey{}).
+		Where("id = ? AND revoked_at IS NULL", id).
+		Updates(map[string]any{
+			"scope":            scope,
+			"scope_updated_at": updatedAt,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return domain.NewNotFoundError("mcp api key not found")
+	}
+	return nil
 }

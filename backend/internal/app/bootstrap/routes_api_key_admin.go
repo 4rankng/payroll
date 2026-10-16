@@ -24,7 +24,9 @@ func setupAPIKeyAdminRoutes(v1 *gin.RouterGroup, container *Container) {
 
 // setupMCPAPIKeyAdminRoutes mounts the admin-only MCP API key management
 // endpoints. Same policy as the vendor key management above: the Casbin admin
-// wildcard covers the routes and no other role holds a rule for them.
+// wildcard covers the routes and no other role holds a rule for them. The
+// scope toggle additionally requires an OTP-verified session (2FA re-entry) —
+// privileged mutation on a machine credential, mirroring the ops-key toggle.
 func setupMCPAPIKeyAdminRoutes(v1 *gin.RouterGroup, container *Container) {
 	if container == nil || container.Handlers == nil || container.Handlers.MCPAPIKey == nil {
 		return
@@ -35,6 +37,7 @@ func setupMCPAPIKeyAdminRoutes(v1 *gin.RouterGroup, container *Container) {
 	g.POST("", container.Handlers.MCPAPIKey.Create)
 	g.GET("", container.Handlers.MCPAPIKey.List)
 	g.DELETE("/:id", container.Handlers.MCPAPIKey.Revoke)
+	g.PUT("/:id/scope", requireOTPVerified(), container.Handlers.MCPAPIKey.SetScope)
 }
 
 // setupOpsAPIKeyAdminRoutes mounts the admin-only ops API key management
