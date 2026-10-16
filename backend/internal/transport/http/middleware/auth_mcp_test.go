@@ -46,6 +46,27 @@ func (r *fakeMCPKeyRepo) GetByHash(_ context.Context, hash string) (*domain.MCPA
 
 func (r *fakeMCPKeyRepo) List(_ context.Context) ([]*domain.MCPAPIKey, error) { return nil, nil }
 
+func (r *fakeMCPKeyRepo) GetByID(_ context.Context, id uint) (*domain.MCPAPIKey, error) {
+	for _, key := range r.byHash {
+		if key.ID == id {
+			clone := *key
+			return &clone, nil
+		}
+	}
+	return nil, domain.NewNotFoundError("mcp api key not found")
+}
+
+func (r *fakeMCPKeyRepo) UpdateScope(_ context.Context, id uint, scope domain.MCPAPIKeyScope, at time.Time) error {
+	for _, key := range r.byHash {
+		if key.ID == id && key.RevokedAt == nil {
+			key.Scope = scope
+			key.ScopeUpdatedAt = &at
+			return nil
+		}
+	}
+	return domain.NewNotFoundError("mcp api key not found")
+}
+
 func (r *fakeMCPKeyRepo) Revoke(_ context.Context, id uint, at time.Time) error {
 	for _, key := range r.byHash {
 		if key.ID == id {
@@ -75,7 +96,7 @@ func (f *fakeMCPUsers) GetByID(_ context.Context, id uint) (*domain.User, error)
 // seedMCPKey creates one key of the given scope and returns its plaintext.
 func seedMCPKey(t *testing.T, repo *fakeMCPKeyRepo, users *fakeMCPUsers, scope domain.MCPAPIKeyScope, creatorID uint) string {
 	t.Helper()
-	svc := mcpapikey.NewService(repo, users, nil)
+	svc := mcpapikey.NewService(repo, users, nil, nil)
 	_, plaintext, err := svc.Create(context.Background(), "agent", scope, creatorID)
 	if err != nil {
 		t.Fatalf("Create: %v", err)
@@ -117,7 +138,7 @@ func mcpAuthFixture(t *testing.T) (*fakeMCPKeyRepo, *fakeMCPUsers) {
 
 func TestMCPKeyReadOnlyGETReachesHandlerWithCreatorIdentity(t *testing.T) {
 	repo, users := mcpAuthFixture(t)
-	svc := mcpapikey.NewService(repo, users, nil)
+	svc := mcpapikey.NewService(repo, users, nil, nil)
 	plaintext := seedMCPKey(t, repo, users, domain.MCPAPIKeyScopeReadOnly, 7)
 
 	rec, gotUser := runAuthGate(t, svc, http.MethodGet, "/api/v1/employees", plaintext)
@@ -129,7 +150,7 @@ func TestMCPKeyReadOnlyGETReachesHandlerWithCreatorIdentity(t *testing.T) {
 
 func TestMCPKeyReadOnlyRejectsMutation(t *testing.T) {
 	repo, users := mcpAuthFixture(t)
-	svc := mcpapikey.NewService(repo, users, nil)
+	svc := mcpapikey.NewService(repo, users, nil, nil)
 	plaintext := seedMCPKey(t, repo, users, domain.MCPAPIKeyScopeReadOnly, 7)
 
 	rec, _ := runAuthGate(t, svc, http.MethodPost, "/api/v1/timesheets/preview", plaintext)
@@ -141,7 +162,7 @@ func TestMCPKeyReadOnlyRejectsMutation(t *testing.T) {
 
 func TestMCPKeyFullPathDeniedForCredentialManagement(t *testing.T) {
 	repo, users := mcpAuthFixture(t)
-	svc := mcpapikey.NewService(repo, users, nil)
+	svc := mcpapikey.NewService(repo, users, nil, nil)
 	plaintext := seedMCPKey(t, repo, users, domain.MCPAPIKeyScopeFull, 7)
 
 	for _, path := range []string{"/api/v1/admin/mcp-api-keys", "/api/v1/admin/api-keys", "/api/v1/auth/login"} {
@@ -153,7 +174,7 @@ func TestMCPKeyFullPathDeniedForCredentialManagement(t *testing.T) {
 
 func TestMCPKeyUnknownKeyIs401(t *testing.T) {
 	repo, users := mcpAuthFixture(t)
-	svc := mcpapikey.NewService(repo, users, nil)
+	svc := mcpapikey.NewService(repo, users, nil, nil)
 
 	rec, _ := runAuthGate(t, svc, http.MethodGet, "/api/v1/employees", "mcp_unknown")
 
@@ -163,7 +184,7 @@ func TestMCPKeyUnknownKeyIs401(t *testing.T) {
 
 func TestMCPKeyRevokedKeyIs401(t *testing.T) {
 	repo, users := mcpAuthFixture(t)
-	svc := mcpapikey.NewService(repo, users, nil)
+	svc := mcpapikey.NewService(repo, users, nil, nil)
 	plaintext := seedMCPKey(t, repo, users, domain.MCPAPIKeyScopeFull, 7)
 
 	require.NoError(t, svc.Revoke(context.Background(), 1))
@@ -174,7 +195,7 @@ func TestMCPKeyRevokedKeyIs401(t *testing.T) {
 
 func TestMCPKeyFullScopeAllowsMutation(t *testing.T) {
 	repo, users := mcpAuthFixture(t)
-	svc := mcpapikey.NewService(repo, users, nil)
+	svc := mcpapikey.NewService(repo, users, nil, nil)
 	plaintext := seedMCPKey(t, repo, users, domain.MCPAPIKeyScopeFull, 7)
 
 	rec, _ := runAuthGate(t, svc, http.MethodPost, "/api/v1/timesheets/preview", plaintext)
@@ -188,7 +209,7 @@ func TestMCPKeyFullScopeAllowsMutation(t *testing.T) {
 // no Authorization header it is still the familiar 401).
 func TestJWTPathUnchanged(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	m := NewAuthMiddleware(nil, mcpapikey.NewService(newFakeMCPKeyRepo(), &fakeMCPUsers{byID: map[uint]*domain.User{}}, nil), nil, config.OpsMCPConfig{})
+	m := NewAuthMiddleware(nil, mcpapikey.NewService(newFakeMCPKeyRepo(), &fakeMCPUsers{byID: map[uint]*domain.User{}}, nil, nil), nil, config.OpsMCPConfig{})
 
 	r := gin.New()
 	r.Use(m.Authenticate())
@@ -214,7 +235,7 @@ func TestMCPKeyNilServiceFailsClosed(t *testing.T) {
 func TestMCPKeyMissingCreatorFailsClosed(t *testing.T) {
 	repo := newFakeMCPKeyRepo()
 	users := &fakeMCPUsers{byID: map[uint]*domain.User{}}
-	svc := mcpapikey.NewService(repo, users, nil)
+	svc := mcpapikey.NewService(repo, users, nil, nil)
 	plaintext := seedMCPKey(t, repo, users, domain.MCPAPIKeyScopeReadOnly, 7)
 
 	rec, _ := runAuthGate(t, svc, http.MethodGet, "/api/v1/employees", plaintext)
@@ -228,7 +249,7 @@ func TestMCPKeySoftDeletedCreatorFailsClosed(t *testing.T) {
 	deleted := &domain.User{ID: 7, Username: "admin", Role: domain.RoleAdmin,
 		DeletedAt: gorm.DeletedAt{Time: time.Now(), Valid: true}}
 	users := &fakeMCPUsers{byID: map[uint]*domain.User{7: deleted}}
-	svc := mcpapikey.NewService(repo, users, nil)
+	svc := mcpapikey.NewService(repo, users, nil, nil)
 	plaintext := seedMCPKey(t, repo, users, domain.MCPAPIKeyScopeReadOnly, 7)
 
 	rec, _ := runAuthGate(t, svc, http.MethodGet, "/api/v1/employees", plaintext)

@@ -139,6 +139,9 @@ func main() {
 	// payroll-ops-mcp flow (pk_ops_* admin-equivalent machine keys)
 	runOpsMCPTests(client, testData, reporter, cfg)
 
+	// MCP API key flow (mcp_* chat-integration keys: admin scope toggle)
+	runMCPAPIKeyTests(client, testData, reporter, cfg)
+
 	// Summary
 	reporter.PrintSummary()
 	os.Exit(reporter.ExitCode())
