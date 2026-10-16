@@ -44,6 +44,27 @@ func (r *fakeKeyRepo) GetByHash(_ context.Context, hash string) (*domain.MCPAPIK
 
 func (r *fakeKeyRepo) List(_ context.Context) ([]*domain.MCPAPIKey, error) { return nil, nil }
 
+func (r *fakeKeyRepo) GetByID(_ context.Context, id uint) (*domain.MCPAPIKey, error) {
+	for _, key := range r.byHash {
+		if key.ID == id {
+			clone := *key
+			return &clone, nil
+		}
+	}
+	return nil, domain.NewNotFoundError("mcp api key not found")
+}
+
+func (r *fakeKeyRepo) UpdateScope(_ context.Context, id uint, scope domain.MCPAPIKeyScope, at time.Time) error {
+	for _, key := range r.byHash {
+		if key.ID == id && key.RevokedAt == nil {
+			key.Scope = scope
+			key.ScopeUpdatedAt = &at
+			return nil
+		}
+	}
+	return domain.NewNotFoundError("mcp api key not found")
+}
+
 func (r *fakeKeyRepo) Revoke(_ context.Context, _ uint, _ time.Time) error {
 	return domain.NewNotFoundError("mcp api key not found")
 }
@@ -68,7 +89,7 @@ func newTestEngine() (*gin.Engine, *mcpapikey.Service) {
 	gin.SetMode(gin.TestMode)
 	repo := &fakeKeyRepo{byHash: map[string]*domain.MCPAPIKey{}}
 	users := &fakeUsers{byID: map[uint]*domain.User{7: {ID: 7, Username: "admin", Role: domain.RoleAdmin}}}
-	keys := mcpapikey.NewService(repo, users, nil)
+	keys := mcpapikey.NewService(repo, users, nil, nil)
 
 	engine := gin.New()
 	auth := middleware.NewAuthMiddleware(nil, keys, nil, config.OpsMCPConfig{})

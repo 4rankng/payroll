@@ -8,6 +8,7 @@ import {
   Copy,
   KeyRound,
   Loader2,
+  Lock,
   Plus,
   RefreshCw,
   ShieldAlert,
@@ -22,7 +23,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { API_CONFIG } from '@/config/api.config';
-import { useMcpApiKeys, useCreateMCPAPIKey, useRevokeMCPAPIKey } from '@/hooks/api/useMcpApiKeys';
+import {
+  useMcpApiKeys,
+  useCreateMCPAPIKey,
+  useRevokeMCPAPIKey,
+  useSetMCPAPIKeyScope,
+} from '@/hooks/api/useMcpApiKeys';
 import type { MCPAPIKey, MCPAPIKeyScope } from '@/services/api/mcpApiKeys.service';
 
 const DATE_TIME_DISPLAY = 'dd/MM/yyyy HH:mm';
@@ -60,11 +66,13 @@ const scopeLabel = (scope: MCPAPIKeyScope): string =>
 
 interface McpKeyRowProps {
   apiKey: MCPAPIKey;
+  onToggleScope: (apiKey: MCPAPIKey) => void;
   onRevoke: (apiKey: MCPAPIKey) => void;
+  toggling: boolean;
   revoking: boolean;
 }
 
-const McpKeyRow = ({ apiKey, onRevoke, revoking }: McpKeyRowProps) => {
+const McpKeyRow = ({ apiKey, onToggleScope, onRevoke, toggling, revoking }: McpKeyRowProps) => {
   const revoked = apiKey.revoked_at != null;
 
   return (
@@ -105,17 +113,34 @@ const McpKeyRow = ({ apiKey, onRevoke, revoking }: McpKeyRowProps) => {
           <span>
             Dùng lần cuối {apiKey.last_used_at ? formatDateTime(apiKey.last_used_at) : 'Chưa dùng'}
           </span>
+          {apiKey.scope_updated_at ? (
+            <span>Đổi phạm vi lần cuối {formatDateTime(apiKey.scope_updated_at)}</span>
+          ) : null}
         </div>
       </div>
 
       {!revoked ? (
-        <div className="shrink-0 self-start md:self-center">
+        <div className="flex shrink-0 flex-col gap-2 self-start sm:flex-row sm:items-center sm:self-center">
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11 gap-1.5 border-amber-500/40 text-amber-700 hover:border-amber-500 hover:bg-amber-500/10 hover:text-amber-800 focus-visible:ring-amber-500 sm:min-h-9 dark:text-amber-400"
+            onClick={() => onToggleScope(apiKey)}
+            disabled={toggling || revoking}
+          >
+            {toggling ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Lock className="size-4" aria-hidden="true" />
+            )}
+            <span>{apiKey.scope === 'full' ? 'Về chỉ đọc' : 'Cấp ghi (ALL)'}</span>
+          </Button>
           <Button
             type="button"
             variant="outline"
             className="min-h-11 gap-1.5 border-destructive/30 text-destructive hover:border-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:ring-destructive sm:min-h-9"
             onClick={() => onRevoke(apiKey)}
-            disabled={revoking}
+            disabled={toggling || revoking}
           >
             {revoking ? (
               <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -139,12 +164,14 @@ export const McpApiKeysSection = () => {
   const { data, isLoading, isError, isFetching, refetch } = useMcpApiKeys();
   const createKey = useCreateMCPAPIKey();
   const revokeKey = useRevokeMCPAPIKey();
+  const setScopeMutation = useSetMCPAPIKeyScope();
 
   const [name, setName] = useState('');
   const [scope, setScope] = useState<MCPAPIKeyScope | null>(null);
   const [revealed, setRevealed] = useState<{ key: string; name: string } | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
   const [revokingId, setRevokingId] = useState<number | null>(null);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
   const [copiedSnippet, setCopiedSnippet] = useState<string | null>(null);
 
   const keys = data?.data ?? [];
@@ -192,6 +219,27 @@ export const McpApiKeysSection = () => {
       setTimeout(() => setCopiedSnippet(null), 1800);
     } catch {
       toast.error('Không thể sao chép nội dung');
+    }
+  };
+
+  const handleToggleScope = async (apiKey: MCPAPIKey) => {
+    const toFull = apiKey.scope !== 'full';
+    const confirmed = window.confirm(
+      toFull
+        ? `Chuyển khoá MCP "${apiKey.name}" sang ALL? Khoá sẽ được phép ghi dữ liệu với quyền quản trị của người tạo khoá. Yêu cầu phiên đã xác thực OTP.`
+        : `Chuyển khoá MCP "${apiKey.name}" về chỉ đọc (READ ONLY)? Agent sẽ bị chặn mọi thao tác ghi ở lượt gọi tiếp theo.`,
+    );
+    if (!confirmed) return;
+    setTogglingId(apiKey.id);
+    try {
+      await setScopeMutation.mutateAsync({
+        id: apiKey.id,
+        payload: { scope: toFull ? 'full' : 'read_only' },
+      });
+    } catch {
+      // Failure toast is emitted by the hook (incl. the OTP 403 case).
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -446,7 +494,9 @@ export const McpApiKeysSection = () => {
                   <McpKeyRow
                     key={apiKey.id}
                     apiKey={apiKey}
+                    onToggleScope={handleToggleScope}
                     onRevoke={handleRevoke}
+                    toggling={togglingId === apiKey.id}
                     revoking={revokingId === apiKey.id}
                   />
                 ))}
@@ -639,7 +689,11 @@ export const McpApiKeysSection = () => {
               <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
                 <li>Khoá chỉ hiển thị một lần khi tạo — lưu ở nơi an toàn.</li>
                 <li>Ưu tiên dùng READ ONLY; chỉ dùng ALL khi agent thực sự cần ghi dữ liệu.</li>
-                <li>Có thể thu hồi bất cứ lúc nào; hệ thống ghi nhận lần dùng gần nhất của khoá.</li>
+                <li>
+                  Có thể đổi phạm vi (READ ONLY ↔ ALL) hoặc thu hồi bất cứ lúc nào — thay đổi
+                  áp dụng ngay ở lượt gọi tiếp theo; hệ thống ghi nhận lần đổi phạm vi và lần dùng
+                  gần nhất của khoá.
+                </li>
                 <li>
                   Các khu vực không được phép truy cập qua MCP (đăng nhập, quản trị khoá API, webhook,
                   {' '}/api/v1/vendor) sẽ bị từ chối theo thiết kế.

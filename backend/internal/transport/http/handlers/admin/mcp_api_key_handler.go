@@ -28,15 +28,16 @@ func NewMCPAPIKeyHandler(service *mcpapikey.Service) *MCPAPIKeyHandler {
 // only on the create response.
 func toMCPAPIKeyResponse(key *domain.MCPAPIKey, plaintext string) dto.MCPAPIKeyResponse {
 	return dto.MCPAPIKeyResponse{
-		ID:         key.ID,
-		Name:       key.Name,
-		Scope:      key.Scope,
-		Key:        plaintext,
-		KeyPrefix:  key.KeyPrefix,
-		CreatedBy:  key.CreatedBy,
-		LastUsedAt: key.LastUsedAt,
-		RevokedAt:  key.RevokedAt,
-		CreatedAt:  key.CreatedAt,
+		ID:             key.ID,
+		Name:           key.Name,
+		Scope:          key.Scope,
+		Key:            plaintext,
+		KeyPrefix:      key.KeyPrefix,
+		CreatedBy:      key.CreatedBy,
+		LastUsedAt:     key.LastUsedAt,
+		RevokedAt:      key.RevokedAt,
+		ScopeUpdatedAt: key.ScopeUpdatedAt,
+		CreatedAt:      key.CreatedAt,
 	}
 }
 
@@ -117,4 +118,45 @@ func (h *MCPAPIKeyHandler) Revoke(c *gin.Context) {
 	}
 
 	response.Success(c, nil, constants.MsgAPIKeyRevokedVN)
+}
+
+// SetScope
+// @Summary Toggle an MCP key scope
+// @Description Switch read_only <-> full on the same key (no revoke/recreate). Requires an OTP-verified session (2FA re-entry); the change is audit-logged and applies to the very next call.
+// @Tags admin,mcp-api-keys
+// @Security Bearer
+// @Param id path int true "MCP API key ID"
+// @Param body body dto.SetMCPAPIKeyScopeRequest true "New scope"
+// @Success 200 {object} response.SuccessResponse
+// @Router /admin/mcp-api-keys/{id}/scope [put]
+func (h *MCPAPIKeyHandler) SetScope(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		response.BadRequest(c, constants.MsgInvalidRequestBodyVN)
+		return
+	}
+
+	var req dto.SetMCPAPIKeyScopeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, constants.MsgInvalidRequestBodyVN+": "+err.Error())
+		return
+	}
+
+	actorID, _ := c.Get(constants.CtxUserID)
+	actor, _ := actorID.(uint)
+
+	key, err := h.service.SetScope(c.Request.Context(), uint(id), req.Scope, actor)
+	if err != nil {
+		if domain.IsValidationError(err) {
+			response.BadRequest(c, err.Error())
+			return
+		}
+		if domain.IsNotFoundError(err) {
+			response.NotFound(c, constants.MsgAPIKeyNotFoundVN)
+			return
+		}
+		response.InternalServerError(c, constants.MsgInternalServerErrorVN)
+		return
+	}
+	response.Success(c, toMCPAPIKeyResponse(key, ""), "Đã cập nhật phạm vi khoá MCP")
 }

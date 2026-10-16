@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => {
       created_by: 10,
       last_used_at: null,
       revoked_at: null,
+      scope_updated_at: null,
       created_at: '2026-09-26T13:33:00.000Z',
     },
     {
@@ -25,7 +26,19 @@ const mocks = vi.hoisted(() => {
       created_by: 10,
       last_used_at: '2026-09-27T08:00:00.000Z',
       revoked_at: '2026-09-25T10:00:00.000Z',
+      scope_updated_at: '2026-09-26T09:00:00.000Z',
       created_at: '2026-09-25T10:00:00.000Z',
+    },
+    {
+      id: 3,
+      name: 'Agent ghi liệu',
+      scope: 'full',
+      key_prefix: 'mcp_wri789te',
+      created_by: 10,
+      last_used_at: null,
+      revoked_at: null,
+      scope_updated_at: '2026-09-28T06:30:00.000Z',
+      created_at: '2026-09-24T10:00:00.000Z',
     },
   ];
 
@@ -33,6 +46,7 @@ const mocks = vi.hoisted(() => {
     refetch: vi.fn(),
     createKey: vi.fn(),
     revokeKey: vi.fn(),
+    setScope: vi.fn(),
     initialKeys,
     keys: [...initialKeys],
     isLoading: false,
@@ -63,6 +77,9 @@ vi.mock('@/hooks/api/useMcpApiKeys', () => ({
   }),
   useRevokeMCPAPIKey: () => ({
     mutateAsync: mocks.revokeKey,
+  }),
+  useSetMCPAPIKeyScope: () => ({
+    mutateAsync: mocks.setScope,
   }),
 }));
 
@@ -133,6 +150,7 @@ describe('McpApiKeysSection', () => {
         created_by: 10,
         last_used_at: null,
         revoked_at: null,
+        scope_updated_at: null,
         created_at: new Date().toISOString(),
       },
     });
@@ -171,7 +189,8 @@ describe('McpApiKeysSection', () => {
 
     render(<McpApiKeysSection />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Thu hồi' }));
+    const row = screen.getByText('Agent báo cáo').closest('li');
+    fireEvent.click(within(row as HTMLElement).getByRole('button', { name: 'Thu hồi' }));
 
     expect(window.confirm).toHaveBeenCalledWith(
       'Thu hồi khoá MCP "Agent báo cáo" (READ ONLY)? Agent đang dùng khoá này sẽ mất quyền truy cập ngay.',
@@ -179,6 +198,90 @@ describe('McpApiKeysSection', () => {
     await waitFor(() => {
       expect(mocks.revokeKey).toHaveBeenCalledWith(1);
     });
+  });
+
+  it('renders the scope toggle per key scope and hides it on revoked keys', () => {
+    render(<McpApiKeysSection />);
+
+    const readOnlyRow = screen.getByText('Agent báo cáo').closest('li');
+    expect(readOnlyRow).not.toBeNull();
+    expect(within(readOnlyRow as HTMLElement).getByRole('button', { name: /Cấp ghi \(ALL\)/ })).toBeInTheDocument();
+    // READ ONLY keys never offer "Về chỉ đọc" — they are already there.
+    expect(within(readOnlyRow as HTMLElement).queryByRole('button', { name: /Về chỉ đọc/ })).not.toBeInTheDocument();
+
+    const fullRow = screen.getByText('Agent ghi liệu').closest('li');
+    expect(fullRow).not.toBeNull();
+    expect(within(fullRow as HTMLElement).getByRole('button', { name: /Về chỉ đọc/ })).toBeInTheDocument();
+    expect(within(fullRow as HTMLElement).queryByRole('button', { name: /Cấp ghi/ })).not.toBeInTheDocument();
+
+    // Revoked keys show neither the toggle nor the revoke button.
+    const revokedRow = screen.getByText('Agent đối soát').closest('li');
+    expect(revokedRow).not.toBeNull();
+    expect(within(revokedRow as HTMLElement).queryByRole('button', { name: /Cấp ghi/ })).not.toBeInTheDocument();
+    expect(within(revokedRow as HTMLElement).queryByRole('button', { name: /Thu hồi/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the last scope change time when the API returns it', () => {
+    render(<McpApiKeysSection />);
+
+    // Keys 2 and 3 carry scope_updated_at; key 1 (never toggled) does not.
+    // The rendered time uses the local timezone, so match the shape, not a
+    // fixed clock reading.
+    const fullRow = screen.getByText('Agent ghi liệu').closest('li');
+    expect(
+      within(fullRow as HTMLElement).getAllByText(/Đổi phạm vi lần cuối \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/)
+        .length,
+    ).toBe(1);
+    const neverToggledRow = screen.getByText('Agent báo cáo').closest('li');
+    expect(
+      within(neverToggledRow as HTMLElement).queryByText(/Đổi phạm vi lần cuối/),
+    ).not.toBeInTheDocument();
+  });
+
+  it('toggles a read_only key to full after confirmation', async () => {
+    mocks.setScope.mockResolvedValueOnce({ data: mocks.keys[0] });
+
+    render(<McpApiKeysSection />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Cấp ghi \(ALL\)/ }));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Chuyển khoá MCP "Agent báo cáo" sang ALL? Khoá sẽ được phép ghi dữ liệu với quyền quản trị của người tạo khoá. Yêu cầu phiên đã xác thực OTP.',
+    );
+    await waitFor(() => {
+      expect(mocks.setScope).toHaveBeenCalledWith({
+        id: 1,
+        payload: { scope: 'full' },
+      });
+    });
+  });
+
+  it('toggles a full key back to read_only after confirmation', async () => {
+    mocks.setScope.mockResolvedValueOnce({ data: mocks.keys[2] });
+
+    render(<McpApiKeysSection />);
+
+    const row = screen.getByText('Agent ghi liệu').closest('li');
+    fireEvent.click(within(row as HTMLElement).getByRole('button', { name: /Về chỉ đọc/ }));
+
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Chuyển khoá MCP "Agent ghi liệu" về chỉ đọc (READ ONLY)? Agent sẽ bị chặn mọi thao tác ghi ở lượt gọi tiếp theo.',
+    );
+    await waitFor(() => {
+      expect(mocks.setScope).toHaveBeenCalledWith({
+        id: 3,
+        payload: { scope: 'read_only' },
+      });
+    });
+  });
+
+  it('does not toggle when the admin cancels the confirmation', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    render(<McpApiKeysSection />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Cấp ghi \(ALL\)/ }));
+
+    expect(mocks.setScope).not.toHaveBeenCalled();
   });
 
   it('copies guide snippets to clipboard', async () => {

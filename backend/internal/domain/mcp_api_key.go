@@ -42,8 +42,11 @@ type MCPAPIKey struct {
 	CreatedBy  uint           `json:"created_by" gorm:"type:bigint unsigned;not null"`
 	LastUsedAt *time.Time     `json:"last_used_at" gorm:"type:datetime(3)"`
 	RevokedAt  *time.Time     `json:"revoked_at" gorm:"type:datetime(3);index:idx_mcp_api_keys_revoked_at"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
+	// ScopeUpdatedAt records the last admin scope toggle (read_only <->
+	// full). NULL means the key still carries its creation-time scope.
+	ScopeUpdatedAt *time.Time `json:"scope_updated_at" gorm:"type:datetime(3)"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 func (MCPAPIKey) TableName() string { return "mcp_api_keys" }
@@ -72,7 +75,12 @@ func (k *MCPAPIKey) ValidateName() error {
 type MCPAPIKeyRepository interface {
 	Create(ctx context.Context, key *MCPAPIKey) error
 	GetByHash(ctx context.Context, keyHash string) (*MCPAPIKey, error)
+	GetByID(ctx context.Context, id uint) (*MCPAPIKey, error)
 	List(ctx context.Context) ([]*MCPAPIKey, error)
 	Revoke(ctx context.Context, id uint, revokedAt time.Time) error
 	UpdateLastUsedAt(ctx context.Context, id uint, at time.Time) error
+	// UpdateScope persists an admin scope toggle (read_only <-> full) on a
+	// live key together with the change timestamp. A revoked key affects
+	// zero rows and is reported as not-found.
+	UpdateScope(ctx context.Context, id uint, scope MCPAPIKeyScope, updatedAt time.Time) error
 }

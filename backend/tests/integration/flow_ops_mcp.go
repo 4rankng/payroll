@@ -53,13 +53,13 @@ func createOpsKey(admin *APIClient, name string, scope string) (*opsKeyCreateRes
 
 // auditCount polls the audit pipeline (asynq is async) until the expected
 // minimum row count shows up, then returns it.
-func auditCount(action string, entityID uint, min int64) (int64, error) {
+func auditCount(entityType, action string, entityID uint, min int64) (int64, error) {
 	deadline := time.Now().Add(8 * time.Second)
 	var last int64
 	for {
 		raw, err := queryPayrollScalar(fmt.Sprintf(
-			"SELECT COUNT(*) FROM audit_logs WHERE action='%s' AND entity_type='ops_api_key' AND entity_id=%d",
-			action, entityID))
+			"SELECT COUNT(*) FROM audit_logs WHERE action='%s' AND entity_type='%s' AND entity_id=%d",
+			action, entityType, entityID))
 		if err != nil {
 			return 0, fmt.Errorf("count audit rows: %w", err)
 		}
@@ -259,7 +259,7 @@ func runOpsMCPTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 	reporter.RunTest(flowOpsMCP, "every authenticated call writes an OPS_MCP_CALL audit row", func() error {
 		// Two successful GETs from the agent client happened in steps 2-3;
 		// audit is async, so poll for at least two rows for this key.
-		count, err := auditCount("OPS_MCP_CALL", key.ID, 2)
+		count, err := auditCount("ops_api_key", "OPS_MCP_CALL", key.ID, 2)
 		if err != nil {
 			return err
 		}
@@ -278,7 +278,7 @@ func runOpsMCPTests(client *APIClient, data *TestData, reporter *Reporter, cfg *
 
 	// ── 11. Scope-toggle auditing ─────────────────────────────────────────
 	reporter.RunTest(flowOpsMCP, "scope toggles are audit-logged", func() error {
-		if _, err := auditCount("OPS_KEY_SCOPE_CHANGED", key.ID, 2); err != nil {
+		if _, err := auditCount("ops_api_key", "OPS_KEY_SCOPE_CHANGED", key.ID, 2); err != nil {
 			return err
 		}
 		return nil
