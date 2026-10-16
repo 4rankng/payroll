@@ -12,6 +12,7 @@ import type { ModalConfig } from "@/types/modal-config.types";
 import { ProjectStatus } from "@/components/projects/ProjectStatusBadge";
 import { getVietnameseProjectStatus } from "@/utils/vietnamese";
 import { OffDaysPicker } from "@/components/projects/OffDaysPicker";
+import { SalaryPeriodFields } from "@/components/projects/SalaryPeriodFields";
 import { authManager } from "@/lib/auth";
 
 interface ProjectEditSheetProps {
@@ -288,34 +289,14 @@ function ProjectEditSheet({
         {/* Row 2: left = salary+offdays, right = description — stacks on mobile */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-3">
-            {/* Salary period */}
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Kỳ lương tháng</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-0.5">
-                  <Input
-                    type="number" min={0} max={31}
-                    value={formData.salary_period_from ?? ''}
-                    onChange={(e) => handleInputChange('salary_period_from', e.target.value === '' ? null : Number(e.target.value))}
-                    className="h-11 text-sm"
-                    placeholder="Từ ngày"
-                    disabled={!isAdmin}
-                  />
-                  <p className="text-xs text-muted-foreground">Tháng trước (0 = ngày 01)</p>
-                </div>
-                <div className="space-y-0.5">
-                  <Input
-                    type="number" min={0} max={31}
-                    value={formData.salary_period_to ?? ''}
-                    onChange={(e) => handleInputChange('salary_period_to', e.target.value === '' ? null : Number(e.target.value))}
-                    className="h-11 text-sm"
-                    placeholder="Đến ngày"
-                    disabled={!isAdmin}
-                  />
-                  <p className="text-xs text-muted-foreground">Tháng này (0 = cuối tháng)</p>
-                </div>
-              </div>
-            </div>
+            {/* Salary period — shared component; admins edit, partners read */}
+            <SalaryPeriodFields
+              salaryPeriodFrom={formData.salary_period_from}
+              salaryPeriodTo={formData.salary_period_to}
+              onSalaryPeriodFromChange={(value) => handleInputChange('salary_period_from', value)}
+              onSalaryPeriodToChange={(value) => handleInputChange('salary_period_to', value)}
+              disabled={!isAdmin}
+            />
 
             {/* Off days */}
             <div className="space-y-1">
