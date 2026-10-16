@@ -27,8 +27,11 @@ func validateSalaryPeriodDay(field string, value *int) error {
 	if value == nil {
 		return nil
 	}
-	if *value < 0 || *value > 28 {
-		return fmt.Errorf("%s phải nằm trong khoảng 0-28", field)
+	// 0 = default boundary (1st / last day); 1-31 are literal day numbers. A day
+	// missing in a short month (e.g. Feb 29) is resolved by rolling forward when
+	// the window is computed, so it must be accepted here.
+	if *value < 0 || *value > 31 {
+		return fmt.Errorf("%s phải nằm trong khoảng 0-31", field)
 	}
 	return nil
 }

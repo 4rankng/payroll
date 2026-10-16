@@ -40,6 +40,10 @@ export function SalaryPeriodFields({
     }
   };
 
+  // Mirrors window resolution: a missing end day clamps to month end ("cuối
+  // tháng") — rolling it forward would show a date belonging to the next cycle.
+  const daysInThisMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+
   // Use only the compact variant with enhanced examples
   return (
     <div className="space-y-3">
@@ -68,7 +72,7 @@ export function SalaryPeriodFields({
             placeholder="0 = đầu tháng"
             disabled={disabled}
           />
-          {salaryPeriodFrom !== null && salaryPeriodFrom >= 0 && salaryPeriodFrom <= 28 ? (
+          {salaryPeriodFrom !== null && salaryPeriodFrom >= 0 && salaryPeriodFrom <= 31 ? (
             <p className="text-xs text-muted-foreground">
               {salaryPeriodFrom === 0
                 ? `Ngày đầu tháng này, ví dụ: ${format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'dd/MM/yyyy')}`
@@ -95,11 +99,11 @@ export function SalaryPeriodFields({
             placeholder="0 = cuối tháng"
             disabled={disabled}
           />
-          {salaryPeriodTo !== null && salaryPeriodTo >= 0 && salaryPeriodTo <= 28 ? (
+          {salaryPeriodTo !== null && salaryPeriodTo >= 0 && salaryPeriodTo <= 31 ? (
             <p className="text-xs text-muted-foreground">
               {salaryPeriodTo === 0
                 ? `Ngày cuối tháng này, ví dụ: ${format(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0), 'dd/MM/yyyy')}`
-                : `Ngày tháng này, ví dụ: ${format(new Date(new Date().getFullYear(), new Date().getMonth(), salaryPeriodTo), 'dd/MM/yyyy')}`
+                : `Ngày tháng này, ví dụ: ${format(new Date(new Date().getFullYear(), new Date().getMonth(), Math.min(salaryPeriodTo, daysInThisMonth)), 'dd/MM/yyyy')}`
               }
             </p>
           ) : (

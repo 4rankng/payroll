@@ -859,6 +859,54 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		return AssertEqual("salary_period_to", 25, resp.SalaryPeriodTo)
 	})
 
+	reporter.RunTest(flowProject, "Salary period accepts month-end days 29-31", func() error {
+		if salaryTestProjectID == 0 {
+			return fmt.Errorf("no salary test project")
+		}
+		// The reported case: a cycle starting on the 29th of the previous month.
+		spFrom := 29
+		spTo := 28
+		var resp ProjectResponse
+		if _, err := admin.PutInto(fmt.Sprintf("/api/v1/projects/%d", salaryTestProjectID), UpdateProjectRequest{
+			SalaryPeriodFrom: &spFrom,
+			SalaryPeriodTo:   &spTo,
+		}, &resp); err != nil {
+			return fmt.Errorf("update salary period to 29-28: %w", err)
+		}
+		if err := AssertEqual("salary_period_from", 29, resp.SalaryPeriodFrom); err != nil {
+			return err
+		}
+		if err := AssertEqual("salary_period_to", 28, resp.SalaryPeriodTo); err != nil {
+			return err
+		}
+
+		spFrom, spTo = 31, 31
+		if _, err := admin.PutInto(fmt.Sprintf("/api/v1/projects/%d", salaryTestProjectID), UpdateProjectRequest{
+			SalaryPeriodFrom: &spFrom,
+			SalaryPeriodTo:   &spTo,
+		}, &resp); err != nil {
+			return fmt.Errorf("update salary period to 31-31: %w", err)
+		}
+		if err := AssertEqual("salary_period_from", 31, resp.SalaryPeriodFrom); err != nil {
+			return err
+		}
+		return AssertEqual("salary_period_to", 31, resp.SalaryPeriodTo)
+	})
+
+	reporter.RunTest(flowProject, "Salary period rejects days above 31", func() error {
+		if salaryTestProjectID == 0 {
+			return fmt.Errorf("no salary test project")
+		}
+		spFrom := 32
+		_, statusCode, _ := admin.Put(fmt.Sprintf("/api/v1/projects/%d", salaryTestProjectID), UpdateProjectRequest{
+			SalaryPeriodFrom: &spFrom,
+		})
+		if err := AssertEqual("status", 400, statusCode); err != nil {
+			return fmt.Errorf("day 32 must be rejected, got HTTP %d", statusCode)
+		}
+		return nil
+	})
+
 	// --- Partner Salary Period Update Guard (must be after salaryTestProjectID setup) ---
 
 	if len(data.Partners) > 0 {
@@ -895,7 +943,7 @@ func runProjectCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		origTo := current.SalaryPeriodTo
 
 		newFrom := origFrom + 1
-		if newFrom > 28 {
+		if newFrom > 31 {
 			newFrom = 0
 		}
 

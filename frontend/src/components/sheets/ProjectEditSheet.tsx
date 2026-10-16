@@ -294,7 +294,7 @@ function ProjectEditSheet({
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-0.5">
                   <Input
-                    type="number" min={0} max={28}
+                    type="number" min={0} max={31}
                     value={formData.salary_period_from ?? ''}
                     onChange={(e) => handleInputChange('salary_period_from', e.target.value === '' ? null : Number(e.target.value))}
                     className="h-11 text-sm"
@@ -305,7 +305,7 @@ function ProjectEditSheet({
                 </div>
                 <div className="space-y-0.5">
                   <Input
-                    type="number" min={0} max={28}
+                    type="number" min={0} max={31}
                     value={formData.salary_period_to ?? ''}
                     onChange={(e) => handleInputChange('salary_period_to', e.target.value === '' ? null : Number(e.target.value))}
                     className="h-11 text-sm"

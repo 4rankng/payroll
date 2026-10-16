@@ -44,8 +44,8 @@ type Project struct {
 	Name             string `json:"name" gorm:"type:varchar(255);not null;comment:'e.g. San xuat xa phong'"`
 	Code             string `json:"code" gorm:"type:varchar(255);uniqueIndex;comment:'Initials of client_name and YYMM of created_at date or manually input by users'"`
 	Description      string `json:"description" gorm:"type:text;comment:'Rich text format supported'"`
-	SalaryPeriodFrom int    `json:"salary_period_from,omitempty" gorm:"column:salary_period_from;type:int;comment:'Day of previous month payroll period starts (0 or NULL = 1st)'"`                               // 0-28
-	SalaryPeriodTo   int    `json:"salary_period_to,omitempty" gorm:"column:salary_period_to;type:int;comment:'Day of current month payroll period ends (0 or NULL = last day)'"`                                 // 0-28
+	SalaryPeriodFrom int    `json:"salary_period_from,omitempty" gorm:"column:salary_period_from;type:int;comment:'Day of previous month payroll period starts (0 or NULL = 1st)'"`                               // 0-31, day missing in a short month rolls forward
+	SalaryPeriodTo   int    `json:"salary_period_to,omitempty" gorm:"column:salary_period_to;type:int;comment:'Day of current month payroll period ends (0 or NULL = last day)'"`                                 // 0-31, day past month length clamps to month end
 	OffDays          int    `json:"off_days" gorm:"column:off_days;type:tinyint unsigned;not null;default:0;comment:'Bitmask of weekly off days: bit0=Sun,bit1=Mon,...,bit6=Sat. Default 0 = no fixed off days'"` // bitmask
 
 	// Denormalised financial totals, scoped to this project's non-deleted timesheets.

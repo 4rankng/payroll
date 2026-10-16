@@ -89,18 +89,23 @@ func (pc *PeriodCalculator) GetProjectPeriod(ctx context.Context, projectID uint
 	return period, nil
 }
 
-// computeMonthlyStart calculates the start date for a monthly period
+// computeMonthlyStart calculates the start date for a monthly period.
+// A day missing in the previous month rolls FORWARD to the next existing day
+// (Feb 29 in a non-leap year -> Mar 1), keeping windows contiguous with the
+// previous cycle that ended on the month's last day. Mirrors
+// utils.CalculateDateRange, which resolves days via time.Date normalization.
 func computeMonthlyStart(monthStart time.Time, day int) time.Time {
 	if day == 0 {
 		return monthStart
 	}
 	prevMonth := monthStart.AddDate(0, -1, 0)
-	maxDay := daysInMonth(prevMonth)
-	clamped := clampDay(day, maxDay)
-	return time.Date(prevMonth.Year(), prevMonth.Month(), clamped, 0, 0, 0, 0, time.UTC)
+	return time.Date(prevMonth.Year(), prevMonth.Month(), day, 0, 0, 0, 0, time.UTC)
 }
 
-// computeMonthlyEnd calculates the end date for a monthly period
+// computeMonthlyEnd calculates the end date for a monthly period. A day past
+// the month's length clamps to the last day of that month ("cuối tháng" — the
+// same meaning as the 0 sentinel): rolling forward here would drag the period
+// into the next cycle's days and double-count them.
 func computeMonthlyEnd(monthStart time.Time, day int) time.Time {
 	if day == 0 {
 		return endOfMonth(monthStart)

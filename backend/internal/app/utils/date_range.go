@@ -34,8 +34,16 @@ func CalculateDateRange(atDate time.Time, salaryPeriodFrom int, salaryPeriodTo i
 	var toDate time.Time
 	if salaryPeriodTo > 0 {
 		// Custom cycle (e.g. end on the 21st).
-		// The end date is in the Anchor Month.
-		toDate = time.Date(anchorDate.Year(), anchorDate.Month(), salaryPeriodTo, 0, 0, 0, 0, atDate.Location())
+		// The end date is in the Anchor Month. A day past the month's length
+		// clamps to that month's last day ("cuối tháng" — the 0 sentinel's
+		// meaning): rolling it forward would pull days belonging to the next
+		// cycle into this one.
+		maxDay := time.Date(anchorDate.Year(), anchorDate.Month()+1, 0, 0, 0, 0, 0, atDate.Location()).Day()
+		endDay := salaryPeriodTo
+		if endDay > maxDay {
+			endDay = maxDay
+		}
+		toDate = time.Date(anchorDate.Year(), anchorDate.Month(), endDay, 0, 0, 0, 0, atDate.Location())
 	} else {
 		// Standard cycle (End of month).
 		// The end date is the last day of the Anchor Month.
