@@ -118,7 +118,9 @@ type APIMetricRepository interface {
 	// DeleteOldRecords deletes records older than the specified number of days
 	DeleteOldRecords(ctx context.Context, days int) (int64, error)
 
-	// GetHighErrorRateEndpoints returns endpoints with error rate > threshold in the last duration
+	// GetHighErrorRateEndpoints returns endpoints with error rate > threshold in the last duration.
+	// Protocol-correct 405s on the stateless MCP transport (GET/HEAD/DELETE
+	// on /api/v1/mcp) are excluded — they are expected probe traffic, not errors.
 	GetHighErrorRateEndpoints(ctx context.Context, since time.Time, threshold float64) ([]HighErrorRateEndpoint, error)
 
 	// GetErrorBreakdownByUser returns errors grouped by user_id + endpoint + status_code

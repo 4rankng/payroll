@@ -37,7 +37,7 @@ Global sweep: those 28 were the **only** ≥500 responses on any endpoint in the
 | Fix | Type | Status |
 |---|---|---|
 | Sort-column allowlist (`SanitizeSortColumnAgainst`) in users list + disable sorting on the computed frontend column | Code | **Done** on `fix/users-sort-computed-field-500` (`13cc22ef`), pushed, **not merged** — awaiting gate/merge approval |
-| Exclude `/api/v1/mcp` GET/HEAD 405 from error-rate alerting (or stop the client's GET/HEAD probes / health-check via POST) | Monitoring | Proposed only |
+| Exclude `/api/v1/mcp` GET/HEAD 405 from error-rate alerting | Monitoring | **Done** — `GetHighErrorRateEndpoints` excludes protocol-correct 405s on the MCP mount (GET/HEAD/DELETE) from the error rate; real failures there still count. Client-side probe change (health-check via POST) remains optional |
 | Key-rotation runbook: install new MCP key into the client together with minting (the 13/10 gap was 15 min; 12–13/10 was ~20 h) | Ops | Proposed only |
 | Observability gaps: audit-log MCP-key create/revoke (currently unaudited — timeline had to be inferred); consider logging failed-key prefix on /mcp 401; `MCPKeyAuthMiddleware` doesn't stamp `last_used_at` | Code/ops | Proposed only |
 

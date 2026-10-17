@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,6 +16,15 @@ import (
 
 	"gorm.io/gorm"
 )
+
+// mcpAgentPath is the mount of the stateless MCP agent transport
+// (Streamable HTTP with Stateless: true). In stateless mode the MCP SDK
+// refuses GET/HEAD/DELETE with 405 Method Not Allowed by design — there is
+// no server-initiated stream or session to address — so client liveness
+// probes on this path are protocol-correct, not endpoint failures. Counting
+// them as errors pins the daily high-error-rate alert at 100% on a healthy
+// surface (docs/incident-2026-10-14-payroll-errors.md).
+const mcpAgentPath = "/api/v1/mcp"
 
 type APIMetricRepository struct {
 	*BaseRepository
@@ -414,6 +424,11 @@ func (r *APIMetricRepository) GetHighErrorRateEndpoints(ctx context.Context, sin
 
 	// Query to calculate error rate for each endpoint
 	// Exclude login endpoint (path contains 'login')
+	// Exclude the stateless MCP transport's protocol-correct 405s
+	// (see mcpAgentPath): they are expected probe traffic, so they are left
+	// out of both the numerator and the denominator — a day of pure GET/HEAD
+	// probes yields no row at all instead of a false 100% alert, while real
+	// failures on the same mount (401 storms, 500s) still count in full.
 	// Only consider endpoints with total_count >= 50
 	query := r.DB.WithContext(ctx).
 		Table("api_metrics am").
@@ -427,6 +442,8 @@ func (r *APIMetricRepository) GetHighErrorRateEndpoints(ctx context.Context, sin
 		`).
 		Where("am.called_at >= ?", since).
 		Where("ae.path NOT LIKE ?", "%login%").
+		Where("NOT (am.status_code = ? AND ae.path = ? AND ae.method IN ('GET', 'HEAD', 'DELETE'))",
+			http.StatusMethodNotAllowed, mcpAgentPath).
 		Group("ae.id, ae.method, ae.path").
 		Having("total_count >= 50 AND error_rate > ?", threshold).
 		Order("error_rate DESC")
