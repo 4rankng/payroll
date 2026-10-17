@@ -6,9 +6,12 @@ const (
 	ErrCodeAssignmentReplaced   = "ASSIGNMENT_REPLACED"
 	ErrCodeAssignmentTerminated = "ASSIGNMENT_TERMINATED"
 	ErrCodeTimesheetExists      = "TIMESHEET_EXISTS"
-	ErrCodeInvalidDateRange     = "INVALID_DATE_RANGE"
-	ErrCodeInvalidTransition    = "INVALID_TRANSITION"
-	ErrCodeConflictResolution   = "CONFLICT_RESOLUTION_FAILED"
+	// ErrCodeMultipleProjectsInCycle refuses a transfer batch that would pay one
+	// employee for two projects in the same cycle (two rows, same bank account).
+	ErrCodeMultipleProjectsInCycle = "MULTIPLE_PROJECTS_IN_CYCLE"
+	ErrCodeInvalidDateRange        = "INVALID_DATE_RANGE"
+	ErrCodeInvalidTransition       = "INVALID_TRANSITION"
+	ErrCodeConflictResolution      = "CONFLICT_RESOLUTION_FAILED"
 )
 
 // NewValidationErrorWithCode creates a validation error with an error code

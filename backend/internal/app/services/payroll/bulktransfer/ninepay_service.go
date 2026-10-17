@@ -210,6 +210,12 @@ func (s *NinePayBulkTransferService) InitiateBulkTransfer(ctx context.Context, r
 	}
 	validData := validationResult.ValidData
 
+	// Same invariant as the manual Chuyển lô export: one employee, one project
+	// per cycle. An auto bulk transfer would otherwise pay the same account twice.
+	if err := excel.ValidateOneProjectPerCycle(validData); err != nil {
+		return nil, err
+	}
+
 	// Resolve active provider name for batch ID prefix and source tag
 	providerName := "auto"
 	if s.providerResolver != nil {
@@ -448,6 +454,11 @@ func (s *NinePayBulkTransferService) EstimateFee(ctx context.Context, req *dto.E
 	validationResult := s.exportService.excelService.ValidateAndFilterBulkTransferData(aggregatedData)
 	if validationResult == nil || validationResult.ValidData == nil || len(validationResult.ValidData.EmployeeProjectAmounts) == 0 {
 		return &dto.EstimateFeeResponse{TotalFee: 0, TransferCount: 0, FeePerTransfer: 0}, nil
+	}
+	// Fee estimate must refuse the same pool the initiate path refuses, or the
+	// admin reads a fee for a transfer that cannot be sent.
+	if err := excel.ValidateOneProjectPerCycle(validationResult.ValidData); err != nil {
+		return nil, err
 	}
 	transferCount := len(validationResult.ValidData.EmployeeProjectAmounts)
 

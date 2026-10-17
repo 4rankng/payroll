@@ -222,6 +222,13 @@ func (p *ExportPlanner) selectAndAggregate(
 	// Validate and filter the data before saving
 	validationResult := p.excelService.ValidateAndFilterBulkTransferData(aggregatedData)
 
+	// One employee may only be payrolled for one project per cycle: two keys for
+	// the same person would put the same bank account in the file twice, and the
+	// bank pays both rows.
+	if err := excel.ValidateOneProjectPerCycle(validationResult.ValidData); err != nil {
+		return nil, nil, nil, nil, 0, err
+	}
+
 	paymentPercentage := p.excelService.GetPaymentPercentageForSchedule(ctx, cycle)
 	return aggregatedData, validationResult, filteredTimesheets, buildForecastOutcomeItems(req, isMonthly, filteredTimesheets, validationResult, paymentPercentage), paymentPercentage, nil
 }
