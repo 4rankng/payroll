@@ -44,11 +44,10 @@ describe.each(['admin', 'partner'] as const)('%s grouped timesheet table', (user
     expect(screen.getAllByRole('row')).toHaveLength(collapsedRowCount);
   });
 
-  // Regression guard: the table card lost its surface and every row sat directly
-  // on the tinted page canvas — borders and pale chips only, i.e. a wireframe
-  // (partner + admin "Bảng công", Oct 2026). The rows must sit on a card
-  // surface, and the header row on the secondary surface.
-  it('paints the rows on a card surface with a secondary header band', () => {
+  // Regression guard: the table card must not be painted on the tinted page
+  // canvas (read as a bare wireframe) nor on a glaring white surface. It sits
+  // on the muted gray surface with a deeper header band.
+  it('paints the rows on a muted surface with a deeper header band', () => {
     render(
       <MemoryRouter>
         <TimesheetGroupedTable
@@ -63,14 +62,15 @@ describe.each(['admin', 'partner'] as const)('%s grouped timesheet table', (user
 
     const table = screen.getByRole('table');
     const card = table.parentElement?.parentElement as HTMLElement;
-    expect(card.className).toContain('bg-card');
-    expect((table.querySelector('thead tr') as HTMLElement).className).toContain('bg-utility-gray-50');
+    expect(card.className).toContain('bg-utility-gray-100');
+    expect(card.className).not.toContain('bg-card');
+    expect((table.querySelector('thead tr') as HTMLElement).className).toContain('bg-utility-gray-200');
   });
 
   // Regression guard: the expanded entry rows used to be white like the
-  // aggregate row, so a group and its entries read as one flat block. The
-  // entries must sit on a dimmer surface than the aggregate row.
-  it('sinks the expanded entry rows below the white aggregate row', () => {
+  // aggregate row, so a group and its entries read as one flat, bright block.
+  // The entries must sit on a deeper surface than the aggregate row.
+  it('sinks the expanded entry rows below the aggregate row surface', () => {
     const groupKey = groupTimesheetsByEmployee([timesheet])[0].groupKey;
     render(
       <MemoryRouter>

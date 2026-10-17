@@ -69,14 +69,14 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
 
   if (grouped.length === 0) {
     return (
-      <div className="rounded-2xl border border-border/60 bg-card p-20 text-center">
+      <div className="rounded-2xl border border-border/60 bg-utility-gray-100 p-20 text-center">
         <EmptyState icon={Clock} title="Không có dữ liệu bảng công" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+    <div className="rounded-xl border border-border/50 bg-utility-gray-100 overflow-hidden">
       {/* Scroll only when the desktop workspace is genuinely too narrow. */}
       <div className="overflow-x-auto">
         <Table className="table-fixed min-w-[860px]">
@@ -91,7 +91,7 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
             <col style={{ width: "36px" }} />
           </colgroup>
           <TableHeader>
-            <TableRow className="bg-utility-gray-50 hover:bg-utility-gray-50 border-b border-utility-gray-200">
+            <TableRow className="bg-utility-gray-200 hover:bg-utility-gray-200 border-b border-utility-gray-300">
               <TableHead className="p-0"><span className="sr-only">Trạng thái</span></TableHead>
               <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 {userRole === "partner" ? "Nhân viên · Ngày" : "Nhân viên"}
@@ -163,7 +163,7 @@ const GroupRow = memo(function GroupRow({
           <TableRow
             onClick={onToggle}
             className={cn(
-              "group cursor-pointer transition-colors hover:bg-utility-gray-50",
+              "group cursor-pointer transition-colors hover:bg-utility-gray-200/60",
               idx !== 0 && "border-t border-utility-gray-200",
             )}
           >
@@ -196,7 +196,7 @@ const GroupRow = memo(function GroupRow({
               {userRole === "partner" ? (
                 <PartnerGroupColumn group={group} />
               ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 h-6 rounded-full bg-muted text-xs font-semibold text-muted-foreground tabular-nums">
+                <span className="inline-flex items-center gap-1 px-2.5 h-6 rounded-full bg-utility-gray-100 text-xs font-semibold text-muted-foreground tabular-nums">
                   {group.entries.length} ca
                 </span>
               )}
@@ -207,7 +207,7 @@ const GroupRow = memo(function GroupRow({
             </TableCell>
             {/* [4] total hours */}
             <TableCell className="border-l border-border/30 px-3 py-2.5 text-right">
-              <span className="inline-flex h-7 min-w-14 items-center justify-end rounded-md bg-utility-gray-100 px-2 typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
+              <span className="typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
                 {formatTimesheetHours(group.totalHours)}h
               </span>
             </TableCell>
@@ -221,7 +221,7 @@ const GroupRow = memo(function GroupRow({
             </TableCell>
             {/* [6] total amount */}
             <TableCell className="px-3 py-2.5 text-right">
-              <span className="inline-flex h-7 items-center justify-end rounded-md bg-emerald-50 px-2 typography-body-medium font-bold text-emerald-800 tabular-nums whitespace-nowrap">
+              <span className="typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
                 {group.totalAmount.toLocaleString("vi-VN")}
                 <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
               </span>
@@ -410,9 +410,9 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
     <TableRow
       onClick={onClick}
       className={cn(
-        "cursor-pointer transition-colors hover:bg-utility-gray-200/60",
-        entryIdx % 2 === 0 ? "bg-utility-gray-50" : "bg-utility-gray-100",
-        entryIdx === 0 && !startsAfterProjectHeader ? "border-t border-dashed border-border/50" : "border-t border-border/20",
+        "cursor-pointer transition-colors hover:bg-utility-gray-200",
+        "bg-utility-gray-200/60",
+        entryIdx === 0 && !startsAfterProjectHeader ? "border-t border-utility-gray-300" : "border-t border-utility-gray-300/60",
       )}
     >
       <TableCell className="p-0 relative">
@@ -422,7 +422,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
         <div className="flex min-h-9 items-center gap-2">
           {showDate ? (
             <div className="flex items-center gap-2">
-              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded-md bg-slate-100 px-1.5 text-xs font-bold uppercase text-slate-600">
+              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded-md bg-utility-gray-50 px-1.5 text-xs font-bold uppercase text-slate-600 ring-1 ring-inset ring-utility-gray-300">
                 {format(entryDate, "EEE", { locale: vi }).replace("Th ", "T")}
               </span>
               <p className="text-xs font-bold tabular-nums text-foreground">{format(entryDate, "dd/MM/yyyy")}</p>
@@ -441,10 +441,10 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
           className={cn(
             "inline-flex h-7 items-center rounded-md px-2.5 text-xs font-semibold capitalize ring-1 ring-inset",
             normalizedDayType.includes("lễ")
-              ? "bg-rose-50 text-rose-800 ring-rose-200"
+              ? "bg-utility-gray-50 text-rose-700 ring-rose-200"
               : normalizedDayType.includes("nghỉ")
-                ? "bg-teal-50 text-teal-800 ring-teal-200"
-                : "bg-slate-50 text-slate-700 ring-slate-200",
+                ? "bg-utility-gray-50 text-teal-700 ring-teal-200"
+                : "bg-utility-gray-50 text-slate-700 ring-utility-gray-300",
           )}
         >
           {dayTypeLabel}
@@ -455,10 +455,10 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
           className={cn(
             "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold capitalize",
             isOvertime
-              ? "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200"
+              ? "bg-utility-gray-50 text-amber-700 ring-1 ring-inset ring-amber-200"
               : isNightShift
-                ? "bg-teal-50 text-teal-800 ring-1 ring-inset ring-teal-200"
-                : "bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-200",
+                ? "bg-utility-gray-50 text-teal-700 ring-1 ring-inset ring-teal-200"
+                : "bg-utility-gray-50 text-sky-700 ring-1 ring-inset ring-sky-200",
           )}
         >
           {isOvertime ? (
@@ -474,8 +474,8 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
       <TableCell className="border-l border-border/30 py-2 px-3 text-right">
         <span
           className={cn(
-            "inline-flex h-7 min-w-12 items-center justify-end rounded-md px-2 text-xs font-bold tabular-nums",
-            isShortShift ? "bg-amber-50 text-amber-800" : "bg-emerald-50 text-emerald-800",
+            "text-xs font-bold tabular-nums",
+            isShortShift ? "text-amber-700" : "text-foreground",
           )}
         >
           {formatTimesheetHours(hoursWorked)}h
@@ -483,7 +483,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
       </TableCell>
       <TableCell className="py-2 px-3 text-right">
         <p className={cn(
-          "inline-flex h-7 items-center justify-end rounded-md bg-card px-2 text-xs tabular-nums",
+          "text-xs tabular-nums",
           (!entry.payrate || entry.payrate === 0) ? "text-red-700 font-semibold" : "font-medium text-muted-foreground",
         )}>
           {(!entry.payrate || entry.payrate === 0) && userRole === "partner" ? (
@@ -501,7 +501,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
       </TableCell>
       <TableCell className="py-2 px-3 text-right">
         <div className="flex items-center justify-end gap-1">
-          <span className="inline-flex h-7 items-center justify-end rounded-md bg-emerald-50 px-2 text-xs font-bold text-emerald-800 tabular-nums">
+          <span className="text-xs font-bold text-foreground tabular-nums">
             {(entry.amount || 0).toLocaleString("vi-VN")}
             <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
           </span>
