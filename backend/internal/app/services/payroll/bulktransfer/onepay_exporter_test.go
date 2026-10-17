@@ -299,24 +299,6 @@ func TestBuildRowsWithSwift_PaymentDetailIsBareVFIC(t *testing.T) {
 	}
 }
 
-// TestCycleLabelVN covers the Vietnamese cycle label used in the empty-pool
-// EMPTY_RESULT message.
-func TestCycleLabelVN(t *testing.T) {
-	tests := []struct {
-		in, want string
-	}{
-		{string(domain.PaymentScheduleWeekly), "tuần"},
-		{string(domain.PaymentScheduleMonthly), "tháng"},
-		{"", "đã chọn"},
-		{"unknown", "đã chọn"},
-	}
-	for _, tc := range tests {
-		if got := cycleLabelVN(tc.in); got != tc.want {
-			t.Errorf("cycleLabelVN(%q): got %q, want %q", tc.in, got, tc.want)
-		}
-	}
-}
-
 // TestBuildEmptySwiftMessage_BucketsByReason verifies the EMPTY_RESULT
 // message combines the three skip counts: pre-validation missing
 // account/name, post-validation missing bank linkage, and unresolved SWIFT.
@@ -356,16 +338,11 @@ func TestBuildEmptySwiftMessage_NilPlan(t *testing.T) {
 	}
 }
 
-// TestExport_EmptyPool_ReturnsEmptyResultError exercises the full Export
-// pipeline with a stub planner whose pool contains zero eligible timesheets.
-// Asserts the returned error is the typed EMPTY_RESULT domain error so the
-// handler maps it to HTTP 422 (not 500).
-//
-// Note: even with an empty pool, the planner returns a non-nil (but empty)
-// ValidatedData, so the code path that fires is the post-SWIFT-resolution
-// zero-rows branch. Either branch produces EMPTY_RESULT — the test only
-// asserts the error type and that the message is the actionable VN form.
-func TestExport_EmptyPool_ReturnsEmptyResultError(t *testing.T) {
+// TestExport_EmptyPool_ReturnsEmptyWorkbook covers the pipeline when the pool
+// holds zero eligible timesheets: the admin asked for a file, so the exporter
+// answers with the headers-only workbook (HTTP 200 via the handler), matching
+// the manual Chuyển lô export. No VFIC codes may be minted for an empty file.
+func TestExport_EmptyPool_ReturnsEmptyWorkbook(t *testing.T) {
 	// Empty stub bundle — no timesheets, no employees, no projects.
 	bundle := &stubRepoBundle{
 		employees:        map[uint]*domain.Employee{},
@@ -384,19 +361,44 @@ func TestExport_EmptyPool_ReturnsEmptyResultError(t *testing.T) {
 	txnRepo := &stubTransactionCodeRepo{}
 	exporter := NewOnePayExporter(planner, bankRepo, txnRepo, nil)
 
-	_, err := exporter.Export(context.Background(), &dto.ExportBulkTransferRequest{
+	result, err := exporter.Export(context.Background(), &dto.ExportBulkTransferRequest{
 		FromDate: "2026-07-08",
 		ToDate:   "2026-07-14",
 	})
 
-	if err == nil {
-		t.Fatalf("expected error, got nil")
+	if err != nil {
+		t.Fatalf("empty pool must return an empty workbook, got error: %v", err)
 	}
-	if !domain.IsEmptyResultError(err) {
-		t.Fatalf("expected EMPTY_RESULT domain error, got %T: %v", err, err)
+	if result.TotalCount != 0 || result.TransferAmount != 0 {
+		t.Errorf("empty workbook must report zero rows/amount, got %d / %d", result.TotalCount, result.TransferAmount)
 	}
-	if !strings.Contains(err.Error(), "Không có") {
-		t.Errorf("expected actionable VN message, got: %v", err)
+	if result.Cycle != string(domain.PaymentScheduleWeekly) {
+		t.Errorf("cycle: got %q, want %q", result.Cycle, domain.PaymentScheduleWeekly)
+	}
+	if !strings.HasSuffix(result.Filename, ".xlsx") {
+		t.Errorf("filename: got %q, want an .xlsx name", result.Filename)
+	}
+	if len(txnRepo.created) != 0 {
+		t.Errorf("CreateBatch must not run for an empty file; got %d codes", len(txnRepo.created))
+	}
+
+	// The workbook must be readable and carry the header row only.
+	workbook, err := excelize.OpenReader(bytes.NewReader(result.ExcelBytes))
+	if err != nil {
+		t.Fatalf("open empty workbook: %v", err)
+	}
+	t.Cleanup(func() { _ = workbook.Close() })
+
+	sheet := workbook.GetSheetName(0)
+	if sheet != onePaySheetName {
+		t.Fatalf("sheet: got %q, want %q", sheet, onePaySheetName)
+	}
+	rows, err := workbook.GetRows(sheet)
+	if err != nil {
+		t.Fatalf("read rows: %v", err)
+	}
+	if len(rows) != onePayHeaderRow {
+		t.Fatalf("expected only %d header row(s), got %d", onePayHeaderRow, len(rows))
 	}
 }
 

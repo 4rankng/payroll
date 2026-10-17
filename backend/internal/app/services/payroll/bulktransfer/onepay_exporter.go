@@ -134,18 +134,13 @@ func (e *OnePayExporter) Export(ctx context.Context, req *dto.ExportBulkTransfer
 	if err != nil {
 		return nil, fmt.Errorf("onepay export: plan: %w", err)
 	}
-	if plan.ValidatedData == nil || plan.ValidatedData.ValidData == nil {
-		// No timesheet matched the cohort (approved + pending-payment) for the
-		// requested cycle/range. This is a user-correctable condition, not a
-		// server fault — surface as EMPTY_RESULT (HTTP 422) so the admin gets
-		// actionable guidance instead of a generic 500.
-		cycle := ""
-		if plan != nil {
-			cycle = plan.Cycle
-		}
-		return nil, domain.NewEmptyResultError(
-			fmt.Sprintf("Không có timesheet nào hợp lệ để xuất cho chu kỳ %s. Vui lòng kiểm tra trạng thái duyệt/thanh toán và khoảng ngày rồi thử lại.", cycleLabelVN(cycle)),
-		)
+	if plan.ValidatedData == nil || plan.ValidatedData.ValidData == nil || len(plan.ValidatedData.ValidData.EmployeeProjectAmounts) == 0 {
+		// Nothing matched the cohort (approved + pending-payment) for the
+		// requested cycle/range. Hand back the workbook the admin asked for —
+		// headers only — exactly like the manual Chuyển lô export does, instead
+		// of a 422 whose SWIFT wording blamed bank data for a pool that was
+		// simply empty. Nothing is minted for an empty file: no VFIC codes.
+		return e.emptyResult(plan)
 	}
 	data := plan.ValidatedData.ValidData
 
@@ -155,9 +150,10 @@ func (e *OnePayExporter) Export(ctx context.Context, req *dto.ExportBulkTransfer
 	}
 
 	if len(rows) == 0 {
-		// Every candidate was filtered out. Surface the three skip buckets so
-		// the admin can tell what to fix: (a) pre-validation missing account
-		// number/name, (b) missing bank linkage, (c) unresolved SWIFT.
+		// Candidates existed but every one of them was filtered out. Surface the
+		// three skip buckets so the admin can tell what to fix: (a)
+		// pre-validation missing account number/name, (b) missing bank linkage,
+		// (c) unresolved SWIFT.
 		return nil, domain.NewEmptyResultError(buildEmptySwiftMessage(plan, skipped))
 	}
 
@@ -384,18 +380,28 @@ func buildOnePayFilename(cycle string, now time.Time) string {
 	return fmt.Sprintf("Yeu_cau_chuyen_tien_%s_%s.xlsx", cycle, stamp)
 }
 
-// cycleLabelVN returns a Vietnamese label for a cycle string used in
-// user-facing messages. Falls back to a neutral label when the cycle
-// is empty or unrecognized.
-func cycleLabelVN(cycle string) string {
-	switch strings.TrimSpace(strings.ToLower(cycle)) {
-	case string(domain.PaymentScheduleWeekly):
-		return "tuần"
-	case string(domain.PaymentScheduleMonthly):
-		return "tháng"
-	default:
-		return "đã chọn"
+// emptyResult builds the headers-only "Yêu cầu chuyển tiền" workbook for a
+// cycle whose cohort is empty. The manual Chuyển lô export answers an empty
+// pool the same way (HTTP 200, 0 rows), so the admin gets the file they asked
+// for instead of a 422 whose wording blames bank/SWIFT data. No transaction
+// codes are minted for a file with no rows.
+func (e *OnePayExporter) emptyResult(plan *ExportPlan) (*OnePayExportResult, error) {
+	excelBytes, err := GenerateOnePayExcel(nil)
+	if err != nil {
+		return nil, fmt.Errorf("onepay export: generate empty excel: %w", err)
 	}
+
+	cycle := ""
+	if plan != nil {
+		cycle = plan.Cycle
+	}
+	return &OnePayExportResult{
+		ExcelBytes:     excelBytes,
+		Filename:       buildOnePayFilename(cycle, e.clock()),
+		Cycle:          cycle,
+		TotalCount:     0,
+		TransferAmount: 0,
+	}, nil
 }
 
 // buildEmptySwiftMessage composes the EMPTY_RESULT message for the
