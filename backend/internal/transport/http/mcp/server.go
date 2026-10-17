@@ -15,8 +15,8 @@ import (
 
 	"api-server/internal/app/services/mcpapikey"
 
-	mcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/gin-gonic/gin"
+	mcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // shared caches JSON schemas across per-request servers so schema generation

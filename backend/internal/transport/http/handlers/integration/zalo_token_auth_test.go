@@ -31,8 +31,8 @@ func (r *endpointKeyRepo) GetByHash(_ context.Context, keyHash string) (*domain.
 	return r.byHash[keyHash], nil
 }
 
-func (r *endpointKeyRepo) List(context.Context) ([]*domain.APIKey, error)   { return nil, nil }
-func (r *endpointKeyRepo) Revoke(context.Context, uint, time.Time) error    { return nil }
+func (r *endpointKeyRepo) List(context.Context) ([]*domain.APIKey, error) { return nil, nil }
+func (r *endpointKeyRepo) Revoke(context.Context, uint, time.Time) error  { return nil }
 func (r *endpointKeyRepo) UpdateLastUsedAt(context.Context, uint, time.Time) error {
 	return nil
 }

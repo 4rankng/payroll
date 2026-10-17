@@ -53,7 +53,7 @@ type VendorTimesheetItem struct {
 	ProjectCode      string  `json:"project_code"`
 	CCCD             string  `json:"cccd"`
 	EmployeeName     string  `json:"employee_name"`
-	Date             string  `json:"date"`   // YYYY-MM-DD
+	Date             string  `json:"date"` // YYYY-MM-DD
 	HoursWorked      float64 `json:"hours_worked"`
 	PayType          string  `json:"pay_type"` // Day_type.shift_type, e.g. ngày_thường.TCN
 	PayRate          int64   `json:"payrate"`  // VND

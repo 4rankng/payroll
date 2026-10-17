@@ -713,4 +713,3 @@ func (s *SettingsConfigService) GetAdvancePaymentFeeMin(ctx context.Context) uin
 	}
 	return DefaultAdvancePaymentFeeMin
 }
-

@@ -9,7 +9,7 @@ func TestVendorPayType(t *testing.T) {
 		{"công nhân.ngày nghỉ.nn", "ngày_nghỉ.NN"},
 		{"phổ thường.ngày lễ.08:00-18:00", "ngày_lễ.08:00-18:00"},
 		{"ngày_thường.TCN", "ngày_thường.TCN"}, // already 2-part
-		{"garbage", "garbage"},                 // not dot-separated: pass through
+		{"garbage", "garbage"}, // not dot-separated: pass through
 		{"", ""},
 	}
 	for _, c := range cases {
