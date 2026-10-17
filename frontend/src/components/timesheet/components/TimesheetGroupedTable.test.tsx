@@ -42,4 +42,27 @@ describe.each(['admin', 'partner'] as const)('%s grouped timesheet table', (user
     expect(screen.getByRole('button', { name: 'Xem bảng công của Lê Thị Hằng' })).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getAllByRole('row')).toHaveLength(collapsedRowCount);
   });
+
+  // Regression guard: the table card lost its surface and every row sat directly
+  // on the tinted page canvas — borders and pale chips only, i.e. a wireframe
+  // (partner + admin "Bảng công", Oct 2026). The rows must sit on a card
+  // surface, and the header row on the secondary surface.
+  it('paints the rows on a card surface with a secondary header band', () => {
+    render(
+      <MemoryRouter>
+        <TimesheetGroupedTable
+          timesheets={[timesheet]}
+          userRole={userRole}
+          expandedGroups={new Set()}
+          onRowClick={() => {}}
+          onToggleGroup={() => {}}
+        />
+      </MemoryRouter>,
+    );
+
+    const table = screen.getByRole('table');
+    const card = table.parentElement?.parentElement as HTMLElement;
+    expect(card.className).toContain('bg-card');
+    expect((table.querySelector('thead tr') as HTMLElement).className).toContain('bg-utility-gray-50');
+  });
 });

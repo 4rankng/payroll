@@ -69,14 +69,14 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
 
   if (grouped.length === 0) {
     return (
-      <div className="rounded-2xl border border-border/60 p-20 text-center">
+      <div className="rounded-2xl border border-border/60 bg-card p-20 text-center">
         <EmptyState icon={Clock} title="Không có dữ liệu bảng công" />
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border/50 overflow-hidden">
+    <div className="rounded-xl border border-border/50 bg-card overflow-hidden">
       {/* Scroll only when the desktop workspace is genuinely too narrow. */}
       <div className="overflow-x-auto">
         <Table className="table-fixed min-w-[860px]">
@@ -91,7 +91,7 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
             <col style={{ width: "36px" }} />
           </colgroup>
           <TableHeader>
-            <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border/40">
+            <TableRow className="bg-utility-gray-50 hover:bg-utility-gray-50 border-b border-utility-gray-200">
               <TableHead className="p-0"><span className="sr-only">Trạng thái</span></TableHead>
               <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
                 {userRole === "partner" ? "Nhân viên · Ngày" : "Nhân viên"}
@@ -163,9 +163,9 @@ const GroupRow = memo(function GroupRow({
           <TableRow
             onClick={onToggle}
             className={cn(
-              "group cursor-pointer transition-colors hover:bg-muted/30",
-              idx !== 0 && "border-t border-border/40",
-              isExpanded && "bg-muted/20",
+              "group cursor-pointer transition-colors hover:bg-utility-gray-50",
+              idx !== 0 && "border-t border-utility-gray-200",
+              isExpanded && "bg-utility-gray-50",
             )}
           >
             {/* [0] status strip */}
@@ -208,7 +208,7 @@ const GroupRow = memo(function GroupRow({
             </TableCell>
             {/* [4] total hours */}
             <TableCell className="border-l border-border/30 px-3 py-2.5 text-right">
-              <span className="inline-flex h-7 min-w-14 items-center justify-end rounded-md bg-card/80 px-2 typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
+              <span className="inline-flex h-7 min-w-14 items-center justify-end rounded-md bg-utility-gray-50 px-2 typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
                 {formatTimesheetHours(group.totalHours)}h
               </span>
             </TableCell>
@@ -345,7 +345,7 @@ const ProjectSection = memo(function ProjectSection({
   return (
     <>
       {showHeader && (
-        <TableRow className={cn("bg-primary/[0.035] hover:bg-primary/[0.035]", isFirstProject && "border-t border-dashed border-border/50")}>
+        <TableRow className={cn("bg-primary/[0.06] hover:bg-primary/[0.06]", isFirstProject && "border-t border-utility-gray-200")}>
           <TableCell className="p-0" />
           <TableCell colSpan={3} className="px-3 py-2.5 pl-6">
             <div className="flex min-w-0 items-center gap-2.5">
