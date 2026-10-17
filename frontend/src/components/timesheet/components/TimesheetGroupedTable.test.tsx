@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import type { Timesheet } from '@/types/api/timesheet.types';
 import { TimesheetGroupedTable } from './TimesheetGroupedTable';
+import { groupTimesheetsByEmployee } from '../utils/timesheetGrouping';
 
 const timesheet: Timesheet = {
   id: 1, project_id: 10, employee_id: 20, date: '2026-07-14',
@@ -64,5 +65,32 @@ describe.each(['admin', 'partner'] as const)('%s grouped timesheet table', (user
     const card = table.parentElement?.parentElement as HTMLElement;
     expect(card.className).toContain('bg-card');
     expect((table.querySelector('thead tr') as HTMLElement).className).toContain('bg-utility-gray-50');
+  });
+
+  // Regression guard: the expanded entry rows used to be white like the
+  // aggregate row, so a group and its entries read as one flat block. The
+  // entries must sit on a dimmer surface than the aggregate row.
+  it('sinks the expanded entry rows below the white aggregate row', () => {
+    const groupKey = groupTimesheetsByEmployee([timesheet])[0].groupKey;
+    render(
+      <MemoryRouter>
+        <TimesheetGroupedTable
+          timesheets={[timesheet]}
+          userRole={userRole}
+          expandedGroups={new Set([groupKey])}
+          onRowClick={() => {}}
+          onToggleGroup={() => {}}
+        />
+      </MemoryRouter>,
+    );
+
+    const rows = screen.getAllByRole('row').filter((row) => row.querySelector('td'));
+    const aggregateRow = rows.find((row) => row.querySelector('button[aria-label$="bảng công của Lê Thị Hằng"]'))!;
+    const entryRows = rows.filter((row) => row !== aggregateRow);
+    expect(aggregateRow.className.split(/\s+/).filter((token) => token.startsWith('bg-utility-'))).toEqual([]);
+    expect(entryRows.length).toBeGreaterThan(0);
+    for (const row of entryRows) {
+      expect(row.className.split(/\s+/).some((token) => token.startsWith('bg-utility-'))).toBe(true);
+    }
   });
 });

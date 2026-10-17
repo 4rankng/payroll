@@ -165,7 +165,6 @@ const GroupRow = memo(function GroupRow({
             className={cn(
               "group cursor-pointer transition-colors hover:bg-utility-gray-50",
               idx !== 0 && "border-t border-utility-gray-200",
-              isExpanded && "bg-utility-gray-50",
             )}
           >
             {/* [0] status strip */}
@@ -208,7 +207,7 @@ const GroupRow = memo(function GroupRow({
             </TableCell>
             {/* [4] total hours */}
             <TableCell className="border-l border-border/30 px-3 py-2.5 text-right">
-              <span className="inline-flex h-7 min-w-14 items-center justify-end rounded-md bg-utility-gray-50 px-2 typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
+              <span className="inline-flex h-7 min-w-14 items-center justify-end rounded-md bg-utility-gray-100 px-2 typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
                 {formatTimesheetHours(group.totalHours)}h
               </span>
             </TableCell>
@@ -411,8 +410,8 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
     <TableRow
       onClick={onClick}
       className={cn(
-        "cursor-pointer transition-colors hover:bg-primary/[0.045]",
-        entryIdx % 2 === 0 ? "bg-card" : "bg-slate-50/55",
+        "cursor-pointer transition-colors hover:bg-utility-gray-200/60",
+        entryIdx % 2 === 0 ? "bg-utility-gray-50" : "bg-utility-gray-100",
         entryIdx === 0 && !startsAfterProjectHeader ? "border-t border-dashed border-border/50" : "border-t border-border/20",
       )}
     >
@@ -484,7 +483,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
       </TableCell>
       <TableCell className="py-2 px-3 text-right">
         <p className={cn(
-          "inline-flex h-7 items-center justify-end rounded-md bg-slate-50 px-2 text-xs tabular-nums",
+          "inline-flex h-7 items-center justify-end rounded-md bg-card px-2 text-xs tabular-nums",
           (!entry.payrate || entry.payrate === 0) ? "text-red-700 font-semibold" : "font-medium text-muted-foreground",
         )}>
           {(!entry.payrate || entry.payrate === 0) && userRole === "partner" ? (
