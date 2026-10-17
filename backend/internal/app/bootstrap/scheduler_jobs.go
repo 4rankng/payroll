@@ -558,4 +558,35 @@ func registerSchedulerJobs(
 			}
 		},
 	})
+
+	// 15. VFIC funding reminder - day 10, day 17, and the last day of the month
+	// at 09:00. Pushes "Nhắc nhở VFIC gửi tiền" to all admins. robfig/cron has
+	// no "last day" token, so the spec fires on 10, 17 and 28–31 (28–31 always
+	// covers any month's last day); the tail is filtered here with
+	// IsLastDayOfMonth so only the true last day sends — exactly 3 reminders/month.
+	s.AddJob(scheduler.Job{
+		Name:    "vfic_funding_reminder",
+		Cron:    "0 9 10,17,28-31 * *",
+		Enabled: true,
+		Handler: func() {
+			ctx := context.Background()
+			now := clock.Now()
+			day := now.Day()
+			if day != 10 && day != 17 && !scheduler.IsLastDayOfMonth(now) {
+				logger.Info("VFIC funding reminder: not a funding day, skipping", "day", day)
+				return
+			}
+			// Title and message share the same minimal text by design.
+			text := "Nhắc nhở VFIC gửi tiền"
+			if err := notificationService.NotifyUsersByRole(
+				ctx,
+				domain.RoleAdmin,
+				domain.NotificationTypeCustom,
+				text,
+				text,
+			); err != nil {
+				logger.Error("Failed to send VFIC funding reminder", "error", err)
+			}
+		},
+	})
 }
