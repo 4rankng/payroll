@@ -17,6 +17,7 @@ import { ManualDisbursementForm } from "@/pages/admin/ManualDisbursementPage/Man
 import { TransactionStatusPanel } from "@/pages/admin/ManualDisbursementPage/TransactionStatusPanel";
 import {
   type BankOption,
+  type DisbursementRecipientPrefill,
   type ManualDisbursementFormState,
   type VerifiedAccount,
   initialFormState,
@@ -27,12 +28,20 @@ interface CreateManualDisbursementDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  /**
+   * Optional provider-confirmed recipient handed off from the account-lookup
+   * dialog. When set, the form opens pre-filled with this account and marked
+   * verified, so the admin only enters the amount and description. Cleared via
+   * `onOpenChange(false)` by the owner.
+   */
+  initialRecipient?: DisbursementRecipientPrefill | null;
 }
 
 export default function CreateManualDisbursementDialog({
   open,
   onOpenChange,
   onSuccess,
+  initialRecipient = null,
 }: CreateManualDisbursementDialogProps) {
   const queryClient = useQueryClient();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -98,6 +107,28 @@ export default function CreateManualDisbursementDialog({
       return () => clearTimeout(timer);
     }
   }, [open]);
+
+  // Seed the form from a lookup-confirmed recipient when the dialog opens.
+  // The account fields and the verified marker are both carried over, so the
+  // admin lands on a pre-verified recipient and only fills in amount +
+  // description. `verifiedAt` is stamped now so the normal 5-minute verification
+  // TTL applies from the moment of handoff.
+  useEffect(() => {
+    if (!open || !initialRecipient) return;
+    setForm({
+      ...initialFormState,
+      bankCode: initialRecipient.bankCode,
+      accountNo: initialRecipient.accountNo,
+      accountName: initialRecipient.accountName,
+    });
+    setVerified({
+      bankCode: initialRecipient.bankCode,
+      accountNo: initialRecipient.accountNo,
+      verifiedName: initialRecipient.accountName,
+      verifiedAt: Date.now(),
+    });
+    setActiveTxnId(null);
+  }, [open, initialRecipient]);
 
   const inProgressRow = statusQuery.data ?? null;
 

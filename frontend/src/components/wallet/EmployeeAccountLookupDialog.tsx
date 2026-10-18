@@ -5,6 +5,7 @@ import {
   CircleHelp,
   Loader2,
   SearchCheck,
+  SendHorizontal,
   TriangleAlert,
   X,
 } from "lucide-react";
@@ -35,10 +36,18 @@ import type {
   EmployeeAccountLookupResponse,
   VerifyAccountResponse,
 } from "@/types/api/manual-disbursement.types";
+import type { DisbursementRecipientPrefill } from "@/pages/admin/ManualDisbursementPage/helpers";
 
 interface EmployeeAccountLookupDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * When provided, a "Chuyển tiền tới tài khoản này" action is shown after a
+   * successful (valid) lookup. It hands the provider-confirmed recipient to the
+   * caller so the transfer flow can open pre-filled. Read-only lookups stay the
+   * default when this is omitted.
+   */
+  onSendToAccount?: (recipient: DisbursementRecipientPrefill) => void;
 }
 
 const OUTCOME_COPY: Record<
@@ -298,6 +307,7 @@ function CustomLookupResult({
 export function EmployeeAccountLookupDialog({
   open,
   onOpenChange,
+  onSendToAccount,
 }: EmployeeAccountLookupDialogProps) {
   const [mode, setMode] = useState<LookupMode>("employee");
   const [employee, setEmployee] = useState<Employee | null>(null);
@@ -376,6 +386,38 @@ export function EmployeeAccountLookupDialog({
       : customLookupMutation.isPending;
   const lookupDisabled =
     pending || (mode === "employee" ? !employee : !customFormValid);
+
+  // A provider-confirmed recipient is only exposed when the lookup came back
+  // valid. This keeps the transfer handoff from ever carrying an unverified or
+  // mismatched account — the same guard the transfer form enforces before
+  // enabling its own submit.
+  const confirmedRecipient: DisbursementRecipientPrefill | null =
+    mode === "employee"
+      ? lookupMutation.data && lookupMutation.data.outcome === "valid"
+        ? {
+            bankCode:
+              lookupMutation.data.stored_bank.swift_code ||
+              lookupMutation.data.stored_bank.bank_code,
+            accountNo: lookupMutation.data.stored_bank.account_number,
+            accountName:
+              lookupMutation.data.provider_result.AccountName?.trim() ||
+              lookupMutation.data.stored_bank.account_name,
+          }
+        : null
+      : customLookupMutation.data && customLookupMutation.data.Valid
+        ? {
+            bankCode: customFields.bankCode.trim().toUpperCase(),
+            accountNo: customFields.accountNumber.trim(),
+            accountName:
+              customLookupMutation.data.AccountName?.trim() ||
+              customFields.accountName.trim(),
+          }
+        : null;
+
+  const handleSendToAccount = useCallback(() => {
+    if (!confirmedRecipient || !onSendToAccount) return;
+    onSendToAccount(confirmedRecipient);
+  }, [confirmedRecipient, onSendToAccount]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -644,7 +686,17 @@ export function EmployeeAccountLookupDialog({
             </div>
           )}
         </div>
-        <DialogFooter className="border-t bg-card px-4 py-3 sm:px-5">
+        <DialogFooter className="flex-col gap-2 border-t bg-card px-4 py-3 sm:flex-row sm:px-5">
+          {confirmedRecipient && onSendToAccount && (
+            <Button
+              type="button"
+              onClick={handleSendToAccount}
+              className="min-h-11 gap-2 sm:min-h-9 sm:order-3"
+            >
+              <SendHorizontal className="size-4" />
+              Chuyển tiền tới tài khoản này
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -655,6 +707,7 @@ export function EmployeeAccountLookupDialog({
           </Button>
           <Button
             type="button"
+            variant={confirmedRecipient ? "outline" : "default"}
             onClick={handleLookup}
             disabled={lookupDisabled}
             className="min-h-11 gap-2 sm:min-h-9"

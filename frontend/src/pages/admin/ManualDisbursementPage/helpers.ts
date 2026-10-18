@@ -97,6 +97,18 @@ export interface VerifiedAccount {
   verifiedAt: number;
 }
 
+/**
+ * A provider-confirmed recipient handed off from the account-lookup dialog
+ * into the "Chuyển tiền" (transfer) form. `bankCode` is the SWIFT code, which
+ * is what the transfer form stores in its `bankCode` field. `accountName`
+ * carries the provider-confirmed name so the transfer form starts verified.
+ */
+export interface DisbursementRecipientPrefill {
+  bankCode: string;
+  accountNo: string;
+  accountName: string;
+}
+
 export function isVerificationValid(
   v: VerifiedAccount | null,
   state: ManualDisbursementFormState,

@@ -15,6 +15,7 @@ import { EmployeeAccountLookupDialog } from '@/components/wallet/EmployeeAccount
 import { BulkTransferBatchList } from '@/components/wallet/BulkTransferBatchList';
 import { BulkTransferUploadDialog } from '@/components/wallet/BulkTransferUploadDialog';
 import { WalletBalanceCard } from '@/components/disbursement/WalletBalanceCard';
+import type { DisbursementRecipientPrefill } from '@/pages/admin/ManualDisbursementPage/helpers';
 
 export default function WalletPageMobile() {
   const queryClient = useQueryClient();
@@ -23,8 +24,24 @@ export default function WalletPageMobile() {
   const [bulkTransferDialogOpen, setBulkTransferDialogOpen] = useState(false);
   const [selectedBulkTransferBatchId, setSelectedBulkTransferBatchId] =
     useState<number | null>(null);
+  // Recipient carried from a valid account lookup into the transfer dialog.
+  const [transferRecipient, setTransferRecipient] =
+    useState<DisbursementRecipientPrefill | null>(null);
 
   const invalidateAll = () => { queryClient.invalidateQueries({ queryKey: ['wallet'] }); };
+
+  const handleDisbursementOpenChange = (nextOpen: boolean) => {
+    setDisbursementOpen(nextOpen);
+    // Drop the handoff as soon as the transfer dialog closes so a later manual
+    // "Chuyển tiền" open starts from a blank form, not the last lookup.
+    if (!nextOpen) setTransferRecipient(null);
+  };
+
+  const handleSendToAccount = (recipient: DisbursementRecipientPrefill) => {
+    setTransferRecipient(recipient);
+    setEmployeeAccountLookupOpen(false);
+    setDisbursementOpen(true);
+  };
 
   return (
     <div className="min-h-dvh bg-brand-section_subtle text-fg-white">
@@ -81,12 +98,14 @@ export default function WalletPageMobile() {
 
       <CreateManualDisbursementDialog
         open={disbursementOpen}
-        onOpenChange={setDisbursementOpen}
+        onOpenChange={handleDisbursementOpenChange}
         onSuccess={invalidateAll}
+        initialRecipient={transferRecipient}
       />
       <EmployeeAccountLookupDialog
         open={employeeAccountLookupOpen}
         onOpenChange={setEmployeeAccountLookupOpen}
+        onSendToAccount={handleSendToAccount}
       />
       <BulkTransferUploadDialog
         open={bulkTransferDialogOpen}

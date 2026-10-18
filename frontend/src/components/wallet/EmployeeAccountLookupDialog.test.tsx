@@ -160,4 +160,111 @@ describe('EmployeeAccountLookupDialog', () => {
     expect(screen.getByRole('button', { name: 'Tra cứu' })).toBeDisabled();
     expect(customLookupMutation.mutate).not.toHaveBeenCalled();
   });
+
+  it('hands the confirmed recipient to the transfer flow after a valid employee lookup', () => {
+    lookupMutation.data = {
+      employee: { id: 21, fullname: 'Nguyễn Thị An' },
+      stored_bank: {
+        bank_id: 1,
+        bank_name: 'Vietcombank',
+        bank_code: 'VCB',
+        swift_code: 'BFTVVNVX',
+        account_number: '123456789',
+        account_name: 'NGUYEN THI AN',
+      },
+      outcome: 'valid',
+      provider_result: {
+        Valid: true,
+        BankCode: 'VCB',
+        AccountNo: '123456789',
+        AccountName: 'NGUYEN THI AN',
+        AccountType: '0',
+        RawErrorCode: '',
+        RawMessage: 'Van tin thanh cong',
+      },
+    };
+    const onSendToAccount = vi.fn();
+
+    render(
+      <EmployeeAccountLookupDialog
+        open
+        onOpenChange={vi.fn()}
+        onSendToAccount={onSendToAccount}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Chuyển tiền tới tài khoản này' }));
+
+    expect(onSendToAccount).toHaveBeenCalledWith({
+      bankCode: 'BFTVVNVX',
+      accountNo: '123456789',
+      accountName: 'NGUYEN THI AN',
+    });
+  });
+
+  it('offers no send-money action for a non-valid outcome', () => {
+    lookupMutation.data = {
+      employee: { id: 21, fullname: 'Nguyễn Thị An' },
+      stored_bank: {
+        bank_id: 1,
+        bank_name: 'Vietcombank',
+        bank_code: 'VCB',
+        swift_code: 'BFTVVNVX',
+        account_number: '123456789',
+        account_name: 'NGUYEN THI AN',
+      },
+      outcome: 'name_mismatch',
+      provider_result: {
+        Valid: false,
+        BankCode: 'VCB',
+        AccountNo: '123456789',
+        AccountName: 'NGUYEN THI ANH',
+        AccountType: '0',
+        RawErrorCode: '12',
+        RawMessage: 'Tên không khớp',
+      },
+    };
+
+    render(
+      <EmployeeAccountLookupDialog
+        open
+        onOpenChange={vi.fn()}
+        onSendToAccount={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: 'Chuyển tiền tới tài khoản này' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the lookup read-only when no send handler is supplied', () => {
+    lookupMutation.data = {
+      employee: { id: 21, fullname: 'Nguyễn Thị An' },
+      stored_bank: {
+        bank_id: 1,
+        bank_name: 'Vietcombank',
+        bank_code: 'VCB',
+        swift_code: 'BFTVVNVX',
+        account_number: '123456789',
+        account_name: 'NGUYEN THI AN',
+      },
+      outcome: 'valid',
+      provider_result: {
+        Valid: true,
+        BankCode: 'VCB',
+        AccountNo: '123456789',
+        AccountName: 'NGUYEN THI AN',
+        AccountType: '0',
+        RawErrorCode: '',
+        RawMessage: 'Van tin thanh cong',
+      },
+    };
+
+    render(<EmployeeAccountLookupDialog open onOpenChange={vi.fn()} />);
+
+    expect(
+      screen.queryByRole('button', { name: 'Chuyển tiền tới tài khoản này' }),
+    ).not.toBeInTheDocument();
+  });
 });
