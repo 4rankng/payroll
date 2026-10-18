@@ -5,14 +5,16 @@ import { Label } from '@/components/ui/label';
 import { formatVietnameseName } from '@/lib/validation';
 import { Textarea } from '@/components/ui/textarea';
 import { BankSelector } from '@/components/ui/bank-selector';
-import { X, Save, Trash2 } from 'lucide-react';
+import { X, Save, Trash2, Banknote } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUpdateLender, useLender, useDeleteLender } from '@/hooks/api/useLoans';
+import { useBank } from '@/hooks/api/useBanks';
 import { SlideSheetTemplate } from './templates/SlideSheetTemplate';
 import { authManager } from '@/lib/auth';
 import type { UpdateLenderRequest } from '@/types/api/loan.types';
 import type { Bank } from '@/types/api/bank.types';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { SendMoneyToLenderModal } from '@/components/modals/SendMoneyToLenderModal';
 
 interface EditLenderSheetProps {
   isOpen: boolean;
@@ -41,6 +43,12 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
   const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // The lender detail API returns bank_id only, so resolve the bank object
+  // separately — otherwise the selector forgets the saved bank on reopen.
+  const { data: lenderBank } = useBank(lenderData?.bank_id || 0, {
+    enabled: isOpen && !!lenderData?.bank_id,
+  });
+
   // Populate form when lender data is loaded
   useEffect(() => {
     if (isOpen && lenderData) {
@@ -54,10 +62,10 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
         bank_account_number: lenderData.bank_account_number || '',
         bank_account_name: lenderData.bank_account_name || '',
       });
-      setSelectedBank(lenderData.bank || null);
+      setSelectedBank(lenderData.bank_id && lenderBank ? lenderBank : null);
       setErrors({});
     }
-  }, [isOpen, lenderData]);
+  }, [isOpen, lenderData, lenderBank]);
 
   const handleSave = async () => {
     const newErrors: Record<string, string> = {};
@@ -165,8 +173,11 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
     }
   }, [deleteLender, lenderId, onClose]);
 
-  const hasActiveLoans = (lenderData?.summary?.active_loans_count ?? 0) > 0;
-  const deleteDisabled = deleteLender.isPending || isLoading || hasActiveLoans;
+  const linkedLoanCount = lenderData?.summary?.total_loans_count ?? 0;
+  const hasLinkedLoans = linkedLoanCount > 0;
+  const deleteDisabled = deleteLender.isPending || isLoading || hasLinkedLoans;
+
+  const [isSendMoneyOpen, setIsSendMoneyOpen] = useState(false);
 
   return (
     <>
@@ -177,7 +188,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
       description={lenderData?.name || 'Đang tải...'}
       compact
       footer={
-        <div className="grid w-full grid-cols-1 gap-2 min-[380px]:grid-cols-3">
+        <div className="grid w-full grid-cols-1 gap-2 min-[380px]:grid-cols-2">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -194,13 +205,23 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
               </TooltipTrigger>
               <TooltipContent className="max-w-72" side="top">
                 <div className="typography-body-medium">
-                  {hasActiveLoans
-                    ? `Không thể xóa vì còn khoản vay hiện tại (${lenderData?.summary?.active_loans_count}). Hãy đóng tất cả khoản vay trước.`
+                  {hasLinkedLoans
+                    ? `Không thể xóa: chủ nợ còn ${linkedLoanCount} khoản vay liên kết trong hệ thống.`
                     : 'Xóa người cho vay khỏi danh sách.'}
                 </div>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          <Button
+            variant="outline"
+            onClick={() => setIsSendMoneyOpen(true)}
+            disabled={isLoading}
+            className="min-h-11 w-full"
+            aria-label="Gửi tiền cho chủ nợ"
+          >
+            <Banknote className="w-4 h-4 mr-2" />
+            Gửi tiền
+          </Button>
           <Button variant="outline" onClick={onClose} className="min-h-11 w-full">
             <X className="w-4 h-4 mr-2" />
             Hủy
@@ -399,6 +420,15 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
         confirmVariant="destructive"
         loading={deleteLender.isPending}
       />
+
+      {/* Gửi tiền cho chủ nợ */}
+      {isSendMoneyOpen && lenderData && (
+        <SendMoneyToLenderModal
+          isOpen={isSendMoneyOpen}
+          onClose={() => setIsSendMoneyOpen(false)}
+          lender={lenderData}
+        />
+      )}
     </>
   );
 }

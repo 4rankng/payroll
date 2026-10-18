@@ -84,18 +84,46 @@ func (r *LenderRepository) List(ctx context.Context, filters domain.LenderFilter
 	return lenders, total, err
 }
 
-func (r *LenderRepository) HasActiveLoans(ctx context.Context, lenderID uint) (bool, error) {
+func (r *LenderRepository) HasAnyLoans(ctx context.Context, lenderID uint) (bool, error) {
 	var count int64
 	err := r.DB.WithContext(ctx).
 		Model(&domain.Loan{}).
-		Where("lender_id = ? AND status = ?", lenderID, domain.LoanStatusActive).
+		Where("lender_id = ?", lenderID).
 		Count(&count).Error
-
 	if err != nil {
 		return false, err
 	}
-
 	return count > 0, nil
+}
+
+// GetLoanSummary aggregates live loans linked to the lender. Principal totals
+// only count disbursed loans (a draft loan has borrowed nothing yet); the
+// repaid figure is derived as borrowed minus outstanding.
+func (r *LenderRepository) GetLoanSummary(ctx context.Context, lenderID uint) (domain.LenderLoanSummary, error) {
+	var row struct {
+		DisbursedPrincipal int64
+		OutstandingAmount  int64
+		ActiveCount        int64
+		TotalCount         int64
+	}
+	err := r.DB.WithContext(ctx).
+		Model(&domain.Loan{}).
+		Select(`COALESCE(SUM(CASE WHEN disbursed_at IS NOT NULL THEN principal_amount ELSE 0 END), 0) AS disbursed_principal,
+			COALESCE(SUM(CASE WHEN disbursed_at IS NOT NULL THEN outstanding_principal ELSE 0 END), 0) AS outstanding_amount,
+			COALESCE(SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), 0) AS active_count,
+			COUNT(*) AS total_count`, domain.LoanStatusActive).
+		Where("lender_id = ?", lenderID).
+		Scan(&row).Error
+	if err != nil {
+		return domain.LenderLoanSummary{}, err
+	}
+	return domain.LenderLoanSummary{
+		TotalPrincipalBorrowed: row.DisbursedPrincipal,
+		TotalPrincipalRepaid:   row.DisbursedPrincipal - row.OutstandingAmount,
+		OutstandingPrincipal:   row.OutstandingAmount,
+		ActiveLoansCount:       int(row.ActiveCount),
+		TotalLoansCount:        int(row.TotalCount),
+	}, nil
 }
 
 // applyFilters applies the common filters to the query
@@ -107,24 +135,4 @@ func (r *LenderRepository) applyFilters(query *gorm.DB, filters domain.LenderFil
 	}
 
 	return query
-}
-
-// HasDisbursedLoans checks if any loan with non-null disbursed_at exists for lender
-func (r *LenderRepository) HasDisbursedLoans(ctx context.Context, lenderID uint) (bool, error) {
-	var count int64
-	err := r.DB.WithContext(ctx).
-		Model(&domain.Loan{}).
-		Where("lender_id = ? AND disbursed_at IS NOT NULL", lenderID).
-		Count(&count).Error
-	if err != nil {
-		return false, err
-	}
-	return count > 0, nil
-}
-
-// DeleteUndisbursedLoansByLender soft-deletes loans that were never disbursed for the given lender
-func (r *LenderRepository) DeleteUndisbursedLoansByLender(ctx context.Context, lenderID uint) error {
-	return r.DB.WithContext(ctx).
-		Where("lender_id = ? AND disbursed_at IS NULL", lenderID).
-		Delete(&domain.Loan{}).Error
 }

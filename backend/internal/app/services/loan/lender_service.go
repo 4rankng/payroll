@@ -56,14 +56,19 @@ func (s *LenderService) CreateLender(ctx context.Context, lender *domain.Lender)
 	return lender, nil
 }
 
-// GetLender retrieves a lender by ID
-func (s *LenderService) GetLender(ctx context.Context, id uint) (*domain.Lender, error) {
+// GetLenderWithSummary retrieves a lender by ID together with its loan summary
+func (s *LenderService) GetLenderWithSummary(ctx context.Context, id uint) (*domain.Lender, domain.LenderLoanSummary, error) {
 	lender, err := s.LenderRepo.GetByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, domain.LenderLoanSummary{}, err
 	}
 
-	return lender, nil
+	summary, err := s.LenderRepo.GetLoanSummary(ctx, id)
+	if err != nil {
+		return nil, domain.LenderLoanSummary{}, fmt.Errorf("failed to get lender loan summary: %w", err)
+	}
+
+	return lender, summary, nil
 }
 
 // ListLenders retrieves a paginated list of lenders
@@ -178,19 +183,15 @@ func (s *LenderService) DeleteLender(ctx context.Context, id uint) error {
 		return err
 	}
 
-	// Check if lender has any disbursed loans (active or closed)
-	hasDisbursed, err := s.LenderRepo.HasDisbursedLoans(ctx, id)
+	// Refuse when any loan record (draft, disbursed, active or closed)
+	// references this lender, so historical links are never orphaned.
+	hasLoans, err := s.LenderRepo.HasAnyLoans(ctx, id)
 	if err != nil {
-		return fmt.Errorf("failed to check disbursed loans: %w", err)
+		return fmt.Errorf("failed to check linked loans: %w", err)
 	}
 
-	if hasDisbursed {
-		return domain.NewValidationError(constants.MsgCannotDeleteLenderWithDisbursedLoansVN)
-	}
-
-	// Soft-delete any undisbursed (draft) loans for this lender to avoid orphans
-	if err := s.LenderRepo.DeleteUndisbursedLoansByLender(ctx, id); err != nil {
-		return fmt.Errorf("failed to remove undisbursed loans for lender: %w", err)
+	if hasLoans {
+		return domain.NewValidationError(constants.MsgCannotDeleteLenderWithLoansVN)
 	}
 
 	// Delete lender (soft delete per GORM DeletedAt)

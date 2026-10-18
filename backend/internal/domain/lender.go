@@ -40,6 +40,15 @@ func (l *Lender) Validate() error {
 	return nil
 }
 
+// LenderLoanSummary aggregates the live (non soft-deleted) loans linked to a lender
+type LenderLoanSummary struct {
+	TotalPrincipalBorrowed int64
+	TotalPrincipalRepaid   int64
+	OutstandingPrincipal   int64
+	ActiveLoansCount       int
+	TotalLoansCount        int
+}
+
 // LenderRepository defines the interface for lender persistence operations
 type LenderRepository interface {
 	Create(ctx context.Context, lender *Lender) error
@@ -47,11 +56,10 @@ type LenderRepository interface {
 	Update(ctx context.Context, lender *Lender) error
 	Delete(ctx context.Context, id uint) error
 	List(ctx context.Context, filters LenderFilters) ([]*Lender, int64, error)
-	HasActiveLoans(ctx context.Context, lenderID uint) (bool, error)
-	// HasDisbursedLoans returns true if lender has any loan with DisbursedAt not null
-	HasDisbursedLoans(ctx context.Context, lenderID uint) (bool, error)
-	// DeleteUndisbursedLoansByLender soft-deletes loans for the lender that were never disbursed
-	DeleteUndisbursedLoansByLender(ctx context.Context, lenderID uint) error
+	// HasAnyLoans returns true if any live loan references the lender
+	HasAnyLoans(ctx context.Context, lenderID uint) (bool, error)
+	// GetLoanSummary aggregates live loans linked to the lender
+	GetLoanSummary(ctx context.Context, lenderID uint) (LenderLoanSummary, error)
 }
 
 // LenderFilters represents filtering options for lender queries

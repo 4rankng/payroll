@@ -88,7 +88,7 @@ func (h *Handler) GetLender(c *gin.Context) {
 		return
 	}
 
-	lender, err := h.lenderService.GetLender(c.Request.Context(), uint(id))
+	lender, summary, err := h.lenderService.GetLenderWithSummary(c.Request.Context(), uint(id))
 	if err != nil {
 		if domain.IsNotFoundError(err) {
 			response.NotFound(c, constants.MsgLenderNotFoundVN)
@@ -98,7 +98,16 @@ func (h *Handler) GetLender(c *gin.Context) {
 		return
 	}
 
-	lenderResponse := h.buildLenderResponse(lender)
+	lenderResponse := dto.LenderWithSummaryResponse{
+		LenderResponse: h.buildLenderResponse(lender),
+		Summary: dto.LenderSummary{
+			TotalPrincipalBorrowed: summary.TotalPrincipalBorrowed,
+			TotalPrincipalRepaid:   summary.TotalPrincipalRepaid,
+			OutstandingPrincipal:   summary.OutstandingPrincipal,
+			ActiveLoansCount:       summary.ActiveLoansCount,
+			TotalLoansCount:        summary.TotalLoansCount,
+		},
+	}
 	response.Success(c, lenderResponse, constants.MsgLenderFetchedVN)
 }
 

@@ -821,14 +821,14 @@ const (
 	MsgFailedToCheckAccessVN   = "Kiểm tra quyền truy cập thất bại"
 
 	// Loan Business Errors - Vietnamese
-	MsgLenderNotFoundVN2                      = "Không tìm thấy người cho vay"
-	MsgMinOneScheduleRequiredVN               = "Phải có ít nhất một lịch thanh toán"
-	MsgScheduleDueDatesMustAscendVN           = "Ngày đáo hạn trong lịch thanh toán phải theo thứ tự tăng dần"
-	MsgFailedToGenerateUniqueLoanCodeVN       = "Không thể tạo mã khoản vay duy nhất. Vui lòng thử lại."
-	MsgScheduleNotBelongToLoanVN              = "Lịch thanh toán không thuộc về khoản vay này"
-	MsgScheduleAlreadyPaidVN                  = "Lịch thanh toán đã được thanh toán"
-	MsgCannotDeleteLenderWithDisbursedLoansVN = "Không thể xóa người cho vay có khoản vay đã giải ngân"
-	MsgLoanAlreadyDisbursedVN2                = "Khoản vay đã được giải ngân"
+	MsgLenderNotFoundVN2                = "Không tìm thấy người cho vay"
+	MsgMinOneScheduleRequiredVN         = "Phải có ít nhất một lịch thanh toán"
+	MsgScheduleDueDatesMustAscendVN     = "Ngày đáo hạn trong lịch thanh toán phải theo thứ tự tăng dần"
+	MsgFailedToGenerateUniqueLoanCodeVN = "Không thể tạo mã khoản vay duy nhất. Vui lòng thử lại."
+	MsgScheduleNotBelongToLoanVN        = "Lịch thanh toán không thuộc về khoản vay này"
+	MsgScheduleAlreadyPaidVN            = "Lịch thanh toán đã được thanh toán"
+	MsgCannotDeleteLenderWithLoansVN    = "Không thể xóa chủ nợ vì còn khoản vay liên kết trong hệ thống"
+	MsgLoanAlreadyDisbursedVN2          = "Khoản vay đã được giải ngân"
 
 	// Settlement Business Errors - Vietnamese
 	MsgCannotOpenFileVN                     = "không thể mở file"

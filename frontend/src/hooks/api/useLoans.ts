@@ -102,13 +102,11 @@ export const useUpdateLender = () => {
     mutationFn: ({ id, data }: { id: number; data: UpdateLenderRequest }) =>
       loanService.updateLender(id, data),
     onSuccess: async (response) => {
-      const updatedLender = response.data!;
-
-      // Optimistically update the lender detail
-      queryClient.setQueryData(
-        QueryKeys.lenders.detail(updatedLender.id),
-        updatedLender
-      );
+      // Invalidate so the detail refetches with its summary intact
+      // (the update response is a plain lender without summary fields).
+      if (response.data?.id) {
+        queryClient.invalidateQueries({ queryKey: QueryKeys.lenders.detail(response.data.id) });
+      }
 
       // Invalidate lists to refresh
       queryClient.invalidateQueries({ queryKey: QueryKeys.lenders.lists() });

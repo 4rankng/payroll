@@ -49,6 +49,7 @@ type LenderSummary struct {
 	TotalPrincipalRepaid   int64 `json:"total_principal_repaid"`
 	OutstandingPrincipal   int64 `json:"outstanding_principal"`
 	ActiveLoansCount       int   `json:"active_loans_count"`
+	TotalLoansCount        int   `json:"total_loans_count"`
 }
 
 // LenderWithSummaryResponse represents lender with financial summary

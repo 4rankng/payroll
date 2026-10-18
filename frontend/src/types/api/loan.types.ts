@@ -38,6 +38,7 @@ export interface LenderSummary {
   total_principal_repaid: number;
   outstanding_principal: number;
   active_loans_count: number;
+  total_loans_count: number;
 }
 
 export interface LenderWithSummary extends Lender {
