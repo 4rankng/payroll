@@ -55,7 +55,8 @@ func setupBankRoutes(protected *gin.RouterGroup, container *Container) {
 func setupPayrateRoutes(protected *gin.RouterGroup, container *Container) {
 	payrates := protected.Group("/payrates")
 	{
-		payrates.POST("", container.Handlers.Payrate.CreatePayrate)
+		// No bare POST /payrates: creation goes through /projects/:id/payrate,
+		// which is the only route that can bind the project ID.
 		payrates.POST("/validate", container.Handlers.Payrate.ValidatePayrate)
 		payrates.GET("", container.Handlers.Payrate.ListPayrates)
 		payrates.GET("/:id", container.Handlers.Payrate.GetPayrate)

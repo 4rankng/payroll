@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -45,22 +46,39 @@ func TestPayrate_IsValid(t *testing.T) {
 
 func TestPayrate_IsActiveOnDate(t *testing.T) {
 	now := time.Now()
-	toDate := now.AddDate(0, 1, 0) // next month
+	staleToDate := now.AddDate(0, 1, 0) // stale bookkeeping, ignored under from-date-only
 	pr := &Payrate{
 		FromDate: now.AddDate(0, -1, 0), // 1 month ago
-		ToDate:   &toDate,
+		ToDate:   &staleToDate,
 	}
 
-	// Should be active today
+	// Active today
 	assert.True(t, pr.IsActiveOnDate(now))
 
-	// Should not be active in the future (after ValidTo)
+	// Active after the stored to_date: end dates are derived bookkeeping and
+	// never gate activity
 	futureDate := now.AddDate(0, 2, 0) // 2 months from now
-	assert.False(t, pr.IsActiveOnDate(futureDate))
+	assert.True(t, pr.IsActiveOnDate(futureDate))
 
-	// Should not be active in the past (before ValidFrom)
+	// Not active before from_date
 	pastDate := now.AddDate(0, -2, 0) // 2 months ago
 	assert.False(t, pr.IsActiveOnDate(pastDate))
+}
+
+func TestPayrateConfiguration_NormalizedKeys(t *testing.T) {
+	// Keys are trimmed and NFC-normalized; diacritics are preserved for display.
+	normalized, err := PayrateConfiguration("{\"Lái xe nâng \": {\"ngày thường\": {\"ca ngày\": 10000}}}").NormalizedKeys()
+	assert.NoError(t, err)
+
+	var got map[string]interface{}
+	assert.NoError(t, json.Unmarshal(normalized, &got))
+	assert.Contains(t, got, "Lái xe nâng")
+
+	// Sibling keys colliding after the Vietnamese lookup fold are rejected.
+	_, err = PayrateConfiguration(
+		"{\"Lái xe nâng\": {\"ngày thường\": {\"ca ngày\": 10000}}, \"lái xe nâng\": {\"ngày thường\": {\"ca ngày\": 20000}}}",
+	).NormalizedKeys()
+	assert.Error(t, err)
 }
 
 func TestPayrate_GetRateValue(t *testing.T) {
@@ -95,35 +113,6 @@ func TestPayrate_GetAllRates(t *testing.T) {
 	assert.Equal(t, PayrateConfiguration(config), rates)
 }
 
-func TestPayrate_CanOverlapWith(t *testing.T) {
-	now := time.Now()
-	toDate1 := now.AddDate(0, 1, 0) // next month
-	toDate2 := now.AddDate(0, 3, 0) // 3 months from now
-	pr1 := &Payrate{
-		FromDate:  now.AddDate(0, -1, 0), // 1 month ago
-		ToDate:    &toDate1,
-		ProjectID: 1,
-	}
-
-	pr2 := &Payrate{
-		FromDate:  now.AddDate(0, 2, 0), // 2 months from now
-		ToDate:    &toDate2,
-		ProjectID: 1,
-	}
-
-	// Should not overlap since dates don't overlap
-	assert.True(t, pr1.CanOverlapWith(pr2))
-
-	// Make pr2's date range overlap with pr1
-	newFromDate := now.AddDate(0, 0, 15) // middle of pr1's range
-	pr2.FromDate = newFromDate
-	assert.False(t, pr1.CanOverlapWith(pr2))
-
-	// Different projects should be able to overlap
-	pr2.ProjectID = 2
-	assert.True(t, pr1.CanOverlapWith(pr2))
-}
-
 // TestNormalizeVietnamese: diacritic-stripping must fold Đ/đ (U+0110/U+0111)
 // to D/d. These are precomposed letters that NFD does not decompose and that
 // carry no unicode.Mn combining mark, so without an explicit replacement the
@@ -144,27 +133,4 @@ func TestNormalizeVietnamese(t *testing.T) {
 			t.Errorf("normalizeVietnamese(%q) = %q, want %q", c.in, got, c.want)
 		}
 	}
-}
-
-func TestPayrate_DateRangeOverlapsWith(t *testing.T) {
-	now := time.Now()
-	toDate1 := now.AddDate(0, 1, 0) // next month
-	toDate2 := now.AddDate(0, 3, 0) // 3 months from now
-	pr1 := &Payrate{
-		FromDate: now.AddDate(0, -1, 0), // 1 month ago
-		ToDate:   &toDate1,
-	}
-
-	pr2 := &Payrate{
-		FromDate: now.AddDate(0, 2, 0), // 2 months from now
-		ToDate:   &toDate2,
-	}
-
-	// Should not overlap
-	assert.False(t, pr1.DateRangeOverlapsWith(pr2))
-
-	// Make pr2's date range overlap with pr1
-	newFromDate := now.AddDate(0, 0, 15) // middle of pr1's range
-	pr2.FromDate = newFromDate
-	assert.True(t, pr1.DateRangeOverlapsWith(pr2))
 }

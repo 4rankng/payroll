@@ -12,6 +12,10 @@ const (
 	ErrCodeInvalidDateRange        = "INVALID_DATE_RANGE"
 	ErrCodeInvalidTransition       = "INVALID_TRANSITION"
 	ErrCodeConflictResolution      = "CONFLICT_RESOLUTION_FAILED"
+
+	// Payrate timeline codes (from-date-only model)
+	ErrCodePayrateNotLatest       = "PAYRATE_NOT_LATEST"
+	ErrCodePayrateImmutableLinked = "PAYRATE_IMMUTABLE_LINKED"
 )
 
 // NewValidationErrorWithCode creates a validation error with an error code

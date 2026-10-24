@@ -1,14 +1,18 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/pkg/timeutil"
+	"api-server/internal/pkg/utils"
 	"api-server/internal/transport/http/response"
 
 	"github.com/gin-gonic/gin"
@@ -62,6 +66,18 @@ type RatesFieldResult struct {
 	// TimesheetCount is how many timesheets are linked to this payrate.
 	// Shown to the user so they understand why rates are locked.
 	TimesheetCount int64 `json:"timesheet_count,omitempty"`
+
+	// MissingPositions lists the latest config's top-level positions this
+	// save drops (warning only — the save may proceed with confirmation).
+	// From-date-only model: a dropped position can no longer price new
+	// timesheets, so the user must see what they are about to remove.
+	MissingPositions []string `json:"missing_positions,omitempty"`
+
+	// KeyDriftWarnings names submitted positions that are case/spelling
+	// variants of existing ones (same Vietnamese fold, different spelling).
+	// Pricing survives via the lookup fold, but display and dropdowns drift —
+	// the user should keep one spelling.
+	KeyDriftWarnings []string `json:"key_drift_warnings,omitempty"`
 }
 
 // ValidatePayrateFields is the per-field breakdown mirroring the submitted request.
@@ -85,6 +101,11 @@ type ValidatePayrateResponse struct {
 
 	// Fields mirrors back every submitted field with its validation state.
 	Fields ValidatePayrateFields `json:"fields"`
+
+	// MutableTimesheetsAffected counts the unpaid and unapproved timesheets
+	// this save would re-price (work date on or after the effective date).
+	// Shown before confirming so the blast radius is explicit.
+	MutableTimesheetsAffected int64 `json:"mutable_timesheets_affected"`
 }
 
 // ValidatePayrate performs a dry-run validation without persisting.
@@ -162,28 +183,50 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 		}
 	}
 
-	// ── Ended-config check (update parity) ────────────────────────────────
-	// The update transaction rejects configs a newer config has replaced
-	// (MsgCannotUpdateEndedPayrateVN); mirror it here so the dry-run never
-	// reports a save that cannot succeed.
-	if !projectBlocked && isUpdate && existingPayrate != nil && existingPayrate.ToDate != nil {
-		endedMessage := constants.MsgCannotUpdateEndedPayrateVN
-		fromResult.field.Status = FieldError
-		fromResult.field.Locked = true
-		fromResult.field.Message = endedMessage
-		ratesResult.Status = FieldError
-		ratesResult.Locked = true
-		ratesResult.Message = endedMessage
+	// ── Non-latest check (update parity) ──────────────────────────────────
+	// From-date-only model: a config a newer config has replaced is history
+	// and view-only; mirror that here so the dry-run never reports a save
+	// that cannot succeed. The stored to_date is ignored (stale by design).
+	if !projectBlocked && isUpdate && existingPayrate != nil {
+		isLatest, successor, latestErr := h.payrateService.IsLatestPayrate(c.Request.Context(), existingPayrate)
+		if latestErr == nil && !isLatest && successor != nil {
+			notLatestMessage := fmt.Sprintf(constants.MsgCannotUpdateNonLatestPayrateVN, successor.FromDate.Format(timeutil.DateFormat))
+			fromResult.field.Status = FieldError
+			fromResult.field.Locked = true
+			fromResult.field.Message = notLatestMessage
+			ratesResult.Status = FieldError
+			ratesResult.Locked = true
+			ratesResult.Message = notLatestMessage
+		}
 	}
 
-	// ── Temporal / timesheet conflict checks ──────────────────────────────
+	// ── Temporal / timesheet constraint checks ────────────────────────────
 	if !projectBlocked && len(fromResult.errors) == 0 && len(ratesResult.Message) == 0 {
-		// Updates and creates share the same constraint set: the paid floor.
-		// Moving a start date later is handled by the update-as-create split,
-		// so linked timesheets never cap an update's start date. projectID is
-		// already resolved from existingPayrate for updates above.
+		// The paid floor binds creates and updates alike; the from-date-only
+		// ordering rules differ (create appends strictly after the latest
+		// config, an update may not cross a sibling). projectID is already
+		// resolved from existingPayrate for updates above.
 		if projectID > 0 && fromResult.parsedDate != nil {
-			h.applyCreateConstraints(c, projectID, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field)
+			h.applyTemporalConstraints(c, projectID, isUpdate, existingPayrate, req.EffectiveFrom, fromResult.parsedDate, &fromResult.field)
+		}
+	}
+
+	// ── Carry-forward completeness ────────────────────────────────────────
+	// Warn when the submitted matrix drops positions present in the latest
+	// config: those positions can no longer price new timesheets.
+	if !projectBlocked && projectID > 0 && ratesResult.Status == FieldOK {
+		if latest, latestErr := h.payrateService.GetLatestPayrateByProject(c.Request.Context(), projectID); latestErr == nil && latest != nil {
+			if missing := missingPositions(latest.Payrate, req.Rates); len(missing) > 0 {
+				ratesResult.Status = FieldWarning
+				ratesResult.MissingPositions = missing
+				ratesResult.Message = fmt.Sprintf("Cấu hình đang bỏ %d vị trí có trong cấu hình hiện tại.", len(missing))
+				ratesResult.Hint = "Các vị trí bị bỏ sẽ không tạo được bảng công mới: " + strings.Join(missing, ", ")
+			} else if drift := keyDriftWarnings(latest.Payrate, req.Rates); len(drift) > 0 {
+				ratesResult.Status = FieldWarning
+				ratesResult.KeyDriftWarnings = drift
+				ratesResult.Message = "Có vị trí viết khác cấu hình hiện tại (khác hoa/thường hoặc dấu)."
+				ratesResult.Hint = "Nên dùng cùng một cách viết để danh sách vị trí không bị lệch: " + strings.Join(drift, "; ")
+			}
 		}
 	}
 
@@ -205,12 +248,18 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 	valid := !hasErrors
 	canSave := !hasErrors && hasWarnings
 
-	c.JSON(200, ValidatePayrateResponse{
+	resp := ValidatePayrateResponse{
 		Valid:               valid,
 		CanSaveWithWarnings: canSave,
 		Summary:             buildValidateSummary(valid, canSave, hasWarnings),
 		Fields:              fields,
-	})
+	}
+	if !projectBlocked && projectID > 0 && fromResult.parsedDate != nil {
+		if affected, cntErr := h.payrateService.CountMutableTimesheetsOnOrAfter(c.Request.Context(), projectID, *fromResult.parsedDate); cntErr == nil {
+			resp.MutableTimesheetsAffected = affected
+		}
+	}
+	c.JSON(200, resp)
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -307,38 +356,142 @@ func validateRates(rates []byte) RatesFieldResult {
 		return r
 	}
 
+	// Normalize keys (trim + NFC) and surface Vietnamese fold-collisions as a
+	// field error before save — mirrors the write-path normalization.
+	if _, normErr := payrate.Payrate.NormalizedKeys(); normErr != nil {
+		r.Status = FieldError
+		r.Message = normErr.Error()
+		r.Hint = "Mỗi vị trí và khung giờ cần một tên duy nhất."
+		return r
+	}
+
 	r.Status = FieldOK
 	return r
 }
 
-// applyPaidFloorConstraints enforces the single immutable boundary shared by
-// create and update: a configuration's start date must fall after the
-// project's most recent paid timesheet work date. Rates are always editable in place —
-// mutable (unpaid and unapproved) rows are recalculated on save.
-func (h *PayrateHandler) applyCreateConstraints(
+// applyTemporalConstraints enforces the timeline rules mirrored from the save
+// transaction: the paid floor binds creates and updates alike; ordering
+// differs — a create must start strictly after the latest config, an update
+// may not move onto or past a sibling config's start.
+func (h *PayrateHandler) applyTemporalConstraints(
 	c *gin.Context,
 	projectID uint,
+	isUpdate bool,
+	existing *domain.Payrate,
 	submittedFrom string,
 	fromDate *time.Time,
 	fromField *FieldResult,
 ) {
+	// Paid floor: the start date must fall after the project's most recent
+	// paid timesheet work date. Mutable (unpaid and unapproved) rows are
+	// recalculated on save.
 	latestPaidDate, err := h.payrateService.GetLatestPaidTimesheetDateForProject(c.Request.Context(), projectID)
-	if err != nil || latestPaidDate == nil {
-		return
+	if err == nil && latestPaidDate != nil {
+		// Wall-clock comparison: converting the stored date to UTC first would
+		// shift it back a day under a loc=Local MySQL DSN (GMT+7/+8).
+		earliestDate := timeutil.StartOfDay(*latestPaidDate).AddDate(0, 0, 1)
+		if timeutil.StartOfDay(*fromDate).Before(earliestDate) {
+			earliestDateStr := earliestDate.Format(timeutil.DateFormat)
+			fromField.Status = FieldError
+			fromField.Message = fmt.Sprintf("Ngày %s có trước ngày trả lương gần nhất của dự án.", submittedFrom)
+			fromField.Hint = fmt.Sprintf("Chọn ngày từ %s trở đi để chỉ cập nhật các bảng công chưa thanh toán và chưa duyệt.", earliestDateStr)
+			fromField.MinValue = earliestDateStr
+			fromField.SuggestedValue = earliestDateStr
+			return
+		}
 	}
-	// Wall-clock comparison: converting the stored date to UTC first would
-	// shift it back a day under a loc=Local MySQL DSN (GMT+7/+8).
-	earliestDate := timeutil.StartOfDay(*latestPaidDate).AddDate(0, 0, 1)
-	if !timeutil.StartOfDay(*fromDate).Before(earliestDate) {
-		return
-	}
-	earliestDateStr := earliestDate.Format(timeutil.DateFormat)
 
-	fromField.Status = FieldError
-	fromField.Message = fmt.Sprintf("Ngày %s có trước ngày trả lương gần nhất của dự án.", submittedFrom)
-	fromField.Hint = fmt.Sprintf("Chọn ngày từ %s trở đi để chỉ cập nhật các bảng công chưa thanh toán và chưa duyệt.", earliestDateStr)
-	fromField.MinValue = earliestDateStr
-	fromField.SuggestedValue = earliestDateStr
+	if isUpdate {
+		if existing == nil {
+			return
+		}
+		hasSibling, siblingErr := h.payrateService.HasSiblingPayrateOnOrAfter(c.Request.Context(), projectID, existing.ID, *fromDate)
+		if siblingErr == nil && hasSibling {
+			fromField.Status = FieldError
+			fromField.Message = constants.MsgCannotUpdatePayrateConflictingConfigVN
+			fromField.Hint = "Ngày hiệu lực không được trùng hoặc vượt quá ngày bắt đầu của cấu hình khác."
+		}
+		return
+	}
+
+	// Create: the timeline is append-only — the new config starts strictly
+	// after the latest existing one; correcting the present is an update.
+	latest, latestErr := h.payrateService.GetLatestPayrateByProject(c.Request.Context(), projectID)
+	if latestErr != nil || latest == nil {
+		return
+	}
+	latestDay := timeutil.StartOfDay(latest.FromDate)
+	if !timeutil.StartOfDay(*fromDate).After(latestDay) {
+		latestStr := latestDay.Format(timeutil.DateFormat)
+		nextStr := latestDay.AddDate(0, 0, 1).Format(timeutil.DateFormat)
+		fromField.Status = FieldError
+		fromField.Message = fmt.Sprintf("Ngày %s không được trước hoặc trùng ngày bắt đầu của cấu hình mới nhất (%s).", submittedFrom, latestStr)
+		fromField.Hint = "Để sửa mức lương hiện tại, hãy chỉnh sửa cấu hình đang mở. Cấu hình mới chỉ dùng cho các ngày sau đó."
+		fromField.MinValue = nextStr
+		fromField.SuggestedValue = nextStr
+	}
+}
+
+// missingPositions lists the latest config's top-level position keys that the
+// submitted configuration drops, compared under the Vietnamese lookup fold so
+// case variants count as present.
+func missingPositions(latest domain.PayrateConfiguration, submitted []byte) []string {
+	var latestMap, submittedMap map[string]json.RawMessage
+	if err := json.Unmarshal(latest, &latestMap); err != nil {
+		return nil
+	}
+	if err := json.Unmarshal(submitted, &submittedMap); err != nil {
+		return nil
+	}
+
+	foldKeys := func(m map[string]json.RawMessage) map[string]string {
+		out := make(map[string]string, len(m))
+		for k := range m {
+			out[utils.NormalizeVietnamese(strings.TrimSpace(k))] = k
+		}
+		return out
+	}
+	submittedFolds := foldKeys(submittedMap)
+
+	var missing []string
+	for k := range latestMap {
+		if _, ok := submittedFolds[utils.NormalizeVietnamese(strings.TrimSpace(k))]; !ok {
+			missing = append(missing, k)
+		}
+	}
+	sort.Strings(missing)
+	return missing
+}
+
+// keyDriftWarnings names submitted positions whose spelling differs from the
+// latest config's spelling of the same folded position (e.g. "xuất hàng" vs
+// "Xuất hàng"). Legal — lookups fold — but the display drift compounds.
+func keyDriftWarnings(latest domain.PayrateConfiguration, submitted []byte) []string {
+	var latestMap, submittedMap map[string]json.RawMessage
+	if err := json.Unmarshal(latest, &latestMap); err != nil {
+		return nil
+	}
+	if err := json.Unmarshal(submitted, &submittedMap); err != nil {
+		return nil
+	}
+
+	var warnings []string
+	for k := range submittedMap {
+		fold := utils.NormalizeVietnamese(strings.TrimSpace(k))
+		if latestSpelling, ok := latestFolding(latestMap)[fold]; ok && latestSpelling != k {
+			warnings = append(warnings, fmt.Sprintf("%q (hiện tại: %q)", k, latestSpelling))
+		}
+	}
+	sort.Strings(warnings)
+	return warnings
+}
+
+func latestFolding(m map[string]json.RawMessage) map[string]string {
+	out := make(map[string]string, len(m))
+	for k := range m {
+		out[utils.NormalizeVietnamese(strings.TrimSpace(k))] = k
+	}
+	return out
 }
 
 func buildValidateSummary(valid, canSave, hasWarnings bool) string {

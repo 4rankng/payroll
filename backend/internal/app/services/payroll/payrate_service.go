@@ -3,9 +3,9 @@ package payroll
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
-	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/services"
@@ -92,44 +92,22 @@ func (s *PayrateService) UpdatePayrate(ctx context.Context, payrate *domain.Payr
 }
 
 func (s *PayrateService) DeletePayrate(ctx context.Context, id uint, deletedBy uint) error {
-	// Check if payrate is used by timesheets
-	isUsed, err := s.PayrateRepo.IsUsedByTimesheets(ctx, id)
+	logger := observability.GetLogger()
+
+	deleted, err := s.TemporalService.DeleteEffectiveDatedPayrate(ctx, id)
 	if err != nil {
-		return fmt.Errorf("failed to check payrate usage: %w", err)
-	}
-	if isUsed {
-		return domain.NewValidationError(constants.MsgCannotDeletePayrateUsedByTimesheetsVN)
-	}
-
-	payrate, err := s.PayrateRepo.GetByID(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	previousEndDate := payrate.FromDate.AddDate(0, 0, -1)
-	previousPayrate, err := s.PayrateRepo.GetByProjectAndToDate(ctx, payrate.ProjectID, previousEndDate)
-	if err != nil && !domain.IsNotFoundError(err) {
-		return fmt.Errorf("failed to load previous payrate: %w", err)
-	}
-	// Soft-delete the target before extending the predecessor. Extending first
-	// would briefly leave two open payrates for the project (target still open,
-	// predecessor re-opened) and violate uq_payrates_one_open_per_project
-	// (error 1062) whenever the target is the currently open payrate.
-	if err := s.PayrateRepo.Delete(ctx, id); err != nil {
-		return fmt.Errorf("failed to delete payrate: %w", err)
-	}
-
-	if previousPayrate != nil {
-		previousPayrate.ToDate = payrate.ToDate
-		if err := s.PayrateRepo.Update(ctx, previousPayrate); err != nil {
-			return fmt.Errorf("failed to extend previous payrate: %w", err)
+		if _, ok := err.(*domain.DomainError); ok {
+			return err
 		}
+		return fmt.Errorf("failed to delete temporal payrate: %w", err)
 	}
+
+	payrate := deleted
 
 	// Publish domain event
 	event := domain.NewPayrateDeletedEvent(ctx, payrate)
 	if err := s.EventBus.Publish(ctx, event); err != nil {
-		observability.GetLogger().Warn("failed to publish PayrateDeletedEvent", "error", err)
+		logger.Warn("failed to publish PayrateDeletedEvent", "error", err)
 	}
 
 	return nil
@@ -155,11 +133,6 @@ func (s *PayrateService) GetCurrentOrUpcomingPayrateByProject(ctx context.Contex
 	return s.PayrateRepo.GetCurrentOrUpcomingByProject(ctx, projectID)
 }
 
-// IsPayrateUsedByTimesheets checks if a payrate has any associated timesheets
-func (s *PayrateService) IsPayrateUsedByTimesheets(ctx context.Context, payrateID uint) (bool, error) {
-	return s.PayrateRepo.IsUsedByTimesheets(ctx, payrateID)
-}
-
 // HasProjectTimesheetsFromDate checks if a project has timesheets on or after a given date
 func (s *PayrateService) HasProjectTimesheetsFromDate(ctx context.Context, projectID uint, fromDate time.Time) (bool, error) {
 	return s.PayrateRepo.HasProjectTimesheetsFromDate(ctx, projectID, fromDate)
@@ -174,4 +147,77 @@ func (s *PayrateService) GetLatestTimesheetDateForPayrate(ctx context.Context, p
 // new effective-dated payrate across the whole project.
 func (s *PayrateService) GetLatestPaidTimesheetDateForProject(ctx context.Context, projectID uint) (*time.Time, error) {
 	return s.TemporalService.GetLatestPaidTimesheetDateForProject(ctx, projectID)
+}
+
+// AttachDisplayEndDates fills each payrate's ToDate with its derived end date
+// (the successor's from_date minus one day; nil for the latest config).
+// From-date-only model: the stored to_date is stale by design, so responses
+// always derive it from the timeline. Mutates entries for response assembly
+// only — write paths nil out ToDate before persisting.
+func (s *PayrateService) AttachDisplayEndDates(ctx context.Context, payrates []*domain.Payrate) error {
+	if len(payrates) == 0 {
+		return nil
+	}
+
+	perProject := make(map[uint][]*domain.Payrate)
+	for _, p := range payrates {
+		perProject[p.ProjectID] = append(perProject[p.ProjectID], p)
+	}
+
+	for projectID := range perProject {
+		timeline, err := s.PayrateRepo.GetByProject(ctx, projectID)
+		if err != nil {
+			return fmt.Errorf("failed to load payrate timeline for display end dates: %w", err)
+		}
+
+		// Sort ascending by (from_date, id) so the walk below is immune to the
+		// repository's own ordering: each row's successor is the next entry.
+		sorted := make([]*domain.Payrate, len(timeline))
+		copy(sorted, timeline)
+		sort.Slice(sorted, func(a, b int) bool {
+			if !sorted[a].FromDate.Equal(sorted[b].FromDate) {
+				return sorted[a].FromDate.Before(sorted[b].FromDate)
+			}
+			return sorted[a].ID < sorted[b].ID
+		})
+
+		endByID := make(map[uint]*time.Time, len(sorted))
+		for i := range sorted {
+			if i == len(sorted)-1 {
+				continue // latest config: open-ended
+			}
+			end := sorted[i+1].FromDate.AddDate(0, 0, -1)
+			endByID[sorted[i].ID] = &end
+		}
+
+		for _, row := range perProject[projectID] {
+			row.ToDate = endByID[row.ID]
+		}
+	}
+
+	return nil
+}
+
+// IsLatestPayrate reports whether the config is still the project's most
+// recent one, returning the successor when it is not.
+func (s *PayrateService) IsLatestPayrate(ctx context.Context, payrate *domain.Payrate) (bool, *domain.Payrate, error) {
+	return s.TemporalService.IsLatestPayrate(ctx, payrate)
+}
+
+// GetLatestPayrateByProject returns the project's most recent config, or nil
+// when the project has none yet.
+func (s *PayrateService) GetLatestPayrateByProject(ctx context.Context, projectID uint) (*domain.Payrate, error) {
+	return s.TemporalService.GetLatestPayrateByProject(ctx, projectID)
+}
+
+// HasSiblingPayrateOnOrAfter mirrors the update-side ordering guard: another
+// live config already starts on or after the proposed date.
+func (s *PayrateService) HasSiblingPayrateOnOrAfter(ctx context.Context, projectID, excludeID uint, date time.Time) (bool, error) {
+	return s.TemporalService.HasSiblingPayrateOnOrAfter(ctx, projectID, excludeID, date)
+}
+
+// CountMutableTimesheetsOnOrAfter counts the timesheets a save effective from
+// the given date would re-price.
+func (s *PayrateService) CountMutableTimesheetsOnOrAfter(ctx context.Context, projectID uint, fromDate time.Time) (int64, error) {
+	return s.TemporalService.CountMutableTimesheetsOnOrAfter(ctx, projectID, fromDate)
 }

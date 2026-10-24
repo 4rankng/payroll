@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"api-server/internal/pkg/clock"
+	"api-server/internal/constants"
 	"api-server/internal/pkg/utils"
 	"github.com/nqd/flat"
+	"golang.org/x/text/unicode/norm"
 	"gorm.io/gorm"
 )
 
@@ -367,6 +368,66 @@ func (p PayrateConfiguration) GetRate(path string) (int, error) {
 	return 0, NewValidationError(fmt.Sprintf("không tìm thấy mức lương cho đường dẫn: %s", path))
 }
 
+// NormalizedKeys returns a copy of the configuration whose object keys are
+// trimmed and Unicode NFC-normalized. Diacritics are preserved: these keys
+// double as display names in the UI (position dropdowns are built from them).
+// Sibling keys that collide under the same Vietnamese fold GetRate uses for
+// lookups are rejected, so divergent spellings of one position ("Lái xe nâng"
+// vs "lái xe nâng") cannot both be persisted and silently price at zero.
+func (p PayrateConfiguration) NormalizedKeys() (PayrateConfiguration, error) {
+	if len(p) == 0 {
+		return p, nil
+	}
+
+	var level map[string]interface{}
+	if err := json.Unmarshal(p, &level); err != nil {
+		return nil, NewValidationError("định dạng JSON không hợp lệ: " + err.Error())
+	}
+
+	normalized, err := normalizeConfigKeys(level)
+	if err != nil {
+		return nil, err
+	}
+
+	out, err := json.Marshal(normalized)
+	if err != nil {
+		return nil, NewValidationError("không thể chuẩn hóa cấu hình mức lương: " + err.Error())
+	}
+	return PayrateConfiguration(out), nil
+}
+
+// normalizeConfigKeys rewrites one object level: keys are trimmed and NFC-
+// composed, and two sibling keys folding to the same canonical form are
+// rejected with both original spellings named. Nested objects recurse.
+func normalizeConfigKeys(level map[string]interface{}) (map[string]interface{}, error) {
+	out := make(map[string]interface{}, len(level))
+	folds := make(map[string]string, len(level))
+
+	for key, value := range level {
+		cleanKey := strings.TrimSpace(norm.NFC.String(key))
+		if cleanKey == "" {
+			return nil, NewValidationError("tên vị trí/khung giờ không được để trống sau khi xử lý khoảng trắng")
+		}
+
+		fold := normalizeVietnamese(cleanKey)
+		if first, dupe := folds[fold]; dupe {
+			return nil, NewValidationError(fmt.Sprintf(constants.MsgPayrateFoldKeyCollisionVN, first, cleanKey))
+		}
+		folds[fold] = cleanKey
+
+		if nested, ok := value.(map[string]interface{}); ok {
+			nestedOut, err := normalizeConfigKeys(nested)
+			if err != nil {
+				return nil, err
+			}
+			value = nestedOut
+		}
+		out[cleanKey] = value
+	}
+
+	return out, nil
+}
+
 // Payrate represents pay rate configuration for a project
 type Payrate struct {
 	ID          uint                 `json:"id" gorm:"primarykey;type:bigint unsigned"`
@@ -385,7 +446,9 @@ type Payrate struct {
 	CreatedUser User    `json:"created_user" gorm:"foreignKey:CreatedBy;references:ID"`
 }
 
-// PayrateRepository defines the interface for payrate persistence operations
+// PayrateRepository defines the interface for payrate persistence operations.
+// From-date-only model: the config for a work date is the project's latest
+// from_date on or before it; to_date is derived and never a query input.
 type PayrateRepository interface {
 	// Existing methods (non-transactional)
 	Create(ctx context.Context, payrate *Payrate) error
@@ -397,23 +460,13 @@ type PayrateRepository interface {
 	GetByProject(ctx context.Context, projectID uint) ([]*Payrate, error)
 	GetActiveByProjectAndDate(ctx context.Context, projectID uint, date time.Time) (*Payrate, error)
 	GetCurrentOrUpcomingByProject(ctx context.Context, projectID uint) (*Payrate, error)
-	IsUsedByTimesheets(ctx context.Context, id uint) (bool, error)
 	HasTimesheetsFromDate(ctx context.Context, id uint, fromDate time.Time) (bool, error)
 	HasProjectTimesheetsFromDate(ctx context.Context, projectID uint, fromDate time.Time) (bool, error)
 	GetLatestTimesheetDateForPayrate(ctx context.Context, payrateID uint) (*time.Time, error)
-	GetByProjectAndToDate(ctx context.Context, projectID uint, toDate time.Time) (*Payrate, error)
 	GetActiveByProject(ctx context.Context, projectID uint, date time.Time) ([]*Payrate, error)
-	EndActivePayrates(ctx context.Context, projectID uint, endDate time.Time, excludeID uint) error
 
 	// Transaction-aware methods for temporal operations
 	CreateWithTx(ctx context.Context, tx interface{}, payrate *Payrate) error
-	FindActiveByProject(ctx context.Context, tx interface{}, projectID uint) ([]*Payrate, error)
-	CloseActiveByProject(ctx context.Context, tx interface{}, projectID uint, toDate time.Time) error
-	DeleteActiveByProject(ctx context.Context, tx interface{}, projectID uint) error
-
-	// Validation queries
-	ValidateDateOrdering(ctx context.Context, tx interface{}, projectID uint) (int64, error)
-	ValidateActiveCount(ctx context.Context, tx interface{}, projectID uint) (int64, error)
 }
 
 // PayrateFilters represents filtering options for payrate queries
@@ -514,25 +567,15 @@ func (p *Payrate) IsValid() error {
 	return nil
 }
 
-// IsActiveOnDate checks if this payrate is active on a specific date
+// IsActiveOnDate reports whether this config has taken effect on the given
+// date. From-date-only model: the config in force for a date is the project's
+// latest from_date on or before it — this check is only the lower bound, and
+// the resolver guarantees the row it returns is the latest qualifying one.
+// to_date is derived bookkeeping and never gates activity.
 func (p *Payrate) IsActiveOnDate(date time.Time) bool {
-	// Date must be on or after from date
 	dateOnly := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 	fromDateOnly := time.Date(p.FromDate.Year(), p.FromDate.Month(), p.FromDate.Day(), 0, 0, 0, 0, p.FromDate.Location())
-
-	if dateOnly.Before(fromDateOnly) {
-		return false
-	}
-
-	// If to date is set, date must be on or before to date
-	if p.ToDate != nil {
-		toDateOnly := time.Date(p.ToDate.Year(), p.ToDate.Month(), p.ToDate.Day(), 0, 0, 0, 0, p.ToDate.Location())
-		if dateOnly.After(toDateOnly) {
-			return false
-		}
-	}
-
-	return true
+	return !dateOnly.Before(fromDateOnly)
 }
 
 // GetRateValue returns the VND rate value for a flattened path
@@ -562,34 +605,6 @@ func (p *Payrate) GetAllRates() PayrateConfiguration {
 		return PayrateConfiguration("{}")
 	}
 	return p.Payrate
-}
-
-// CanOverlapWith checks if this payrate can overlap with another payrate
-func (p *Payrate) CanOverlapWith(other *Payrate) bool {
-	if p.ProjectID != other.ProjectID {
-		return true // Different projects can overlap
-	}
-
-	// Check date overlap
-	return !p.DateRangeOverlapsWith(other)
-}
-
-// DateRangeOverlapsWith checks if date ranges overlap
-func (p *Payrate) DateRangeOverlapsWith(other *Payrate) bool {
-	p1Start := p.FromDate
-	p1End := clock.Now()
-	if p.ToDate != nil {
-		p1End = *p.ToDate
-	}
-
-	p2Start := other.FromDate
-	p2End := clock.Now()
-	if other.ToDate != nil {
-		p2End = *other.ToDate
-	}
-
-	// Check if ranges overlap
-	return p1Start.Before(p2End.AddDate(0, 0, 1)) && p2Start.Before(p1End.AddDate(0, 0, 1))
 }
 
 // Note: No skill level validation functions needed

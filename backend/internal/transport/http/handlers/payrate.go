@@ -65,124 +65,6 @@ func (h *PayrateHandler) earliestEffectiveFrom(ctx context.Context, projectID ui
 	return latestPaid.AddDate(0, 0, 1).Format("2006-01-02")
 }
 
-// Start-date fields are never load-time locked: moving a start date later now
-// splits the config (update-as-create), so any stored state is correctable via
-// the normal edit flow. Completed/cancelled projects are rejected by the
-// validate endpoint and the update handler itself.
-
-func (h *PayrateHandler) CreatePayrate(c *gin.Context) {
-	var req dto.CreatePayrateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, constants.MsgInvalidRequestBodyVN)
-		return
-	}
-
-	userID, exists := c.Get(constants.CtxUserID)
-	if !exists {
-		response.Forbidden(c, constants.MsgUserIDNotFoundInContextVN)
-		return
-	}
-
-	userRole, roleExists := c.Get("user_role")
-	if !roleExists {
-		response.Forbidden(c, constants.MsgUserRoleNotFoundInContextVN)
-		return
-	}
-
-	// Check if project exists and validate status
-	project, err := h.projectService.GetProject(c.Request.Context(), req.ProjectID)
-	if err != nil {
-		response.HandleDomainError(c, err)
-		return
-	}
-	if userRole.(string) == string(domain.RolePartner) {
-		canModify, err := h.projectPermissionService.CanUserModifyProject(c.Request.Context(), req.ProjectID, userID.(uint))
-		if err != nil {
-			response.InternalServerError(c, constants.MsgFailedToCheckProjectAccessVN)
-			return
-		}
-		if !canModify {
-			response.Forbidden(c, constants.MsgForbiddenVN)
-			return
-		}
-	}
-
-	// Check if project status allows modifications
-	if project.IsCompleted() || project.IsCancelled() {
-		response.BadRequest(c, constants.MsgCannotCreatePayrateForProjectVN+": "+string(project.ProjectStatus))
-		return
-	}
-
-	// Convert DTO to domain entity
-	payrate, err := req.ToDomain()
-	if err != nil {
-		response.BadRequest(c, fmt.Sprintf("%s: %s", constants.MsgInvalidPayrateConfigurationVN, err.Error()))
-		return
-	}
-
-	// Validate rate structure
-	if err := payrate.Payrate.Validate(); err != nil {
-		response.BadRequest(c, err.Error())
-		return
-	}
-
-	// Auto-resolve overlapping shifts (wider shift wins)
-	resolved, err := payrate.Payrate.ResolveFlexibleOverlaps()
-	if err == nil {
-		payrate.Payrate = resolved
-	}
-
-	// Parse from date string to time.Time for database
-	fromDate, err := time.ParseInLocation("2006-01-02", req.EffectiveFrom, time.Local)
-	if err != nil {
-		response.BadRequest(c, constants.MsgInvalidEffectiveFromFormatVN)
-		return
-	}
-
-	// Parse to date if provided
-	var toDate *time.Time
-	if req.EffectiveTo != nil && *req.EffectiveTo != "" {
-		parsedToDate, err := time.ParseInLocation("2006-01-02", *req.EffectiveTo, time.Local)
-		if err != nil {
-			response.BadRequest(c, constants.MsgInvalidToDateFormatVN)
-			return
-		}
-		toDate = &parsedToDate
-	}
-
-	// Set additional fields on the converted payrate
-	payrate.ProjectID = req.ProjectID
-	payrate.FromDate = fromDate
-	payrate.ToDate = toDate
-	payrate.CreatedBy = userID.(uint)
-
-	createdPayrate, err := h.payrateService.CreatePayrate(c.Request.Context(), payrate, userID.(uint), userRole.(string))
-	if err != nil {
-		response.HandleDomainError(c, err)
-		return
-	}
-
-	// Convert dates back to string for response
-	var toDateStr *string
-	if createdPayrate.ToDate != nil {
-		dateStr := createdPayrate.ToDate.Format("2006-01-02")
-		toDateStr = &dateStr
-	}
-
-	payrateResponse := dto.PayrateResponse{
-		ID:        createdPayrate.ID,
-		ProjectID: createdPayrate.ProjectID,
-		Rates:     createdPayrate.Payrate,
-		FromDate:  createdPayrate.FromDate.Format("2006-01-02"),
-		ToDate:    toDateStr,
-		CreatedBy: createdPayrate.CreatedBy,
-		CreatedAt: createdPayrate.CreatedAt,
-		UpdatedAt: createdPayrate.UpdatedAt,
-	}
-
-	response.SuccessCreated(c, payrateResponse, constants.MsgPayrateCreatedSuccessfullyVN)
-}
-
 func (h *PayrateHandler) GetPayrate(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -219,6 +101,13 @@ func (h *PayrateHandler) GetPayrate(c *gin.Context) {
 			response.Forbidden(c, constants.MsgForbiddenVN)
 			return
 		}
+	}
+
+	// Derived end date for display (successor's from_date - 1); the stored
+	// to_date is stale by design under the from-date-only model.
+	if err := h.payrateService.AttachDisplayEndDates(c.Request.Context(), []*domain.Payrate{payrate}); err != nil {
+		response.InternalServerError(c, constants.MsgInternalServerErrorVN)
+		return
 	}
 
 	payrateResponse := dto.PayrateResponse{
@@ -309,6 +198,12 @@ func (h *PayrateHandler) ListPayrates(c *gin.Context) {
 	payrates, err := h.payrateService.ListPayrates(c.Request.Context(), filters)
 	if err != nil {
 		response.InternalServerError(c, constants.MsgFailedToListPayratesVN)
+		return
+	}
+
+	// Derived end dates for display (successor's from_date - 1).
+	if err := h.payrateService.AttachDisplayEndDates(c.Request.Context(), payrates); err != nil {
+		response.InternalServerError(c, constants.MsgInternalServerErrorVN)
 		return
 	}
 
@@ -443,6 +338,15 @@ func (h *PayrateHandler) UpdatePayrate(c *gin.Context) {
 		return
 	}
 
+	// Normalize keys (trim + NFC) and reject Vietnamese fold-collisions so
+	// divergent spellings of one position cannot be persisted.
+	normalizedRates, normErr := updatedPayrate.Payrate.NormalizedKeys()
+	if normErr != nil {
+		response.BadRequest(c, normErr.Error())
+		return
+	}
+	updatedPayrate.Payrate = normalizedRates
+
 	// Validate rate structure
 	if err := updatedPayrate.Payrate.Validate(); err != nil {
 		logger.Error("Payrate validation failed",
@@ -493,12 +397,9 @@ func (h *PayrateHandler) UpdatePayrate(c *gin.Context) {
 		"to_date", toDate)
 
 	// Update fields (keep existing project_id, don't change it).
-	// effective_to is not part of the model: create drops it at the service
-	// level and configs close only via the timeline (update-as-create split /
-	// predecessor sync / EndActivePayrateForProject). A supplied effective_to
-	// is parsed above for a clear 400 on malformed input but deliberately
-	// ignored — mirroring create. Persisting it would mark the config "ended"
-	// by our own guard and brick it from further edits.
+	// From-date-only model: to_date is derived from the successor and never
+	// written. A supplied effective_to is parsed above for a clear 400 on
+	// malformed input but deliberately ignored — mirroring create.
 	payrate.Payrate = updatedPayrate.Payrate
 	payrate.FromDate = fromDate
 
@@ -514,6 +415,12 @@ func (h *PayrateHandler) UpdatePayrate(c *gin.Context) {
 
 	logger.Info("Payrate update completed successfully",
 		"payrate_id", payrate.ID)
+
+	// Derived end date for display (successor's from_date - 1).
+	if err := h.payrateService.AttachDisplayEndDates(c.Request.Context(), []*domain.Payrate{payrate}); err != nil {
+		response.InternalServerError(c, constants.MsgInternalServerErrorVN)
+		return
+	}
 
 	payrateResponse := dto.PayrateResponse{
 		ID:        payrate.ID,

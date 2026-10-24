@@ -80,6 +80,13 @@ func (h *Handler) ListProjectPayrates(c *gin.Context) {
 		return
 	}
 
+	// Derived end dates for display (successor's from_date - 1); the stored
+	// to_date is stale by design under the from-date-only model.
+	if err := h.payrateService.AttachDisplayEndDates(c.Request.Context(), payrates); err != nil {
+		response.InternalServerError(c, constants.MsgInternalServerErrorVN)
+		return
+	}
+
 	total, err := h.payrateService.CountPayrates(c.Request.Context(), filters)
 	if err != nil {
 		response.InternalServerError(c, constants.MsgFailedToCountPayratesVN)
@@ -248,6 +255,15 @@ func (h *Handler) CreateProjectPayrate(c *gin.Context) {
 		return
 	}
 
+	// Normalize keys (trim + NFC) and reject Vietnamese fold-collisions so
+	// divergent spellings of one position cannot be persisted.
+	normalizedRates, normErr := payrate.Payrate.NormalizedKeys()
+	if normErr != nil {
+		response.BadRequest(c, fmt.Sprintf("%s: %s", constants.MsgInvalidPayrateConfigurationVN, normErr.Error()))
+		return
+	}
+	payrate.Payrate = normalizedRates
+
 	// Validate rate structure using basic JSON validation
 	logger.Info("Validating payrate configuration",
 		"project_id", projectID,
@@ -292,9 +308,10 @@ func (h *Handler) CreateProjectPayrate(c *gin.Context) {
 		toDate = &parsedToDate
 	}
 
-	// Set additional fields on the converted payrate
+	// Set additional fields on the converted payrate. From-date-only model:
+	// to_date is derived from the successor and never written; a supplied
+	// effective_to is deliberately ignored (the service nils it out).
 	payrate.FromDate = fromDate
-	payrate.ToDate = toDate
 	payrate.CreatedBy = userID.(uint)
 
 	logger.Info("Creating payrate in service layer",
@@ -373,6 +390,12 @@ func (h *Handler) GetCurrentProjectPayrate(c *gin.Context) {
 			return
 		}
 		response.HandleDomainError(c, err)
+		return
+	}
+
+	// Derived end date for display (successor's from_date - 1).
+	if err := h.payrateService.AttachDisplayEndDates(c.Request.Context(), []*domain.Payrate{payrate}); err != nil {
+		response.InternalServerError(c, constants.MsgInternalServerErrorVN)
 		return
 	}
 
