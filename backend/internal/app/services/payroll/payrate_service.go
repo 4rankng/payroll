@@ -3,7 +3,6 @@ package payroll
 import (
 	"context"
 	"fmt"
-	"sort"
 	"time"
 
 	"api-server/internal/domain"
@@ -147,55 +146,6 @@ func (s *PayrateService) GetLatestTimesheetDateForPayrate(ctx context.Context, p
 // new effective-dated payrate across the whole project.
 func (s *PayrateService) GetLatestPaidTimesheetDateForProject(ctx context.Context, projectID uint) (*time.Time, error) {
 	return s.TemporalService.GetLatestPaidTimesheetDateForProject(ctx, projectID)
-}
-
-// AttachDisplayEndDates fills each payrate's ToDate with its derived end date
-// (the successor's from_date minus one day; nil for the latest config).
-// From-date-only model: the stored to_date is stale by design, so responses
-// always derive it from the timeline. Mutates entries for response assembly
-// only — write paths nil out ToDate before persisting.
-func (s *PayrateService) AttachDisplayEndDates(ctx context.Context, payrates []*domain.Payrate) error {
-	if len(payrates) == 0 {
-		return nil
-	}
-
-	perProject := make(map[uint][]*domain.Payrate)
-	for _, p := range payrates {
-		perProject[p.ProjectID] = append(perProject[p.ProjectID], p)
-	}
-
-	for projectID := range perProject {
-		timeline, err := s.PayrateRepo.GetByProject(ctx, projectID)
-		if err != nil {
-			return fmt.Errorf("failed to load payrate timeline for display end dates: %w", err)
-		}
-
-		// Sort ascending by (from_date, id) so the walk below is immune to the
-		// repository's own ordering: each row's successor is the next entry.
-		sorted := make([]*domain.Payrate, len(timeline))
-		copy(sorted, timeline)
-		sort.Slice(sorted, func(a, b int) bool {
-			if !sorted[a].FromDate.Equal(sorted[b].FromDate) {
-				return sorted[a].FromDate.Before(sorted[b].FromDate)
-			}
-			return sorted[a].ID < sorted[b].ID
-		})
-
-		endByID := make(map[uint]*time.Time, len(sorted))
-		for i := range sorted {
-			if i == len(sorted)-1 {
-				continue // latest config: open-ended
-			}
-			end := sorted[i+1].FromDate.AddDate(0, 0, -1)
-			endByID[sorted[i].ID] = &end
-		}
-
-		for _, row := range perProject[projectID] {
-			row.ToDate = endByID[row.ID]
-		}
-	}
-
-	return nil
 }
 
 // IsLatestPayrate reports whether the config is still the project's most

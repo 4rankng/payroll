@@ -103,6 +103,34 @@ func TestRequireAPIKeyScope_RejectsUnknownScopeKey(t *testing.T) {
 	assert.NotContains(t, rec.Body.String(), "reached handler")
 }
 
+// TestRequireAPIKeyScope_TimesheetReadRefusedOnTingHire pins the cross-scope
+// isolation the vendor integration depends on: a timesheet_read key is valid
+// but belongs to the read-only vendor surface, so a TingHire-guarded route
+// (employee lookup, OTP reset, self check-in) must answer 403, never fall
+// through a rollout-transition shim.
+func TestRequireAPIKeyScope_TimesheetReadRefusedOnTingHire(t *testing.T) {
+	repo := newFakeKeyRepo()
+	key := seedKey(t, repo, domain.APIKeyScopeTimesheetRead)
+
+	rec := runScopeGate(t, repo, key, domain.APIKeyScopeTingHire)
+
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+	assert.NotContains(t, rec.Body.String(), "reached handler")
+}
+
+// TestRequireAPIKeyScope_LegacyChatbotStillAcceptedOnTingHire pins the legacy
+// exception that stays: pre-normalization chatbot keys keep driving the
+// TingHire surface.
+func TestRequireAPIKeyScope_LegacyChatbotStillAcceptedOnTingHire(t *testing.T) {
+	repo := newFakeKeyRepo()
+	key := seedKey(t, repo, domain.APIKeyScopeChatbot)
+
+	rec := runScopeGate(t, repo, key, domain.APIKeyScopeTingHire)
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "reached handler", rec.Body.String())
+}
+
 // TestRequireAPIKeyScope_InvalidKeyIs401Not403 pins the ordering guarantee: an
 // invalid credential is rejected by Authenticate as 401, and only a genuinely
 // valid-but-under-scoped key reaches the guard as 403. That ordering keeps the

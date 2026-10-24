@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"time"
+
+	"api-server/internal/pkg/clock"
 )
 
 const flowPayrate = "PayrateCRUD"
@@ -225,20 +227,39 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		return AssertEqual("code", "PAYRATE_NOT_LATEST", apiErr.Code)
 	})
 
-	reporter.RunTest(flowPayrate, "New model: derived end date follows successor", func() error {
-		var payrates []PayrateResponse
-		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/payrates?project_id=%d", projectID), &payrates); err != nil {
+	reporter.RunTest(flowPayrate, "New model: no end date on the wire (from-date-only)", func() error {
+		// Migration 138 dropped payrates.to_date; the API must not carry any
+		// toDate key — neither derived nor stale.
+		rows, _, err := vendorRawRows(admin, fmt.Sprintf("/api/v1/payrates?project_id=%d&pageSize=100", projectID))
+		if err != nil {
 			return fmt.Errorf("list: %w", err)
 		}
-		for i := range payrates {
-			if payrates[i].ID == v1ID {
-				if payrates[i].ToDate == nil {
-					return fmt.Errorf("superseded config must derive an end date, got null")
-				}
-				return AssertEqual("derived end date", today(), *payrates[i].ToDate)
+		if len(rows) == 0 {
+			return fmt.Errorf("expected at least one payrate row")
+		}
+		for i, row := range rows {
+			if _, present := row["toDate"]; present {
+				return fmt.Errorf("row %d carries a toDate key — end dates must not be on the wire", i)
 			}
 		}
-		return fmt.Errorf("v1 %d not found in list", v1ID)
+		return nil
+	})
+
+	reporter.RunTest(flowPayrate, "New model: supplied effective_to is rejected (400)", func() error {
+		toDate := clockHelperDayAfter(clockHelperTomorrow())
+		body := CreatePayrateRequest{
+			Rates:         []byte(`{"Nhân viên":{"Ngày thường":{"Ca ngày":260000}}}`),
+			EffectiveFrom: clockHelperTomorrow(),
+			EffectiveTo:   &toDate,
+		}
+		_, statusCode, err := admin.PostExpectError(fmt.Sprintf("/api/v1/projects/%d/payrate", projectID), body)
+		if err != nil {
+			return fmt.Errorf("post: %w", err)
+		}
+		if statusCode != 400 {
+			return fmt.Errorf("expected 400, got %d", statusCode)
+		}
+		return nil
 	})
 
 	reporter.RunTest(flowPayrate, "New model: dry-run valid for a later date", func() error {
@@ -315,9 +336,6 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		}
 		for i := range payrates {
 			if payrates[i].ID == v1ID {
-				if payrates[i].ToDate != nil {
-					return fmt.Errorf("expected open-ended after successor deleted, got %s", *payrates[i].ToDate)
-				}
 				return nil
 			}
 		}
@@ -325,9 +343,13 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 	})
 }
 
-// clockHelperTomorrow returns tomorrow's date string in local time.
+// clockHelperTomorrow returns tomorrow's date string on the business clock
+// (Asia/Ho_Chi_Minh), same source as today(). Host-local time.Now() desyncs
+// from the business clock between 23:00 ICT and midnight whenever the host
+// runs a different timezone (e.g. +08), which flipped the day and made the
+// derived-end-date assertion fail near midnight ICT.
 func clockHelperTomorrow() string {
-	return time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	return clock.Now().AddDate(0, 0, 1).Format("2006-01-02")
 }
 
 // clockHelperDayAfter returns the day after the given date string.
@@ -362,7 +384,7 @@ func findTodayPayrate(admin *APIClient, projectID uint) (*PayrateResponse, bool)
 		return nil, false
 	}
 	for i := range payrates {
-		if payrates[i].FromDate == today() && payrates[i].ToDate == nil {
+		if payrates[i].FromDate == today() {
 			return &payrates[i], true
 		}
 	}

@@ -43,7 +43,6 @@ export interface DryRunValidateResponse {
   summary: string;
   fields: {
     effective_from: FieldResult;
-    effective_to: FieldResult;
     rates: RatesFieldResult;
   };
   /** Unpaid and unapproved timesheets this save would re-price. */
@@ -94,7 +93,6 @@ export class PayRateService {
     const backendData = {
       rates: data.rates,
       effective_from: data.effective_from,
-      effective_to: data.effective_to,
     };
     const response = await apiClient.post<PayRate>(
       API_ENDPOINTS.projects.payrate(projectId),
@@ -117,7 +115,6 @@ export class PayRateService {
     const backendData = {
       rates: data.rates,
       effective_from: data.effective_from,
-      effective_to: data.effective_to,
     };
     return (await apiClient.post<PayRateResponse>(
       "/payrates",
@@ -157,7 +154,6 @@ export class PayRateService {
     const backendData = {
       rates: data.rates,
       effective_from: data.effective_from,
-      effective_to: data.effective_to,
     };
     return (await apiClient.put<PayRateResponse>(
       `/payrates/${payRateId}`,
@@ -186,14 +182,13 @@ export class PayRateService {
    */
   async dryRunValidate(
     projectId: number,
-    data: { rates: unknown; effective_from: string; effective_to?: string | null },
+    data: { rates: unknown; effective_from: string },
     payrateId?: number,
   ): Promise<DryRunValidateResponse> {
     const body = {
       project_id: projectId,
       rates: data.rates,
       effective_from: data.effective_from,
-      effective_to: data.effective_to || undefined,
     };
     const url = payrateId
       ? `/payrates/${payrateId}/validate`
@@ -216,7 +211,6 @@ export class PayRateService {
     targetProjectId: number,
     options: {
       effective_from: string;
-      effective_to: string;
       modify_rates?: {
         adjustment_type: "percentage" | "fixed";
         adjustment_value: number;
@@ -238,7 +232,6 @@ export class PayRateService {
     return this.createProjectPayRate(targetProjectId, {
       rates: targetRates as Record<string, RateCategory>,
       effective_from: options.effective_from,
-      effective_to: options.effective_to,
     });
   }
 

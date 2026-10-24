@@ -13,7 +13,10 @@ type CreatePayrateRequest struct {
 	ProjectID     uint            `json:"-"` // Set from URL path
 	Rates         json.RawMessage `json:"rates"`
 	EffectiveFrom string          `json:"effective_from" binding:"required"`
-	EffectiveTo   *string         `json:"effective_to,omitempty"`
+	// EffectiveTo is a tripwire: the from-date-only model has no end dates
+	// (migration 138 dropped the column). Any supplied value is rejected with
+	// 400 by the handlers — the field stays so Gin's binding can see it.
+	EffectiveTo *string `json:"effective_to,omitempty"`
 }
 
 // ToDomain converts the DTO to domain entity
@@ -39,7 +42,8 @@ func (req *CreatePayrateRequest) ToDomain() (*domain.Payrate, error) {
 type UpdatePayrateRequest struct {
 	Rates         json.RawMessage `json:"rates"`
 	EffectiveFrom string          `json:"effective_from" binding:"required"`
-	EffectiveTo   *string         `json:"effective_to,omitempty"`
+	// Tripwire, same contract as CreatePayrateRequest.EffectiveTo.
+	EffectiveTo *string `json:"effective_to,omitempty"`
 }
 
 // ToDomain converts the DTO to domain entity
@@ -66,7 +70,9 @@ type PayrateResponse struct {
 	ProjectID uint                        `json:"project_id"`
 	Rates     domain.PayrateConfiguration `json:"rates"`
 	FromDate  string                      `json:"fromDate"`
-	ToDate    *string                     `json:"toDate"`
+	// No ToDate on the wire: end dates are derived from each config's
+	// successor and the column is gone (migration 138). A config runs until
+	// its successor's fromDate.
 	CreatedBy uint                        `json:"created_by"`
 	CreatedAt time.Time                   `json:"created_at"`
 	UpdatedAt time.Time                   `json:"updated_at"`

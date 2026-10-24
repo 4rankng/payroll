@@ -232,19 +232,12 @@ func (h *Handler) buildDetailedProjectResponse(ctx context.Context, project *dom
 	// Get current payrate if service is available
 	if h.payrateService != nil {
 		if payrate, err := h.payrateService.GetActivePayrateByProjectAndDate(ctx, project.ID, h.clock.Now()); err == nil {
-			var toDateStr *string
-			if payrate.ToDate != nil {
-				dateStr := payrate.ToDate.Format("2006-01-02")
-				toDateStr = &dateStr
-			}
-
 			// Parse payrate configuration
 			config, _ := payrate.Payrate.Parse()
 
 			response.CurrentPayrate = &dto.ProjectCurrentPayrate{
 				ID:            payrate.ID,
 				FromDate:      payrate.FromDate.Format("2006-01-02"),
-				ToDate:        toDateStr,
 				Configuration: config,
 				Status:        "active", // Payrate status field no longer exists, using active default
 			}

@@ -169,9 +169,8 @@ func (r *PayrateRepository) applyFilters(query *gorm.DB, filters domain.PayrateF
 		query = query.Where("from_date >= ?", *filters.FromDate)
 	}
 
-	if filters.ToDate != nil {
-		query = query.Where("to_date <= ?", *filters.ToDate)
-	}
+	// No ToDate filter: payrates.to_date was dropped by migration 138; end
+	// dates are derived per row from each config's successor.
 
 	return query
 }

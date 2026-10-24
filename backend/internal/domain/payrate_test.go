@@ -11,8 +11,7 @@ import (
 func TestPayrate_ValidatePayrateConfig(t *testing.T) {
 	pr := &Payrate{
 		ProjectID: 1,
-		FromDate:  time.Now().AddDate(0, 0, -1),                 // yesterday
-		ToDate:    &[]time.Time{time.Now().AddDate(0, 1, 0)}[0], // next month
+		FromDate:  time.Now().AddDate(0, 0, -1), // yesterday
 		Payrate:   PayrateConfiguration(`{"regular": {"rate": 100000}}`),
 	}
 
@@ -27,11 +26,9 @@ func TestPayrate_ValidatePayrateConfig(t *testing.T) {
 
 func TestPayrate_IsValid(t *testing.T) {
 	now := time.Now()
-	toDate := now.AddDate(0, 1, 0) // next month
 	pr := &Payrate{
 		ProjectID: 1,
 		FromDate:  now.AddDate(0, 0, -1), // yesterday
-		ToDate:    &toDate,
 		Payrate:   PayrateConfiguration(`{"regular": {"rate": 100000}}`),
 	}
 
@@ -46,17 +43,15 @@ func TestPayrate_IsValid(t *testing.T) {
 
 func TestPayrate_IsActiveOnDate(t *testing.T) {
 	now := time.Now()
-	staleToDate := now.AddDate(0, 1, 0) // stale bookkeeping, ignored under from-date-only
 	pr := &Payrate{
 		FromDate: now.AddDate(0, -1, 0), // 1 month ago
-		ToDate:   &staleToDate,
 	}
 
 	// Active today
 	assert.True(t, pr.IsActiveOnDate(now))
 
-	// Active after the stored to_date: end dates are derived bookkeeping and
-	// never gate activity
+	// Active forever after from_date: there is no end date — a config runs
+	// until its successor's fromDate (migration 138 dropped to_date)
 	futureDate := now.AddDate(0, 2, 0) // 2 months from now
 	assert.True(t, pr.IsActiveOnDate(futureDate))
 

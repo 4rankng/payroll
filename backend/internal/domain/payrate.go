@@ -457,11 +457,13 @@ type Payrate struct {
 	PayrateJSON string               `json:"-" gorm:"column:payrate_json;type:json;not null;comment:'custom payrate format per project; values are hourly for standard projects and per-shift totals for flexible projects'"`
 	Payrate     PayrateConfiguration `json:"payrate" gorm:"-"`
 	FromDate    time.Time            `json:"fromDate" gorm:"type:date;not null"`
-	ToDate      *time.Time           `json:"toDate" gorm:"type:date"`
-	DeletedAt   gorm.DeletedAt       `json:"-" gorm:"index"`
-	CreatedBy   uint                 `json:"created_by" gorm:"not null;type:bigint unsigned;comment:'User who created the payrate'"`
-	CreatedAt   time.Time            `json:"created_at"`
-	UpdatedAt   time.Time            `json:"updated_at"`
+	// No ToDate: migration 138 dropped payrates.to_date. A config runs until
+	// its successor's fromDate; anything that needs an end date derives it
+	// from the timeline, never from this struct.
+	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+	CreatedBy uint           `json:"created_by" gorm:"not null;type:bigint unsigned;comment:'User who created the payrate'"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 
 	// Relationships
 	Project     Project `json:"project" gorm:"foreignKey:ProjectID;references:ID"`
@@ -496,7 +498,9 @@ type PayrateFilters struct {
 	ProjectID *uint
 	CreatedBy *uint
 	FromDate  *time.Time
-	ToDate    *time.Time
+	// ToDate removed with migration 138 (payrate_drop_to_date): the column no
+	// longer exists, and no caller ever set this field — a kept filter clause
+	// would hard-error the first time someone did.
 	Limit     int
 	Offset    int
 	SortBy    string
@@ -560,16 +564,12 @@ func (p *Payrate) ValidatePayrateConfig() error {
 	return p.Payrate.Validate()
 }
 
-// ValidateDates validates from and to dates
+// ValidateDates validates the effective start date. There is no end date:
+// migration 138 dropped payrates.to_date and a config runs until its
+// successor's fromDate.
 func (p *Payrate) ValidateDates() error {
 	if p.FromDate.IsZero() {
 		return NewValidationError("ngày bắt đầu là bắt buộc")
-	}
-
-	if p.ToDate != nil {
-		if p.ToDate.Before(p.FromDate) {
-			return NewValidationError("ngày kết thúc phải sau ngày bắt đầu")
-		}
 	}
 
 	return nil

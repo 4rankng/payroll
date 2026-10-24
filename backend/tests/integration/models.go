@@ -718,8 +718,9 @@ type PayrateResponse struct {
 	ProjectID uint            `json:"project_id"`
 	Rates     json.RawMessage `json:"rates"`
 	FromDate  string          `json:"fromDate"`
-	ToDate    *string         `json:"toDate"`
-	CreatedBy uint            `json:"created_by"`
+	// No ToDate: the API no longer carries end dates (from-date-only model,
+	// migration 138).
+	CreatedBy uint `json:"created_by"`
 }
 
 // --- Loan Management ---

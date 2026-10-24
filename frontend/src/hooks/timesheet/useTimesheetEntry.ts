@@ -80,13 +80,15 @@ export function useTimesheetEntry() {
 
   const payrateConfig = useMemo(() => {
     if (payRateData?.data && Array.isArray(payRateData.data) && payRateData.data.length > 0) {
-      // Get the most recent active payrate from the list
+      // The config in force is the latest fromDate on or before today
+      // (from-date-only model — no end dates).
       const today = new Date().toISOString().split('T')[0];
-      const activePayrate = payRateData.data.find(payrate => {
-        const fromDate = payrate.fromDate;
-        const toDate = payrate.toDate;
-        return fromDate <= today && (!toDate || toDate >= today);
-      });
+      let activePayrate: (typeof payRateData.data)[number] | null = null;
+      for (const payrate of payRateData.data) {
+        if (payrate.fromDate <= today && (!activePayrate || payrate.fromDate > activePayrate.fromDate)) {
+          activePayrate = payrate;
+        }
+      }
 
       // If no active payrate, use the most recent one
       const payrate = activePayrate || payRateData.data[0];
