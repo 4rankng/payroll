@@ -67,11 +67,9 @@ func (h *Handler) ListProjectPayrates(c *gin.Context) {
 		}
 	}
 
-	if toDate := c.Query("toDate"); toDate != "" {
-		if date, err := time.Parse("2006-01-02", toDate); err == nil {
-			filters.ToDate = &date
-		}
-	}
+	// No toDate filter: payrates.to_date was dropped by migration 138 and end
+	// dates are derived for display from each config's successor. The FE list
+	// params never carried toDate.
 
 	// Get payrates using the injected payrate service
 	payrates, err := h.payrateService.ListPayrates(c.Request.Context(), filters)

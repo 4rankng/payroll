@@ -252,16 +252,18 @@ func TestPayrateTemporalServiceMovesStartDateEarlierInPlace(t *testing.T) {
 	seedPayrateTemporalPayrate(t, db, target)
 
 	// Moving the latest config earlier is an in-place correction: no boundary
-	// stitching, the predecessor row stays untouched, and the derived end date
-	// simply follows the new successor from_date.
+	// stitching, the predecessor row stays untouched. Post-138 nothing
+	// persists end dates — even a seeded ToDate value does not round-trip
+	// (the column is gone; display derives from the successor).
 	target.FromDate = time.Date(2026, 8, 15, 0, 0, 0, 0, time.Local)
 	target.Payrate = domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`)
 	require.NoError(t, service.UpdateEffectiveDatedPayrate(ctx, target))
 
 	var persistedPrevious domain.Payrate
 	require.NoError(t, db.First(&persistedPrevious, previous.ID).Error)
-	require.NotNil(t, persistedPrevious.ToDate)
-	require.Equal(t, "2026-08-21", persistedPrevious.ToDate.Format("2006-01-02"))
+	require.Nil(t, persistedPrevious.ToDate, "end dates are derived, never persisted")
+	require.True(t, persistedPrevious.FromDate.Equal(time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local)),
+		"predecessor must stay untouched: no to_date stitching")
 
 	var persistedTarget domain.Payrate
 	require.NoError(t, db.First(&persistedTarget, target.ID).Error)
@@ -562,9 +564,9 @@ func assertTimesheetRateOnConfig(t *testing.T, db *gorm.DB, timesheetID, payrate
 func seedPayrateTemporalPayrate(t *testing.T, db *gorm.DB, payrate *domain.Payrate) {
 	t.Helper()
 	require.NoError(t, db.Exec(`
-		INSERT INTO payrates (id, project_id, from_date, to_date, payrate_json, created_by)
-		VALUES (?, ?, ?, ?, ?, ?)
-	`, payrate.ID, payrate.ProjectID, payrate.FromDate, payrate.ToDate, string(payrate.Payrate), 1).Error)
+		INSERT INTO payrates (id, project_id, from_date, payrate_json, created_by)
+		VALUES (?, ?, ?, ?, ?)
+	`, payrate.ID, payrate.ProjectID, payrate.FromDate, string(payrate.Payrate), 1).Error)
 }
 
 type payrateTemporalRepositoryStub struct {
@@ -595,7 +597,6 @@ func newPayrateTemporalTestDB(t *testing.T) *gorm.DB {
 			id INTEGER PRIMARY KEY,
 			project_id INTEGER NOT NULL,
 			from_date DATETIME NOT NULL,
-			to_date DATETIME,
 			payrate_json TEXT NOT NULL,
 			created_by INTEGER NOT NULL,
 			deleted_at DATETIME,

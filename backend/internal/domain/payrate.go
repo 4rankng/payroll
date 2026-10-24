@@ -457,11 +457,15 @@ type Payrate struct {
 	PayrateJSON string               `json:"-" gorm:"column:payrate_json;type:json;not null;comment:'custom payrate format per project; values are hourly for standard projects and per-shift totals for flexible projects'"`
 	Payrate     PayrateConfiguration `json:"payrate" gorm:"-"`
 	FromDate    time.Time            `json:"fromDate" gorm:"type:date;not null"`
-	ToDate      *time.Time           `json:"toDate" gorm:"type:date"`
-	DeletedAt   gorm.DeletedAt       `json:"-" gorm:"index"`
-	CreatedBy   uint                 `json:"created_by" gorm:"not null;type:bigint unsigned;comment:'User who created the payrate'"`
-	CreatedAt   time.Time            `json:"created_at"`
-	UpdatedAt   time.Time            `json:"updated_at"`
+	// ToDate is display-only: migration 138 dropped payrates.to_date and the
+	// value is derived in memory from each config's successor
+	// (AttachDisplayEndDates). gorm:"-" keeps it out of INSERT/SELECT so the
+	// model maps cleanly onto the post-138 schema.
+	ToDate    *time.Time     `json:"toDate" gorm:"-"`
+	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+	CreatedBy uint           `json:"created_by" gorm:"not null;type:bigint unsigned;comment:'User who created the payrate'"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 
 	// Relationships
 	Project     Project `json:"project" gorm:"foreignKey:ProjectID;references:ID"`
@@ -496,7 +500,9 @@ type PayrateFilters struct {
 	ProjectID *uint
 	CreatedBy *uint
 	FromDate  *time.Time
-	ToDate    *time.Time
+	// ToDate removed with migration 138 (payrate_drop_to_date): the column no
+	// longer exists, and no caller ever set this field — a kept filter clause
+	// would hard-error the first time someone did.
 	Limit     int
 	Offset    int
 	SortBy    string

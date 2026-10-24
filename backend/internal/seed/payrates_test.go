@@ -21,7 +21,7 @@ func TestSeedPayratesPersistsUsableConfiguration(t *testing.T) {
 		`CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, deleted_at DATETIME)`,
 		`CREATE TABLE projects (id INTEGER PRIMARY KEY, name TEXT, deleted_at DATETIME)`,
 		`CREATE TABLE project_employees (id INTEGER PRIMARY KEY, project_id INTEGER, position TEXT, deleted_at DATETIME)`,
-		`CREATE TABLE payrates (id INTEGER PRIMARY KEY, project_id INTEGER, payrate_json TEXT, from_date DATETIME, to_date DATETIME, deleted_at DATETIME, created_by INTEGER, created_at DATETIME, updated_at DATETIME)`,
+		`CREATE TABLE payrates (id INTEGER PRIMARY KEY, project_id INTEGER, payrate_json TEXT, from_date DATETIME, deleted_at DATETIME, created_by INTEGER, created_at DATETIME, updated_at DATETIME)`,
 		`INSERT INTO users (id, username) VALUES (1, 'admin')`,
 		`INSERT INTO projects (id, name) VALUES (1, 'Synthetic project')`,
 		`INSERT INTO project_employees (id, project_id, position) VALUES (1, 1, 'phổ thông')`,
