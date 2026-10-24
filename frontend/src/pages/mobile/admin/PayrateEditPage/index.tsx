@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MobilePageShell } from '@/components/shared/MobilePageShell';
 import { MobileSubPageHeader } from '@/components/shared/MobileSubPageHeader';
+import { PayratePeriodStrip } from '@/components/payrates/components/PayratePeriodStrip';
 import { PayrateMatrixEditor } from '@/components/payrates/components/PayrateMatrixEditor';
 import { FlexiblePayrateEditor } from '@/components/payrates/components/FlexiblePayrateEditor';
 import {
@@ -406,7 +407,8 @@ export default function PayrateEditPageMobile() {
                       />
                     </div>
                   </div>
-                  <div className="mt-2">
+                  <div className="mt-2 space-y-2">
+                    <PayratePeriodStrip payrates={allPayRatesData?.data ?? []} selectedDate={config.fromDate} />
                     {isNew && latestPayrate && (
                       <p className="mb-1 text-xs text-muted-foreground">
                         Cấu hình mới áp dụng sau cấu hình hiện hành (từ {minFromDate}). Muốn sửa mức lương đang chạy, hãy chỉnh sửa cấu hình hiện tại.

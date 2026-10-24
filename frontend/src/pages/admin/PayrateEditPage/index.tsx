@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PayratePeriodStrip } from '@/components/payrates/components/PayratePeriodStrip';
 import { PayrateMatrixEditor } from '@/components/payrates/components/PayrateMatrixEditor';
 import { FlexiblePayrateEditor } from '@/components/payrates/components/FlexiblePayrateEditor';
 import {
@@ -472,7 +473,8 @@ export default function PayrateEditPage() {
                         />
                       </div>
                     </div>
-                    <div className="ml-12 max-w-xl">
+                    <div className="ml-12 max-w-xl space-y-2">
+                      <PayratePeriodStrip payrates={allPayRatesData?.data ?? []} selectedDate={config.fromDate} />
                       {isNew && latestPayrate && (
                         <p className="mb-1 text-xs text-muted-foreground">
                           Cấu hình mới áp dụng sau cấu hình hiện hành (từ {formatIsoDateDisplay(minFromDate ?? config.fromDate!)}). Muốn sửa mức lương đang chạy, hãy quay lại chỉnh sửa cấu hình hiện tại.
