@@ -95,7 +95,9 @@ func runApprovalsTests(client *APIClient, data *TestData, reporter *Reporter, _ 
 		return
 	}
 	partner := client.WithToken(data.Partners[0].Token)
-	tsIDs := voidableTimesheetIDs(8)
+	// Larger pool: shared dev DBs accumulate consumed void keys across runs,
+	// and candidates that no longer resolve are skipped at file time.
+	tsIDs := voidableTimesheetIDs(32)
 	if len(tsIDs) < 3 {
 		reporter.Skip(flowApprovals, "All tests", "not enough voidable timesheets in dev data")
 		return

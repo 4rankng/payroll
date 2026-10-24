@@ -246,15 +246,27 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 			"rates":          json.RawMessage(`{"Nhân viên":{"Ngày thường":{"Ca ngày":260000}}}`),
 			"effective_from": clockHelperDayAfter(tomorrow),
 		}
-		var resp struct {
-			Valid                     bool  `json:"valid"`
-			MutableTimesheetsAffected int64 `json:"mutable_timesheets_affected"`
-		}
-		if _, err := admin.PostInto("/api/v1/payrates/validate?project_id="+fmt.Sprint(projectID), body, &resp); err != nil {
+		// The validate endpoint responds with a bare body (no status/data
+		// envelope), so read raw bytes instead of PostInto.
+		raw, _, statusCode, err := admin.DownloadPost("/api/v1/payrates/validate?project_id="+fmt.Sprint(projectID), body)
+		if err != nil {
 			return fmt.Errorf("validate: %w", err)
+		}
+		if statusCode != 200 {
+			return fmt.Errorf("expected 200, got %d: %s", statusCode, string(raw))
+		}
+		var resp struct {
+			Valid                     bool `json:"valid"`
+			MutableTimesheetsAffected *int64 `json:"mutable_timesheets_affected"`
+		}
+		if err := json.Unmarshal(raw, &resp); err != nil {
+			return fmt.Errorf("unmarshal: %w", err)
 		}
 		if !resp.Valid {
 			return fmt.Errorf("expected valid dry-run for a date after the latest config")
+		}
+		if resp.MutableTimesheetsAffected == nil {
+			return fmt.Errorf("mutable_timesheets_affected missing from response")
 		}
 		return nil
 	})
@@ -263,6 +275,13 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		body := map[string]any{
 			"rates":          json.RawMessage(`{"Nhân viên":{"Ngày thường":{"Ca ngày":10000}},"nhân viên":{"Ngày thường":{"Ca ngày":20000}}}`),
 			"effective_from": clockHelperDayAfter(tomorrow),
+		}
+		raw, _, statusCode, err := admin.DownloadPost("/api/v1/payrates/validate?project_id="+fmt.Sprint(projectID), body)
+		if err != nil {
+			return fmt.Errorf("validate: %w", err)
+		}
+		if statusCode != 200 {
+			return fmt.Errorf("expected 200, got %d: %s", statusCode, string(raw))
 		}
 		var resp struct {
 			Valid  bool `json:"valid"`
@@ -273,8 +292,8 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 				} `json:"rates"`
 			} `json:"fields"`
 		}
-		if _, err := admin.PostInto("/api/v1/payrates/validate?project_id="+fmt.Sprint(projectID), body, &resp); err != nil {
-			return fmt.Errorf("validate: %w", err)
+		if err := json.Unmarshal(raw, &resp); err != nil {
+			return fmt.Errorf("unmarshal: %w", err)
 		}
 		if resp.Valid || resp.Fields.Rates.Status != "error" {
 			return fmt.Errorf("expected fold-collision rejection, got valid=%v status=%q", resp.Valid, resp.Fields.Rates.Status)
