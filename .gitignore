@@ -108,3 +108,4 @@ kanban/
 .codewhale/
 frontend/qa/ops-mcp-install/
 backups/
+HANDOFF.md
