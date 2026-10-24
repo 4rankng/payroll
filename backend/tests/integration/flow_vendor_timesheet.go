@@ -401,9 +401,26 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 			return fmt.Errorf("row count changed: %d -> %d", len(before), len(after))
 		}
 		for i := range before {
-			if before[i] != after[i] {
-				return fmt.Errorf("row %d changed: %+v -> %+v", i, before[i], after[i])
+			if !vendorItemEqual(before[i], after[i]) {
+				b, _ := json.Marshal(before[i])
+				a, _ := json.Marshal(after[i])
+				return fmt.Errorf("row %d changed: %s -> %s", i, b, a)
 			}
+		}
+		return nil
+	})
+
+	// --- Pagination sanity --------------------------------------------------
+	// Runs before revocation: the clamp contract needs a live key, and the
+	// revocation test below deliberately kills the only vendor credential
+	// this flow holds.
+	reporter.RunTest(flowVendorTimesheetAPI, "page_size is clamped, not rejected", func() error {
+		resp, err := vendor.GetInto("/api/v1/vendor/projects?page_size=100000", &[]VendorProjectItem{})
+		if err != nil {
+			return err
+		}
+		if resp.Pagination != nil && resp.Pagination.PageSize > 100 {
+			return fmt.Errorf("pageSize = %d, want clamped to <= 100", resp.Pagination.PageSize)
 		}
 		return nil
 	})
@@ -424,18 +441,6 @@ func runVendorTimesheetTests(client *APIClient, data *TestData, reporter *Report
 		}
 		if code != 401 {
 			return fmt.Errorf("post-revoke status %d, want 401", code)
-		}
-		return nil
-	})
-
-	// --- Pagination sanity --------------------------------------------------
-	reporter.RunTest(flowVendorTimesheetAPI, "page_size is clamped, not rejected", func() error {
-		resp, err := vendor.GetInto("/api/v1/vendor/projects?page_size=100000", &[]VendorProjectItem{})
-		if err != nil {
-			return err
-		}
-		if resp.Pagination != nil && resp.Pagination.PageSize > 100 {
-			return fmt.Errorf("pageSize = %d, want clamped to <= 100", resp.Pagination.PageSize)
 		}
 		return nil
 	})
@@ -472,6 +477,32 @@ func vendorRawRows(c *APIClient, path string) ([]map[string]any, *Pagination, er
 		return nil, resp.Pagination, fmt.Errorf("decode vendor rows: %w", err)
 	}
 	return rows, resp.Pagination, nil
+}
+
+// vendorItemEqual compares two snapshot rows by VALUE. The payment fields are
+// pointers: struct equality on *string compares addresses of freshly decoded
+// JSON strings, so `before[i] != after[i]` reports a phantom diff on every
+// paid row. Dereferencing keeps the assertion deterministic while still
+// catching a hidden write that changes a payment reference or timestamp.
+func vendorItemEqual(a, b VendorTimesheetItem) bool {
+	deref := func(s *string) string {
+		if s == nil {
+			return ""
+		}
+		return *s
+	}
+	return a.ProjectCode == b.ProjectCode &&
+		a.CCCD == b.CCCD &&
+		a.EmployeeName == b.EmployeeName &&
+		a.Date == b.Date &&
+		a.HoursWorked == b.HoursWorked &&
+		a.PayType == b.PayType &&
+		a.PayRate == b.PayRate &&
+		a.Amount == b.Amount &&
+		a.PaidAmount == b.PaidAmount &&
+		a.PaymentStatus == b.PaymentStatus &&
+		deref(a.PaymentReference) == deref(b.PaymentReference) &&
+		deref(a.PaidAt) == deref(b.PaidAt)
 }
 
 // vendorTimesheetSnapshot captures the observable timesheet state so the flow

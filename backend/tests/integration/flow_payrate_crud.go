@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"reflect"
 	"time"
+
+	"api-server/internal/pkg/clock"
 )
 
 const flowPayrate = "PayrateCRUD"
@@ -325,9 +327,13 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 	})
 }
 
-// clockHelperTomorrow returns tomorrow's date string in local time.
+// clockHelperTomorrow returns tomorrow's date string on the business clock
+// (Asia/Ho_Chi_Minh), same source as today(). Host-local time.Now() desyncs
+// from the business clock between 23:00 ICT and midnight whenever the host
+// runs a different timezone (e.g. +08), which flipped the day and made the
+// derived-end-date assertion fail near midnight ICT.
 func clockHelperTomorrow() string {
-	return time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+	return clock.Now().AddDate(0, 0, 1).Format("2006-01-02")
 }
 
 // clockHelperDayAfter returns the day after the given date string.

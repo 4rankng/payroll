@@ -104,8 +104,12 @@ func (m *APIKeyAuthMiddleware) RequireAPIKeyScope(required ...domain.APIKeyScope
 				c.Next()
 				return
 			}
-			// TingHire surface accepts legacy chatbot scope and timesheet_read during rollout transition
-			if req == domain.APIKeyScopeTingHire && (grantedScope == domain.APIKeyScopeChatbot || grantedScope == domain.APIKeyScopeTimesheetRead) {
+			// TingHire surface accepts the legacy chatbot scope: keys minted
+			// before the scope was normalized to 'tinghire' keep working.
+			// timesheet_read is deliberately NOT accepted here — it belongs to
+			// the read-only vendor surface and must not drive integration
+			// (employee lookup, OTP reset, self check-in) endpoints.
+			if req == domain.APIKeyScopeTingHire && grantedScope == domain.APIKeyScopeChatbot {
 				c.Next()
 				return
 			}

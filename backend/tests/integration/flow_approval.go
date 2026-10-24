@@ -26,9 +26,12 @@ type approvalFlowRequest struct {
 func voidableTimesheetIDs(n int) []uint {
 	// Excludes timesheets already referenced by an approval request: void
 	// idempotency keys are consumed forever (even after cancel), so prior runs
-	// permanently shrink an unfiltered pool.
+	// permanently shrink an unfiltered pool. Soft-deleted rows are excluded
+	// too: GORM cannot resolve them (deleted_at scope), so filing against one
+	// answers "không tìm thấy bảng công" — without this filter the newest-32
+	// window can be entirely deleted rows and the pool reads as exhausted.
 	raw, err := queryPayrollScalar(
-		fmt.Sprintf("SELECT GROUP_CONCAT(id ORDER BY id DESC) FROM (SELECT t.id FROM timesheets t WHERE t.payment_status NOT IN ('paid','failed','cancelled') AND t.id NOT IN (SELECT CAST(JSON_EXTRACT(payload,'$.timesheetId') AS UNSIGNED) FROM approval_requests WHERE JSON_EXTRACT(payload,'$.timesheetId') IS NOT NULL) ORDER BY t.id DESC LIMIT %d) x", n))
+		fmt.Sprintf("SELECT GROUP_CONCAT(id ORDER BY id DESC) FROM (SELECT t.id FROM timesheets t WHERE t.deleted_at IS NULL AND t.payment_status NOT IN ('paid','failed','cancelled') AND t.id NOT IN (SELECT CAST(JSON_EXTRACT(payload,'$.timesheetId') AS UNSIGNED) FROM approval_requests WHERE JSON_EXTRACT(payload,'$.timesheetId') IS NOT NULL) ORDER BY t.id DESC LIMIT %d) x", n))
 	if err != nil || raw == "" {
 		return nil
 	}

@@ -20,7 +20,11 @@ func runAssetTests(client *APIClient, data *TestData, reporter *Reporter, cfg *T
 	// Create a temp file for upload
 	tmpDir := os.TempDir()
 	tmpFile := filepath.Join(tmpDir, prefix+"_upload.txt")
-	if err := os.WriteFile(tmpFile, []byte("itest upload content"), 0644); err != nil {
+	// Unique content per run: the asset service deduplicates uploads by
+	// checksum, so fixed content collides with a row from a previous run and
+	// reuses a file path that may live on another checkout's disk. A unique
+	// body forces a fresh store, making upload→download self-contained.
+	if err := os.WriteFile(tmpFile, []byte("itest upload content "+prefix), 0644); err != nil {
 		return
 	}
 	defer func() { _ = os.Remove(tmpFile) }()
