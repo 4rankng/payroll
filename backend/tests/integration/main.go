@@ -11,6 +11,12 @@ import (
 )
 
 func main() {
+	// Serialize runs before touching any shared state: a second instance
+	// blocks here until the first one exits, so two lanes can never pollute
+	// each other's fixtures through the shared dev DB and asynq queue.
+	lockFile := acquireSuiteLock()
+	defer releaseSuiteLock(lockFile)
+
 	cfg := LoadTestConfig()
 	reporter := NewReporter()
 

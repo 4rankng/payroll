@@ -82,6 +82,45 @@ make api-test    # Runs: cd backend && go run ./tests/integration/
 
 Requires a running backend (start with `make dev` or `make db` + `air`).
 
+### Serialized runs (fixture-pollution guard)
+
+The suite shares one dev DB (`payroll-mysql`) and its asynq queue with every
+lane on this machine. Two concurrent runs pollute each other's fixtures:
+void idempotency keys consumed by the other run ("Cancel is terminal" pool
+exhaustion), BCC import jobs processed by the wrong checkout's working
+directory (ENOENT on the uploaded file), snapshots taken mid-write.
+
+The runner therefore takes an exclusive `flock` on
+`/tmp/payroll-integration-suite.lock` before touching any state (see
+`tests/integration/suite_lock.go`). A second instance prints
+`🔒 Another integration-suite run holds the lock` and waits — this is normal,
+not a hang. The kernel releases the lock on any exit, so a crashed lane never
+wedges the next one.
+
+**Runbook:**
+
+1. **One suite instance at a time per machine.** Don't bypass the lock; if
+   two lanes genuinely need parallel runs, give each its own backend + DB
+   (per-lane `payroll_itest_<lane>` schema and `PAYROLL_BASE_URL`) before
+   lifting this rule.
+2. **Stale servers count as a second instance.** A leftover api-server from
+   an earlier lane keeps consuming asynq jobs against the shared DB even if
+   no suite is running. Before debugging "fixture pollution" failures, check:
+   ```bash
+   pgrep -fl api-server   # expect exactly ONE (your backend); kill stale /tmp copies
+   ```
+3. **Base URL** defaults to `http://localhost:8080`; point a run at another
+   local backend with `PAYROLL_BASE_URL=http://localhost:<port>`.
+4. The lock is machine-local, matching the dev DB's localhost boundary —
+   if the dev DB ever moves to a shared host, replace the flock with a MySQL
+   advisory lock (`GET_LOCK`) held on a live connection.
+5. **Back-to-back runs can still trip per-minute rate limits.** The lock
+   serializes runs, not their rate-limit windows: several full suites within
+   one minute can make an external-quota-guarded endpoint answer 429 (seen on
+   `manual-disbursement/employee-account-check`). A lone 429 that passes on
+   the next single run is limiter transient, not a contract break — space
+   rapid iterations a minute apart.
+
 ### Architecture
 
 | File | Purpose |
