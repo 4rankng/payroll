@@ -47,7 +47,6 @@ describe("ShiftNamesSection", () => {
             id: 91,
             project_id: project.id,
             fromDate: "2020-01-01",
-            toDate: null,
             rates: {
               "Công nhân": {
                 "ngày thường": {
@@ -106,7 +105,6 @@ describe("ShiftNamesSection", () => {
             id: 91,
             project_id: project.id,
             fromDate: "2020-01-01",
-            toDate: null,
             rates: {
               "Công nhân": {
                 "ngày thường": { "08:00-17:00": 252000 },
@@ -139,22 +137,16 @@ describe("ShiftNamesSection", () => {
     mockUseProjectPayRates.mockReturnValue({
       data: {
         data: [
-          {
-            id: 10,
-            fromDate: "2020-01-01",
-            toDate: "2020-12-31",
-            rates: { "Công nhân": { "ngày thường": { "06:00-14:00": 200000 } } },
-          },
+          // No config has taken effect yet: every fromDate is in the future,
+          // so the nearest upcoming one (2090) is what editing opens.
           {
             id: 30,
             fromDate: "2100-01-01",
-            toDate: null,
             rates: { "Công nhân": { "ngày thường": { "07:00-15:00": 250000 } } },
           },
           {
             id: 20,
             fromDate: "2090-01-01",
-            toDate: null,
             rates: { "Công nhân": { "ngày thường": { "08:00-16:00": 300000 } } },
           },
         ],
@@ -183,7 +175,6 @@ describe("ShiftNamesSection", () => {
           {
             id: 92,
             fromDate: "2020-01-01",
-            toDate: null,
             rates: {},
           },
         ],

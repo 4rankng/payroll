@@ -83,7 +83,6 @@ type RatesFieldResult struct {
 // ValidatePayrateFields is the per-field breakdown mirroring the submitted request.
 type ValidatePayrateFields struct {
 	EffectiveFrom FieldResult      `json:"effective_from"`
-	EffectiveTo   FieldResult      `json:"effective_to"`
 	Rates         RatesFieldResult `json:"rates"`
 }
 
@@ -137,10 +136,16 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 			Summary: "Dữ liệu gửi lên không hợp lệ",
 			Fields: ValidatePayrateFields{
 				EffectiveFrom: FieldResult{Status: FieldError, Message: "Không thể đọc dữ liệu: " + err.Error()},
-				EffectiveTo:   FieldResult{Status: FieldOK},
 				Rates:         RatesFieldResult{FieldResult: FieldResult{Status: FieldError, Message: "Không thể đọc dữ liệu"}},
 			},
 		})
+		return
+	}
+
+	// From-date-only model: a supplied effective_to is a contract violation —
+	// same tripwire as the save paths.
+	if req.EffectiveTo != nil && *req.EffectiveTo != "" {
+		response.BadRequest(c, constants.MsgEffectiveToNotSupportedVN)
 		return
 	}
 
@@ -162,7 +167,6 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 	// ── Build per-field results ────────────────────────────────────────────
 
 	fromResult := validateFromDate(req.EffectiveFrom, today)
-	toResult := validateToDate(req.EffectiveTo, fromResult.parsedDate, today)
 	ratesResult := validateRates(req.Rates)
 
 	// ── Project-level checks ───────────────────────────────────────────────
@@ -176,8 +180,6 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 			fromResult.field.Locked = true
 			fromResult.field.Message = fmt.Sprintf("Dự án đang ở trạng thái '%s'", string(project.ProjectStatus))
 			fromResult.field.Hint = "Dự án đã hoàn thành hoặc bị hủy — không thể thay đổi cấu hình lương."
-			toResult.field.Status = FieldError
-			toResult.field.Locked = true
 			ratesResult.Status = FieldError
 			ratesResult.Locked = true
 		}
@@ -233,16 +235,13 @@ func (h *PayrateHandler) ValidatePayrate(c *gin.Context) {
 	// ── Assemble response ──────────────────────────────────────────────────
 	fields := ValidatePayrateFields{
 		EffectiveFrom: fromResult.field,
-		EffectiveTo:   toResult.field,
 		Rates:         ratesResult,
 	}
 
 	hasErrors := fields.EffectiveFrom.Status == FieldError ||
-		fields.EffectiveTo.Status == FieldError ||
 		fields.Rates.Status == FieldError
 
 	hasWarnings := fields.EffectiveFrom.Status == FieldWarning ||
-		fields.EffectiveTo.Status == FieldWarning ||
 		fields.Rates.Status == FieldWarning
 
 	valid := !hasErrors
@@ -292,45 +291,6 @@ func validateFromDate(submitted string, today time.Time) fromDateResult {
 	}
 
 	r.parsedDate = &parsed
-	r.field.Status = FieldOK
-	return r
-}
-
-type toDateResult struct {
-	field      FieldResult
-	parsedDate *time.Time
-}
-
-func validateToDate(submitted *string, fromDate *time.Time, today time.Time) toDateResult {
-	r := toDateResult{}
-	if submitted == nil || *submitted == "" {
-		r.field.Submitted = ""
-		r.field.Status = FieldOK
-		return r
-	}
-
-	r.field.Submitted = *submitted
-	parsed, err := time.Parse(timeutil.DateFormat, *submitted)
-	if err != nil {
-		r.field.Status = FieldError
-		r.field.Message = fmt.Sprintf("Định dạng ngày kết thúc không hợp lệ (cần: %s).", timeutil.DateFormat)
-		r.field.Hint = fmt.Sprintf("Ví dụ: %s", today.AddDate(0, 6, 0).Format(timeutil.DateFormat))
-		r.field.SuggestedValue = today.AddDate(0, 6, 0).Format(timeutil.DateFormat)
-		return r
-	}
-
-	r.parsedDate = &parsed
-
-	if fromDate != nil && parsed.Before(*fromDate) {
-		r.field.Status = FieldError
-		r.field.Message = "Ngày kết thúc phải sau ngày bắt đầu."
-		suggested := fromDate.AddDate(0, 1, 0).Format(timeutil.DateFormat)
-		r.field.Hint = fmt.Sprintf("Chọn ngày sau %s.", fromDate.Format(timeutil.DateFormat))
-		r.field.MinValue = fromDate.AddDate(0, 0, 1).Format(timeutil.DateFormat)
-		r.field.SuggestedValue = suggested
-		return r
-	}
-
 	r.field.Status = FieldOK
 	return r
 }

@@ -255,7 +255,6 @@ export function useValidatePayRate() {
       project_id: number;
       rates: Record<string, RateCategory>;
       effective_from: string;
-      effective_to: string;
       exclude_rate_id?: number;
     }) => (payRateService as unknown as { validatePayRate: (d: unknown) => Promise<{ data: { valid: boolean; errors: string[]; warnings: string[] } }> }).validatePayRate(data),
   });
@@ -277,7 +276,6 @@ export function useCopyPayRate() {
       targetProjectId: number;
       options: {
         effective_from: string;
-        effective_to: string;
         modify_rates?: {
           adjustment_type: 'percentage' | 'fixed';
           adjustment_value: number;
@@ -313,7 +311,6 @@ export function usePayRateManager(projectId: number) {
       project_id: projectId,
       rates: data.rates as unknown as Record<string, RateCategory>,
       effective_from: data.effective_from,
-      effective_to: data.effective_to || null,
     });
 
     if (!(validation as { data: { valid: boolean; errors: string[] } }).data.valid) {
@@ -348,7 +345,6 @@ export function usePayRateValidation() {
     project_id: number;
     rates: Record<string, RateCategory>;
     effective_from: string;
-    effective_to: string;
     exclude_rate_id?: number;
   }) => {
     try {

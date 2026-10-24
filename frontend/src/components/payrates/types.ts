@@ -63,11 +63,11 @@ export interface PayrateConfig {
   project_id: number;
   rates: PayrateStructure;
   fromDate: string;
-  toDate?: string | null;
   status: PayrateStatus;
   created_by?: number;
   created_at?: string;
   updated_at?: string;
+  // No toDate: from-date-only model (migration 138).
 }
 
 // Request/Response types for component use
@@ -75,14 +75,12 @@ export interface CreatePayrateRequest {
   project_id: number;
   rates: PayrateStructure;
   effective_from: string;
-  effective_to?: string;
 }
 
 export interface UpdatePayrateRequest {
   project_id?: number;
   rates?: PayrateStructure;
   effective_from?: string;
-  effective_to?: string;
 }
 
 export interface PayrateResponse {

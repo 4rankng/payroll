@@ -69,7 +69,6 @@ func NewPayrateTemporalService(db *gorm.DB, payrateRepo domain.PayrateRepository
 // update flow, which re-prices mutable timesheets in place.
 func (s *PayrateTemporalService) CreateEffectiveDatedPayrate(ctx context.Context, payrate *domain.Payrate) error {
 	payrate.FromDate = toLocalDateOnly(payrate.FromDate)
-	payrate.ToDate = nil // open-ended; the successor implies the end date
 
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := s.lockProjectTimelineTx(ctx, tx, payrate.ProjectID); err != nil {
@@ -105,7 +104,6 @@ func (s *PayrateTemporalService) CreateEffectiveDatedPayrate(ctx context.Context
 func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context, payrate *domain.Payrate) error {
 	logger := observability.GetLogger()
 	payrate.FromDate = toLocalDateOnly(payrate.FromDate)
-	payrate.ToDate = nil
 
 	// Capture the target row's ID outside the transaction closure: the closure
 	// is retried on transient errors and must always reload the original row.

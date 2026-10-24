@@ -31,7 +31,6 @@ export interface PayRate {
   project_id: number;
   rates: PayrateStructure;
   fromDate: string;
-  toDate: string | null;
   /** Day after the project's most recent paid timesheet work date — earliest allowed start. */
   earliest_effective_from?: string;
   /** True when the start date has no legal move (paid floor below, linked timesheets above) — render read-only. */
@@ -39,19 +38,20 @@ export interface PayRate {
   created_by: number;
   created_at: string;
   updated_at: string;
+  // No toDate: from-date-only model — a config runs until its successor's
+  // fromDate (migration 138 dropped the column).
 }
 
 // Request types
 export interface CreatePayRateRequest {
   rates: PayrateStructure;
   effective_from: string;
-  effective_to?: string;
+  // No effective_to: rejected with 400 by the API (from-date-only model).
 }
 
 export interface UpdatePayRateRequest {
   rates: PayrateStructure;
   effective_from: string;
-  effective_to?: string;
 }
 
 export interface PayRateListParams {
@@ -119,19 +119,39 @@ export interface PayRateError {
   };
 }
 
-// Status calculation helper
-export function getPayrateStatus(payrate: PayRate): PayrateStatus {
+// Status calculation helper. Successor semantics: a config is active when it
+// has taken effect (fromDate <= today) and no other config in the list started
+// after it on or before today. Pass the project's full list for a correct
+// answer; without it, any taken-effect config reads as active.
+export function getPayrateStatus(payrate: PayRate, projectPayrates?: PayRate[]): PayrateStatus {
   const today = new Date().toISOString().split('T')[0];
-  const fromDate = payrate.fromDate;
-  const toDate = payrate.toDate;
 
-  // If current date is within range, it's active
-  if (fromDate <= today && (!toDate || toDate >= today)) {
-    return 'active';
+  if (payrate.fromDate > today) {
+    return 'inactive';
   }
 
-  // Otherwise, it's inactive (future or past)
-  return 'inactive';
+  if (projectPayrates) {
+    const superseded = projectPayrates.some(
+      other => other.id !== payrate.id && other.fromDate > payrate.fromDate && other.fromDate <= today
+    );
+    return superseded ? 'inactive' : 'active';
+  }
+
+  return 'active';
+}
+
+// The config currently in force: the latest fromDate on or before today
+// (later fromDate wins; id breaks same-date ties, mirroring the backend).
+export function getActivePayrate(payrates: PayRate[]): PayRate | null {
+  const today = new Date().toISOString().split('T')[0];
+  let active: PayRate | null = null;
+  for (const rate of payrates) {
+    if (rate.fromDate > today) continue;
+    if (!active || rate.fromDate > active.fromDate || (rate.fromDate === active.fromDate && rate.id > active.id)) {
+      active = rate;
+    }
+  }
+  return active;
 }
 
 // Vietnamese translations for API status values
@@ -142,7 +162,6 @@ export const VIETNAMESE_PAYRATE_LABELS = {
   },
   fields: {
     effective_from: 'Có hiệu lực từ',
-    effective_to: 'Có hiệu lực đến',
     rates: 'Cấu hình mức lương'
   },
   dayTypes: {
@@ -220,7 +239,7 @@ export function extractPositionsFromPayrates(payrates: PayRate[] | PayRate): str
     return [];
   }
 
-  const activePayrate = payrates.find(rate => !rate.toDate || new Date(rate.toDate) > new Date());
+  const activePayrate = getActivePayrate(payrates);
 
   if (!activePayrate || !activePayrate.rates) {
     return [];

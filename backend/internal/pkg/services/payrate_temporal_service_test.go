@@ -194,11 +194,11 @@ func TestPayrateTemporalServiceMovesStartDateEarlierAndRecalculatesMutableTimesh
 	const projectID uint = 44
 	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
 
-	// Sibling config still current, its immutable rows end Aug 7.
+	// Sibling config still current; under from-date-only there is no stored
+	// end date (migration 138) — the row runs until the successor's fromDate.
 	sibling := &domain.Payrate{
 		ID: 7, ProjectID: projectID,
 		FromDate: time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
-		ToDate:   func() *time.Time { t := time.Date(2026, 8, 7, 0, 0, 0, 0, time.Local); return &t }(),
 	}
 	// Target config created too late; admin needs to move it back to Aug 8.
 	target := &domain.Payrate{
@@ -238,11 +238,9 @@ func TestPayrateTemporalServiceMovesStartDateEarlierInPlace(t *testing.T) {
 	const projectID uint = 50
 	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
 
-	previousEnd := time.Date(2026, 8, 21, 0, 0, 0, 0, time.Local)
 	previous := &domain.Payrate{
 		ID: 13, ProjectID: projectID,
 		FromDate: time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
-		ToDate:   &previousEnd,
 	}
 	target := &domain.Payrate{
 		ID: 14, ProjectID: projectID,
@@ -252,23 +250,21 @@ func TestPayrateTemporalServiceMovesStartDateEarlierInPlace(t *testing.T) {
 	seedPayrateTemporalPayrate(t, db, target)
 
 	// Moving the latest config earlier is an in-place correction: no boundary
-	// stitching, the predecessor row stays untouched. Post-138 nothing
-	// persists end dates — even a seeded ToDate value does not round-trip
-	// (the column is gone; display derives from the successor).
+	// stitching, the predecessor row stays untouched. There is no end date
+	// anywhere — migration 138 dropped the column and the model no longer has
+	// the field.
 	target.FromDate = time.Date(2026, 8, 15, 0, 0, 0, 0, time.Local)
 	target.Payrate = domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`)
 	require.NoError(t, service.UpdateEffectiveDatedPayrate(ctx, target))
 
 	var persistedPrevious domain.Payrate
 	require.NoError(t, db.First(&persistedPrevious, previous.ID).Error)
-	require.Nil(t, persistedPrevious.ToDate, "end dates are derived, never persisted")
 	require.True(t, persistedPrevious.FromDate.Equal(time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local)),
 		"predecessor must stay untouched: no to_date stitching")
 
 	var persistedTarget domain.Payrate
 	require.NoError(t, db.First(&persistedTarget, target.ID).Error)
 	require.True(t, persistedTarget.FromDate.Equal(target.FromDate))
-	require.Nil(t, persistedTarget.ToDate)
 }
 
 func TestPayrateTemporalServiceRejectsStartDateOnOrBeforeLatestPaidTimesheet(t *testing.T) {
@@ -348,7 +344,6 @@ func TestPayrateTemporalServiceLaterRateChangeRequiresNewConfig(t *testing.T) {
 	var persisted domain.Payrate
 	require.NoError(t, db.First(&persisted, target.ID).Error)
 	require.True(t, persisted.FromDate.Equal(time.Date(2026, 8, 15, 0, 0, 0, 0, time.Local)))
-	require.Nil(t, persisted.ToDate)
 
 	// The later change goes through the create flow: a pure append leaves the
 	// predecessor untouched, keeps paid rows on the config that priced them,
@@ -363,7 +358,6 @@ func TestPayrateTemporalServiceLaterRateChangeRequiresNewConfig(t *testing.T) {
 
 	var persistedAfterCreate domain.Payrate
 	require.NoError(t, db.First(&persistedAfterCreate, target.ID).Error)
-	require.Nil(t, persistedAfterCreate.ToDate, "predecessor must stay untouched: no to_date stitching")
 	require.True(t, persistedAfterCreate.FromDate.Equal(time.Date(2026, 8, 15, 0, 0, 0, 0, time.Local)))
 
 	assertTimesheetRateOnConfig(t, db, paid.ID, 12, 100000)
@@ -394,7 +388,6 @@ func TestPayrateTemporalServiceMovesStartDateLaterWithNoLinkedTimesheets(t *test
 	var persisted domain.Payrate
 	require.NoError(t, db.First(&persisted, 16).Error)
 	require.True(t, persisted.FromDate.Equal(time.Date(2026, 8, 4, 0, 0, 0, 0, time.Local)))
-	require.Nil(t, persisted.ToDate)
 	require.Equal(t, uint(16), target.ID, "no new row: the config is corrected in place")
 }
 
@@ -405,12 +398,10 @@ func TestPayrateTemporalServiceRejectsUpdateOfReplacedConfig(t *testing.T) {
 
 	const projectID uint = 51
 	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
-	endDate := time.Date(2026, 8, 5, 0, 0, 0, 0, time.Local)
 	replaced := &domain.Payrate{
 		ID:        15,
 		ProjectID: projectID,
 		FromDate:  time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
-		ToDate:    &endDate,
 	}
 	successor := &domain.Payrate{
 		ID:        17,
@@ -442,16 +433,14 @@ func TestPayrateTemporalServiceLatestConfigWithStaleEndDateStaysEditable(t *test
 
 	const projectID uint = 54
 	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
-	staleEnd := time.Date(2026, 8, 14, 0, 0, 0, 0, time.Local)
 	lone := &domain.Payrate{
 		ID:        18,
 		ProjectID: projectID,
 		FromDate:  time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
-		ToDate:    &staleEnd, // leftover stitching bookkeeping; no successor exists
 	}
 	seedPayrateTemporalPayrate(t, db, lone)
 
-	// The stale to_date must not brick the project's only (latest) config.
+	// The project's only (latest) config must stay editable on its own.
 	lone.FromDate = time.Date(2026, 8, 5, 0, 0, 0, 0, time.Local)
 	lone.Payrate = domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`)
 	require.NoError(t, service.UpdateEffectiveDatedPayrate(ctx, lone))
@@ -541,16 +530,11 @@ func TestPayrateTemporalServiceDropsSuppliedEndDateOnUpdate(t *testing.T) {
 	}
 	seedPayrateTemporalPayrate(t, db, target)
 
-	// A caller (or legacy API client) supplying effective_to must not be able
-	// to end the config: persisting it would make the row "ended" by the
-	// update guard and brick it from further edits — same ruling as create.
-	suppliedEnd := time.Date(2026, 8, 20, 0, 0, 0, 0, time.Local)
-	target.ToDate = &suppliedEnd
 	require.NoError(t, service.UpdateEffectiveDatedPayrate(ctx, target))
 
 	var persisted domain.Payrate
 	require.NoError(t, db.First(&persisted, target.ID).Error)
-	require.Nil(t, persisted.ToDate, "update must keep the config open-ended despite a supplied effective_to")
+	require.True(t, persisted.FromDate.Equal(target.FromDate))
 }
 
 func assertTimesheetRateOnConfig(t *testing.T, db *gorm.DB, timesheetID, payrateID uint, rate int64) {

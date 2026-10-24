@@ -180,11 +180,12 @@ export default function PayrateEditPage() {
       // Default the start date to the paid floor (day after the latest paid
       // timesheet work date) whenever the stored start sits before it — the backend
       // rejects anything earlier, so pre-clamp instead of surfacing an error.
-      // Ended configs are exempt: their stored start legitimately predates the
-      // floor, and pre-clamping would point at the current config's date.
+      // Superseded configs are exempt: their stored start legitimately predates
+      // the floor, and pre-clamping would point at the current config's date.
+      const isSupersededTarget = latestPayrate != null && targetPayrate.id !== latestPayrate.id;
       const floor = targetPayrate.earliest_effective_from;
       const fromDate =
-        floor && !targetPayrate.toDate && targetPayrate.fromDate < floor ? floor : targetPayrate.fromDate;
+        floor && !isSupersededTarget && targetPayrate.fromDate < floor ? floor : targetPayrate.fromDate;
       setConfig({
         project_id: numProjectId,
         rates: targetPayrate.rates || {},
@@ -250,10 +251,10 @@ export default function PayrateEditPage() {
     return { changedCells, addedPositions, removedPositions };
   }, [editorMode, targetPayrate, latestPayrate, config.rates]);
 
-  // Ended configs (a newer config took over) are history: rows under them are
-  // priced, and the backend rejects any update. Render everything read-only
-  // instead of offering an edit that can only fail.
-  const isEnded = editorMode === 'edit' && !!targetPayrate?.toDate;
+  // Superseded configs (a newer config took over) are history: rows under them
+  // are priced, and the backend rejects any update. Render everything
+  // read-only instead of offering an edit that can only fail.
+  const isEnded = editorMode === 'edit' && !!targetPayrate && !!latestPayrate && targetPayrate.id !== latestPayrate.id;
   const ratesLocked = isEnded || (serverResult?.fields.rates.locked ?? false);
   // Ended configs are fully locked above; for live configs only the server's
   // dry-run locks the date (completed/cancelled projects).
@@ -482,7 +483,7 @@ export default function PayrateEditPage() {
                       )}
                       {isEnded && (
                         <p className="mb-1 text-xs text-muted-foreground">
-                          Cấu hình đã kết thúc (hiệu lực đến {formatIsoDateDisplay(targetPayrate!.toDate!)}) — chỉ xem lịch sử. Hãy chỉnh sửa cấu hình lương hiện hành.
+                          Cấu hình đã bị thay thế bởi cấu hình mới hơn — chỉ xem lịch sử. Hãy chỉnh sửa cấu hình lương hiện hành.
                         </p>
                       )}
                       <FieldFeedback

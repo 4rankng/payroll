@@ -78,13 +78,6 @@ func (h *Handler) ListProjectPayrates(c *gin.Context) {
 		return
 	}
 
-	// Derived end dates for display (successor's from_date - 1); the stored
-	// to_date is stale by design under the from-date-only model.
-	if err := h.payrateService.AttachDisplayEndDates(c.Request.Context(), payrates); err != nil {
-		response.InternalServerError(c, constants.MsgInternalServerErrorVN)
-		return
-	}
-
 	total, err := h.payrateService.CountPayrates(c.Request.Context(), filters)
 	if err != nil {
 		response.InternalServerError(c, constants.MsgFailedToCountPayratesVN)
@@ -94,18 +87,11 @@ func (h *Handler) ListProjectPayrates(c *gin.Context) {
 	// Convert payrates to response format
 	var payrateResponses []dto.PayrateResponse
 	for _, payrate := range payrates {
-		var toDateStr *string
-		if payrate.ToDate != nil {
-			dateStr := payrate.ToDate.Format(timeutil.DateFormat)
-			toDateStr = &dateStr
-		}
-
 		payrateResponses = append(payrateResponses, dto.PayrateResponse{
 			ID:        payrate.ID,
 			ProjectID: payrate.ProjectID,
 			Rates:     payrate.Payrate,
 			FromDate:  payrate.FromDate.Format(timeutil.DateFormat),
-			ToDate:    toDateStr,
 			CreatedBy: payrate.CreatedBy,
 			CreatedAt: payrate.CreatedAt,
 			UpdatedAt: payrate.UpdatedAt,
@@ -209,7 +195,6 @@ func (h *Handler) CreateProjectPayrate(c *gin.Context) {
 		"project_id", projectID,
 		"rates_count", len(req.Rates),
 		"effective_from", req.EffectiveFrom,
-		"has_effective_to", req.EffectiveTo != nil,
 	)
 
 	userID, exists := c.Get(constants.CtxUserID)
@@ -277,10 +262,9 @@ func (h *Handler) CreateProjectPayrate(c *gin.Context) {
 	}
 
 	// Parse from date string to time.Time for database
-	logger.Info("Parsing effective dates",
+	logger.Info("Parsing effective date",
 		"project_id", projectID,
 		"effective_from", req.EffectiveFrom,
-		"effective_to", req.EffectiveTo,
 	)
 
 	fromDate, err := time.Parse(timeutil.DateFormat, req.EffectiveFrom)
@@ -295,20 +279,15 @@ func (h *Handler) CreateProjectPayrate(c *gin.Context) {
 		return
 	}
 
-	// Parse to date if provided
-	var toDate *time.Time
+	// From-date-only model: there are no end dates (migration 138 dropped the
+	// column). A supplied effective_to is a contract violation — reject it
+	// loudly instead of silently ignoring.
 	if req.EffectiveTo != nil && *req.EffectiveTo != "" {
-		parsedToDate, err := time.Parse(timeutil.DateFormat, *req.EffectiveTo)
-		if err != nil {
-			response.BadRequest(c, constants.MsgInvalidEffectiveToFormatVN)
-			return
-		}
-		toDate = &parsedToDate
+		response.BadRequest(c, constants.MsgEffectiveToNotSupportedVN)
+		return
 	}
 
-	// Set additional fields on the converted payrate. From-date-only model:
-	// to_date is derived from the successor and never written; a supplied
-	// effective_to is deliberately ignored (the service nils it out).
+	// Set additional fields on the converted payrate.
 	payrate.FromDate = fromDate
 	payrate.CreatedBy = userID.(uint)
 
@@ -317,12 +296,6 @@ func (h *Handler) CreateProjectPayrate(c *gin.Context) {
 		"user_id", userID.(uint),
 		"user_role", userRole.(string),
 		"from_date", fromDate.Format(timeutil.DateFormat),
-		"to_date", func() string {
-			if toDate != nil {
-				return toDate.Format(timeutil.DateFormat)
-			}
-			return "null"
-		}(),
 	)
 
 	createdPayrate, err := h.payrateService.CreatePayrate(c.Request.Context(), payrate, userID.(uint), userRole.(string))
@@ -344,18 +317,11 @@ func (h *Handler) CreateProjectPayrate(c *gin.Context) {
 	)
 
 	// Convert dates back to string for response
-	var toDateStr *string
-	if createdPayrate.ToDate != nil {
-		dateStr := createdPayrate.ToDate.Format(timeutil.DateFormat)
-		toDateStr = &dateStr
-	}
-
 	payrateResponse := dto.PayrateResponse{
 		ID:        createdPayrate.ID,
 		ProjectID: createdPayrate.ProjectID,
 		Rates:     createdPayrate.Payrate,
 		FromDate:  createdPayrate.FromDate.Format(timeutil.DateFormat),
-		ToDate:    toDateStr,
 		CreatedBy: createdPayrate.CreatedBy,
 		CreatedAt: createdPayrate.CreatedAt,
 		UpdatedAt: createdPayrate.UpdatedAt,
@@ -391,25 +357,12 @@ func (h *Handler) GetCurrentProjectPayrate(c *gin.Context) {
 		return
 	}
 
-	// Derived end date for display (successor's from_date - 1).
-	if err := h.payrateService.AttachDisplayEndDates(c.Request.Context(), []*domain.Payrate{payrate}); err != nil {
-		response.InternalServerError(c, constants.MsgInternalServerErrorVN)
-		return
-	}
-
 	// Convert to response format
-	var toDateStr *string
-	if payrate.ToDate != nil {
-		dateStr := payrate.ToDate.Format(timeutil.DateFormat)
-		toDateStr = &dateStr
-	}
-
 	payrateResponse := dto.PayrateResponse{
 		ID:        payrate.ID,
 		ProjectID: payrate.ProjectID,
 		Rates:     payrate.Payrate,
 		FromDate:  payrate.FromDate.Format(timeutil.DateFormat),
-		ToDate:    toDateStr,
 		CreatedBy: payrate.CreatedBy,
 		CreatedAt: payrate.CreatedAt,
 		UpdatedAt: payrate.UpdatedAt,

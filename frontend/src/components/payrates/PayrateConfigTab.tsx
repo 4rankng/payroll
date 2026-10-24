@@ -15,7 +15,6 @@ import {
   STATUS_LABELS
 } from './types';
 import { dateToString } from '@/utils/dateHelpers';
-import { getPayrateStatus } from '@/types/api/payrate.types';
 import { PayRate } from '@/types/api/payrate.types';
 import {
   useProjectPayRates,
@@ -54,19 +53,15 @@ export function PayrateConfigTab({ project }: PayrateConfigTabProps) {
     let upcoming: PayRate | null = null;
 
     for (const payrate of payrates) {
-      const fromDate = payrate.fromDate;
-      const toDate = payrate.toDate;
-
-      // Current active: fromDate <= today AND (toDate is null OR toDate >= today)
-      if (fromDate <= today && (!toDate || toDate >= today)) {
-        active = payrate;
-      }
-
-      // Upcoming: fromDate > today
-      if (fromDate > today) {
-        if (!upcoming || fromDate < upcoming.fromDate) {
-          upcoming = payrate;
+      // Active: the latest config that has taken effect. From-date-only
+      // model — no end dates; a config runs until its successor starts.
+      if (payrate.fromDate <= today) {
+        if (!active || payrate.fromDate > active.fromDate) {
+          active = payrate;
         }
+      } else if (!upcoming || payrate.fromDate < upcoming.fromDate) {
+        // Upcoming: the earliest config that has not taken effect yet.
+        upcoming = payrate;
       }
     }
 
@@ -163,12 +158,11 @@ export function PayrateConfigTab({ project }: PayrateConfigTabProps) {
         <div className="rounded-xl border border-border bg-card">
           {/* Meta row */}
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50">
-            <Badge variant={getPayrateStatus(activePayrate) === 'active' ? 'default' : 'secondary'} className="text-xs px-1.5 py-0">
-              {STATUS_LABELS[getPayrateStatus(activePayrate)]}
+            <Badge variant="default" className="text-xs px-1.5 py-0">
+              {STATUS_LABELS.active}
             </Badge>
             <span className="text-xs text-muted-foreground">
               từ {format(new Date(activePayrate.fromDate), 'dd/MM/yyyy')}
-              {activePayrate.toDate && ` → ${format(new Date(activePayrate.toDate), 'dd/MM/yyyy')}`}
             </span>
           </div>
           {/* Rate grid */}
@@ -197,7 +191,6 @@ export function PayrateConfigTab({ project }: PayrateConfigTabProps) {
               <span className="text-xs font-medium text-muted-foreground">Sắp tới</span>
               <span className="text-xs text-muted-foreground">
                 từ {format(new Date(upcomingPayrate.fromDate), 'dd/MM/yyyy')}
-                {upcomingPayrate.toDate && ` → ${format(new Date(upcomingPayrate.toDate), 'dd/MM/yyyy')}`}
               </span>
             </div>
             {canModifyPayrates && (
@@ -269,10 +262,9 @@ function OtherConfigsSection({ payrates, expanded, onToggle, canModify, confirmD
             <div key={p.id} className="flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <Badge variant="secondary" className="text-xs px-1.5 py-0">Đã kết thúc</Badge>
+                  <Badge variant="secondary" className="text-xs px-1.5 py-0">Đã thay thế</Badge>
                   <span className="text-xs text-muted-foreground truncate">
-                    {format(new Date(p.fromDate), 'dd/MM/yyyy')}
-                    {p.toDate && ` → ${format(new Date(p.toDate), 'dd/MM/yyyy')}`}
+                    từ {format(new Date(p.fromDate), 'dd/MM/yyyy')}
                   </span>
                 </div>
               </div>

@@ -216,7 +216,7 @@ const (
 	MsgProjectPayrateCreatedSuccessfullyVN = "Tạo mức lương dự án thành công"
 	MsgCurrentProjectPayrateRetrievedVN    = "Lấy mức lương dự án hiện tại thành công"
 	MsgInvalidRequestBodyFormatVN          = "Định dạng nội dung yêu cầu không hợp lệ: %s"
-	MsgInvalidEffectiveToFormatVN          = "Định dạng effective_to không hợp lệ. Sử dụng YYYY-MM-DD"
+	MsgEffectiveToNotSupportedVN           = "effective_to không còn được hỗ trợ — mô hình lương from-date-only, cấu hình luôn mở đến khi có cấu hình kế nhiệm"
 
 	// Project Summary Messages - Vietnamese
 	MsgFailedToGetProjectSummaryVN        = "Không thể lấy tóm tắt dự án"

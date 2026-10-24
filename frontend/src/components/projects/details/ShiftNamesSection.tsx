@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Check, Clock3, X, Moon } from "lucide-react";
 import { useUpdateProject } from "@/hooks/api/useProjects";
 import { useProjectPayRates } from "@/hooks/api/usePayRates";
+import type { PayRate } from "@/types/api/payrate.types";
 import type { Project, ShiftName } from "@/types/api/project.types";
 import { dateToString } from "@/utils/dateHelpers";
 import {
@@ -36,9 +37,15 @@ export function ShiftNamesSection({
   const displayedPayrate = useMemo(() => {
     const payrates = payRatesData?.data ?? [];
     if (payrates.length === 0) return null;
-    // Active = fromDate <= today AND (no toDate OR toDate >= today).
+    // Active = the latest config that has taken effect (from-date-only —
+    // a config runs until its successor's fromDate).
     const today = dateToString(new Date());
-    const active = payrates.find((p) => p.fromDate <= today && (!p.toDate || p.toDate >= today));
+    let active: PayRate | null = null;
+    for (const p of payrates) {
+      if (p.fromDate <= today && (!active || p.fromDate > active.fromDate)) {
+        active = p;
+      }
+    }
     if (active) return active;
 
     return payrates
