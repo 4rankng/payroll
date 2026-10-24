@@ -56,7 +56,9 @@ func splitCommaRaw(s string) []string {
 
 // fileApprovalFirstAvailable tries each candidate timesheet until one files
 // (skipping ids whose (type, cycle) idempotency key is already consumed by
-// earlier runs — executed/cancelled rows keep their key forever).
+// earlier runs — executed/cancelled rows keep their key forever — and ids
+// that no longer resolve on a shared dev DB, where prior suite runs may have
+// removed or re-homed fixtures between the pool snapshot and the file call).
 func fileApprovalFirstAvailable(client *APIClient, ids []uint, from *int, reason string) (*approvalFlowRequest, error) {
 	for *from < len(ids) {
 		id := ids[*from]
@@ -65,7 +67,8 @@ func fileApprovalFirstAvailable(client *APIClient, ids []uint, from *int, reason
 		if err == nil {
 			return req, nil
 		}
-		if !strings.Contains(err.Error(), "409") {
+		msg := err.Error()
+		if !strings.Contains(msg, "409") && !strings.Contains(msg, "không tìm thấy bảng công") {
 			return nil, err
 		}
 	}

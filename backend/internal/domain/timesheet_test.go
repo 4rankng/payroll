@@ -150,9 +150,19 @@ func TestTimesheet_CalculateAmount(t *testing.T) {
 		PayRate:     100000,
 	}
 
-	expectedAmount := int64(8 * 100000) // Direct calculation
-	amount := ts.CalculateAmount()
-	assert.Equal(t, expectedAmount, amount)
+	// Standard projects price hours x rate.
+	assert.Equal(t, int64(8*100000), ts.CalculateAmount(false))
+	// Flexible projects price per shift: the rate is the amount.
+	assert.Equal(t, int64(100000), ts.CalculateAmount(true))
+}
+
+func TestComputeTimesheetAmount(t *testing.T) {
+	// Standard: hours x rate
+	assert.Equal(t, int64(800000), ComputeTimesheetAmount(false, 8.0, 100000))
+	assert.Equal(t, int64(150000), ComputeTimesheetAmount(false, 1.5, 100000))
+	// Flexible: the rate is the amount, hours ignored
+	assert.Equal(t, int64(100000), ComputeTimesheetAmount(true, 8.0, 100000))
+	assert.Equal(t, int64(100000), ComputeTimesheetAmount(true, 0, 100000))
 }
 
 func TestTimesheet_IsWeekend(t *testing.T) {

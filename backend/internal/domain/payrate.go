@@ -343,29 +343,51 @@ func normalizeVietnamese(s string) string {
 	return utils.NormalizeVietnamese(s)
 }
 
+// RateLookup is a payrate configuration flattened once for repeated lookups.
+// Exact keys are indexed directly, and a Vietnamese-folded index backs the
+// same fallback matching GetRate has always used — so re-pricing loops parse
+// the JSON once per config instead of once per timesheet row.
+type RateLookup struct {
+	exact  map[string]int
+	folded map[string]int
+}
+
+// RateLookup flattens the configuration and builds both lookup indexes.
+func (p PayrateConfiguration) RateLookup() (*RateLookup, error) {
+	flattened, err := p.Flatten()
+	if err != nil {
+		return nil, err
+	}
+
+	lookup := &RateLookup{
+		exact:  flattened,
+		folded: make(map[string]int, len(flattened)),
+	}
+	for key, value := range flattened {
+		lookup.folded[normalizeVietnamese(key)] = value
+	}
+	return lookup, nil
+}
+
+// Get resolves a flattened path with the same exact-then-Vietnamese-folded
+// matching as GetRate.
+func (l *RateLookup) Get(path string) (int, error) {
+	if value, exists := l.exact[path]; exists {
+		return value, nil
+	}
+	if value, exists := l.folded[normalizeVietnamese(path)]; exists {
+		return value, nil
+	}
+	return 0, NewValidationError(fmt.Sprintf("không tìm thấy mức lương cho đường dẫn: %s", path))
+}
+
 // GetRate returns rate value for a flattened path with case-insensitive Vietnamese-normalized matching
 func (p PayrateConfiguration) GetRate(path string) (int, error) {
-	flattened, err := p.Flatten()
+	lookup, err := p.RateLookup()
 	if err != nil {
 		return 0, NewValidationError("không thể phân tích cấu hình mức lương: " + err.Error())
 	}
-
-	// Normalize the search path for comparison
-	normalizedPath := normalizeVietnamese(path)
-
-	// Try exact match first (for performance)
-	if value, exists := flattened[path]; exists {
-		return value, nil
-	}
-
-	// Fall back to normalized case-insensitive search
-	for key, value := range flattened {
-		if normalizeVietnamese(key) == normalizedPath {
-			return value, nil
-		}
-	}
-
-	return 0, NewValidationError(fmt.Sprintf("không tìm thấy mức lương cho đường dẫn: %s", path))
+	return lookup.Get(path)
 }
 
 // NormalizedKeys returns a copy of the configuration whose object keys are

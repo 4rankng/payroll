@@ -335,9 +335,21 @@ func (t *Timesheet) SubmitForApproval() error {
 	return nil
 }
 
+// ComputeTimesheetAmount is the single pricing rule for timesheet amounts:
+// flexible projects price per shift (the rate is the amount, hours ignored);
+// standard projects price hours x rate. Every amount write — creation,
+// re-pricing, payroll — must go through here so a save can never disagree
+// with what a later recalculation would produce.
+func ComputeTimesheetAmount(isFlexible bool, hoursWorked float64, rate int64) int64 {
+	if isFlexible {
+		return rate
+	}
+	return int64(hoursWorked * float64(rate))
+}
+
 // CalculateAmount calculates the amount based on hours worked and pay rate
-func (t *Timesheet) CalculateAmount() int64 {
-	return int64(t.HoursWorked * float64(t.PayRate))
+func (t *Timesheet) CalculateAmount(isFlexible bool) int64 {
+	return ComputeTimesheetAmount(isFlexible, t.HoursWorked, t.PayRate)
 }
 
 // RequiresApproval checks if this timesheet requires approval

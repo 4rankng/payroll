@@ -17,9 +17,11 @@ type APIResponse struct {
 
 // APIError is returned on failure.
 type APIError struct {
-	Status     string `json:"status"`
-	Message    string `json:"message"`
-	HTTPStatus int    `json:"http_status"`
+	Status     string         `json:"status"`
+	Message    string         `json:"message"`
+	HTTPStatus int            `json:"http_status"`
+	Code       string         `json:"code,omitempty"`
+	Details    map[string]any `json:"details,omitempty"`
 }
 
 // Pagination represents pagination metadata.

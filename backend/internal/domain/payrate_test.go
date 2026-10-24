@@ -134,3 +134,37 @@ func TestNormalizeVietnamese(t *testing.T) {
 		}
 	}
 }
+
+// TestPayrateConfiguration_RateLookup: a lookup built once must resolve with
+// the same exact-then-Vietnamese-folded matching as GetRate, so re-pricing
+// loops can parse the JSON once per config without changing behavior.
+func TestPayrateConfiguration_RateLookup(t *testing.T) {
+	config := PayrateConfiguration(`{"Tất cả":{"Ngày thường":50000,"Ngày lễ":100000},"Lái xe nâng":{"Ngày thường":60000}}`)
+
+	lookup, err := config.RateLookup()
+	if err != nil {
+		t.Fatalf("RateLookup() returned error: %v", err)
+	}
+
+	// Exact match
+	v, err := lookup.Get("Tất cả.Ngày thường")
+	if err != nil || v != 50000 {
+		t.Errorf("exact match: got (%d, %v), want 50000, nil", v, err)
+	}
+
+	// Folded fallback: case and diacritics differences resolve to the same rate
+	v, err = lookup.Get("tất cả.ngày lễ")
+	if err != nil || v != 100000 {
+		t.Errorf("folded fallback: got (%d, %v), want 100000, nil", v, err)
+	}
+
+	// Missing path errors
+	if _, err := lookup.Get("Tất cả.Ca đêm"); err == nil {
+		t.Error("missing path: want error, got nil")
+	}
+
+	// Invalid JSON errors
+	if _, err := PayrateConfiguration(`not json`).RateLookup(); err == nil {
+		t.Error("invalid JSON: want error, got nil")
+	}
+}

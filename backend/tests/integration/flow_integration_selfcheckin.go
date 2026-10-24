@@ -92,7 +92,7 @@ func runIntegrationSelfCheckinTests(client *APIClient, data *TestData, reporter 
 	var key string
 	reporter.RunTest(flowIntegrationSelfCheckin, "Admin creates an API key for the flow", func() error {
 		var out CreateAPIKeyResponse
-		if _, err := admin.PostInto("/api/v1/admin/api-keys", CreateAPIKeyRequest{Name: "itest self-checkin"}, &out); err != nil {
+		if _, err := admin.PostInto("/api/v1/admin/api-keys", CreateAPIKeyRequest{Name: "itest self-checkin", Scope: "tinghire"}, &out); err != nil {
 			return err
 		}
 		if out.Key == "" {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"time"
 )
 
 const flowPayrate = "PayrateCRUD"
@@ -139,6 +140,199 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 		}
 		return nil
 	})
+
+	// ── From-date-only model ─────────────────────────────────────────────
+	// Rate changes append a new config strictly after the latest; superseded
+	// configs are view-only; deletes heal the timeline by date resolution.
+	// These scenarios own their v1/v2 pair — the base flow above deletes its
+	// payrate before this point.
+	tomorrow := clockHelperTomorrow()
+	var v1ID, v2ID uint
+
+	reporter.RunTest(flowPayrate, "New model: create current version succeeds", func() error {
+		body := CreatePayrateRequest{
+			Rates:         []byte(`{"Nhân viên":{"Ngày thường":{"Ca ngày":270000}}}`),
+			EffectiveFrom: today(),
+		}
+		var resp PayrateResponse
+		if _, err := admin.PostInto(fmt.Sprintf("/api/v1/projects/%d/payrate", projectID), body, &resp); err == nil {
+			v1ID = resp.ID
+		} else if existing, found := findPayrateFromDate(admin, projectID, today()); found && isTestPayrateRates(existing.Rates) {
+			v1ID = existing.ID
+			fmt.Printf("    Adopted existing v1 payrate ID %d\n", v1ID)
+		} else {
+			return fmt.Errorf("create v1: %w", err)
+		}
+		return AssertGreaterThan("v1 id", uint(0), v1ID)
+	})
+
+	defer func() {
+		if v1ID != 0 {
+			_, _, _ = admin.Delete(fmt.Sprintf("/api/v1/payrates/%d", v1ID))
+		}
+	}()
+
+	reporter.RunTest(flowPayrate, "New model: create on/before latest rejected", func() error {
+		body := CreatePayrateRequest{
+			Rates:         []byte(`{"Nhân viên":{"Ngày thường":{"Ca ngày":250000}}}`),
+			EffectiveFrom: today(),
+		}
+		apiErr, statusCode, err := admin.PostExpectError(fmt.Sprintf("/api/v1/projects/%d/payrate", projectID), body)
+		if err != nil {
+			return fmt.Errorf("post: %w", err)
+		}
+		if statusCode != 400 {
+			return fmt.Errorf("expected 400, got %d", statusCode)
+		}
+		return AssertEqual("code", "PAYRATE_NOT_LATEST", apiErr.Code)
+	})
+
+	reporter.RunTest(flowPayrate, "New model: create version after latest succeeds", func() error {
+		body := CreatePayrateRequest{
+			Rates:         []byte(`{"Nhân viên":{"Ngày thường":{"Ca ngày":260000}}}`),
+			EffectiveFrom: tomorrow,
+		}
+		var resp PayrateResponse
+		if _, err := admin.PostInto(fmt.Sprintf("/api/v1/projects/%d/payrate", projectID), body, &resp); err == nil {
+			v2ID = resp.ID
+		} else if existing, found := findPayrateFromDate(admin, projectID, tomorrow); found && isTestPayrateRates(existing.Rates) {
+			v2ID = existing.ID
+			fmt.Printf("    Adopted existing v2 payrate ID %d\n", v2ID)
+		} else {
+			return fmt.Errorf("create v2: %w", err)
+		}
+		return AssertGreaterThan("v2 id", uint(0), v2ID)
+	})
+
+	defer func() {
+		if v2ID != 0 {
+			_, _, _ = admin.Delete(fmt.Sprintf("/api/v1/payrates/%d", v2ID))
+		}
+	}()
+
+	reporter.RunTest(flowPayrate, "New model: superseded config is view-only", func() error {
+		body := UpdatePayrateRequest{
+			Rates:         []byte(`{"Nhân viên":{"Ngày thường":{"Ca ngày":999000}}}`),
+			EffectiveFrom: today(),
+		}
+		apiErr, statusCode, err := admin.PutExpectError(fmt.Sprintf("/api/v1/payrates/%d", v1ID), body)
+		if err != nil {
+			return fmt.Errorf("put: %w", err)
+		}
+		if statusCode != 400 {
+			return fmt.Errorf("expected 400, got %d", statusCode)
+		}
+		return AssertEqual("code", "PAYRATE_NOT_LATEST", apiErr.Code)
+	})
+
+	reporter.RunTest(flowPayrate, "New model: derived end date follows successor", func() error {
+		var payrates []PayrateResponse
+		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/payrates?project_id=%d", projectID), &payrates); err != nil {
+			return fmt.Errorf("list: %w", err)
+		}
+		for i := range payrates {
+			if payrates[i].ID == v1ID {
+				if payrates[i].ToDate == nil {
+					return fmt.Errorf("superseded config must derive an end date, got null")
+				}
+				return AssertEqual("derived end date", today(), *payrates[i].ToDate)
+			}
+		}
+		return fmt.Errorf("v1 %d not found in list", v1ID)
+	})
+
+	reporter.RunTest(flowPayrate, "New model: dry-run valid for a later date", func() error {
+		body := map[string]any{
+			"rates":          json.RawMessage(`{"Nhân viên":{"Ngày thường":{"Ca ngày":260000}}}`),
+			"effective_from": clockHelperDayAfter(tomorrow),
+		}
+		var resp struct {
+			Valid                     bool  `json:"valid"`
+			MutableTimesheetsAffected int64 `json:"mutable_timesheets_affected"`
+		}
+		if _, err := admin.PostInto("/api/v1/payrates/validate?project_id="+fmt.Sprint(projectID), body, &resp); err != nil {
+			return fmt.Errorf("validate: %w", err)
+		}
+		if !resp.Valid {
+			return fmt.Errorf("expected valid dry-run for a date after the latest config")
+		}
+		return nil
+	})
+
+	reporter.RunTest(flowPayrate, "New model: dry-run rejects fold-colliding keys", func() error {
+		body := map[string]any{
+			"rates":          json.RawMessage(`{"Nhân viên":{"Ngày thường":{"Ca ngày":10000}},"nhân viên":{"Ngày thường":{"Ca ngày":20000}}}`),
+			"effective_from": clockHelperDayAfter(tomorrow),
+		}
+		var resp struct {
+			Valid  bool `json:"valid"`
+			Fields struct {
+				Rates struct {
+					Status  string `json:"status"`
+					Message string `json:"message"`
+				} `json:"rates"`
+			} `json:"fields"`
+		}
+		if _, err := admin.PostInto("/api/v1/payrates/validate?project_id="+fmt.Sprint(projectID), body, &resp); err != nil {
+			return fmt.Errorf("validate: %w", err)
+		}
+		if resp.Valid || resp.Fields.Rates.Status != "error" {
+			return fmt.Errorf("expected fold-collision rejection, got valid=%v status=%q", resp.Valid, resp.Fields.Rates.Status)
+		}
+		return AssertContains("message", resp.Fields.Rates.Message, "Trùng tên")
+	})
+
+	reporter.RunTest(flowPayrate, "New model: delete heals timeline", func() error {
+		if v2ID == 0 {
+			return fmt.Errorf("no v2 payrate")
+		}
+		if _, _, err := admin.Delete(fmt.Sprintf("/api/v1/payrates/%d", v2ID)); err != nil {
+			return fmt.Errorf("delete v2: %w", err)
+		}
+		v2ID = 0 // deferred cleanup must skip
+		var payrates []PayrateResponse
+		if _, err := admin.GetInto(fmt.Sprintf("/api/v1/payrates?project_id=%d", projectID), &payrates); err != nil {
+			return fmt.Errorf("list: %w", err)
+		}
+		for i := range payrates {
+			if payrates[i].ID == v1ID {
+				if payrates[i].ToDate != nil {
+					return fmt.Errorf("expected open-ended after successor deleted, got %s", *payrates[i].ToDate)
+				}
+				return nil
+			}
+		}
+		return fmt.Errorf("v1 %d not found in list", v1ID)
+	})
+}
+
+// clockHelperTomorrow returns tomorrow's date string in local time.
+func clockHelperTomorrow() string {
+	return time.Now().AddDate(0, 0, 1).Format("2006-01-02")
+}
+
+// clockHelperDayAfter returns the day after the given date string.
+func clockHelperDayAfter(dateStr string) string {
+	t, err := time.ParseInLocation("2006-01-02", dateStr, time.Local)
+	if err != nil {
+		return dateStr
+	}
+	return t.AddDate(0, 0, 1).Format("2006-01-02")
+}
+
+// findPayrateFromDate returns the project's payrate effective on the given
+// date, if one exists.
+func findPayrateFromDate(admin *APIClient, projectID uint, date string) (*PayrateResponse, bool) {
+	var payrates []PayrateResponse
+	if _, err := admin.GetInto(fmt.Sprintf("/api/v1/payrates?project_id=%d", projectID), &payrates); err != nil {
+		return nil, false
+	}
+	for i := range payrates {
+		if payrates[i].FromDate == date {
+			return &payrates[i], true
+		}
+	}
+	return nil, false
 }
 
 // findTodayPayrate returns the project's active payrate whose effective date is

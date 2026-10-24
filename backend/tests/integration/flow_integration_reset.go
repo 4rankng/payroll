@@ -32,7 +32,7 @@ func runIntegrationResetTests(client *APIClient, data *TestData, reporter *Repor
 
 	reporter.RunTest(flowIntegrationAPI, "Admin creates an API key", func() error {
 		var out CreateAPIKeyResponse
-		if _, err := admin.PostInto("/api/v1/admin/api-keys", CreateAPIKeyRequest{Name: "itest chatbot"}, &out); err != nil {
+		if _, err := admin.PostInto("/api/v1/admin/api-keys", CreateAPIKeyRequest{Name: "itest chatbot", Scope: "tinghire"}, &out); err != nil {
 			return err
 		}
 		if out.Key == "" {

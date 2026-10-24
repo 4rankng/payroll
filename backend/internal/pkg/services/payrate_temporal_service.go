@@ -474,17 +474,19 @@ func (s *PayrateTemporalService) recalculateMutableTimesheets(ctx context.Contex
 		return fmt.Errorf("failed to load mutable timesheets: %w", err)
 	}
 
+	rateLookup, err := payrate.Payrate.RateLookup()
+	if err != nil {
+		return domain.NewValidationError("không thể phân tích cấu hình mức lương: " + err.Error())
+	}
+
 	updatedCount := 0
 	for _, timesheet := range timesheets {
-		rate, err := payrate.Payrate.GetRate(timesheet.PayType)
+		rate, err := rateLookup.Get(timesheet.PayType)
 		if err != nil {
 			return domain.NewValidationError(fmt.Sprintf("bảng công %d có loại lương không tồn tại trong cấu hình mới", timesheet.ID))
 		}
 
-		amount := int64(timesheet.HoursWorked * float64(rate))
-		if project.IsFlexible {
-			amount = int64(rate)
-		}
+		amount := domain.ComputeTimesheetAmount(project.IsFlexible, timesheet.HoursWorked, int64(rate))
 
 		result := tx.WithContext(ctx).
 			Model(&domain.Timesheet{}).
@@ -536,17 +538,19 @@ func (s *PayrateTemporalService) repriceTimesheetsLinkedToTx(ctx context.Context
 		return nil
 	}
 
+	rateLookup, err := covering.Payrate.RateLookup()
+	if err != nil {
+		return domain.NewValidationError("không thể phân tích cấu hình mức lương: " + err.Error())
+	}
+
 	updatedCount := 0
 	for _, timesheet := range timesheets {
-		rate, err := covering.Payrate.GetRate(timesheet.PayType)
+		rate, err := rateLookup.Get(timesheet.PayType)
 		if err != nil {
 			return domain.NewValidationError(fmt.Sprintf("bảng công %d có loại lương không tồn tại trong cấu hình kế trước", timesheet.ID))
 		}
 
-		amount := int64(timesheet.HoursWorked * float64(rate))
-		if project.IsFlexible {
-			amount = int64(rate)
-		}
+		amount := domain.ComputeTimesheetAmount(project.IsFlexible, timesheet.HoursWorked, int64(rate))
 
 		result := tx.WithContext(ctx).
 			Model(&domain.Timesheet{}).

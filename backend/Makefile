@@ -179,7 +179,7 @@ restore:
 	HASH=$$(if [ -f .env ]; then HS=$$(grep -E '^HASH_SECRET=' .env | cut -d= -f2-); HSA=$$(grep -E '^HASH_SALT=' .env | cut -d= -f2-); else HS='dev-not-for-prod-hash-secret'; HSA='dev-not-for-prod-hash-salt'; fi; HASH_SECRET="$$HS" HASH_SALT="$$HSA" go run ./cmd/hashpw Admin123) && \
 	echo "🔐 Updating ALL user passwords to 'Admin123'..." && \
 	docker exec -e UPD="UPDATE users SET password='$$HASH';" payroll-mysql \
-		sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" payroll_db -e "$$UPD"' && \
+		sh -c 'mysql -u "$$MYSQL_USER" -p"$$MYSQL_PASSWORD" "$$MYSQL_DATABASE" -e "$$UPD"' && \
 	echo "✅ All users now have password: Admin123"
 
 # Reset every user's password to "Admin123" without dropping the DB.
@@ -188,7 +188,7 @@ reset-passwords:
 	@echo "🔐 Generating Argon2id hash for 'Admin123' (using app peppers)..."
 	@HASH=$$(if [ -f .env ]; then HS=$$(grep -E '^HASH_SECRET=' .env | cut -d= -f2-); HSA=$$(grep -E '^HASH_SALT=' .env | cut -d= -f2-); else HS='dev-not-for-prod-hash-secret'; HSA='dev-not-for-prod-hash-salt'; fi; HASH_SECRET="$$HS" HASH_SALT="$$HSA" go run ./cmd/hashpw Admin123) && \
 	docker exec -e UPD="UPDATE users SET password='$$HASH';" payroll-mysql \
-		sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" payroll_db -e "$$UPD"' && \
+		sh -c 'mysql -u "$$MYSQL_USER" -p"$$MYSQL_PASSWORD" "$$MYSQL_DATABASE" -e "$$UPD"' && \
 	echo "✅ All users now have password: Admin123"
 
 # Lint command for code quality
