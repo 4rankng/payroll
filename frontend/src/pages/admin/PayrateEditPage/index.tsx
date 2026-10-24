@@ -24,6 +24,7 @@ import {
   validateFlexiblePayrateStructure,
   createDefaultPayrateStructure,
   createFlexiblePayrateStructure,
+  backfillCarriedForwardMatrix,
 } from '@/components/payrates/types';
 import { dateToString, formatIsoDateDisplay } from '@/utils/dateHelpers';
 import { useProject } from '@/hooks/api/useProjects';
@@ -148,9 +149,12 @@ export default function PayrateEditPage() {
     if (latestPayrate) {
       const next = new Date(latestPayrate.fromDate + 'T00:00:00');
       next.setDate(next.getDate() + 1);
+      const cloned = JSON.parse(JSON.stringify(latestPayrate.rates)) as PayrateStructure;
       setConfig(prev => ({
         ...prev,
-        rates: JSON.parse(JSON.stringify(latestPayrate.rates)) as PayrateStructure,
+        // Non-flexible carry-forward backfills the full grid (zeros explicit)
+        // so the strict client validator accepts the seeded matrix.
+        rates: isFlexible ? cloned : backfillCarriedForwardMatrix(cloned),
         fromDate: dateToString(next),
       }));
     } else if (isFlexible) {

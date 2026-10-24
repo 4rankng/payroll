@@ -402,6 +402,40 @@ export function createDefaultPayrateStructure(): PayrateStructure {
   return structure;
 }
 
+// Backfill a carried-forward matrix to the complete grid shape the matrix
+// editor and client validator expect: every position gets all three day
+// types, and every day type gets the full union of hour-type columns with
+// zeros where the source config had nothing. Carry-forward must never seed a
+// matrix that fails client validation — that re-creates the stuck-editor
+// wall this wave removes. Flexible projects are exempt: their shape is one
+// day type with time-range shifts, and the flexible validator only needs a
+// non-empty shift set.
+export function backfillCarriedForwardMatrix(rates: PayrateStructure): PayrateStructure {
+  const hourTypes = new Set<string>();
+  for (const pos of Object.values(rates)) {
+    for (const dayMap of Object.values(pos ?? {})) {
+      for (const hourType of Object.keys(dayMap ?? {})) {
+        hourTypes.add(hourType);
+      }
+    }
+  }
+
+  const out: PayrateStructure = {};
+  for (const [position, dayMap] of Object.entries(rates)) {
+    const positionOut: Record<string, Record<string, number>> = {};
+    for (const dayType of ALL_DAY_TYPES) {
+      const source = (dayMap as Record<string, Record<string, number>>)?.[dayType] ?? {};
+      const row: Record<string, number> = {};
+      hourTypes.forEach(hourType => {
+        row[hourType] = source[hourType] ?? 0;
+      });
+      positionOut[dayType] = row;
+    }
+    out[position] = positionOut;
+  }
+  return out;
+}
+
 // Validation for flexible projects
 export function validateFlexiblePayrateStructure(rates: PayrateStructure): ValidationResult {
   const errors: string[] = [];
