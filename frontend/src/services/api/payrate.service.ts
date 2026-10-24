@@ -31,6 +31,10 @@ export interface FieldResult {
 
 export interface RatesFieldResult extends FieldResult {
   timesheet_count?: number;
+  /** Latest config's positions this save drops — warning only, save may proceed. */
+  missing_positions?: string[];
+  /** Submitted positions that are case/spelling variants of existing ones. */
+  key_drift_warnings?: string[];
 }
 
 export interface DryRunValidateResponse {
@@ -42,6 +46,8 @@ export interface DryRunValidateResponse {
     effective_to: FieldResult;
     rates: RatesFieldResult;
   };
+  /** Unpaid and unapproved timesheets this save would re-price. */
+  mutable_timesheets_affected?: number;
 }
 
 export class PayRateService {

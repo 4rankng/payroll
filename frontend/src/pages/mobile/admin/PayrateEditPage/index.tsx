@@ -17,7 +17,6 @@ import { MobilePageShell } from '@/components/shared/MobilePageShell';
 import { MobileSubPageHeader } from '@/components/shared/MobileSubPageHeader';
 import { PayrateMatrixEditor } from '@/components/payrates/components/PayrateMatrixEditor';
 import { FlexiblePayrateEditor } from '@/components/payrates/components/FlexiblePayrateEditor';
-import { PayrateJsonEditor } from '@/components/payrates/components/PayrateJsonEditor';
 import {
   type PayrateConfig,
   type PayrateStructure,
@@ -39,7 +38,7 @@ import { payRateService, type DryRunValidateResponse, type FieldResult } from '@
 import type { PayRate } from '@/types/api/payrate.types';
 import { cn } from '@/lib/utils';
 
-type SaveStep = 'idle' | 'validating' | 'confirmed' | 'saving';
+type SaveStep = 'idle' | 'validating' | 'confirm' | 'saving';
 
 /** Per-field feedback rendered as a stacked card with optional apply-suggestion. */
 function FieldFeedback({ field, onApplySuggestion }: {
@@ -103,6 +102,12 @@ export default function PayrateEditPageMobile() {
     return allPayRatesData?.data?.find(p => p.id === numPayrateId) ?? null;
   }, [allPayRatesData, isNew, numPayrateId]);
 
+  // Latest config = first row of the from_date DESC list. New versions must
+  // start strictly after it, and create pre-fills from it (carry-forward).
+  const latestPayrate = useMemo<PayRate | null>(() => {
+    return allPayRatesData?.data?.[0] ?? null;
+  }, [allPayRatesData]);
+
   const editorMode: EditorMode = isNew ? 'create' : 'edit';
 
   const [config, setConfig] = useState<Partial<PayrateConfig>>({
@@ -111,22 +116,49 @@ export default function PayrateEditPageMobile() {
     fromDate: dateToString(new Date()),
   });
 
-  const [viewMode, setViewMode] = useState<'matrix' | 'json'>('matrix');
   const [saveStep, setSaveStep] = useState<SaveStep>('idle');
   const [serverResult, setServerResult] = useState<DryRunValidateResponse | null>(null);
   const [validateError, setValidateError] = useState<string | null>(null);
   const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
+  // Whether the pending (validated) save changes rates — decides create vs
+  // in-place update when the user confirms.
+  const [pendingRatesChanged, setPendingRatesChanged] = useState(false);
 
   const fromDateRef = useRef<HTMLInputElement>(null);
 
   const isFlexible = !!project?.is_flexible;
 
-  const flexibleInitDone = useRef(false);
+  // Carry-forward: a new payrate starts as a copy of the latest config, so
+  // untouched positions keep their rates. First-ever config keeps the generic
+  // template. The ref prevents re-running on subsequent renders.
+  const carryForwardDone = useRef(false);
   useEffect(() => {
-    if (!isNew || !isFlexible || flexibleInitDone.current) return;
-    flexibleInitDone.current = true;
-    setConfig(prev => ({ ...prev, rates: createFlexiblePayrateStructure() }));
-  }, [isFlexible, isNew]);
+    if (!isNew || carryForwardDone.current || isLoadingProject || isLoadingRates) return;
+    carryForwardDone.current = true;
+    if (latestPayrate) {
+      const next = new Date(latestPayrate.fromDate + 'T00:00:00');
+      next.setDate(next.getDate() + 1);
+      setConfig(prev => ({
+        ...prev,
+        rates: JSON.parse(JSON.stringify(latestPayrate.rates)) as PayrateStructure,
+        fromDate: dateToString(next),
+      }));
+    } else if (isFlexible) {
+      setConfig(prev => ({ ...prev, rates: createFlexiblePayrateStructure() }));
+    }
+  }, [isNew, isLoadingProject, isLoadingRates, isFlexible, latestPayrate]);
+
+  // Create mode appends after the latest config: the date input floors at
+  // latest from_date + 1 (the backend rejects anything on or before it).
+  const minFromDate = useMemo(() => {
+    if (editorMode === 'edit') {
+      return serverResult?.fields.effective_from.min_value || targetPayrate?.earliest_effective_from;
+    }
+    if (!latestPayrate) return undefined;
+    const d = new Date(latestPayrate.fromDate + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    return dateToString(d);
+  }, [editorMode, serverResult, targetPayrate, latestPayrate]);
 
   useEffect(() => {
     if (targetPayrate) {
@@ -168,6 +200,38 @@ export default function PayrateEditPageMobile() {
       : validatePayrateStructure(config.rates);
   }, [config.rates, isFlexible]);
 
+  // Diff summary for the confirmation step: what changes relative to the
+  // baseline this save versioned from (target for edits, latest for creates).
+  const diffSummary = useMemo(() => {
+    const base = (editorMode === 'edit' ? targetPayrate?.rates : latestPayrate?.rates) ?? {};
+    const next = config.rates ?? {};
+    let changedCells = 0;
+    const addedPositions: string[] = [];
+    const removedPositions: string[] = [];
+
+    const dayKeys = (m: unknown): string[] => (m && typeof m === 'object' ? Object.keys(m) : []);
+    const rateAt = (m: unknown, day: string, shift: string): number | undefined => {
+      const dayMap = (m as Record<string, Record<string, number>>)[day];
+      return dayMap?.[shift];
+    };
+
+    for (const pos of Object.keys(base)) {
+      if (!(pos in next)) {
+        removedPositions.push(pos);
+        continue;
+      }
+      for (const day of dayKeys(base[pos])) {
+        for (const shift of dayKeys((base[pos] as Record<string, unknown>)[day])) {
+          if (rateAt(base[pos], day, shift) !== rateAt(next[pos], day, shift)) changedCells += 1;
+        }
+      }
+    }
+    for (const pos of Object.keys(next)) {
+      if (!(pos in base)) addedPositions.push(pos);
+    }
+    return { changedCells, addedPositions, removedPositions };
+  }, [editorMode, targetPayrate, latestPayrate, config.rates]);
+
   // Ended configs (a newer config took over) are history: rows under them are
   // priced, and the backend rejects any update. Render everything read-only
   // instead of offering an edit that can only fail.
@@ -186,6 +250,33 @@ export default function PayrateEditPageMobile() {
     navigate(`${basePath}/projects?modal=project_details&id=${numProjectId}`);
   }, [navigate, basePath, numProjectId]);
 
+  // From-date-only model: rate changes always create a NEW config version;
+  // only a start-date correction without rate changes updates in place.
+  const performSave = useCallback(async (ratesChanged: boolean) => {
+    setSaveStep('saving');
+    try {
+      if (editorMode === 'edit' && targetPayrate?.id && !ratesChanged) {
+        await updateMutation.mutateAsync({
+          payRateId: targetPayrate.id,
+          data: { rates: config.rates!, effective_from: config.fromDate! },
+        });
+      } else {
+        await createMutation.mutateAsync({
+          projectId: numProjectId,
+          data: { rates: config.rates!, effective_from: config.fromDate! },
+        });
+      }
+      goBack();
+    } catch (err: unknown) {
+      // Never swallow failed saves: a silent reset invites retries that
+      // duplicate rows.
+      const apiErr = err as { response?: { data?: { message?: string } }; message?: string };
+      setValidateError(apiErr?.response?.data?.message || apiErr?.message || 'Lưu thất bại. Vui lòng thử lại.');
+      setServerResult(null);
+      setSaveStep('idle');
+    }
+  }, [config, numProjectId, editorMode, targetPayrate, createMutation, updateMutation, goBack]);
+
   const handleValidate = useCallback(async () => {
     setHasAttemptedSave(true);
     if (!clientValidation.valid || !config.fromDate) return;
@@ -202,28 +293,13 @@ export default function PayrateEditPageMobile() {
         ratesChanged ? undefined : numPayrateId ?? undefined,
       );
       setServerResult(result);
+      setPendingRatesChanged(ratesChanged);
 
       if (result.valid) {
-        setSaveStep('saving');
-        try {
-          // Rate changes version append-only: create a new config; the backend
-          // closes the previous one the day before the new effective_from.
-          // Only a start-date correction without rate changes updates in place
-          // (re-pricing mutable, i.e. unpaid and unapproved, timesheets).
-          if (editorMode === 'edit' && targetPayrate?.id && !ratesChanged) {
-            await updateMutation.mutateAsync({
-              payRateId: targetPayrate.id,
-              data: { rates: config.rates!, effective_from: config.fromDate! },
-            });
-          } else {
-            await createMutation.mutateAsync({
-              projectId: numProjectId,
-              data: { rates: config.rates!, effective_from: config.fromDate! },
-            });
-          }
-          goBack();
-        } catch {
-          setSaveStep('idle');
+        if (editorMode === 'edit' && targetPayrate?.id && !ratesChanged) {
+          await performSave(ratesChanged);
+        } else {
+          setSaveStep('confirm');
         }
       } else {
         setSaveStep('idle');
@@ -237,7 +313,11 @@ export default function PayrateEditPageMobile() {
       setServerResult(null);
       setSaveStep('idle');
     }
-  }, [clientValidation.valid, config, numProjectId, numPayrateId, editorMode, targetPayrate, createMutation, updateMutation, goBack]);
+  }, [clientValidation.valid, config, numProjectId, numPayrateId, editorMode, targetPayrate, performSave]);
+
+  const handleConfirmSave = useCallback(async () => {
+    await performSave(pendingRatesChanged);
+  }, [performSave, pendingRatesChanged]);
 
   const isLoading = isLoadingProject || isLoadingRates;
   const isValidating = saveStep === 'validating';
@@ -245,11 +325,6 @@ export default function PayrateEditPageMobile() {
   const canProceed = clientValidation.valid && !!config.fromDate && !isLoading;
 
   const sf = serverResult?.fields;
-
-  // Server locks all fields only when the project is completed/cancelled.
-  // Otherwise every field stays editable: moving the start date earlier or
-  // changing rates re-prices mutable (unpaid, unapproved) timesheets on save.
-  const fromDateIsActionable = false;
 
   return (
     <MobilePageShell>
@@ -285,11 +360,8 @@ export default function PayrateEditPageMobile() {
             )}
 
             {/* Compact editor controls */}
-            <section className={cn(
-              '-mx-4 border-y bg-card transition-colors',
-              fromDateIsActionable ? 'border-utility-warning-400 bg-utility-warning-50/30' : 'border-[hsl(var(--surface-border))]',
-            )}>
-              {!isFlexible && (
+            {!isFlexible && (
+              <section className="-mx-4 border-y border-[hsl(var(--surface-border))] bg-card transition-colors">
                 <div className="px-4 py-3">
                   <div className="grid gap-3 min-[380px]:grid-cols-[minmax(0,1fr)_9.5rem] min-[380px]:items-end">
                     <div className="flex min-w-0 items-center gap-3">
@@ -304,88 +376,54 @@ export default function PayrateEditPageMobile() {
                     <div className="flex flex-col gap-1">
                       <Label htmlFor="fromDate" className={cn(
                         'flex items-center gap-1 text-xs font-medium',
-                        fromDateLocked && !fromDateIsActionable ? 'text-muted-foreground' : 'text-foreground',
-                        sf?.effective_from.status === 'error' && !fromDateIsActionable && 'text-utility-error-700',
-                        fromDateIsActionable && 'font-semibold text-fg-warning-primary',
+                        fromDateLocked ? 'text-muted-foreground' : 'text-foreground',
+                        sf?.effective_from.status === 'error' && 'text-utility-error-700',
                       )}>
                         Từ ngày <span className="text-destructive">*</span>
-                        {fromDateLocked && !fromDateIsActionable && <Lock01 className="h-3 w-3" aria-hidden="true" />}
+                        {fromDateLocked && <Lock01 className="h-3 w-3" aria-hidden="true" />}
                       </Label>
                       <Input
                         ref={fromDateRef}
                         id="fromDate"
                         type="date"
                         value={config.fromDate || ''}
-                        readOnly={fromDateLocked && !fromDateIsActionable}
-                        min={fromDateIsActionable ? sf?.rates.suggested_value : (sf?.effective_from.min_value || targetPayrate?.earliest_effective_from)}
-                        autoFocus={fromDateIsActionable}
+                        readOnly={fromDateLocked}
+                        min={minFromDate}
                         onChange={e => {
-                          if (fromDateLocked && !fromDateIsActionable) return;
+                          if (fromDateLocked) return;
                           setConfig(prev => ({ ...prev, fromDate: e.target.value }));
                           clearServerField('effective_from');
                         }}
                         className={cn(
                           'h-11 w-full text-sm',
-                          fromDateLocked && !fromDateIsActionable && 'cursor-not-allowed bg-muted/50 opacity-60',
-                          fromDateIsActionable && 'border-utility-warning-400 bg-utility-warning-50/40 ring-2 ring-utility-warning-200',
-                          !fromDateIsActionable && fieldBorderClass(sf?.effective_from),
+                          fromDateLocked && 'cursor-not-allowed bg-muted/50 opacity-60',
+                          fieldBorderClass(sf?.effective_from),
                         )}
                       />
                     </div>
                   </div>
-                  {fromDateIsActionable && sf?.rates.suggested_value && (
-                    <div className="mt-3 space-y-1 border-l-2 border-utility-warning-300 pl-3 text-xs text-utility-warning-700">
-                      <p className="font-medium">Cần tạo cấu hình mới để thay đổi mức lương.</p>
-                      <p>Các bảng công chưa thanh toán và chưa duyệt từ ngày này sẽ được cập nhật.</p>
-                      <p>Ngày bắt đầu sớm nhất: <strong>{sf.rates.suggested_value}</strong>.</p>
-                    </div>
-                  )}
-                  {!fromDateIsActionable && (
-                    <>
-                      {isEnded && (
-                        <p className="mb-1 text-xs text-muted-foreground">
-                          Cấu hình đã kết thúc (hiệu lực đến {targetPayrate?.toDate}) — chỉ xem lịch sử. Hãy chỉnh sửa cấu hình lương hiện hành.
-                        </p>
-                      )}
-                      <FieldFeedback
+                  <div className="mt-2">
+                    {isNew && latestPayrate && (
+                      <p className="mb-1 text-xs text-muted-foreground">
+                        Cấu hình mới áp dụng sau cấu hình hiện hành (từ {minFromDate}). Muốn sửa mức lương đang chạy, hãy chỉnh sửa cấu hình hiện tại.
+                      </p>
+                    )}
+                    {isEnded && (
+                      <p className="mb-1 text-xs text-muted-foreground">
+                        Cấu hình đã kết thúc (hiệu lực đến {targetPayrate?.toDate}) — chỉ xem lịch sử. Hãy chỉnh sửa cấu hình lương hiện hành.
+                      </p>
+                    )}
+                    <FieldFeedback
                       field={sf?.effective_from}
                       onApplySuggestion={v => {
                         setConfig(prev => ({ ...prev, fromDate: v }));
                         clearServerField('effective_from');
                       }}
                     />
-                    </>
-                  )}
+                  </div>
                 </div>
-              )}
-
-              <div className={cn('grid grid-cols-2 border-t border-border/70', isFlexible && 'border-t-0')} role="tablist" aria-label="Chế độ chỉnh sửa cấu hình lương">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={viewMode === 'matrix'}
-                  onClick={() => setViewMode('matrix')}
-                  className={cn(
-                    'min-h-11 border-b-2 px-4 text-xs font-semibold transition-colors',
-                    viewMode === 'matrix' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground',
-                  )}
-                >
-                  Ma trận
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={viewMode === 'json'}
-                  onClick={() => setViewMode('json')}
-                  className={cn(
-                    'min-h-11 border-b-2 px-4 text-xs font-semibold transition-colors',
-                    viewMode === 'json' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground',
-                  )}
-                >
-                  JSON
-                </button>
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* Client-side validation */}
             {hasAttemptedSave && !clientValidation.valid && (
@@ -397,13 +435,48 @@ export default function PayrateEditPageMobile() {
               </div>
             )}
 
-            {/* Matrix / JSON editor */}
+            {/* Confirmation step: creates and rate changes */}
+            {saveStep === 'confirm' && (
+              <section className="rounded-xl border border-border bg-card px-4 py-3 text-sm space-y-2">
+                <p className="font-semibold">
+                  {isNew ? 'Xác nhận tạo cấu hình mới' : 'Xác nhận cập nhật cấu hình'}
+                </p>
+                <ul className="space-y-0.5 text-xs text-muted-foreground">
+                  <li>Hiệu lực từ {config.fromDate}.</li>
+                  {diffSummary.changedCells > 0 && <li>{diffSummary.changedCells} ô mức lương thay đổi.</li>}
+                  {diffSummary.addedPositions.length > 0 && <li>Thêm vị trí: {diffSummary.addedPositions.join(', ')}.</li>}
+                  {diffSummary.removedPositions.length > 0 && (
+                    <li className="text-fg-warning-primary">
+                      Bỏ vị trí (sẽ không tạo được bảng công mới cho vị trí này): {diffSummary.removedPositions.join(', ')}.
+                    </li>
+                  )}
+                  {!!serverResult?.fields.rates.key_drift_warnings?.length && (
+                    <li className="text-fg-warning-primary">
+                      Viết khác hiện tại: {serverResult.fields.rates.key_drift_warnings.join('; ')}.
+                    </li>
+                  )}
+                  {!!serverResult?.mutable_timesheets_affected && serverResult.mutable_timesheets_affected > 0 && (
+                    <li>Sẽ tính lại {serverResult.mutable_timesheets_affected} bảng công chưa thanh toán và chưa duyệt.</li>
+                  )}
+                </ul>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <Button variant="outline" className="h-11 w-full" onClick={() => setSaveStep('idle')} disabled={isSaving}>
+                    Quay lại sửa
+                  </Button>
+                  <Button className="btn-admin-primary !h-11 w-full" onClick={handleConfirmSave} disabled={isSaving}>
+                    {isSaving ? 'Đang lưu...' : 'Xác nhận'}
+                  </Button>
+                </div>
+              </section>
+            )}
+
+            {/* Matrix editor */}
             <section className={cn(
               '-mx-4 overflow-hidden border-y bg-card transition-all',
               ratesLocked ? 'border-muted' : 'border-[hsl(var(--surface-border))]',
               sf?.rates?.status === 'error' && 'ring-2 ring-utility-error-100',
             )}>
-              {sf?.rates.status === 'error' && sf.rates.message && !fromDateIsActionable && (
+              {sf?.rates.status === 'error' && sf.rates.message && (
                 <div className="mx-4 mt-3 space-y-1.5 rounded-xl border border-utility-error-200 bg-utility-error-50 px-3 py-2.5 text-xs">
                   <p className="font-semibold text-fg-error-primary">{sf.rates.message}</p>
                   {sf.rates.hint && <p className="text-utility-error-700">{sf.rates.hint}</p>}
@@ -412,28 +485,20 @@ export default function PayrateEditPageMobile() {
 
               <div className={cn('min-w-0 py-3', ratesLocked && 'pointer-events-none select-none opacity-60')}>
                 <div className="min-w-0">
-                  {viewMode === 'matrix' ? (
-                    isFlexible ? (
-                      <FlexiblePayrateEditor
-                        rates={config.rates || {}}
-                        onChange={handleRatesChange}
-                        readOnly={ratesLocked}
-                      />
-                    ) : (
-                      <PayrateMatrixEditor
-                        rates={config.rates || {}}
-                        originalRates={editorMode === 'edit' ? (targetPayrate?.rates ?? undefined) : undefined}
-                        onChange={handleRatesChange}
-                        validation={hasAttemptedSave ? clientValidation : undefined}
-                        readOnly={ratesLocked}
-                        isFlexible={false}
-                      />
-                    )
-                  ) : (
-                    <PayrateJsonEditor
+                  {isFlexible ? (
+                    <FlexiblePayrateEditor
                       rates={config.rates || {}}
                       onChange={handleRatesChange}
                       readOnly={ratesLocked}
+                    />
+                  ) : (
+                    <PayrateMatrixEditor
+                      rates={config.rates || {}}
+                      originalRates={editorMode === 'edit' ? (targetPayrate?.rates ?? undefined) : undefined}
+                      onChange={handleRatesChange}
+                      validation={hasAttemptedSave ? clientValidation : undefined}
+                      readOnly={ratesLocked}
+                      isFlexible={false}
                     />
                   )}
                 </div>

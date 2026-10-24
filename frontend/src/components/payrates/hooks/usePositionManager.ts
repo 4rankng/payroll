@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { PayrateStructure } from '../types';
 import { addPositionToRates, removePositionFromRates, getPositionsFromRates } from '../types';
+import { normalizePayrateKey, isPayrateKeyAvailable } from '@/utils/payrateKey';
 
 export function usePositionManager(
   rates: PayrateStructure,
@@ -15,9 +16,17 @@ export function usePositionManager(
   const positions = getPositionsFromRates(rates);
 
   const handleAddPosition = () => {
-    if (!newPosition.trim() || readOnly) return;
+    const candidate = normalizePayrateKey(newPosition);
+    if (!candidate || readOnly) return;
+    // Fold-based duplicate guard: a case/diacritic variant of an existing
+    // position is the same position — skip, mirroring the exact-key no-op.
+    if (!isPayrateKeyAvailable(positions, candidate)) {
+      setNewPosition('');
+      setShowAddPosition(false);
+      return;
+    }
 
-    const newRates = addPositionToRates(rates, newPosition.trim());
+    const newRates = addPositionToRates(rates, candidate);
     onChange(newRates);
     setNewPosition('');
     setShowAddPosition(false);
@@ -37,7 +46,12 @@ export function usePositionManager(
   };
 
   const handleSavePosition = () => {
-    if (!editingPosition || !editingPositionValue.trim() || editingPositionValue === editingPosition || readOnly) {
+    const candidate = normalizePayrateKey(editingPositionValue);
+    if (!editingPosition || !candidate || candidate === editingPosition || readOnly) {
+      setEditingPosition(null);
+      return;
+    }
+    if (!isPayrateKeyAvailable(positions, candidate, editingPosition)) {
       setEditingPosition(null);
       return;
     }
@@ -46,7 +60,7 @@ export function usePositionManager(
 
     // Rename the position
     if (newRates[editingPosition]) {
-      newRates[editingPositionValue.trim()] = newRates[editingPosition];
+      newRates[candidate] = newRates[editingPosition];
       delete newRates[editingPosition];
     }
 

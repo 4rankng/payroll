@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { PayrateStructure, DayType } from '../types';
 import { getAllHourTypes, getPositionsFromRates, isTimeRange, TIME_RANGE_RE, suggestTimeRange } from '../types';
+import { normalizePayrateKey, isPayrateKeyAvailable } from '@/utils/payrateKey';
 
 export function useHourTypeManager(
   rates: PayrateStructure,
@@ -47,9 +48,15 @@ export function useHourTypeManager(
   };
 
   const handleAddHourType = () => {
-    if (!newHourType.trim() || readOnly) return;
-
-    const hourType = newHourType.trim();
+    const hourType = normalizePayrateKey(newHourType);
+    if (!hourType || readOnly) return;
+    // Fold-based duplicate guard: a case/diacritic variant of an existing
+    // hour type is the same column — skip, mirroring the exact-key no-op.
+    if (!isPayrateKeyAvailable(hourTypes, hourType)) {
+      setNewHourType('');
+      setShowAddHourType(false);
+      return;
+    }
     const newRates = { ...rates };
 
     positions.forEach(position => {
@@ -96,7 +103,7 @@ export function useHourTypeManager(
       return;
     }
 
-    const trimmed = editingHourTypeValue.trim();
+    const trimmed = normalizePayrateKey(editingHourTypeValue);
 
     // Unchanged or empty → just close
     if (!trimmed || trimmed === editingHourType) {
@@ -109,6 +116,13 @@ export function useHourTypeManager(
       const suggestion = suggestTimeRange(trimmed);
       setEditingHourTypeError('Sai định dạng — cần HH:MM-HH:MM (24 giờ)');
       setEditingHourTypeSuggestion(suggestion);
+      return; // Keep edit mode open so user can fix it
+    }
+
+    // Fold-based duplicate guard: renaming onto a case/diacritic variant of
+    // another hour type would merge two columns silently — refuse.
+    if (!isPayrateKeyAvailable(hourTypes, trimmed, editingHourType)) {
+      setEditingHourTypeError('Tên này trùng với một khung giờ đã có (không phân biệt hoa thường và dấu).');
       return; // Keep edit mode open so user can fix it
     }
 
