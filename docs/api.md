@@ -188,7 +188,7 @@ CRUD, `POST /:id/disburse`, `POST /:id/repay`.
 
 ### Settings (`/api/v1/settings`)
 
-CRUD. Partner role has read-only access. Notable keys: `employee.mobile_required` (boolean, missing row = off) — when on, every employee create path requires a phone number.
+CRUD. Partner role has read-only access. Notable keys: `employee.mobile_required` (boolean, seeded `false` at boot; missing row = off) — when on, every employee create path requires a phone number.
 
 ### Notifications (`/api/v1/notifications`)
 

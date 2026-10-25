@@ -33,6 +33,7 @@ import (
 	"api-server/internal/infra/storage"
 	"api-server/internal/pkg/clock"
 	"api-server/internal/pkg/tenantqueue"
+	"api-server/internal/seed"
 	"api-server/internal/transport/http/handlers"
 	adminHandlers "api-server/internal/transport/http/handlers/admin"
 	advPartnerHandlers "api-server/internal/transport/http/handlers/adv_partner"
@@ -160,6 +161,15 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		infra.Logger.Warn("settings secret backfill failed", "error", err)
 	} else if len(sealed) > 0 {
 		infra.Logger.Info("settings secret backfill sealed plaintext values", "keys", sealed)
+	}
+
+	// Ensure boot-flag settings rows exist (idempotent FirstOrCreate). A
+	// never-saved optional key must read as its documented default (200)
+	// instead of 404 — those 404s fed the high-error-rate alert for keys the
+	// frontend fetches before any admin saves the owning panel. Best-effort —
+	// a failure must not block boot.
+	if err := seed.EnsureSettings(context.Background(), infra.DB.DB); err != nil {
+		infra.Logger.Warn("settings boot seed failed", "error", err)
 	}
 
 	// Shared clock instance — must be created before services so attendance
