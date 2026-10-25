@@ -18,7 +18,7 @@ vi.mock('@/hooks/api/useEmployees', () => ({
   useRequestEmployeeAccess: () => ({ isPending: false, mutateAsync: vi.fn() }),
 }));
 vi.mock('@/hooks/api/useSettings', () => ({
-  useSettingByKey: () => ({ data: mocks.mobileSetting }),
+  useMultipleSettings: () => ({ data: [mocks.mobileSetting] }),
 }));
 vi.mock('@/lib/auth', () => ({ authManager: { getUserRole: () => 'admin' } }));
 vi.mock('@/hooks/useModalNavigation', () => ({ useModalNavigation: () => ({ closeModal: vi.fn() }) }));

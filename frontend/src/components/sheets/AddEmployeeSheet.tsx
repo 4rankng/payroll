@@ -10,7 +10,7 @@ import { X, User, CreditCard, UserPlus, Plus, Loader2, AlertTriangle, Search, Ha
 import { toast } from '@/components/ui/sonner';
 import { CreateEmployeeData, DuplicateCheckMatch } from '@/types/api/employee.types';
 import { useCreateEmployee, useDuplicateCheck, useRequestEmployeeAccess } from '@/hooks/api/useEmployees';
-import { useSettingByKey } from '@/hooks/api/useSettings';
+import { useMultipleSettings } from '@/hooks/api/useSettings';
 import { useDebounce } from '@/hooks/useDebounce';
 import { SlideSheetTemplate } from './templates/SlideSheetTemplate';
 import { useModalNavigation } from '@/hooks/useModalNavigation';
@@ -151,8 +151,10 @@ function AddEmployeeSheetComponent({
   const isAdmin = userRole === 'admin';
   const requestAccess = useRequestEmployeeAccess();
   // Missing row = OFF: only a stored 'true' makes mobile mandatory on create.
-  const { data: mobileRequiredSetting } = useSettingByKey('employee.mobile_required');
-  const mobileRequired = mobileRequiredSetting?.value === 'true';
+  // useMultipleSettings maps the 404 of a never-saved row to undefined
+  // instead of failing the query.
+  const { data: mobileRequiredSettings } = useMultipleSettings(['employee.mobile_required']);
+  const mobileRequired = mobileRequiredSettings?.[0]?.value === 'true';
 
   const [formData, setFormData] = useState<CreateEmployeeData>({
     fullname: '',
