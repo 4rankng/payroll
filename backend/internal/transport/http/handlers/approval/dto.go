@@ -46,10 +46,6 @@ type requestResponse struct {
 	CreatedAt     string `json:"created_at"`
 }
 
-func newRequestResponse(r *domain.ApprovalRequest) requestResponse {
-	return newRequestResponseWithView(r, approval.View{})
-}
-
 func newRequestResponseWithView(r *domain.ApprovalRequest, view approval.View) requestResponse {
 	out := requestResponse{
 		ID:            r.ID,
@@ -74,14 +70,6 @@ func newRequestResponseWithView(r *domain.ApprovalRequest, view approval.View) r
 	var payload map[string]any
 	if json.Unmarshal([]byte(r.Payload), &payload) == nil {
 		out.Payload = payload
-	}
-	return out
-}
-
-func newRequestResponses(items []*domain.ApprovalRequest) []requestResponse {
-	out := make([]requestResponse, 0, len(items))
-	for _, r := range items {
-		out = append(out, newRequestResponse(r))
 	}
 	return out
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   BadgeCheck,
@@ -391,28 +391,33 @@ export function EmployeeAccountLookupDialog({
   // valid. This keeps the transfer handoff from ever carrying an unverified or
   // mismatched account — the same guard the transfer form enforces before
   // enabling its own submit.
-  const confirmedRecipient: DisbursementRecipientPrefill | null =
-    mode === "employee"
-      ? lookupMutation.data && lookupMutation.data.outcome === "valid"
-        ? {
-            bankCode:
-              lookupMutation.data.stored_bank.swift_code ||
-              lookupMutation.data.stored_bank.bank_code,
-            accountNo: lookupMutation.data.stored_bank.account_number,
-            accountName:
-              lookupMutation.data.provider_result.AccountName?.trim() ||
-              lookupMutation.data.stored_bank.account_name,
-          }
-        : null
-      : customLookupMutation.data && customLookupMutation.data.Valid
-        ? {
-            bankCode: customFields.bankCode.trim().toUpperCase(),
-            accountNo: customFields.accountNumber.trim(),
-            accountName:
-              customLookupMutation.data.AccountName?.trim() ||
-              customFields.accountName.trim(),
-          }
-        : null;
+  // Memoized so handleSendToAccount's useCallback deps are stable across
+  // renders (the object literal otherwise changes identity every render).
+  const confirmedRecipient = useMemo<DisbursementRecipientPrefill | null>(
+    () =>
+      mode === "employee"
+        ? lookupMutation.data && lookupMutation.data.outcome === "valid"
+          ? {
+              bankCode:
+                lookupMutation.data.stored_bank.swift_code ||
+                lookupMutation.data.stored_bank.bank_code,
+              accountNo: lookupMutation.data.stored_bank.account_number,
+              accountName:
+                lookupMutation.data.provider_result.AccountName?.trim() ||
+                lookupMutation.data.stored_bank.account_name,
+            }
+          : null
+        : customLookupMutation.data && customLookupMutation.data.Valid
+          ? {
+              bankCode: customFields.bankCode.trim().toUpperCase(),
+              accountNo: customFields.accountNumber.trim(),
+              accountName:
+                customLookupMutation.data.AccountName?.trim() ||
+                customFields.accountName.trim(),
+            }
+          : null,
+    [mode, lookupMutation.data, customLookupMutation.data, customFields]
+  );
 
   const handleSendToAccount = useCallback(() => {
     if (!confirmedRecipient || !onSendToAccount) return;

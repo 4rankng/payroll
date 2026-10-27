@@ -319,7 +319,7 @@ const AdminDashboardMobile = () => {
         onClick: () => navigate('/admin/projects'),
       },
     ];
-  }, [bankData, dashboardNav, hasPendingError, navigate, pendingApprovals]);
+  }, [bankData, dashboardNav, hasPendingError, navigate, pendingApprovals, approvalsCount, approvalsEscalated.data?.pagination?.totalRecords]);
 
   if (loading) {
     return (

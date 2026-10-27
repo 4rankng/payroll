@@ -182,7 +182,7 @@ export default function PayrateEditPageMobile() {
         fromDate,
       });
     }
-  }, [targetPayrate, numProjectId]);
+  }, [targetPayrate, numProjectId, latestPayrate]);
 
   const clearServerField = useCallback((field: 'effective_from' | 'rates') => {
     setValidateError(null);
