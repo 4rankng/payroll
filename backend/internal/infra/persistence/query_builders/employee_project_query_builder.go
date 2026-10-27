@@ -319,7 +319,7 @@ func (b *EmployeeProjectQueryBuilder) BuildMissingBankDetailsCountQuery(filters 
 
 // missingMobilePredicate matches employees with no usable phone number on
 // file. COALESCE+TRIM mirrors the bank predicate: legacy rows may hold NULL or
-// whitespace even though the column default is ''.
+// whitespace even though the column default is ”.
 const missingMobilePredicate = `COALESCE(TRIM(employees.mobile), '') = ''`
 
 // BuildMissingMobileQuery lists employees with no mobile number on file. Unlike

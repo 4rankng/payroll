@@ -19,7 +19,7 @@ func newSettingsTestDB(t *testing.T) *gorm.DB {
 	// sqlite. Column shapes only — FirstOrCreate behavior is type-agnostic.
 	require.NoError(t, db.Exec(`CREATE TABLE settings (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		` + "`key`" + ` varchar(100) NOT NULL UNIQUE,
+		`+"`key`"+` varchar(100) NOT NULL UNIQUE,
 		value TEXT,
 		value_type varchar(10) NOT NULL DEFAULT 'string',
 		deleted_at DATETIME,

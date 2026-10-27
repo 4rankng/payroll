@@ -117,8 +117,8 @@ type ProjectRecentEmployee struct {
 
 // ProjectCurrentPayrate represents current active payrate for a project
 type ProjectCurrentPayrate struct {
-	ID       uint                   `json:"id"`
-	FromDate string                 `json:"fromDate"`
+	ID       uint   `json:"id"`
+	FromDate string `json:"fromDate"`
 	// No ToDate: end dates are derived from the successor config (migration
 	// 138 dropped the column).
 	Configuration map[string]interface{} `json:"configuration"`

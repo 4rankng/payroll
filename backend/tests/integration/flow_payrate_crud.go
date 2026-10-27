@@ -277,7 +277,7 @@ func runPayrateCRUDTests(client *APIClient, data *TestData, reporter *Reporter, 
 			return fmt.Errorf("expected 200, got %d: %s", statusCode, string(raw))
 		}
 		var resp struct {
-			Valid                     bool `json:"valid"`
+			Valid                     bool   `json:"valid"`
 			MutableTimesheetsAffected *int64 `json:"mutable_timesheets_affected"`
 		}
 		if err := json.Unmarshal(raw, &resp); err != nil {
