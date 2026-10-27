@@ -21,6 +21,7 @@ import (
 	"api-server/internal/pkg/ipgeo"
 	"api-server/internal/pkg/phone"
 
+	"github.com/altcha-org/altcha-lib-go/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"google.golang.org/api/idtoken"
@@ -113,10 +114,10 @@ func (s *AuthService) findUserByMobileIdentifier(ctx context.Context, identifier
 	return identity.New(s.userService.UserRepo, s.employeeRepo).ResolveUserByMobile(ctx, identifier)
 }
 
-// GenerateCaptcha creates a new image CAPTCHA challenge.
-func (s *AuthService) GenerateCaptcha(ctx context.Context) (id, imageBase64 string, err error) {
+// GenerateCaptcha creates a new ALTCHA proof-of-work CAPTCHA challenge.
+func (s *AuthService) GenerateCaptcha(ctx context.Context) (challenge altcha.Challenge, err error) {
 	if s.captchaService == nil {
-		return "", "", domain.NewInternalError("captcha not configured", nil)
+		return altcha.Challenge{}, domain.NewInternalError("captcha not configured", nil)
 	}
 	return s.captchaService.Generate(ctx)
 }
@@ -298,7 +299,7 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 	// otp_failed_attempts counter as the consecutive-failure tracker (reset on
 	// successful login below).
 	if s.captchaService != nil && s.captchaService.RequiredForFailures(user.OTPFailedAttempts) {
-		if !s.captchaService.Verify(ctx, req.CaptchaID, req.CaptchaCode) {
+		if !s.captchaService.Verify(ctx, req.Captcha) {
 			s.writeFailedLoginAudit(ctx, user.ID, req.Username, ipAddress, userAgent, "thất bại: captcha không hợp lệ")
 			// Keep the failure counter climbing so the account continues to
 			// escalate toward OTP-lockout; a sustained captcha-failed flood must

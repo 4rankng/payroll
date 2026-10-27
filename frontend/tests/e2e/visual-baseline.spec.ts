@@ -195,7 +195,7 @@ test.describe("visual baselines", () => {
       const outcome = await Promise.race([
         page.waitForURL(account.destination, { timeout: 30_000 }).then(() => "navigated" as const),
         page
-          .locator("#captchaCode")
+          .locator("altcha-widget")
           .waitFor({ state: "visible", timeout: 30_000 })
           .then(() => "captcha" as const),
         page

@@ -16,7 +16,7 @@ Security practices, threat models, and mitigations for the payroll system. This 
 
 ### Login Protection
 
-- **Self-hosted image CAPTCHA** after 3 failed login attempts (commit `6327168`). Uses `base64Captcha` with Redis storage.
+- **Self-hosted ALTCHA proof-of-work CAPTCHA** after 3 failed login attempts (commit `6327168` digit image; replaced 2026-10 by `altcha-lib-go/v2` per PAYR-16). HMAC-signed challenges (`CAPTCHA_HMAC_SECRET`, boot-gated), browser-solved PoW — the user only ticks a checkbox; solutions are single-use via Redis markers (`captcha:used:*`), payload size-limited (4096 chars), challenge TTL via `CAPTCHA_CODE_TTL`, difficulty via `CAPTCHA_COST`.
 - **Per-account login rate limiting** (commit `473a49e`). Redis-backed, returns Vietnamese message with actual `retry_after` seconds.
 - **Per-IP rate limiting** via `middleware/rate_limit.go`.
 

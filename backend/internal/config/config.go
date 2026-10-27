@@ -143,14 +143,16 @@ type GoogleConfig struct {
 	ClientID     string
 }
 
-// CaptchaConfig controls the self-hosted image CAPTCHA (base64Captcha + Redis).
-// When Enabled, a digit-image CAPTCHA is required after `Threshold` consecutive
-// login failures. Default off — purely additive. Gated by CAPTCHA_ENABLE.
+// CaptchaConfig controls the self-hosted ALTCHA proof-of-work CAPTCHA
+// (altcha-lib-go + Redis). When Enabled, a CAPTCHA is required after
+// `Threshold` consecutive login failures. Default off — purely additive.
+// Gated by CAPTCHA_ENABLE.
 type CaptchaConfig struct {
-	Enabled    bool
-	Threshold  int           // failures before CAPTCHA is required (default 3)
-	CodeTTL    time.Duration // challenge lifetime (default 5m)
-	CodeLength int           // digits in the code (default 5)
+	Enabled      bool
+	Threshold    int           // failures before CAPTCHA is required (default 3)
+	ChallengeTTL time.Duration // challenge lifetime (default 5m)
+	HMACSecret   string        // signs challenge parameters (required when Enabled)
+	Cost         int           // PoW difficulty: hash iterations per solve attempt (default 500)
 }
 
 type LogConfig struct {
@@ -489,10 +491,11 @@ func Load() (*Config, error) {
 			RatePerMin: parseInt(getEnv("PAYROLL_OPS_MCP_RATE_PER_MIN", "120")),
 		},
 		Captcha: CaptchaConfig{
-			Enabled:    parseBool(getEnv("CAPTCHA_ENABLE", "false")),
-			Threshold:  parseInt(getEnv("CAPTCHA_THRESHOLD", "3")),
-			CodeTTL:    parseDuration(getEnv("CAPTCHA_CODE_TTL", "5m")),
-			CodeLength: parseInt(getEnv("CAPTCHA_CODE_LENGTH", "5")),
+			Enabled:      parseBool(getEnv("CAPTCHA_ENABLE", "false")),
+			Threshold:    parseInt(getEnv("CAPTCHA_THRESHOLD", "3")),
+			ChallengeTTL: parseDuration(getEnv("CAPTCHA_CODE_TTL", "5m")),
+			HMACSecret:   getEnv("CAPTCHA_HMAC_SECRET", ""),
+			Cost:         parseInt(getEnv("CAPTCHA_COST", "500")),
 		},
 		CashForecast: CashForecastConfig{
 			ServiceLevel:              parseFloat(getEnv("CASH_FORECAST_SERVICE_LEVEL", "0.95")),
@@ -674,6 +677,14 @@ func (c *Config) validate() error {
 	// secret — but a missing one means Google login silently fails at runtime.
 	if c.Google.OAuthEnabled && c.Google.ClientID == "" {
 		return fmt.Errorf("GOOGLE_CLIENT_ID must be set when GOOGLE_OAUTH_ENABLED=true")
+	}
+
+	// CAPTCHA fail-safe: an enabled CAPTCHA without its HMAC secret would have
+	// to either fail open (no brute-force protection at all) or fail closed at
+	// request time (login lockout for challenged accounts). Both are worse than
+	// refusing to boot, so require the secret up front.
+	if c.Captcha.Enabled && c.Captcha.HMACSecret == "" {
+		return fmt.Errorf("CAPTCHA_HMAC_SECRET must be set when CAPTCHA_ENABLE=true")
 	}
 
 	// Disbursement mutual-exclusion: at most one provider may handle each

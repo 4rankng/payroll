@@ -62,20 +62,19 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 // @Summary Generate login CAPTCHA
-// @Description Generate a digit-image CAPTCHA for brute-force protection (required after N failed logins)
+// @Description Generate an ALTCHA proof-of-work challenge for brute-force protection (required after N failed logins)
 // @Tags auth
 // @Produce json
 // @Success 200 {object} response.SuccessResponse
 // @Router /auth/captcha [get]
 func (h *AuthHandler) GetCaptcha(c *gin.Context) {
-	id, image, err := h.authService.GenerateCaptcha(c.Request.Context())
+	challenge, err := h.authService.GenerateCaptcha(c.Request.Context())
 	if err != nil {
 		response.InternalServerError(c, "Không thể tạo mã captcha")
 		return
 	}
 	response.Success(c, gin.H{
-		"captcha_id": id,
-		"image":      image,
+		"challenge": challenge,
 	}, "OK")
 }
 

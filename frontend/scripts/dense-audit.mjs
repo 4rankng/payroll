@@ -81,14 +81,9 @@ const PROBE = `(() => {
 
 async function login(page) {
   await page.goto(BASE + "/login");
-  // The captcha field only renders when the server requires it (per-username
-  // failure counter, TTL'd). Fill credentials, submit, then handle captcha
-  // if the form grew a third input.
-  const solveCaptcha = async () => {
-    const cap = await (await fetch(BASE.replace("5174", "8080") + "/api/v1/auth/captcha")).json();
-    const id = cap.data.captcha_id;
-    return execSync(`docker exec payroll-redis redis-cli get captcha:${id}`).toString().trim();
-  };
+  // The ALTCHA proof-of-work widget (PAYR-16) only renders when the server
+  // requires it (per-username failure counter). The widget solves itself in
+  // the page; we just wait for the verified state, then resubmit.
   await page.locator("input").nth(0).fill("frankng");
   await page.locator("input[type=password]").fill("TempAudit2026");
   await page.getByRole("button", { name: "Đăng nhập" }).click();
@@ -98,7 +93,10 @@ async function login(page) {
   } catch {
     /* captcha likely required */
   }
-  await page.locator("input").nth(2).fill(await solveCaptcha(), { timeout: 8000 });
+  const widget = page.locator("altcha-widget");
+  await widget.waitFor({ state: "visible", timeout: 15000 });
+  // auto="onload" makes the widget solve immediately; wait for the ticked box.
+  await page.locator('altcha-widget .altcha[data-state="verified"]').waitFor({ timeout: 30000 });
   await page.getByRole("button", { name: "Đăng nhập" }).click();
   await page.waitForURL("**/admin", { timeout: 15000 });
 }

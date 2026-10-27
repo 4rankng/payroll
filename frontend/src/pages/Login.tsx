@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AlertCircle, Eye, EyeOff, Lock01, RefreshCw05, ShieldTick, User01 } from "@untitledui/icons";
+import { AlertCircle, Eye, EyeOff, Lock01, ShieldTick, User01 } from "@untitledui/icons";
 import { authManager } from "@/lib/auth";
 import { useAuth } from "@/contexts";
 import { useLogin } from "@/hooks/api/useAuth";
@@ -11,52 +11,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthSpinner } from "@/components/auth/AuthSpinner";
 import { AuthBrandMark } from "@/components/auth/AuthBrandMark";
-import { cx } from "@/utils/cx";
+import { AltchaCaptcha } from "@/components/auth/AltchaCaptcha";
 
 const Login = () => {
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [captchaImage, setCaptchaImage] = useState<string | null>(null);
-  const [captchaId, setCaptchaId] = useState<string | null>(null);
-  const [captchaCode, setCaptchaCode] = useState("");
-  const [captchaLoading, setCaptchaLoading] = useState(false);
   const [loginSubmitting, setLoginSubmitting] = useState(false);
+  // CAPTCHA (PAYR-16): required only after N consecutive failed logins. The
+  // server's failure counter is the single source of truth — the preflight
+  // check (username blur + submit) reveals the requirement, then the ALTCHA
+  // widget fetches a challenge, solves it in the background, and reports the
+  // payload back through onVerified.
+  const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [captchaChallenge, setCaptchaChallenge] = useState<string | null>(null);
+  const [captchaPayload, setCaptchaPayload] = useState<string | null>(null);
   const loginMutation = useLogin();
   const loginError = loginMutation.error;
   const resetLogin = loginMutation.reset;
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
-  const needsCaptcha = failedAttempts >= 3;
   const loginSubmitInFlightRef = useRef(false);
 
-  // Fetch a fresh CAPTCHA challenge. The endpoint is public (no auth token
-  // required — see backend setupAuthRoutes), so it works pre-login. Goes
-  // through apiClient so the configured baseURL/proxy + headers are honored
-  // (a raw fetch("/api/v1/...") breaks when VITE_API_BASE_URL is a separate
-  // host). Synchronously guards against overlapping requests via a ref.
-  const captchaInFlightRef = useRef(false);
-  const refreshCaptcha = useCallback(async () => {
-    if (captchaInFlightRef.current) return;
-    captchaInFlightRef.current = true;
-    setCaptchaLoading(true);
-    try {
-      const res = await apiClient.get<{ captcha_id: string; image: string }>("/auth/captcha");
-      const d = res?.data;
-      if (d?.captcha_id && d?.image) {
-        setCaptchaId(d.captcha_id);
-        setCaptchaImage(d.image);
-        setCaptchaCode("");
-      }
-    } catch {
-      // Swallow: the form still submits without a captcha_id, and the server
-      // returns a clear "captcha required" error the user can act on.
-    } finally {
-      captchaInFlightRef.current = false;
-      setCaptchaLoading(false);
-    }
-  }, []);
+  const captchaPending = captchaRequired && !captchaPayload;
 
   const syncCaptchaRequirement = useCallback(async (): Promise<boolean> => {
     const username = emailOrUsername.trim();
@@ -67,7 +44,7 @@ const Login = () => {
         params: { username },
       });
       const required = res?.data?.required === true;
-      if (required) setFailedAttempts((attempts) => Math.max(attempts, 3));
+      if (required) setCaptchaRequired(true);
       return required;
     } catch {
       // Do not make the status check a new login outage. The login endpoint
@@ -96,27 +73,58 @@ const Login = () => {
     }
   }, []);
 
-  // Track login failures + fetch CAPTCHA image when threshold is reached.
+  // Track login outcomes: a captcha-required error means the running client
+  // predates the ALTCHA backend (stale cached PWA bundle) — reload once so the
+  // fresh bundle renders the self-ticking widget (PAYR-16 AC-05). The
+  // sessionStorage stamp bounds reloads across page loads: a persistent
+  // fail-closed backend condition (Redis outage, secret skew) must degrade to
+  // a visible error, not a self-reinforcing reload loop. Any other failure
+  // resets the challenge: the prior solution was consumed server-side during
+  // the captcha gate, so keeping it would only earn a replay rejection.
   useEffect(() => {
     if (loginMutation.isError) {
       const error = loginMutation.error;
       if (error?.message?.toLowerCase().includes("captcha")) {
-        setFailedAttempts((attempts) => Math.max(attempts, 3));
-      } else {
-        setFailedAttempts((attempts) => attempts + 1);
+        const reloadGuardKey = "payr16-captcha-reload-at";
+        const lastReloadAt = Number(sessionStorage.getItem(reloadGuardKey) ?? 0);
+        if (Date.now() - lastReloadAt > 60_000) {
+          sessionStorage.setItem(reloadGuardKey, String(Date.now()));
+          window.location.reload();
+        }
+        return;
+      }
+      if (captchaRequired) {
+        setCaptchaChallenge(null);
+        setCaptchaPayload(null);
       }
     }
-    if (loginMutation.isSuccess) setFailedAttempts(0);
-  }, [loginMutation.error, loginMutation.isError, loginMutation.isSuccess]);
+  }, [loginMutation.error, loginMutation.isError, captchaRequired]);
 
-  // Fetch the initial challenge when the threshold is first crossed, and
-  // auto-refresh the image after each subsequent failed attempt (the prior
-  // challenge is single-use server-side). Depends on failedAttempts so a
-  // failed login with a captcha triggers a fresh image automatically.
+  // Fetch a challenge for the widget. The endpoint is public (no auth token
+  // required — see backend setupAuthRoutes), so it works pre-login. Goes
+  // through apiClient so the configured baseURL/proxy + headers are honored
+  // (a raw fetch("/api/v1/...") breaks when VITE_API_BASE_URL is a separate
+  // host). Returns null on failure — the submit path retries, so a transient
+  // challenge-fetch failure recovers on the next submit instead of wedging
+  // the form on the loading placeholder.
+  const fetchChallenge = useCallback(async (): Promise<string | null> => {
+    try {
+      const res = await apiClient.get<{ challenge: Record<string, unknown> }>("/auth/captcha");
+      const challenge = res?.data?.challenge;
+      if (challenge) {
+        const serialized = JSON.stringify(challenge);
+        setCaptchaChallenge(serialized);
+        return serialized;
+      }
+    } catch {
+      // Transient — retried from the submit path (see handleSubmit).
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
-    if (!needsCaptcha) return;
-    refreshCaptcha();
-  }, [needsCaptcha, failedAttempts, refreshCaptcha]);
+    if (captchaRequired && !captchaChallenge) void fetchChallenge();
+  }, [captchaRequired, captchaChallenge, fetchChallenge]);
 
   useEffect(() => {
     if (loginError) resetLogin();
@@ -135,16 +143,20 @@ const Login = () => {
       setLoginSubmitting(true);
       try {
         const serverRequiresCaptcha = await syncCaptchaRequirement();
-        if (serverRequiresCaptcha && (!captchaId || !captchaCode)) {
-          if (!captchaId) await refreshCaptcha();
+        const requiresCaptcha = serverRequiresCaptcha || captchaRequired;
+        // The widget reports its payload asynchronously; the disabled submit
+        // button normally prevents reaching here unsolved, but Enter-key
+        // submits still must not fire without it (fail closed). If the
+        // challenge itself never loaded, retry the fetch here so a transient
+        // failure recovers on the next submit.
+        if (requiresCaptcha && !captchaPayload) {
+          if (!captchaChallenge) void fetchChallenge();
           return;
         }
         await loginMutation.mutateAsync({
           username: emailOrUsername,
           password,
-          ...((needsCaptcha || serverRequiresCaptcha) && captchaId
-            ? { captcha_id: captchaId, captcha_code: captchaCode }
-            : {}),
+          ...(requiresCaptcha && captchaPayload ? { captcha: captchaPayload } : {}),
         });
       } catch {
         // The mutation owns error presentation; this only prevents an unhandled
@@ -154,7 +166,7 @@ const Login = () => {
         setLoginSubmitting(false);
       }
     },
-    [emailOrUsername, password, loginMutation, needsCaptcha, captchaId, captchaCode, refreshCaptcha, syncCaptchaRequirement]
+    [emailOrUsername, password, loginMutation, captchaRequired, captchaPayload, captchaChallenge, fetchChallenge, syncCaptchaRequirement]
   );
 
   const togglePassword = useCallback(() => setShowPassword((v) => !v), []);
@@ -316,52 +328,15 @@ const Login = () => {
                     </Link>
                   </div>
 
-                  {needsCaptcha && (
-                    <div className="space-y-2 motion-safe:animate-fade-in-up">
-                      <Label htmlFor="captchaCode">Mã xác nhận</Label>
-                      <div className="flex items-center gap-2">
-                        {captchaImage ? (
-                          <button
-                            type="button"
-                            onClick={() => refreshCaptcha()}
-                            className="h-11 overflow-hidden rounded-lg border border-input bg-card shadow-xs outline-brand transition duration-100 ease-linear focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 sm:h-9"
-                            aria-label="Tải hình mã xác nhận khác"
-                          >
-                            <img src={captchaImage} alt="Hình ảnh mã xác nhận 5 chữ số" className="h-full w-auto select-none" />
-                          </button>
-                        ) : (
-                          <div className="flex h-11 min-w-24 items-center justify-center rounded-lg border border-input bg-muted sm:h-9" aria-hidden="true">
-                            <AuthSpinner className="size-4 text-fg-tertiary" />
-                          </div>
-                        )}
-                        <Input
-                          id="captchaCode"
-                          type="text"
-                          inputMode="numeric"
-                          placeholder="Nhập mã"
-                          value={captchaCode}
-                          onChange={(e) => setCaptchaCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
-                          className="flex-1 text-center tracking-[0.3em]"
-                          autoComplete="off"
-                          required={needsCaptcha}
-                          disabled={isDisabled || captchaLoading}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => refreshCaptcha()}
-                          disabled={captchaLoading || isDisabled}
-                          aria-label="Tải hình mã xác nhận khác"
-                        >
-                          <RefreshCw05 className={cx("size-4", captchaLoading && "animate-spin motion-reduce:animate-none")} aria-hidden="true" />
-                        </Button>
-                      </div>
-                    </div>
+                  {captchaRequired && (
+                    <AltchaCaptcha
+                      challenge={captchaChallenge ?? ""}
+                      onVerified={setCaptchaPayload}
+                    />
                   )}
                 </fieldset>
 
-                <Button type="submit" className="w-full" disabled={isDisabled}>
+                <Button type="submit" className="w-full" disabled={isDisabled || captchaPending}>
                   {loginMutation.isPending ? (
                     <>
                       <AuthSpinner className="size-4" />

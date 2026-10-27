@@ -186,6 +186,6 @@ audit(employee): add import event emission
 | `casbin/casbin` | RBAC authorization |
 | `golang-jwt/jwt` | JWT authentication |
 | `resend/resend-go` | Email sending (Resend provider) |
-| `go-chi/captcha` | CAPTCHA generation |
+| `altcha-org/altcha-lib-go/v2` | CAPTCHA generation (ALTCHA proof-of-work) |
 
 <!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->

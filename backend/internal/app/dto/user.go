@@ -48,10 +48,13 @@ type UserResponse struct {
 
 // LoginRequest represents the login request
 type LoginRequest struct {
-	Username    string `json:"username" binding:"required,min=1"`
-	Password    string `json:"password" binding:"required"`
-	CaptchaID   string `json:"captcha_id,omitempty"`
-	CaptchaCode string `json:"captcha_code,omitempty"`
+	Username string `json:"username" binding:"required,min=1"`
+	Password string `json:"password" binding:"required"`
+	// Captcha carries the base64 ALTCHA proof-of-work payload from the login
+	// widget — required only after N consecutive failed logins (see
+	// CaptchaService). The legacy captcha_id/captcha_code digit-image pair was
+	// replaced by this single field (frontend and backend deploy together).
+	Captcha string `json:"captcha,omitempty" binding:"omitempty,max=4096"`
 }
 
 // VerifyOTPRequest completes the email-OTP login step. OTPSessionID was returned

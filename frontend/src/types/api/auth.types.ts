@@ -27,9 +27,12 @@ export interface BasicUserProfile {
 export interface LoginCredentials {
   username: string;
   password: string;
-  /** CAPTCHA challenge response (required after N failed logins). */
-  captcha_id?: string;
-  captcha_code?: string;
+  /**
+   * Base64 ALTCHA proof-of-work payload from the login widget — required by
+   * the backend only after N consecutive failed logins. Replaces the legacy
+   * captcha_id/captcha_code digit-image pair (PAYR-16).
+   */
+  captcha?: string;
 }
 
 export interface LoginResponse {
