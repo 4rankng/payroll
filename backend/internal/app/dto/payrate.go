@@ -73,9 +73,9 @@ type PayrateResponse struct {
 	// No ToDate on the wire: end dates are derived from each config's
 	// successor and the column is gone (migration 138). A config runs until
 	// its successor's fromDate.
-	CreatedBy uint                        `json:"created_by"`
-	CreatedAt time.Time                   `json:"created_at"`
-	UpdatedAt time.Time                   `json:"updated_at"`
+	CreatedBy uint      `json:"created_by"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// EarliestEffectiveFrom is the day after the project's most recent paid
 	// timesheet work date — the earliest start date an update may take. Empty
 	// when the project has no paid timesheets (no floor beyond today).
