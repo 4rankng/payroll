@@ -370,7 +370,9 @@ func TestScheduledRetryBlockedByPrecondition(t *testing.T) {
 	svc, cycle, _, _, _, retry, _ := newTestService(t)
 	ctx := context.Background()
 	req, _ := svc.File(ctx, CreateParams{Type: domain.ApprovalTypeSendSaoKeEmail, Params: saoKeParams(), ActorID: 1, ActorRole: RoleAdmin, ActorName: "Admin"})
-	svc.Reject(ctx, req.ID, admin(), "thử lại")
+	if _, err := svc.Reject(ctx, req.ID, admin(), "thử lại"); err != nil {
+		t.Fatalf("Reject: %v", err)
+	}
 
 	// Data went incomplete again: a timesheet is back in pending_approval.
 	cycle.rows = []*domainServices.ProjectReportData{{

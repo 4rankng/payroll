@@ -768,15 +768,17 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// Google OIDC nonce store (Redis) — single-use replay defense for id_tokens.
 	nonceStore := cache.NewNonceStore(redis.Client, 10*time.Minute)
 
-	// Self-hosted ALTCHA proof-of-work CAPTCHA (altcha-lib-go + Redis). Reuses
-	// the shared Redis client. When CAPTCHA_ENABLE=false the service is still
-	// constructed (cheap) but RequiredForFailures() short-circuits.
+	// Self-hosted ALTCHA proof-of-work CAPTCHA (signed challenges + Redis
+	// single-use solutions). Reuses the shared Redis client. When
+	// CAPTCHA_ENABLE=false the service is still constructed (cheap) but
+	// RequiredForFailures() short-circuits.
 	captchaService := auth.NewCaptchaService(redis.Client, auth.CaptchaConfig{
-		Enabled:      cfg.Captcha.Enabled,
-		Threshold:    cfg.Captcha.Threshold,
-		ChallengeTTL: cfg.Captcha.ChallengeTTL,
-		HMACSecret:   cfg.Captcha.HMACSecret,
-		Cost:         cfg.Captcha.Cost,
+		Enabled:       cfg.Captcha.Enabled,
+		Threshold:     cfg.Captcha.Threshold,
+		ChallengeTTL:  cfg.Captcha.ChallengeTTL,
+		HMACSecret:    cfg.Captcha.HMACSecret,
+		PoWCost:       cfg.Captcha.PoWCost,
+		PoWDifficulty: cfg.Captcha.PoWDifficulty,
 	})
 
 	servicesStruct := &Services{

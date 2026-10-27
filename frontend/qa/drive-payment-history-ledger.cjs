@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 // Rung-3 QA driver — drives the payment-history ledger in a real browser.
 // Artifacts: screenshots + DOM assertions + console log + this driver log.
 // Screenshots land in payment-history-ledger/ (gitignored: they capture the

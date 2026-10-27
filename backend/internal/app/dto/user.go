@@ -46,15 +46,15 @@ type UserResponse struct {
 	MustChangePassword bool `json:"must_change_password,omitempty"`
 }
 
-// LoginRequest represents the login request
+// LoginRequest represents the login request. CaptchaPayload carries the
+// base64 ALTCHA proof-of-work solution when the server requires a captcha
+// (after N consecutive failed logins). The legacy captcha_id/captcha_code
+// fields are gone: a stale cached bundle sending them fails closed — the
+// empty payload is rejected with the captcha error.
 type LoginRequest struct {
-	Username string `json:"username" binding:"required,min=1"`
-	Password string `json:"password" binding:"required"`
-	// Captcha carries the base64 ALTCHA proof-of-work payload from the login
-	// widget — required only after N consecutive failed logins (see
-	// CaptchaService). The legacy captcha_id/captcha_code digit-image pair was
-	// replaced by this single field (frontend and backend deploy together).
-	Captcha string `json:"captcha,omitempty" binding:"omitempty,max=4096"`
+	Username       string `json:"username" binding:"required,min=1"`
+	Password       string `json:"password" binding:"required"`
+	CaptchaPayload string `json:"captcha_payload,omitempty"`
 }
 
 // VerifyOTPRequest completes the email-OTP login step. OTPSessionID was returned

@@ -28,11 +28,12 @@ export interface LoginCredentials {
   username: string;
   password: string;
   /**
-   * Base64 ALTCHA proof-of-work payload from the login widget — required by
-   * the backend only after N consecutive failed logins. Replaces the legacy
-   * captcha_id/captcha_code digit-image pair (PAYR-16).
+   * Base64 ALTCHA proof-of-work payload, required when the server demands a
+   * captcha (after N failed logins). Produced by the official <altcha-widget>;
+   * the legacy captcha_id/captcha_code fields are gone — a stale cached bundle
+   * that still sends them is rejected server-side (fail-closed).
    */
-  captcha?: string;
+  captcha_payload?: string;
 }
 
 export interface LoginResponse {

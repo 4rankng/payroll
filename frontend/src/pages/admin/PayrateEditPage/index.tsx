@@ -192,7 +192,7 @@ export default function PayrateEditPage() {
         fromDate,
       });
     }
-  }, [targetPayrate, numProjectId]);
+  }, [targetPayrate, numProjectId, latestPayrate]);
 
   // Clear server result when user edits a field
   const clearServerField = useCallback((field: 'effective_from' | 'rates') => {

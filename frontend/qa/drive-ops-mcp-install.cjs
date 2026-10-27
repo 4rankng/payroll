@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 // Rung-3 QA driver — drives the payroll-ops-mcp install section in the admin
 // Settings → API tab in a real browser: renders (desktop 1280 + mobile 390),
 // creates a pk_ops_* key through the UI, toggles scope, revokes, and uses

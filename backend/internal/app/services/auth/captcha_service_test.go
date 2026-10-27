@@ -4,157 +4,205 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	altcha "github.com/altcha-org/altcha-lib-go/v2"
+	"github.com/altcha-org/altcha-lib-go/v2"
 	"github.com/redis/go-redis/v9"
 )
 
-func newTestCaptchaService(t *testing.T, ttl time.Duration) (*CaptchaService, *miniredis.Miniredis) {
+// solve encodes the test helper for the widget's client-side work: brute-force
+// the counter and return the base64 payload a browser would submit.
+func solve(t *testing.T, challenge altcha.Challenge) string {
 	t.Helper()
-	return newTestCaptchaServiceWithSecret(t, ttl, "test-captcha-hmac-secret")
+	solution, err := altcha.SolveChallenge(altcha.SolveChallengeOptions{
+		Challenge: challenge,
+		DeriveKey: altcha.DeriveKeyPBKDF2(),
+	})
+	if err != nil || solution == nil {
+		t.Fatalf("SolveChallenge: %v (solution=%v)", err, solution)
+	}
+	b, err := json.Marshal(altcha.Payload{Challenge: challenge, Solution: *solution})
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+	return base64.StdEncoding.EncodeToString(b)
 }
 
-func newTestCaptchaServiceWithSecret(t *testing.T, ttl time.Duration, secret string) (*CaptchaService, *miniredis.Miniredis) {
+func newTestCaptchaService(t *testing.T, mutate func(*CaptchaConfig)) (*CaptchaService, *miniredis.Miniredis) {
 	t.Helper()
-	redisServer := miniredis.RunT(t)
-	rdb := redis.NewClient(&redis.Options{Addr: redisServer.Addr()})
-	t.Cleanup(func() { _ = rdb.Close() })
-	return NewCaptchaService(rdb, CaptchaConfig{
-		Enabled:      true,
-		Threshold:    3,
-		ChallengeTTL: ttl,
-		HMACSecret:   secret,
-		Cost:         1, // keep the test's own solve fast
-	}), redisServer
+	mr, err := miniredis.Run()
+	if err != nil {
+		t.Fatalf("miniredis: %v", err)
+	}
+	t.Cleanup(mr.Close)
+	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+	t.Cleanup(func() { _ = client.Close() })
+	cfg := CaptchaConfig{
+		Enabled:       true,
+		Threshold:     3,
+		ChallengeTTL:  5 * time.Minute,
+		HMACSecret:    "test-hmac-secret",
+		PoWCost:       1000,
+		PoWDifficulty: 50,
+	}
+	if mutate != nil {
+		mutate(&cfg)
+	}
+	return NewCaptchaService(client, cfg), mr
 }
 
-// solve solves the challenge the same way the browser widget does, then
-// returns the base64 payload a login request would carry.
-func solve(t *testing.T, svc *CaptchaService) string {
-	t.Helper()
+func TestCaptchaService_VerifyValidSolution(t *testing.T) {
+	svc, _ := newTestCaptchaService(t, nil)
+	ctx := context.Background()
+
+	challenge, err := svc.Generate(ctx)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	if challenge.Signature == "" {
+		t.Fatal("challenge must be signed")
+	}
+	if challenge.Parameters.ExpiresAt == 0 {
+		t.Fatal("challenge must carry an expiry")
+	}
+
+	payload := solve(t, challenge)
+	if !svc.Verify(ctx, payload) {
+		t.Fatal("valid unconsumed solution must verify (AC-02)")
+	}
+	// Single-use: the same payload is a replay on the second attempt.
+	if svc.Verify(ctx, payload) {
+		t.Fatal("replayed solution must be rejected (AC-03)")
+	}
+}
+
+func TestCaptchaService_VerifyRejectsBadPayloads(t *testing.T) {
+	svc, _ := newTestCaptchaService(t, nil)
+	ctx := context.Background()
+
+	challenge, err := svc.Generate(ctx)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	valid := solve(t, challenge)
+
+	// Forged: tamper with the signed parameters, breaking the HMAC.
+	var payload altcha.Payload
+	b, err := base64.StdEncoding.DecodeString(valid)
+	if err != nil {
+		t.Fatalf("decode valid payload: %v", err)
+	}
+	if err := json.Unmarshal(b, &payload); err != nil {
+		t.Fatalf("unmarshal valid payload: %v", err)
+	}
+	forged := payload
+	forged.Challenge.Parameters.Cost++
+	forgedB, err := json.Marshal(forged)
+	if err != nil {
+		t.Fatalf("marshal forged: %v", err)
+	}
+
+	// Mismatched pair: challenge A bundled with the solution of challenge B.
+	// Each challenge has a unique salt/nonce, so B's key does not match A's
+	// signed key prefix.
+	other, err := svc.Generate(ctx)
+	if err != nil {
+		t.Fatalf("Generate other: %v", err)
+	}
+	otherSolution, err := altcha.SolveChallenge(altcha.SolveChallengeOptions{
+		Challenge: other,
+		DeriveKey: altcha.DeriveKeyPBKDF2(),
+	})
+	if err != nil || otherSolution == nil {
+		t.Fatalf("SolveChallenge other: %v (solution=%v)", err, otherSolution)
+	}
+	mismatched, err := json.Marshal(altcha.Payload{Challenge: challenge, Solution: *otherSolution})
+	if err != nil {
+		t.Fatalf("marshal mismatched: %v", err)
+	}
+
+	cases := []struct {
+		name    string
+		payload string
+	}{
+		{"absent", ""},
+		{"not base64", "!!!not-base64!!!"},
+		{"not json", base64.StdEncoding.EncodeToString([]byte("not-json"))},
+		{"oversized", base64.StdEncoding.EncodeToString([]byte(strings.Repeat("x", maxCaptchaPayloadSize+1)))},
+		{"forged signature", base64.StdEncoding.EncodeToString(forgedB)},
+		{"solution of another challenge", base64.StdEncoding.EncodeToString(mismatched)},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if svc.Verify(ctx, tc.payload) {
+				t.Fatalf("%s payload must be rejected (AC-03)", tc.name)
+			}
+		})
+	}
+}
+
+func TestCaptchaService_VerifyRejectsExpiredChallenge(t *testing.T) {
+	// The constructor normalizes non-positive TTLs to the default, so expire
+	// by waiting out a short TTL instead.
+	svc, _ := newTestCaptchaService(t, func(cfg *CaptchaConfig) {
+		cfg.ChallengeTTL = 1 * time.Second
+	})
 	challenge, err := svc.Generate(context.Background())
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
-	solution, err := altcha.SolveChallenge(altcha.SolveChallengeOptions{
-		Challenge: challenge,
-		DeriveKey: altcha.DeriveKeySHA(),
-	})
-	if err != nil || solution == nil {
-		t.Fatalf("SolveChallenge: solution=%v err=%v", solution, err)
-	}
-	raw, err := json.Marshal(map[string]any{"challenge": challenge, "solution": *solution})
-	if err != nil {
-		t.Fatalf("marshal payload: %v", err)
-	}
-	return base64.StdEncoding.EncodeToString(raw)
-}
-
-func TestCaptchaServiceVerifyHappyPathThenReplayRejected(t *testing.T) {
-	svc, _ := newTestCaptchaService(t, 5*time.Minute)
-	ctx := context.Background()
-
-	payload := solve(t, svc)
-	if !svc.Verify(ctx, payload) {
-		t.Fatal("expected a freshly solved payload to verify")
-	}
-	if svc.Verify(ctx, payload) {
-		t.Fatal("expected the same payload to be rejected as a replay")
+	payload := solve(t, challenge)
+	time.Sleep(1100 * time.Millisecond)
+	if svc.Verify(context.Background(), payload) {
+		t.Fatal("expired solution must be rejected (AC-03)")
 	}
 }
 
-func TestCaptchaServiceVerifyRejectsBadInput(t *testing.T) {
-	svc, _ := newTestCaptchaService(t, 5*time.Minute)
-	ctx := context.Background()
-
-	cases := map[string]string{
-		"empty":    "",
-		"garbage":  "not-base64-$$$",
-		"not json": base64.StdEncoding.EncodeToString([]byte("hello")),
-		"truncated payload": base64.StdEncoding.EncodeToString(
-			[]byte(`{"challenge":{"parameters":{"algorithm":"SHA-256"}}}`),
-		),
-	}
-	// A payload with a validly signed challenge but a WRONG proof-of-work
-	// counter must be rejected: the signature covers the challenge parameters,
-	// not the solver's work — the hash check itself is what rejects it.
-	challenge, err := altcha.CreateChallenge(altcha.CreateChallengeOptions{
-		Algorithm:           string(altcha.SHA256),
-		DeriveKey:           altcha.DeriveKeySHA(),
-		HMACSignatureSecret: "test-captcha-hmac-secret",
-		Cost:                1,
+func TestCaptchaService_FailsClosedWithoutSecret(t *testing.T) {
+	svc, _ := newTestCaptchaService(t, func(cfg *CaptchaConfig) {
+		cfg.HMACSecret = ""
 	})
-	if err != nil {
-		t.Fatalf("CreateChallenge: %v", err)
+	if _, err := svc.Generate(context.Background()); err == nil {
+		t.Fatal("Generate must fail without an HMAC secret (boot validation backs this up)")
 	}
-	solution, err := altcha.SolveChallenge(altcha.SolveChallengeOptions{Challenge: challenge, DeriveKey: altcha.DeriveKeySHA()})
-	if err != nil || solution == nil {
-		t.Fatalf("SolveChallenge: solution=%v err=%v", solution, err)
-	}
-	solution.Counter += 1 // valid signature, invalid work
-	raw, err := json.Marshal(map[string]any{"challenge": challenge, "solution": *solution})
-	if err != nil {
-		t.Fatalf("marshal payload: %v", err)
-	}
-	cases["tampered counter"] = base64.StdEncoding.EncodeToString(raw)
-
-	for name, payload := range cases {
-		if svc.Verify(ctx, payload) {
-			t.Errorf("%s: expected rejection", name)
-		}
-	}
-
-	// A payload signed for a different secret must fail (forged challenge).
-	other, _ := newTestCaptchaServiceWithSecret(t, 5*time.Minute, "a-different-hmac-secret")
-	payload := solve(t, other)
-	if svc.Verify(ctx, payload) {
-		t.Error("expected a payload signed with another secret to be rejected")
+	if svc.Verify(context.Background(), "anything") {
+		t.Fatal("Verify must fail closed without an HMAC secret")
 	}
 }
 
-func TestCaptchaServiceVerifyRejectsExpiredChallenge(t *testing.T) {
-	svc, _ := newTestCaptchaService(t, 5*time.Minute)
-	ctx := context.Background()
-
-	// Craft a challenge whose signature is valid but whose expiry is in the
-	// past — the server must reject it even though it solves correctly.
-	past := time.Now().UTC().Add(-time.Minute)
-	challenge, err := altcha.CreateChallenge(altcha.CreateChallengeOptions{
-		Algorithm:           string(altcha.SHA256),
-		DeriveKey:           altcha.DeriveKeySHA(),
-		HMACSignatureSecret: "test-captcha-hmac-secret",
-		Cost:                1,
-		ExpiresAt:           &past,
+func TestCaptchaService_RequiredForFailures(t *testing.T) {
+	enabled, _ := newTestCaptchaService(t, nil)
+	if enabled.RequiredForFailures(2) {
+		t.Fatal("below threshold must not require captcha")
+	}
+	if !enabled.RequiredForFailures(3) {
+		t.Fatal("at threshold must require captcha")
+	}
+	disabled, _ := newTestCaptchaService(t, func(cfg *CaptchaConfig) {
+		cfg.Enabled = false
 	})
-	if err != nil {
-		t.Fatalf("CreateChallenge: %v", err)
-	}
-	solution, err := altcha.SolveChallenge(altcha.SolveChallengeOptions{
-		Challenge: challenge,
-		DeriveKey: altcha.DeriveKeySHA(),
-	})
-	if err != nil || solution == nil {
-		t.Fatalf("SolveChallenge: solution=%v err=%v", solution, err)
-	}
-	raw, err := json.Marshal(map[string]any{"challenge": challenge, "solution": *solution})
-	if err != nil {
-		t.Fatalf("marshal payload: %v", err)
-	}
-	if svc.Verify(ctx, base64.StdEncoding.EncodeToString(raw)) {
-		t.Fatal("expected an expired challenge to be rejected")
+	if disabled.RequiredForFailures(100) {
+		t.Fatal("disabled captcha must never be required")
 	}
 }
 
-func TestCaptchaServiceDisabledNeverRequired(t *testing.T) {
-	redisServer := miniredis.RunT(t)
-	rdb := redis.NewClient(&redis.Options{Addr: redisServer.Addr()})
-	t.Cleanup(func() { _ = rdb.Close() })
-	svc := NewCaptchaService(rdb, CaptchaConfig{Enabled: false, Threshold: 3, HMACSecret: "s"})
-
-	if svc.RequiredForFailures(100) {
-		t.Fatal("a disabled service must never require a captcha")
+func TestCaptchaService_ChallengesAreUnique(t *testing.T) {
+	svc, _ := newTestCaptchaService(t, nil)
+	c1, err := svc.Generate(context.Background())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	c2, err := svc.Generate(context.Background())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	if c1.Parameters.Salt == c2.Parameters.Salt || c1.Parameters.Nonce == c2.Parameters.Nonce {
+		t.Fatal("two challenges must not share salt/nonce")
+	}
+	if c1.Signature == c2.Signature {
+		t.Fatal("two challenges must not share a signature")
 	}
 }

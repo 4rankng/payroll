@@ -206,7 +206,7 @@ test.describe("visual baselines", () => {
       if (outcome === "navigated") return;
       if (outcome === "captcha") {
         throw new Error(
-          `CAPTCHA demanded for ${account.username} — clear the lockout on /login, then rerun.`
+          `ALTCHA captcha demanded for ${account.username} — clear the lockout on /login, then rerun.`
         );
       }
       // alert or timeout: back off briefly and retry the whole flow once.
