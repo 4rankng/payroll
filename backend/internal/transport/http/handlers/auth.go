@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"strings"
 
 	"api-server/internal/app/dto"
@@ -61,22 +62,20 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	response.Success(c, loginResponse, "Login successful")
 }
 
-// @Summary Generate login CAPTCHA
-// @Description Generate a digit-image CAPTCHA for brute-force protection (required after N failed logins)
+// @Summary Generate login CAPTCHA challenge
+// @Description Generate an ALTCHA proof-of-work challenge for brute-force protection (required after N failed logins). Returns the raw challenge JSON ({parameters, signature}) the official widget consumes directly — deliberately NOT wrapped in the standard {status,data,message} envelope.
 // @Tags auth
 // @Produce json
-// @Success 200 {object} response.SuccessResponse
+// @Success 200 {object} object "ALTCHA challenge"
 // @Router /auth/captcha [get]
 func (h *AuthHandler) GetCaptcha(c *gin.Context) {
-	id, image, err := h.authService.GenerateCaptcha(c.Request.Context())
+	challenge, err := h.authService.GenerateCaptcha(c.Request.Context())
 	if err != nil {
-		response.InternalServerError(c, "Không thể tạo mã captcha")
+		response.InternalServerError(c, "Không thể tạo mã xác nhận")
 		return
 	}
-	response.Success(c, gin.H{
-		"captcha_id": id,
-		"image":      image,
-	}, "OK")
+	c.Header("Cache-Control", "no-store")
+	c.JSON(http.StatusOK, challenge)
 }
 
 // @Summary Check whether login CAPTCHA is required

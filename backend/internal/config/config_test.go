@@ -293,6 +293,36 @@ func TestValidate(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "captcha enabled without HMAC secret rejected",
+			cfg: &Config{
+				App:      AppConfig{Env: "dev"},
+				Auth:     AuthConfig{JWTSecret: "j"},
+				Security: SecurityConfig{HashSecret: "h", HashSalt: "s"},
+				Captcha:  CaptchaConfig{Enabled: true},
+			},
+			wantErr: true,
+		},
+		{
+			name: "captcha enabled with HMAC secret passes",
+			cfg: &Config{
+				App:      AppConfig{Env: "dev"},
+				Auth:     AuthConfig{JWTSecret: "j"},
+				Security: SecurityConfig{HashSecret: "h", HashSalt: "s"},
+				Captcha:  CaptchaConfig{Enabled: true, HMACSecret: "secret"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "captcha disabled without HMAC secret passes",
+			cfg: &Config{
+				App:      AppConfig{Env: "dev"},
+				Auth:     AuthConfig{JWTSecret: "j"},
+				Security: SecurityConfig{HashSecret: "h", HashSalt: "s"},
+				Captcha:  CaptchaConfig{Enabled: false},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {

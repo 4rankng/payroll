@@ -21,6 +21,7 @@ import (
 	"api-server/internal/pkg/ipgeo"
 	"api-server/internal/pkg/phone"
 
+	"github.com/altcha-org/altcha-lib-go/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"google.golang.org/api/idtoken"
@@ -113,10 +114,12 @@ func (s *AuthService) findUserByMobileIdentifier(ctx context.Context, identifier
 	return identity.New(s.userService.UserRepo, s.employeeRepo).ResolveUserByMobile(ctx, identifier)
 }
 
-// GenerateCaptcha creates a new image CAPTCHA challenge.
-func (s *AuthService) GenerateCaptcha(ctx context.Context) (id, imageBase64 string, err error) {
+// GenerateCaptcha creates a new ALTCHA proof-of-work challenge for the login
+// widget. The client solves it in the background and submits the signed
+// payload with the login request.
+func (s *AuthService) GenerateCaptcha(ctx context.Context) (altcha.Challenge, error) {
 	if s.captchaService == nil {
-		return "", "", domain.NewInternalError("captcha not configured", nil)
+		return altcha.Challenge{}, domain.NewInternalError("captcha not configured", nil)
 	}
 	return s.captchaService.Generate(ctx)
 }
@@ -293,12 +296,12 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 	}
 
 	// CAPTCHA gate: after `threshold` consecutive failed logins on this account,
-	// require a valid captcha code before the password is even checked. Prevents
-	// automated brute-force tools from hammering the password check. Reuses the
-	// otp_failed_attempts counter as the consecutive-failure tracker (reset on
-	// successful login below).
+	// require a valid ALTCHA proof-of-work payload before the password is even
+	// checked. Prevents automated brute-force tools from hammering the password
+	// check. Reuses the otp_failed_attempts counter as the consecutive-failure
+	// tracker (reset on successful login below).
 	if s.captchaService != nil && s.captchaService.RequiredForFailures(user.OTPFailedAttempts) {
-		if !s.captchaService.Verify(ctx, req.CaptchaID, req.CaptchaCode) {
+		if !s.captchaService.Verify(ctx, req.CaptchaPayload) {
 			s.writeFailedLoginAudit(ctx, user.ID, req.Username, ipAddress, userAgent, "thất bại: captcha không hợp lệ")
 			// Keep the failure counter climbing so the account continues to
 			// escalate toward OTP-lockout; a sustained captcha-failed flood must

@@ -1,28 +1,38 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AlertCircle, Eye, EyeOff, Lock01, RefreshCw05, ShieldTick, User01 } from "@untitledui/icons";
+import { AlertCircle, Eye, EyeOff, Lock01, ShieldTick, User01 } from "@untitledui/icons";
+import "altcha";
+import "altcha/i18n/vi";
+import type { AltchaWidgetElement } from "altcha";
 import { authManager } from "@/lib/auth";
 import { useAuth } from "@/contexts";
 import { useLogin } from "@/hooks/api/useAuth";
 import { apiClient } from "@/services/api/client";
 import type { ApiError } from "@/services/api/client";
+import { API_CONFIG } from "@/config/api.config";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthSpinner } from "@/components/auth/AuthSpinner";
 import { AuthBrandMark } from "@/components/auth/AuthBrandMark";
-import { cx } from "@/utils/cx";
+
+// Hide the widget's logo + attribution link inside the login card; the official
+// widget is configured via this JSON attribute (hideLogo/hideFooter are not
+// plain HTML attributes).
+const ALTCHA_WIDGET_CONFIGURATION = JSON.stringify({ hideLogo: true, hideFooter: true });
+
+/** state + payload last reported by the widget's statechange event. */
+type AltchaRuntimeState = { state: string; payload: string | null };
 
 const Login = () => {
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
-  const [captchaImage, setCaptchaImage] = useState<string | null>(null);
-  const [captchaId, setCaptchaId] = useState<string | null>(null);
-  const [captchaCode, setCaptchaCode] = useState("");
-  const [captchaLoading, setCaptchaLoading] = useState(false);
   const [loginSubmitting, setLoginSubmitting] = useState(false);
+  // Bumped after a submitted payload was consumed server-side so the widget
+  // remounts and solves a fresh challenge (solutions are single-use).
+  const [captchaRound, setCaptchaRound] = useState(0);
   const loginMutation = useLogin();
   const loginError = loginMutation.error;
   const resetLogin = loginMutation.reset;
@@ -30,33 +40,14 @@ const Login = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const needsCaptcha = failedAttempts >= 3;
   const loginSubmitInFlightRef = useRef(false);
+  const altchaRef = useRef<AltchaWidgetElement | null>(null);
+  const altchaStateRef = useRef<AltchaRuntimeState>({ state: "unverified", payload: null });
+  const altchaWaitersRef = useRef<Array<(payload: string | null) => void>>([]);
 
-  // Fetch a fresh CAPTCHA challenge. The endpoint is public (no auth token
-  // required — see backend setupAuthRoutes), so it works pre-login. Goes
-  // through apiClient so the configured baseURL/proxy + headers are honored
-  // (a raw fetch("/api/v1/...") breaks when VITE_API_BASE_URL is a separate
-  // host). Synchronously guards against overlapping requests via a ref.
-  const captchaInFlightRef = useRef(false);
-  const refreshCaptcha = useCallback(async () => {
-    if (captchaInFlightRef.current) return;
-    captchaInFlightRef.current = true;
-    setCaptchaLoading(true);
-    try {
-      const res = await apiClient.get<{ captcha_id: string; image: string }>("/auth/captcha");
-      const d = res?.data;
-      if (d?.captcha_id && d?.image) {
-        setCaptchaId(d.captcha_id);
-        setCaptchaImage(d.image);
-        setCaptchaCode("");
-      }
-    } catch {
-      // Swallow: the form still submits without a captcha_id, and the server
-      // returns a clear "captcha required" error the user can act on.
-    } finally {
-      captchaInFlightRef.current = false;
-      setCaptchaLoading(false);
-    }
-  }, []);
+  // The widget fetches the challenge itself from the same origin the axios
+  // client uses, so a raw fetch("/api/v1/...") mismatch (separate VITE_API_BASE_URL
+  // host) cannot happen here either.
+  const challengeUrl = useMemo(() => `${API_CONFIG.baseURL}${API_CONFIG.apiV1}/auth/captcha`, []);
 
   const syncCaptchaRequirement = useCallback(async (): Promise<boolean> => {
     const username = emailOrUsername.trim();
@@ -77,6 +68,50 @@ const Login = () => {
     }
   }, [emailOrUsername]);
 
+  // Track the widget's state + solved payload. Attached in the ref callback —
+  // not an effect — because the widget can solve before effects re-run on fast
+  // devices, and a late listener would miss the verified statechange entirely.
+  const attachAltcha = useCallback((el: AltchaWidgetElement | null) => {
+    altchaRef.current = el;
+    if (!el) return;
+    const onStateChange = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ state: string; payload?: string }>).detail;
+      altchaStateRef.current = { state: detail.state, payload: detail.payload ?? null };
+      if ((detail.state === "verified" && detail.payload) || detail.state === "error" || detail.state === "expired") {
+        const waiters = altchaWaitersRef.current;
+        altchaWaitersRef.current = [];
+        for (const resolve of waiters) resolve(detail.payload ?? null);
+      }
+    };
+    el.addEventListener("statechange", onStateChange);
+  }, []);
+
+  const waitForAltchaPayload = useCallback((): Promise<string | null> => {
+    // The widget may have finished before the submit — read its live state and
+    // the hidden payload input it renders before falling back to waiting.
+    const el = altchaRef.current;
+    if (el && typeof el.getState === "function") {
+      const state = el.getState();
+      if (state === "verified") {
+        const hidden = el.querySelector<HTMLInputElement>('input[name="altcha"]');
+        const payload = hidden?.value ?? altchaStateRef.current.payload;
+        if (payload) {
+          altchaStateRef.current = { state, payload };
+          return Promise.resolve(payload);
+        }
+      }
+      if (state === "error" || state === "expired") return Promise.resolve(null);
+    }
+    if (altchaStateRef.current.payload) return Promise.resolve(altchaStateRef.current.payload);
+    return new Promise((resolve) => {
+      const timeout = window.setTimeout(() => resolve(altchaStateRef.current.payload), 30_000);
+      altchaWaitersRef.current.push((payload) => {
+        window.clearTimeout(timeout);
+        resolve(payload);
+      });
+    });
+  }, []);
+
   // Redirect authenticated users away from /login
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -96,27 +131,21 @@ const Login = () => {
     }
   }, []);
 
-  // Track login failures + fetch CAPTCHA image when threshold is reached.
+  // Track login outcomes. A captcha rejection is handled by reloading the page
+  // (AC-05): a stale cached PWA bundle without the ALTCHA widget can never
+  // satisfy the server, so the fresh bundle must render; on a current client
+  // the reload equally produces a fresh challenge after a consumed solution.
   useEffect(() => {
     if (loginMutation.isError) {
-      const error = loginMutation.error;
-      if (error?.message?.toLowerCase().includes("captcha")) {
-        setFailedAttempts((attempts) => Math.max(attempts, 3));
-      } else {
-        setFailedAttempts((attempts) => attempts + 1);
+      const message = loginMutation.error?.message?.toLowerCase() ?? "";
+      if (message.includes("captcha")) {
+        window.location.reload();
+        return;
       }
+      setFailedAttempts((attempts) => attempts + 1);
     }
     if (loginMutation.isSuccess) setFailedAttempts(0);
   }, [loginMutation.error, loginMutation.isError, loginMutation.isSuccess]);
-
-  // Fetch the initial challenge when the threshold is first crossed, and
-  // auto-refresh the image after each subsequent failed attempt (the prior
-  // challenge is single-use server-side). Depends on failedAttempts so a
-  // failed login with a captcha triggers a fresh image automatically.
-  useEffect(() => {
-    if (!needsCaptcha) return;
-    refreshCaptcha();
-  }, [needsCaptcha, failedAttempts, refreshCaptcha]);
 
   useEffect(() => {
     if (loginError) resetLogin();
@@ -135,16 +164,31 @@ const Login = () => {
       setLoginSubmitting(true);
       try {
         const serverRequiresCaptcha = await syncCaptchaRequirement();
-        if (serverRequiresCaptcha && (!captchaId || !captchaCode)) {
-          if (!captchaId) await refreshCaptcha();
-          return;
+        const captchaRequired = needsCaptcha || serverRequiresCaptcha;
+
+        let captchaPayload: string | null = altchaStateRef.current.payload;
+        if (captchaRequired) {
+          if (!captchaPayload && !needsCaptcha) {
+            // The server just told us a captcha is needed; the widget mounts on
+            // the next render and ticks itself. Let this click go — the next
+            // submit carries the payload.
+            return;
+          }
+          if (!captchaPayload) {
+            // Widget visible but still solving — wait for verification.
+            captchaPayload = await waitForAltchaPayload();
+          }
+          if (!captchaPayload) return; // errored/timed out — the widget shows its own error
+          // A solution is single-use server-side: drop it here and remount the
+          // widget so the next attempt solves a fresh challenge.
+          altchaStateRef.current.payload = null;
+          setCaptchaRound((round) => round + 1);
         }
+
         await loginMutation.mutateAsync({
           username: emailOrUsername,
           password,
-          ...((needsCaptcha || serverRequiresCaptcha) && captchaId
-            ? { captcha_id: captchaId, captcha_code: captchaCode }
-            : {}),
+          ...(captchaRequired && captchaPayload ? { captcha_payload: captchaPayload } : {}),
         });
       } catch {
         // The mutation owns error presentation; this only prevents an unhandled
@@ -154,7 +198,7 @@ const Login = () => {
         setLoginSubmitting(false);
       }
     },
-    [emailOrUsername, password, loginMutation, needsCaptcha, captchaId, captchaCode, refreshCaptcha, syncCaptchaRequirement]
+    [emailOrUsername, password, loginMutation, needsCaptcha, syncCaptchaRequirement, waitForAltchaPayload]
   );
 
   const togglePassword = useCallback(() => setShowPassword((v) => !v), []);
@@ -317,46 +361,15 @@ const Login = () => {
                   </div>
 
                   {needsCaptcha && (
-                    <div className="space-y-2 motion-safe:animate-fade-in-up">
-                      <Label htmlFor="captchaCode">Mã xác nhận</Label>
-                      <div className="flex items-center gap-2">
-                        {captchaImage ? (
-                          <button
-                            type="button"
-                            onClick={() => refreshCaptcha()}
-                            className="h-11 overflow-hidden rounded-lg border border-input bg-card shadow-xs outline-brand transition duration-100 ease-linear focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 sm:h-9"
-                            aria-label="Tải hình mã xác nhận khác"
-                          >
-                            <img src={captchaImage} alt="Hình ảnh mã xác nhận 5 chữ số" className="h-full w-auto select-none" />
-                          </button>
-                        ) : (
-                          <div className="flex h-11 min-w-24 items-center justify-center rounded-lg border border-input bg-muted sm:h-9" aria-hidden="true">
-                            <AuthSpinner className="size-4 text-fg-tertiary" />
-                          </div>
-                        )}
-                        <Input
-                          id="captchaCode"
-                          type="text"
-                          inputMode="numeric"
-                          placeholder="Nhập mã"
-                          value={captchaCode}
-                          onChange={(e) => setCaptchaCode(e.target.value.replace(/\D/g, "").slice(0, 5))}
-                          className="flex-1 text-center tracking-[0.3em]"
-                          autoComplete="off"
-                          required={needsCaptcha}
-                          disabled={isDisabled || captchaLoading}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => refreshCaptcha()}
-                          disabled={captchaLoading || isDisabled}
-                          aria-label="Tải hình mã xác nhận khác"
-                        >
-                          <RefreshCw05 className={cx("size-4", captchaLoading && "animate-spin motion-reduce:animate-none")} aria-hidden="true" />
-                        </Button>
-                      </div>
+                    <div className="motion-safe:animate-fade-in-up" data-testid="altcha-captcha">
+                      <altcha-widget
+                        key={captchaRound}
+                        ref={attachAltcha}
+                        challenge={challengeUrl}
+                        language="vi"
+                        auto="onload"
+                        configuration={ALTCHA_WIDGET_CONFIGURATION}
+                      />
                     </div>
                   )}
                 </fieldset>

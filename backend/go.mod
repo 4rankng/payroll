@@ -5,6 +5,7 @@ go 1.26.0
 require (
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/alicebob/miniredis/v2 v2.38.0
+	github.com/altcha-org/altcha-lib-go/v2 v2.4.1
 	github.com/brianvoe/gofakeit/v7 v7.5.1
 	github.com/casbin/casbin/v2 v2.122.0
 	github.com/cespedes/accounting v0.0.0-20230225055409-0f48b5944834
@@ -19,7 +20,6 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/leanovate/gopter v0.2.11
 	github.com/modelcontextprotocol/go-sdk v1.8.0
-	github.com/mojocn/base64Captcha v1.3.8
 	github.com/mssola/useragent v1.0.0
 	github.com/nqd/flat v0.2.0
 	github.com/pkg/errors v0.9.1
@@ -68,7 +68,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
-	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/google/jsonschema-go v0.4.3 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.15 // indirect
@@ -114,7 +113,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	golang.org/x/arch v0.18.0 // indirect
-	golang.org/x/image v0.44.0 // indirect
 	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect

@@ -2,38 +2,58 @@ package auth
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"math/rand/v2"
 	"time"
 
-	"github.com/mojocn/base64Captcha"
+	"github.com/altcha-org/altcha-lib-go/v2"
 	"github.com/redis/go-redis/v9"
 )
 
-// CaptchaConfig controls when CAPTCHA is required and how long codes live.
+// CaptchaConfig controls when CAPTCHA is required and how ALTCHA challenges
+// are issued.
 type CaptchaConfig struct {
-	Enabled    bool          // feature flag (CAPTCHA_ENABLE)
-	Threshold  int           // require CAPTCHA after this many consecutive failures (default 3)
-	CodeTTL    time.Duration // how long a captcha challenge stays valid (default 5m)
-	CodeLength int           // number of digits in the code (default 5)
+	Enabled       bool          // feature flag (CAPTCHA_ENABLE)
+	Threshold     int           // require CAPTCHA after this many consecutive failures (default 3)
+	ChallengeTTL  time.Duration // how long an ALTCHA challenge (and its solution) stays valid (default 5m)
+	HMACSecret    string        // signs challenges and verifies solutions (CAPTCHA_HMAC_SECRET)
+	PoWCost       int           // PBKDF2 iterations per derivation (CAPTCHA_POW_COST, default 5000)
+	PoWDifficulty int           // expected number of KDF derivations the client performs (CAPTCHA_POW_DIFFICULTY, default 150)
 }
 
 const (
 	defaultCaptchaThreshold  = 3
 	defaultCaptchaCodeTTL    = 5 * time.Minute
-	defaultCaptchaCodeLength = 5
+	defaultCaptchaPoWCost    = 5000
+	defaultCaptchaDifficulty = 150
 	redisCaptchaPrefix       = "captcha:"
+	// maxCaptchaPayloadSize bounds the base64 payload accepted at login. A
+	// real ALTCHA payload is a few hundred bytes; anything larger is refused
+	// without parsing (fail-closed, reported as an invalid captcha). Kept below
+	// the login rate limiter's 4 KiB body cap so an oversized payload is
+	// rejected with the captcha error rather than a body-parse error.
+	maxCaptchaPayloadSize = 2048
+	// powAlgorithm must match what the official widget bundles by default.
+	powAlgorithm = "PBKDF2/SHA-256"
 )
 
-// CaptchaService generates and verifies image CAPTCHAs using base64Captcha's
-// digit driver, with the answer stored in Redis (self-hosted, no external
-// service). Digit-only codes are easier for factory workers than letters (no
-// ambiguity between uppercase/lowercase/l/I/O/0).
+// CaptchaService issues ALTCHA proof-of-work challenges and verifies
+// solutions. The user only ticks (or watches tick itself) a checkbox; no code
+// is typed. Challenges are HMAC-signed, expire after ChallengeTTL, and each
+// solution is single-use (consumed in Redis on first successful verification,
+// so a replayed payload is rejected).
 type CaptchaService struct {
-	store     base64Captcha.Store
-	driver    *base64Captcha.DriverDigit
-	ttl       time.Duration
-	enabled   bool
-	threshold int
+	rdb        *redis.Client
+	hmacSecret string
+	cost       int
+	difficulty int
+	ttl        time.Duration
+	enabled    bool
+	threshold  int
 }
 
 // NewCaptchaService constructs the service. The Redis client is reused from the
@@ -43,29 +63,26 @@ func NewCaptchaService(rdb *redis.Client, cfg CaptchaConfig) *CaptchaService {
 	if threshold <= 0 {
 		threshold = defaultCaptchaThreshold
 	}
-	length := cfg.CodeLength
-	if length <= 0 {
-		length = defaultCaptchaCodeLength
+	cost := cfg.PoWCost
+	if cost <= 0 {
+		cost = defaultCaptchaPoWCost
 	}
-	ttl := cfg.CodeTTL
+	difficulty := cfg.PoWDifficulty
+	if difficulty <= 0 {
+		difficulty = defaultCaptchaDifficulty
+	}
+	ttl := cfg.ChallengeTTL
 	if ttl <= 0 {
 		ttl = defaultCaptchaCodeTTL
 	}
-	store := newRedisCaptchaStore(rdb, ttl)
-	// DriverDigit: number-only captcha. Height/width tuned for mobile display.
-	driver := base64Captcha.DriverDigit{
-		Height:   80,
-		Width:    200,
-		Length:   length,
-		MaxSkew:  0.7,
-		DotCount: 80,
-	}
 	return &CaptchaService{
-		store:     store,
-		driver:    &driver,
-		ttl:       ttl,
-		enabled:   cfg.Enabled,
-		threshold: threshold,
+		rdb:        rdb,
+		hmacSecret: cfg.HMACSecret,
+		cost:       cost,
+		difficulty: difficulty,
+		ttl:        ttl,
+		enabled:    cfg.Enabled,
+		threshold:  threshold,
 	}
 }
 
@@ -81,60 +98,75 @@ func (s *CaptchaService) RequiredForFailures(failureCount int) bool {
 	return failureCount >= s.threshold
 }
 
-// Generate creates a new CAPTCHA challenge. Returns:
-//   - captchaID: opaque id to send back with the login attempt
-//   - imageBase64: base64-encoded PNG (the full data:image/png;base64,... string)
-func (s *CaptchaService) Generate(ctx context.Context) (captchaID, imageBase64 string, err error) {
-	id, content, answer := s.driver.GenerateIdQuestionAnswer()
-	item, err := s.driver.DrawCaptcha(content)
-	if err != nil {
-		return "", "", fmt.Errorf("captcha draw: %w", err)
+// Generate creates a new ALTCHA challenge. The challenge is issued in
+// deterministic-counter mode: the server hides a counter in [1, 2*difficulty)
+// behind a key prefix, so the widget performs ~`difficulty` KDF derivations on
+// average before it finds the matching key and the checkbox ticks itself.
+// The default difficulty keeps solving within a few seconds on a low-end
+// Android device while each derivation costs the client `cost` PBKDF2 rounds.
+func (s *CaptchaService) Generate(ctx context.Context) (altcha.Challenge, error) {
+	if s.hmacSecret == "" {
+		return altcha.Challenge{}, fmt.Errorf("captcha hmac secret not configured")
 	}
-	if err := s.store.Set(id, answer); err != nil {
-		return "", "", fmt.Errorf("captcha store: %w", err)
-	}
-	return id, item.EncodeB64string(), nil
+	// Wall-clock (not clock.Now): the expiry is a Unix second compared by
+	// altcha-lib against time.Now internally; epoch time is timezone-free, so
+	// the business clock's Asia/Ho_Chi_Minh location is irrelevant here.
+	expiresAt := time.Now().Add(s.ttl)
+	// counter in [1, 2*difficulty) -> expected `difficulty` derivations.
+	counter := 1 + rand.IntN(2*s.difficulty)
+	return altcha.CreateChallenge(altcha.CreateChallengeOptions{
+		Algorithm:              powAlgorithm,
+		DeriveKey:              altcha.DeriveKeyPBKDF2(),
+		HMACSignatureSecret:    s.hmacSecret,
+		HMACKeySignatureSecret: s.hmacSecret,
+		Cost:                   s.cost,
+		KeyLength:              32,
+		Counter:                &counter,
+		ExpiresAt:              &expiresAt,
+	})
 }
 
-// Verify checks the user's answer against the stored code. The code is
-// single-use — it's deleted on verification regardless of correctness (so a
-// replay is impossible even if the answer was right).
-func (s *CaptchaService) Verify(ctx context.Context, captchaID, code string) bool {
-	if captchaID == "" || code == "" {
+// Verify checks the client's base64 ALTCHA payload: bounded size, decodable,
+// correctly signed, not expired, and not replayed. Every failure mode —
+// absent, forged, malformed, oversized, expired, verification-failing, or
+// replayed — returns false so login rejects with the same captcha error.
+// A verified solution is consumed in Redis (SETNX), making it single-use.
+func (s *CaptchaService) Verify(ctx context.Context, payloadB64 string) bool {
+	if s.hmacSecret == "" || payloadB64 == "" || len(payloadB64) > maxCaptchaPayloadSize {
 		return false
 	}
-	return s.store.Verify(captchaID, code, true)
-}
-
-// --- Redis-backed store ---
-
-type redisCaptchaStore struct {
-	rdb *redis.Client
-	ttl time.Duration
-}
-
-func newRedisCaptchaStore(rdb *redis.Client, ttl time.Duration) *redisCaptchaStore {
-	return &redisCaptchaStore{rdb: rdb, ttl: ttl}
-}
-
-func (s *redisCaptchaStore) Set(id string, value string) error {
-	return s.rdb.Set(context.Background(), redisCaptchaPrefix+id, value, s.ttl).Err()
-}
-
-func (s *redisCaptchaStore) Get(id string, clear bool) string {
-	val, err := s.rdb.Get(context.Background(), redisCaptchaPrefix+id).Result()
+	decoded, err := base64.StdEncoding.DecodeString(payloadB64)
 	if err != nil {
-		return ""
+		return false
 	}
-	if clear {
-		s.rdb.Del(context.Background(), redisCaptchaPrefix+id)
+	var payload altcha.Payload
+	if err := json.Unmarshal(decoded, &payload); err != nil {
+		return false
 	}
-	return val
+	result, err := altcha.VerifySolution(altcha.VerifySolutionOptions{
+		Challenge:              payload.Challenge,
+		Solution:               payload.Solution,
+		DeriveKey:              altcha.DeriveKeyPBKDF2(),
+		HMACSignatureSecret:    s.hmacSecret,
+		HMACKeySignatureSecret: s.hmacSecret,
+	})
+	if err != nil || !result.Verified {
+		return false
+	}
+	// Single-use: the payload hash is the replay key; it only needs to live
+	// until the challenge expires (after that the payload fails on expiry).
+	key := redisCaptchaPrefix + "solved:" + sha256Hex(payloadB64)
+	consumed, err := s.rdb.SetNX(ctx, key, 1, s.ttl).Result()
+	if err != nil {
+		// Redis unavailable: fail closed rather than allow unlimited replay.
+		return false
+	}
+	return consumed
 }
 
-func (s *redisCaptchaStore) Verify(id, answer string, clear bool) bool {
-	stored := s.Get(id, clear)
-	return stored != "" && stored == answer
-}
+// --- helpers ---
 
-var _ base64Captcha.Store = (*redisCaptchaStore)(nil)
+func sha256Hex(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(sum[:])
+}

@@ -143,14 +143,18 @@ type GoogleConfig struct {
 	ClientID     string
 }
 
-// CaptchaConfig controls the self-hosted image CAPTCHA (base64Captcha + Redis).
-// When Enabled, a digit-image CAPTCHA is required after `Threshold` consecutive
-// login failures. Default off — purely additive. Gated by CAPTCHA_ENABLE.
+// CaptchaConfig controls the ALTCHA proof-of-work CAPTCHA (self-hosted,
+// signed challenges + Redis single-use solutions). When Enabled, an ALTCHA
+// challenge is required after `Threshold` consecutive login failures; the user
+// only ticks a checkbox that verifies itself in the background. Default off —
+// purely additive. Gated by CAPTCHA_ENABLE; requires CAPTCHA_HMAC_SECRET.
 type CaptchaConfig struct {
-	Enabled    bool
-	Threshold  int           // failures before CAPTCHA is required (default 3)
-	CodeTTL    time.Duration // challenge lifetime (default 5m)
-	CodeLength int           // digits in the code (default 5)
+	Enabled       bool
+	Threshold     int           // failures before CAPTCHA is required (default 3)
+	ChallengeTTL  time.Duration // challenge/solution lifetime (default 5m)
+	HMACSecret    string        // challenge signing + solution verification secret
+	PoWCost       int           // PBKDF2 rounds per derivation (default 5000)
+	PoWDifficulty int           // expected client derivations per challenge (default 150)
 }
 
 type LogConfig struct {
@@ -489,10 +493,12 @@ func Load() (*Config, error) {
 			RatePerMin: parseInt(getEnv("PAYROLL_OPS_MCP_RATE_PER_MIN", "120")),
 		},
 		Captcha: CaptchaConfig{
-			Enabled:    parseBool(getEnv("CAPTCHA_ENABLE", "false")),
-			Threshold:  parseInt(getEnv("CAPTCHA_THRESHOLD", "3")),
-			CodeTTL:    parseDuration(getEnv("CAPTCHA_CODE_TTL", "5m")),
-			CodeLength: parseInt(getEnv("CAPTCHA_CODE_LENGTH", "5")),
+			Enabled:       parseBool(getEnv("CAPTCHA_ENABLE", "false")),
+			Threshold:     parseInt(getEnv("CAPTCHA_THRESHOLD", "3")),
+			ChallengeTTL:  parseDuration(getEnv("CAPTCHA_CODE_TTL", "5m")),
+			HMACSecret:    getEnv("CAPTCHA_HMAC_SECRET", ""),
+			PoWCost:       parseInt(getEnv("CAPTCHA_POW_COST", "5000")),
+			PoWDifficulty: parseInt(getEnv("CAPTCHA_POW_DIFFICULTY", "150")),
 		},
 		CashForecast: CashForecastConfig{
 			ServiceLevel:              parseFloat(getEnv("CASH_FORECAST_SERVICE_LEVEL", "0.95")),
@@ -667,6 +673,14 @@ func (c *Config) validate() error {
 		if c.Notification.ResendAPIKey == "" {
 			return fmt.Errorf("RESEND_API_KEY must be set when OTP_ENABLE=true")
 		}
+	}
+
+	// ALTCHA fail-fast: challenges are HMAC-signed and solutions verified with
+	// CAPTCHA_HMAC_SECRET. An enabled-but-secretless deploy would fail every
+	// challenge at runtime (the service refuses to generate without a key),
+	// so stop at boot instead.
+	if c.Captcha.Enabled && c.Captcha.HMACSecret == "" {
+		return fmt.Errorf("CAPTCHA_HMAC_SECRET must be set when CAPTCHA_ENABLE=true")
 	}
 
 	// Google OIDC fail-fast: when the flow is enabled, the client ID must be set
