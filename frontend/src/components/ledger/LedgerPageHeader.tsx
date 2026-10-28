@@ -18,6 +18,9 @@ import {
   Loader2,
   TrendingUp,
   Zap,
+  Download,
+  Upload,
+  FlaskConical,
 } from 'lucide-react';
 import { CashFlowChart } from './CashFlowChart';
 import { cn } from '@/lib/utils';
@@ -36,6 +39,10 @@ interface LedgerPageHeaderProps {
   onSendSaoKeAdvance?: () => void;
   onViewSaoKeHistory?: () => void;
   onImportOnePayFeeReport?: () => void;
+  onExportSaoKePayroll?: () => void;
+  onExportSaoKeAdvance?: () => void;
+  onUploadSettlementResult?: () => void;
+  onSimulateSettlement?: () => void;
   isSendingSaoKe?: boolean;
   onRunWalletSettlement?: () => void;
   isRunningWalletSettlement?: boolean;
@@ -54,6 +61,10 @@ export function LedgerPageHeader({
   onSendSaoKeAdvance,
   onViewSaoKeHistory,
   onImportOnePayFeeReport,
+  onExportSaoKePayroll,
+  onExportSaoKeAdvance,
+  onUploadSettlementResult,
+  onSimulateSettlement,
   isSendingSaoKe = false,
   onRunWalletSettlement,
   isRunningWalletSettlement = false,
@@ -117,6 +128,30 @@ export function LedgerPageHeader({
       label: 'Nhập phí OnePay',
       icon: ReceiptText,
       onClick: onImportOnePayFeeReport,
+    },
+    onExportSaoKePayroll && {
+      key: 'export-saoke-payroll',
+      label: 'Xuất sao kê lương',
+      icon: Download,
+      onClick: onExportSaoKePayroll,
+    },
+    onExportSaoKeAdvance && {
+      key: 'export-saoke-advance',
+      label: 'Xuất sao kê ứng lương',
+      icon: Download,
+      onClick: onExportSaoKeAdvance,
+    },
+    onUploadSettlementResult && {
+      key: 'settlement-upload',
+      label: 'Upload kết quả settlement',
+      icon: Upload,
+      onClick: onUploadSettlementResult,
+    },
+    onSimulateSettlement && {
+      key: 'settlement-simulate',
+      label: 'Mô phỏng settlement',
+      icon: FlaskConical,
+      onClick: onSimulateSettlement,
     },
   ].filter(Boolean) as Array<{ key: string; label: string; icon: typeof Plus; onClick: () => void; disabled?: boolean }>;
 
@@ -193,6 +228,43 @@ export function LedgerPageHeader({
               )}
               Chốt lương
             </Button>
+          )}
+          {(onExportSaoKePayroll || onExportSaoKeAdvance || onUploadSettlementResult || onSimulateSettlement) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="rounded-none border-0 gap-1.5">
+                  <MoreHorizontal className="w-4 h-4" />
+                  Khác
+                  <ChevronDownIcon className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {onExportSaoKePayroll && (
+                  <DropdownMenuItem onClick={onExportSaoKePayroll}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Xuất sao kê lương
+                  </DropdownMenuItem>
+                )}
+                {onExportSaoKeAdvance && (
+                  <DropdownMenuItem onClick={onExportSaoKeAdvance}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Xuất sao kê ứng lương
+                  </DropdownMenuItem>
+                )}
+                {onUploadSettlementResult && (
+                  <DropdownMenuItem onClick={onUploadSettlementResult}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload kết quả settlement
+                  </DropdownMenuItem>
+                )}
+                {onSimulateSettlement && (
+                  <DropdownMenuItem onClick={onSimulateSettlement}>
+                    <FlaskConical className="w-4 h-4 mr-2" />
+                    Mô phỏng settlement
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 

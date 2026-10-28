@@ -3,14 +3,18 @@ import { useSearchParams } from 'react-router-dom';
 import { LedgerPageHeader } from '@/components/ledger/LedgerPageHeader';
 import { LedgerSummaryCard } from '@/components/ledger/LedgerSummaryCard';
 import { LedgerMobileList } from '@/components/ledger/LedgerMobileList';
-import { LedgerFiltersMobile } from '@/components/ledger/mobile/LedgerFiltersMobile';
+import { TransactionFilters } from '@/components/transaction/TransactionFilters';
 import { MobilePageShell } from '@/components/shared/MobilePageShell';
 import { DoubleEntryModal } from '@/components/ledger/DoubleEntryModal';
-import { ReversalDialog } from '@/components/ledger/ReversalDialog';
 import { PayrollReportEmailDialog, type PayrollReportEmailParams } from '@/components/timesheet/PayrollReportEmailDialog';
 import { AdvancePaymentEmailDialog, type AdvancePaymentEmailParams } from '@/components/advance-payment/AdvancePaymentEmailDialog';
 import { SaoKeHistoryDialog } from '@/components/transaction/SaoKeHistoryDialog';
-import { useLedgerEntries } from '@/hooks/ledger/useLedgerEntries';
+import { ExportSaoKeDialog } from '@/components/transaction/ExportSaoKeDialog';
+import { AdvancePaymentExportDialog } from '@/components/advance-payment/AdvancePaymentExportDialog';
+import { OnePayFeeReportDialog } from '@/components/ledger/OnePayFeeReportDialog';
+import { SettlementResultUploadDialog } from '@/components/transaction/SettlementResultUploadDialog';
+import { SettlementSimulationDialog } from '@/components/ledger/SettlementSimulationDialog';
+import { useTransactions } from '@/hooks/transactions/useTransactions';
 import { useOverallBalance, useLedgerSummary } from '@/hooks/ledger/useLedgerBalance';
 import { useLedgerManagement } from '@/hooks/ledger/useLedgerManagement';
 import { useLedgerMetadata } from '@/hooks/ledger/useLedgerMetadata';
@@ -19,8 +23,14 @@ import { useSendReconciliationEmail } from '@/hooks/api/useAdvancePaymentReconci
 import { useProjects } from '@/hooks/api/useProjects';
 import { useGeneralModals } from '@/hooks/useModalNavigation';
 import { dateToString } from '@/utils/dateHelpers';
-import type { LedgerFilters as FiltersType, LedgerEntry , AccountMetadata} from '@/types/api/financial.types';
+import { transactionToLedgerEntryView } from '@/utils/transactionLedgerAdapter';
+import { extractOnePayFeeIssues } from '@/utils/onepayFeeReport';
+import type { TransactionFilters as FiltersType } from '@/services/api/transaction.service';
+import type { LedgerEntry, AccountMetadata, OnePayFeeImportResponse, OnePayFeeReportIssue } from '@/types/api/financial.types';
 
+// PAYR-20: this list is served by the Transaction API — the same model/API as
+// the desktop TransactionsPage at the same URL. Cards render through the
+// transactionToLedgerEntryView adapter (transaction ids preserved).
 const LedgerEntriesPageMobile = () => {
   const [searchParams] = useSearchParams();
 
@@ -40,18 +50,24 @@ const LedgerEntriesPageMobile = () => {
   const [filters, setFilters] = useState<FiltersType>(() => ({
     page: 1,
     pageSize: 50,
-    sortBy: 'date',
+    sortBy: 'created_at',
     sortOrder: 'desc',
     fromDate: getInitialDateRange.fromDate,
     toDate: getInitialDateRange.toDate,
   }));
   const [showDoubleEntryModal, setShowDoubleEntryModal] = useState(false);
-  const [reverseEntry, setReverseEntry] = useState<LedgerEntry | null>(null);
 
-  // Sao kê dialog state
+  // Dialog state
   const [payrollEmailDialogOpen, setPayrollEmailDialogOpen] = useState(false);
   const [advanceEmailDialogOpen, setAdvanceEmailDialogOpen] = useState(false);
   const [saoKeHistoryDialogOpen, setSaoKeHistoryDialogOpen] = useState(false);
+  const [exportSaoKeDialogOpen, setExportSaoKeDialogOpen] = useState(false);
+  const [exportAdvanceDialogOpen, setExportAdvanceDialogOpen] = useState(false);
+  const [showSettlementDialog, setShowSettlementDialog] = useState(false);
+  const [simulationDialogOpen, setSimulationDialogOpen] = useState(false);
+  const [onePayFeeDialogOpen, setOnePayFeeDialogOpen] = useState(false);
+  const [onePayFeeResult, setOnePayFeeResult] = useState<OnePayFeeImportResponse | null>(null);
+  const [onePayFeeIssues, setOnePayFeeIssues] = useState<OnePayFeeReportIssue[]>([]);
 
   const sendPayrollEmailMutation = useSendPayrollReportEmail();
   const sendAdvanceEmailMutation = useSendReconciliationEmail();
@@ -90,50 +106,45 @@ const LedgerEntriesPageMobile = () => {
     }
   }, [searchParams]);
 
-  // Data fetching
-  const { data: entriesData, isLoading: isLoadingEntries } = useLedgerEntries(filters);
+  // Data fetching — Transaction model, shared with desktop
+  const { data: transactionsData, isLoading: isLoadingTransactions } = useTransactions(filters);
   const { data: overallBalance, isLoading: isLoadingBalance } = useOverallBalance();
   const { data: ledgerSummary, isLoading: isLoadingSummary } = useLedgerSummary(
     filters.fromDate || getInitialDateRange.fromDate,
     filters.toDate || getInitialDateRange.toDate,
-    filters.project_id,
+    undefined,
     !!(filters.fromDate && filters.toDate)
   );
 
   const { data: projectsData } = useProjects();
   const { data: accountMetadata, isLoading: isLoadingAccountMetadata } = useLedgerMetadata();
 
-  // CRUD operations
-  const { reverseEntry: performReverse, recalculateBalances: performRecalculate, runWalletSettlement: performRunWalletSettlement, isReversing, isRecalculating, isRunningWalletSettlement } = useLedgerManagement();
+  // Ledger tools (double-entry, recalculator, settlement run) + OnePay fee import
+  const {
+    importOnePayFeeReport,
+    isImportingOnePayFeeReport,
+    recalculateBalances: performRecalculate,
+    runWalletSettlement: performRunWalletSettlement,
+    isRecalculating,
+    isRunningWalletSettlement,
+  } = useLedgerManagement();
 
   // Modal navigation
-  const { openLedgerDetails, openAddLedgerEntry } = useGeneralModals();
+  const { openTransactionDetails, openAddLedgerEntry } = useGeneralModals();
 
-  // Derived data - handle case where entriesData might be array directly
-  const entries = Array.isArray(entriesData) ? entriesData : (entriesData?.data || []);
-  const pagination = Array.isArray(entriesData)
-    ? {
-        page: filters.page,
-        pageSize: filters.pageSize,
-        totalPages: Math.ceil(entriesData.length / filters.pageSize) || 1,
-        totalRecords: entriesData.length,
-      }
-    : entriesData?.pagination;
+  // Derived data
+  const transactions = transactionsData?.data || [];
+  const entries = useMemo(
+    () => transactions.map(transactionToLedgerEntryView),
+    [transactions],
+  );
+  const pagination = transactionsData?.pagination ?? null;
   const netCashFlow = ledgerSummary?.totals.net_cashflow;
   const projects = projectsData?.data || [];
 
   // Handlers
   const handleAddEntry = () => {
     openAddLedgerEntry();
-  };
-
-  const handleReverseEntry = (entry: LedgerEntry) => {
-    setReverseEntry(entry);
-  };
-
-  const handleConfirmReverse = async (entryId: number, reason: string) => {
-    await performReverse({ id: entryId, reason });
-    setReverseEntry(null);
   };
 
   const handleRecalculateBalance = async () => {
@@ -153,7 +164,8 @@ const LedgerEntriesPageMobile = () => {
   };
 
   const handleRowClick = (entry: LedgerEntry) => {
-    openLedgerDetails(entry.id.toString());
+    // Adapter preserves the transaction id — open the shared transaction details.
+    openTransactionDetails(entry.id.toString());
   };
 
   // Filter handlers
@@ -165,7 +177,7 @@ const LedgerEntriesPageMobile = () => {
     setFilters({
       page: 1,
       pageSize: 50,
-      sortBy: 'date',
+      sortBy: 'created_at',
       sortOrder: 'desc',
       fromDate: getInitialDateRange.fromDate,
       toDate: getInitialDateRange.toDate,
@@ -196,8 +208,28 @@ const LedgerEntriesPageMobile = () => {
     } catch { /* handled by mutation */ }
   }, [sendAdvanceEmailMutation]);
 
+  // OnePay fee import handlers (parity with desktop TransactionsPage)
+  const handleOnePayFeeDialogOpenChange = useCallback((open: boolean) => {
+    setOnePayFeeDialogOpen(open);
+    if (open) {
+      setOnePayFeeResult(null);
+      setOnePayFeeIssues([]);
+    }
+  }, []);
+
+  const handleImportOnePayFeeReport = useCallback(async (file: File) => {
+    setOnePayFeeResult(null);
+    setOnePayFeeIssues([]);
+    try {
+      const result = await importOnePayFeeReport(file);
+      setOnePayFeeResult(result);
+    } catch (error) {
+      setOnePayFeeIssues(extractOnePayFeeIssues(error));
+    }
+  }, [importOnePayFeeReport]);
+
   // Check if any filters are active (excluding default values)
-  const hasFilters = !!(filters.project_id || filters.account || filters.party || filters.created_by || filters.has_evidence !== undefined);
+  const hasFilters = !!(filters.search || filters.transaction_type || filters.status || filters.party || filters.created_by);
 
   return (
     <MobilePageShell className="mx-auto w-full max-w-[1280px] space-y-4 lg:px-6">
@@ -215,6 +247,11 @@ const LedgerEntriesPageMobile = () => {
         onSendSaoKePayroll={() => setPayrollEmailDialogOpen(true)}
         onSendSaoKeAdvance={() => setAdvanceEmailDialogOpen(true)}
         onViewSaoKeHistory={() => setSaoKeHistoryDialogOpen(true)}
+        onImportOnePayFeeReport={() => handleOnePayFeeDialogOpenChange(true)}
+        onExportSaoKePayroll={() => setExportSaoKeDialogOpen(true)}
+        onExportSaoKeAdvance={() => setExportAdvanceDialogOpen(true)}
+        onUploadSettlementResult={() => setShowSettlementDialog(true)}
+        onSimulateSettlement={() => setSimulationDialogOpen(true)}
         isSendingSaoKe={sendPayrollEmailMutation.isPending || sendAdvanceEmailMutation.isPending}
       />
 
@@ -223,32 +260,24 @@ const LedgerEntriesPageMobile = () => {
         isLoading={isLoadingSummary}
       />
 
-      <LedgerFiltersMobile
+      <TransactionFilters
         filters={filters}
         onFiltersChange={handleFiltersChange}
-        projects={projects}
         onClearFilters={handleClearFilters}
         hasFilters={hasFilters}
         totalResults={pagination?.totalRecords}
-        accountMetadata={(accountMetadata ?? []) as AccountMetadata[]}
-        isLoadingAccountMetadata={isLoadingAccountMetadata}
       />
 
-      {!isLoadingAccountMetadata && accountMetadata && accountMetadata.length > 0 ? (
-        <LedgerMobileList
-          entries={entries}
-          isLoading={isLoadingEntries}
-          onRowClick={handleRowClick}
-          projects={projects}
-          accountMetadata={accountMetadata as AccountMetadata[]}
-          pagination={pagination}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-        />
-      ) : (
-        <div className="flex justify-center items-center py-12 rounded-xl border border-border bg-card">          <p className="text-sm text-muted-foreground">Đang tải thông tin tài khoản...</p>
-        </div>
-      )}
+      <LedgerMobileList
+        entries={entries}
+        isLoading={isLoadingTransactions}
+        onRowClick={handleRowClick}
+        projects={projects}
+        accountMetadata={(accountMetadata ?? []) as AccountMetadata[]}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
 
       <DoubleEntryModal
         isOpen={showDoubleEntryModal}
@@ -256,15 +285,7 @@ const LedgerEntriesPageMobile = () => {
         projects={projects}
       />
 
-      <ReversalDialog
-        isOpen={!!reverseEntry}
-        onClose={() => setReverseEntry(null)}
-        entry={reverseEntry}
-        onConfirm={handleConfirmReverse}
-        isLoading={isReversing}
-      />
-
-      {/* Sao kê dialogs */}
+      {/* Sao kê / export / fee / settlement dialogs — shared with desktop */}
       <PayrollReportEmailDialog
         open={payrollEmailDialogOpen}
         onOpenChange={setPayrollEmailDialogOpen}
@@ -280,6 +301,34 @@ const LedgerEntriesPageMobile = () => {
       <SaoKeHistoryDialog
         open={saoKeHistoryDialogOpen}
         onOpenChange={setSaoKeHistoryDialogOpen}
+      />
+      <ExportSaoKeDialog
+        open={exportSaoKeDialogOpen}
+        onOpenChange={setExportSaoKeDialogOpen}
+      />
+      <AdvancePaymentExportDialog
+        open={exportAdvanceDialogOpen}
+        onOpenChange={setExportAdvanceDialogOpen}
+      />
+      <OnePayFeeReportDialog
+        open={onePayFeeDialogOpen}
+        onOpenChange={handleOnePayFeeDialogOpenChange}
+        onUpload={handleImportOnePayFeeReport}
+        onFileChange={() => {
+          setOnePayFeeResult(null);
+          setOnePayFeeIssues([]);
+        }}
+        isUploading={isImportingOnePayFeeReport}
+        result={onePayFeeResult}
+        issues={onePayFeeIssues}
+      />
+      <SettlementResultUploadDialog
+        open={showSettlementDialog}
+        onOpenChange={setShowSettlementDialog}
+      />
+      <SettlementSimulationDialog
+        open={simulationDialogOpen}
+        onOpenChange={setSimulationDialogOpen}
       />
     </MobilePageShell>
   );
