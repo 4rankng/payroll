@@ -73,6 +73,16 @@
     padding-bottom: calc(7rem + env(safe-area-inset-bottom));
   }
 
+  /* PAYR-28: Bell FAB clearance rail. The fixed bell (48px at right-4) must
+     never sit on content at >=768px — below that the FAB is hidden and the
+     mobile nav owns the bottom edge. 4.5rem = 16px offset + 48px button +
+     margin. Specificity beats the padding shorthand above. */
+  @media (min-width: 768px) {
+    [data-admin-ui] .admin-page-frame {
+      padding-right: 4.5rem;
+    }
+  }
+
   [data-admin-ui] .admin-page-frame::before {
     content: none;
   }
