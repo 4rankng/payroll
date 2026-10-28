@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { AlertTriangle, ClipboardCheck, Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, ChevronLeft, ChevronRight, ClipboardCheck, Loader2, RefreshCw } from 'lucide-react';
 
 import { ApprovalDecisionModal, type ApprovalDecisionMode } from '@/components/approvals/ApprovalDecisionModal';
 import { Badge } from '@/components/ui/badge';
@@ -48,6 +48,7 @@ const formatDateTime = (iso?: string | null) => {
 /** Mobile approval queue: one-column list, 44px targets, chip filters. */
 const ApprovalsPageMobile = () => {
   const [filterKey, setFilterKey] = useState('waiting');
+  const [page, setPage] = useState(1);
   const [modal, setModal] = useState<{ mode: ApprovalDecisionMode; request: ApprovalRequest } | null>(null);
   const [prepareDate, setPrepareDate] = useState('');
   const fileApproval = useFileApproval();
@@ -71,7 +72,7 @@ const ApprovalsPageMobile = () => {
   };
 
   const filter = FILTERS.find((f) => f.key === filterKey) ?? FILTERS[0];
-  const listQuery = useApprovalsList({ statuses: filter.statuses, page: 1, pageSize: PAGE_SIZE });
+  const listQuery = useApprovalsList({ statuses: filter.statuses, page, pageSize: PAGE_SIZE });
   const waitingQuery = useApprovalsList({ statuses: ['pending', 'rescheduled'], pageSize: 1 });
   const escalatedQuery = useApprovalsList({ statuses: ['escalated'], pageSize: 1 });
 
@@ -82,7 +83,7 @@ const ApprovalsPageMobile = () => {
 
   const escalatedCount = escalatedQuery.data?.pagination?.totalRecords ?? null;
   const items = listQuery.data?.items ?? [];
-  const hasMore = (listQuery.data?.pagination?.totalRecords ?? 0) > PAGE_SIZE;
+  const pagination = listQuery.data?.pagination ?? null;
 
   const headerSummary = useMemo(() => {
     const waiting = waitingQuery.data?.pagination?.totalRecords ?? null;
@@ -133,7 +134,10 @@ const ApprovalsPageMobile = () => {
               type="button"
               role="tab"
               aria-selected={filterKey === f.key}
-              onClick={() => setFilterKey(f.key)}
+              onClick={() => {
+                setFilterKey(f.key);
+                setPage(1);
+              }}
               className={cn(
                 'h-9 shrink-0 rounded-full border px-3.5 text-sm transition-colors',
                 filterKey === f.key
@@ -253,10 +257,32 @@ const ApprovalsPageMobile = () => {
           ))
         )}
 
-        {hasMore ? (
-          <p className="pt-1 text-center text-xs text-muted-foreground">
-            Đang hiển thị {PAGE_SIZE} yêu cầu mới nhất — mở bản máy tính để xem đầy đủ.
-          </p>
+        {pagination && pagination.totalPages > 1 ? (
+          <nav className="flex items-center justify-between gap-2 pt-1" aria-label="Phân trang">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 shrink-0 gap-1"
+              disabled={page <= 1 || listQuery.isFetching}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              <ChevronLeft aria-hidden="true" className="size-4" />
+              Trước
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Trang {pagination.page} / {pagination.totalPages} · {pagination.totalRecords.toLocaleString('vi-VN')} yêu cầu
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 shrink-0 gap-1"
+              disabled={page >= pagination.totalPages || listQuery.isFetching}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Sau
+              <ChevronRight aria-hidden="true" className="size-4" />
+            </Button>
+          </nav>
         ) : null}
       </div>
 
