@@ -687,6 +687,10 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	zaloConnectSvc := zaloconnect.NewService(repos.Settings, logger)
 	zaloProvider := zalo.NewProvider(zaloConnectSvc, zalo.DefaultConfig(), logger)
 	zaloProvider.SetRefreshCoordinator(zalo.NewRedisRefreshCoordinator(redis.Client))
+	// Best-effort zns_messages audit: every send (success or failure) appends
+	// one tracking row for the admin ZNS page. Recorder errors are swallowed
+	// inside recordSend — delivery is never affected.
+	zaloProvider.SetZnsRecorder(repos.ZnsMessage)
 	zaloConnectSvc.SetProvider(zaloProvider)
 	// Push lane to TingHire (payroll is the sole OA token rotator): every
 	// persisted rotation — refresh exchange, validated admin paste, or metadata
@@ -708,7 +712,9 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// lets a developer test the full reset flow locally without a Zalo OA.
 	var zaloSender zalo.Sender = zaloProvider
 	if cfg.Zalo.UseSandbox {
-		zaloSender = zalo.NewSandboxSender(logger)
+		sandbox := zalo.NewSandboxSender(logger)
+		sandbox.SetZnsRecorder(repos.ZnsMessage)
+		zaloSender = sandbox
 		logger.Info("zalo: SANDBOX mode enabled — OTPs will be logged, not sent to Zalo")
 	}
 

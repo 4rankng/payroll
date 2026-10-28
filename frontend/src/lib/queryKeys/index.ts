@@ -56,6 +56,17 @@ interface AuditLogFilters {
   pageSize?: number;
 }
 
+interface ZnsMessageFilters {
+  page?: number;
+  pageSize?: number;
+  status?: string[];
+  feature?: string;
+  templateId?: string;
+  fromDate?: string;
+  toDate?: string;
+  q?: string;
+}
+
 /**
  * Core Query Keys Factory
  * Hierarchical structure with type-safe builders
@@ -270,6 +281,12 @@ export const QueryKeys = {
     all: ['audit'] as const,
     logs: (filters?: AuditLogFilters) => [...QueryKeys.audit.all, 'logs', filters] as const,
     logDetail: (id: number) => [...QueryKeys.audit.all, 'logs', id] as const,
+  },
+
+  // ========== ZNS TRACKING ==========
+  zns: {
+    all: ['zns'] as const,
+    messages: (filters?: ZnsMessageFilters) => [...QueryKeys.zns.all, 'messages', filters] as const,
   },
 
   // ========== SETTINGS ==========

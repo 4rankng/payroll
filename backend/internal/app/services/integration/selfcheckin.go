@@ -204,7 +204,7 @@ func (s *SelfCheckinService) SelfCheckinOTP(ctx context.Context, rawPhone string
 	}
 
 	trackingID := fmt.Sprintf("integ_selfcheckin_%d_%d", u.ID, s.clk.Now().UnixNano())
-	res, sendErr := s.zalo.Send(ctx, recipient, s.templateID, trackingID, map[string]string{"otp": code})
+	res, sendErr := s.zalo.Send(ctx, zalo.FeatureSelfCheckin, recipient, s.templateID, trackingID, map[string]string{"otp": code})
 	if sendErr != nil {
 		s.logger.Error("self check-in: zns transport error", "error", sendErr, "user_id", u.ID)
 		return &SelfCheckinRequestResult{Found: true, FailureReason: FailureDeliveryFailed}, nil

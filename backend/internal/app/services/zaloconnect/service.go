@@ -383,7 +383,7 @@ func (s *Service) TestSend(ctx context.Context, phone, templateID string, data m
 		}
 	}
 	trackingID := fmt.Sprintf("test_%d_%s", s.clk().Unix(), randomHex(4))
-	result, err := s.provider.Send(ctx, phone, templateID, trackingID, data)
+	result, err := s.provider.Send(ctx, zalo.FeatureTestSend, phone, templateID, trackingID, data)
 	if err != nil {
 		// Convert Zalo errors to domain errors for proper HTTP status codes
 		if errors.Is(err, zalo.ErrNotConfigured) {

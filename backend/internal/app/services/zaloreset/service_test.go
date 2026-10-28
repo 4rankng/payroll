@@ -122,7 +122,7 @@ type fakeSender struct {
 	err       error
 }
 
-func (f *fakeSender) Send(_ context.Context, phone, _, _ string, data map[string]string) (zalo.SendResult, error) {
+func (f *fakeSender) Send(_ context.Context, _ string, phone, _, _ string, data map[string]string) (zalo.SendResult, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.sends++

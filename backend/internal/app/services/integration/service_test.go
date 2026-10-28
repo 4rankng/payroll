@@ -84,7 +84,7 @@ type fakeSender struct {
 	lastData map[string]string
 }
 
-func (f *fakeSender) Send(_ context.Context, _ string, _ string, _ string, data map[string]string) (zalo.SendResult, error) {
+func (f *fakeSender) Send(_ context.Context, _ string, _ string, _ string, _ string, data map[string]string) (zalo.SendResult, error) {
 	f.calls++
 	f.lastData = data
 	return f.result, f.err

@@ -61,7 +61,7 @@ func TestProvider_RotationHook_FiresOnSendRetryRefresh(t *testing.T) {
 		hooked <- accessToken
 	})
 
-	res, err := p.Send(context.Background(), "0987654321", "617976", "track-hook", map[string]string{
+	res, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "track-hook", map[string]string{
 		"otp_code": "123456",
 	})
 	if err != nil {
@@ -116,7 +116,7 @@ func TestProvider_RotationHook_SkippedWhenNoRotation(t *testing.T) {
 	}
 	mock.mu.Unlock()
 
-	res, err := p.Send(context.Background(), "0987654321", "617976", "track-winner", map[string]string{
+	res, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "track-winner", map[string]string{
 		"otp_code": "123456",
 	})
 	if err != nil {

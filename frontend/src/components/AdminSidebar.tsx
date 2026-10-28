@@ -19,6 +19,7 @@ import {
   Home01,
   Key01,
   LogOut01,
+  MessageSquare01,
   Receipt,
   Settings01,
   UserCircle,
@@ -84,6 +85,7 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
   { title: "Kiểm tra API", icon: Activity, path: "/admin/system-health", group: "he-thong" },
   { title: "Lịch công việc", icon: Clock, path: "/admin/cron-health", group: "he-thong" },
   { title: "Nhật ký", icon: Clipboard, path: "/admin/audit-log", group: "he-thong" },
+  { title: "ZNS tracking", icon: MessageSquare01, path: "/admin/zns-tracking", group: "he-thong" },
   { title: "Cài đặt", icon: Settings01, path: "/admin/settings", group: "he-thong" },
   { title: "Quản lý ví", icon: Wallet01, path: "/admin/wallet", group: "tai-chinh" },
 ];

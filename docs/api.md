@@ -221,6 +221,16 @@ API performance: latency trends, slowest endpoints, error breakdown, browser sta
 | POST | `/advance` | Advance time by duration |
 | POST | `/reset` | Reset to real time |
 
+### Admin ZNS Tracking (`/api/v1/admin/zns-notifications`)
+
+Admin-only list over `zns_messages` — the single audit table for every ZNS the system sends (all features, recorded at the provider layer). `flexpay_salary_notifications` stays the internal retry queue and is never an admin data source.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `` | Paginated tracking list, newest first |
+
+Query params (combinable): `page`, `pageSize`, `status` (repeatable), `feature`, `templateId`, `fromDate`/`toDate` (YYYY-MM-DD), `q` (phone or provider message id substring).
+
 ### Health
 
 | Method | Path | Purpose |

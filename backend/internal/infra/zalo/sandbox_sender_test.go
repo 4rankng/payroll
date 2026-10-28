@@ -9,7 +9,7 @@ import (
 func TestSandboxSender_CapturesAndLogs(t *testing.T) {
 	s := NewSandboxSender(nil)
 
-	res, err := s.Send(context.Background(), "0987654321", "617976", "track-1", map[string]string{
+	res, err := s.Send(context.Background(), "test_send", "0987654321", "617976", "track-1", map[string]string{
 		"otp_code":             "123456",
 		"user_fullname":        "Nguyễn Văn A",
 		"otp_valid_in_minutes": "10",
@@ -40,8 +40,8 @@ func TestSandboxSender_CapturesAndLogs(t *testing.T) {
 
 func TestSandboxSender_Reset(t *testing.T) {
 	s := NewSandboxSender(nil)
-	_, _ = s.Send(context.Background(), "01", "t", "", map[string]string{"otp_code": "1"})
-	_, _ = s.Send(context.Background(), "02", "t", "", map[string]string{"otp_code": "2"})
+	_, _ = s.Send(context.Background(), "test_send", "01", "t", "", map[string]string{"otp_code": "1"})
+	_, _ = s.Send(context.Background(), "test_send", "02", "t", "", map[string]string{"otp_code": "2"})
 	if s.Count() != 2 {
 		t.Fatalf("Count = %d, want 2", s.Count())
 	}

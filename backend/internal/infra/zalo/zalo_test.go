@@ -317,7 +317,7 @@ func ptrTime(t time.Time) *time.Time { return &t }
 
 func TestProvider_Send_Happy(t *testing.T) {
 	p, mock, _, _ := newProviderWithMock(t)
-	res, err := p.Send(context.Background(), "0987654321", "617976", "track-1", map[string]string{
+	res, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "track-1", map[string]string{
 		"otp_code":             "123456",
 		"user_fullname":        "Nguyễn Văn A",
 		"otp_valid_in_minutes": "10",
@@ -359,7 +359,7 @@ func TestProvider_Send_RetriesOnBadAccessToken(t *testing.T) {
 	}
 	mock.mu.Unlock()
 
-	res, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	res, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if err != nil {
 		t.Fatalf("Send err: %v", err)
 	}
@@ -408,7 +408,7 @@ func TestProvider_Send_Minus124ForcesRefreshWithFutureExpiry(t *testing.T) {
 	}
 	mock.mu.Unlock()
 
-	res, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	res, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if err != nil {
 		t.Fatalf("Send err: %v", err)
 	}
@@ -460,7 +460,7 @@ func TestProvider_Send_ConcurrentMinus124CoalescesRefresh(t *testing.T) {
 	outcomes := make(chan outcome, 2)
 	for range 2 {
 		go func() {
-			result, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+			result, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 			outcomes <- outcome{result: result, err: err}
 		}()
 	}
@@ -513,7 +513,7 @@ func TestProvider_Send_TwoProvidersShareOneRefreshAuthority(t *testing.T) {
 	errs := make(chan error, 2)
 	for _, provider := range []*Provider{p1, p2} {
 		go func(p *Provider) {
-			result, err := p.Send(context.Background(), "0987654321", "617976", "track", map[string]string{"otp": "123456"})
+			result, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "track", map[string]string{"otp": "123456"})
 			results <- result
 			errs <- err
 		}(provider)
@@ -564,7 +564,7 @@ func TestProvider_StoreConfigurationRejectsStaleMetadataSave(t *testing.T) {
 func TestProvider_Send_NoRetryOnBusinessError(t *testing.T) {
 	p, mock, _, _ := newProviderWithMock(t)
 	mock.setSendError(ErrNoZaloAccount) // -118
-	res, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	res, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if err != nil {
 		t.Fatalf("Send err: %v", err)
 	}
@@ -590,7 +590,7 @@ func TestProvider_Send_ReturnsSanitizedErrorForUpstreamBadGateway(t *testing.T) 
 	}
 	mock.mu.Unlock()
 
-	_, err := p.Send(context.Background(), "0987654321", "619686", "t", map[string]string{
+	_, err := p.Send(context.Background(), "test_send", "0987654321", "619686", "t", map[string]string{
 		"customer_name": "Nhân viên kiểm thử",
 		"max_amount":    "1000000",
 		"expiry_date":   "12/08/2026",
@@ -609,7 +609,7 @@ func TestProvider_Send_ReturnsSanitizedErrorForUpstreamBadGateway(t *testing.T) 
 func TestProvider_Send_NotConfiguredWhenNoTokens(t *testing.T) {
 	creds := &fakeCreds{cur: Credentials{AppID: "app1", SecretKey: "s", TemplateID: "617976"}} // no tokens
 	p := NewProvider(creds, Config{SendURL: "http://x", OAuthURL: "http://y", HTTPTimeout: time.Second}, nil)
-	_, err := p.Send(context.Background(), "0987654321", "617976", "t", nil)
+	_, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", nil)
 	if err != ErrNotConfigured {
 		t.Errorf("err = %v, want ErrNotConfigured", err)
 	}
@@ -626,7 +626,7 @@ func TestProvider_Refresh_EmptyBodyClassifiedAsRejectedToken(t *testing.T) {
 	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute)) // already expired
 	creds.mu.Unlock()
 
-	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	_, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if !errors.Is(err, ErrRefreshTokenRejected) {
 		t.Fatalf("Send err = %v, want ErrRefreshTokenRejected (empty body = consumed refresh token)", err)
 	}
@@ -643,7 +643,7 @@ func TestProvider_Refresh_HTMLBodyStaysTransientRefreshFailure(t *testing.T) {
 	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute)) // already expired
 	creds.mu.Unlock()
 
-	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	_, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if !errors.Is(err, ErrRefreshFailed) {
 		t.Fatalf("Send err = %v, want ErrRefreshFailed", err)
 	}
@@ -667,7 +667,7 @@ func TestProvider_Refresh_EmptyNonSuccessBodyStaysTransient(t *testing.T) {
 	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute))
 	creds.mu.Unlock()
 
-	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	_, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if !errors.Is(err, ErrRefreshFailed) {
 		t.Fatalf("Send err = %v, want ErrRefreshFailed", err)
 	}
@@ -686,7 +686,7 @@ func TestProvider_Refresh_NoAccessTokenRejected(t *testing.T) {
 	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute)) // already expired
 	creds.mu.Unlock()
 
-	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	_, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if err == nil {
 		t.Fatal("expected error from failed refresh, got nil")
 	}
@@ -702,7 +702,7 @@ func TestProvider_Send_Minus124WithInvalidRefreshTokenReturnsRetryableError(t *t
 	mock.setSendError(ErrBadAccessToken)
 	mock.setOAuthInvalidRefreshToken()
 
-	res, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	res, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if !errors.Is(err, ErrRefreshTokenRejected) {
 		t.Fatalf("Send err = %v, want ErrRefreshTokenRejected", err)
 	}
@@ -749,7 +749,7 @@ func TestProvider_Refresh_AcceptsAdvisoryExpiresInShapes(t *testing.T) {
 			creds.mu.Unlock()
 
 			startedAt := time.Now()
-			_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+			_, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 			if err != nil {
 				t.Fatalf("Send should retain a valid token pair when expires_in is %s: %v", tt.name, err)
 			}
@@ -779,7 +779,7 @@ func TestProvider_Refresh_StringErrorCodeClassifiedAsRejected(t *testing.T) {
 	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute)) // expired
 	creds.mu.Unlock()
 
-	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	_, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if !errors.Is(err, ErrRefreshTokenRejected) {
 		t.Fatalf("Send err = %v, want ErrRefreshTokenRejected (string -14014)", err)
 	}
@@ -869,7 +869,7 @@ func TestProvider_Refresh_AccessTokenOnlyKeepsOldRefreshToken(t *testing.T) {
 	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute)) // expired
 	creds.mu.Unlock()
 
-	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	_, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if err != nil {
 		t.Fatalf("Send should succeed with access_token-only refresh, got: %v", err)
 	}
@@ -893,7 +893,7 @@ func TestProvider_Refresh_PersistsNewPair(t *testing.T) {
 	creds.cur.ExpiresAt = ptrTime(time.Now().Add(-time.Minute)) // expired → triggers refresh
 	creds.mu.Unlock()
 
-	_, err := p.Send(context.Background(), "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
+	_, err := p.Send(context.Background(), "test_send", "0987654321", "617976", "t", map[string]string{"otp_code": "1"})
 	if err != nil {
 		t.Fatalf("Send err: %v", err)
 	}

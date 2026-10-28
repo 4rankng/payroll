@@ -84,6 +84,21 @@ func setupProviderTransactionsAdminRoutes(v1 *gin.RouterGroup, container *Contai
 	stats.GET("/stats", container.Handlers.ProviderTransactions.Stats)
 }
 
+// setupZnsAdminRoutes mounts the admin ZNS tracking list over zns_messages —
+// every ZNS the system sends, whatever feature. Casbin-protects to admin via
+// the standard Authorize() middleware (admin-only, 403 for everyone else).
+func setupZnsAdminRoutes(v1 *gin.RouterGroup, container *Container) {
+	if container == nil || container.Handlers == nil || container.Handlers.ZnsMessages == nil {
+		return
+	}
+	zns := v1.Group("/admin/zns-notifications")
+	zns.Use(container.Middleware.Auth.Authenticate())
+	if container.Middleware.Authorization != nil {
+		zns.Use(container.Middleware.Authorization.Authorize())
+	}
+	zns.GET("", container.Handlers.ZnsMessages.List)
+}
+
 func setupSettingsRoutes(v1 *gin.RouterGroup, container *Container) {
 	settings := v1.Group("/settings")
 	settings.Use(container.Middleware.Auth.Authenticate())
