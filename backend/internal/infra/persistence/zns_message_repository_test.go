@@ -89,18 +89,18 @@ func TestZnsMessageListAdmin_FiltersCombineIndependently(t *testing.T) {
 	require.Equal(t, "0987654321", rows[0].Phone)
 
 	// feature only
-	rows, total, err = repo.ListAdmin(ctx, domain.ZnsMessageFilter{Feature: "password_reset", Page: 1, PageSize: 10})
+	_, total, err = repo.ListAdmin(ctx, domain.ZnsMessageFilter{Feature: "password_reset", Page: 1, PageSize: 10})
 	require.NoError(t, err)
 	require.EqualValues(t, 2, total)
 
 	// template only
-	rows, total, err = repo.ListAdmin(ctx, domain.ZnsMessageFilter{TemplateID: "tpl-a", Page: 1, PageSize: 10})
+	_, total, err = repo.ListAdmin(ctx, domain.ZnsMessageFilter{TemplateID: "tpl-a", Page: 1, PageSize: 10})
 	require.NoError(t, err)
 	require.EqualValues(t, 2, total)
 
 	// date range (day 1 only)
 	from, to := day, day
-	rows, total, err = repo.ListAdmin(ctx, domain.ZnsMessageFilter{FromDate: &from, ToDate: &to, Page: 1, PageSize: 10})
+	_, total, err = repo.ListAdmin(ctx, domain.ZnsMessageFilter{FromDate: &from, ToDate: &to, Page: 1, PageSize: 10})
 	require.NoError(t, err)
 	require.EqualValues(t, 3, total)
 
@@ -111,7 +111,7 @@ func TestZnsMessageListAdmin_FiltersCombineIndependently(t *testing.T) {
 	require.Equal(t, "0912345678", rows[0].Phone)
 
 	// q matches provider message id
-	rows, total, err = repo.ListAdmin(ctx, domain.ZnsMessageFilter{Query: "zns-3", Page: 1, PageSize: 10})
+	_, total, err = repo.ListAdmin(ctx, domain.ZnsMessageFilter{Query: "zns-3", Page: 1, PageSize: 10})
 	require.NoError(t, err)
 	require.EqualValues(t, 1, total)
 
@@ -129,7 +129,7 @@ func TestZnsMessageListAdmin_FiltersCombineIndependently(t *testing.T) {
 		Feature:  "password_reset",
 		Statuses: []string{domain.ZnsStatusFailed},
 		FromDate: &from, ToDate: &to,
-		Page:     1, PageSize: 10,
+		Page: 1, PageSize: 10,
 	})
 	require.NoError(t, err)
 	require.EqualValues(t, 0, total)

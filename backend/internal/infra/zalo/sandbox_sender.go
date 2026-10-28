@@ -17,10 +17,10 @@ import (
 //
 // Mirrors the email package's SandboxProvider pattern.
 type SandboxSender struct {
-	mu         sync.RWMutex
-	sends      []*SandboxSend
-	counter    atomic.Uint64
-	logger     *slog.Logger
+	mu          sync.RWMutex
+	sends       []*SandboxSend
+	counter     atomic.Uint64
+	logger      *slog.Logger
 	znsRecorder ZnsRecorder
 }
 
