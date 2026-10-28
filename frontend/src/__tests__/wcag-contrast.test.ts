@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -324,3 +325,29 @@ function hexToRgbArr(hex: string): [number, number, number] {
   const n = parseInt(hex.replace("#", ""), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
+
+// ---------------------------------------------------------------------------
+// Button palette (PAYR-26): white copy on the solid emerald button family must
+// clear AA 4.5:1 at 12px text. emerald-600 measured 3.77:1 on the "Duyệt"
+// buttons — the family was darkened to emerald-700 (and hover emerald-800).
+// ---------------------------------------------------------------------------
+
+describe("Button palette white-on-emerald (PAYR-26)", () => {
+  it.each([
+    ["emerald-700 (primary action bg)", "#047857"],
+    ["emerald-800 (hover bg)", "#065f46"],
+    ["brand-solid (UU primary bg)", "#08783e"],
+    ["brand-solid_hover", "#066632"],
+    ["emerald-700 status badge (settled/complete)", "#047857"],
+  ])("white on %s meets 4.5:1", (_label, bg) => {
+    expect(contrastRatio(WHITE, bg)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("cấm cặp white-on-emerald-600 (3.77:1) quay lại trong source", () => {
+    const out = execSync(
+      "grep -rl 'bg-emerald-600[^/]*text-white\\|bg-emerald-600 text-white' src --include='*.tsx' --include='*.ts' | grep -v __tests__ || true",
+      { cwd: process.cwd(), encoding: "utf8" },
+    ).trim();
+    expect(out, `white-on-emerald-600 pair reappeared in:\n${out}`).toBe("");
+  });
+});

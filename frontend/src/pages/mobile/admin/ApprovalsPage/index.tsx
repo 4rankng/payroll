@@ -236,7 +236,7 @@ const ApprovalsPageMobile = () => {
                 <div className="mt-3 flex gap-2">
                   <Button
                     type="button"
-                    className="h-11 flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
+                    className="h-11 flex-1 bg-emerald-700 text-white hover:bg-emerald-800"
                     disabled={activeMutation}
                     onClick={() => setModal({ mode: 'approve', request: item })}
                   >

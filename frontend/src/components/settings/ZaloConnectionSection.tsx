@@ -112,7 +112,7 @@ const SetupStep = ({ step, label, complete, active }: SetupStepProps) => (
     <span
       className={cn(
         "flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
-        complete && "border-emerald-600 bg-emerald-600 text-white",
+        complete && "border-emerald-700 bg-emerald-700 text-white",
         !complete && active && "border-primary bg-primary/10 text-primary",
         !complete &&
           !active &&
