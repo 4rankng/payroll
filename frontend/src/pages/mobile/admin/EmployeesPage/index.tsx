@@ -23,6 +23,8 @@ import { EmployeeMobileCard } from "@/components/employees/EmployeeMobileCard";
 import { EmployeeEmptyStates } from "@/components/employees/EmployeeEmptyStates";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { ExportEmployeesModal } from "@/components/modals/ExportEmployeesModal";
+import { ExportPaidNoMobileModal } from "@/components/modals/ExportPaidNoMobileModal";
+import { ImportMobilesModal } from "@/components/modals/ImportMobilesModal";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { useEmployeeDataInfinite } from "@/hooks/employees/useEmployeeDataInfinite";
 import { useEmployeesSummary } from "@/hooks/api/useEmployees";
@@ -38,6 +40,7 @@ import {
   Plus,
   XClose,
 } from "@untitledui/icons";
+import { MoreHorizontal, PhoneIncoming, PhoneOff } from "lucide-react";
 import { MobileStatStrip } from "@/components/shared/MobileStatStrip";
 import type { Employee } from "@/types/api/employee.types";
 
@@ -59,6 +62,9 @@ const EmployeesPageMobile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [moreActionsOpen, setMoreActionsOpen] = useState(false);
+  const [paidNoMobileModalOpen, setPaidNoMobileModalOpen] = useState(false);
+  const [importMobilesModalOpen, setImportMobilesModalOpen] = useState(false);
 
   const {
     employees,
@@ -77,7 +83,7 @@ const EmployeesPageMobile = () => {
   const { data: employeesSummary, isLoading: summaryLoading } =
     useEmployeesSummary();
   const { data: projectsData } = useAssignableProjects();
-  const { exportEmployees, isExporting } = useEmployeeExport();
+  const { exportEmployees, exportPaidWithoutMobile, isExporting } = useEmployeeExport();
   const { openEmployeeDetails, openAddEmployee } = useEmployeeModals();
 
   useEffect(() => {
@@ -236,6 +242,15 @@ const EmployeesPageMobile = () => {
               disabled={isExporting}
             >
               <Download01 className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-11 w-11 px-0"
+              onClick={() => setMoreActionsOpen(true)}
+              aria-label="Thao tác khác"
+            >
+              <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button
               size="sm"
@@ -578,6 +593,50 @@ const EmployeesPageMobile = () => {
         onExport={handleExportConfirm}
         projects={projectsForExport}
         isExporting={isExporting}
+      />
+
+      {/* More actions sheet — parity with desktop header actions */}
+      <Sheet open={moreActionsOpen} onOpenChange={setMoreActionsOpen}>
+        <SheetContent side="bottom" className="h-auto">
+          <SheetHeader>
+            <SheetTitle>Thao tác khác</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-2 pb-4">
+            <Button
+              variant="outline"
+              className="h-12 w-full justify-start gap-3"
+              onClick={() => {
+                setMoreActionsOpen(false);
+                setPaidNoMobileModalOpen(true);
+              }}
+            >
+              <PhoneOff className="h-4 w-4" aria-hidden="true" />
+              NV chưa có SĐT
+            </Button>
+            <Button
+              variant="outline"
+              className="h-12 w-full justify-start gap-3"
+              onClick={() => {
+                setMoreActionsOpen(false);
+                setImportMobilesModalOpen(true);
+              }}
+            >
+              <PhoneIncoming className="h-4 w-4" aria-hidden="true" />
+              Nhập SĐT
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <ExportPaidNoMobileModal
+        open={paidNoMobileModalOpen}
+        onClose={() => setPaidNoMobileModalOpen(false)}
+        onExport={(months) => exportPaidWithoutMobile(months)}
+        isExporting={isExporting}
+      />
+      <ImportMobilesModal
+        open={importMobilesModalOpen}
+        onClose={() => setImportMobilesModalOpen(false)}
       />
     </div>
   );

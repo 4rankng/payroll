@@ -31,12 +31,15 @@ interface EmployeeMobileCardProps {
   employee: Employee;
   onClick: (employee: Employee) => void;
   onPendingTimesheets?: (employee: Employee) => void;
+  /** Optional trailing action row (e.g. partner claim "Yêu cầu quản lý"). */
+  action?: React.ReactNode;
 }
 
 export const EmployeeMobileCard = React.memo(function EmployeeMobileCard({
   employee,
   onClick,
   onPendingTimesheets,
+  action,
 }: EmployeeMobileCardProps) {
   const hasBankDetails = hasCompleteBankDetails(employee);
   const projects = getEmployeeProjects(employee);
@@ -153,6 +156,8 @@ export const EmployeeMobileCard = React.memo(function EmployeeMobileCard({
           {pendingTimesheets} bảng công chờ duyệt
         </button>
       )}
+
+      {action && <div className="border-t border-border p-2.5">{action}</div>}
     </div>
   );
 });

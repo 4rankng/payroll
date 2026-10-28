@@ -25,14 +25,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmployeeMobileCard } from "@/components/employees/EmployeeMobileCard";
 import { EmployeeEmptyStates } from "@/components/employees/EmployeeEmptyStates";
 import { usePartnerEmployeesData } from "@/hooks/partner-employees/usePartnerEmployeesData";
-import { useEmployeesSummary } from "@/hooks/api/useEmployees";
+import { useEmployeesSummary, useRequestEmployeeAccess } from "@/hooks/api/useEmployees";
 import { useEmployeeModals } from "@/hooks/useModalNavigation";
 import { useAssignableProjects } from "@/hooks/api/useProjects";
 import { useEmployeeExport } from "@/hooks/employees/useEmployeeExport";
 import { ExportEmployeesModal } from "@/components/modals/ExportEmployeesModal";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { Users } from "lucide-react";
-import { Download01, FilterLines, Plus, XClose } from "@untitledui/icons";
+import { Download01, FilterLines, Plus, UserPlus01, XClose } from "@untitledui/icons";
 import type { Employee } from "@/types/api/employee.types";
 
 // Generate last 12 months
@@ -80,6 +80,17 @@ const EmployeesPageMobile = () => {
   const { exportEmployees, isExporting } = useEmployeeExport();
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const { openEmployeeDetails, openAddEmployee } = useEmployeeModals();
+  const requestAccess = useRequestEmployeeAccess();
+  const handleClaim = useCallback(
+    (employee: Employee) => {
+      requestAccess.mutate(employee.id, {
+        // Same flow as desktop: open the detail sheet only after the server
+        // has persisted the manage permission.
+        onSuccess: () => openEmployeeDetails(employee.id.toString()),
+      });
+    },
+    [openEmployeeDetails, requestAccess],
+  );
 
   const handleEmployeeClick = useCallback(
     (employee: Employee) => {
@@ -316,6 +327,23 @@ const EmployeesPageMobile = () => {
                   onClick={handleEmployeeClick}
                   onPendingTimesheets={(selectedEmployee) =>
                     navigate(`/partner/timesheet?employee=${selectedEmployee.id}`)
+                  }
+                  action={
+                    employee.is_accessible === false ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-11 w-full gap-2 border-primary/40 text-primary hover:bg-primary/10"
+                        disabled={requestAccess.isPending}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClaim(employee);
+                        }}
+                      >
+                        <UserPlus01 className="h-4 w-4" aria-hidden="true" />
+                        Yêu cầu quản lý
+                      </Button>
+                    ) : undefined
                   }
                 />
               ))}
