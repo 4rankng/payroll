@@ -49,6 +49,11 @@ const AdvancePaymentsPageMobile = lazy(() => import("./pages/mobile/admin/Advanc
 const AdvancePaymentsEmployeeListPageMobile = lazy(() => import("./pages/mobile/admin/AdvancePaymentsPage/EmployeeListPage"));
 const LendersPageMobile = lazy(() => import("./pages/mobile/admin/LoansPage/LendersPage"));
 const ActivityUsersPageMobile = lazy(() => import("./pages/mobile/admin/DashboardPage/ActivityUsersPage"));
+// Desktop variants for the drill-down routes above (PAYR-23): ResponsivePage
+// picks the right variant per width instead of pinning mobile UI everywhere.
+const AdvancePaymentsEmployeeListPage = lazy(() => import("./pages/admin/AdvancePaymentsPage/EmployeeListPage"));
+const LendersPage = lazy(() => import("./pages/admin/LoansPage/LendersPage"));
+const ActivityUsersPage = lazy(() => import("./pages/admin/DashboardPage/ActivityUsersPage"));
 const SettingsPageMobile = lazy(() => import("./pages/mobile/admin/SettingsPage"));
 const SystemHealthPageMobile = lazy(() => import("./pages/mobile/admin/SystemHealthPage"));
 const CronHealthPageMobile = lazy(() => import("./pages/mobile/admin/CronHealthPage"));
@@ -62,6 +67,7 @@ const PartnerEmployeesPage = lazy(() => import("./pages/partner/EmployeesPage"))
 const PartnerTimesheetsPage = lazy(() => import("./pages/partner/TimesheetsPage"));
 const PartnerDashboardPage = lazy(() => import("./pages/partner/DashboardPage"));
 const PartnerPaymentHistoryPage = lazy(() => import("./pages/partner/PaymentHistoryPage"));
+const PartnerPaymentHistoryPageMobile = lazy(() => import("./pages/mobile/partner/TimesheetsPage/PaymentHistoryPage"));
 
 // Partner Mobile Pages (lazy-loaded)
 const PartnerProjectsPageMobile = lazy(() => import("./pages/mobile/partner/ProjectsPage"));
@@ -260,7 +266,7 @@ const AppContent = () => {
         {/* Admin Routes */}
         <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminLayout /></ProtectedRoute>}>
           <Route index element={<ResponsivePage desktopComponent={AdminDashboard} mobileComponent={AdminDashboardMobile} />} />
-          <Route path="dashboard/activity" element={<ActivityUsersPageMobile />} />
+          <Route path="dashboard/activity" element={<ResponsivePage desktopComponent={ActivityUsersPage} mobileComponent={ActivityUsersPageMobile} />} />
           <Route path="users" element={<ResponsivePage desktopComponent={UsersPage} mobileComponent={UsersPageMobile} />} />
           <Route path="projects" element={<ResponsivePage desktopComponent={ProjectsPage} mobileComponent={ProjectsPageMobile} />} />
           <Route path="employees" element={<ResponsivePage desktopComponent={EmployeesPage} mobileComponent={EmployeesPageMobile} />} />
@@ -272,10 +278,10 @@ const AppContent = () => {
           <Route path="transactions" element={<Navigate to="/admin/ledger" replace />} />
           <Route path="ledger" element={<ResponsivePage desktopComponent={TransactionsPage} mobileComponent={LedgerEntriesPageMobile} />} />
           <Route path="loans" element={<ResponsivePage desktopComponent={LoansPage} mobileComponent={LoansPageMobile} />} />
-          <Route path="loans/lenders" element={<LendersPageMobile />} />
+          <Route path="loans/lenders" element={<ResponsivePage desktopComponent={LendersPage} mobileComponent={LendersPageMobile} />} />
           <Route path="advance-payments" element={<ResponsivePage desktopComponent={AdvancePaymentsPage} mobileComponent={AdvancePaymentsPageMobile} />} />
           <Route path="advance-payments/check-in-settings" element={<CheckInSettingsPage />} />
-          <Route path="advance-payments/employees" element={<AdvancePaymentsEmployeeListPageMobile />} />
+          <Route path="advance-payments/employees" element={<ResponsivePage desktopComponent={AdvancePaymentsEmployeeListPage} mobileComponent={AdvancePaymentsEmployeeListPageMobile} />} />
           <Route path="advance-payment-fees" element={<Navigate to="/admin/settings?tab=fee-config" replace />} />
           <Route path="approvals" element={<ResponsivePage desktopComponent={ApprovalsPage} mobileComponent={ApprovalsPageMobile} />} />
           <Route path="settings" element={<ResponsivePage desktopComponent={SettingsPage} mobileComponent={SettingsPageMobile} />} />
@@ -297,7 +303,7 @@ const AppContent = () => {
           <Route path="projects" element={<ResponsivePage desktopComponent={PartnerProjectsPage} mobileComponent={PartnerProjectsPageMobile} />} />
           <Route path="employees" element={<ResponsivePage desktopComponent={PartnerEmployeesPage} mobileComponent={PartnerEmployeesPageMobile} />} />
           <Route path="timesheet" element={<ResponsivePage desktopComponent={PartnerTimesheetsPage} mobileComponent={PartnerTimesheetsPageMobile} />} />
-          <Route path="timesheet/payment-history" element={<PartnerPaymentHistoryPage />} />
+          <Route path="timesheet/payment-history" element={<ResponsivePage desktopComponent={PartnerPaymentHistoryPage} mobileComponent={PartnerPaymentHistoryPageMobile} />} />
           <Route path="projects/:projectId/payrates/:payrateId/edit" element={<ResponsivePage desktopComponent={PayrateEditPage} mobileComponent={PayrateEditPageMobile} />} />
         </Route>
 
@@ -315,7 +321,7 @@ const AppContent = () => {
             element={<ResponsivePage desktopComponent={AdvPartnerAdvancePaymentsPage} mobileComponent={AdvancePaymentsPageMobile} />}
           />
           <Route path="advance-payments/check-in-settings" element={<CheckInSettingsPage />} />
-          <Route path="advance-payments/employees" element={<AdvancePaymentsEmployeeListPageMobile />} />
+          <Route path="advance-payments/employees" element={<ResponsivePage desktopComponent={AdvancePaymentsEmployeeListPage} mobileComponent={AdvancePaymentsEmployeeListPageMobile} />} />
           <Route
             path="users"
             element={<AdvPartnerUsersPage />}
