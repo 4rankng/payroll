@@ -1005,6 +1005,24 @@ func (r *ProjectEmployeeRepository) GetEmployeesWithPendingCheckInChange(ctx con
 	return assignments, nil
 }
 
+// GetEmployeesWithPendingCheckInEnableEffective retrieves assignments whose
+// deferred check-in ENABLE takes effect exactly on the given date (the
+// month-end activation reminder; disables never notify).
+func (r *ProjectEmployeeRepository) GetEmployeesWithPendingCheckInEnableEffective(ctx context.Context, effectiveDate time.Time) ([]*domain.ProjectEmployee, error) {
+	var assignments []*domain.ProjectEmployee
+
+	query := r.DB.WithContext(ctx).
+		Where("pending_check_in_enabled = ?", true).
+		Where("check_in_effective_from = ?", effectiveDate)
+
+	err := r.applyCommonPreloads(query).Find(&assignments).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return assignments, nil
+}
+
 // ApplyScheduleChanges applies pending payment schedule changes for specified employees
 func (r *ProjectEmployeeRepository) ApplyScheduleChanges(ctx context.Context, employeeIDs []uint) error {
 	if len(employeeIDs) == 0 {

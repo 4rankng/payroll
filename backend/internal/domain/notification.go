@@ -30,6 +30,10 @@ const (
 	// Tổng quan. The dashboard card keys off this type (unread = pending),
 	// so it must stay distinct from generic custom notifications.
 	NotificationTypeCheckInRoster NotificationType = "checkin_roster"
+	// NotificationTypeCheckInActivationReminder tells an employee, one day
+	// before the new month, that their pending self check-in activation starts
+	// tomorrow (sent by the month-end 09:00 reminder job).
+	NotificationTypeCheckInActivationReminder NotificationType = "checkin_activation_reminder"
 )
 
 // Notification titles use plain text — no emoji prefixes.
@@ -102,4 +106,8 @@ type NotificationRepository interface {
 	MarkOldNotificationsAsRead(ctx context.Context, olderThanDays int) (int64, error)
 	MarkTypeAsRead(ctx context.Context, typeName string) (int64, error)
 	UpdateMetadata(ctx context.Context, id uint, metadata string) error
+	// HasNotificationForUserOn reports whether the user already received a
+	// notification of the given type on the given calendar day (created_at
+	// within [day, day+1)). Reminder jobs use it as a same-day dedup guard.
+	HasNotificationForUserOn(ctx context.Context, userID uint, notificationType NotificationType, day time.Time) (bool, error)
 }

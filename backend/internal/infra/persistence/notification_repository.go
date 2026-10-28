@@ -3,6 +3,7 @@ package persistence
 import (
 	"api-server/internal/pkg/clock"
 	"context"
+	"time"
 
 	"api-server/internal/domain"
 )
@@ -20,6 +21,19 @@ func NewNotificationRepository(db *Database) domain.NotificationRepository {
 // Create creates a new notification
 func (r *NotificationRepository) Create(ctx context.Context, notification *domain.Notification) error {
 	return r.DB.WithContext(ctx).Create(notification).Error
+}
+
+// HasNotificationForUserOn reports whether the user already received a
+// notification of the given type on the given calendar day (created_at within
+// [day, day+1)). Reminder jobs use it as a same-day dedup guard.
+func (r *NotificationRepository) HasNotificationForUserOn(ctx context.Context, userID uint, notificationType domain.NotificationType, day time.Time) (bool, error) {
+	start := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, day.Location())
+	var count int64
+	err := r.DB.WithContext(ctx).Model(&domain.Notification{}).
+		Where("recipient_id = ? AND type = ? AND created_at >= ? AND created_at < ?",
+			userID, notificationType, start, start.AddDate(0, 0, 1)).
+		Count(&count).Error
+	return count > 0, err
 }
 
 // GetByID retrieves a notification by its primary key

@@ -181,6 +181,11 @@ func (m *MockProjectEmployeeRepository) GetEmployeesWithPendingCheckInChange(ctx
 	return args.Get(0).([]*domain.ProjectEmployee), args.Error(1)
 }
 
+func (m *MockProjectEmployeeRepository) GetEmployeesWithPendingCheckInEnableEffective(ctx context.Context, effectiveDate time.Time) ([]*domain.ProjectEmployee, error) {
+	args := m.Called(ctx, effectiveDate)
+	return args.Get(0).([]*domain.ProjectEmployee), args.Error(1)
+}
+
 func (m *MockProjectEmployeeRepository) GetCheckInConfiguration(ctx context.Context, query domain.CheckInConfigurationQuery) (*domain.CheckInConfigurationResult, error) {
 	args := m.Called(ctx, query)
 	result, _ := args.Get(0).(*domain.CheckInConfigurationResult)

@@ -46,6 +46,7 @@ func registerSchedulerJobs(
 	aggregateRecomputeService *project.AggregateRecomputeService,
 	walletBalanceAlertService *notification.WalletBalanceAlertService,
 	assetSvc *asset.AssetService,
+	checkInActivationReminderService *notification.CheckInActivationReminderService,
 	logger *slog.Logger,
 ) {
 	// Helper for template rendering
@@ -135,6 +136,29 @@ func registerSchedulerJobs(
 			} else {
 				logger.Info("Pending check-in changes applied successfully")
 			}
+		},
+	})
+
+	// 1c. Check-in activation reminder — month-end 09:00, one day before the
+	// new month: employees with a pending activation (effective day 1) learn
+	// self check-in starts tomorrow. The service itself guards on "tomorrow is
+	// day 1", so the days-28-31 cron window yields exactly one acting run.
+	s.AddJob(scheduler.Job{
+		Name:    "check_in_activation_reminder",
+		Cron:    "0 9 28-31 * *",
+		Enabled: true,
+		Handler: func() {
+			ctx := context.Background()
+			count, err := checkInActivationReminderService.Send(ctx, clock.Now())
+			if err != nil {
+				logger.Error("Failed to send check-in activation reminders", "error", err)
+				return
+			}
+			if count == 0 {
+				logger.Info("No check-in activations effective tomorrow, skipping reminder")
+				return
+			}
+			logger.Info("Check-in activation reminders sent", "count", count)
 		},
 	})
 

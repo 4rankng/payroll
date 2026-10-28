@@ -150,6 +150,10 @@ type ProjectEmployeeRepository interface {
 
 	// Deferred check-in activation methods
 	GetEmployeesWithPendingCheckInChange(ctx context.Context, effectiveDate time.Time) ([]*ProjectEmployee, error)
+	// GetEmployeesWithPendingCheckInEnableEffective retrieves assignments
+	// whose deferred check-in ENABLE takes effect exactly on the given date.
+	// Used by the month-end activation reminder; disables never notify.
+	GetEmployeesWithPendingCheckInEnableEffective(ctx context.Context, effectiveDate time.Time) ([]*ProjectEmployee, error)
 	GetCheckInConfiguration(ctx context.Context, query CheckInConfigurationQuery) (*CheckInConfigurationResult, error)
 
 	// HasAccessViaProject checks if user can access employee through project assignments

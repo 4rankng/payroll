@@ -228,6 +228,12 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		services.Email,
 		infra.Logger,
 	)
+	checkInActivationReminderSvc := notification.NewCheckInActivationReminderService(
+		repos.ProjectEmployee,
+		services.Notification,
+		repos.Notification,
+		infra.Logger,
+	)
 	// The denormalised projects.*_vnd totals are written by this service alone
 	// (the bulk transfer worker builds its own instance from the same
 	// repository), so the scheduler reconciliation and the CLI backfill stay the
@@ -240,7 +246,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		infra.Logger,
 	)
 	aggregateRecomputeSvc := project.NewAggregateRecomputeService(repos.Project, clock.New(), infra.Logger)
-	sched := initScheduler(services.Notification, services.Email, services.ProjectEmployee, services.APIMetricCleanupService, services.Reconcile, repos.APIMetric, repos.AdvancePaymentRequest, services.Wallet, services.FlexPayReconciliationService, loanRepaymentReminderService, services.ZaloConnect, aggregateRecomputeSvc, walletBalanceAlertSvc, services.Asset, cfg, infra.Logger)
+	sched := initScheduler(services.Notification, services.Email, services.ProjectEmployee, services.APIMetricCleanupService, services.Reconcile, repos.APIMetric, repos.AdvancePaymentRequest, services.Wallet, services.FlexPayReconciliationService, loanRepaymentReminderService, services.ZaloConnect, aggregateRecomputeSvc, walletBalanceAlertSvc, services.Asset, checkInActivationReminderSvc, cfg, infra.Logger)
 	sched.SetRepo(repos.CronJobStatus)
 	h.Cron = handlers.NewCronHandler(repos.CronJobStatus, sched)
 	// init tenant queue manager for per-tenant background workers
@@ -579,7 +585,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 	}
 }
 
-func initScheduler(notificationService *notification.NotificationService, emailService *notification.EmailService, projectEmployeeService *project.ProjectEmployeeService, apiMetricCleanupService *cleanup.APIMetricCleanupService, reconcileService *ledger.ReconcileService, apiMetricRepo domain.APIMetricRepository, advancePaymentReqRepo domain.AdvancePaymentRequestRepository, walletSvc wallet.WalletService, flexPayReconciliationSvc *domainServices.FlexPayReconciliationService, loanRepaymentReminderService *notification.LoanRepaymentReminderService, zaloConnectSvc *zaloconnect.Service, aggregateRecomputeSvc *project.AggregateRecomputeService, walletBalanceAlertSvc *notification.WalletBalanceAlertService, assetSvc *asset.AssetService, cfg *config.Config, logger *slog.Logger) *scheduler.Scheduler {
+func initScheduler(notificationService *notification.NotificationService, emailService *notification.EmailService, projectEmployeeService *project.ProjectEmployeeService, apiMetricCleanupService *cleanup.APIMetricCleanupService, reconcileService *ledger.ReconcileService, apiMetricRepo domain.APIMetricRepository, advancePaymentReqRepo domain.AdvancePaymentRequestRepository, walletSvc wallet.WalletService, flexPayReconciliationSvc *domainServices.FlexPayReconciliationService, loanRepaymentReminderService *notification.LoanRepaymentReminderService, zaloConnectSvc *zaloconnect.Service, aggregateRecomputeSvc *project.AggregateRecomputeService, walletBalanceAlertSvc *notification.WalletBalanceAlertService, assetSvc *asset.AssetService, checkInActivationReminderSvc *notification.CheckInActivationReminderService, cfg *config.Config, logger *slog.Logger) *scheduler.Scheduler {
 	s := scheduler.NewScheduler(
 		logger,
 		cfg.Scheduler.Timezone,
@@ -602,6 +608,7 @@ func initScheduler(notificationService *notification.NotificationService, emailS
 		aggregateRecomputeSvc,
 		walletBalanceAlertSvc,
 		assetSvc,
+		checkInActivationReminderSvc,
 		logger,
 	)
 
