@@ -33,6 +33,7 @@ const SystemHealthPage = lazy(() => import("./pages/admin/SystemHealthPage"));
 const CronHealthPage = lazy(() => import("./pages/admin/CronHealthPage"));
 const PayrateEditPage = lazy(() => import("./pages/admin/PayrateEditPage"));
 const AuditLogPage = lazy(() => import("./pages/admin/AuditLogPage"));
+const ZnsTrackingPage = lazy(() => import("./pages/admin/ZnsTrackingPage"));
 const AdminPaymentHistoryPage = lazy(() => import("./pages/admin/PaymentHistoryPage"));
 
 // Admin Mobile Pages (lazy-loaded)
@@ -54,6 +55,7 @@ const SystemHealthPageMobile = lazy(() => import("./pages/mobile/admin/SystemHea
 const CronHealthPageMobile = lazy(() => import("./pages/mobile/admin/CronHealthPage"));
 const WalletPageMobile = lazy(() => import("./pages/mobile/admin/WalletPage"));
 const AuditLogPageMobile = lazy(() => import("./pages/mobile/admin/AuditLogPage"));
+const ZnsTrackingPageMobile = lazy(() => import("./pages/mobile/admin/ZnsTrackingPage"));
 const PayrateEditPageMobile = lazy(() => import("./pages/mobile/admin/PayrateEditPage"));
 
 // Partner Desktop Pages (lazy-loaded)
@@ -284,6 +286,7 @@ const AppContent = () => {
           <Route path="system-health" element={<ResponsivePage desktopComponent={SystemHealthPage} mobileComponent={SystemHealthPageMobile} />} />
           <Route path="cron-health" element={<ResponsivePage desktopComponent={CronHealthPage} mobileComponent={CronHealthPageMobile} />} />
           <Route path="audit-log" element={<ResponsivePage desktopComponent={AuditLogPage} mobileComponent={AuditLogPageMobile} />} />
+          <Route path="zns-tracking" element={<ResponsivePage desktopComponent={ZnsTrackingPage} mobileComponent={ZnsTrackingPageMobile} />} />
           <Route path="send-notification" element={<Navigate to="/admin/settings?tab=notifications" replace />} />
           <Route path="email" element={<EmailPage />} />
           <Route path="projects/:projectId/payrates/:payrateId/edit" element={<ResponsivePage desktopComponent={PayrateEditPage} mobileComponent={PayrateEditPageMobile} />} />
