@@ -90,7 +90,7 @@ func (s *FlexPayZNSService) SendSalaryNotification(ctx context.Context, data Fle
 	trackingID := fmt.Sprintf("flexpay-%d-%s", clock.Now().Unix(), phone)
 
 	// Send ZNS via provider
-	result, err := s.provider.Send(ctx, phone, FlexPaySalaryTemplateID, trackingID, templateData)
+	result, err := s.provider.Send(ctx, zalo.FeatureSalaryNotification, phone, FlexPaySalaryTemplateID, trackingID, templateData)
 	if err != nil {
 		// Transport/credential failures - log and return error
 		s.logger.Error("zns: transport error sending notification",

@@ -450,7 +450,7 @@ type recordingSender struct {
 	lastData     map[string]string
 }
 
-func (f *recordingSender) Send(_ context.Context, _ string, templateID string, _ string, data map[string]string) (zalo.SendResult, error) {
+func (f *recordingSender) Send(_ context.Context, _ string, _ string, templateID string, _ string, data map[string]string) (zalo.SendResult, error) {
 	f.lastTemplate = templateID
 	f.lastData = data
 	return f.result, f.err

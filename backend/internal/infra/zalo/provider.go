@@ -45,6 +45,7 @@ type Provider struct {
 	creds        CredentialSource
 	coordinator  RefreshCoordinator
 	rotationHook func(ctx context.Context, accessToken string)
+	znsRecorder  ZnsRecorder
 	cfg          Config
 	http         *http.Client
 	log          *slog.Logger
@@ -56,6 +57,12 @@ type Provider struct {
 // and still retain the Provider's in-process mutex.
 func (p *Provider) SetRefreshCoordinator(coordinator RefreshCoordinator) {
 	p.coordinator = coordinator
+}
+
+// SetZnsRecorder wires the best-effort zns_messages audit sink. Bootstrap
+// passes the ZnsMessageRepository; nil disables recording (tests, tools).
+func (p *Provider) SetZnsRecorder(recorder ZnsRecorder) {
+	p.znsRecorder = recorder
 }
 
 // SetRotationHook registers fn to run after every successful token rotation —
@@ -121,7 +128,15 @@ type templateMessageResponse struct {
 //
 // Business errors from Zalo are returned in SendResult.ErrorCode (Go error nil).
 // Transport/credential failures are returned as the Go error.
-func (p *Provider) Send(ctx context.Context, phone, templateID, trackingID string, data map[string]string) (SendResult, error) {
+//
+// Every call — success or failure — appends one zns_messages row via the
+// optional ZnsRecorder (feature names the call source). Recording is
+// best-effort: it never changes the send outcome.
+func (p *Provider) Send(ctx context.Context, feature, phone, templateID, trackingID string, data map[string]string) (res SendResult, err error) {
+	start := time.Now()
+	defer func() {
+		recordSend(ctx, p.znsRecorder, auditMessage(feature, phone, templateID, start, res, err))
+	}()
 	phone = NormalizePhone(phone)
 	if phone == "" || templateID == "" {
 		return SendResult{ErrorCode: -1, ErrorMsg: "Thiếu SĐT hoặc template_id"}, nil
@@ -141,7 +156,7 @@ func (p *Provider) Send(ctx context.Context, phone, templateID, trackingID strin
 		return SendResult{}, err
 	}
 
-	res, err := p.doSend(ctx, phone, templateID, data, trackingID, token)
+	res, err = p.doSend(ctx, phone, templateID, data, trackingID, token)
 	if err != nil {
 		return SendResult{}, err // transport error
 	}

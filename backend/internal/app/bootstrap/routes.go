@@ -39,6 +39,7 @@ func setupAPIRoutes(router *gin.Engine, container *Container) {
 	setupManualDisbursementRoutes(v1, container)
 	setupDisbursementSettingsRoutes(v1, container)
 	setupProviderTransactionsAdminRoutes(v1, container)
+	setupZnsAdminRoutes(v1, container)
 	setupAdminAttendanceRoutes(v1, container)
 	setupClockRoutes(v1, container)
 	setupWalletRoutes(v1, container)

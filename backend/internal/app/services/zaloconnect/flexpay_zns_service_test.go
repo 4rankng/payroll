@@ -14,17 +14,17 @@ import (
 // MockZaloProvider is a mock provider for testing
 type MockZaloProvider struct {
 	mu           sync.Mutex
-	SendFunc     func(ctx context.Context, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error)
+	SendFunc     func(ctx context.Context, feature, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error)
 	RefreshCount int
 	sendCount    int
 }
 
-func (m *MockZaloProvider) Send(ctx context.Context, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error) {
+func (m *MockZaloProvider) Send(ctx context.Context, feature, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error) {
 	m.mu.Lock()
 	m.sendCount++
 	m.mu.Unlock()
 	if m.SendFunc != nil {
-		return m.SendFunc(ctx, phone, templateID, trackingID, data)
+		return m.SendFunc(ctx, feature, phone, templateID, trackingID, data)
 	}
 	return zalo.SendResult{ErrorCode: 0, ErrorMsg: ""}, nil
 }
@@ -63,7 +63,7 @@ func TestNewFlexPayZNSService(t *testing.T) {
 // TestSendSalaryNotification_Success verifies successful ZNS send
 func TestSendSalaryNotification_Success(t *testing.T) {
 	provider := &MockZaloProvider{
-		SendFunc: func(ctx context.Context, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error) {
+		SendFunc: func(ctx context.Context, feature, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error) {
 			if templateID != FlexPaySalaryTemplateID {
 				t.Errorf("template_id = %q, want %q", templateID, FlexPaySalaryTemplateID)
 			}
@@ -162,7 +162,7 @@ func TestSendSalaryNotification_Disabled(t *testing.T) {
 // TestSendSalaryNotification_BusinessError verifies business errors don't fail the send
 func TestSendSalaryNotification_BusinessError(t *testing.T) {
 	provider := &MockZaloProvider{
-		SendFunc: func(ctx context.Context, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error) {
+		SendFunc: func(ctx context.Context, feature, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error) {
 			// Simulate Zalo business error (e.g., no Zalo account)
 			return zalo.SendResult{ErrorCode: -118, ErrorMsg: "Phone has no linked Zalo account"}, nil
 		},
@@ -231,7 +231,7 @@ func TestSendBatch_Empty(t *testing.T) {
 // TestTemplateDataMapping verifies template data is correctly formatted
 func TestTemplateDataMapping(t *testing.T) {
 	provider := &MockZaloProvider{
-		SendFunc: func(ctx context.Context, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error) {
+		SendFunc: func(ctx context.Context, feature, phone, templateID, trackingID string, data map[string]string) (zalo.SendResult, error) {
 			// Verify template data
 			if data["customer_name"] != "Nguyễn Việt Duy" {
 				t.Errorf("expected customer_name 'Nguyễn Việt Duy', got '%s'", data["customer_name"])

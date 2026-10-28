@@ -174,7 +174,7 @@ func (s *Service) RequestOTP(ctx context.Context, rawPhone string) (*RequestResu
 	}
 
 	trackingID := fmt.Sprintf("integ_pwreset_%d_%d", u.ID, s.clk.Now().UnixNano())
-	res, sendErr := s.zalo.Send(ctx, recipient, s.templateID, trackingID, map[string]string{"otp": code})
+	res, sendErr := s.zalo.Send(ctx, zalo.FeatureIntegrationReset, recipient, s.templateID, trackingID, map[string]string{"otp": code})
 	if sendErr != nil {
 		s.logger.Error("integration reset: zns transport error", "error", sendErr, "user_id", u.ID)
 		return &RequestResult{Found: true, FailureReason: FailureDeliveryFailed}, nil

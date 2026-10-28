@@ -119,6 +119,7 @@ type Handlers struct {
 	WeeklyPaymentFee       *handlers.WeeklyPaymentFeeHandler
 	ReconciliationExport   *disbursementHandlers.ReconciliationExportHandler
 	ProviderTransactions   *adminHandlers.WalletPaymentStatsHandler
+	ZnsMessages            *adminHandlers.ZnsMessageHandler
 	Wallet                 *handlers.WalletHandler
 	WalletBulkTransfer     *handlers.WalletBulkTransferHandler
 	AdvPartnerUser         *advPartnerHandlers.UserHandler
@@ -500,6 +501,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 		Settlement:           handlers.NewSettlementHandler(services.SettlementUpload, repos.Notification, clk),
 		Metric:               handlers.NewMetricHandler(services.Metric, services.Cache, eventBus, clk),
 		Audit:                handlers.NewAuditHandler(repos.AuditLog),
+		ZnsMessages:          adminHandlers.NewZnsMessageHandler(repos.ZnsMessage),
 		AdvancePayment:       advancePaymentHandlers.NewAdvancePaymentHandler(services.AdvancePayment, repos.Asset, asynqClient, services.ImportProgress, fileStorage, services.FlexPayReconciliationService, services.FlexPayReconciliationExporter, services.FlexPaySettlementService, services.Email, services.Audit, repos.Notification, repos.WalletPayment, repos.TxWalletPayment, clk),
 		AdvancePaymentFee:    advancePaymentHandlers.NewFeeScheduleHandler(services.AdvancePaymentFeeSchedule, clk),
 		AdBanner:             handlers.NewAdBannerHandler(services.AdBanner, logger),

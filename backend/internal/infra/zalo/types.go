@@ -8,11 +8,13 @@ import (
 // Sender is the narrow port the zaloreset service depends on. The concrete
 // implementation is *Provider; tests inject a fake.
 type Sender interface {
-	// Send dispatches one ZNS template message. The phone must already be in
-	// domestic form (NormalizePhone is applied inside Send as a safety net).
-	// Returns a SendResult whose ErrorCode is the Zalo business code (0 = OK);
-	// the Go error is non-nil only for transport/credential-source failures.
-	Send(ctx context.Context, phone, templateID, trackingID string, data map[string]string) (SendResult, error)
+	// Send dispatches one ZNS template message. feature names the call source
+	// (see the Feature* constants) and is recorded to zns_messages for admin
+	// tracking. The phone must already be in domestic form (NormalizePhone is
+	// applied inside Send as a safety net). Returns a SendResult whose ErrorCode
+	// is the Zalo business code (0 = OK); the Go error is non-nil only for
+	// transport/credential-source failures.
+	Send(ctx context.Context, feature, phone, templateID, trackingID string, data map[string]string) (SendResult, error)
 }
 
 // SendResult is the outcome of a single Send attempt. Business errors from Zalo

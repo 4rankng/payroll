@@ -51,6 +51,7 @@ type Repositories struct {
 	BulkTransferBatch         domain.BulkTransferBatchRepository
 	TimesheetImportJob        domain.TimesheetImportJobRepository
 	FlexPaySalaryNotification domain.FlexPaySalaryNotificationRepository
+	ZnsMessage                domain.ZnsMessageRepository
 	AdBanner                  domain.AdBannerRepository
 	ApprovalRequest           domain.ApprovalRequestRepository
 	MCPAPIKey                 domain.MCPAPIKeyRepository
@@ -100,6 +101,7 @@ func Initialize(db *persistence.Database, eventBus domain.EventBus) *Repositorie
 		BulkTransferBatch:         persistence.NewBulkTransferBatchRepository(db),
 		TimesheetImportJob:        persistence.NewTimesheetImportJobRepository(db),
 		FlexPaySalaryNotification: persistence.NewFlexPaySalaryNotificationRepository(db),
+		ZnsMessage:                persistence.NewZnsMessageRepository(db),
 		AdBanner:                  persistence.NewAdBannerRepository(db),
 	}
 

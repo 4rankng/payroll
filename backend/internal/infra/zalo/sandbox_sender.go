@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // SandboxSender is a dev/test Sender that captures ZNS sends in memory instead
@@ -16,10 +17,11 @@ import (
 //
 // Mirrors the email package's SandboxProvider pattern.
 type SandboxSender struct {
-	mu      sync.RWMutex
-	sends   []*SandboxSend
-	counter atomic.Uint64
-	logger  *slog.Logger
+	mu         sync.RWMutex
+	sends      []*SandboxSend
+	counter    atomic.Uint64
+	logger     *slog.Logger
+	znsRecorder ZnsRecorder
 }
 
 // SandboxSend is one captured ZNS "send".
@@ -41,7 +43,8 @@ func NewSandboxSender(logger *slog.Logger) *SandboxSender {
 	return &SandboxSender{logger: logger}
 }
 
-func (p *SandboxSender) Send(_ context.Context, phone, templateID, trackingID string, data map[string]string) (SendResult, error) {
+func (p *SandboxSender) Send(_ context.Context, feature, phone, templateID, trackingID string, data map[string]string) (SendResult, error) {
+	start := time.Now()
 	id := p.counter.Add(1)
 	cp := make(map[string]string, len(data))
 	for k, v := range data {
@@ -68,12 +71,21 @@ func (p *SandboxSender) Send(_ context.Context, phone, templateID, trackingID st
 	)
 	fmt.Printf("\n   📱 [ZALO SANDBOX] OTP for %s: %s\n\n", phone, otp)
 
-	return SendResult{
+	res := SendResult{
 		MsgID:      fmt.Sprintf("sandbox-%d", id),
 		ErrorCode:  0,
 		ErrorMsg:   "Thành công (sandbox)",
 		HTTPStatus: 200,
-	}, nil
+	}
+	// Same best-effort zns_messages audit as the real provider so dev/sandbox
+	// tracking behaves like production.
+	recordSend(context.Background(), p.znsRecorder, auditMessage(feature, phone, templateID, start, res, nil))
+	return res, nil
+}
+
+// SetZnsRecorder wires the best-effort zns_messages audit sink.
+func (p *SandboxSender) SetZnsRecorder(recorder ZnsRecorder) {
+	p.znsRecorder = recorder
 }
 
 // LastSend returns the most recent captured send, or nil.

@@ -127,7 +127,7 @@ func (s *SalaryNotificationDeliveryService) Deliver(ctx context.Context, notific
 		return s.retryOrFail(ctx, n, "Zalo provider chưa được cấu hình", 0)
 	}
 
-	result, err := s.sender.Send(ctx, n.Phone, n.TemplateID, fmt.Sprintf("flexpay-salary-zns:%d", n.ID), map[string]string{
+	result, err := s.sender.Send(ctx, zalo.FeatureSalaryNotification, n.Phone, n.TemplateID, fmt.Sprintf("flexpay-salary-zns:%d", n.ID), map[string]string{
 		"customer_name": n.CustomerName,
 		"max_amount":    formatAmount(n.MaxAmount),
 		"expiry_date":   n.ExpiryDate.Format("02/01/2006"),

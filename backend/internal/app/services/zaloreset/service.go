@@ -182,7 +182,7 @@ func (s *Service) RequestReset(ctx context.Context, mobile string) (string, erro
 		bg, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 		trackingID := fmt.Sprintf("pwreset_%d_%d", uid, s.clk.Now().UnixNano())
-		res, sendErr := s.zalo.Send(bg, recipMobile, tpl, trackingID, map[string]string{
+		res, sendErr := s.zalo.Send(bg, zalo.FeaturePasswordReset, recipMobile, tpl, trackingID, map[string]string{
 			"otp": code,
 		})
 		if sendErr != nil {

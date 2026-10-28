@@ -141,7 +141,7 @@ func TestSalaryNotificationScheduleIsDurableAndIdempotent(t *testing.T) {
 
 func TestSalaryNotificationDeliverRetriesTransportFailure(t *testing.T) {
 	repo, queue := newFakeSalaryNotificationRepo(), &fakeSalaryNotificationEnqueuer{}
-	sender := &MockZaloProvider{SendFunc: func(context.Context, string, string, string, map[string]string) (zalo.SendResult, error) {
+	sender := &MockZaloProvider{SendFunc: func(context.Context, string, string, string, string, map[string]string) (zalo.SendResult, error) {
 		return zalo.SendResult{}, errors.New("timeout")
 	}}
 	svc := testSalaryService(repo, sender, queue, mockEnabledCheck, time.Date(2026, 6, 1, 9, 0, 0, 0, clock.DefaultLocation))
@@ -156,7 +156,7 @@ func TestSalaryNotificationDeliverRetriesTransportFailure(t *testing.T) {
 
 func TestSalaryNotificationDeliverRecordsSuccessAndStableTrackingID(t *testing.T) {
 	repo, queue := newFakeSalaryNotificationRepo(), &fakeSalaryNotificationEnqueuer{}
-	sender := &MockZaloProvider{SendFunc: func(_ context.Context, _ string, _ string, trackingID string, data map[string]string) (zalo.SendResult, error) {
+	sender := &MockZaloProvider{SendFunc: func(_ context.Context, _ string, _ string, _ string, trackingID string, data map[string]string) (zalo.SendResult, error) {
 		if trackingID != "flexpay-salary-zns:1" {
 			t.Fatalf("tracking id = %q", trackingID)
 		}
@@ -178,7 +178,7 @@ func TestSalaryNotificationDeliverRecordsSuccessAndStableTrackingID(t *testing.T
 
 func TestSalaryNotificationSuppressesTerminalBusinessError(t *testing.T) {
 	repo, queue := newFakeSalaryNotificationRepo(), &fakeSalaryNotificationEnqueuer{}
-	sender := &MockZaloProvider{SendFunc: func(context.Context, string, string, string, map[string]string) (zalo.SendResult, error) {
+	sender := &MockZaloProvider{SendFunc: func(context.Context, string, string, string, string, map[string]string) (zalo.SendResult, error) {
 		return zalo.SendResult{ErrorCode: zalo.ErrNoZaloAccount, ErrorMsg: "not linked"}, nil
 	}}
 	svc := testSalaryService(repo, sender, queue, mockEnabledCheck, time.Date(2026, 6, 1, 9, 0, 0, 0, clock.DefaultLocation))
