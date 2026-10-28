@@ -92,6 +92,7 @@ vi.mock("@/hooks/partner-employees/usePartnerEmployeesData", () => ({
 
 vi.mock("@/hooks/api/useEmployees", () => ({
   useEmployeesSummary: () => ({ data: undefined, isLoading: false }),
+  useRequestEmployeeAccess: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 
 vi.mock("@/hooks/api/useProjects", () => ({

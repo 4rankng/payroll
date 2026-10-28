@@ -29,6 +29,7 @@ vi.mock("@/hooks/employees/useEmployeeDataInfinite", () => ({
 
 vi.mock("@/hooks/api/useEmployees", () => ({
   useEmployeesSummary: () => ({ data: undefined, isLoading: false }),
+  useBackfillEmployeeMobiles: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 vi.mock("@/hooks/api/useProjects", () => ({
