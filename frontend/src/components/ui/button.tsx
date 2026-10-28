@@ -24,7 +24,7 @@ const buttonVariants = cva(
     // Vendored styles.common.root (group/before hooks, UU outline focus ring,
     // h-max lets size entries win the compact height) + this app's legacy
     // gap and child-svg contract.
-    "group relative inline-flex h-max cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg text-sm font-semibold select-none outline-brand transition duration-100 ease-linear before:absolute focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+    "group relative inline-flex h-max cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg text-sm font-semibold select-none outline-brand transition duration-100 ease-linear before:absolute focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 tap-target-44",
     // Disabled styles (UU: explicit disabled tokens replace opacity).
     "disabled:cursor-not-allowed disabled:text-fg-disabled",
     // Icon styles: vendored data-icon rules + the legacy [&_svg] contract.

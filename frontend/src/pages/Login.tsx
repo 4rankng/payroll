@@ -354,8 +354,8 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-end">
-                    <Link to="/forgot-password" className="rounded-sm text-xs font-semibold text-brand-secondary underline-offset-2 outline-brand transition duration-100 ease-linear hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+                  <div className="flex justify-end pb-3 pt-3">
+                    <Link to="/forgot-password" className="tap-target-44 inline-flex min-h-6 items-center rounded-sm text-xs font-semibold text-brand-secondary underline-offset-2 outline-brand transition duration-100 ease-linear hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
                       Quên mật khẩu?
                     </Link>
                   </div>

@@ -282,4 +282,26 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  /* PAYR-24 (WCAG 2.5.8/2.5.5): expand hit areas to 44x44 on touch-width
+     screens without changing visible layout. Each dimension only grows when
+     the element is smaller than 44px, so wide controls (adjacent text
+     buttons) never gain overlapping horizontal hit regions. Requires the
+     element to sit in a non-clipping container (overflow-hidden ancestors
+     clip pseudo hit areas — grow those controls for real instead). */
+  @media (max-width: 767.98px) {
+    .tap-target-44 {
+      position: relative;
+    }
+
+    .tap-target-44::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: max(100%, 44px);
+      height: max(100%, 44px);
+      transform: translate(-50%, -50%);
+    }
+  }
 }
