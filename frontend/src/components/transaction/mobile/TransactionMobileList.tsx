@@ -44,7 +44,7 @@ export function TransactionMobileList({
   };
 
   const statusColors: Record<string, string> = {
-    settled: 'bg-emerald-600 text-white',
+    settled: 'bg-emerald-700 text-white',
     pending: 'border border-yellow-500 text-yellow-800 bg-yellow-50',
     partially_settled: 'border border-teal-500 text-teal-800 bg-teal-50',
   };

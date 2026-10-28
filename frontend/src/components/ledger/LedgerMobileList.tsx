@@ -114,17 +114,18 @@ export function LedgerMobileList({
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onRowClick?.(entry); }}
             >
-              {/* Top: party + amount */}
-              <div className="flex items-start justify-between gap-3 mb-1.5">
-                <p className="text-sm font-semibold text-foreground line-clamp-1 flex-1">{entry.party}</p>
-                <p className={cn('text-sm font-bold tabular-nums shrink-0', amountColor)}>
-                  {fmtCurrency(displayAmount)}
-                </p>
-              </div>
+              {/* Party/ref: wrap full — no hard clip, no ellipsis (PAYR-27).
+                  Long OnePay refs stay readable; tap the card for details. */}
+              <p className="mb-1.5 break-all text-sm font-semibold text-foreground">{entry.party}</p>
+
+              {/* Amount: own region so long refs keep the full card width. */}
+              <p className={cn('mb-1.5 text-sm font-bold tabular-nums', amountColor)}>
+                {fmtCurrency(displayAmount)}
+              </p>
 
               {/* Middle: description */}
               {entry.description && (
-                <p className="text-xs text-muted-foreground line-clamp-1 mb-1.5">{entry.description}</p>
+                <p className="mb-1.5 break-words text-xs leading-5 text-muted-foreground">{entry.description}</p>
               )}
 
               {/* Bottom: date + account badge + project */}

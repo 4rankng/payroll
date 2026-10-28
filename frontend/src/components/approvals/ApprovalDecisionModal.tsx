@@ -33,7 +33,7 @@ const MODE_COPY: Record<
     title: 'Duyệt yêu cầu',
     description: 'Duyệt sẽ thực thi hành động (ví dụ đưa email vào hàng đợi gửi) và ghi lại kết quả.',
     confirm: 'Duyệt',
-    confirmClass: 'bg-emerald-600 text-white hover:bg-emerald-700',
+    confirmClass: 'bg-emerald-700 text-white hover:bg-emerald-800',
     noteRequired: false,
     noteLabel: 'Ghi chú (không bắt buộc)',
     noteHint: 'Ghi chú nội bộ kèm quyết định.',

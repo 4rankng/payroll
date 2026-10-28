@@ -16,7 +16,7 @@ import { useAdvancePaymentsPage } from "@/hooks/advance-payment/useAdvancePaymen
 import { formatMonthDisplay } from "@/utils/advancePaymentHelpers";
 import type { FlexPayEmployeeListItem } from "@/types/api/advance-payment.types";
 import { useState, useCallback } from "react";
-import { EmployeeDetailSheet } from "./EmployeeDetailSheet";
+import { EmployeeDetailSheet } from "@/components/advance-payment/EmployeeDetailSheet";
 
 const EmployeeListPage = () => {
   const navigate = useNavigate();

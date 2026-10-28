@@ -58,7 +58,7 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
         type="button"
         onClick={handleShowAll}
         className={cn(
-          'h-9 border-r border-border/70 px-3 text-xs font-semibold transition-colors whitespace-nowrap sm:px-2.5',
+          'h-11 border-r border-border/70 px-3 text-xs font-semibold transition-colors whitespace-nowrap sm:px-2.5 md:h-9',
           value === 'all'
             ? 'bg-foreground text-background'
             : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -71,7 +71,7 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
         type="button"
         onClick={handlePreviousMonth}
         aria-label="Tháng trước"
-        className="-ml-px flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="-ml-px flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:h-9 md:w-9"
       >
         <ChevronLeft className="h-3.5 w-3.5" />
       </button>
@@ -80,7 +80,7 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
         <PopoverTrigger asChild>
           <button
             type="button"
-            className="-ml-px flex h-9 min-w-0 items-center justify-center gap-1.5 bg-muted/35 px-2.5 transition-colors hover:bg-muted"
+            className="-ml-px flex h-11 min-w-0 items-center justify-center gap-1.5 bg-muted/35 px-2.5 transition-colors hover:bg-muted md:h-9"
             aria-label="Chọn tháng"
           >
             <CalendarDays className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -109,7 +109,7 @@ export const TimesheetMonthSelector: React.FC<TimesheetMonthSelectorProps> = ({
         type="button"
         onClick={handleNextMonth}
         aria-label="Tháng sau"
-        className="-ml-px flex h-9 w-9 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        className="-ml-px flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:h-9 md:w-9"
       >
         <ChevronRight className="h-3.5 w-3.5" />
       </button>

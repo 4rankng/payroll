@@ -253,7 +253,7 @@ const ApprovalsPage = () => {
                     <Button
                       type="button"
                       size="sm"
-                      className="h-9 bg-emerald-600 text-white hover:bg-emerald-700"
+                      className="h-9 bg-emerald-700 text-white hover:bg-emerald-800"
                       disabled={activeMutation}
                       onClick={() => setModal({ mode: 'approve', request: item })}
                     >

@@ -55,7 +55,9 @@ export const NotificationFAB = () => {
             className="h-5 w-5 brightness-0 invert animate-bell-swing"
             aria-hidden="true"
           />
-          <NotificationBadge count={unreadCount} className="absolute -top-1 -right-1" />
+          {/* Badge sits inside the 48px button so its hit area covers the
+              whole control (PAYR-28) — no overhang onto page content. */}
+          <NotificationBadge count={unreadCount} />
         </button>
       )}
 

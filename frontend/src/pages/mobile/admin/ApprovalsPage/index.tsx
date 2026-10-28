@@ -127,7 +127,7 @@ const ApprovalsPageMobile = () => {
             <RefreshCw aria-hidden="true" className="size-4" />
           </Button>
         </div>
-        <div className="mt-3 -mx-4 flex gap-2 overflow-x-auto px-4 pb-1" role="tablist" aria-label="Lọc theo trạng thái">
+        <div className="mt-3 -mx-4 flex gap-2 overflow-x-auto px-4 py-1" role="tablist" aria-label="Lọc theo trạng thái">
           {FILTERS.map((f) => (
             <button
               key={f.key}
@@ -139,7 +139,7 @@ const ApprovalsPageMobile = () => {
                 setPage(1);
               }}
               className={cn(
-                'h-9 shrink-0 rounded-full border px-3.5 text-sm transition-colors',
+                'tap-target-44 h-9 shrink-0 rounded-full border px-3.5 text-sm transition-colors',
                 filterKey === f.key
                   ? 'border-indigo-300 bg-indigo-50 font-medium text-indigo-800'
                   : 'border-border bg-background text-muted-foreground'
@@ -236,7 +236,7 @@ const ApprovalsPageMobile = () => {
                 <div className="mt-3 flex gap-2">
                   <Button
                     type="button"
-                    className="h-11 flex-1 bg-emerald-600 text-white hover:bg-emerald-700"
+                    className="h-11 flex-1 bg-emerald-700 text-white hover:bg-emerald-800"
                     disabled={activeMutation}
                     onClick={() => setModal({ mode: 'approve', request: item })}
                   >
