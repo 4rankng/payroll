@@ -16,6 +16,7 @@ import {
   VALID_SETTINGS_TABS,
 } from '@/components/settings/SettingsTabList';
 import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule/FeeScheduleSection';
+import { WeeklyPaymentFeeScheduleSection } from '@/components/admin/WeeklyPaymentFeeSchedule/WeeklyPaymentFeeScheduleSection';
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
@@ -126,6 +127,8 @@ const SettingsPageMobile = () => {
 
           <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-4">
             <FeeScheduleSection />
+            <Separator />
+            <WeeklyPaymentFeeScheduleSection />
             <Separator />
             <DisbursementFeeScheduleSection />
           </TabsContent>
