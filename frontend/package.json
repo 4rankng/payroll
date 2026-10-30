@@ -182,15 +182,15 @@
     "overrides": {
       "esbuild": ">=0.25.0",
       "rollup": "4.59.0",
-      "serialize-javascript": ">=7.0.5",
+      "serialize-javascript": ">=7.1.4",
       "hono": ">=4.12.18",
       "@hono/node-server": "1.19.13",
       "flatted": "3.4.2",
       "express-rate-limit": "8.3.1",
-      "fast-uri": ">=4.1.5",
+      "fast-uri": ">=4.2.3",
       "@dicebear/initials": ">=9.4.3",
       "browserslist": ">=4.28.7",
-      "ip-address": ">=10.2.2",
+      "ip-address": ">=10.7.5",
       "@babel/plugin-transform-modules-systemjs": ">=7.29.4",
       "ws": ">=8.21.0",
       "postcss": ">=8.5.18",
@@ -201,7 +201,8 @@
       "postcss-selector-parser@<7.1.6": "7.1.6",
       "brace-expansion@<1.1.21": "1.1.21",
       "brace-expansion@>=2.0.0 <2.1.7": "2.1.7",
-      "brace-expansion@>=3.0.0 <5.0.12": "5.0.12"
+      "brace-expansion@>=3.0.0 <5.0.12": "5.0.12",
+      "deepmerge": ">=4.3.1"
     }
   }
 }
