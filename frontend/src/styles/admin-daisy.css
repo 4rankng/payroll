@@ -22,6 +22,30 @@
     transition: background-color 9999s ease-out;
   }
 
+  /* PAYR-29: ALTCHA vẽ lỗi xác minh như một popover absolute (mũi tên chỉ lên,
+     z-index cực đại) đè lên hàng checkbox và nút Đăng nhập. Ép bong bóng lỗi
+     vào normal flow NGAY DƯỚI hàng captcha để nó không bao giờ phủ control nào
+     — chiều cao tăng đẩy nút Đăng nhập xuống thay vì bị che.
+     Chỉ đích danh display "standard" (mặc định): overlay/bottomsheet do widget
+     tự dời ra document.body, không đè control trong form.
+     Specificity 0-5-0 để thắng stylesheet widget (inject vào <head> sau CSS
+     bundle, rule data-top của widget chỉ 0-4-0). */
+  [data-login-ui] .altcha-popover[data-popover][data-variant="error"][data-display="standard"] {
+    position: static;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    z-index: auto;
+    margin-top: 0.5rem;
+    filter: none;
+  }
+
+  /* Mũi tên popover chỉ có ý nghĩa khi nổi (trỏ vào checkbox) — bỏ khi inline. */
+  [data-login-ui] .altcha-popover[data-popover][data-variant="error"][data-display="standard"] .altcha-popover-arrow {
+    display: none;
+  }
+
   [data-admin-ui] [data-radix-popper-content-wrapper] {
     z-index: 80 !important;
   }
