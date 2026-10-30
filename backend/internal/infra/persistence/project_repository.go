@@ -220,7 +220,7 @@ func (r *ProjectRepository) applyFilters(query *gorm.DB, filters domain.ProjectF
 
 	if filters.ModifiableBy != nil {
 		query = query.Where(`
-			projects.created_by = ? OR EXISTS (
+			(projects.created_by = ? AND projects.owner_revoked_at IS NULL) OR EXISTS (
 				SELECT 1 FROM project_users
 				WHERE project_users.project_id = projects.id
 					AND project_users.user_id = ?
@@ -255,7 +255,7 @@ func (r *ProjectRepository) applyAccessibilityFilter(query *gorm.DB, userID uint
 			AND eu.deleted_at IS NULL`,
 		userID, userID)
 
-	query = query.Where("projects.created_by = ? OR pu.id IS NOT NULL OR pe.created_by = ? OR eu.id IS NOT NULL", userID, userID)
+	query = query.Where("(projects.created_by = ? AND projects.owner_revoked_at IS NULL) OR pu.id IS NOT NULL OR pe.created_by = ? OR eu.id IS NOT NULL", userID, userID)
 	return query
 }
 
@@ -329,7 +329,7 @@ func (r *ProjectRepository) getAccessibleProjectIDs(ctx context.Context, userID 
 		Joins("LEFT JOIN project_users pu ON pu.project_id = projects.id AND pu.user_id = ? AND pu.deleted_at IS NULL", userID).
 		Joins("LEFT JOIN project_employees pe ON pe.project_id = projects.id AND pe.deleted_at IS NULL").
 		Joins("LEFT JOIN employee_users eu ON eu.employee_id = pe.employee_id AND eu.user_id = ? AND eu.deleted_at IS NULL", userID).
-		Where("projects.created_by = ? OR pu.id IS NOT NULL OR pe.created_by = ? OR eu.id IS NOT NULL", userID, userID).
+		Where("(projects.created_by = ? AND projects.owner_revoked_at IS NULL) OR pu.id IS NOT NULL OR pe.created_by = ? OR eu.id IS NOT NULL", userID, userID).
 		Where("projects.deleted_at IS NULL")
 
 	err := query.Pluck("projects.id", &accessibleIDs).Error

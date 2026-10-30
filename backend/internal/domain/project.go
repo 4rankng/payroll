@@ -79,8 +79,12 @@ type Project struct {
 	ShiftNames           []ShiftName    `json:"shift_names" gorm:"type:json;serializer:json"`
 	DeletedAt            gorm.DeletedAt `json:"-" gorm:"index"`
 	CreatedBy            uint           `json:"created_by" gorm:"not null;type:bigint unsigned"`
-	CreatedAt            time.Time      `json:"created_at"`
-	UpdatedAt            time.Time      `json:"updated_at"`
+	// OwnerRevokedAt, when set, records that an admin revoked the intrinsic
+	// owner access of CreatedBy (PAYR-30). The creator then only retains access
+	// through an explicit project_users grant like any other manager.
+	OwnerRevokedAt *time.Time `json:"-" gorm:"column:owner_revoked_at;type:datetime(3)"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 
 	// Relationships
 	Creator User `json:"creator" gorm:"foreignKey:CreatedBy;references:ID"`

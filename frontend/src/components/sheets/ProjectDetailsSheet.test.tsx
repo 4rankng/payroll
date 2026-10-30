@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import ProjectDetailsSheet from "./ProjectDetailsSheet";
-import type { Project } from "@/types/api/project.types";
+import type { Project, ProjectUser } from "@/types/api/project.types";
 
 const navigateMock = vi.fn();
 const closeModalMock = vi.fn();
@@ -28,8 +28,20 @@ const project = {
   updated_at: "2026-01-01T00:00:00Z",
 } satisfies Project;
 
-const { mockUseProject } = vi.hoisted(() => ({
+const managerRow: ProjectUser = {
+  id: 7,
+  user_id: 999,
+  user_fullname: "Quản Lý Đối Tác",
+  user_email: "manager@test.local",
+  granted_by: 1,
+  granted_at: "2026-01-02T00:00:00Z",
+};
+
+// accessManage.list feeds the REAL useProjectAccessManagement hook through the
+// mocked useProjectUsers, so gate tests exercise the real membership logic.
+const { mockUseProject, accessManage } = vi.hoisted(() => ({
   mockUseProject: vi.fn(),
+  accessManage: { list: [] as unknown[] },
 }));
 
 vi.mock("react-router-dom", () => ({
@@ -58,6 +70,7 @@ vi.mock("@/hooks/useModalNavigation", () => ({
 
 vi.mock("@/hooks/api/useProjects", () => ({
   useProject: mockUseProject,
+  useProjectUsers: () => ({ data: accessManage.list, isLoading: false }),
   usePauseProject: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useResumeProject: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useStartProject: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -65,11 +78,6 @@ vi.mock("@/hooks/api/useProjects", () => ({
   useCancelProject: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteProject: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useProjectApprovedTimesheets: () => ({ data: { data: [] }, isLoading: false }),
-}));
-
-vi.mock("@/hooks/useCanEditProject", () => ({
-  useCanEditProject: () => true,
-  useCanManageProjectEmployees: () => false,
 }));
 
 vi.mock("./templates/SlideSheetTemplate", () => ({
@@ -149,6 +157,7 @@ describe("ProjectDetailsSheet", () => {
     navigateMock.mockReset();
     closeModalMock.mockReset();
     invalidateQueriesMock.mockReset();
+    accessManage.list = [];
     mockUseProject.mockReturnValue({
       data: null,
       isLoading: false,
@@ -185,5 +194,50 @@ describe("ProjectDetailsSheet", () => {
     fireEvent.click(screen.getByRole("button", { name: "Trigger payrate edit" }));
 
     expect(navigateMock).toHaveBeenCalledWith("/partner/projects/58/payrates/91/edit");
+  });
+
+  it("shows the Phân quyền tab to a partner who holds a project grant (PAYR-30)", () => {
+    currentRole = "partner";
+    accessManage.list = [managerRow];
+
+    render(
+      <ProjectDetailsSheet
+        project={project}
+        isOpen
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getAllByText("Phân quyền").length).toBeGreaterThan(0);
+  });
+
+  it("hides the Phân quyền tab from a partner without a project grant", () => {
+    currentRole = "partner";
+    accessManage.list = [];
+
+    render(
+      <ProjectDetailsSheet
+        project={project}
+        isOpen
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText("Phân quyền")).not.toBeInTheDocument();
+  });
+
+  it("survives the deep-link loading → loaded transition (hook order, PAYR-30)", () => {
+    currentRole = "partner";
+    accessManage.list = [managerRow];
+    mockUseProject.mockReturnValue({ data: undefined, isLoading: true });
+
+    const { rerender } = render(<ProjectDetailsSheet id="58" isOpen onClose={vi.fn()} />);
+    expect(screen.queryByText("Project info")).not.toBeInTheDocument();
+
+    mockUseProject.mockReturnValue({ data: project, isLoading: false });
+    rerender(<ProjectDetailsSheet id="58" isOpen onClose={vi.fn()} />);
+
+    expect(screen.getByText("Project info")).toBeInTheDocument();
+    expect(screen.getAllByText("Phân quyền").length).toBeGreaterThan(0);
   });
 });

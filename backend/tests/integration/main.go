@@ -109,6 +109,7 @@ func main() {
 	runBankCRUDTests(client, testData, reporter, cfg)
 	runEmployeeCRUDTests(client, testData, reporter, cfg)
 	runProjectCRUDTests(client, testData, reporter, cfg)
+	runProjectUserAccessTests(client, testData, reporter, cfg)
 
 	// Phase 9: Domain flows
 	runPayrateCRUDTests(client, testData, reporter, cfg)

@@ -1,6 +1,41 @@
 import { useMemo } from 'react';
-import { Project } from '@/types/api/project.types';
+import { Project, ProjectUser } from '@/types/api/project.types';
+import { useProjectUsers } from '@/hooks/api/useProjects';
+import { authManager } from '@/lib/auth';
 import { canPartnerManageProject } from '@/lib/permissions';
+
+/**
+ * Hook exposing a project's access list together with whether the current
+ * user may manage it (PAYR-30). The access list doubles as the
+ * management-scope check: the API returns the creator (unless an admin
+ * revoked their owner access) plus every granted manager, so a partner-admin
+ * — creator OR granted manager — is exactly a user listed here.
+ * Both the details sheet and the access tab must gate on this same signal.
+ */
+export function useProjectAccessManagement(project?: Project | null): {
+  projectUsers: ProjectUser[];
+  isLoadingUsers: boolean;
+  canManageProjectAccess: boolean;
+} {
+  const currentUserId = authManager.getUserId();
+  const isAdmin = authManager.getUserRole() === 'admin';
+
+  const { data: projectUsers = [], isLoading: isLoadingUsers } = useProjectUsers(
+    project?.id ?? 0,
+    !!project
+  );
+
+  const isProjectManager = useMemo(
+    () => projectUsers.some((pu) => pu.user_id === currentUserId),
+    [projectUsers, currentUserId]
+  );
+
+  return {
+    projectUsers,
+    isLoadingUsers,
+    canManageProjectAccess: isAdmin || isProjectManager,
+  };
+}
 
 /**
  * Hook to check if a project can be edited

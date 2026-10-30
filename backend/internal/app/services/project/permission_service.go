@@ -8,6 +8,7 @@ import (
 	"api-server/internal/constants"
 	"api-server/internal/domain"
 	"api-server/internal/infra/observability"
+	"api-server/internal/pkg/clock"
 )
 
 // ProjectPermissionService handles project access management
@@ -39,17 +40,40 @@ func NewProjectPermissionService(
 	}
 }
 
+// canManageProjectAccess reports whether the actor may change a project's
+// access list. Admins manage every project. A partner may manage only their
+// own project: as its creator (until an admin revokes that intrinsic owner
+// privilege) or as the holder of an explicit project_users grant. Any other
+// role has no business granting project management rights (PAYR-30).
+func (s *ProjectPermissionService) canManageProjectAccess(ctx context.Context, project *domain.Project, actorID uint, actorRole string) (bool, error) {
+	if actorRole == string(domain.RoleAdmin) {
+		return true, nil
+	}
+	if actorRole != string(domain.RolePartner) {
+		return false, nil
+	}
+	if project.CreatedBy == actorID && project.OwnerRevokedAt == nil {
+		return true, nil
+	}
+	return s.projectUserRepo.HasAccess(ctx, project.ID, actorID)
+}
+
 // GrantProjectAccess grants project access to a user
 func (s *ProjectPermissionService) GrantProjectAccess(ctx context.Context, projectID, userID, grantedBy uint, granterRole string) error {
-	// Verify granter is project creator or admin
+	// Verify the granter may manage this project's access list
 	project, err := s.projectRepo.GetByID(ctx, projectID)
 	if err != nil {
 		return err
 	}
 
-	// Admins can grant access to any project, partners can only grant access to projects they created
-	if granterRole != string(domain.RoleAdmin) && project.CreatedBy != grantedBy {
-		return domain.NewForbiddenError(constants.MsgOnlyProjectCreatorOrAdminCanGrantAccessVN)
+	// Admins manage access on any project; partner-admins (unrevoked creator or
+	// holder of an explicit grant) only on their own project (PAYR-30).
+	canManage, err := s.canManageProjectAccess(ctx, project, grantedBy, granterRole)
+	if err != nil {
+		return err
+	}
+	if !canManage {
+		return domain.NewForbiddenError(constants.MsgOnlyProjectManagerCanGrantAccessVN)
 	}
 
 	// Check if user exists and is a partner
@@ -58,8 +82,13 @@ func (s *ProjectPermissionService) GrantProjectAccess(ctx context.Context, proje
 		return err
 	}
 
-	// Only allow granting to partner role users
+	// Only partner-role users may hold project management rights. A partner
+	// admin targeting any other role is a company-side elevation attempt
+	// (admin/accountant/...) and is forbidden, not a validation slip.
 	if user.Role != domain.RolePartner {
+		if granterRole != string(domain.RoleAdmin) {
+			return domain.NewForbiddenError(constants.MsgCannotGrantProjectAccessToNonPartnerVN)
+		}
 		return domain.NewValidationError(constants.MsgCanOnlyGrantProjectAccessToPartnerVN)
 	}
 
@@ -103,15 +132,37 @@ func (s *ProjectPermissionService) GrantProjectAccess(ctx context.Context, proje
 
 // RevokeProjectAccess revokes project access from a user
 func (s *ProjectPermissionService) RevokeProjectAccess(ctx context.Context, projectID, userID, revokedBy uint, revokerRole string) error {
-	// Verify revoker is project creator or admin
+	// Verify the revoker may manage this project's access list
 	project, err := s.projectRepo.GetByID(ctx, projectID)
 	if err != nil {
 		return err
 	}
 
-	// Admins can revoke access from any project, partners can only revoke access from projects they created
-	if revokerRole != string(domain.RoleAdmin) && project.CreatedBy != revokedBy {
-		return domain.NewForbiddenError(constants.MsgOnlyProjectCreatorOrAdminCanRevokeAccessVN)
+	// Revoking the project creator strips the intrinsic owner privilege and is
+	// admin-only: partner-admins may only manage the users they share the
+	// project with (PAYR-30).
+	if userID == project.CreatedBy && revokerRole != string(domain.RoleAdmin) {
+		return domain.NewForbiddenError(constants.MsgOnlyAdminCanRevokeProjectCreatorVN)
+	}
+
+	// Admins revoke on any project; partner-admins only on their own (PAYR-30).
+	canManage, err := s.canManageProjectAccess(ctx, project, revokedBy, revokerRole)
+	if err != nil {
+		return err
+	}
+	if !canManage {
+		return domain.NewForbiddenError(constants.MsgOnlyProjectManagerCanRevokeAccessVN)
+	}
+
+	// Revoking the creator also kills the owner privilege itself, which no
+	// project_users row represents (PAYR-30). Idempotent: a later grant re-adds
+	// a plain management row; the intrinsic owner privilege is never restored.
+	if userID == project.CreatedBy && project.OwnerRevokedAt == nil {
+		now := clock.Now()
+		project.OwnerRevokedAt = &now
+		if err := s.projectRepo.Update(ctx, project); err != nil {
+			return err
+		}
 	}
 
 	// Revoke access (soft delete)
@@ -164,8 +215,9 @@ func (s *ProjectPermissionService) GetProjectUsers(ctx context.Context, projectI
 		}
 	}
 
-	// If owner is not in the list, add them
-	if !ownerAlreadyIncluded {
+	// If owner is not in the list, add them — unless an admin revoked their
+	// intrinsic owner access (PAYR-30).
+	if !ownerAlreadyIncluded && project.OwnerRevokedAt == nil {
 		// Get the owner user details
 		owner, err := s.userRepo.GetByID(ctx, project.CreatedBy)
 		if err != nil {
@@ -201,7 +253,8 @@ func (s *ProjectPermissionService) CanUserAccessProject(ctx context.Context, pro
 		return false, err
 	}
 
-	if project.CreatedBy == userID {
+	// The creator holds intrinsic owner access until an admin revokes it (PAYR-30).
+	if project.CreatedBy == userID && project.OwnerRevokedAt == nil {
 		return true, nil
 	}
 
@@ -242,7 +295,7 @@ func (s *ProjectPermissionService) CanUserModifyProject(ctx context.Context, pro
 		return false, err
 	}
 
-	if project.CreatedBy == userID {
+	if project.CreatedBy == userID && project.OwnerRevokedAt == nil {
 		return true, nil
 	}
 
@@ -256,5 +309,5 @@ func (s *ProjectPermissionService) CanUserDeleteProject(ctx context.Context, pro
 		return false, err
 	}
 
-	return project.CreatedBy == userID, nil
+	return project.CreatedBy == userID && project.OwnerRevokedAt == nil, nil
 }

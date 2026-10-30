@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useProject, usePauseProject, useResumeProject, useStartProject, useCompleteProject, useCancelProject, useDeleteProject, useProjectApprovedTimesheets } from "@/hooks/api/useProjects";
-import { useCanEditProject, useCanManageProjectEmployees } from "@/hooks/useCanEditProject";
+import { useCanEditProject, useCanManageProjectEmployees, useProjectAccessManagement } from "@/hooks/useCanEditProject";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -92,9 +92,12 @@ function ProjectDetailsSheet({
   const userRole = authManager.getUserRole();
   const isAdmin = userRole === 'admin';
 
-  // Check permissions using hooks
+  // Check permissions using hooks (all hooks must run before any early return)
   const canEditProject = useCanEditProject(project);
   const canManageEmployees = useCanManageProjectEmployees(project);
+  // Shared gate with the access tab (PAYR-30): admin, creator, or granted
+  // project manager.
+  const { canManageProjectAccess } = useProjectAccessManagement(project);
 
   // Check for approved timesheets (to prevent deletion)
   const { data: approvedTimesheetsData, isLoading: isLoadingApprovedTimesheets } = useProjectApprovedTimesheets(
@@ -313,9 +316,9 @@ function ProjectDetailsSheet({
     )
   };
 
-  // Check if current user can manage project access (admin or project creator)
-  const isProjectCreator = project.created_by === authManager.getUserId();
-  const canManageProjectAccess = isAdmin || isProjectCreator;
+  // Check if current user can manage project access (admin, creator, or
+  // granted project manager — PAYR-30 shares one gate with the access tab).
+  // Computed above, before the loading early-returns, to keep hook order stable.
 
   // Clamp tab: if a deep-link points to 'access' but the viewer lacks permission,
   // fall back to overview so the sheet never opens on an invisible tab.
