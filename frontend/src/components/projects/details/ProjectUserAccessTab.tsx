@@ -1,9 +1,8 @@
 import { format } from "date-fns";
 import { useState, useMemo } from 'react';
 import { Project, ProjectUser } from '@/types/api/project.types';
-import { User } from '@/types/user';
-import { useProjectUsers, useGrantProjectAccess, useRevokeProjectAccess } from '@/hooks/api/useProjects';
-import { useUser } from '@/hooks/api/useUsers';
+import { useGrantProjectAccess, useRevokeProjectAccess } from '@/hooks/api/useProjects';
+import { useProjectAccessManagement } from '@/hooks/useCanEditProject';
 import { UserSelector } from '@/components/ui/user-selector';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -25,54 +24,22 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
   const userRole = authManager.getUserRole();
   const isAdmin = userRole === 'admin';
   const isProjectCreator = project.created_by === currentUserId;
-  const canManageProjectAccess = isAdmin || isProjectCreator;
 
-  // Fetch project users
-  const { data: projectUsers = [], isLoading: isLoadingUsers } = useProjectUsers(
-    project.id,
-    canManageProjectAccess // Fetch if user is admin or project creator
-  );
-
-  // Fetch project creator details
-  const { data: creatorData, isLoading: isLoadingCreator } = useUser(
-    project.created_by,
-    canManageProjectAccess // Only fetch if user can manage access
-  );
+  // Shared gate with the details sheet (PAYR-30): a partner-admin is the
+  // project creator OR the holder of an explicit project_users grant — both
+  // appear in the access list the API returns.
+  const { projectUsers, isLoadingUsers, canManageProjectAccess } =
+    useProjectAccessManagement(project);
 
   // Mutations
   const grantAccessMutation = useGrantProjectAccess();
   const revokeAccessMutation = useRevokeProjectAccess();
 
-  // Combine project users with creator to show complete access list
-  const allProjectUsers = useMemo(() => {
-    const users: ProjectUser[] = [...projectUsers];
-
-    // Check if creator is already in the list
-    const creatorInList = users.some(user => user.user_id === project.created_by);
-
-    // If creator is not in the list and we have creator data, add them
-    if (!creatorInList && creatorData) {
-      const creatorUser: ProjectUser = {
-        id: -1, // Use negative ID to distinguish from API users
-        user_id: project.created_by,
-        user_fullname: creatorData.fullname,
-        user_email: creatorData.email || '',
-        granted_by: project.created_by, // Self-granted
-        granted_at: project.created_at, // Use project creation time
-      };
-
-      // Add creator at the beginning of the list
-      users.unshift(creatorUser);
-    }
-
-    return users;
-  }, [projectUsers, creatorData, project.created_by, project.created_at]);
-
   // Get user IDs that already have access to exclude from selector
   const excludeUserIds = useMemo(() => {
-    const userIds = allProjectUsers.map(pu => pu.user_id);
+    const userIds = projectUsers.map(pu => pu.user_id);
     return userIds;
-  }, [allProjectUsers]);
+  }, [projectUsers]);
 
   // Handle granting access
   const handleGrantAccess = async () => {
@@ -105,7 +72,16 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
     }
   };
 
-  // Show permission denied if not admin or project creator
+  if (isLoadingUsers) {
+    return (
+      <div className="flex items-center justify-center py-6 text-xs text-muted-foreground gap-2 mt-3">
+        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        Đang tải...
+      </div>
+    );
+  }
+
+  // Show permission denied if the user does not manage this project
   if (!canManageProjectAccess) {
     return (
       <div className="mt-3 rounded-xl border bg-muted/20 p-4">
@@ -114,7 +90,7 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
           <div>
             <p className="text-sm font-medium">Không có quyền truy cập</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Chỉ admin hoặc người tạo dự án mới có thể quản lý.
+              Chỉ quản trị viên hoặc người quản lý dự án mới có thể quản lý.
             </p>
           </div>
         </div>
@@ -173,20 +149,20 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
           <span className="text-sm font-medium">Danh sách người dùng</span>
           <span className="text-xs text-muted-foreground">· có thể quản lý dự án này</span>
         </div>
-        {isLoadingUsers || isLoadingCreator ? (
+        {isLoadingUsers ? (
           <div className="flex items-center justify-center py-6 text-xs text-muted-foreground gap-2">
             <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             Đang tải...
           </div>
-        ) : allProjectUsers.length === 0 ? (
+        ) : projectUsers.length === 0 ? (
           <div className="text-center py-6 text-xs text-muted-foreground border bg-muted/30 rounded-xl">
             Chưa có người dùng nào được cấp quyền quản lý.
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-            {allProjectUsers.map((projectUser) => (
+            {projectUsers.map((projectUser) => (
               <div
-                key={projectUser.id === -1 ? `creator-${projectUser.user_id}` : projectUser.id}
+                key={projectUser.id}
                 className="flex items-center justify-between px-3 py-2.5 border rounded-xl hover:bg-accent/50 transition-colors"
               >
                 <div className="flex items-center gap-2.5">
@@ -213,7 +189,7 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
                   </div>
                 </div>
 
-                {projectUser.user_id !== project.created_by && (
+                {(projectUser.user_id !== project.created_by || isAdmin) && (
                   <Button
                     variant="ghost"
                     size="sm"

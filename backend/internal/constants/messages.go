@@ -205,7 +205,8 @@ const (
 	MsgOnlyPartnerCanRequestEmployeeAccessVN = "Chỉ người dùng có vai trò quản lý mới có thể yêu cầu quản lý nhân viên"
 	MsgDuplicateCheckRequiresIdentifierVN    = "Cần nhập ít nhất một tiêu chí: CCCD, số điện thoại hoặc email"
 	MsgEmployeeDuplicatesFoundVN             = "Phát hiện nhân viên trùng khớp"
-	MsgCanOnlyGrantProjectAccessToPartnerVN  = "Chỉ có thể cấp quyền truy cập dự án cho người dùng có vai trò quản lý"
+	MsgCanOnlyGrantProjectAccessToPartnerVN       = "Chỉ có thể cấp quyền truy cập dự án cho người dùng có vai trò quản lý"
+	MsgCannotGrantProjectAccessToNonPartnerVN     = "Chỉ có thể cấp quyền quản lý dự án cho người dùng vai trò đối tác"
 	MsgCanOnlyGrantEmployeeAccessToPartnerVN = "Chỉ có thể cấp quyền truy cập nhân viên cho người dùng có vai trò quản lý"
 
 	// Project Payrate Messages - Vietnamese
@@ -749,8 +750,9 @@ const (
 	MsgCannotGrantAccessToEmployeeCreatorVN        = "Không thể cấp quyền truy cập cho người tạo nhân viên"
 	MsgOnlyEmployeeCreatorOrAdminCanGrantAccessVN  = "Chỉ người tạo nhân viên hoặc quản trị viên mới có thể cấp quyền truy cập"
 	MsgOnlyEmployeeCreatorOrAdminCanRevokeAccessVN = "Chỉ người tạo nhân viên hoặc quản trị viên mới có thể thu hồi quyền truy cập"
-	MsgOnlyProjectCreatorOrAdminCanGrantAccessVN   = "Chỉ người tạo dự án hoặc quản trị viên mới có thể cấp quyền truy cập"
-	MsgOnlyProjectCreatorOrAdminCanRevokeAccessVN  = "Chỉ người tạo dự án hoặc quản trị viên mới có thể thu hồi quyền truy cập"
+	MsgOnlyProjectManagerCanGrantAccessVN          = "Chỉ quản trị viên hoặc người quản lý dự án mới có thể cấp quyền truy cập"
+	MsgOnlyProjectManagerCanRevokeAccessVN         = "Chỉ quản trị viên hoặc người quản lý dự án mới có thể thu hồi quyền truy cập"
+	MsgOnlyAdminCanRevokeProjectCreatorVN          = "Chỉ quản trị viên mới có thể thu hồi quyền truy cập của người tạo dự án"
 	MsgUserAlreadyHasAccessToEmployeeVN            = "Người dùng đã có quyền truy cập nhân viên này"
 	MsgUserAlreadyHasAccessToProjectVN             = "Người dùng đã có quyền truy cập dự án này"
 	MsgRecipientUserNotActiveVN                    = "Người dùng nhận không hoạt động"
