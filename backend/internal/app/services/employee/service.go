@@ -270,6 +270,7 @@ func (s *EmployeeService) createEmployeeCore(
 func (s *EmployeeService) UpdateEmployee(ctx context.Context, employee *domain.Employee, updatedBy uint) error {
 	var originalEmployee *domain.Employee
 	var nameChanged bool
+	var cccdChanged bool
 
 	// Orchestrate employee update within a transaction
 	err := s.TransactionManager.WithTransaction(ctx, func(txCtx context.Context) error {
@@ -306,6 +307,10 @@ func (s *EmployeeService) UpdateEmployee(ctx context.Context, employee *domain.E
 
 		// Check if name changed after normalization
 		nameChanged = originalName != employee.Fullname
+
+		// Check if the CCCD changed — the assignment rows carry a copy the
+		// BCC import resolves by, so it must cascade on update.
+		cccdChanged = originalEmployee.CCCD != employee.CCCD
 
 		// 1. Validate employee data (domain entity validation)
 		if err := employee.IsValid(); err != nil {
@@ -391,8 +396,9 @@ func (s *EmployeeService) UpdateEmployee(ctx context.Context, employee *domain.E
 	// Publish domain events (outside transaction)
 	actorFullName := audit.GetActorFullName(ctx, s.UserRepo, updatedBy)
 
-	// If name changed, publish EmployeeNameUpdatedEvent first to trigger sync
-	if nameChanged {
+	// If the name or the CCCD changed, publish EmployeeNameUpdatedEvent first
+	// to trigger the assignment copy sync (the event carries both values).
+	if nameChanged || cccdChanged {
 		nameChangeEvent := domain.NewEmployeeNameUpdatedEvent(
 			ctx,
 			employee.ID,

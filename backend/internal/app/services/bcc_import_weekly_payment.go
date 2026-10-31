@@ -560,6 +560,12 @@ func (s *BCCImportService) buildWeeklyPaymentEntries(
 				continue // a failed STK row must not be re-processed under its name
 			}
 			if assignment == nil {
+				// A row CCCD that misses the index may be a stale copy on the
+				// assignment; try to heal from the employee profile before
+				// reporting the row unresolvable.
+				assignment = s.healAssignmentByProfileCCCD(ctx, projectID, emp.EmployeeCode, emp.FullName, rows)
+			}
+			if assignment == nil {
 				if missingErr := weeklyBCCMissingAssignmentError(
 					emp.EmployeeCode,
 					emp.FullName,

@@ -5,10 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/domain"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // MockProjectEmployeeRepository is a mock for ProjectEmployeeRepository
@@ -472,22 +475,25 @@ func TestEmployeeSyncService_ValidateEmployeeNameConsistency(t *testing.T) {
 	pastDate := time.Now().AddDate(-1, 0, 0)
 	assignments := []*domain.ProjectEmployee{
 		{
-			ID:           1,
-			EmployeeID:   employeeID,
-			EmployeeName: correctName, // Consistent
-			LastDate:     nil,
+			ID:            1,
+			EmployeeID:    employeeID,
+			EmployeeName:  correctName,      // Consistent
+			EmployeeCCCD:  "123456789012", // Consistent
+			LastDate:      nil,
 		},
 		{
-			ID:           2,
-			EmployeeID:   employeeID,
-			EmployeeName: "Wrong Name", // Inconsistent
-			LastDate:     &pastDate,
+			ID:            2,
+			EmployeeID:    employeeID,
+			EmployeeName:  "Wrong Name",     // Inconsistent
+			EmployeeCCCD:  "123456789012", // CCCD consistent
+			LastDate:      &pastDate,
 		},
 		{
-			ID:           3,
-			EmployeeID:   employeeID,
-			EmployeeName: correctName, // Consistent
-			LastDate:     nil,
+			ID:            3,
+			EmployeeID:    employeeID,
+			EmployeeName:  correctName,      // Consistent
+			EmployeeCCCD:  "123456789012", // Consistent
+			LastDate:      nil,
 		},
 	}
 
@@ -546,4 +552,52 @@ func TestInconsistentAssignment_IsValid(t *testing.T) {
 			assert.Equal(t, tt.assignment.CorrectName, "Correct Name")
 		})
 	}
+}
+
+// Regression: a profile CCCD fix must cascade into the assignment's denormalized
+// EmployeeCCCD copy (the weekly BCC import resolves rows by that copy), while
+// ended assignments stay untouched and consistent ones are not rewritten.
+func TestEmployeeSyncService_SyncEmployeeIdentityToAssignments_CCCDCascade(t *testing.T) {
+	ctx := context.Background()
+	employeeID := uint(7)
+	canonicalCCCD := "011307000923"
+
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	assert.NoError(t, err)
+	tm := infrastructure.NewTransactionManager(db)
+
+	mockEmployeeRepo := &MockEmployeeRepository{}
+	mockProjectEmployeeRepo := &MockProjectEmployeeRepository{}
+
+	employee := &domain.Employee{ID: employeeID, Fullname: "Nguyen Van A", CCCD: canonicalCCCD}
+	past := time.Now().AddDate(-1, 0, 0)
+	staleActive := &domain.ProjectEmployee{ID: 11, EmployeeID: employeeID, EmployeeName: "Nguyen Van A", EmployeeCCCD: "011305000923"}
+	ended := &domain.ProjectEmployee{ID: 12, EmployeeID: employeeID, EmployeeName: "Nguyen Van A", EmployeeCCCD: "000", LastDate: &past}
+	consistent := &domain.ProjectEmployee{ID: 13, EmployeeID: employeeID, EmployeeName: "Nguyen Van A", EmployeeCCCD: canonicalCCCD}
+
+	mockEmployeeRepo.On("GetByID", ctx, employeeID).Return(employee, nil)
+	mockProjectEmployeeRepo.On("GetByEmployee", ctx, employeeID).Return([]*domain.ProjectEmployee{staleActive, ended, consistent}, nil)
+	var updatedIDs []uint
+	mockProjectEmployeeRepo.On("Update", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			updatedIDs = append(updatedIDs, args.Get(1).(*domain.ProjectEmployee).ID)
+		}).
+		Return(nil)
+
+	service := &EmployeeSyncService{
+		projectEmployeeRepo: mockProjectEmployeeRepo,
+		employeeRepo:        mockEmployeeRepo,
+		transactionManager:  tm,
+	}
+
+	result, err := service.SyncEmployeeIdentityToAssignments(ctx, employeeID, employee.Fullname, canonicalCCCD)
+
+	assert.NoError(t, err)
+	assert.True(t, result.IsSuccess())
+	assert.Equal(t, []uint{11}, updatedIDs, "only the active assignment with a stale CCCD is rewritten")
+	assert.Equal(t, canonicalCCCD, staleActive.EmployeeCCCD)
+	assert.Equal(t, "000", ended.EmployeeCCCD, "ended assignments stay untouched")
+	assert.Equal(t, canonicalCCCD, consistent.EmployeeCCCD)
+	mockEmployeeRepo.AssertExpectations(t)
+	mockProjectEmployeeRepo.AssertExpectations(t)
 }

@@ -15,7 +15,7 @@ import (
 
 // EmployeeSyncServiceInterface defines the interface for employee sync service
 type EmployeeSyncServiceInterface interface {
-	SyncEmployeeNameToActiveAssignments(ctx context.Context, employeeID uint, newFullName string) (*SyncResult, error)
+	SyncEmployeeIdentityToAssignments(ctx context.Context, employeeID uint, newFullName, newCCCD string) (*SyncResult, error)
 	SyncAllInconsistentData(ctx context.Context) (*BulkSyncResult, error)
 	ValidateEmployeeNameConsistency(ctx context.Context, employeeID uint) (*ConsistencyReport, error)
 }
@@ -43,25 +43,21 @@ func NewEmployeeSyncService(
 	}
 }
 
-// SyncEmployeeNameToActiveAssignments synchronizes employee name to all active and upcoming project assignments
-func (s *EmployeeSyncService) SyncEmployeeNameToActiveAssignments(ctx context.Context, employeeID uint, newFullName string) (*SyncResult, error) {
-	// Get the employee to verify they exist and get the old name for audit
+// SyncEmployeeIdentityToAssignments synchronizes the employee's name and CCCD
+// to all active and upcoming project assignments. Both fields are denormalized
+// copies on project_employees (the BCC import resolver indexes assignments by
+// the CCCD copy), so a profile edit that moves either value must cascade here —
+// otherwise the next import reports "Không tìm thấy nhân viên" for an employee
+// who plainly exists.
+func (s *EmployeeSyncService) SyncEmployeeIdentityToAssignments(ctx context.Context, employeeID uint, newFullName, newCCCD string) (*SyncResult, error) {
+	// Get the employee to verify they exist and use the stored values as the
+	// canonical targets for the copy sync.
 	employee, err := s.employeeRepo.GetByID(ctx, employeeID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get employee: %w", err)
 	}
 
 	oldFullName := employee.Fullname
-	if oldFullName == newFullName {
-		// No change needed
-		return &SyncResult{
-			EmployeeID:   employeeID,
-			OldFullName:  oldFullName,
-			NewFullName:  newFullName,
-			UpdatedCount: 0,
-			SyncedAt:     clock.Now(),
-		}, nil
-	}
 
 	var updatedCount int64
 	var syncError error
@@ -82,8 +78,19 @@ func (s *EmployeeSyncService) SyncEmployeeNameToActiveAssignments(ctx context.Co
 				continue
 			}
 
-			// Update each assignment with the new employee name
-			assignment.EmployeeName = newFullName
+			nameDelta := assignment.EmployeeName != newFullName
+			cccdDelta := assignment.EmployeeCCCD != newCCCD
+			if !nameDelta && !cccdDelta {
+				continue
+			}
+
+			// Update the assignment's stale identity copies
+			if nameDelta {
+				assignment.EmployeeName = newFullName
+			}
+			if cccdDelta {
+				assignment.EmployeeCCCD = newCCCD
+			}
 			if err := s.projectEmployeeRepo.Update(ctx, assignment); err != nil {
 				return fmt.Errorf("failed to update assignment %d: %w", assignment.ID, err)
 			}
@@ -94,7 +101,7 @@ func (s *EmployeeSyncService) SyncEmployeeNameToActiveAssignments(ctx context.Co
 	})
 
 	if err != nil {
-		syncError = fmt.Errorf("failed to sync employee name: %w", err)
+		syncError = fmt.Errorf("failed to sync employee identity: %w", err)
 		updatedCount = 0
 	}
 
@@ -152,7 +159,7 @@ func (s *EmployeeSyncService) SyncAllInconsistentData(ctx context.Context) (*Bul
 	}
 
 	for _, employee := range employees {
-		syncResult, err := s.SyncEmployeeNameToActiveAssignments(ctx, employee.ID, employee.Fullname)
+		syncResult, err := s.SyncEmployeeIdentityToAssignments(ctx, employee.ID, employee.Fullname, employee.CCCD)
 		if err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("Employee %d (%s): %v", employee.ID, employee.Fullname, err))
 			continue
@@ -167,7 +174,8 @@ func (s *EmployeeSyncService) SyncAllInconsistentData(ctx context.Context) (*Bul
 	return result, nil
 }
 
-// ValidateEmployeeNameConsistency checks if employee names are consistent between tables
+// ValidateEmployeeNameConsistency checks if employee names and CCCDs are
+// consistent between the employees table and their project assignments
 func (s *EmployeeSyncService) ValidateEmployeeNameConsistency(ctx context.Context, employeeID uint) (*ConsistencyReport, error) {
 	// Get employee from employees table
 	employee, err := s.employeeRepo.GetByID(ctx, employeeID)
@@ -191,16 +199,21 @@ func (s *EmployeeSyncService) ValidateEmployeeNameConsistency(ctx context.Contex
 	}
 
 	for _, assignment := range assignments {
-		if assignment.EmployeeName != employee.Fullname {
-			report.InconsistentCount++
-			report.InconsistentAssignments = append(report.InconsistentAssignments, InconsistentAssignment{
-				AssignmentID: assignment.ID,
-				ProjectID:    assignment.ProjectID,
-				CurrentName:  assignment.EmployeeName,
-				CorrectName:  employee.Fullname,
-				LastDate:     assignment.LastDate,
-			})
+		nameDelta := assignment.EmployeeName != employee.Fullname
+		cccdDelta := assignment.EmployeeCCCD != employee.CCCD
+		if !nameDelta && !cccdDelta {
+			continue
 		}
+		report.InconsistentCount++
+		report.InconsistentAssignments = append(report.InconsistentAssignments, InconsistentAssignment{
+			AssignmentID: assignment.ID,
+			ProjectID:    assignment.ProjectID,
+			CurrentName:  assignment.EmployeeName,
+			CorrectName:  employee.Fullname,
+			CurrentCCCD:  assignment.EmployeeCCCD,
+			CorrectCCCD:  employee.CCCD,
+			LastDate:     assignment.LastDate,
+		})
 	}
 
 	return report, nil
@@ -250,11 +263,14 @@ func (r *ConsistencyReport) IsConsistent() bool {
 	return r.InconsistentCount == 0
 }
 
-// InconsistentAssignment represents an assignment with inconsistent employee name
+// InconsistentAssignment represents an assignment with an inconsistent
+// employee name or CCCD
 type InconsistentAssignment struct {
 	AssignmentID uint
 	ProjectID    uint
 	CurrentName  string
 	CorrectName  string
+	CurrentCCCD  string
+	CorrectCCCD  string
 	LastDate     *time.Time
 }

@@ -647,3 +647,13 @@ func TestSelectWeeklyPaymentPositionCorrections_OnlyEmployeesWithFinalEntries(t 
 		assert.Equal(t, uint(100), selected[0].employeeID)
 	}
 }
+
+// A bare BCCImportService (no employeeService wired, as in the builder tests)
+// must not heal — the missing-assignment error path stays intact.
+func TestHealAssignmentByProfileCCCD_BareServiceIsNoop(t *testing.T) {
+	svc := &BCCImportService{}
+	rows := newWeeklyRowResolver(map[string]*domain.ProjectEmployee{}, nil, nil)
+	healed := svc.healAssignmentByProfileCCCD(context.Background(), 10, "011307000923", "Lò Kiều Linh", rows)
+	assert.Nil(t, healed, "bare service must not heal")
+	assert.Empty(t, rows.byCCCD)
+}

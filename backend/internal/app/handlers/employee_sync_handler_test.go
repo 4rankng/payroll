@@ -16,8 +16,8 @@ type MockEmployeeSyncService struct {
 	mock.Mock
 }
 
-func (m *MockEmployeeSyncService) SyncEmployeeNameToActiveAssignments(ctx context.Context, employeeID uint, newFullName string) (*employee.SyncResult, error) {
-	args := m.Called(ctx, employeeID, newFullName)
+func (m *MockEmployeeSyncService) SyncEmployeeIdentityToAssignments(ctx context.Context, employeeID uint, newFullName, newCCCD string) (*employee.SyncResult, error) {
+	args := m.Called(ctx, employeeID, newFullName, newCCCD)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -77,7 +77,7 @@ func TestEmployeeSyncHandler_Handle_EmployeeNameUpdatedEvent(t *testing.T) {
 	}
 
 	// Setup mock expectation
-	mockSyncService.On("SyncEmployeeNameToActiveAssignments", ctx, employeeID, newName).Return(expectedResult, nil)
+	mockSyncService.On("SyncEmployeeIdentityToAssignments", ctx, employeeID, newName, cccd).Return(expectedResult, nil)
 
 	// Execute test
 	err := handler.Handle(ctx, event)
@@ -115,7 +115,7 @@ func TestEmployeeSyncHandler_Handle_UnsupportedEventType(t *testing.T) {
 	// Assertions
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "unsupported event type")
-	mockSyncService.AssertNotCalled(t, "SyncEmployeeNameToActiveAssignments")
+	mockSyncService.AssertNotCalled(t, "SyncEmployeeIdentityToAssignments")
 }
 
 func TestEmployeeSyncHandler_CanHandle(t *testing.T) {
@@ -162,14 +162,14 @@ func TestEmployeeSyncHandler_Handle_SyncError(t *testing.T) {
 
 	// Setup mock expectation to return an error
 	expectedError := assert.AnError
-	mockSyncService.On("SyncEmployeeNameToActiveAssignments", ctx, employeeID, newName).Return(nil, expectedError)
+	mockSyncService.On("SyncEmployeeIdentityToAssignments", ctx, employeeID, newName, "123456789012").Return(nil, expectedError)
 
 	// Execute test
 	err := handler.Handle(ctx, event)
 
 	// Assertions
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to sync employee name")
+	assert.Contains(t, err.Error(), "failed to sync employee identity")
 	assert.Contains(t, err.Error(), expectedError.Error())
 	mockSyncService.AssertExpectations(t)
 }

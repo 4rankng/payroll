@@ -38,15 +38,17 @@ func (h *EmployeeSyncHandler) CanHandle(eventType string) bool {
 
 // handleEmployeeNameUpdated handles EmployeeNameUpdatedEvent
 func (h *EmployeeSyncHandler) handleEmployeeNameUpdated(ctx context.Context, event domain.EmployeeNameUpdatedEvent) error {
-	// Sync the employee name to active and upcoming project assignments
-	result, err := h.employeeSyncService.SyncEmployeeNameToActiveAssignments(
+	// Sync the employee's name and CCCD to active and upcoming project
+	// assignments — both are denormalized copies the BCC import indexes by.
+	result, err := h.employeeSyncService.SyncEmployeeIdentityToAssignments(
 		ctx,
 		event.AggregateID(),
 		event.NewFullName,
+		event.CCCD,
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to sync employee name for employee %d: %w", event.AggregateID(), err)
+		return fmt.Errorf("failed to sync employee identity for employee %d: %w", event.AggregateID(), err)
 	}
 
 	if result.UpdatedCount > 0 {

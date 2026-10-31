@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	excelparser "api-server/internal/app/services/excel"
@@ -11,6 +12,46 @@ import (
 // Pieces shared by the two weekly BCC processors (weekly BCC-* sheets and
 // weekly payment tier sheets), extracted verbatim from their formerly
 // copy-pasted bodies.
+
+// healAssignmentByProfileCCCD repairs a BCC row whose CCCD misses the project's
+// assignment index only because the assignment row holds a stale CCCD copy: the
+// row's CCCD matches an existing employee profile, that employee has exactly one
+// active assignment in the project, and the row's name matches the assignment's
+// name (loosely — accent typos are data-entry noise). A CCCD that belongs to a
+// different person must keep failing loudly, so the name must match too. The
+// resolver index is re-keyed in place (same mutation contract as auto-created
+// hires) so the file's remaining rows resolve without repeating the lookup.
+// Returns nil when the row cannot be healed; the caller keeps its missing-
+// assignment error path.
+func (s *BCCImportService) healAssignmentByProfileCCCD(
+	ctx context.Context,
+	projectID uint,
+	cccd string,
+	fullName string,
+	rows weeklyRowResolver,
+) *domain.ProjectEmployee {
+	if s.employeeService == nil || cccd == "" {
+		return nil
+	}
+	emp, err := s.employeeService.GetEmployeeByCCCD(ctx, cccd)
+	if err != nil || emp == nil {
+		return nil
+	}
+	assignment, err := s.employeeService.GetActiveAssignment(ctx, projectID, emp.ID)
+	if err != nil || assignment == nil {
+		return nil
+	}
+	if bccNormNameLoose(assignment.EmployeeName) != bccNormNameLoose(fullName) {
+		return nil
+	}
+	rows.byCCCD[cccd] = assignment
+	slog.Info("BCCImport: healed stale assignment CCCD from employee profile",
+		"assignment_id", assignment.ID,
+		"employee_id", emp.ID,
+		"project_id", projectID,
+		"cccd", cccd)
+	return assignment
+}
 
 // weeklyRateResolver resolves the payrate config active on a given date,
 // cached per day. A payrate can change mid-month; a weekly file's visible
