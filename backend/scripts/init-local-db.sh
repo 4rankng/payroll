@@ -64,8 +64,17 @@ for file in "$migrations"/*.up.sql; do
     103_split_loan_schedule_principal_and_interest.up.sql)
       # 103 assumes settlement linkage existed in the deployed schema. The
       # forward compatibility migration supplies the omitted schema first.
-      "${mysql_cmd[@]}" < "$migrations/107_reconcile_runtime_schema.up.sql"
+      "${mysql_cmd[@]}" < "$migrations/108_reconcile_runtime_schema.up.sql"
       "${mysql_cmd[@]}" < "$file"
+      ;;
+    120_settings_reusable_soft_deleted_key.up.sql)
+      # 120 drops idx_settings_key, an index only older production installs
+      # ever carried; a migrations-only local database never created it, and
+      # MySQL has no DROP INDEX IF EXISTS here.
+      corrected=$(mktemp)
+      sed -E '/^-- Drop the blocking index first/,/^    DROP INDEX idx_settings_key;$/d' "$file" > "$corrected"
+      "${mysql_cmd[@]}" < "$corrected"
+      rm -f "$corrected"
       ;;
     *) "${mysql_cmd[@]}" < "$file" ;;
   esac

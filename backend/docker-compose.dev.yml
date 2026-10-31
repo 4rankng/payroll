@@ -34,7 +34,10 @@ services:
       --max-connections=200
       --wait-timeout=600
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${ROOT_PASSWORD}"]
+      # Authenticate as the app user: mysqladmin ping exits 0 even when
+      # authentication fails, so a root-password check reports "healthy" while
+      # root logins are broken.
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u \"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
       timeout: 20s
       retries: 10
       interval: 10s

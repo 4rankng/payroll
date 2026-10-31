@@ -3,8 +3,8 @@
 # Load environment variables from .env file (optional — local dev only;
 # push/deploy must run without it: GHCR_OWNER has a ?= fallback below and the
 # GHCR token is resolved at runtime via ../scripts/ghcr-token.sh;
-# backup/restore/reset-passwords read MySQL credentials from the container's
-# own MYSQL_ROOT_PASSWORD env at runtime)
+# backup reads the prod container's own MYSQL_ROOT_PASSWORD env at runtime;
+# restore/reset-passwords use the container's MYSQL_USER/MYSQL_PASSWORD)
 -include .env
 export
 
@@ -44,7 +44,7 @@ db:
 	@echo "🐳 Starting all services..."
 	docker compose -f $(COMPOSE_FILE) up -d --build mysql redis adminer sandbox
 	@echo "⏳ Waiting for services to be ready..."
-	@timeout 60 sh -c 'until docker compose -f $(COMPOSE_FILE) exec mysql mysqladmin ping -h localhost --silent; do sleep 2; done' || echo "⚠️  MySQL took longer than expected to start"
+	@timeout 60 sh -c 'until docker compose -f $(COMPOSE_FILE) exec mysql sh -c '"'"'mysqladmin ping -h localhost -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent'"'"'; do sleep 2; done' || echo "⚠️  MySQL took longer than expected to start"
 	@timeout 30 sh -c 'until docker compose -f $(COMPOSE_FILE) exec redis redis-cli ping | grep PONG; do sleep 2; done' || echo "⚠️  Redis took longer than expected to start"
 	@echo "✅ All services are ready!"
 	@echo ""
@@ -168,12 +168,7 @@ restore:
 	echo "📂 Found latest backup: $$(basename $$LATEST_BACKUP)" && \
 	echo "📊 Backup size: $$(du -h "$$LATEST_BACKUP" | cut -f1)" && \
 	RESTORE_T0=$$(date +%s) && \
-	echo "[$$(date +%H:%M:%S)] 🗑️  Dropping existing database (this can take a few minutes)..." && \
-	docker exec payroll-mysql sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE IF EXISTS payroll_db;"' && \
-	echo "🆕 Creating fresh database..." && \
-	docker exec payroll-mysql sh -c 'mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE payroll_db;"' && \
-	echo "[$$(date +%H:%M:%S)] ⏳ Decompressing and restoring to payroll_db..." && \
-	gunzip -c "$$LATEST_BACKUP" | docker exec -i payroll-mysql sh -c 'mysql --init-command="SET sql_log_bin=0" -u root -p"$$MYSQL_ROOT_PASSWORD" payroll_db' && \
+	./scripts/restore-local-db.sh "$$LATEST_BACKUP" && \
 	echo "[$$(date +%H:%M:%S)] ✅ Database restored from backup in $$(( $$(date +%s) - $$RESTORE_T0 ))s!" && \
 	echo "🔐 Generating Argon2id hash for 'Admin123' (using app peppers)..." && \
 	HASH=$$(if [ -f .env ]; then HS=$$(grep -E '^HASH_SECRET=' .env | cut -d= -f2-); HSA=$$(grep -E '^HASH_SALT=' .env | cut -d= -f2-); else HS='dev-not-for-prod-hash-secret'; HSA='dev-not-for-prod-hash-salt'; fi; HASH_SECRET="$$HS" HASH_SALT="$$HSA" go run ./cmd/hashpw Admin123) && \

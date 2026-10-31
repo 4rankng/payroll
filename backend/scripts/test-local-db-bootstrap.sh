@@ -67,7 +67,7 @@ before=$(query "$snapshot_query")
 # Replay twice to exercise both addition and already-applied paths.
 for ((attempt=0; attempt<2; attempt++)); do
   docker exec -i -e MYSQL_PWD=bootstrap-test-only "$container" \
-    mysql -uroot payroll_bootstrap_test < "$backend_dir/migrations/107_reconcile_runtime_schema.up.sql"
+    mysql -uroot payroll_bootstrap_test < "$backend_dir/migrations/108_reconcile_runtime_schema.up.sql"
 done
 [[ $(query "$snapshot_query") == "$before" ]]
 [[ $(query 'SELECT COUNT(*) FROM ledger_entries WHERE settlement_id IS NULL') == 1 ]]
