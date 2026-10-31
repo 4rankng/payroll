@@ -21,7 +21,7 @@ interface KpiTile {
 
 function KpiTileView({ tile }: { tile: KpiTile }) {
   return (
-    <article className={cn('overflow-hidden rounded-xl border border-border/70 bg-card px-4 py-3', tile.wide && 'sm:col-span-2', tile.emphasis && 'bg-primary/5')}>
+    <article className={cn('overflow-hidden rounded-xl border border-border/70 bg-card px-4 py-3', tile.wide && 'sm:col-span-2', tile.emphasis && 'border-primary/40')}>
       <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
         {tile.label}
       </h3>
