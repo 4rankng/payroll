@@ -36,7 +36,7 @@ interface Props {
 }
 
 const RuleText = ({ fragments }: { fragments: RuleFragment[] }) => (
-  <p className="text-base sm:text-lg leading-snug text-foreground">
+  <p className="text-base sm:text-lg leading-snug tabular-nums text-foreground">
     {fragments.map((f, i) =>
       f.type === "emphasis" ? (
         <strong key={i} className="font-semibold">
@@ -99,7 +99,7 @@ const ActiveCard = ({
 }) => {
   if (!active) {
     return (
-      <div className="rounded-xl border border-dashed bg-muted/30 p-5 flex items-center justify-center text-center">
+      <div className="rounded-xl border border-dashed bg-card p-5 flex items-center justify-center text-center">
         <p className="text-sm text-muted-foreground">
           Chưa có cấu hình nào đang hoạt động
         </p>
@@ -108,7 +108,7 @@ const ActiveCard = ({
   }
 
   return (
-    <div className="rounded-xl border-2 border-primary/30 bg-primary/[0.04] p-4 sm:p-5 relative overflow-hidden">
+    <div className="rounded-xl border-2 border-primary/30 bg-card p-4 sm:p-5 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-primary/60" />
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -116,7 +116,7 @@ const ActiveCard = ({
             <CheckCircle2 className="h-4 w-4 text-primary" />
           </div>
           <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Đang áp dụng
+            Đang dùng
           </span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -159,14 +159,14 @@ const UpcomingCard = ({
   const editable = isEntryEditable(entry);
 
   return (
-    <div className="rounded-xl border-2 border-amber-400/40 bg-amber-50/50 dark:bg-amber-500/[0.06] p-4 sm:p-5 relative overflow-hidden">
-      <div className="absolute inset-x-0 top-0 h-1 bg-amber-400/70" />
+    <div className="rounded-xl border-2 border-warning/30 bg-card p-4 sm:p-5 relative overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-1 bg-warning/60" />
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
-            <CalendarClock className="h-4 w-4 text-amber-800" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning/15">
+            <CalendarClock className="h-4 w-4 text-warning" />
           </div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-amber-800 dark:text-amber-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-warning">
             Đang chờ
           </span>
         </div>
@@ -207,12 +207,12 @@ const UpcomingCard = ({
       </p>
 
       {additionalCount > 0 && (
-        <div className="mt-3 pt-3 border-t border-amber-400/20">
+        <div className="mt-3 pt-3 border-t border-warning/20">
           <button
             type="button"
             onClick={onToggleAdditional}
             aria-expanded={showAdditional}
-            className="min-h-11 text-left text-xs text-amber-800 dark:text-amber-400 hover:underline"
+            className="min-h-11 text-left text-xs text-warning hover:underline"
           >
             {showAdditional
               ? "Ẩn các cấu hình khác"
@@ -225,8 +225,8 @@ const UpcomingCard = ({
                   key={e.id}
                   className="text-xs text-muted-foreground flex items-baseline justify-between gap-2"
                 >
-                  <span className="truncate">{e.summary}</span>
-                  <span className="shrink-0">
+                  <span className="min-w-0">{e.summary}</span>
+                  <span className="shrink-0 tabular-nums">
                     {formatVietnameseDate(e.effectiveDate)}
                   </span>
                 </li>
@@ -242,7 +242,7 @@ const UpcomingCard = ({
 const NoUpcomingCard = () => (
   <div
     className={cn(
-      "rounded-xl border border-dashed bg-muted/20 p-4 sm:p-5",
+      "rounded-xl border border-dashed bg-card p-4 sm:p-5",
       "flex flex-col justify-center text-center gap-2",
     )}
   >

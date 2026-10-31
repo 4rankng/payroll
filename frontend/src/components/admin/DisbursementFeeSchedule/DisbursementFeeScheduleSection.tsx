@@ -105,7 +105,7 @@ export const DisbursementFeeScheduleSection = () => {
           <h2 className="text-base font-semibold tracking-tight">
             Phí giao dịch chi hộ
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5 max-w-prose leading-relaxed">
             Phí cố định cho mỗi giao dịch chi tạm ứng qua nhà cung cấp dịch vụ
             chi hộ. Mỗi cấu hình áp dụng từ ngày hiệu lực cho đến khi có
             cấu hình mới thay thế.
@@ -172,7 +172,7 @@ export const DisbursementFeeScheduleSection = () => {
                       <TableCell className="whitespace-nowrap">
                         {PROVIDER_LABELS[entry.provider as DisbursementProvider] ?? entry.provider}
                       </TableCell>
-                      <TableCell className="font-medium whitespace-nowrap">
+                      <TableCell className="font-medium whitespace-nowrap tabular-nums">
                         {formatVietnameseDate(entry.effectiveDate)}
                       </TableCell>
                       <TableCell>
@@ -184,10 +184,10 @@ export const DisbursementFeeScheduleSection = () => {
                           <Badge variant="outline">Đã hết hạn</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap tabular-nums">
                         {formatVnd(entry.feeVnd)} ₫
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
+                      <TableCell className="text-xs text-muted-foreground max-w-[280px]">
                         {entry.notes ?? ""}
                       </TableCell>
                       {sorted.some((e) => e.isPending) && (
@@ -247,7 +247,7 @@ const ActiveCard = ({
 }) => {
   if (!active) {
     return (
-      <div className="rounded-xl border border-dashed bg-muted/30 p-5 flex items-center justify-center text-center">
+      <div className="rounded-xl border border-dashed bg-card p-5 flex items-center justify-center text-center">
         <p className="text-sm text-muted-foreground">
           Chưa có cấu hình nào đang hoạt động
         </p>
@@ -256,7 +256,7 @@ const ActiveCard = ({
   }
 
   return (
-    <div className="rounded-xl border-2 border-primary/30 bg-primary/[0.04] p-4 sm:p-5 relative overflow-hidden">
+    <div className="rounded-xl border-2 border-primary/30 bg-card p-4 sm:p-5 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-primary/60" />
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -264,12 +264,12 @@ const ActiveCard = ({
             <CheckCircle2 className="h-4 w-4 text-primary" />
           </div>
           <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Đang áp dụng
+            Đang dùng
           </span>
         </div>
       </div>
 
-      <p className="text-base sm:text-lg leading-snug text-foreground">
+      <p className="text-base sm:text-lg leading-snug tabular-nums text-foreground">
         <strong className="font-semibold">{formatVnd(active.feeVnd)} ₫</strong>
         {" / giao dịch"}
       </p>
@@ -297,14 +297,14 @@ const UpcomingCard = ({
   const editable = isEntryEditable(entry);
 
   return (
-    <div className="rounded-xl border-2 border-amber-400/40 bg-amber-50/50 dark:bg-amber-500/[0.06] p-4 sm:p-5 relative overflow-hidden">
-      <div className="absolute inset-x-0 top-0 h-1 bg-amber-400/70" />
+    <div className="rounded-xl border-2 border-warning/30 bg-card p-4 sm:p-5 relative overflow-hidden">
+      <div className="absolute inset-x-0 top-0 h-1 bg-warning/60" />
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/15">
-            <CalendarClock className="h-4 w-4 text-amber-800" />
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning/15">
+            <CalendarClock className="h-4 w-4 text-warning" />
           </div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-amber-800 dark:text-amber-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-warning">
             Đang chờ
           </span>
         </div>
@@ -334,7 +334,7 @@ const UpcomingCard = ({
         </div>
       </div>
 
-      <p className="text-base sm:text-lg leading-snug text-foreground">
+      <p className="text-base sm:text-lg leading-snug tabular-nums text-foreground">
         <strong className="font-semibold">{formatVnd(entry.feeVnd)} ₫</strong>
         {" / giao dịch"}
       </p>
@@ -351,7 +351,7 @@ const UpcomingCard = ({
 };
 
 const NoUpcomingCard = () => (
-  <div className="rounded-xl border border-dashed bg-muted/20 p-4 sm:p-5 flex flex-col justify-center text-center gap-2">
+  <div className="rounded-xl border border-dashed bg-card p-4 sm:p-5 flex flex-col justify-center text-center gap-2">
     <Sparkles className="h-5 w-5 text-muted-foreground mx-auto" />
     <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
       Không có cấu hình sắp có hiệu lực. Thêm cấu hình mới để thay đổi phí từ

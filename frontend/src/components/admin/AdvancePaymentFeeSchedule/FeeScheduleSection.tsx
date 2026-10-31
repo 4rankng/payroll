@@ -66,7 +66,7 @@ export const FeeScheduleSection = () => {
           <h2 className="text-base font-semibold tracking-tight">
             Cấu hình phí ứng lương
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5 max-w-prose leading-relaxed">
             Mỗi cấu hình áp dụng từ ngày hiệu lực cho đến khi có cấu hình mới
             thay thế.
           </p>

@@ -66,7 +66,7 @@ export const FeeScheduleList = ({
         <TableBody>
           {sorted.map((entry) => (
               <TableRow key={entry.id}>
-                <TableCell className="font-medium whitespace-nowrap">
+                <TableCell className="font-medium whitespace-nowrap tabular-nums">
                   {formatDate(entry.effectiveDate)}
                 </TableCell>
                 <TableCell>
@@ -81,10 +81,10 @@ export const FeeScheduleList = ({
                   )}
                 </TableCell>
                 <TableCell className="text-sm">{entry.summary}</TableCell>
-                <TableCell className="whitespace-nowrap">
+                <TableCell className="whitespace-nowrap tabular-nums">
                   {formatCurrency(entry.minFeeVnd)}
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground max-w-[280px] truncate">
+                <TableCell className="text-xs text-muted-foreground max-w-[280px]">
                   {entry.notes ?? ""}
                 </TableCell>
               </TableRow>
