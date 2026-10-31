@@ -44,7 +44,7 @@ export const FeeScheduleLivePreview = ({ tiers, minFeeVnd }: Props) => {
 
   return (
     <aside
-      className="rounded-xl border bg-muted/30 p-4 space-y-4 self-start sticky top-2"
+      className="min-w-0 rounded-xl border bg-muted/30 p-3 space-y-3 self-start sticky top-2"
       aria-label="Xem trước phí"
     >
       <div className="space-y-1">
@@ -66,7 +66,7 @@ export const FeeScheduleLivePreview = ({ tiers, minFeeVnd }: Props) => {
           value={customAmount}
           onChange={(e) => setCustomAmount(Number(e.target.value) || 0)}
         />
-        <div className="rounded-md bg-card border p-3 space-y-1.5 text-sm">
+        <div className="rounded-md bg-card border p-2.5 space-y-1 text-sm tabular-nums">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Phí</span>
             <span className="font-medium">{formatCurrency(preview.fee)}</span>
@@ -88,7 +88,7 @@ export const FeeScheduleLivePreview = ({ tiers, minFeeVnd }: Props) => {
 
       <div className="space-y-1.5">
         <p className="text-xs font-medium text-muted-foreground">Mức tham khảo</p>
-        <ul className="space-y-1 text-xs">
+        <ul className="space-y-1 text-xs tabular-nums">
           {presetRows.map(({ amount, result }) => (
             <li key={amount} className="flex justify-between gap-2">
               <span className="text-muted-foreground">

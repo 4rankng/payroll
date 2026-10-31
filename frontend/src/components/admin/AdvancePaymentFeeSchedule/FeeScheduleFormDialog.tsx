@@ -4,17 +4,14 @@ import { Plus, Trash2, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  DialogNavyHeader,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -171,19 +168,25 @@ export const FeeScheduleFormDialog = ({
   return (
     <>
       <Dialog open={open && !showConfirm} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {isEdit ? "Sửa cấu hình phí" : "Thêm cấu hình phí"}
-            </DialogTitle>
-            <DialogDescription>
-              Cấu hình sẽ áp dụng cho các giao dịch ứng lương từ ngày hiệu
-              lực. Cấu hình quá khứ và đang hoạt động không thể sửa hoặc xóa.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent
+          className="flex max-h-[92dvh] max-w-3xl flex-col gap-0 overflow-hidden"
+          contentPadding="none"
+          hideCloseButton
+        >
+          <DialogNavyHeader
+            title={isEdit ? "Sửa cấu hình phí" : "Thêm cấu hình phí"}
+            description="Áp dụng cho các giao dịch ứng lương từ ngày hiệu lực. Cấu hình quá khứ và đang hoạt động không thể sửa hoặc xóa."
+          />
 
-          <div className="grid gap-6 md:grid-cols-[1fr_280px]">
-            <div className="space-y-5">
+          <div className="min-h-0 flex-1 grid gap-5 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 md:grid-cols-[minmax(0,1fr)_300px]">
+            <form
+              id="fee-schedule-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAttemptSubmit();
+              }}
+              className="min-w-0 space-y-4"
+            >
               {/* Presets — create mode only */}
               {!isEdit && (
                 <div className="space-y-2">
@@ -213,33 +216,87 @@ export const FeeScheduleFormDialog = ({
                 </div>
               )}
 
-              {/* Effective date */}
-              <div className="space-y-1.5">
-                <Label htmlFor="effectiveDate">Ngày hiệu lực</Label>
-                <Input
-                  id="effectiveDate"
-                  type="date"
-                  value={formState.effectiveDate}
-                  min={today}
-                  className={cn(
-                    fieldErrors.effectiveDate &&
-                      "border-destructive focus-visible:ring-destructive",
-                  )}
-                  onChange={(e) =>
-                    setFormState((s) => ({
-                      ...s,
-                      effectiveDate: e.target.value,
-                    }))
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  Có hiệu lực từ ngày này. Phải là hôm nay hoặc tương lai.
-                </p>
-                {fieldErrors.effectiveDate && (
-                  <p className="text-xs text-destructive">
-                    {fieldErrors.effectiveDate}
+              {/* Effective date + minimum fee — compact scalars, one row */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="effectiveDate">Ngày hiệu lực</Label>
+                  <Input
+                    id="effectiveDate"
+                    type="date"
+                    value={formState.effectiveDate}
+                    min={today}
+                    aria-invalid={!!fieldErrors.effectiveDate}
+                    aria-describedby={
+                      fieldErrors.effectiveDate
+                        ? "fee-schedule-error-effective-date"
+                        : undefined
+                    }
+                    className={cn(
+                      fieldErrors.effectiveDate &&
+                        "border-destructive focus-visible:ring-destructive",
+                    )}
+                    onChange={(e) =>
+                      setFormState((s) => ({
+                        ...s,
+                        effectiveDate: e.target.value,
+                      }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Phải là hôm nay hoặc tương lai.
                   </p>
-                )}
+                  {fieldErrors.effectiveDate && (
+                    <p
+                      id="fee-schedule-error-effective-date"
+                      className="text-xs text-destructive"
+                    >
+                      {fieldErrors.effectiveDate}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="minFee">Phí tối thiểu (₫)</Label>
+                  <Input
+                    id="minFee"
+                    type="number"
+                    min={0}
+                    value={formState.minFeeVnd}
+                    aria-invalid={!!fieldErrors.minFee}
+                    aria-describedby={
+                      fieldErrors.minFee
+                        ? "fee-schedule-error-min-fee"
+                        : undefined
+                    }
+                    className={cn(
+                      fieldErrors.minFee &&
+                        "border-destructive focus-visible:ring-destructive",
+                      !fieldErrors.minFee &&
+                        fieldWarnings.minFee &&
+                        "border-amber-400 focus-visible:ring-amber-400",
+                    )}
+                    onChange={(e) =>
+                      setFormState((s) => ({
+                        ...s,
+                        minFeeVnd: Number(e.target.value) || 0,
+                      }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Áp dụng khi phí theo % nhỏ hơn mức này.
+                  </p>
+                  {fieldErrors.minFee ? (
+                    <p
+                      id="fee-schedule-error-min-fee"
+                      className="text-xs text-destructive"
+                    >
+                      {fieldErrors.minFee}
+                    </p>
+                  ) : fieldWarnings.minFee ? (
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                      {fieldWarnings.minFee}
+                    </p>
+                  ) : null}
+                </div>
               </div>
 
               {/* Structure */}
@@ -265,8 +322,6 @@ export const FeeScheduleFormDialog = ({
                 </RadioGroup>
               </div>
 
-              <Separator />
-
               {/* Tiers */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -283,8 +338,8 @@ export const FeeScheduleFormDialog = ({
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground -mt-1">
-                  Bậc 1 áp dụng cho mọi khoản từ 0 ₫ trở lên (mặc định). Thêm
-                  bậc nếu muốn % phí khác cho khoản lớn hơn.
+                  Bậc 1 áp dụng cho mọi khoản từ 0 ₫. Thêm bậc để áp % khác
+                  cho khoản lớn hơn.
                 </p>
                 <div className="space-y-2">
                   {formState.tiers.map((tier, idx) => {
@@ -302,6 +357,12 @@ export const FeeScheduleFormDialog = ({
                           </Label>
                           <Input
                             aria-label={`Từ số tiền bậc ${idx + 1}`}
+                            aria-invalid={!!minErr}
+                            aria-describedby={
+                              minErr
+                                ? `fee-schedule-error-tier-${idx}-min`
+                                : undefined
+                            }
                             type="number"
                             min={0}
                             value={tier.minAmount}
@@ -319,7 +380,10 @@ export const FeeScheduleFormDialog = ({
                             }
                           />
                           {minErr && (
-                            <p className="text-xs text-destructive">
+                            <p
+                              id={`fee-schedule-error-tier-${idx}-min`}
+                              className="text-xs text-destructive"
+                            >
                               {minErr}
                             </p>
                           )}
@@ -330,6 +394,12 @@ export const FeeScheduleFormDialog = ({
                           </Label>
                           <Input
                             aria-label={`Phần trăm bậc ${idx + 1}`}
+                            aria-invalid={!!pctErr}
+                            aria-describedby={
+                              pctErr
+                                ? `fee-schedule-error-tier-${idx}-pct`
+                                : undefined
+                            }
                             type="number"
                             min={0}
                             max={100}
@@ -351,7 +421,10 @@ export const FeeScheduleFormDialog = ({
                             }
                           />
                           {pctErr ? (
-                            <p className="text-xs text-destructive">
+                            <p
+                              id={`fee-schedule-error-tier-${idx}-pct`}
+                              className="text-xs text-destructive"
+                            >
                               {pctErr}
                             </p>
                           ) : pctWarn ? (
@@ -378,44 +451,6 @@ export const FeeScheduleFormDialog = ({
                 </div>
               </div>
 
-              <Separator />
-
-              {/* Min fee */}
-              <div className="space-y-1.5">
-                <Label htmlFor="minFee">Phí tối thiểu (₫)</Label>
-                <Input
-                  id="minFee"
-                  type="number"
-                  min={0}
-                  value={formState.minFeeVnd}
-                  className={cn(
-                    fieldErrors.minFee &&
-                      "border-destructive focus-visible:ring-destructive",
-                    !fieldErrors.minFee &&
-                      fieldWarnings.minFee &&
-                      "border-amber-400 focus-visible:ring-amber-400",
-                  )}
-                  onChange={(e) =>
-                    setFormState((s) => ({
-                      ...s,
-                      minFeeVnd: Number(e.target.value) || 0,
-                    }))
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  Mức phí tối thiểu, kể cả khi phần trăm nhân ra số nhỏ hơn.
-                </p>
-                {fieldErrors.minFee ? (
-                  <p className="text-xs text-destructive">
-                    {fieldErrors.minFee}
-                  </p>
-                ) : fieldWarnings.minFee ? (
-                  <p className="text-xs text-amber-700 dark:text-amber-400">
-                    {fieldWarnings.minFee}
-                  </p>
-                ) : null}
-              </div>
-
               {/* Notes */}
               <div className="space-y-1.5">
                 <Label htmlFor="notes">Ghi chú (tùy chọn)</Label>
@@ -428,7 +463,7 @@ export const FeeScheduleFormDialog = ({
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Tùy chọn — ghi lý do thay đổi để dễ kiểm tra sau.
+                  Ghi lý do thay đổi để dễ đối chiếu sau.
                 </p>
               </div>
 
@@ -443,7 +478,7 @@ export const FeeScheduleFormDialog = ({
                   </p>
                 </div>
               )}
-            </div>
+            </form>
 
             <FeeScheduleLivePreview
               tiers={formState.tiers}
@@ -451,7 +486,7 @@ export const FeeScheduleFormDialog = ({
             />
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-2">
+          <DialogFooter className="shrink-0 border-t border-utility-gray-200 bg-card px-4 py-3 sm:px-6">
             <Button
               type="button"
               variant="outline"
@@ -464,8 +499,8 @@ export const FeeScheduleFormDialog = ({
               <TooltipTrigger asChild>
                 <span tabIndex={isInvalid ? 0 : -1}>
                   <Button
-                    type="button"
-                    onClick={handleAttemptSubmit}
+                    type="submit"
+                    form="fee-schedule-form"
                     disabled={isInvalid || isSubmitting}
                   >
                     {isEdit ? "Xem lại & lưu" : "Xem lại & tạo"}
