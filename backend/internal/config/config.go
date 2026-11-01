@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -159,7 +160,7 @@ type CaptchaConfig struct {
 
 type LogConfig struct {
 	Level string
-	File  string
+	Dir   string
 }
 
 type RateLimitConfig struct {
@@ -391,7 +392,11 @@ func Load() (*Config, error) {
 		},
 		Log: LogConfig{
 			Level: getEnv("LOG_LEVEL", "info"),
-			File:  getEnv("LOG_FILE", "logs/app.log"),
+			// PAYR-32: log directory for the daily payroll-backend-YYYYMMDD.log
+			// files (GIN access + app logs, dual-output with stdout). Falls
+			// back to the legacy LOG_FILE's directory so existing deployments
+			// keep writing to the same mounted volume.
+			Dir: getEnv("LOG_DIR", filepath.Dir(getEnv("LOG_FILE", "logs/app.log"))),
 		},
 		RateLimit: RateLimitConfig{
 			RPS: parseInt(getEnv("RATE_LIMIT_RPS", "50")),

@@ -44,7 +44,7 @@ func Initialize(cfg *appConfig.Config) (*Components, error) {
 func initLogger(cfg *appConfig.Config) (*slog.Logger, error) {
 	return observability.NewLogger(observability.LogConfig{
 		Level: cfg.Log.Level,
-		File:  cfg.Log.File,
+		Dir:   cfg.Log.Dir,
 	})
 }
 
