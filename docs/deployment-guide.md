@@ -37,6 +37,27 @@ cd /opt/payroll && docker compose pull frontend backend
 cd /opt/payroll && docker compose up -d --force-recreate --no-deps frontend backend
 ```
 
+## Persistent Backend Logs (PAYR-32)
+
+Since PAYR-32 the backend writes **dual output** — `docker logs` (stdout/stderr) is unchanged, and the same lines are appended to a persistent daily file:
+
+- Files: `/opt/payroll/logs/payroll-backend-YYYYMMDD.log` (day in Asia/Ho_Chi_Minh), containing GIN access lines, GIN panic traces, and the slog JSON app log.
+- Rotation: automatic at midnight; files older than **14 days** are deleted on startup and at each rollover. No logrotate/cron needed.
+- Volume: the production compose already mounts `./logs:/app/logs` and `LOG_DIR` defaults to `logs` (→ `/app/logs` in the container), so **no compose change is required** — the fix ships with the image. Override the directory with `LOG_DIR` in `/opt/payroll/.env` if it ever moves.
+
+Why: recreating `payroll-backend` destroys `docker logs` (the 31/10 GET `/api/v1/projects` 500 burst was undiagnosable for this reason). App JSON logs were already on the volume via lumberjack (`app.log`); GIN access logs were stdout-only and vanished on every recreate. PAYR-32 routes GIN + app output into the daily volume file while keeping stdout intact.
+
+Verify after deploy:
+```bash
+ssh root@tingting.vip "ls -la /opt/payroll/logs/payroll-backend-*.log | tail -3"
+ssh root@tingting.vip "tail -5 /opt/payroll/logs/payroll-backend-\$(date +%Y%m%d).log"   # GIN + JSON lines
+curl -s https://tingting.vip/api/healthz >/dev/null
+ssh root@tingting.vip "tail -2 /opt/payroll/logs/payroll-backend-\$(date +%Y%m%d).log"   # new access line appended
+docker logs payroll-backend --tail 5                                                     # stdout still present
+```
+
+Docker logging-driver note: the compose service uses the default `json-file` driver. Adding `max-size`/`max-file` caps would bound `docker logs` disk usage, but json-file logs are still wiped on `--force-recreate` — the bind-mounted volume is what actually survives recreates. Driver caps are optional polish, not the retention mechanism.
+
 ## Demo Deploy
 
 > **RETIRED (verified 2026-09-06):** the `demo` / `push-demo` / `deploy-demo`

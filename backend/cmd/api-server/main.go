@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -14,6 +15,8 @@ import (
 	"api-server/internal/infra/events"
 	"api-server/internal/infra/observability"
 	"api-server/internal/pkg/clock"
+
+	"github.com/gin-gonic/gin"
 )
 
 const API_SERVER_VERSION = "v1.10.1"
@@ -58,7 +61,7 @@ func main() {
 	// Initialize singleton logger with proper configuration
 	loggerConfig := observability.LogConfig{
 		Level: cfg.Log.Level,
-		File:  cfg.Log.File,
+		Dir:   cfg.Log.Dir,
 	}
 	logger, err := observability.NewLogger(loggerConfig)
 	if err != nil {
@@ -66,6 +69,25 @@ func main() {
 		os.Exit(1)
 	}
 	observability.SetLogger(logger)
+
+	// PAYR-32: mirror GIN access + panic output into the persistent daily
+	// file (same shared writer as the app log) while keeping stdout/stderr
+	// for `docker logs`. Must run before the router is built — gin.Logger()
+	// captures gin.DefaultWriter at middleware-creation time.
+	fileLog := observability.DailyWriter(cfg.Log.Dir)
+	if fileLog == nil {
+		fmt.Fprintf(os.Stderr, "warning: persistent log file disabled (%v); logging to stdout only\n", observability.DailyWriterError())
+	}
+	stdoutTargets := []io.Writer{os.Stdout}
+	if fileLog != nil {
+		stdoutTargets = append(stdoutTargets, fileLog)
+	}
+	gin.DefaultWriter = io.MultiWriter(stdoutTargets...)
+	stderrTargets := []io.Writer{os.Stderr}
+	if fileLog != nil {
+		stderrTargets = append(stderrTargets, fileLog)
+	}
+	gin.DefaultErrorWriter = io.MultiWriter(stderrTargets...)
 
 	// Bootstrap application
 	container, err := bootstrap.NewContainer(cfg, API_SERVER_VERSION)
