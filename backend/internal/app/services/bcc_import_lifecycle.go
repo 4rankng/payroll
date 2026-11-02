@@ -427,24 +427,19 @@ func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID u
 	}
 	release := func() { s.releaseImportLock(ctx, projectID, effectiveMonth, lockValue) }
 
+	// Anchor the payrate lookup at the file's earliest worked day: a config
+	// effective mid-month must serve a file whose entries all fall after it.
+	// Files without in-month entries keep the month-start anchor. A miss at
+	// the lookup date is terminal — no config can be active at month start
+	// yet not active on a later day.
 	lookupDate := monthStart
 	if earliestEntryDay > 0 {
 		lookupDate = time.Date(year, month, earliestEntryDay, 0, 0, 0, 0, loc)
 	}
 	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, lookupDate)
 	if err != nil {
-		// A payrate whose effective date starts mid-month (e.g. a project
-		// created Aug 30 with payrate from Aug 24) has no rate at the month
-		// boundary. Accept it only when it is already active on or before the
-		// file's earliest timesheet day — never retroactively for worked days
-		// that precede the payrate's effective date.
-		if domain.IsNotFoundError(err) && earliestEntryDay > 0 {
-			payrate, err = s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, monthStart)
-		}
-		if err != nil {
-			release()
-			return nil, nil, fmt.Errorf("không tìm thấy bảng lương cho dự án: %v", err)
-		}
+		release()
+		return nil, nil, fmt.Errorf("không tìm thấy bảng lương cho dự án: %v", err)
 	}
 	flatRates, err := payrate.Payrate.Flatten()
 	if err != nil {

@@ -90,6 +90,23 @@ func buildRateToTarget(flatRates map[string]int, posPrefix string) map[int]rateT
 	return rateToTarget
 }
 
+// lookupRateTarget resolves an entry's rate against a position's rate map,
+// tolerating ±1 VND rounding drift from Excel formula rates (e.g.
+// 42307 × 1.5 = 63460.5 renders as 63461 while the config stores 63460).
+// Exact matches always win; −1 is preferred over +1 when both could match.
+func lookupRateTarget(rateToTarget map[int]rateTarget, rateVND int) (rateTarget, bool) {
+	if target, ok := rateToTarget[rateVND]; ok {
+		return target, true
+	}
+	if target, ok := rateToTarget[rateVND-1]; ok {
+		return target, true
+	}
+	if target, ok := rateToTarget[rateVND+1]; ok {
+		return target, true
+	}
+	return rateTarget{}, false
+}
+
 // dedupBCCEntries merges entries that resolved to the same payrate bucket for
 // the same employee on the same date, summing hours.
 //

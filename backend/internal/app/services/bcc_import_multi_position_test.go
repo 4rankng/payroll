@@ -9,10 +9,10 @@ import (
 
 func TestValidateSheetPositions_Normalization(t *testing.T) {
 	flatRates := map[string]int{
-		"Chia chọn.ngày thường.ca ngày":  37500,
-		"Chia chọn.ngày thường.tăng ca":  56250,
-		"Xuất hàng.ngày thường.ca ngày":  48750,
-		"Xuất hàng.ngày thường.tăng ca":  56250,
+		"Chia chọn.ngày thường.ca ngày":   37500,
+		"Chia chọn.ngày thường.tăng ca":   56250,
+		"Xuất hàng.ngày thường.ca ngày":   48750,
+		"Xuất hàng.ngày thường.tăng ca":   56250,
 		"Lái xe nâng.ngày thường.ca ngày": 42307,
 		"Lái xe nâng.ngày thường.tăng ca": 63460,
 	}
@@ -54,22 +54,24 @@ func TestBuildRateToTarget_OneVNDTolerance(t *testing.T) {
 		t.Fatalf("expected 2 targets, got %d: %v", len(rateToTarget), rateToTarget)
 	}
 
-	// Exact match
-	if target, ok := rateToTarget[42307]; !ok || target.hourType != "ca ngày" {
+	// Exact match through the same lookup the import uses
+	if target, ok := lookupRateTarget(rateToTarget, 42307); !ok || target.hourType != "ca ngày" {
 		t.Fatalf("expected 42307 -> ca ngày, got %v, ok=%v", target, ok)
 	}
 
 	// Entry rate 63461 (Excel formatted integer) vs config 63460
-	entryRate := 63461
-	target, ok := rateToTarget[entryRate]
-	if !ok {
-		if tTarget, found := rateToTarget[entryRate-1]; found {
-			target, ok = tTarget, true
-		} else if tTarget, found := rateToTarget[entryRate+1]; found {
-			target, ok = tTarget, true
-		}
-	}
+	target, ok := lookupRateTarget(rateToTarget, 63461)
 	if !ok || target.hourType != "tăng ca" {
 		t.Fatalf("expected entryRate 63461 to match 63460 via 1-VND tolerance -> tăng ca, got %v, ok=%v", target, ok)
+	}
+
+	// An exact config rate still wins over its ±1 neighbours
+	if target, ok := lookupRateTarget(rateToTarget, 63460); !ok || target.hourType != "tăng ca" {
+		t.Fatalf("expected exact 63460 -> tăng ca, got %v, ok=%v", target, ok)
+	}
+
+	// Unrelated rates match nothing
+	if _, ok := lookupRateTarget(rateToTarget, 50000); ok {
+		t.Fatal("expected 50000 to match no target")
 	}
 }

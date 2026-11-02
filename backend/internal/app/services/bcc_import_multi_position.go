@@ -467,16 +467,7 @@ func (s *BCCImportService) buildMultiPositionEntries(
 					continue
 				}
 
-				target, ok := rateToTarget[entry.RateVND]
-				if !ok {
-					// Tolerate 1 VND rounding differences from formula rates (e.g. 42307 * 1.5 = 63460.5
-					// which Excel displays/formats as 63461 while payrate config stores 63460).
-					if t, found := rateToTarget[entry.RateVND-1]; found {
-						target, ok = t, true
-					} else if t, found := rateToTarget[entry.RateVND+1]; found {
-						target, ok = t, true
-					}
-				}
+				target, ok := lookupRateTarget(rateToTarget, entry.RateVND)
 				if !ok || entry.RateVND == 0 {
 					importErrors = append(importErrors, domain.ImportError{
 						Employee: emp.FullName,
