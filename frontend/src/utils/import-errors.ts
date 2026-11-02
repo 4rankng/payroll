@@ -25,6 +25,9 @@ export function getSafeImportErrorReason(reason: string): string {
   if (normalized.includes('không tìm thấy') && normalized.includes('nhân viên')) {
     return 'Không tìm thấy nhân viên';
   }
+  if (normalized.includes('số điện thoại là bắt buộc')) {
+    return 'Thiếu số điện thoại (hệ thống yêu cầu SĐT cho nhân viên mới)';
+  }
   if (normalized.includes('không thể tạo nhân viên')) {
     return 'Không thể tạo hồ sơ nhân viên';
   }

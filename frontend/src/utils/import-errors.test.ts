@@ -45,6 +45,18 @@ describe('parseImportErrors', () => {
     ]);
   });
 
+  it('maps missing-mobile error to actionable copy', () => {
+    expect(parseImportErrors(JSON.stringify([{
+      row: 0,
+      employee: 'Lê Thị Thúy Vân',
+      reason: 'không thể tạo nhân viên CCCD 031168011277: Số điện thoại là bắt buộc khi bật chế độ bắt buộc số điện thoại cho nhân viên mới',
+    }]))).toEqual([{
+      row: 0,
+      employee: 'Lê Thị Thúy Vân',
+      reason: 'Thiếu số điện thoại (hệ thống yêu cầu SĐT cho nhân viên mới)',
+    }]);
+  });
+
   it('ignores malformed payloads', () => {
     expect(parseImportErrors('{"reason":"failed"}')).toEqual([]);
     expect(parseImportErrors('not-json')).toEqual([]);
