@@ -9,6 +9,8 @@ import (
 	"api-server/internal/domain"
 	domainservices "api-server/internal/domain/services"
 	"api-server/internal/pkg/clock"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 // Shared pipeline pieces for the per-format BCC processors (legacy/date-row,
@@ -67,7 +69,8 @@ func buildRateToTarget(flatRates map[string]int, posPrefix string) map[int]rateT
 		if rate == 0 {
 			continue
 		}
-		if posPrefix != "" && !strings.HasPrefix(strings.ToLower(path), posPrefix) {
+		normPath := strings.ToLower(strings.TrimSpace(norm.NFC.String(path)))
+		if posPrefix != "" && !strings.HasPrefix(normPath, posPrefix) {
 			continue
 		}
 		parts := strings.Split(path, ".")

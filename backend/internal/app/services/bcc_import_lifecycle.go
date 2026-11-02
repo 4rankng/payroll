@@ -427,7 +427,11 @@ func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID u
 	}
 	release := func() { s.releaseImportLock(ctx, projectID, effectiveMonth, lockValue) }
 
-	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, monthStart)
+	lookupDate := monthStart
+	if earliestEntryDay > 0 {
+		lookupDate = time.Date(year, month, earliestEntryDay, 0, 0, 0, 0, loc)
+	}
+	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, lookupDate)
 	if err != nil {
 		// A payrate whose effective date starts mid-month (e.g. a project
 		// created Aug 30 with payrate from Aug 24) has no rate at the month
@@ -435,8 +439,7 @@ func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID u
 		// file's earliest timesheet day — never retroactively for worked days
 		// that precede the payrate's effective date.
 		if domain.IsNotFoundError(err) && earliestEntryDay > 0 {
-			probe := time.Date(year, month, earliestEntryDay, 0, 0, 0, 0, loc)
-			payrate, err = s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, probe)
+			payrate, err = s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, monthStart)
 		}
 		if err != nil {
 			release()

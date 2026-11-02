@@ -14,11 +14,17 @@ import (
 // four stop-column variants) deliberately stay local to their owners.
 
 // isSummaryRow reports whether an employee data row is actually the
-// workbook's summary row — "tổng cộng" in the name or identity column.
+// workbook's summary row — "tổng" / "tổng cộng" in the name or identity column.
 // Parsers stop reading the roster there.
 func isSummaryRow(name, code string) bool {
-	return strings.Contains(strings.ToLower(name), "tổng cộng") ||
-		strings.Contains(strings.ToLower(code), "tổng cộng")
+	lowName := strings.ToLower(strings.TrimSpace(name))
+	lowCode := strings.ToLower(strings.TrimSpace(code))
+	return strings.Contains(lowName, "tổng cộng") ||
+		strings.Contains(lowCode, "tổng cộng") ||
+		strings.HasPrefix(lowName, "tổng") ||
+		strings.HasPrefix(lowCode, "tổng") ||
+		strings.HasPrefix(lowName, "tong") ||
+		strings.HasPrefix(lowCode, "tong")
 }
 
 // headerContainsAny reports whether a trimmed header cell contains any of the

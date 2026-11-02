@@ -150,10 +150,10 @@ func validateSheetPositions(parsed *excelparser.MultiPositionImportData, flatRat
 	availablePositions := getPositions(flatRates)
 	availableSet := make(map[string]bool, len(availablePositions))
 	for _, p := range availablePositions {
-		availableSet[strings.ToLower(p)] = true
+		availableSet[bccNormName(p)] = true
 	}
 	for _, sheet := range parsed.Sheets {
-		if !availableSet[strings.ToLower(sheet.Position)] {
+		if !availableSet[bccNormName(sheet.Position)] {
 			return fmt.Sprintf("vị trí \"%s\" không có trong cấu hình lương. Các vị trí khả dụng: %s",
 				sheet.Position, strings.Join(availablePositions, ", "))
 		}
@@ -407,7 +407,7 @@ func (s *BCCImportService) buildMultiPositionEntries(
 	// shared package-level declarations.
 	for _, sheet := range parsed.Sheets {
 		// Build position-scoped rate-to-target map.
-		rateToTarget := buildRateToTarget(flatRates, strings.ToLower(sheet.Position)+".")
+		rateToTarget := buildRateToTarget(flatRates, bccNormName(sheet.Position)+".")
 
 		for _, emp := range sheet.Employees {
 			totalRows++
@@ -468,6 +468,15 @@ func (s *BCCImportService) buildMultiPositionEntries(
 				}
 
 				target, ok := rateToTarget[entry.RateVND]
+				if !ok {
+					// Tolerate 1 VND rounding differences from formula rates (e.g. 42307 * 1.5 = 63460.5
+					// which Excel displays/formats as 63461 while payrate config stores 63460).
+					if t, found := rateToTarget[entry.RateVND-1]; found {
+						target, ok = t, true
+					} else if t, found := rateToTarget[entry.RateVND+1]; found {
+						target, ok = t, true
+					}
+				}
 				if !ok || entry.RateVND == 0 {
 					importErrors = append(importErrors, domain.ImportError{
 						Employee: emp.FullName,
