@@ -61,6 +61,11 @@
     --input: 216 18% 84%;              /* #d0d5dd */
     --ring: 151 87% 25%;               /* emerald focus rings */
 
+    /* Selection highlight - brand-hue emerald at selection opacity. Deliberately
+       NOT --primary: the WCAG-darkened text token turns into a murky gray-green
+       smudge at low alpha over white, so selection gets its own vivid tint. */
+    --selection: 151 77% 42%;          /* #19be6e vivid emerald */
+
     /* Secondary Actions - Neutral */
     --secondary: 216 24% 96%;
     --secondary-foreground: 220 43% 11%;

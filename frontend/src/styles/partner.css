@@ -37,10 +37,7 @@
   text-rendering: optimizeLegibility;
 }
 
-[data-partner-ui] ::selection {
-  background: hsl(var(--primary) / 0.18);
-  color: hsl(var(--foreground));
-}
+/* ::selection lives in base.css (one product-wide rule, --selection token). */
 
 /* Inline popper content rendered inside the wrapper.
    Matches admin-daisy.css:35 pattern. */

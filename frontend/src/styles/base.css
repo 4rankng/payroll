@@ -35,6 +35,15 @@
     min-height: 100dvh;
   }
 
+  /* Text selection highlight — one product-wide rule. Chromium renders
+     ::selection as flat line boxes only (no radius/padding), so the tint is
+     the whole design surface: keep it saturated enough to read as an
+     intentional highlight instead of a smudge. */
+  ::selection {
+    background-color: hsl(var(--selection) / 0.3);
+    color: hsl(var(--foreground));
+  }
+
   /* ========================================================================
      DISTINCTIVE TYPOGRAPHY - Breaking Anti-Patterns
      ======================================================================== */

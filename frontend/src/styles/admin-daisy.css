@@ -1,14 +1,11 @@
-[data-admin-ui] {
+  [data-admin-ui] {
     color: hsl(var(--foreground));
     font-family: var(--admin-font-body);
     font-feature-settings: "tnum" 1, "liga" 1;
     text-rendering: optimizeLegibility;
   }
 
-  [data-admin-ui] ::selection {
-    background: hsl(var(--primary) / 0.18);
-    color: hsl(var(--foreground));
-  }
+  /* ::selection lives in base.css (one product-wide rule, --selection token). */
 
   /* Keep browser autofill from painting a contrasting blue strip inside login fields. */
   [data-login-ui] input:-webkit-autofill,
