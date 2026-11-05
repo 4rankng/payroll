@@ -120,9 +120,12 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 
 	var totalMax, totalComp, totalPend uint64
 
-	// Check-in-only months cannot back a regular advance request (the create
-	// endpoint refuses them); track them so CanRequest reflects that instead
-	// of showing an enabled button that always errors.
+	// Check-in-only months cannot back a regular advance request while the
+	// employee still has the self-check-in service (the create endpoint
+	// refuses them); track them so CanRequest reflects that instead of showing
+	// an enabled button that always errors. Once the service is off there is no
+	// check-in screen for them at all, so those months back regular requests
+	// like any other quota.
 	checkInOnlyMonths := map[string]bool{}
 	regularRemaining := uint64(0)
 
@@ -149,7 +152,7 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		if maxAdv > 0 {
 			if rows, rerr := s.config.AdvancePaymentRepo.GetByEmployeeAndMonth(ctx, employeeID, m); rerr != nil {
 				s.logger.Warn("failed to check period source", "error", rerr, "employee_id", employeeID, "month", m)
-			} else if periodHasCheckInEarnings(rows) {
+			} else if eligibility.hasCheckInEnabled && periodHasCheckInEarnings(rows) {
 				checkInOnlyMonths[m] = true
 			} else {
 				regularRemaining += remUint
@@ -324,11 +327,14 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 		))
 	}
 
-	// A check-in period is served by the self-check-in flow only, so one period
-	// never has two request paths. The regular endpoint already assumes a
+	// A check-in period stays with the self-check-in flow while the employee
+	// still has that service, so one period never has two request paths. Once
+	// the service is off, the check-in screen no longer exists for them and
+	// this endpoint is their only path — quota provenance stops mattering and
+	// remaining budget is the gate. The regular endpoint already assumes a
 	// single project per employee (it attaches to the first quota row and the
 	// budget check sums across projects), so the test is the whole period.
-	if periodHasCheckInEarnings(advPayments) {
+	if eligibility.hasCheckInEnabled && periodHasCheckInEarnings(advPayments) {
 		return nil, domain.NewValidationError(fmt.Sprintf(
 			constants.MsgAdvancePeriodCheckInOnlyVN, FormatMonthDisplay(forMonth),
 		))
