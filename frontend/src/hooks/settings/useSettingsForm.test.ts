@@ -45,6 +45,12 @@ const mocks = vi.hoisted(() => ({
       value_type: 'number',
     },
     {
+      id: 16,
+      key: 'self_check_in_advance_window_open_day',
+      value: '10',
+      value_type: 'number',
+    },
+    {
       id: 7,
       key: 'transfer_bank_account_holder',
       value: 'CONG TY LUONG TUAN',
@@ -193,6 +199,34 @@ describe('useSettingsForm', () => {
     ];
     act(() => options.onSuccess());
     expect(result.current.originalSelfCheckInAdvanceHoldHours).toBe('6');
+  });
+
+  it('loads and saves the self-check-in advance window open day', async () => {
+    const { result } = renderHook(() => useSettingsForm());
+
+    await waitFor(() => {
+      expect(result.current.selfCheckInAdvanceWindowOpenDay).toBe('10');
+    });
+    expect(result.current.originalSelfCheckInAdvanceWindowOpenDay).toBe('10');
+
+    act(() => {
+      result.current.setSelfCheckInAdvanceWindowOpenDay('15');
+    });
+    act(() => {
+      result.current.handleSaveSelfCheckInAdvanceWindowOpenDay();
+    });
+
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      { id: 16, data: { value: '15' } },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+
+    const [, options] = mocks.mutate.mock.calls.at(-1) as [
+      unknown,
+      { onSuccess: () => void },
+    ];
+    act(() => options.onSuccess());
+    expect(result.current.originalSelfCheckInAdvanceWindowOpenDay).toBe('15');
   });
 
   it('mirrors the weekly account into unset FlexPay fields', async () => {

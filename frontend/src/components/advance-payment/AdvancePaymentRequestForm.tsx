@@ -163,11 +163,12 @@ export function AdvancePaymentRequestForm({
     if (!isSelfCheckInFlow || !quotaExhausted) return null;
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    if (now.getDate() < ADVANCE_REQUEST_WINDOW_OPEN_DAY) {
-      return `Kỳ ứng lương tháng ${formatMonthShort(currentMonth)} sẽ mở vào ngày ${ADVANCE_REQUEST_WINDOW_OPEN_DAY}/${now.getMonth() + 1}.`;
+    const windowOpenDay = info.windowOpenDay ?? ADVANCE_REQUEST_WINDOW_OPEN_DAY;
+    if (now.getDate() < windowOpenDay) {
+      return `Kỳ ứng lương tháng ${formatMonthShort(currentMonth)} sẽ mở vào ngày ${windowOpenDay}/${now.getMonth() + 1}.`;
     }
     return `Kỳ tháng ${formatMonthShort(currentMonth)} đang mở — chọn kỳ hiện tại để ứng tiếp.`;
-  }, [isSelfCheckInFlow, quotaExhausted]);
+  }, [isSelfCheckInFlow, quotaExhausted, info.windowOpenDay]);
   const showQuotaProgress = quotaSummary.maxAdvanceAmount > 0;
 
   const status = useMemo<PeriodStatus>(() => {

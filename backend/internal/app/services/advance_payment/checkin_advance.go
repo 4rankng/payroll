@@ -19,17 +19,28 @@ import (
 //     max_adv_amount = floor(salary * configured_percent / 100); default 70%).
 //   - Salary period: calendar month (project.SalaryPeriodFrom), NOT the admin
 //     day-20 three-phase model.
-//   - Request window: opens on SelfCheckInAdvanceWindowOpenDay (day 10) and closes
+//   - Request window: opens on the configured window-open day (setting
+//     self_check_in_advance_window_open_day, default 10) and closes
 //     at month end; the previous salary period is locked after month rollover.
 //
 // The admin GetEmployeeAdvanceInfo / CreateRequest are untouched.
 
-// SelfCheckInAdvanceWindowOpenDay is the day of the calendar month from which a
-// self-check-in employee may request an advance for the current salary period.
-// Before this day the employee may still check-in/out and earn, but cannot submit
-// an advance request. Centralized alongside the configurable self-check-in
-// advance percentage.
-const SelfCheckInAdvanceWindowOpenDay = 10
+// SelfCheckInAdvanceWindowOpenDay is the fallback day of the calendar month from
+// which a self-check-in employee may request an advance for the current salary
+// period when the Admin setting is absent or invalid. Before this day the
+// employee may still check-in/out and earn, but cannot submit an advance
+// request. Centralized alongside the configurable self-check-in advance
+// percentage.
+const SelfCheckInAdvanceWindowOpenDay = int(domain.DefaultSelfCheckInAdvanceWindowOpenDay)
+
+// checkInWindowOpenDay resolves the configured window-open day. Nil in tests
+// and boot-order gaps; callers then get the typed domain default.
+func (s *Service) checkInWindowOpenDay(ctx context.Context) int {
+	if s.config.GetSelfCheckInAdvanceWindowOpenDay != nil {
+		return int(s.config.GetSelfCheckInAdvanceWindowOpenDay(ctx))
+	}
+	return SelfCheckInAdvanceWindowOpenDay
+}
 
 // CheckInAdvanceDisclaimerVN is the in-app note clarifying that the displayed
 // check-in wages exclude overtime and company allowances.
@@ -77,23 +88,23 @@ type CheckInAdvanceInfo struct {
 //     same tail the regular endpoint serves, so a check-in period keeps exactly
 //     one request path whichever side of the month we are on.
 //   - day 9: locked, matching the regular flow's gap day.
-//   - days 10+: the CURRENT month, open from SelfCheckInAdvanceWindowOpenDay
-//     through month end.
+//   - days windowOpenDay+: the CURRENT month, open from the configured
+//     window-open day (default 10) through month end.
 //
 // Prior months are always locked: a period cannot be requested after it rolls
 // past its window.
-func checkInRequestPeriod(now time.Time) (forMonth string, open bool) {
+func checkInRequestPeriod(now time.Time, windowOpenDay int) (forMonth string, open bool) {
 	currentCalMonth := now.Format("2006-01")
 	if IsBeforeCutoff(now) {
 		return now.AddDate(0, -1, 0).Format("2006-01"), true
 	}
-	return currentCalMonth, now.Day() >= SelfCheckInAdvanceWindowOpenDay
+	return currentCalMonth, now.Day() >= windowOpenDay
 }
 
 // isCheckInRequestWindowOpen reports whether a self-check-in employee may
 // request an advance for forMonth at time now.
-func isCheckInRequestWindowOpen(now time.Time, forMonth string) bool {
-	period, open := checkInRequestPeriod(now)
+func isCheckInRequestWindowOpen(now time.Time, forMonth string, windowOpenDay int) bool {
+	period, open := checkInRequestPeriod(now, windowOpenDay)
 	return open && forMonth == period
 }
 
@@ -107,12 +118,13 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 	now := clock.Now()
 	// The screen must describe the period the employee can actually request
 	// right now: the previous month during the days 1-8 tail, the current month
-	// from day 10, nothing in between.
-	servedMonth, windowOpen := checkInRequestPeriod(now)
+	// from the configured window-open day, nothing in between.
+	windowOpenDay := s.checkInWindowOpenDay(ctx)
+	servedMonth, windowOpen := checkInRequestPeriod(now, windowOpenDay)
 
 	info := &CheckInAdvanceInfo{
 		ForMonth:      servedMonth,
-		WindowOpenDay: SelfCheckInAdvanceWindowOpenDay,
+		WindowOpenDay: windowOpenDay,
 		Disclaimer:    CheckInAdvanceDisclaimerVN,
 		HasFlexible:   eligibility.hasFlexible,
 	}
@@ -169,7 +181,7 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 	if !windowOpen {
 		info.CanRequest = false
 		info.CanRequestTitle = "Chưa đến kỳ xin ứng"
-		info.CanRequestReason = fmt.Sprintf("Bạn có thể xin ứng lương từ ngày %d đến cuối tháng.", SelfCheckInAdvanceWindowOpenDay)
+		info.CanRequestReason = fmt.Sprintf("Bạn có thể xin ứng lương từ ngày %d đến cuối tháng.", windowOpenDay)
 		if eligibility.advanceRequestDisabled {
 			applyPaused()
 		}
@@ -195,7 +207,7 @@ func (s *Service) GetCheckInAdvanceInfoByUserID(ctx context.Context, userID uint
 		if domain.IsNotFoundError(err) {
 			return &CheckInAdvanceInfo{
 				ForMonth:      clock.Now().Format("2006-01"),
-				WindowOpenDay: SelfCheckInAdvanceWindowOpenDay,
+				WindowOpenDay: s.checkInWindowOpenDay(ctx),
 				Disclaimer:    CheckInAdvanceDisclaimerVN,
 			}, nil
 		}
@@ -206,9 +218,9 @@ func (s *Service) GetCheckInAdvanceInfoByUserID(ctx context.Context, userID uint
 
 // CreateCheckInAdvanceRequest creates an advance request under the self-check-in flow.
 // The window is the served period from checkInRequestPeriod (previous month on
-// days 1-8, current month from day 10); the budget is checked atomically by
-// CreateWithBudgetCheck against the stored configured max_adv_amount; fee via
-// the flexible-pay schedule (unchanged).
+// days 1-8, current month from the configured window-open day); the budget is
+// checked atomically by CreateWithBudgetCheck against the stored configured
+// max_adv_amount; fee via the flexible-pay schedule (unchanged).
 func (s *Service) CreateCheckInAdvanceRequest(ctx context.Context, employeeID uint64, requestAmount uint64, forMonth string) (*domain.AdvancePaymentRequest, error) {
 	if requestAmount < minCheckInAdvanceRequest {
 		return nil, domain.NewValidationError(constants.MsgMinAdvanceAmountVN)
@@ -225,16 +237,17 @@ func (s *Service) CreateCheckInAdvanceRequest(ctx context.Context, employeeID ui
 		return nil, domain.NewValidationError("Tài khoản chưa được cấp quyền sử dụng dịch vụ tự chấm công")
 	}
 
+	windowOpenDay := s.checkInWindowOpenDay(ctx)
 	now := clock.Now()
 	if forMonth == "" {
-		forMonth, _ = checkInRequestPeriod(now)
+		forMonth, _ = checkInRequestPeriod(now, windowOpenDay)
 	}
-	if !isCheckInRequestWindowOpen(now, forMonth) {
+	if !isCheckInRequestWindowOpen(now, forMonth, windowOpenDay) {
 		return nil, domain.NewValidationError(fmt.Sprintf(
 			"Bạn có thể xin ứng lương cho kỳ %s: từ ngày 1 đến ngày %d của tháng sau, hoặc từ ngày %d đến cuối tháng của kỳ hiện tại.",
 			FormatMonthDisplay(now.AddDate(0, -1, 0).Format("2006-01")),
 			clock.RequestCutoffDay,
-			SelfCheckInAdvanceWindowOpenDay,
+			windowOpenDay,
 		))
 	}
 

@@ -14,7 +14,8 @@ import (
 // Hybrid employees (self-checkin enabled + prior-month FlexPay quota) may use
 // the regular endpoint ONLY for the previous-period tail (days 1-9). The
 // current month must go through the self-checkin flow whose window opens on
-// day 10 — the regular endpoint must never serve it to them.
+// the Admin-configured window-open day — the regular endpoint must never
+// serve it to them.
 func TestCreateRequestHybridWindow(t *testing.T) {
 	cases := []struct {
 		name     string

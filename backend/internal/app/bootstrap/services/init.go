@@ -342,6 +342,7 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 		GetAdvanceCashFeePercentage:     settingsConfigService.GetAdvanceCashFeePercentage,
 		GetPartnerCompany:               settingsConfigService.GetPartnerCompany,
 		GetSelfCheckInAdvancePercentage: settingsConfigService.GetSelfCheckInAdvancePercentage,
+		GetSelfCheckInAdvanceWindowOpenDay: settingsConfigService.GetSelfCheckInAdvanceWindowOpenDay,
 		GetTransferLimits: func(ctx context.Context) advance_payment.ProviderTransferLimits {
 			limits := disbursementRegistry.ActiveTransferLimits(ctx)
 			return advance_payment.ProviderTransferLimits{

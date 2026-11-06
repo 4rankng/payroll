@@ -22,6 +22,7 @@ const (
 	SettingKeyBulkTransferWorkbookLimit = "bulk_transfer_workbook_limit_vnd"
 	SettingKeySelfCheckInAdvancePercent = "self_check_in_advance_percentage"
 	SettingKeySelfCheckInAdvanceHold    = "self_check_in_advance_hold_hours"
+	SettingKeySelfCheckInAdvanceWindowOpenDay = "self_check_in_advance_window_open_day"
 	SettingKeyWalletBalanceAlert        = "wallet_balance_alert_threshold_vnd"
 	SettingKeyTransferBankHolder        = "transfer_bank_account_holder"
 	SettingKeyTransferBankNumber        = "transfer_bank_account_number"
@@ -73,6 +74,15 @@ const (
 	MinBulkTransferWorkbookLimit      = int64(100_000_000)
 	MaxBulkTransferWorkbookLimit      = int64(500_000_000)
 	MaxSelfCheckInAdvanceHoldHours    = uint64(720)
+
+	// Bounds for the self-check-in advance window-open day. The regular
+	// admin-upload calendar serves days 1-8 as the previous period's tail
+	// (clock.RequestCutoffDay = 8) and day 9 as its fixed locked gap, so any
+	// day below 10 could never take effect; a day above 28 is unreachable in
+	// February. Bounds keep the employee-facing "từ ngày X" message truthful.
+	DefaultSelfCheckInAdvanceWindowOpenDay = domain.DefaultSelfCheckInAdvanceWindowOpenDay
+	MinSelfCheckInAdvanceWindowOpenDay     = uint64(10)
+	MaxSelfCheckInAdvanceWindowOpenDay     = uint64(28)
 
 	// Bounds for the wallet low-balance alert threshold. The alert fires once
 	// per downward crossing of this value; defaults to 50 million VND.
@@ -295,6 +305,28 @@ func parseSelfCheckInAdvanceHoldHours(setting *domain.Settings) (uint64, error) 
 	return hours, nil
 }
 
+func parseSelfCheckInAdvanceWindowOpenDay(setting *domain.Settings) (uint64, error) {
+	if setting == nil || setting.Value == nil {
+		return 0, domain.NewValidationError("ngày mở kỳ ứng lương tự chấm công không được để trống")
+	}
+	if setting.ValueType != domain.ValueTypeNumber {
+		return 0, domain.NewValidationError("ngày mở kỳ ứng lương tự chấm công phải là số")
+	}
+
+	raw := *setting.Value
+	if raw == "" || strings.TrimSpace(raw) != raw || (len(raw) > 1 && raw[0] == '0') || strings.IndexFunc(raw, func(r rune) bool {
+		return r < '0' || r > '9'
+	}) >= 0 {
+		return 0, domain.NewValidationError("ngày mở kỳ ứng lương tự chấm công phải là số nguyên từ 10 đến 28")
+	}
+
+	value, err := strconv.ParseUint(raw, 10, 64)
+	if err != nil || value < MinSelfCheckInAdvanceWindowOpenDay || value > MaxSelfCheckInAdvanceWindowOpenDay {
+		return 0, domain.NewValidationError("ngày mở kỳ ứng lương tự chấm công phải là số nguyên từ 10 đến 28")
+	}
+	return value, nil
+}
+
 // GetSelfCheckInAdvanceHoldDuration returns the authoritative post-checkout
 // holding duration before self-check-in earnings become advanceable. Financial
 // scheduling bypasses cache so a completed Admin update governs the next
@@ -326,6 +358,38 @@ func (s *SettingsConfigService) GetSelfCheckInAdvanceHoldDuration(ctx context.Co
 	}
 
 	return time.Duration(hours) * time.Hour
+}
+
+// GetSelfCheckInAdvanceWindowOpenDay returns the configured day of month the
+// self-check-in advance request window opens (default 10, bounds 10-28).
+// Reads bypass cache so a completed Admin update governs the next request;
+// missing or invalid persisted data falls back to the long-standing default.
+func (s *SettingsConfigService) GetSelfCheckInAdvanceWindowOpenDay(ctx context.Context) uint64 {
+	if s.settingsService == nil {
+		return DefaultSelfCheckInAdvanceWindowOpenDay
+	}
+
+	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, SettingKeySelfCheckInAdvanceWindowOpenDay)
+	if err != nil {
+		observability.GetLogger().Warn(
+			"failed to get self check-in advance window open day setting, using default",
+			"key", SettingKeySelfCheckInAdvanceWindowOpenDay,
+			"error", err,
+		)
+		return DefaultSelfCheckInAdvanceWindowOpenDay
+	}
+
+	day, err := parseSelfCheckInAdvanceWindowOpenDay(setting)
+	if err != nil {
+		observability.GetLogger().Warn(
+			"invalid self check-in advance window open day setting, using default",
+			"key", SettingKeySelfCheckInAdvanceWindowOpenDay,
+			"error", err,
+		)
+		return DefaultSelfCheckInAdvanceWindowOpenDay
+	}
+
+	return day
 }
 
 // GetSelfCheckInAdvancePercentage returns the authoritative self-check-in

@@ -44,6 +44,10 @@ type Config struct {
 	// credited salary. Exposed to the employee app so per-shift rows can show
 	// the advanceable amount alongside the full wage.
 	GetSelfCheckInAdvancePercentage func(ctx context.Context) uint64
+	// GetSelfCheckInAdvanceWindowOpenDay returns the configured day of month
+	// the self-check-in advance request window opens (default 10, bounds
+	// 10-28). Nil in tests; callers fall back to SelfCheckInAdvanceWindowOpenDay.
+	GetSelfCheckInAdvanceWindowOpenDay func(ctx context.Context) uint64
 	// GetTransferLimits returns the active disbursement provider's per-transfer
 	// amount bounds. Returns zero-value limits when no provider is configured.
 	// Used by CreateRequest to fail-fast when the net amount (after fee) would

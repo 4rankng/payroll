@@ -400,12 +400,15 @@ export function getInitialEmployeeAdvanceMonth(
 
 
 /**
- * Day-of-month from which a freshly-created advance request lands in the
- * CURRENT calendar month — also the day the self-check-in advance window opens.
+ * Day-of-month the self-check-in advance window opens when the API response
+ * omits `windowOpenDay` (older payloads) — employee-facing code falls back to
+ * this. Also the heuristic day for `getDefaultAdvanceMonth`'s admin list
+ * default month.
  *
  * Mirrors `SelfCheckInAdvanceWindowOpenDay` in
- * `backend/internal/app/services/advance_payment/checkin_advance.go`. If the
- * backend constant changes, update this one too.
+ * `backend/internal/app/services/advance_payment/checkin_advance.go`. The
+ * Admin-configured value arrives via the API (`windowOpenDay`); update this
+ * constant only when the backend default changes.
  */
 export const ADVANCE_REQUEST_WINDOW_OPEN_DAY = 10;
 

@@ -220,6 +220,27 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
         wholeNumber
         suffix="giờ"
       />
+      <SettingCard
+        title="Ngày mở kỳ ứng lương tự chấm công"
+        description="Ngày trong tháng bắt đầu cho phép nhân viên tự chấm công xin ứng lương cho kỳ hiện tại, áp dụng đến cuối tháng."
+        value={form.selfCheckInAdvanceWindowOpenDay}
+        originalValue={form.originalSelfCheckInAdvanceWindowOpenDay}
+        onChange={form.setSelfCheckInAdvanceWindowOpenDay}
+        onSave={form.handleSaveSelfCheckInAdvanceWindowOpenDay}
+        onReset={() =>
+          form.setSelfCheckInAdvanceWindowOpenDay(form.originalSelfCheckInAdvanceWindowOpenDay)
+        }
+        isDirty={
+          form.selfCheckInAdvanceWindowOpenDay !== form.originalSelfCheckInAdvanceWindowOpenDay
+        }
+        isSaving={form.isSaving}
+        type="number"
+        min={10}
+        max={28}
+        step={1}
+        wholeNumber
+        suffix="ngày"
+      />
     </SettingsSection>
 
     <SettingsSection

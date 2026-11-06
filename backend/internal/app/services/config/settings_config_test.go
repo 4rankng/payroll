@@ -415,3 +415,77 @@ func TestSettingsConfigServiceInvalidateCacheReReadsTransferBank(t *testing.T) {
 	service.InvalidateCache()
 	assert.Equal(t, "CONG TY MOI", service.GetTransferBankInfo(context.Background()).Holder)
 }
+
+func selfCheckInAdvanceWindowOpenDaySetting(value *string) *domain.Settings {
+	return &domain.Settings{
+		Key:       SettingKeySelfCheckInAdvanceWindowOpenDay,
+		Value:     value,
+		ValueType: domain.ValueTypeNumber,
+	}
+}
+
+func TestSettingsConfigServiceGetSelfCheckInAdvanceWindowOpenDay(t *testing.T) {
+	valid := "15"
+	reader := &stubSettingReader{setting: selfCheckInAdvanceWindowOpenDaySetting(&valid)}
+	service := NewSettingsConfigService(reader)
+
+	assert.Equal(t, uint64(15), service.GetSelfCheckInAdvanceWindowOpenDay(context.Background()))
+	assert.Equal(t, 1, reader.calls)
+
+	updated := "28"
+	reader.setting = selfCheckInAdvanceWindowOpenDaySetting(&updated)
+	assert.Equal(t, uint64(28), service.GetSelfCheckInAdvanceWindowOpenDay(context.Background()))
+	assert.Equal(t, 2, reader.calls, "the request window must bypass the local cache")
+}
+
+func TestSettingsConfigServiceGetSelfCheckInAdvanceWindowOpenDayFallsBackToDefault(t *testing.T) {
+	tests := []struct {
+		name    string
+		setting *domain.Settings
+		err     error
+	}{
+		{name: "missing", err: errors.New("not found")},
+		{name: "nil value", setting: selfCheckInAdvanceWindowOpenDaySetting(nil)},
+		{name: "below minimum", setting: selfCheckInAdvanceWindowOpenDaySetting(stringPointer("9"))},
+		{name: "above maximum", setting: selfCheckInAdvanceWindowOpenDaySetting(stringPointer("29"))},
+		{name: "leading zero", setting: selfCheckInAdvanceWindowOpenDaySetting(stringPointer("015"))},
+		{name: "non numeric", setting: selfCheckInAdvanceWindowOpenDaySetting(stringPointer("abc"))},
+		{
+			name: "wrong type",
+			setting: &domain.Settings{
+				Key:       SettingKeySelfCheckInAdvanceWindowOpenDay,
+				Value:     stringPointer("10"),
+				ValueType: domain.ValueTypeString,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewSettingsConfigService(&stubSettingReader{setting: tt.setting, err: tt.err})
+			assert.Equal(t, DefaultSelfCheckInAdvanceWindowOpenDay, service.GetSelfCheckInAdvanceWindowOpenDay(context.Background()))
+		})
+	}
+}
+
+func TestParseSelfCheckInAdvanceWindowOpenDayBoundaries(t *testing.T) {
+	for _, value := range []uint64{10, 15, 28} {
+		raw := strconv.FormatUint(value, 10)
+		parsed, err := parseSelfCheckInAdvanceWindowOpenDay(selfCheckInAdvanceWindowOpenDaySetting(&raw))
+		require.NoError(t, err)
+		assert.Equal(t, value, parsed)
+	}
+
+	for _, raw := range []string{"9", "29", "015", "abc", "", " 15 "} {
+		_, err := parseSelfCheckInAdvanceWindowOpenDay(selfCheckInAdvanceWindowOpenDaySetting(&raw))
+		require.Error(t, err, "value %q must be rejected", raw)
+	}
+}
+
+func TestValidateBusinessSettingValidatesWindowOpenDay(t *testing.T) {
+	valid := "10"
+	require.NoError(t, validateBusinessSetting(selfCheckInAdvanceWindowOpenDaySetting(&valid)))
+
+	invalid := "9"
+	require.Error(t, validateBusinessSetting(selfCheckInAdvanceWindowOpenDaySetting(&invalid)))
+}

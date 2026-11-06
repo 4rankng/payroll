@@ -9,6 +9,7 @@ const SETTINGS_KEYS = {
   WALLET_BALANCE_ALERT_THRESHOLD_VND: 'wallet_balance_alert_threshold_vnd',
   SELF_CHECK_IN_ADVANCE_PERCENTAGE: 'self_check_in_advance_percentage',
   SELF_CHECK_IN_ADVANCE_HOLD_HOURS: 'self_check_in_advance_hold_hours',
+  SELF_CHECK_IN_ADVANCE_WINDOW_OPEN_DAY: 'self_check_in_advance_window_open_day',
   TRANSFER_BANK_HOLDER: 'transfer_bank_account_holder',
   TRANSFER_BANK_NUMBER: 'transfer_bank_account_number',
   TRANSFER_BANK_NAME: 'transfer_bank_name',
@@ -45,6 +46,8 @@ export interface SettingsFormState {
   originalSelfCheckInAdvancePercentage: string;
   selfCheckInAdvanceHoldHours: string;
   originalSelfCheckInAdvanceHoldHours: string;
+  selfCheckInAdvanceWindowOpenDay: string;
+  originalSelfCheckInAdvanceWindowOpenDay: string;
   transferBankHolder: string;
   originalTransferBankHolder: string;
   transferBankNumber: string;
@@ -71,6 +74,7 @@ export interface SettingsFormState {
   setWalletBalanceAlertThresholdVnd: (v: string) => void;
   setSelfCheckInAdvancePercentage: (v: string) => void;
   setSelfCheckInAdvanceHoldHours: (v: string) => void;
+  setSelfCheckInAdvanceWindowOpenDay: (v: string) => void;
   setTransferBankHolder: (v: string) => void;
   setTransferBankNumber: (v: string) => void;
   setTransferBankName: (v: string) => void;
@@ -86,6 +90,7 @@ export interface SettingsFormState {
   handleSaveWalletBalanceAlertThresholdVnd: () => Promise<void>;
   handleSaveSelfCheckInAdvancePercentage: () => void;
   handleSaveSelfCheckInAdvanceHoldHours: () => void;
+  handleSaveSelfCheckInAdvanceWindowOpenDay: () => void;
   handleSaveTransferBank: () => void;
   handleSaveTransferBankVisible: () => void;
   handleSaveFlexPayTransferBank: () => void;
@@ -107,6 +112,7 @@ export function useSettingsForm(): SettingsFormState {
     SETTINGS_KEYS.WALLET_BALANCE_ALERT_THRESHOLD_VND,
     SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_PERCENTAGE,
     SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_HOLD_HOURS,
+    SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_WINDOW_OPEN_DAY,
     SETTINGS_KEYS.TRANSFER_BANK_HOLDER,
     SETTINGS_KEYS.TRANSFER_BANK_NUMBER,
     SETTINGS_KEYS.TRANSFER_BANK_NAME,
@@ -134,6 +140,8 @@ export function useSettingsForm(): SettingsFormState {
   const [originalSelfCheckInAdvancePercentage, setOriginalSelfCheckInAdvancePercentage] = useState('');
   const [selfCheckInAdvanceHoldHours, setSelfCheckInAdvanceHoldHours] = useState('');
   const [originalSelfCheckInAdvanceHoldHours, setOriginalSelfCheckInAdvanceHoldHours] = useState('');
+  const [selfCheckInAdvanceWindowOpenDay, setSelfCheckInAdvanceWindowOpenDay] = useState('');
+  const [originalSelfCheckInAdvanceWindowOpenDay, setOriginalSelfCheckInAdvanceWindowOpenDay] = useState('');
   const [transferBankHolder, setTransferBankHolder] = useState('');
   const [originalTransferBankHolder, setOriginalTransferBankHolder] = useState('');
   const [transferBankNumber, setTransferBankNumber] = useState('');
@@ -171,6 +179,9 @@ export function useSettingsForm(): SettingsFormState {
       );
       const selfCheckInAdvanceHoldHoursSetting = settings.find(
         (s) => s?.key === SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_HOLD_HOURS,
+      );
+      const selfCheckInAdvanceWindowOpenDaySetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_WINDOW_OPEN_DAY,
       );
       const transferBankHolderSetting = settings.find(
         (s) => s?.key === SETTINGS_KEYS.TRANSFER_BANK_HOLDER,
@@ -226,6 +237,10 @@ export function useSettingsForm(): SettingsFormState {
       if (selfCheckInAdvanceHoldHoursSetting?.value != null) {
         setSelfCheckInAdvanceHoldHours(selfCheckInAdvanceHoldHoursSetting.value);
         setOriginalSelfCheckInAdvanceHoldHours(selfCheckInAdvanceHoldHoursSetting.value);
+      }
+      if (selfCheckInAdvanceWindowOpenDaySetting?.value != null) {
+        setSelfCheckInAdvanceWindowOpenDay(selfCheckInAdvanceWindowOpenDaySetting.value);
+        setOriginalSelfCheckInAdvanceWindowOpenDay(selfCheckInAdvanceWindowOpenDaySetting.value);
       }
       // Missing rows fall back to the shared defaults so admins see what is
       // currently printed on statements before saving an override.
@@ -357,6 +372,18 @@ export function useSettingsForm(): SettingsFormState {
     );
   };
 
+  const handleSaveSelfCheckInAdvanceWindowOpenDay = () => {
+    if (!settings || !Array.isArray(settings)) return;
+    const setting = settings.find(
+      (item) => item?.key === SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_WINDOW_OPEN_DAY,
+    );
+    if (!setting) return;
+    updateMutation.mutate(
+      { id: setting.id, data: { value: selfCheckInAdvanceWindowOpenDay } },
+      { onSuccess: () => setOriginalSelfCheckInAdvanceWindowOpenDay(selfCheckInAdvanceWindowOpenDay) },
+    );
+  };
+
   const handleSaveBulkTransferWorkbookLimitVnd = async () => {
     if (!bulkTransferWorkbookLimitSetting) return;
 
@@ -467,6 +494,8 @@ export function useSettingsForm(): SettingsFormState {
     originalSelfCheckInAdvancePercentage,
     selfCheckInAdvanceHoldHours,
     originalSelfCheckInAdvanceHoldHours,
+    selfCheckInAdvanceWindowOpenDay,
+    originalSelfCheckInAdvanceWindowOpenDay,
     transferBankHolder,
     originalTransferBankHolder,
     transferBankNumber,
@@ -495,6 +524,7 @@ export function useSettingsForm(): SettingsFormState {
     setWalletBalanceAlertThresholdVnd,
     setSelfCheckInAdvancePercentage,
     setSelfCheckInAdvanceHoldHours,
+    setSelfCheckInAdvanceWindowOpenDay,
     setTransferBankHolder,
     setTransferBankNumber,
     setTransferBankName,
@@ -510,6 +540,7 @@ export function useSettingsForm(): SettingsFormState {
     handleSaveWalletBalanceAlertThresholdVnd,
     handleSaveSelfCheckInAdvancePercentage,
     handleSaveSelfCheckInAdvanceHoldHours,
+    handleSaveSelfCheckInAdvanceWindowOpenDay,
     handleSaveTransferBank,
     handleSaveTransferBankVisible,
     handleSaveFlexPayTransferBank,

@@ -1,10 +1,15 @@
 package advance_payment
 
 import (
+	"context"
+	"io"
+	"log/slog"
+	"strings"
 	"testing"
 	"time"
 
 	"api-server/internal/domain"
+	"api-server/internal/pkg/clock"
 )
 
 // TestIsCheckInRequestWindowOpen covers the self-check-in advance request
@@ -35,8 +40,33 @@ func TestIsCheckInRequestWindowOpen(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if got := isCheckInRequestWindowOpen(c.now, c.forMonth); got != c.want {
+			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, SelfCheckInAdvanceWindowOpenDay); got != c.want {
 				t.Errorf("isCheckInRequestWindowOpen(%s, %s) = %v, want %v",
+					c.now.Format("2006-01-02"), c.forMonth, got, c.want)
+			}
+		})
+	}
+}
+
+// With a configured window-open day of 15, the default day-10 expectations no
+// longer apply: day 14 stays locked, day 15 opens.
+func TestIsCheckInRequestWindowOpenConfiguredDay(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*3600)
+	cases := []struct {
+		name     string
+		now      time.Time
+		forMonth string
+		want     bool
+	}{
+		{"day 14 same month - locked", time.Date(2026, 5, 14, 23, 59, 0, 0, loc), "2026-05", false},
+		{"day 15 same month - open", time.Date(2026, 5, 15, 0, 1, 0, 0, loc), "2026-05", true},
+		{"day 10 same month - locked before configured day", time.Date(2026, 5, 10, 12, 0, 0, 0, loc), "2026-05", false},
+		{"day 28 same month - open", time.Date(2026, 5, 28, 12, 0, 0, 0, loc), "2026-05", true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, 15); got != c.want {
+				t.Errorf("isCheckInRequestWindowOpen(%s, %s, 15) = %v, want %v",
 					c.now.Format("2006-01-02"), c.forMonth, got, c.want)
 			}
 		})
@@ -70,11 +100,14 @@ func TestDefaultSelfCheckInAdvancePercentage(t *testing.T) {
 	}
 }
 
-// TestCheckInAdvanceConstants pins the window-open day so a future edit can't
-// silently change the business rule without updating the test.
+// TestCheckInAdvanceConstants pins the fallback window-open day so a future
+// edit can't silently change the business rule without updating the test.
 func TestCheckInAdvanceConstants(t *testing.T) {
-	if SelfCheckInAdvanceWindowOpenDay != 10 {
-		t.Errorf("SelfCheckInAdvanceWindowOpenDay = %d, want 10", SelfCheckInAdvanceWindowOpenDay)
+	if domain.DefaultSelfCheckInAdvanceWindowOpenDay != 10 {
+		t.Errorf("DefaultSelfCheckInAdvanceWindowOpenDay = %d, want 10", domain.DefaultSelfCheckInAdvanceWindowOpenDay)
+	}
+	if SelfCheckInAdvanceWindowOpenDay != int(domain.DefaultSelfCheckInAdvanceWindowOpenDay) {
+		t.Errorf("SelfCheckInAdvanceWindowOpenDay = %d, want int(domain.DefaultSelfCheckInAdvanceWindowOpenDay)", SelfCheckInAdvanceWindowOpenDay)
 	}
 	if minCheckInAdvanceRequest != 10000 {
 		t.Errorf("minCheckInAdvanceRequest = %d, want 10000", minCheckInAdvanceRequest)
@@ -82,4 +115,95 @@ func TestCheckInAdvanceConstants(t *testing.T) {
 	if CheckInAdvanceDisclaimerVN == "" {
 		t.Error("CheckInAdvanceDisclaimerVN must not be empty")
 	}
+}
+
+// windowDayAdvanceRepo serves the Sum* aggregates GetCheckInAdvanceInfo needs.
+type windowDayAdvanceRepo struct {
+	domain.AdvancePaymentRepository
+}
+
+func (f *windowDayAdvanceRepo) SumSalaryAndMaxAdvByEmployeeMonth(_ context.Context, _ uint64, _ string) (uint64, uint64, error) {
+	return 5_000_000, 3_500_000, nil
+}
+
+func (f *windowDayAdvanceRepo) SumPendingEarningsByEmployeeMonth(_ context.Context, _ uint64, _ string) (uint64, error) {
+	return 0, nil
+}
+
+// windowDayRequestRepo serves the completed/pending sums GetCheckInAdvanceInfo needs.
+type windowDayRequestRepo struct {
+	domain.AdvancePaymentRequestRepository
+}
+
+func (f *windowDayRequestRepo) SumCompletedByEmployeeMonth(_ context.Context, _ uint64, _ string) (uint64, error) {
+	return 0, nil
+}
+
+func (f *windowDayRequestRepo) SumPendingByEmployeeMonth(_ context.Context, _ uint64, _ string) (uint64, error) {
+	return 0, nil
+}
+
+// TestGetCheckInAdvanceInfoConfiguredWindowDay proves the employee-facing info
+// follows the Admin-configured window-open day: a service wired with a getter
+// returning 15 reports WindowOpenDay 15 (day 12 is before the window → closed,
+// reason names "ngày 15"); a service with the getter nil falls back to 10.
+func TestGetCheckInAdvanceInfoConfiguredWindowDay(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*3600)
+	// Day 12: past the days 1-8 tail, before a day-15 window.
+	clock.SetGlobal(clock.NewFake(time.Date(2026, 5, 12, 9, 0, 0, 0, loc)))
+	t.Cleanup(func() { clock.SetGlobal(clock.New()) })
+
+	newSvc := func(getter func(ctx context.Context) uint64) *Service {
+		return NewService(&Config{
+			AdvancePaymentRepo:        &windowDayAdvanceRepo{},
+			AdvancePaymentRequestRepo: &windowDayRequestRepo{},
+			ProjectEmployeeRepo: &hybridCreateProjectEmployeeRepo{
+				assignments: []*domain.ProjectEmployee{
+					{
+						EmployeeID:            99,
+						ProjectID:             5,
+						PaymentSchedule:       string(domain.PaymentScheduleFlexible),
+						CheckInEnabled:        true,
+						AdvanceRequestEnabled: true,
+					},
+				},
+			},
+			GetSelfCheckInAdvanceWindowOpenDay: getter,
+		}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	}
+
+	t.Run("configured day 15 governs the served info", func(t *testing.T) {
+		info, err := newSvc(func(_ context.Context) uint64 { return 15 }).GetCheckInAdvanceInfo(context.Background(), 99)
+		if err != nil {
+			t.Fatalf("GetCheckInAdvanceInfo: %v", err)
+		}
+		if info.WindowOpenDay != 15 {
+			t.Errorf("WindowOpenDay = %d, want 15", info.WindowOpenDay)
+		}
+		if info.ForMonth != "2026-05" {
+			t.Errorf("ForMonth = %s, want 2026-05", info.ForMonth)
+		}
+		if info.CanRequest {
+			t.Error("day 12 must be before a day-15 window")
+		}
+		if !strings.Contains(info.CanRequestReason, "ngày 15") {
+			t.Errorf("CanRequestReason = %q, want it to name ngày 15", info.CanRequestReason)
+		}
+	})
+
+	t.Run("nil getter falls back to default day 10", func(t *testing.T) {
+		// Day 9 (the gap day) sits before the default day-10 window, so the
+		// closed-window reason must name the fallback day.
+		clock.SetGlobal(clock.NewFake(time.Date(2026, 5, 9, 12, 0, 0, 0, loc)))
+		info, err := newSvc(nil).GetCheckInAdvanceInfo(context.Background(), 99)
+		if err != nil {
+			t.Fatalf("GetCheckInAdvanceInfo: %v", err)
+		}
+		if info.WindowOpenDay != 10 {
+			t.Errorf("WindowOpenDay = %d, want 10", info.WindowOpenDay)
+		}
+		if !strings.Contains(info.CanRequestReason, "ngày 10") {
+			t.Errorf("CanRequestReason = %q, want it to name ngày 10", info.CanRequestReason)
+		}
+	})
 }

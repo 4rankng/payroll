@@ -10,6 +10,11 @@ import (
 // the Admin setting is missing or invalid.
 const DefaultSelfCheckInAdvancePercentage uint64 = 70
 
+// DefaultSelfCheckInAdvanceWindowOpenDay is the fallback day of month from which a
+// self-check-in employee may request an advance for the current salary period when
+// the Admin setting is missing or invalid.
+const DefaultSelfCheckInAdvanceWindowOpenDay uint64 = 10
+
 // QuotaCreditHoldDuration is the default self-check-out earning hold when the
 // Admin setting is missing or invalid. Check-out enqueues a deferred credit task
 // after the configured hold; admin manual approvals credit immediately and

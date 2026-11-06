@@ -289,8 +289,9 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 		// Hybrid employee (self-checkin enabled): the regular endpoint serves
 		// ONLY the previous-period tail — days 1-8 of the current month, for the
 		// previous month. Current-month requests must go through the self-checkin
-		// flow (/me/check-in-advance), whose window opens on day 10; allowing the
-		// current month here from day 9 would bypass that window.
+		// flow (/me/check-in-advance), whose window opens on the Admin-configured
+		// window-open day; allowing the current month here from day 9 would
+		// bypass that window.
 		if !IsBeforeCutoff(now) {
 			if forMonth == prevCalMonth {
 				return nil, domain.NewValidationError(constants.MsgAdvanceRequestCutoffVN)
