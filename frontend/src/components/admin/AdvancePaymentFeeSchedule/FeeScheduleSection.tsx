@@ -64,7 +64,7 @@ export const FeeScheduleSection = () => {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-base font-semibold tracking-tight">
-            Cấu hình phí ứng lương
+            Phí ứng lương (lương tháng — ứng lương cuối tháng)
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5 max-w-prose leading-relaxed">
             Mỗi cấu hình áp dụng từ ngày hiệu lực cho đến khi có cấu hình mới

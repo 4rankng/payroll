@@ -125,9 +125,9 @@ const SettingsPage = () => {
         </TabsContent>
 
         <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-8">
-          <FeeScheduleSection />
-          <Separator />
           <WeeklyPaymentFeeScheduleSection />
+          <Separator />
+          <FeeScheduleSection />
           <Separator />
           <DisbursementFeeScheduleSection />
         </TabsContent>

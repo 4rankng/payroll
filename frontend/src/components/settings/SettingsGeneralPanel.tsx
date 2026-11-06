@@ -1,4 +1,4 @@
-import { type LucideIcon, Building2, Landmark, Percent, Wallet } from 'lucide-react';
+import { type LucideIcon, Building2, CalendarCheck, CalendarDays, Landmark, Percent, Wallet } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 
 import { SettingCard } from '@/components/settings/SettingCard';
@@ -122,37 +122,9 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
   <div className="space-y-0">
     <SettingsSection
       icon={Percent}
-      title="Giới hạn thanh toán"
-      description="Kiểm soát số tiền và tỷ lệ ngân sách được phép giải ngân."
+      title="Lương tuần"
+      description="Thiết lập cho lương tuần: tỷ lệ ngân sách được phép giải ngân theo chu kỳ tuần."
     >
-      <SettingCard
-        title="Giới hạn tổng tiền mỗi file Chuyển lô"
-        description="Hệ thống tự tách file để tổng tiền mỗi file luôn nhỏ hơn giới hạn này."
-        value={form.bulkTransferWorkbookLimitVnd}
-        originalValue={form.originalBulkTransferWorkbookLimitVnd}
-        onChange={form.setBulkTransferWorkbookLimitVnd}
-        onSave={form.handleSaveBulkTransferWorkbookLimitVnd}
-        onReset={() =>
-          form.setBulkTransferWorkbookLimitVnd(form.originalBulkTransferWorkbookLimitVnd)
-        }
-        isDirty={
-          form.bulkTransferWorkbookLimitVnd !== form.originalBulkTransferWorkbookLimitVnd
-        }
-        isSaving={form.isSaving}
-        displayMode="currency-slider"
-        min="100000000"
-        max="500000000"
-        sliderPresets={[
-          '100000000',
-          '200000000',
-          '300000000',
-          '400000000',
-          '500000000',
-        ]}
-        errorMessage={form.bulkTransferWorkbookLimitSaveError}
-        unavailableMessage={form.bulkTransferWorkbookLimitUnavailableMessage}
-        onRetry={form.retryLoading}
-      />
       <SettingCard
         title="Tỷ lệ trả lương tuần"
         description="Phần trăm ngân sách được phép trả theo chu kỳ tuần."
@@ -166,19 +138,13 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
         type="number"
         suffix="%"
       />
-      <SettingCard
-        title="Tỷ lệ trả lương tháng"
-        description="Phần trăm ngân sách được phép trả theo chu kỳ tháng."
-        value={form.monthlyPaymentPercentage}
-        originalValue={form.originalMonthlyPayment}
-        onChange={form.setMonthlyPaymentPercentage}
-        onSave={form.handleSaveMonthlyPayment}
-        onReset={() => form.setMonthlyPaymentPercentage(form.originalMonthlyPayment)}
-        isDirty={form.monthlyPaymentPercentage !== form.originalMonthlyPayment}
-        isSaving={form.isSaving}
-        type="number"
-        suffix="%"
-      />
+    </SettingsSection>
+
+    <SettingsSection
+      icon={CalendarCheck}
+      title="Lương ngày (tự chấm công)"
+      description="Thiết lập cho lương ngày: nhân viên tự chấm công và xin ứng lương theo ca làm việc."
+    >
       <SettingCard
         title="Tỷ lệ ứng lương tự chấm công"
         description="Phần trăm tiền công đã ghi nhận được cộng vào hạn mức ứng lương."
@@ -240,6 +206,54 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
         step={1}
         wholeNumber
         suffix="ngày"
+      />
+    </SettingsSection>
+
+    <SettingsSection
+      icon={CalendarDays}
+      title="Lương tháng (ứng lương cuối tháng)"
+      description="Thiết lập cho kỳ ứng lương tháng: tỷ lệ ngân sách và giới hạn file chuyển lô."
+    >
+      <SettingCard
+        title="Tỷ lệ trả lương tháng"
+        description="Phần trăm ngân sách được phép trả theo chu kỳ tháng."
+        value={form.monthlyPaymentPercentage}
+        originalValue={form.originalMonthlyPayment}
+        onChange={form.setMonthlyPaymentPercentage}
+        onSave={form.handleSaveMonthlyPayment}
+        onReset={() => form.setMonthlyPaymentPercentage(form.originalMonthlyPayment)}
+        isDirty={form.monthlyPaymentPercentage !== form.originalMonthlyPayment}
+        isSaving={form.isSaving}
+        type="number"
+        suffix="%"
+      />
+      <SettingCard
+        title="Giới hạn tổng tiền mỗi file Chuyển lô"
+        description="Hệ thống tự tách file để tổng tiền mỗi file luôn nhỏ hơn giới hạn này."
+        value={form.bulkTransferWorkbookLimitVnd}
+        originalValue={form.originalBulkTransferWorkbookLimitVnd}
+        onChange={form.setBulkTransferWorkbookLimitVnd}
+        onSave={form.handleSaveBulkTransferWorkbookLimitVnd}
+        onReset={() =>
+          form.setBulkTransferWorkbookLimitVnd(form.originalBulkTransferWorkbookLimitVnd)
+        }
+        isDirty={
+          form.bulkTransferWorkbookLimitVnd !== form.originalBulkTransferWorkbookLimitVnd
+        }
+        isSaving={form.isSaving}
+        displayMode="currency-slider"
+        min="100000000"
+        max="500000000"
+        sliderPresets={[
+          '100000000',
+          '200000000',
+          '300000000',
+          '400000000',
+          '500000000',
+        ]}
+        errorMessage={form.bulkTransferWorkbookLimitSaveError}
+        unavailableMessage={form.bulkTransferWorkbookLimitUnavailableMessage}
+        onRetry={form.retryLoading}
       />
     </SettingsSection>
 

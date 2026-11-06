@@ -147,7 +147,7 @@ export const WeeklyPaymentFeeScheduleSection = () => {
             description="Thêm cấu hình đầu tiên để bắt đầu áp dụng cho các kỳ trả lương tuần"
           />
         ) : (
-          <div tabIndex={0} role="region" aria-label="Lịch sử cấu hình phí trả lương tuần" className="rounded-lg border overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <div tabIndex={0} role="region" aria-label="Lịch sử cấu hình phí trả lương tuần" className="rounded-lg border bg-card shadow-sm overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
             <Table>
               <TableHeader>
                 <TableRow>
