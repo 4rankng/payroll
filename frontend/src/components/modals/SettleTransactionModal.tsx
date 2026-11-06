@@ -265,7 +265,7 @@ function SettleTransactionModalComponent({
                       value={watchedAmount}
                       onChange={handleAmountChange}
                       placeholder="0"
-                      className={`pr-12 text-right ${errors.amount ? 'border-red-500' : ''}`}
+                      className={`pr-12 sm:pr-12 text-right ${errors.amount ? 'border-red-500' : ''}`}
                       required
                     />
                     <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">

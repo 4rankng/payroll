@@ -389,7 +389,7 @@ export const ApiKeysSection = () => {
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Ví dụ: TingHire Production, Đối tác chấm công..."
                       maxLength={100}
-                      className="min-h-11 pr-14 text-sm sm:min-h-9"
+                      className="min-h-11 pr-14 sm:pr-14 text-sm sm:min-h-9"
                       disabled={createKey.isPending}
                     />
                     <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground select-none">

@@ -285,7 +285,7 @@ export const SettingCard = ({
                 disabled={isSaving || isUnavailable}
                 className={cn(
                   'h-12 min-w-0 bg-white text-base font-semibold tabular-nums',
-                  visibleSuffix && 'pr-8',
+                  visibleSuffix && 'pr-8 sm:pr-8',
                   displayMode === 'currency-vnd' && 'text-right',
                   displayMode === 'account-number',
                   hasVisibleError && 'border-destructive focus-visible:ring-destructive/20',

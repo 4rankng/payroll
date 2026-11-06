@@ -221,7 +221,7 @@ function EditUserSheet({
                 placeholder="Để trống nếu không đổi"
                 value={formData.password}
                 onChange={(e) => handleInputChange("password", e.target.value)}
-                className={cn("pr-10", errors.password ? "border-destructive" : "")}
+                className={cn("pr-10 sm:pr-10", errors.password ? "border-destructive" : "")}
               />
               <button
                 type="button"

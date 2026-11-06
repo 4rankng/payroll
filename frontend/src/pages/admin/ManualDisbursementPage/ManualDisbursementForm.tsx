@@ -434,7 +434,7 @@ export function ManualDisbursementForm(props: Props) {
             autoComplete="off"
             onChange={(e) => setField("amount", parseAmountInput(e.target.value))}
             disabled={disabled}
-            className="min-h-11 pr-14 text-right text-lg font-semibold tabular-nums"
+            className="min-h-11 pr-14 sm:pr-14 text-right text-lg font-semibold tabular-nums"
           />
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
             ₫

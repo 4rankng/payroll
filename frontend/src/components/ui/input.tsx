@@ -8,6 +8,10 @@ import { cn } from "@/lib/utils"
 // focus-visible outline treatment matching the vendored button. Vendored
 // invalid styling (ring-error_subtle / ring-error) has no bridged tokens, so
 // invalid maps to a utility-error-300 border + error outline.
+// NOTE: the variants end with responsive padding (`sm:px-2.5`). A caller
+// reserving space for an absolute-positioned suffix/icon must pass BOTH
+// `pr-*` and `sm:pr-*` — an unprefixed `pr-*` alone is trampled by
+// `sm:px-2.5` at >=sm, and right-aligned text slides under the suffix.
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input"> & {
   variant?: 'default' | 'filled' | 'outlined'
 }>(({ className, type, variant = 'default', ...props }, ref) => {
