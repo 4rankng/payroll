@@ -142,7 +142,7 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
 
     <SettingsSection
       icon={CalendarCheck}
-      title="Lương ngày (tự chấm công)"
+      title="Lương ngày"
       description="Thiết lập cho lương ngày: nhân viên tự chấm công và xin ứng lương theo ca làm việc."
     >
       <SettingCard
@@ -211,8 +211,8 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
 
     <SettingsSection
       icon={CalendarDays}
-      title="Lương tháng (ứng lương cuối tháng)"
-      description="Thiết lập cho kỳ ứng lương tháng: tỷ lệ ngân sách và giới hạn file chuyển lô."
+      title="Lương tháng"
+      description="Thiết lập cho kỳ ứng lương cuối tháng: tỷ lệ ngân sách và giới hạn file chuyển lô."
     >
       <SettingCard
         title="Tỷ lệ trả lương tháng"
