@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCompactVND, formatCurrency } from "@/utils/formatters";
+import { formatFullCurrency } from "@/utils/formatters";
 
 export interface AdvPartnerHeroStripProps {
   /** Gross total of completed advance requests this period
@@ -54,10 +54,10 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
           </div>
           <div
             className={cn("treasury-value console-value relative z-[1] mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal text-foreground", compact ? "text-[clamp(1.5rem,7.5vw,1.75rem)]" : "text-[clamp(1.875rem,7vw,2.25rem)]")}
-            title={formatCurrency(totalAmount)}
-            aria-label={formatCurrency(totalAmount)}
+            title={formatFullCurrency(totalAmount)}
+            aria-label={formatFullCurrency(totalAmount)}
           >
-            {formatCompactVND(totalAmount)}
+            {formatFullCurrency(totalAmount)}
           </div>
 
           {/* Footer rail — pinned via mt-auto to the shared band baseline so the
@@ -69,10 +69,10 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
               </div>
               <div
                 className="mt-0.5 truncate font-financial text-[15px] font-semibold leading-snug text-foreground tabular-nums"
-                title={avgPerRequest > 0 ? `~${formatCurrency(avgPerRequest)}` : undefined}
-                aria-label={avgPerRequest > 0 ? `~${formatCurrency(avgPerRequest)}` : undefined}
+                title={avgPerRequest > 0 ? `~${formatFullCurrency(avgPerRequest)}` : undefined}
+                aria-label={avgPerRequest > 0 ? `~${formatFullCurrency(avgPerRequest)}` : undefined}
               >
-                {avgPerRequest > 0 ? `~${formatCompactVND(avgPerRequest)}` : "—"}
+                {avgPerRequest > 0 ? `~${formatFullCurrency(avgPerRequest)}` : "—"}
               </div>
             </div>
           </div>

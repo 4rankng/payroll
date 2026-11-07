@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth } from 'date-fns';
 // UU PRO restyle (W13a): lucide → verified @untitledui/icons. The shared
@@ -42,6 +42,15 @@ const AdminDashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(format(startOfMonth(new Date()), 'yyyy-MM'));
   const [activitySchedule, setActivitySchedule] = useState<'weekly' | 'monthly' | 'flexible' | null>(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+
+  // Literal toto.sg console skin for this dashboard only. The class lives on
+  // <html> so the sidebar and portalled dialogs share the navy/teal tokens;
+  // it is removed on unmount, restoring the light day console elsewhere.
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('admin-dashboard-dark');
+    return () => root.classList.remove('admin-dashboard-dark');
+  }, []);
 
   const handleMonthChange = useCallback((value: string) => {
     setSelectedMonth(value);

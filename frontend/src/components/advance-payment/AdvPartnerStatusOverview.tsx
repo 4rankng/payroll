@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 // W13c: lucide → verified @untitledui/icons (same glyph semantics).
 import { CheckCircle } from "@untitledui/icons";
-import { formatCompactVND, formatCurrency } from "@/utils/formatters";
+import { formatFullCurrency } from "@/utils/formatters";
 
 export interface AdvPartnerStatusOverviewProps {
   totalPaid: number;
@@ -204,10 +204,10 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
                     {amount !== undefined && (
                       <span
                         className="font-financial text-xs font-medium leading-none text-muted-foreground tabular-nums"
-                        title={formatCurrency(amount)}
-                        aria-label={formatCurrency(amount)}
+                        title={formatFullCurrency(amount)}
+                        aria-label={formatFullCurrency(amount)}
                       >
-                        {formatCompactVND(amount)}
+                        {formatFullCurrency(amount)}
                       </span>
                     )}
                   </div>
