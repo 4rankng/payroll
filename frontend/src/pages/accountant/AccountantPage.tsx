@@ -5,7 +5,6 @@ import { BulkTransferExportDialog } from '@/components/timesheet/BulkTransferExp
 import { BulkTransferResultUploadDialog } from '@/components/timesheet/BulkTransferResultUploadDialog';
 import { PayrollReportExportDialog } from '@/components/timesheet/PayrollReportExportDialog';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +18,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { getConsoleKicker } from '@/lib/console';
 import { useBulkApproveTimesheets, useTimesheets } from '@/hooks/api/useTimesheets';
 import { useExportBulkTransfer, useExportPayrollReport } from '@/hooks/api/usePayrolls';
 import type { Timesheet } from '@/types/api/timesheet.types';
@@ -50,11 +52,14 @@ export default function AccountantPage() {
   return (
     <div data-accountant-ui="" className="console-shell min-h-screen bg-card">
       <header className="sticky top-0 z-10 border-b border-utility-gray-200 bg-card">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+        <div className="console-page-header mx-auto flex max-w-6xl items-center justify-between gap-3 pr-4">
           <div className="min-w-0">
-            <p className="text-sm font-semibold leading-5 text-fg-primary">Kế toán</p>
-            <p className="truncate text-xs text-fg-tertiary">
-              {user?.name || user?.username || ''}
+            <p className="console-kicker mb-1">{getConsoleKicker('/accountant')}</p>
+            <h1 className="font-display text-xl font-bold tracking-tight text-fg-primary sm:text-2xl">
+              Bàn làm việc
+            </h1>
+            <p className="mt-1 truncate font-financial text-[11px] text-fg-tertiary">
+              {user?.name || user?.username || ''} · Kỳ {format(new Date(), 'MM/yyyy', { locale: vi })}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -67,21 +72,21 @@ export default function AccountantPage() {
       <main className="mx-auto w-full max-w-6xl px-4 py-6">
         <Tabs defaultValue="duyet-cong" className="w-full">
           <TabsList className="mb-4 grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
-            <TabsTrigger value="duyet-cong" className="gap-1.5 whitespace-normal text-center leading-snug">
-              <CalendarCheck01 className="size-4" aria-hidden="true" />
-              Duyệt công
+            <TabsTrigger value="duyet-cong" className="w-full min-w-0 gap-1.5 px-2.5 sm:h-9 sm:min-h-0 sm:px-3">
+              <CalendarCheck01 className="size-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">Duyệt công</span>
             </TabsTrigger>
-            <TabsTrigger value="xuat-chuyen-lo" className="gap-1.5 whitespace-normal text-center leading-snug">
-              <FileDownload02 className="size-4" aria-hidden="true" />
-              Xuất file chuyển lô
+            <TabsTrigger value="xuat-chuyen-lo" className="w-full min-w-0 gap-1.5 px-2.5 sm:h-9 sm:min-h-0 sm:px-3">
+              <FileDownload02 className="size-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">Xuất file chuyển lô</span>
             </TabsTrigger>
-            <TabsTrigger value="nhap-kq" className="gap-1.5 whitespace-normal text-center leading-snug">
-              <Upload01 className="size-4" aria-hidden="true" />
-              Nhập KQ chuyển lô
+            <TabsTrigger value="nhap-kq" className="w-full min-w-0 gap-1.5 px-2.5 sm:h-9 sm:min-h-0 sm:px-3">
+              <Upload01 className="size-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">Nhập KQ chuyển lô</span>
             </TabsTrigger>
-            <TabsTrigger value="xuat-sao-ke" className="gap-1.5 whitespace-normal text-center leading-snug">
-              <FileDownload01 className="size-4" aria-hidden="true" />
-              Xuất sao kê
+            <TabsTrigger value="xuat-sao-ke" className="w-full min-w-0 gap-1.5 px-2.5 sm:h-9 sm:min-h-0 sm:px-3">
+              <FileDownload01 className="size-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">Xuất sao kê</span>
             </TabsTrigger>
           </TabsList>
 
@@ -157,9 +162,9 @@ function ApproveTimesheetsTab() {
     .reduce((sum, r) => sum + (r.amount ?? 0), 0);
 
   return (
-    <Card>
-      <CardHeader className="gap-3 border-b py-4">
-        <CardTitle className="text-base">Chấm công chờ duyệt</CardTitle>
+    <div className="console-panel">
+      <div className="console-panel-header flex-wrap">
+        <p className="text-sm font-semibold text-fg-primary">Chấm công chờ duyệt</p>
         <div className="flex flex-wrap items-end gap-3">
           <div className="space-y-1">
             <Label htmlFor="acc-from" className="text-xs">
@@ -190,10 +195,9 @@ function ApproveTimesheetsTab() {
             />
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto" role="region" aria-label="Chấm công chờ duyệt" tabIndex={0}>
-        <Table>
+      </div>
+      <div className="overflow-x-auto" role="region" aria-label="Chấm công chờ duyệt" tabIndex={0}>
+        <Table variant="console">
           <TableHeader>
             <TableRow>
               <TableHead className="w-14">
@@ -248,17 +252,16 @@ function ApproveTimesheetsTab() {
                     <div className="text-xs text-fg-tertiary">{r.employeeCCCD || r.employeeCode}</div>
                   </TableCell>
                   <TableCell className="text-sm">{r.projectName}</TableCell>
-                  <TableCell className="text-sm">{r.date}</TableCell>
-                  <TableCell className="text-right text-sm tabular-nums">{r.hours_worked}</TableCell>
-                  <TableCell className="text-right text-sm tabular-nums">{formatCurrency(r.amount)}</TableCell>
+                  <TableCell className="num">{r.date}</TableCell>
+                  <TableCell className="num tabular-nums">{r.hours_worked}</TableCell>
+                  <TableCell className="num tabular-nums">{formatCurrency(r.amount)}</TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
-        </div>
-      </CardContent>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 sm:px-6">
+      </div>
+      <div className="console-divider flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3 sm:px-6">
         <div className="min-w-0">
           <p className="text-sm text-fg-tertiary">
             Đã chọn {selected.size}/{rows.length}
@@ -274,7 +277,7 @@ function ApproveTimesheetsTab() {
           {bulkApprove.isPending ? 'Đang duyệt…' : `Duyệt (${selected.size})`}
         </Button>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -284,11 +287,11 @@ function ExportBulkTransferTab() {
   const exportMutation = useExportBulkTransfer();
 
   return (
-    <Card>
-      <CardHeader className="border-b py-4">
-        <CardTitle className="text-base">Xuất file chuyển lô</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col items-start gap-3 py-6">
+    <div className="console-panel">
+      <div className="console-panel-header">
+        <p className="text-sm font-semibold text-fg-primary">Xuất file chuyển lô</p>
+      </div>
+      <div className="console-panel-body flex flex-col items-start gap-3">
         <p className="text-sm text-fg-tertiary">
           Chọn tuần (hoặc tháng) và dự án, hệ thống tạo file Excel chuyển lô để nộp ngân hàng.
         </p>
@@ -296,14 +299,14 @@ function ExportBulkTransferTab() {
           <FileDownload02 className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Mở hộp thoại xuất file
         </Button>
-      </CardContent>
+      </div>
       <BulkTransferExportDialog
         open={open}
         onOpenChange={setOpen}
         onExport={(params) => exportMutation.mutate(params)}
         isLoading={exportMutation.isPending}
       />
-    </Card>
+    </div>
   );
 }
 
@@ -312,11 +315,11 @@ function ImportResultTab() {
   const [open, setOpen] = useState(false);
 
   return (
-    <Card>
-      <CardHeader className="border-b py-4">
-        <CardTitle className="text-base">Nhập KQ chuyển lô</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col items-start gap-3 py-6">
+    <div className="console-panel">
+      <div className="console-panel-header">
+        <p className="text-sm font-semibold text-fg-primary">Nhập KQ chuyển lô</p>
+      </div>
+      <div className="console-panel-body flex flex-col items-start gap-3">
         <p className="text-sm text-fg-tertiary">
           Tải lên file kết quả ngân hàng trả về sau chuyển lô để cập nhật trạng thái thanh toán.
         </p>
@@ -324,9 +327,9 @@ function ImportResultTab() {
           <Upload01 className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Tải lên file kết quả
         </Button>
-      </CardContent>
+      </div>
       <BulkTransferResultUploadDialog open={open} onOpenChange={setOpen} />
-    </Card>
+    </div>
   );
 }
 
@@ -336,11 +339,11 @@ function ExportSaoKeTab() {
   const exportMutation = useExportPayrollReport();
 
   return (
-    <Card>
-      <CardHeader className="border-b py-4">
-        <CardTitle className="text-base">Xuất sao kê thanh toán</CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col items-start gap-3 py-6">
+    <div className="console-panel">
+      <div className="console-panel-header">
+        <p className="text-sm font-semibold text-fg-primary">Xuất sao kê thanh toán</p>
+      </div>
+      <div className="console-panel-body flex flex-col items-start gap-3">
         <p className="text-sm text-fg-tertiary">
           Xuất sao kê thanh toán lương (file Excel) theo ngày đối chiếu.
         </p>
@@ -348,13 +351,13 @@ function ExportSaoKeTab() {
           <FileDownload01 className="mr-1.5 h-4 w-4" aria-hidden="true" />
           Mở hộp thoại xuất sao kê
         </Button>
-      </CardContent>
+      </div>
       <PayrollReportExportDialog
         open={open}
         onOpenChange={setOpen}
         onExport={(params) => exportMutation.mutate({ atDate: params.atDate })}
         isLoading={exportMutation.isPending}
       />
-    </Card>
+    </div>
   );
 }

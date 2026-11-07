@@ -43,7 +43,7 @@ import { useTimesheets } from '@/hooks/api/useTimesheets';
 import { useBankUsageAllProjects, useEmployeeActivityStats } from '@/hooks/api/useDashboard';
 import { useDashboardNavigation } from '@/hooks/useDashboardNavigation';
 import { CheckInRosterReminderBanner } from '@/components/admin-dashboard/CheckInRosterReminderBanner';
-import { formatFullCurrency as formatVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND, formatCompactVND } from '@/utils/formatters';
 
 const AdminDashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(format(startOfMonth(new Date()), 'yyyy-MM'));
@@ -145,14 +145,16 @@ const AdminDashboard = () => {
     return [
       {
         label: 'Đã trả kỳ này',
-        value: formatVND(data.dashboardSummary.paid_salary_this_month),
+        value: formatCompactVND(data.dashboardSummary.paid_salary_this_month),
+        fullValue: formatVND(data.dashboardSummary.paid_salary_this_month),
         context: `Tổng đã trả ${formatVND(data.dashboardSummary.total_paid_salary)}`,
         tone: 'primary',
         onClick: dashboardNav.navigateToSalaryLedger,
       },
       {
         label: 'Lợi nhuận kỳ này',
-        value: formatVND(data.dashboardSummary.total_profit_this_month),
+        value: formatCompactVND(data.dashboardSummary.total_profit_this_month),
+        fullValue: formatVND(data.dashboardSummary.total_profit_this_month),
         context: `Lũy kế ${formatVND(data.dashboardSummary.total_profit)}`,
         tone: 'success',
       },

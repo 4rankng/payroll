@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { format, startOfMonth } from 'date-fns';
 import { Users, UserCheck, UserX, Banknote, type LucideIcon } from 'lucide-react';
-import { Calendar, Trophy01, UserX01 } from '@untitledui/icons';
+import { UserX01 } from '@untitledui/icons';
 import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,7 +39,7 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
 
   return (
     <div
-      className="flex flex-wrap items-center gap-1 rounded-xl bg-muted/60 p-1"
+      className="console-filter-bar rounded-lg bg-muted/60 p-1"
       role="group"
       aria-label="Chọn kỳ dữ liệu"
     >
@@ -50,7 +50,7 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
           onClick={() => onChange(opt.value)}
           aria-pressed={value === opt.value}
           className={cn(
-            'min-h-11 shrink-0 rounded-lg px-3 text-xs font-semibold transition-[background-color,color,box-shadow]',
+            'h-9 shrink-0 rounded-md px-3 text-xs font-semibold transition-[background-color,color,box-shadow]',
             'outline-brand focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2',
             value === opt.value
               ? 'bg-card text-foreground shadow-sm ring-1 ring-inset ring-border/60'
@@ -69,7 +69,7 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
         <SelectTrigger
           aria-label="Chọn tháng khác"
           className={cn(
-            'h-11 min-h-11 w-[132px] shrink-0 border-0 bg-transparent px-3 text-xs font-semibold shadow-none focus:ring-1 focus:ring-ring focus:ring-offset-0',
+            'h-9 min-h-9 w-[132px] shrink-0 border-0 bg-transparent px-3 text-xs font-semibold shadow-none focus:ring-1 focus:ring-ring focus:ring-offset-0',
             isOtherMonth && 'bg-card text-foreground shadow-sm ring-1 ring-border/60',
           )}
         >
@@ -150,7 +150,7 @@ const RANK_BADGE = [
 function LeaderRow({ item, rank }: { item: TopPaidEmployeeItem; rank: number }) {
   const badge = RANK_BADGE[rank - 1] ?? 'bg-muted/60 text-muted-foreground ring-1 ring-border/60';
   return (
-    <div className="group grid grid-cols-[2rem_2.25rem_minmax(0,1fr)] items-center gap-2 rounded-xl border border-transparent px-2 py-2 transition-colors hover:border-border/60 hover:bg-muted/30">
+    <div className="group grid grid-cols-[2rem_2.25rem_minmax(0,1fr)] items-center gap-2 rounded-md px-2 py-2 transition-colors hover:bg-muted/40">
       <span className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums', badge)}>
         {rank}
       </span>
@@ -165,7 +165,7 @@ function LeaderRow({ item, rank }: { item: TopPaidEmployeeItem; rank: number }) 
             </span>
           )}
         </div>
-        <span className="mt-0.5 block text-xs font-bold tabular-nums text-foreground">
+        <span className="console-value mt-0.5 block text-xs font-bold text-foreground">
           {formatVND(item.total_paid_vnd)}
         </span>
       </div>
@@ -176,9 +176,9 @@ function LeaderRow({ item, rank }: { item: TopPaidEmployeeItem; rank: number }) 
 // ─── Skeletons ─────────────────────────────────────────────────────────────
 function StatRowSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="h-[140px] rounded-xl border border-input bg-card px-4 py-4 shadow-xs">
+        <div key={i} className="console-panel px-4 py-4">
           <Skeleton className="h-3 w-16" />
           <Skeleton className="mt-3 h-6 w-24" />
           <Skeleton className="mt-2 h-3 w-20" />
@@ -217,13 +217,10 @@ function BannerHeader({
   onMonthChange: (v: string) => void;
 }) {
   return (
-    <header className="rounded-xl border border-input bg-card px-5 py-4 shadow-xs sm:px-6 sm:py-5">
+    <header className="console-panel px-5 py-4 sm:px-6 sm:py-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-brand-secondary">
-            <Calendar className="h-4 w-4" aria-hidden="true" />
-            Kỳ báo cáo
-          </div>
+          <p className="console-kicker mb-2">Kỳ báo cáo</p>
           <h1 className="font-display text-display-lg font-semibold tracking-tight text-fg-primary">
             Tổng quan
           </h1>
@@ -284,7 +281,7 @@ const PartnerDashboardPage = () => {
         {isLoading ? (
           <StatRowSkeleton />
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 motion-safe:animate-fade-in-up">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 motion-safe:animate-fade-in-up">
             <PartnerStat
               label="Tổng chi trả"
               value={formatVND(data?.total_paid_vnd ?? 0)}
@@ -338,26 +335,21 @@ const PartnerDashboardPage = () => {
           />
 
           {/* Leaderboard */}
-          <section className="rounded-xl border border-input bg-card p-5 shadow-xs">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div className="flex items-start gap-2.5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning/10 text-warning">
-                  <Trophy01 className="h-4 w-4" aria-hidden="true" />
-                </span>
-                <div>
-                  <h2 className="text-base font-semibold text-fg-primary">Top nhân viên được trả lương</h2>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    Xếp hạng theo tổng chi trả {periodLabel}
-                  </p>
-                </div>
+          <section className="console-panel">
+            <header className="console-panel-header">
+              <div className="min-w-0 flex-1">
+                <h2 className="console-kicker">Top nhân viên được trả lương</h2>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Xếp hạng theo tổng chi trả {periodLabel}
+                </p>
               </div>
               {!isLoading && topEmployees.length > 0 && (
-                <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                <span className="console-value inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
                   {topEmployees.length} nhân viên
                 </span>
               )}
-            </div>
-
+            </header>
+            <div className="console-panel-body">
             {isLoading ? (
               <LeaderboardSkeleton />
             ) : topEmployees.length === 0 ? (
@@ -373,6 +365,7 @@ const PartnerDashboardPage = () => {
                 ))}
               </div>
             )}
+            </div>
           </section>
         </div>
 

@@ -18,7 +18,7 @@ interface RecentEmployeesCardProps {
 
 /** Shimmer skeleton card for a single employee entry */
 const EmployeeSkeleton = () => (
-  <div className="flex items-center gap-2.5 rounded-xl px-2.5 py-2">
+  <div className="flex items-center gap-2.5 px-2.5 py-2">
     <div className="w-8 h-8 rounded-full flex-shrink-0 bg-muted animate-shimmer bg-[length:200%_100%]
       [background-image:linear-gradient(90deg,hsl(var(--muted))_25%,hsl(var(--muted-foreground)/0.08)_50%,hsl(var(--muted))_75%)]" />
     <div className="min-w-0 flex-1 space-y-1.5">
@@ -61,7 +61,7 @@ export const RecentEmployeesCard: React.FC<RecentEmployeesCardProps> = ({
   const weekLabel = weeks === 1 ? '1 tuần gần đây' : `${weeks} tuần gần đây`;
 
   return (
-    <Card className="shadow-none transition-colors">
+    <Card variant="console" className="transition-colors">
       <CardContent className="p-3 sm:p-4">
         {isLoading && (
           <div className="flex items-center justify-center py-8">
@@ -77,13 +77,13 @@ export const RecentEmployeesCard: React.FC<RecentEmployeesCardProps> = ({
 
         {!isLoading && employeesArray.length > 0 && (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+            <div className="divide-y divide-border/60">
               {visibleEmployees.map((employee) => (
                 <button
                   key={employee.id}
                   type="button"
                   onClick={() => handleEmployeeClick(employee)}
-                  className="group flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-left
+                  className="group flex w-full items-center gap-2.5 px-2.5 py-2 text-left
                     transition-colors duration-150 ease-out
                     hover:bg-accent/50
                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -114,8 +114,8 @@ export const RecentEmployeesCard: React.FC<RecentEmployeesCardProps> = ({
               ))}
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-1 border-t pt-2">
-              <p className="text-xs text-muted-foreground">
+            <div className="console-divider mt-2 flex flex-wrap items-center justify-between gap-1 border-t pt-2">
+              <p className="console-value text-xs text-muted-foreground">
                 {employeesArray.length} nhân viên
               </p>
               <div className="flex flex-wrap items-center gap-2">

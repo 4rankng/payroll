@@ -1,9 +1,8 @@
 import { memo } from 'react';
-// W13c follow-up (approved W13a pattern): icon slot widened from lucide's
-// LucideIcon to a plain ComponentType so both lucide and @untitledui/icons
-// fit. LucideIcon stays structurally assignable; the hardcoded
-// strokeWidth={2} was dropped (it equals lucide's default — no visual change
-// for existing callers; UU icons keep their native weight).
+// Staff day console: the `icon` prop stays in the interface for caller
+// compatibility (both lucide and @untitledui/icons fit the ComponentType
+// slot) but is no longer rendered — console strip cells carry a kicker
+// label, the figure, and a hint, with no icon-box decoration.
 import type { ComponentType, SVGProps } from 'react';
 import { cn } from '@/lib/utils';
 import { useCountUp } from '@/hooks/useCountUp';
@@ -36,13 +35,13 @@ const BADGE_STYLES: Record<NonNullable<KpiHeroCardProps['badge']>['variant'], st
 
 const COLOR_STYLES: Record<
   KpiHeroCardProps['color'],
-  { icon: string; accent: string }
+  { accent: string }
 > = {
-  blue: { icon: 'bg-info/10 text-info', accent: 'bg-info' },
-  emerald: { icon: 'bg-primary/10 text-primary', accent: 'bg-primary' },
-  amber: { icon: 'bg-warning/10 text-warning', accent: 'bg-warning' },
-  teal: { icon: 'bg-success/10 text-success', accent: 'bg-success' },
-  rose: { icon: 'bg-destructive/10 text-destructive', accent: 'bg-destructive' },
+  blue: { accent: 'bg-info' },
+  emerald: { accent: 'bg-primary' },
+  amber: { accent: 'bg-warning' },
+  teal: { accent: 'bg-success' },
+  rose: { accent: 'bg-destructive' },
 };
 
 export const KpiHeroCard = memo(function KpiHeroCard({
@@ -50,7 +49,6 @@ export const KpiHeroCard = memo(function KpiHeroCard({
   value,
   unit,
   formattedValue,
-  icon: Icon,
   color,
   sublabel,
   trend,
@@ -76,26 +74,19 @@ export const KpiHeroCard = memo(function KpiHeroCard({
   return (
     <CardRoot
       className={cn(
-        'group relative h-full w-full overflow-hidden rounded-2xl border bg-card text-left',
-        'shadow-soft transition-[border-color,box-shadow,transform] duration-200',
-        // Active state keeps bg-card (white) so label text stays 8.89:1; the
-        // green border + top accent bar carry the "selected" signal. A
-        // translucent bg tint here would composite over the page canvas and
-        // drop the label below AA.
-        isActive ? 'border-primary/50' : 'border-border/60',
-        onClick && 'cursor-pointer hover:border-primary/25 hover:shadow-card active:scale-[0.995] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'console-panel group relative h-full w-full overflow-hidden text-left',
+        isActive && 'border-primary/50',
+        onClick && 'cursor-pointer hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         className,
       )}
       onClick={onClick}
       {...(onClick ? { type: 'button' as const } : {})}
     >
       <div className={cn('relative flex h-full flex-col p-4', variant === 'stack' && 'sm:p-5')}>
-        <div className="flex items-start justify-between gap-3">
-          <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl', colorStyle.icon)}>
-            <Icon className="h-[18px] w-[18px]" />
-          </div>
+        <div className="flex items-start justify-between gap-2">
+          <p className="console-kicker min-w-0 pt-0.5">{label}</p>
           {(trend || badge) && (
-            <div className="flex min-h-7 flex-wrap items-center justify-end gap-1.5">
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
               {trend && (
                 <span className={cn(
                   'inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold tabular-nums',
@@ -117,24 +108,17 @@ export const KpiHeroCard = memo(function KpiHeroCard({
           )}
         </div>
 
-        <div className="mt-3 min-w-0">
-          <p className="text-xs font-semibold leading-tight text-muted-foreground">
-            {label}
-          </p>
-          <p className={cn(
-            'mt-1 font-display font-extrabold tabular-nums leading-tight tracking-[-0.035em] text-foreground',
-            variant === 'stack'
-              ? 'whitespace-nowrap text-[clamp(0.875rem,1.7vw,1.5rem)]'
-              : 'break-words text-xl sm:text-2xl',
-          )}>
-            <span>{displayAmount}</span>
-            {displayUnit ? (
-              <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">
-                {displayUnit}
-              </span>
-            ) : null}
-          </p>
-        </div>
+        <p className={cn(
+          'mt-1.5 console-value font-display font-semibold leading-tight tracking-[-0.01em] text-foreground text-xl sm:text-2xl',
+          variant === 'stack' ? 'whitespace-nowrap' : 'break-words',
+        )}>
+          <span>{displayAmount}</span>
+          {displayUnit ? (
+            <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">
+              {displayUnit}
+            </span>
+          ) : null}
+        </p>
 
         {(sublabel || footer) && (
           <div className="mt-auto pt-2 text-xs leading-snug text-muted-foreground">

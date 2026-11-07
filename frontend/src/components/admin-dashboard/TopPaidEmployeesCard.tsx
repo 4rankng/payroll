@@ -13,9 +13,6 @@ interface TopPaidEmployeesCardProps {
   month?: string; // YYYY-MM; if undefined shows all-time
 }
 
-const RANK_COLORS = ['text-amber-700', 'text-slate-600', 'text-amber-700'];
-const RANK_BG = ['bg-amber-50 border-amber-200', 'bg-slate-50 border-slate-300', 'bg-amber-50/60 border-amber-100'];
-
 const EmployeeRow = memo(function EmployeeRow({
   item,
   maxPaid,
@@ -24,14 +21,16 @@ const EmployeeRow = memo(function EmployeeRow({
   maxPaid: number;
 }) {
   const pct = maxPaid > 0 ? (item.total_paid_vnd / maxPaid) * 100 : 0;
-  const rankColor = RANK_COLORS[item.rank - 1] ?? 'text-muted-foreground';
-  const rankBg = RANK_BG[item.rank - 1] ?? '';
+  // Amber is rank-1 semantics only; every other rank is neutral.
+  const rankStyle = item.rank === 1
+    ? 'bg-amber-50 border-amber-200 text-amber-700'
+    : 'bg-muted/40 border-border/40 text-muted-foreground';
 
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-border/40 last:border-0">
+    <div className="flex items-center gap-3 py-2">
       {/* Rank */}
       <div
-        className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 border ${rankBg || 'bg-muted/40 border-border/40'} ${rankColor}`}
+        className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 border ${rankStyle}`}
       >
         {item.rank <= 3 ? (
           <Trophy className="w-3 h-3" />
@@ -76,7 +75,7 @@ const EmployeeRow = memo(function EmployeeRow({
 
       {/* Amount */}
       <div className="text-right shrink-0">
-        <span className="text-xs font-semibold tabular-nums text-foreground">
+        <span className="console-value text-xs font-semibold tabular-nums text-foreground">
           {formatVND(item.total_paid_vnd)}
         </span>
       </div>
@@ -93,7 +92,7 @@ export const TopPaidEmployeesCard = memo(function TopPaidEmployeesCard({
   const maxPaid = employees[0]?.total_paid_vnd ?? 0;
 
   return (
-    <Card className="shadow-none">
+    <Card variant="console">
       <CardContent>
         {isLoading ? (
           <div className="space-y-3">
@@ -112,7 +111,7 @@ export const TopPaidEmployeesCard = memo(function TopPaidEmployeesCard({
         ) : employees.length === 0 ? (
           <EmptyState title="Chưa có dữ liệu thanh toán" size="sm" className="py-4" />
         ) : (
-          <div>
+          <div className="divide-y divide-border/60">
             {employees.map((item) => (
               <EmployeeRow key={item.employee_id} item={item} maxPaid={maxPaid} />
             ))}

@@ -26,17 +26,30 @@ const items: BankDistributionItem[] = [
 ];
 
 describe('BankDistributionChart', () => {
-  it('renders a compact textual summary and exact distribution values', () => {
+  it('renders the donut contract: centre total, legend rows and whole-percent shares', () => {
     render(<BankDistributionChart items={items} totalEmployees={100} />);
 
     expect(screen.getByText('100')).toBeInTheDocument();
-    expect(screen.getByText('Quân đội (MB)')).toBeInTheDocument();
-    expect(screen.getByText('Hàng hải (MSB)')).toBeInTheDocument();
-    expect(screen.getAllByText('58%')).toHaveLength(2);
+
+    // Centre figure: compact total paid across all banks.
     expect(
-      screen.getByRole('img', {
-        name: 'Phân bổ ngân hàng nhận lương: MB 58%, MSB 14%',
-      }),
+      screen.getByRole('img', { name: 'TỔNG CHI TRẢ 3,7 tỷ' }),
     ).toBeInTheDocument();
+
+    // Legend rows — short label + "transactions · compact amount".
+    const legend = screen.getByText('120 gd · 3 tỷ').closest('ul');
+    expect(legend).toHaveTextContent('MB');
+    expect(legend).toHaveTextContent('MSB');
+    expect(screen.getByText('120 gd · 3 tỷ')).toBeInTheDocument();
+    expect(screen.getByText('28 gd · 700 tr')).toBeInTheDocument();
+
+    // Shares are recomputed over the donut's own value set (headcount).
+    expect(screen.getByText('81%')).toBeInTheDocument();
+    expect(screen.getByText('19%')).toBeInTheDocument();
+
+    // The old stacked bar visual is gone.
+    expect(
+      screen.queryByRole('img', { name: /Phân bổ ngân hàng nhận lương/ }),
+    ).not.toBeInTheDocument();
   });
 });

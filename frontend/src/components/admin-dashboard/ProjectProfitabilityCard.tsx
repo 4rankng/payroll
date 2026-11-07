@@ -238,7 +238,7 @@ export const ProjectProfitabilityCard = memo(() => {
   return (
     <div className="space-y-4">
       {/* ── Weekly line chart ── */}
-      <Card className="shadow-none">
+      <Card variant="console">
         <CardHeader className="p-3 sm:p-4 pb-3">
           <div className="flex items-center justify-between gap-2">
             {(hasHidden || hasFocus) && (
@@ -393,7 +393,7 @@ export const ProjectProfitabilityCard = memo(() => {
 
       {/* ── Ranking table ── */}
       <DashboardSectionHeader title="Xếp Hạng Lợi Nhuận" subtitle="12 tháng gần nhất" icon={TrendingUp} />
-      <Card className="shadow-none">
+      <Card variant="console">
         <CardContent className="p-0">
           {tableLoading ? (
             <div className="px-3 pb-3 space-y-2">

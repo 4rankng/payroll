@@ -10,7 +10,7 @@ import {
   ClipboardList,
   History,
 } from 'lucide-react';
-import { UserCheck01, Users01, UserX01 } from '@untitledui/icons';
+import { UserCheck01, UserX01 } from '@untitledui/icons';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -88,7 +88,7 @@ function TopEmployeeRow({ item, maxPaid }: { item: TopPaidEmployeeItem; maxPaid:
               />
             </div>
           </div>
-          <span className="shrink-0 text-right text-[13px] font-semibold tabular-nums text-foreground">
+          <span className="console-value shrink-0 text-right text-[13px] font-semibold text-foreground">
             {formatVND(item.total_paid_vnd)}
           </span>
         </div>
@@ -232,7 +232,7 @@ const PartnerDashboardMobile = () => {
 
   return (
     <MobilePageShell className="space-y-2">
-      <h1 className="py-1 font-display text-lg font-extrabold tracking-tight text-foreground">Tổng quan</h1>
+      <h1 className="py-1 font-display text-xl font-bold tracking-tight text-foreground">Tổng quan</h1>
       <TimesheetMonthSelector value={selectedMonth} onChange={handleMonthChange} />
 
       {isLoading ? (
@@ -242,7 +242,7 @@ const PartnerDashboardMobile = () => {
             <Skeleton className="h-8 w-44" />
             <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-[76px] rounded-2xl" />
+                <Skeleton key={i} className="h-[76px] rounded-lg" />
               ))}
             </div>
           </div>
@@ -256,12 +256,14 @@ const PartnerDashboardMobile = () => {
           primaryHint={momAmountSublabel}
           metrics={operationMetrics}
           actions={quickActions}
+          className="rounded-lg bg-card"
         />
       )}
 
       <MobileTaskList
         title="Việc cần theo dõi"
         items={taskRows}
+        className="rounded-lg bg-card"
       />
 
       <PartnerApprovalRequestsCard compact />
@@ -270,12 +272,9 @@ const PartnerDashboardMobile = () => {
       <MissingMobileSection onEmployeeClick={handleEmployeeClick} />
 
       <MobileSurface className="p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <Users01 className="h-4 w-4 text-primary" aria-hidden="true" />
-          </div>
-          <h2 className="text-sm font-semibold text-foreground">Chi trả theo nhân viên</h2>
-          <span className="text-xs text-muted-foreground">— {periodLabel}</span>
+        <div className="mb-3 flex items-baseline gap-2">
+          <h2 className="console-kicker">Chi trả theo nhân viên</h2>
+          <span className="text-[11px] text-muted-foreground">— {periodLabel}</span>
         </div>
 
         <div className="divide-y divide-border/60">

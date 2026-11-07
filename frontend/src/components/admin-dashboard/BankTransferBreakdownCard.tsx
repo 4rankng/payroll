@@ -80,7 +80,7 @@ export const BankTransferBreakdownCard = memo(function BankTransferBreakdownCard
   }, [selectedProjectId, allData]);
 
   return (
-    <Card className="overflow-hidden shadow-none">
+    <Card variant="console">
       <CardContent className="p-3 sm:p-4">
         {isLoading ? (
           <div aria-label="Đang tải phân bổ ngân hàng">

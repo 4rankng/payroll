@@ -11,6 +11,9 @@ type DashboardTone = 'primary' | 'success' | 'warning' | 'neutral';
 export interface DashboardMetricItem {
   label: string;
   value: string;
+  /** Exact figure behind a compact `value` — surfaces as the cell's
+   *  title/aria-label so compact KPI text never hides the real number. */
+  fullValue?: string;
   context: string;
   /** Kept for API compatibility; the treasury strip renders a signal LED
    *  instead of an icon tile. */
@@ -103,11 +106,12 @@ function MetricContent({ item }: { item: DashboardMetricItem }) {
     <>
       <div className="relative z-[1] flex items-center gap-1.5">
         <span className={cn('treasury-signal', SIGNAL_TONE[item.tone])} aria-hidden="true" />
-        <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          {item.label}
-        </p>
+        <p className="console-kicker">{item.label}</p>
       </div>
-      <p className="treasury-value relative z-[1] mt-2 break-words font-financial text-2xl font-semibold leading-tight tracking-normal text-foreground tabular-nums">
+      <p
+        className="console-value treasury-value relative z-[1] mt-2 break-words font-financial text-2xl font-semibold leading-tight tracking-normal text-foreground tabular-nums"
+        {...(item.fullValue ? { title: item.fullValue, 'aria-label': item.fullValue } : {})}
+      >
         {item.value}
       </p>
       <p className="relative z-[1] mt-1 text-xs leading-relaxed text-muted-foreground">
@@ -167,9 +171,7 @@ export function DashboardPriorityList({
     <section className="overflow-hidden rounded-xl border border-border/80 bg-card">
       <div className="flex flex-col gap-2.5 border-b border-border/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Hàng đợi vận hành
-          </p>
+          <p className="console-kicker">Hàng đợi vận hành</p>
           <h2 className="mt-1 text-base font-semibold text-foreground">Việc cần xử lý</h2>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             Ưu tiên các bước có thể làm chậm chốt công và giải ngân kỳ lương.
@@ -222,7 +224,7 @@ export function DashboardPriorityList({
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
-                <span className="font-display text-lg font-semibold text-foreground tabular-nums">
+                <span className="console-value font-display text-lg font-semibold text-foreground tabular-nums">
                   {item.value}
                 </span>
                 {item.onClick ? <ArrowUpRight className="h-4 w-4 text-muted-foreground" /> : null}
@@ -263,9 +265,7 @@ export function DashboardActivityPanel({
   return (
     <section className="overflow-hidden rounded-xl border border-border/80 bg-card">
       <div className="border-b border-border/70 px-3 py-3 sm:px-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          Tín hiệu sử dụng · {monthLabel}
-        </p>
+        <p className="console-kicker">Tín hiệu sử dụng · {monthLabel}</p>
         <div className="mt-2 flex items-end justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-foreground">Tài khoản hoạt động</h2>
@@ -377,9 +377,7 @@ export function DashboardAreaHeader({
       )}
     >
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          {eyebrow}
-        </p>
+        <p className="console-kicker">{eyebrow}</p>
         <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">{title}</h2>
         <p className="mt-1 max-w-3xl text-xs leading-relaxed text-muted-foreground">{description}</p>
       </div>

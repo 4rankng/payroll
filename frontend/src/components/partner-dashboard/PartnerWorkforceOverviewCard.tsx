@@ -5,7 +5,6 @@ import {
   PieChart,
   ResponsiveContainer,
 } from 'recharts';
-import { CircleDollarSign } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -26,18 +25,22 @@ export function PartnerWorkforceOverviewCard({
   className,
 }: PartnerWorkforceOverviewCardProps) {
   return (
-    <section className={cn('rounded-2xl border border-border/60 bg-card p-5 shadow-soft', className)}>
-      <div className="mb-2">
-        <h2 className="text-base font-bold text-foreground">Cơ cấu nhân sự</h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          Phân loại theo trạng thái hoạt động
-        </p>
+    <section className={cn('console-panel', className)}>
+      <header className="console-panel-header">
+        <div className="min-w-0">
+          <h2 className="console-kicker">Cơ cấu nhân sự</h2>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Phân loại theo trạng thái hoạt động
+          </p>
+        </div>
+      </header>
+      <div className="console-panel-body">
+        {isLoading ? (
+          <Skeleton className="h-[200px] w-full rounded-lg" />
+        ) : (
+          <PartnerWorkforceDonut active={active} dropped={dropped} paid={paid} />
+        )}
       </div>
-      {isLoading ? (
-        <Skeleton className="h-[200px] w-full rounded-xl" />
-      ) : (
-        <PartnerWorkforceDonut active={active} dropped={dropped} paid={paid} />
-      )}
     </section>
   );
 }
@@ -92,7 +95,7 @@ function PartnerWorkforceDonut({
           </PieChart>
         </ResponsiveContainer>
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-3xl font-extrabold tabular-nums leading-none text-foreground">
+          <span className="console-value text-3xl font-extrabold leading-none text-foreground">
             {total.toLocaleString('vi-VN')}
           </span>
           <span className="mt-1 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
@@ -102,27 +105,22 @@ function PartnerWorkforceDonut({
       </div>
       <div className="grid grid-cols-2 gap-2">
         {chartData.map((item) => (
-          <div key={item.name} className="rounded-xl bg-muted/40 p-3">
+          <div key={item.name} className="rounded-lg bg-muted/40 p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
               <span>{item.name}</span>
             </div>
-            <span className="mt-1 block text-lg font-bold tabular-nums text-foreground">
+            <span className="console-value mt-1 block text-lg font-bold text-foreground">
               {item.value.toLocaleString('vi-VN')}
             </span>
           </div>
         ))}
       </div>
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/60 pt-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <CircleDollarSign className="h-4 w-4" />
-          </span>
-          <span className="text-xs leading-snug text-muted-foreground">
-            Đã thanh toán trong kỳ
-          </span>
-        </div>
-        <span className="shrink-0 text-lg font-bold tabular-nums text-foreground">
+        <span className="min-w-0 text-xs leading-snug text-muted-foreground">
+          Đã thanh toán trong kỳ
+        </span>
+        <span className="console-value shrink-0 text-lg font-bold text-foreground">
           {paid.toLocaleString('vi-VN')}
         </span>
       </div>

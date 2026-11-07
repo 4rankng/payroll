@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -6,6 +7,7 @@ import { MonthPicker } from '@/components/ui/month-picker';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, RefreshCcw } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, parse } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { getConsoleKicker } from '@/lib/console';
 
 interface DashboardHeaderProps {
   value: string; // 'all' | 'yyyy-MM'
@@ -14,10 +16,15 @@ interface DashboardHeaderProps {
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ value, onChange }) => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const location = useLocation();
 
   const selectedDate = value !== 'all'
     ? startOfMonth(parse(value + '-01', 'yyyy-MM-dd', new Date()))
     : startOfMonth(new Date());
+
+  const meta = value === 'all'
+    ? 'Tất cả kỳ'
+    : `Kỳ ${format(selectedDate, 'MM/yyyy', { locale: vi })}`;
 
   const handlePreviousMonth = useCallback(() => {
     const current = value !== 'all' ? selectedDate : new Date();
@@ -42,6 +49,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ value, onChang
     <PageHeader
       title="Tổng quan"
       description="Theo dõi số liệu vận hành, nhân sự và tài chính theo kỳ"
+      kicker={getConsoleKicker(location.pathname)}
+      meta={meta}
     >
       <div className="admin-dashboard-header flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-1 sm:rounded-xl sm:border sm:border-border/70 sm:bg-card sm:p-1">
         <Button

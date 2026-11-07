@@ -31,9 +31,7 @@ export const DashboardSectionHeader = ({
       )}
       <div className="min-w-0 space-y-0.5">
         {eyebrow && (
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            {eyebrow}
-          </p>
+          <p className="console-kicker">{eyebrow}</p>
         )}
         <h2 className="text-sm font-semibold tracking-wide text-foreground">{title}</h2>
         {subtitle && <p className="text-xs leading-relaxed text-muted-foreground">{subtitle}</p>}

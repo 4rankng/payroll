@@ -48,6 +48,13 @@ React 18 + TypeScript + Vite 6 frontend for a Vietnamese payroll management syst
 - Verify authenticated Admin and Partner desktop views at 1280px or wider and their mobile views at 390px for every shared or role-sensitive change. Also test 320px for dense content, long Vietnamese text, full currency values, tables, dialogs, sheets, and other overflow-prone UI.
 - Browser QA must confirm feature/action parity, correct data and permissions, readable wrapping, no horizontal scrolling, keyboard and screen-reader semantics, visible focus, and touch targets of at least 44px.
 
+### Console Design Language (staff day console — see docs/decisions/ADR-013)
+
+- Staff surfaces (Admin, Partner, Accountant — desktop + mobile) render in the console instrument language: hairline panels on a measurement grid, mono kickers, tabular figures, 36px tables, one-row filters. Light only — no dark mode, no toggle. Palette locked (`#e2e8e4` canvas, white panels, emerald signal); never introduce new hues.
+- Use the frozen primitives instead of ad-hoc chrome: `.console-panel` (hairline panel), `.console-kicker` (9px mono uppercase label), `.console-value` (tabular figures), `.console-page-header` (3px signal strip), `.console-table` / `<Table variant="console">` with `td.num`, `.console-filter-bar` (one row), `console-panel` Card variant, `ConsoleDonut`/`ConsoleGauge` (`components/shared/console-charts.tsx`), `formatCompactVND` (KPI cells only — tables/exports keep exact figures), `getConsoleKicker(pathname)` (page-header kicker).
+- GUARDRAIL: never restyle `Button`/`Input`/`Select`/`Badge`/`Tabs` base classes for the console — they are shared with login/employee. Console styling lands via the classes above, the `Table`/`Card` `console` variants, and staff-only shared primitives. Employee portal and login must not regress.
+- Chart series colors come from the `chart-1…6`/`chart-other` token bridge — no hardcoded HSL literals in staff chart components.
+
 ### DOs
 
 **Code & Architecture**

@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 
 import { InlineStatStrip, type InlineStatItem } from '@/components/shared/InlineStatStrip';
+import { ConsoleGauge } from '@/components/shared/console-charts';
 import { cn } from '@/lib/utils';
 import { useCheckInHealth } from '@/hooks/api/useDashboard';
 import { HealthDrilldownSheet } from './HealthDrilldownSheet';
@@ -132,6 +133,17 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
     return items;
   }, [data, openSuccessfulCheckouts]);
 
+  // Completion-rate gauge — only meaningful when requests exist today
+  // (denominator 0 ⇒ the gauge is omitted, never a fake 0%).
+  const activityGauge =
+    data && (data.requests_total_today ?? 0) > 0 ? (
+      <ConsoleGauge
+        value={(data.requests_completed_today ?? 0) / (data.requests_total_today ?? 0)}
+        display={`${data.requests_completed_today ?? 0}/${data.requests_total_today ?? 0}`}
+        label="HOÀN TẤT HÔM NAY"
+      />
+    ) : undefined;
+
   return (
     <div className={cn('space-y-3', className)}>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -146,6 +158,7 @@ function CheckInHealthStripImpl({ month, className }: CheckInHealthStripProps) {
           icon={Activity}
           items={activity}
           isLoading={isLoading}
+          gauge={activityGauge}
         />
       </div>
 
@@ -169,12 +182,14 @@ interface SectionCardProps {
   icon: LucideIcon;
   items: InlineStatItem[];
   isLoading: boolean;
+  /** Optional console figure (e.g. ConsoleGauge) beside the stat strip. */
+  gauge?: ReactNode;
   className?: string;
 }
 
-const SectionCard = memo(function SectionCard({ title, icon: Icon, items, isLoading, className }: SectionCardProps) {
+const SectionCard = memo(function SectionCard({ title, icon: Icon, items, isLoading, gauge, className }: SectionCardProps) {
   return (
-    <section className={cn('rounded-2xl border min-w-0 border-border/80 bg-card text-card-foreground shadow-none', className)}>
+    <section className={cn('console-panel min-w-0 text-card-foreground', className)}>
       <div className="flex flex-col min-w-0 gap-3 p-3 sm:p-4">
         <div className="flex min-w-0 items-center gap-2">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-primary/15 bg-primary/5 text-primary">
@@ -184,12 +199,15 @@ const SectionCard = memo(function SectionCard({ title, icon: Icon, items, isLoad
             {title}
           </h3>
         </div>
-        <InlineStatStrip
-          items={isLoading ? LOADING_PLACEHOLDER_ITEMS : items}
-          isLoading={isLoading}
-          variant="premium"
-          direction="vertical"
-        />
+        <div className="flex flex-col-reverse items-start gap-3 sm:flex-row sm:justify-between">
+          <InlineStatStrip
+            items={isLoading ? LOADING_PLACEHOLDER_ITEMS : items}
+            isLoading={isLoading}
+            variant="premium"
+            direction="vertical"
+          />
+          {gauge ? <div className="shrink-0">{gauge}</div> : null}
+        </div>
       </div>
     </section>
   );

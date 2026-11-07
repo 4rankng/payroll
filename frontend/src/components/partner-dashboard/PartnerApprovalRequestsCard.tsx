@@ -1,5 +1,3 @@
-import { Inbox } from 'lucide-react';
-
 import { Badge } from '@/components/ui/badge';
 import { useApprovalsList } from '@/hooks/api/useApprovals';
 import { cn } from '@/lib/utils';
@@ -32,44 +30,39 @@ export const PartnerApprovalRequestsCard = ({ compact = false }: { compact?: boo
   if (isLoading || items.length === 0) return null;
 
   return (
-    <section
-      aria-label="Yêu cầu phê duyệt của tôi"
-      className={cn(
-        'rounded-xl border bg-card text-card-foreground',
-        compact ? 'px-4 py-3.5' : 'p-4 sm:p-5'
-      )}
-    >
-      <div className="mb-2.5 flex items-center gap-2">
-        <Inbox aria-hidden="true" className="size-4 text-indigo-700" />
-        <h2 className="text-sm font-semibold text-foreground">Yêu cầu của tôi</h2>
-        <span className="text-xs text-muted-foreground">({items.length})</span>
-      </div>
-      <ul className="space-y-2">
-        {items.map((item) => (
-          <li key={item.id} className="flex flex-wrap items-center justify-between gap-1.5 rounded-lg border bg-background px-3 py-2">
-            <div className="min-w-0">
-              <p className="truncate text-sm text-foreground">
-                {item.summary || item.type_label}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatDateTime(item.created_at)}
-                {item.scheduled_at ? ` · thử lại ${formatDateTime(item.scheduled_at)}` : ''}
-              </p>
-              {item.decision_note ? (
-                <p className="text-xs text-muted-foreground">
-                  Ghi chú: <span className="text-foreground">{item.decision_note}</span>
+    <section aria-label="Yêu cầu phê duyệt của tôi" className="console-panel text-card-foreground">
+      <header className="console-panel-header">
+        <h2 className="console-kicker">Yêu cầu của tôi</h2>
+        <span className="console-value ml-auto text-[11px] text-muted-foreground">({items.length})</span>
+      </header>
+      <div className={cn(compact ? 'px-4 py-3' : 'console-panel-body')}>
+        <ul className="divide-y divide-border/60">
+          {items.map((item) => (
+            <li key={item.id} className="flex flex-wrap items-center justify-between gap-1.5 py-2">
+              <div className="min-w-0">
+                <p className="truncate text-sm text-foreground">
+                  {item.summary || item.type_label}
                 </p>
-              ) : null}
-            </div>
-            <Badge variant="outline" className={cn('h-6 shrink-0 px-2 text-xs', STATUS_BADGE[item.status] ?? '')}>
-              {item.status_label}
-            </Badge>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2.5 text-xs leading-5 text-muted-foreground">
-        Yêu cầu chỉ được thực thi sau khi quản trị viên duyệt — kết quả sẽ được thông báo đến bạn.
-      </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDateTime(item.created_at)}
+                  {item.scheduled_at ? ` · thử lại ${formatDateTime(item.scheduled_at)}` : ''}
+                </p>
+                {item.decision_note ? (
+                  <p className="text-xs text-muted-foreground">
+                    Ghi chú: <span className="text-foreground">{item.decision_note}</span>
+                  </p>
+                ) : null}
+              </div>
+              <Badge variant="outline" className={cn('h-6 shrink-0 px-2 text-xs', STATUS_BADGE[item.status] ?? '')}>
+                {item.status_label}
+              </Badge>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2.5 text-xs leading-5 text-muted-foreground">
+          Yêu cầu chỉ được thực thi sau khi quản trị viên duyệt — kết quả sẽ được thông báo đến bạn.
+        </p>
+      </div>
     </section>
   );
 };

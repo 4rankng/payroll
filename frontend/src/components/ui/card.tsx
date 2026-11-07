@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & {
-    variant?: 'default' | 'elevated' | 'outlined' | 'filled'
+    variant?: 'default' | 'elevated' | 'outlined' | 'filled' | 'console'
   }
 >(({ className, variant = 'default', ...props }, ref) => {
   const variants = {

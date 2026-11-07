@@ -3,6 +3,15 @@ import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { cn } from "@/lib/utils";
 import { useMonthlyFinancials } from '@/hooks/admin-dashboard/useMonthlyFinancials';
 import { formatFullCurrency as formatVND } from '@/utils/formatters';
@@ -32,7 +41,7 @@ export const MonthlyFinancialTable = memo(() => {
   const hasMore = sortedMonths.length > 5;
 
   return (
-    <Card className="flex flex-col shadow-none">
+    <Card variant="console" className="flex flex-col">
       <CardContent className="p-0 pb-1">
         {isLoading ? (
           <div className="px-3 py-3 space-y-2">
@@ -53,13 +62,13 @@ export const MonthlyFinancialTable = memo(() => {
             {/* Total profit summary banner */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-border/40">
               <span className="text-xs font-medium text-foreground">Lợi nhuận tích lũy</span>
-              <span className="text-sm font-bold tabular-nums text-foreground">
+              <span className="console-value text-sm font-bold tabular-nums text-foreground">
                 {formatVND(data.total.fee_earned)}
               </span>
             </div>
             {/* Phones: one stacked block per month — three money columns cannot
-                be read side by side at 390px, they only produce sideways scroll. */}
-            <ul className="divide-y divide-border/20 lg:hidden">
+                be read side by side below md, they only produce sideways scroll. */}
+            <ul className="divide-y divide-border/20 md:hidden">
               {visibleMonths.map((row) => (
                 <li key={row.month} className="py-2">
                   <p className="text-xs font-semibold capitalize text-foreground">
@@ -80,7 +89,7 @@ export const MonthlyFinancialTable = memo(() => {
                         </dt>
                         <dd
                           className={cn(
-                            "text-xs tabular-nums text-foreground",
+                            "console-value text-xs tabular-nums text-foreground",
                             index === all.length - 1 && "font-semibold",
                           )}
                         >
@@ -95,48 +104,48 @@ export const MonthlyFinancialTable = memo(() => {
             {hasMore && (
               <button
                 onClick={() => setShowAll(prev => !prev)}
-                className="w-full py-2 text-xs font-semibold text-foreground active:opacity-70 lg:hidden"
+                className="w-full py-2 text-xs font-semibold text-foreground active:opacity-70 md:hidden"
               >
                 {showAll ? 'Thu gọn' : `Xem tất cả (${sortedMonths.length})`}
               </button>
             )}
 
-            <table className="hidden w-full min-w-[640px] text-xs lg:table">
-              <thead>
-                <tr className="border-b border-border/40">
-                  <th className="text-left px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-foreground">Tháng</th>
-                  <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-foreground">Chi phí</th>
-                  <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-foreground">Doanh thu</th>
-                  <th className="text-right px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-foreground">Lợi nhuận</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/20">
+            {/* md+: 36px console rows fit without a horizontal rail; the
+                secondary "Chi phí" column returns at lg. */}
+            <Table variant="console" className="hidden md:table">
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="text-left">Tháng</TableHead>
+                  <TableHead className="hidden text-right lg:table-cell">Chi phí</TableHead>
+                  <TableHead className="text-right">Doanh thu</TableHead>
+                  <TableHead className="text-right">Lợi nhuận</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {visibleMonths.map((row) => (
-                  <tr key={row.month} className="transition-colors">
-                    <td className="px-3 py-1.5 font-medium capitalize text-foreground">{formatMonthLabel(row.month)}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-foreground">{formatVND(row.paid_out)}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-foreground">{formatVND(row.billed)}</td>
-                    <td className="px-3 py-1.5 text-right font-semibold tabular-nums text-foreground">
-                      {formatVND(row.fee_earned)}
-                    </td>
-                  </tr>
+                  <TableRow key={row.month}>
+                    <TableCell className="font-medium capitalize">{formatMonthLabel(row.month)}</TableCell>
+                    <TableCell className="num hidden lg:table-cell">{formatVND(row.paid_out)}</TableCell>
+                    <TableCell className="num">{formatVND(row.billed)}</TableCell>
+                    <TableCell className="num font-semibold">{formatVND(row.fee_earned)}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
+              </TableBody>
               {hasMore && (
-                <tfoot>
-                  <tr>
-                    <td colSpan={4} className="py-2 text-center">
+                <TableFooter className="bg-transparent">
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={4} className="py-2 text-center">
                       <button
                         onClick={() => setShowAll(prev => !prev)}
                         className="text-xs font-semibold active:opacity-70 text-foreground"
                       >
                         {showAll ? 'Thu gọn' : `Xem tất cả (${sortedMonths.length})`}
                       </button>
-                    </td>
-                  </tr>
-                </tfoot>
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
               )}
-            </table>
+            </Table>
           </div>
         )}
       </CardContent>
