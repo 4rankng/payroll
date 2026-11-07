@@ -74,29 +74,29 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     moreItems?.some((item) => item.path && location.pathname.startsWith(item.path)) ?? false;
 
   const navSlotClass =
-    "group relative flex min-h-[68px] min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 px-1 pb-1 pt-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))] max-[359px]:gap-0.5 max-[359px]:px-0.5";
+    "group relative flex min-h-[64px] min-w-0 flex-1 touch-manipulation flex-col items-center justify-center gap-1 px-1 pb-1 pt-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))] max-[359px]:gap-0.5 max-[359px]:px-0.5";
 
   const navIconClass = (isActive: boolean) =>
     cn(
-      "flex h-9 w-9 items-center justify-center rounded-2xl border transition-colors duration-200 max-[359px]:h-8 max-[359px]:w-8 max-[359px]:rounded-xl",
+      "flex h-9 w-9 items-center justify-center rounded-lg transition-colors duration-200 max-[359px]:h-8 max-[359px]:w-8",
       isActive
-        ? "border-transparent bg-[hsl(var(--primary))] text-white"
-        : "border-transparent bg-white/65 text-[hsl(var(--muted-foreground))] group-hover:border-[hsl(var(--border))] group-hover:text-[hsl(var(--foreground))]"
+        ? "text-[hsl(var(--primary))]"
+        : "text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))]"
     );
 
   const navLabelClass = (isActive: boolean) =>
     cn(
-      "w-full max-w-full px-0.5 text-center text-xs font-semibold leading-tight transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate",
+      "font-financial w-full max-w-full px-0.5 text-center text-[9px] font-semibold uppercase leading-tight tracking-[0.08em] transition-colors max-[359px]:line-clamp-2 max-[359px]:break-words min-[360px]:truncate",
       isActive ? "text-[hsl(var(--foreground))]" : "text-[hsl(var(--muted-foreground))]"
     );
 
   const renderActiveIndicator = (isActive: boolean) =>
     isActive ? (
-      <span className="absolute left-1/2 top-0 h-1 w-11 -translate-x-1/2 rounded-b-full bg-[hsl(var(--secondary))]" />
+      <span className="absolute inset-x-0 top-0 h-0.5 rounded-none bg-[hsl(var(--primary))]" />
     ) : null;
 
   const sheetSurfaceClass =
-    "admin-mobile-sheet flex h-auto max-h-[78dvh] flex-col overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-slate-300 bg-slate-50/95 px-0 pb-0 pt-0 backdrop-blur-xl";
+    "admin-mobile-sheet flex h-auto max-h-[78dvh] flex-col overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-border bg-card/95 px-0 pb-0 pt-0 backdrop-blur-xl";
 
   const openGroupTitle = openGroup?.title ?? "Điều hướng";
 
@@ -116,8 +116,8 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
       <button
         type="button"
         className={cn(
-          "admin-mobile-tile group grid min-h-14 w-full grid-cols-[2.25rem_minmax(0,1fr)] items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 py-2 text-left transition-colors touch-manipulation",
-          "active:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]",
+          "admin-mobile-tile group grid min-h-14 w-full grid-cols-[2.25rem_minmax(0,1fr)] items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors touch-manipulation",
+          "active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]",
           tone === "default" &&
             isActive &&
             "border-[hsl(var(--primary))/0.25] !bg-[hsl(var(--primary))] text-white",
@@ -184,7 +184,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
         {/* Blur on an inner layer: a backdrop-filter on the fixed root
             misplaces the bar during scroll on iOS Safari. */}
         <div aria-hidden className="admin-mobile-nav-backdrop pointer-events-none absolute inset-0" />
-        <div className="relative flex min-h-[72px] items-stretch px-2 max-[359px]:px-1">
+        <div className="relative flex min-h-[64px] items-stretch px-2 max-[359px]:px-1">
           {groups.map((group) => {
             const isActive = isGroupActive(group);
 

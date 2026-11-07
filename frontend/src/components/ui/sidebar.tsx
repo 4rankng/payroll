@@ -474,7 +474,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       data-sidebar="group-label"
       className={cn(
-        "duration-200 flex h-6 shrink-0 items-center rounded-md px-3 text-xs font-semibold uppercase tracking-widest text-sidebar-foreground/40 outline-none ring-sidebar-ring transition-[margin,opacity] ease-linear focus-visible:ring-2 [&>svg]:size-3 [&>svg]:shrink-0",
+        "duration-200 flex h-6 shrink-0 items-center rounded-md px-3 font-financial text-[9px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40 outline-none ring-sidebar-ring transition-[margin,opacity] ease-linear focus-visible:ring-2 [&>svg]:size-3 [&>svg]:shrink-0",
         "group-data-[collapsible=icon]:-mt-6 group-data-[collapsible=icon]:opacity-0",
         className
       )}
@@ -556,7 +556,7 @@ const sidebarMenuButtonVariants = cva(
           "bg-card shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },
       size: {
-        default: "h-7 text-sm",
+        default: "h-9 text-sm",
         sm: "h-6 text-xs",
         lg: "h-9 text-sm group-data-[collapsible=icon]:!p-0",
       },

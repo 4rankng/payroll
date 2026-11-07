@@ -18,6 +18,10 @@ interface PageHeaderAction {
 interface PageHeaderProps {
   title: string;
   description?: string;
+  /** Mono domain kicker above the title (e.g. getConsoleKicker(pathname)). */
+  kicker?: string;
+  /** 11px mono metadata line (period + count + updated time). */
+  meta?: string;
   actions?: PageHeaderAction[];
   children?: React.ReactNode;
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
@@ -27,6 +31,8 @@ interface PageHeaderProps {
 export const PageHeader = ({
   title,
   description,
+  kicker,
+  meta,
   actions = [],
   children,
   icon: Icon,
@@ -40,33 +46,39 @@ export const PageHeader = ({
         data-slot="page-header"
         data-admin-surface="header"
         className={cn(
-          // Self-sufficient card surface: the page canvas is a dark sage for
-          // WCAG 1.4.11 card/canvas separation, so header text must sit on a
-          // light surface. Pages that already wrap this in AdminPageHeaderCard
-          // get a seamless inner fill; pages that don't (timesheet, dashboard,
-          // ledger, wallet) stay readable instead of falling onto the canvas.
-          'admin-page-header flex flex-col gap-2 rounded-xl bg-card px-4 py-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4',
+          // Console strip: 3px signal mark, hairline bottom — no card, no
+          // shadow, no icon chip. Replaces the old admin-page-header card.
+          'console-page-header flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4',
           className,
         )}
       >
         <div className="min-w-0 flex-1 sm:min-w-64 sm:basis-64">
           <div className="flex items-center gap-2">
               {Icon && (
-                <div data-slot="page-header-icon" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  <Icon className="h-4 w-4 text-muted-foreground" />
-                </div>
+                <Icon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
               )}
               <div className="min-w-0">
-                <p data-slot="page-header-eyebrow" className="hidden">Quản trị</p>
-                <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                {kicker ? (
+                  <p data-slot="page-header-eyebrow" className="console-kicker mb-1">
+                    {kicker}
+                  </p>
+                ) : (
+                  <p data-slot="page-header-eyebrow" className="hidden" />
+                )}
+                <h1 className="font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl">
                   {title}
                 </h1>
+                {meta && (
+                  <p data-slot="page-header-meta" className="mt-1 font-financial text-[11px] text-muted-foreground">
+                    {meta}
+                  </p>
+                )}
               </div>
           </div>
           {description && (
             <p data-slot="page-header-description" className={cn(
               'mt-1 text-sm text-muted-foreground leading-normal',
-              Icon ? 'sm:ml-9' : '',
+              Icon ? 'sm:ml-7' : '',
             )}>
               {description}
             </p>

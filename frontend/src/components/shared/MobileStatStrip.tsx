@@ -48,7 +48,7 @@ export const MobileStatStrip = ({
   return (
     <div
       className={cn(
-        "grid overflow-hidden rounded-xl border border-border bg-card",
+        "grid overflow-hidden rounded-lg border border-border bg-card",
         className,
       )}
       style={{ gridTemplateColumns: `repeat(${columnCount}, minmax(0, 1fr))` }}

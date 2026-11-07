@@ -9,11 +9,15 @@ import { cn } from "@/lib/utils"
 // (plan-of-record engine-keep ruling).
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
+  React.HTMLAttributes<HTMLTableElement> & { variant?: 'default' | 'console' }
+>(({ className, variant = 'default', ...props }, ref) => (
   <table
     ref={ref}
-    className={cn("w-full caption-bottom text-sm", className)}
+    className={cn(
+      "w-full caption-bottom text-sm",
+      variant === "console" && "console-table",
+      className
+    )}
     {...props}
   />
 ))

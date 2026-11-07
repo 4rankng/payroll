@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface MobilePageHeaderProps {
-  /** Page title — rendered in display font, extrabold */
+  /** Page title — rendered in display font, bold */
   title: string;
   /** Optional subtitle below the title (date, record count, etc.) */
   subtitle?: React.ReactNode;
+  /** Mono domain kicker above the title (console contract). */
+  kicker?: string;
   /** Optional icon displayed in a soft colored container */
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
   /** When provided, renders a back chevron button on the left.
@@ -41,6 +43,7 @@ interface MobilePageHeaderProps {
 export const MobilePageHeader = ({
   title,
   subtitle,
+  kicker,
   icon: Icon,
   back,
   actions,
@@ -53,8 +56,8 @@ export const MobilePageHeader = ({
     <div
       className={cn(
         'z-20',
-        sticky || bordered ? 'bg-white' : 'bg-transparent',
-        bordered && 'border-b border-slate-300 shadow-[0_1px_0_rgba(15,23,42,0.04)]',
+        sticky || bordered ? 'bg-card' : 'bg-transparent',
+        bordered && 'border-b border-border',
         sticky && 'sticky top-0',
         'px-4 pb-2 pt-2.5',
         className,
@@ -84,7 +87,7 @@ export const MobilePageHeader = ({
             <Button
               variant="ghost"
               size="icon"
-              className="-ml-1 h-11 w-11 shrink-0 rounded-xl text-slate-700"
+              className="-ml-1 h-11 w-11 shrink-0 rounded-xl text-foreground"
               onClick={back}
               aria-label="Quay lại"
             >
@@ -97,11 +100,12 @@ export const MobilePageHeader = ({
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h1 className="break-words font-display text-[clamp(1.0625rem,4.6vw,1.1875rem)] font-extrabold leading-tight tracking-normal text-slate-950">
+            {kicker && <p className="console-kicker mb-1">{kicker}</p>}
+            <h1 className="break-words font-display text-xl font-bold leading-tight tracking-tight text-foreground">
               {title}
             </h1>
             {subtitle && (
-              <p className="mt-0.5 break-words text-xs font-medium leading-normal text-slate-600">
+              <p className="mt-0.5 break-words text-xs font-medium leading-normal text-muted-foreground">
                 {subtitle}
               </p>
             )}

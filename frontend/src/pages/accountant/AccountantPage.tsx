@@ -48,7 +48,7 @@ export default function AccountantPage() {
   };
 
   return (
-    <div data-accountant-ui="" className="min-h-screen bg-card">
+    <div data-accountant-ui="" className="console-shell min-h-screen bg-card">
       <header className="sticky top-0 z-10 border-b border-utility-gray-200 bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">

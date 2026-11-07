@@ -30,7 +30,7 @@ export function MobileSurface({ children, className }: MobileSurfaceProps) {
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-2xl border border-[hsl(var(--surface-border))] bg-white shadow-none",
+        "overflow-hidden rounded-lg border border-[hsl(var(--surface-border))] bg-card shadow-none",
         className,
       )}
     >

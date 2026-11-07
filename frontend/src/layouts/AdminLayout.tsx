@@ -74,8 +74,8 @@ const AdminLayoutInner = () => {
           id="main-content"
           className={
             isMobile
-              ? "admin-main min-h-dvh flex-1 overflow-visible"
-              : "admin-main min-h-0 flex-1 overflow-auto"
+              ? "admin-main console-shell min-h-dvh flex-1 overflow-visible"
+              : "admin-main console-shell min-h-0 flex-1 overflow-auto"
           }
         >
           <div className="admin-shell-rail" aria-hidden="true" />

@@ -21,7 +21,7 @@ export const AdminPageCanvas = ({
 }) => (
   <div
     className={cn(
-      'min-h-full bg-[radial-gradient(circle_at_top_left,rgba(8,120,62,0.07),transparent_32rem)]',
+      'min-h-full',
       className,
     )}
   >
@@ -47,9 +47,8 @@ export const AdminPageHeaderCard = ({
   <div
     data-mobile-header
     className={cn(
-      // padding lives on .admin-page-header (see admin-daisy.css) so wrapped
-      // and bare header usages share one inset and never double up.
-      'rounded-2xl border border-white/80 bg-white/82 shadow-[0_1px_2px_rgba(16,24,40,0.05),0_18px_48px_-32px_rgba(8,120,62,0.22)] backdrop-blur',
+      // Console: transparent layout wrapper — PageHeader renders the strip
+      // (.console-page-header) itself; no glass card, no shadow.
       className,
     )}
   >
@@ -71,7 +70,7 @@ export const AdminSectionCard = ({
     aria-label={ariaLabel}
     data-mobile-stats
     className={cn(
-      'overflow-hidden rounded-2xl border border-utility-gray-300 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]',
+      'console-panel overflow-hidden',
       className,
     )}
   >

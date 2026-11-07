@@ -118,22 +118,21 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
             ? isActive
               ? "h-9 w-9 justify-center mx-auto bg-card/[0.08] ring-1 ring-white/[0.12]"
               : "h-9 w-9 justify-center mx-auto"
-            : "h-11 px-2.5 lg:h-10",
+            : "h-9 px-2.5",
           isActive
-            ? "bg-card/[0.08] text-white"
+            ? "bg-[hsl(var(--primary)/0.08)] text-white"
             : "text-white/85 hover:bg-card/[0.06] hover:text-white"
         )}
       >
-        {/* Gliding active pill — slides in with a scale animation */}
+        {/* Console signal — 2px emerald bar on the active row (no pill). */}
         {isActive && !isCollapsed && (
-          <span className="absolute inset-y-2 left-0 w-[3px] origin-center rounded-r-full bg-[hsl(var(--admin-accent))] animate-pill-appear" />
+          <span className="absolute inset-y-0 left-0 w-0.5 origin-center rounded-none bg-[hsl(var(--primary))] animate-pill-appear" />
         )}
         <item.icon
           className={cn(
             "shrink-0 transition-all duration-150",
             isCollapsed ? "w-[17px] h-[17px]" : "w-[15px] h-[15px]",
-            // Icon morphs from outline-weight to accent color when active
-            isActive ? "text-[hsl(var(--admin-accent))]" : "text-white/90"
+            isActive ? "text-white" : "text-white/90"
           )}
         />
         {!isCollapsed && (
@@ -220,7 +219,7 @@ const NavGroup = React.memo(
           className="mt-4 flex min-h-10 w-full cursor-pointer select-none items-center px-2.5 py-1 group/label"
           aria-expanded={isExpanded}
         >
-          <span className="flex-1 text-left text-xs font-semibold uppercase tracking-[0.1em] text-white/75 group-hover/label:text-white/90 transition-colors">
+          <span className="console-kicker flex-1 text-left !text-white/70 transition-colors group-hover/label:!text-white/90">
             {label}
           </span>
           <ChevronDown

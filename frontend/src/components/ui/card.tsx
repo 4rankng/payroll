@@ -18,6 +18,8 @@ const Card = React.forwardRef<
     elevated: "rounded-lg border border-utility-gray-200 bg-card text-card-foreground shadow-xs hover:shadow-sm transition-shadow",
     outlined: "rounded-lg border-2 border-utility-gray-300 bg-card text-card-foreground",
     filled: "rounded-lg bg-utility-gray-50 text-fg-secondary",
+    // Staff day console hairline panel — visual identity lives in .console-panel.
+    console: "console-panel overflow-hidden text-card-foreground",
   }
 
   return (

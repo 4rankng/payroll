@@ -83,19 +83,19 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
               : "h-9 w-9 justify-center mx-auto"
             : "min-h-9 py-1.5 px-3",
           isActive
-            ? "bg-card/[0.08] text-white shadow-[-3px_0_8px_-2px_hsl(var(--partner-accent)/0.15)]"
+            ? "bg-[hsl(var(--primary)/0.08)] text-white"
             : "text-white/50 hover:bg-card/10 hover:text-white/80 hover:translate-x-0.5"
         )}
       >
         {isActive && !isCollapsed && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-partner-accent rounded-r-full" />
+          <span className="absolute inset-y-0 left-0 w-0.5 rounded-none bg-[hsl(var(--primary))]" />
         )}
         <item.icon
           aria-hidden="true"
           className={cn(
             "shrink-0",
             isCollapsed ? "w-[17px] h-[17px]" : "w-4 h-4",
-            isActive ? "text-[hsl(var(--partner-accent))]" : "text-white/80"
+            isActive ? "text-white" : "text-white/80"
           )}
         />
         {!isCollapsed && (

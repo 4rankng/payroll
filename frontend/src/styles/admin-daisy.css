@@ -68,9 +68,9 @@
   [data-admin-ui] .admin-shell {
     position: relative;
     isolation: isolate;
-    background:
-      radial-gradient(circle at top left, rgba(8, 120, 62, 0.055), transparent 30rem),
-      hsl(var(--background));
+    /* Staff day console: the grid backdrop (.console-shell on .admin-main)
+       is the one backdrop; the shell paints plain canvas beneath it. */
+    background: hsl(var(--background));
   }
 
   [data-admin-ui] .admin-shell::before {
@@ -338,23 +338,33 @@
   }
 
   [data-admin-ui] .admin-filter-bar {
-    gap: 0.55rem;
-    padding: 0.75rem;
-    border: 1px solid hsl(var(--border) / 0.78);
-    border-radius: 1.15rem;
-    background: hsl(var(--card) / 0.9);
-    box-shadow: var(--admin-card-shadow);
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-bottom: 1px solid hsl(var(--border) / 0.65);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   [data-admin-ui] .admin-filter-bar button,
   [data-admin-ui] .admin-filter-bar input,
   [data-admin-ui] .admin-filter-bar [role="combobox"] {
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
   }
 
   [data-admin-ui] .admin-filter-bar input,
   [data-admin-ui] .admin-filter-bar [role="combobox"] {
     min-height: 2.75rem;
+  }
+
+  /* Desktop ≥1200px: 36px filter controls (locked density decision). Mobile
+     keeps the 44px floor above; tablets keep the 40px variables.css floor. */
+  @media (min-width: 1200px) {
+    [data-admin-ui] .admin-filter-bar input,
+    [data-admin-ui] .admin-filter-bar [role="combobox"] {
+      min-height: 2.25rem;
+    }
   }
 
   [data-admin-ui] .admin-empty-state {

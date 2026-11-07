@@ -38,7 +38,7 @@ export const MobileCard = ({
   return (
     <div
       className={cn(
-        'rounded-2xl',
+        'rounded-lg',
         variant === 'default' && 'border bg-card',
         variant === 'elevated' && 'border bg-card shadow-none',
         variant === 'ghost' && 'bg-muted/40',

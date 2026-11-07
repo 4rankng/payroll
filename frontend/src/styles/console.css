@@ -93,29 +93,6 @@
     padding: 12px;
   }
 
-  /* 36px console table: mono uppercase column headers, compact data rows,
-     right-aligned mono numerals via td.num. Interactive rows keep ≥44px
-     targets on mobile through call-site utilities. */
-  .console-table thead th {
-    font-family: var(--font-family-financial);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: hsl(var(--muted-foreground));
-  }
-  .console-table thead tr,
-  .console-table tbody tr {
-    height: 36px;
-  }
-  .console-table td {
-    font-size: 13px;
-  }
-  .console-table td.num {
-    font-family: var(--font-family-financial);
-    text-align: right;
-  }
-
   /* One-row filter bar; horizontal scroll only below 360px. */
   .console-filter-bar {
     display: flex;
@@ -128,4 +105,32 @@
       overflow-x: auto;
     }
   }
+}
+
+/* ============================================================================
+   CONSOLE TABLE CONTRACT — declared OUTSIDE any cascade layer so the 36px
+   rows and mono headers win over the utility classes baked into the Table
+   primitive (text-xs/text-fg-tertiary on th). Unlayered author styles beat
+   all layered styles; call-site utilities that must differ use explicit
+   overrides on the element.
+   ============================================================================ */
+
+.console-table thead th {
+  font-family: var(--font-family-financial);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+.console-table thead tr,
+.console-table tbody tr {
+  height: 36px;
+}
+.console-table td {
+  font-size: 13px;
+}
+.console-table td.num {
+  font-family: var(--font-family-financial);
+  text-align: right;
 }

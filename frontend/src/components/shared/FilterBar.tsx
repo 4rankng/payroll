@@ -6,13 +6,13 @@ interface FilterBarProps {
   className?: string;
 }
 
-/** Standardized filter toolbar — no card wrapper, just a flex row. */
+/** Standardized filter toolbar — one console row, no card wrapper. */
 export const FilterBar = ({ children, className }: FilterBarProps) => (
   <div
     data-slot="filter-bar"
     data-admin-surface="filter-bar"
     className={cn(
-      'admin-filter-bar flex items-center gap-1.5 flex-wrap',
+      'admin-filter-bar console-filter-bar',
       className,
     )}
   >
