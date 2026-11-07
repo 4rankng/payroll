@@ -21,7 +21,7 @@ import { PartnerWorkforceOverviewCard } from '@/components/partner-dashboard/Par
 import { PartnerApprovalRequestsCard } from '@/components/partner-dashboard/PartnerApprovalRequestsCard';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { formatCompactVND } from '@/utils/formatters';
+import { formatFullCurrency } from '@/utils/formatters';
 import type {
   TopPaidEmployeeItem,
   PartnerEmployeeListType,
@@ -229,7 +229,7 @@ const PartnerDashboardPage = () => {
           <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 motion-safe:animate-fade-in-up">
             <ConsoleKpi
               label="Tổng chi trả"
-              value={formatCompactVND(data?.total_paid_vnd ?? 0)}
+              value={formatFullCurrency(data?.total_paid_vnd ?? 0)}
               title={formatVND(data?.total_paid_vnd ?? 0)}
               icon={Banknote}
               tone="primary"

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { useMonthlyFinancials } from '@/hooks/admin-dashboard/useMonthlyFinancials';
-import { formatCompactVND, formatFullCurrency as formatVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND } from '@/utils/formatters';
 import {
   ConsoleDelta,
   ConsolePanel,
@@ -94,18 +94,18 @@ export const MonthlyFinancialTable = memo(function MonthlyFinancialTable({
             stats={[
               {
                 label: 'Tích lũy',
-                value: formatCompactVND(data.total.fee_earned),
+                value: formatVND(data.total.fee_earned),
                 title: formatVND(data.total.fee_earned),
               },
               {
                 label: 'Tháng gần nhất',
-                value: latest ? formatCompactVND(latest.fee_earned) : '—',
+                value: latest ? formatVND(latest.fee_earned) : '—',
                 title: latest ? formatVND(latest.fee_earned) : undefined,
                 hint: <ConsoleDelta value={latestDelta} />,
               },
               {
                 label: 'Doanh thu',
-                value: latest ? formatCompactVND(latest.billed) : '—',
+                value: latest ? formatVND(latest.billed) : '—',
                 title: latest ? formatVND(latest.billed) : undefined,
               },
             ]}

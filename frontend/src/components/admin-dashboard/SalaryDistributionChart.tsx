@@ -5,7 +5,7 @@ import {
   getCycleSections,
   buildFixedBins,
 } from '@/hooks/admin-dashboard/useSalaryDistribution';
-import { formatCompactVND, formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatFullCurrency } from '@/utils/formatters';
 import { ConsolePanel, ConsoleStatRow } from '@/components/shared/console-panel';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -113,17 +113,17 @@ function HorizontalCycleSection({ label, values, summary }: CycleSectionProps) {
         stats={[
           {
             label: 'TB',
-            value: formatCompactVND(summary.mean),
+            value: formatFullCurrency(summary.mean),
             title: formatCurrency(summary.mean),
           },
           {
             label: 'Thấp nhất',
-            value: formatCompactVND(summary.min),
+            value: formatFullCurrency(summary.min),
             title: formatCurrency(summary.min),
           },
           {
             label: 'Cao nhất',
-            value: formatCompactVND(summary.max),
+            value: formatFullCurrency(summary.max),
             title: formatCurrency(summary.max),
           },
         ]}

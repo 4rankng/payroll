@@ -33,7 +33,7 @@ import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSel
 import { cn } from '@/lib/utils';
 import type { TopPaidEmployeeItem, PartnerEmployeeListType } from '@/types/api/dashboard.types';
 import type { Employee } from '@/types/api/employee.types';
-import { formatFullCurrency as formatVND, formatCompactVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 const ALL_VALUE = 'all';
 
@@ -172,7 +172,7 @@ const PartnerDashboardMobile = () => {
   const operationMetrics = useMemo<MobileOperationMetric[]>(() => [
     {
       label: 'Tổng chi trả',
-      value: formatCompactVND(data?.total_paid_vnd ?? 0),
+      value: formatVND(data?.total_paid_vnd ?? 0),
       helper: momAmountSublabel,
       icon: Banknote,
       tone: 'primary',
@@ -242,7 +242,7 @@ const PartnerDashboardMobile = () => {
           eyebrow={periodLabel}
           title="Theo dõi chi trả"
           primaryLabel="Tổng chi trả"
-          primaryValue={formatCompactVND(data?.total_paid_vnd ?? 0)}
+          primaryValue={formatVND(data?.total_paid_vnd ?? 0)}
           primaryHint={momAmountSublabel}
           metrics={operationMetrics}
           actions={quickActions}

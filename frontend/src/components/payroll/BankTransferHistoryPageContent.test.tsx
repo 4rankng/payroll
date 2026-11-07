@@ -130,8 +130,8 @@ describe('BankTransferHistoryPageContent', () => {
     const { container } = renderContent();
 
     const summary = within(container.querySelector('[data-slot="payment-history-summary"]')!);
-    // Console contract: compact summary figure, exact figure in title/aria-label.
-    const total = summary.getByText('2,37 tỷ');
+    // Console contract: full summary figure, also carried in title/aria-label.
+    const total = summary.getByText('2.367.588.332 ₫');
     expect(total).toBeInTheDocument();
     expect(total).toHaveAttribute('title', formatCurrency(2_367_588_332));
     expect(total).toHaveAttribute('aria-label', `Tổng đã chuyển: ${formatCurrency(2_367_588_332)}`);
@@ -214,8 +214,8 @@ describe('BankTransferHistoryPageContent', () => {
     expect(summary.getByText('Tổng đã chuyển')).toBeInTheDocument();
     expect(summary.getByText('bút toán ngân hàng')).toBeInTheDocument();
     expect(summary.getByText('nhân viên')).toBeInTheDocument();
-    // Compact summary figure; the exact amount lives in the title/aria-label.
-    expect(summary.getByText('2 tr')).toHaveAttribute('title', formatCurrency(1_998_000));
+    // Full summary figure; also mirrored in the title/aria-label.
+    expect(summary.getByText('1.998.000 ₫')).toHaveAttribute('title', formatCurrency(1_998_000));
     expect(summary.getByText('07/2026')).toBeInTheDocument();
     expect(container.querySelector('.shadow-soft')).not.toBeInTheDocument();
 

@@ -55,7 +55,7 @@ import {
   type MobileOperationMetric,
   type MobileTaskRow,
 } from '@/components/shared/MobileOperationsPanel';
-import { formatCompactVND } from '@/utils/formatters';
+import { formatFullCurrency } from '@/utils/formatters';
 
 interface DashboardDisclosureProps {
   value: string;
@@ -239,7 +239,7 @@ const AdminDashboardMobile = () => {
       },
       {
         label: 'Đã trả kỳ này',
-        value: formatCompactVND(data.dashboardSummary.paid_salary_this_month),
+        value: formatFullCurrency(data.dashboardSummary.paid_salary_this_month),
         helper: monthLabel,
         icon: SwitchHorizontal01,
         tone: 'success',
@@ -396,8 +396,8 @@ const AdminDashboardMobile = () => {
           eyebrow={`Kỳ ${monthLabel}`}
           title="Điều hành lương"
           primaryLabel="Chờ trả"
-          primaryValue={formatCompactVND(dashboardSummary.pending_salary_this_month)}
-          primaryHint={`Đã trả ${formatCompactVND(dashboardSummary.paid_salary_this_month)}`}
+          primaryValue={formatFullCurrency(dashboardSummary.pending_salary_this_month)}
+          primaryHint={`Đã trả ${formatFullCurrency(dashboardSummary.paid_salary_this_month)}`}
           metrics={operationMetrics}
           actions={quickActions}
         />
@@ -464,7 +464,7 @@ const AdminDashboardMobile = () => {
           eyebrow="Phân tích"
           title="Chi trả và biến động"
           summary="Đối chiếu phân bổ lương, lợi nhuận và người nhận lương cao nhất."
-          meta={`${formatCompactVND(dashboardSummary?.total_profit_this_month ?? 0)} lợi nhuận`}
+          meta={`${formatFullCurrency(dashboardSummary?.total_profit_this_month ?? 0)} lợi nhuận`}
           icon={ArrowUpRight}
         >
           <div className="space-y-3">

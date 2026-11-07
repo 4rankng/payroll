@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatCompactVND, formatFullCurrency, splitCurrencyDisplay } from './formatters';
+import { formatFullCurrency, splitCurrencyDisplay } from './formatters';
 import { formatProjectCurrency, formatBudgetDisplay } from './projectHelpers';
 import { formatVietnameseCurrency } from './vietnamese';
 
@@ -52,30 +52,3 @@ describe('splitCurrencyDisplay', () => {
   });
 });
 
-describe('formatCompactVND', () => {
-  it('returns an em dash for null, undefined and NaN', () => {
-    expect(formatCompactVND(null)).toBe('—');
-    expect(formatCompactVND(undefined)).toBe('—');
-    expect(formatCompactVND(Number.NaN)).toBe('—');
-  });
-
-  it('keeps sub-thousand figures exact', () => {
-    expect(formatCompactVND(0)).toBe('0');
-    expect(formatCompactVND(999)).toBe('999');
-  });
-
-  it('abbreviates thousands with ng', () => {
-    expect(formatCompactVND(1_000)).toBe('1 ng');
-    expect(formatCompactVND(850_000)).toBe('850 ng');
-  });
-
-  it('abbreviates millions with one-decimal tr', () => {
-    expect(formatCompactVND(1_000_000)).toBe('1 tr');
-    expect(formatCompactVND(45_200_000)).toBe('45,2 tr');
-  });
-
-  it('abbreviates billions with two-decimal tỷ', () => {
-    expect(formatCompactVND(1_000_000_000)).toBe('1 tỷ');
-    expect(formatCompactVND(1_030_000_000)).toBe('1,03 tỷ');
-  });
-});

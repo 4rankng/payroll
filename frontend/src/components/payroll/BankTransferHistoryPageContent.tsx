@@ -32,7 +32,7 @@ import {
   BANK_TRANSFER_CYCLE_LABELS,
   getCurrentMonthValue,
 } from '@/utils/bankTransferHistoryHelpers';
-import { formatCurrency, formatCompactVND } from '@/utils/formatters';
+import { formatCurrency, formatFullCurrency } from '@/utils/formatters';
 import { buildLedgerRows, LEDGER_COLUMNS } from './bankTransferLedger';
 import { LedgerMobileRecord, LedgerTableRow } from './BankTransferLedgerRow';
 
@@ -162,7 +162,7 @@ function SummaryBand({
           title={formatCurrency(totalAmount)}
           aria-label={`Tổng đã chuyển: ${formatCurrency(totalAmount)}`}
         >
-          {formatCompactVND(totalAmount)}
+          {formatFullCurrency(totalAmount)}
         </span>
       )}
       <span className="text-fg-tertiary" aria-hidden="true">·</span>

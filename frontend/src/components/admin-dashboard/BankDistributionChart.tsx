@@ -2,7 +2,7 @@ import { memo } from 'react';
 
 import { ConsoleDonut } from '@/components/shared/console-charts';
 import { ConsoleStatRow } from '@/components/shared/console-panel';
-import { formatCompactVND } from '@/utils/formatters';
+import { formatFullCurrency } from '@/utils/formatters';
 
 import type { BankDistributionItem } from './bank-distribution';
 
@@ -25,7 +25,7 @@ export const BankDistributionChart = memo(function BankDistributionChart({
   const segments = items.map((item) => ({
     label: item.shortName,
     value: item.employeeCount,
-    display: `${item.transferCount} gd · ${formatCompactVND(item.totalPaidVnd)}`,
+    display: `${item.transferCount} gd · ${formatFullCurrency(item.totalPaidVnd)}`,
     color: item.color,
   }));
 
@@ -33,7 +33,7 @@ export const BankDistributionChart = memo(function BankDistributionChart({
     <div>
       <ConsoleDonut
         segments={segments}
-        centreValue={formatCompactVND(totalPaidVnd)}
+        centreValue={formatFullCurrency(totalPaidVnd)}
         centreLabel="TỔNG CHI TRẢ"
       />
       <ConsoleStatRow

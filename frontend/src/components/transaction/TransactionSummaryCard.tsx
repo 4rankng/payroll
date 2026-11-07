@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency, formatCompactVND } from '@/utils/formatters';
+import { formatCurrency, formatFullCurrency } from '@/utils/formatters';
 import type { LedgerSummary } from '@/types/api/financial.types';
 import { useMemo, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
@@ -73,9 +73,9 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
     const { by_account } = ledgerSummary;
     const payable = by_account.payable?.net_amount ?? 0;
     return [
-      { label: 'Phải thu', value: formatCompactVND(by_account.receivable?.net_amount ?? 0), full: formatCurrency(by_account.receivable?.net_amount ?? 0) },
-      { label: 'Phải trả', value: formatCompactVND(payable), full: formatCurrency(payable), valueClassName: payable < 0 ? 'text-financial-negative' : undefined },
-      { label: 'Vay nợ', value: formatCompactVND(by_account.loan?.net_amount ?? 0), full: formatCurrency(by_account.loan?.net_amount ?? 0) },
+      { label: 'Phải thu', value: formatFullCurrency(by_account.receivable?.net_amount ?? 0), full: formatCurrency(by_account.receivable?.net_amount ?? 0) },
+      { label: 'Phải trả', value: formatFullCurrency(payable), full: formatCurrency(payable), valueClassName: payable < 0 ? 'text-financial-negative' : undefined },
+      { label: 'Vay nợ', value: formatFullCurrency(by_account.loan?.net_amount ?? 0), full: formatCurrency(by_account.loan?.net_amount ?? 0) },
     ];
   }, [ledgerSummary]);
 
@@ -86,13 +86,13 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
     const expense = by_account.expense?.net_amount ?? 0;
     const cash = by_account.cash?.net_amount ?? 0;
     return {
-      cash: formatCompactVND(cash),
+      cash: formatFullCurrency(cash),
       cashFull: formatCurrency(cash),
-      revenue: formatCompactVND(revenue),
+      revenue: formatFullCurrency(revenue),
       revenueFull: formatCurrency(revenue),
-      expense: formatCompactVND(expense),
+      expense: formatFullCurrency(expense),
       expenseFull: formatCurrency(expense),
-      profit: formatCompactVND(revenue - expense),
+      profit: formatFullCurrency(revenue - expense),
       profitFull: formatCurrency(revenue - expense),
       margin: revenue > 0 ? `${((revenue - expense) / revenue * 100).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%` : '—',
     };

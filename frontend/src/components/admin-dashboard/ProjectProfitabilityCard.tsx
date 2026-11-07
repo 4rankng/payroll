@@ -42,7 +42,7 @@ function formatTooltipDate(label: string): string {
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
-import { formatCompactVND, formatFullCurrency as formatVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND } from '@/utils/formatters';
 
 // ─── Rank badge ───────────────────────────────────────────────────────────────
 
@@ -279,11 +279,11 @@ export const ProjectProfitabilityCard = memo(function ProjectProfitabilityCard({
             {
               label: 'Dẫn đầu',
               value: summary.top?.project_name ?? '—',
-              hint: summary.top ? formatCompactVND(summary.top.net_profit_vnd) : undefined,
+              hint: summary.top ? formatVND(summary.top.net_profit_vnd) : undefined,
             },
             {
               label: 'Tổng',
-              value: formatCompactVND(summary.total),
+              value: formatVND(summary.total),
               title: formatVND(summary.total),
             },
             {

@@ -31,17 +31,17 @@ describe('BankDistributionChart', () => {
 
     expect(screen.getByText('100')).toBeInTheDocument();
 
-    // Centre figure: compact total paid across all banks.
+    // Centre figure: full total paid across all banks.
     expect(
-      screen.getByRole('img', { name: 'TỔNG CHI TRẢ 3,7 tỷ' }),
+      screen.getByRole('img', { name: 'TỔNG CHI TRẢ 3.700.000.000 ₫' }),
     ).toBeInTheDocument();
 
-    // Legend rows — short label + "transactions · compact amount".
-    const legend = screen.getByText('120 gd · 3 tỷ').closest('ul');
+    // Legend rows — short label + "transactions · full amount".
+    const legend = screen.getByText('120 gd · 3.000.000.000 ₫').closest('ul');
     expect(legend).toHaveTextContent('MB');
     expect(legend).toHaveTextContent('MSB');
-    expect(screen.getByText('120 gd · 3 tỷ')).toBeInTheDocument();
-    expect(screen.getByText('28 gd · 700 tr')).toBeInTheDocument();
+    expect(screen.getByText('120 gd · 3.000.000.000 ₫')).toBeInTheDocument();
+    expect(screen.getByText('28 gd · 700.000.000 ₫')).toBeInTheDocument();
 
     // Shares are recomputed over the donut's own value set (headcount).
     expect(screen.getByText('81%')).toBeInTheDocument();
