@@ -75,13 +75,14 @@ const (
 	MaxBulkTransferWorkbookLimit      = int64(500_000_000)
 	MaxSelfCheckInAdvanceHoldHours    = uint64(720)
 
-	// Bounds for the self-check-in advance window-open day. The regular
-	// admin-upload calendar serves days 1-8 as the previous period's tail
-	// (clock.RequestCutoffDay = 8) and day 9 as its fixed locked gap, so any
-	// day below 10 could never take effect; a day above 28 is unreachable in
-	// February. Bounds keep the employee-facing "từ ngày X" message truthful.
+	// Bounds for the self-check-in advance window-open day. Owner decision
+	// (2026-11-07): the window may open as early as day 1 — days 1-9 overlap
+	// the regular admin-upload calendar tail (clock.RequestCutoffDay = 8) but
+	// the self-check-in flow is independent of it. A day above 28 is
+	// unreachable in February. Bounds keep the employee-facing "từ ngày X"
+	// message truthful.
 	DefaultSelfCheckInAdvanceWindowOpenDay = domain.DefaultSelfCheckInAdvanceWindowOpenDay
-	MinSelfCheckInAdvanceWindowOpenDay     = uint64(10)
+	MinSelfCheckInAdvanceWindowOpenDay     = uint64(1)
 	MaxSelfCheckInAdvanceWindowOpenDay     = uint64(28)
 
 	// Bounds for the wallet low-balance alert threshold. The alert fires once
@@ -317,12 +318,12 @@ func parseSelfCheckInAdvanceWindowOpenDay(setting *domain.Settings) (uint64, err
 	if raw == "" || strings.TrimSpace(raw) != raw || (len(raw) > 1 && raw[0] == '0') || strings.IndexFunc(raw, func(r rune) bool {
 		return r < '0' || r > '9'
 	}) >= 0 {
-		return 0, domain.NewValidationError("ngày mở kỳ ứng lương tự chấm công phải là số nguyên từ 10 đến 28")
+		return 0, domain.NewValidationError("ngày mở kỳ ứng lương tự chấm công phải là số nguyên từ 1 đến 28")
 	}
 
 	value, err := strconv.ParseUint(raw, 10, 64)
 	if err != nil || value < MinSelfCheckInAdvanceWindowOpenDay || value > MaxSelfCheckInAdvanceWindowOpenDay {
-		return 0, domain.NewValidationError("ngày mở kỳ ứng lương tự chấm công phải là số nguyên từ 10 đến 28")
+		return 0, domain.NewValidationError("ngày mở kỳ ứng lương tự chấm công phải là số nguyên từ 1 đến 28")
 	}
 	return value, nil
 }
@@ -361,7 +362,7 @@ func (s *SettingsConfigService) GetSelfCheckInAdvanceHoldDuration(ctx context.Co
 }
 
 // GetSelfCheckInAdvanceWindowOpenDay returns the configured day of month the
-// self-check-in advance request window opens (default 10, bounds 10-28).
+// self-check-in advance request window opens (default 10, bounds 1-28).
 // Reads bypass cache so a completed Admin update governs the next request;
 // missing or invalid persisted data falls back to the long-standing default.
 func (s *SettingsConfigService) GetSelfCheckInAdvanceWindowOpenDay(ctx context.Context) uint64 {

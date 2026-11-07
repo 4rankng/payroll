@@ -46,7 +46,7 @@ type Config struct {
 	GetSelfCheckInAdvancePercentage func(ctx context.Context) uint64
 	// GetSelfCheckInAdvanceWindowOpenDay returns the configured day of month
 	// the self-check-in advance request window opens (default 10, bounds
-	// 10-28). Nil in tests; callers fall back to SelfCheckInAdvanceWindowOpenDay.
+	// 1-28). Nil in tests; callers fall back to SelfCheckInAdvanceWindowOpenDay.
 	GetSelfCheckInAdvanceWindowOpenDay func(ctx context.Context) uint64
 	// GetTransferLimits returns the active disbursement provider's per-transfer
 	// amount bounds. Returns zero-value limits when no provider is configured.

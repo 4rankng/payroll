@@ -446,7 +446,7 @@ func TestSettingsConfigServiceGetSelfCheckInAdvanceWindowOpenDayFallsBackToDefau
 	}{
 		{name: "missing", err: errors.New("not found")},
 		{name: "nil value", setting: selfCheckInAdvanceWindowOpenDaySetting(nil)},
-		{name: "below minimum", setting: selfCheckInAdvanceWindowOpenDaySetting(stringPointer("9"))},
+		{name: "below minimum", setting: selfCheckInAdvanceWindowOpenDaySetting(stringPointer("0"))},
 		{name: "above maximum", setting: selfCheckInAdvanceWindowOpenDaySetting(stringPointer("29"))},
 		{name: "leading zero", setting: selfCheckInAdvanceWindowOpenDaySetting(stringPointer("015"))},
 		{name: "non numeric", setting: selfCheckInAdvanceWindowOpenDaySetting(stringPointer("abc"))},
@@ -469,14 +469,14 @@ func TestSettingsConfigServiceGetSelfCheckInAdvanceWindowOpenDayFallsBackToDefau
 }
 
 func TestParseSelfCheckInAdvanceWindowOpenDayBoundaries(t *testing.T) {
-	for _, value := range []uint64{10, 15, 28} {
+	for _, value := range []uint64{1, 7, 10, 15, 28} {
 		raw := strconv.FormatUint(value, 10)
 		parsed, err := parseSelfCheckInAdvanceWindowOpenDay(selfCheckInAdvanceWindowOpenDaySetting(&raw))
 		require.NoError(t, err)
 		assert.Equal(t, value, parsed)
 	}
 
-	for _, raw := range []string{"9", "29", "015", "abc", "", " 15 "} {
+	for _, raw := range []string{"0", "29", "015", "abc", "", " 15 "} {
 		_, err := parseSelfCheckInAdvanceWindowOpenDay(selfCheckInAdvanceWindowOpenDaySetting(&raw))
 		require.Error(t, err, "value %q must be rejected", raw)
 	}
@@ -486,6 +486,6 @@ func TestValidateBusinessSettingValidatesWindowOpenDay(t *testing.T) {
 	valid := "10"
 	require.NoError(t, validateBusinessSetting(selfCheckInAdvanceWindowOpenDaySetting(&valid)))
 
-	invalid := "9"
+	invalid := "0"
 	require.Error(t, validateBusinessSetting(selfCheckInAdvanceWindowOpenDaySetting(&invalid)))
 }
