@@ -34,7 +34,7 @@ const tabs = [
  */
 export const SettingsTabList = () => (
   <div className="min-w-0">
-    <TabsList className="flex h-auto w-full justify-start gap-2 overflow-x-auto overflow-y-hidden rounded-xl border border-border bg-card px-2 py-2 text-muted-foreground shadow-none [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:gap-1 sm:overflow-visible sm:pb-2 sm:w-max sm:min-w-full sm:justify-start">
+    <TabsList className="flex h-auto w-full justify-start gap-2 overflow-x-auto overflow-y-hidden rounded-xl border border-border bg-card px-2 py-2 text-muted-foreground shadow-none [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:gap-1 sm:overflow-visible sm:pb-2 sm:justify-start">
       {tabs.map(({ value, label, icon: Icon }) => (
         <TabsTrigger
           key={value}
