@@ -181,3 +181,27 @@ export const formatFullCurrency = (
 
   return `${formattedValue}${showSymbol ? ' ₫' : ''}`;
 };
+
+/**
+ * Compact VND figure for console KPI cells only — tables, exports, and PDFs
+ * must keep exact values (use formatCurrency / formatFullCurrency there).
+ *
+ * null/undefined/NaN → "—"; ≥1e9 → "1,03 tỷ"; ≥1e6 → "45,2 tr";
+ * ≥1e3 → "850 ng"; otherwise the exact figure. Vietnamese decimal comma via
+ * vi-VN. Call sites render the ₫ unit separately and carry the exact figure
+ * in title/aria-label.
+ */
+export const formatCompactVND = (value: number | null | undefined): string => {
+  if (value === null || value === undefined || Number.isNaN(value)) return '—';
+
+  if (Math.abs(value) >= 1e9) {
+    return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(value / 1e9)} tỷ`;
+  }
+  if (Math.abs(value) >= 1e6) {
+    return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(value / 1e6)} tr`;
+  }
+  if (Math.abs(value) >= 1e3) {
+    return `${new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value / 1e3)} ng`;
+  }
+  return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value);
+};

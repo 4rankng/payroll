@@ -1,0 +1,131 @@
+/* ============================================================================
+   STAFF DAY CONSOLE — toto.sg mission-control port workbench layer.
+
+   One instrument language for Admin / Partner / Accountant staff surfaces:
+   hairline panels on a measurement grid, mono kickers, tabular figures,
+   36px tables, one-row filters. Employee portal and login are NOT console
+   surfaces — never apply these classes there.
+
+   Layered as `components` so Tailwind utilities still win at call sites.
+   Palette is unchanged (owner-locked): the identity comes from geometry,
+   density, and typography, not hue. Values derive from role tokens declared
+   in variables.css (--console-*, --chart-*).
+   ============================================================================ */
+
+@layer components {
+  /* One backdrop per shell: soft corner glows over a 48px measurement grid.
+     Desktop and tablet only — mobile drops the grid entirely (thumb scrolling
+     makes hairlines noisy, and fixed attachment janks on iOS). */
+  .console-shell {
+    background-image:
+      radial-gradient(1000px 560px at 14% -10%, var(--console-glow-primary), transparent 70%),
+      radial-gradient(820px 460px at 88% -8%, var(--console-glow-info), transparent 72%),
+      linear-gradient(to right, var(--console-grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--console-grid) 1px, transparent 1px);
+    background-size: auto, auto, 48px 48px, 48px 48px;
+    background-attachment: fixed;
+  }
+  @media (max-width: 767.98px) {
+    .console-shell {
+      background-image: none;
+    }
+  }
+
+  /* Hairline panel: white card, visible outline, faint emerald crown. */
+  .console-panel {
+    position: relative;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.5rem;
+    background: hsl(var(--card));
+    box-shadow: var(--console-panel-shadow);
+  }
+  .console-panel::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: hsl(var(--primary) / 0.18);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .console-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid hsl(var(--border) / 0.65);
+    background: hsl(var(--muted) / 0.4);
+  }
+
+  .console-divider {
+    border-color: hsl(var(--border) / 0.65);
+  }
+
+  /* 9px mono uppercase kicker — section labels, gauge labels, sidebar groups. */
+  .console-kicker {
+    font-family: var(--font-family-financial);
+    font-size: 9px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Tabular figures for every numeric cell and KPI figure. */
+  .console-value {
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Page header strip: 3px signal mark on the left edge, hairline below.
+     Replaces the white rounded card — no shadow, no icon chip. */
+  .console-page-header {
+    border-left: 3px solid hsl(var(--primary));
+    border-bottom: 1px solid hsl(var(--border));
+    padding: 12px 0 12px 12px;
+  }
+
+  .console-panel-body {
+    padding: 12px;
+  }
+
+  /* 36px console table: mono uppercase column headers, compact data rows,
+     right-aligned mono numerals via td.num. Interactive rows keep ≥44px
+     targets on mobile through call-site utilities. */
+  .console-table thead th {
+    font-family: var(--font-family-financial);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+  .console-table thead tr,
+  .console-table tbody tr {
+    height: 36px;
+  }
+  .console-table td {
+    font-size: 13px;
+  }
+  .console-table td.num {
+    font-family: var(--font-family-financial);
+    text-align: right;
+  }
+
+  /* One-row filter bar; horizontal scroll only below 360px. */
+  .console-filter-bar {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+  }
+  @media (max-width: 359.98px) {
+    .console-filter-bar {
+      overflow-x: auto;
+    }
+  }
+}

@@ -35,13 +35,20 @@ export default function AccountantPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  // Same pattern as AdminLayout: role tokens on <html> so portalled dialogs
+  // (rendered outside this wrapper) inherit the accountant scope too.
+  useEffect(() => {
+    document.documentElement.classList.add('accountant-route-active');
+    return () => document.documentElement.classList.remove('accountant-route-active');
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
   };
 
   return (
-    <div className="min-h-screen bg-card">
+    <div data-accountant-ui="" className="min-h-screen bg-card">
       <header className="sticky top-0 z-10 border-b border-utility-gray-200 bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">

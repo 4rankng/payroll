@@ -4,6 +4,7 @@
 @import './styles/premium.css';
 @import './styles/admin-daisy.css';
 @import './styles/partner.css';
+@import './styles/console.css';
 
 @tailwind base;
 @tailwind components;

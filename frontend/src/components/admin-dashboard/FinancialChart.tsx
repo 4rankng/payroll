@@ -36,21 +36,21 @@ const CHART_GROUPS: ReadonlyArray<{
     label: 'Lợi nhuận',
     description: 'Doanh thu, Chi phí, Lợi nhuận',
     lines: ['Doanh thu', 'Chi phí', 'Lợi nhuận'],
-    color: 'hsl(142 76% 36%)'
+    color: 'hsl(var(--chart-1))'
   },
   {
     value: 'cashflow',
     label: 'Dòng tiền',
     description: 'Tiền mặt, Công nợ',
     lines: ['Tiền mặt', 'Công nợ phải thu', 'Công nợ phải trả'],
-    color: 'hsl(217 91% 60%)'
+    color: 'hsl(var(--chart-3))'
   },
   {
     value: 'operations',
     label: 'Hoạt động',
     description: 'NV làm việc, Doanh thu, Phải thu',
     lines: ['NV làm việc', 'Doanh thu', 'Công nợ phải thu'],
-    color: 'hsl(174 72% 31%)'
+    color: 'hsl(var(--chart-other))'
   },
 ];
 
@@ -427,7 +427,7 @@ export function FinancialChart({ className }: FinancialChartProps) {
                 yAxisId="left"
                 type="monotone"
                 dataKey="Chi phí"
-                stroke="hsl(0 84% 60%)"
+                stroke="hsl(var(--chart-5))"
                 strokeWidth={2.5}
                 dot={false}
                 activeDot={{ r: 4 }}
@@ -437,7 +437,7 @@ export function FinancialChart({ className }: FinancialChartProps) {
                 yAxisId="left"
                 type="monotone"
                 dataKey="Lợi nhuận"
-                stroke="hsl(45 93% 47%)"
+                stroke="hsl(var(--chart-4))"
                 strokeWidth={2.5}
                 dot={false}
                 activeDot={{ r: 4 }}
@@ -459,7 +459,7 @@ export function FinancialChart({ className }: FinancialChartProps) {
                 yAxisId="left"
                 type="monotone"
                 dataKey="Công nợ phải thu"
-                stroke="hsl(200 70% 50%)"
+                stroke="hsl(var(--chart-6))"
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 dot={false}
@@ -470,7 +470,7 @@ export function FinancialChart({ className }: FinancialChartProps) {
                 yAxisId="left"
                 type="monotone"
                 dataKey="Công nợ phải trả"
-                stroke="hsl(25 95% 53%)"
+                stroke="hsl(var(--chart-2))"
                 strokeWidth={2}
                 strokeDasharray="5 5"
                 dot={false}
