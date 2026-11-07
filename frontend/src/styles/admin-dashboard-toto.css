@@ -1,0 +1,173 @@
+/* ============================================================================
+   ADMIN DASHBOARD — toto.sg light day-console.
+
+   Scoped to the desktop /admin dashboard only: `AdminDashboard` adds
+   `admin-dashboard-toto` to <html> on mount and removes it on unmount, so the
+   rest of the payroll app keeps its own product palette.
+
+   Cool paper canvas, white hairline panels, deep teal signal, cyan data hue,
+   gold rank, rose negative. The sidebar stays a dark ink rail so the light
+   data canvas has a contrast anchor.
+   ============================================================================ */
+
+html.admin-dashboard-toto {
+  --admin-background: 192 33% 95%; /* #EEF6F8 */
+  --admin-foreground: 197 76% 10%; /* #06212C */
+  --admin-card: 0 0% 100%;
+  --admin-card-foreground: 197 76% 10%;
+  --admin-popover: 0 0% 100%;
+  --admin-popover-foreground: 197 76% 10%;
+  --admin-primary: 170 83% 26%; /* #0B7A67 — AA text on paper */
+  --admin-primary-foreground: 0 0% 100%;
+  --admin-secondary: 193 82% 31%; /* #0E7490 */
+  --admin-secondary-foreground: 0 0% 100%;
+  --admin-muted: 195 42% 93%; /* #E4F0F4 */
+  --admin-muted-foreground: 199 22% 35%; /* #45606C */
+  --admin-accent-soft: 168 55% 93%; /* #E3F7F3 */
+  --admin-accent-foreground: 170 83% 26%;
+  --admin-border: 196 30% 75%; /* hairline; controls are darker below */
+  --admin-input: 196 22% 58%;
+  --admin-ring: 170 83% 34%;
+  --admin-success: 142 72% 29%;
+  --admin-success-foreground: 0 0% 100%;
+  --admin-warning: 28 82% 37%;
+  --admin-warning-foreground: 0 0% 100%;
+  --admin-info: 193 82% 31%;
+  --admin-info-foreground: 0 0% 100%;
+  --admin-destructive: 347 77% 41%;
+  --admin-destructive-foreground: 0 0% 100%;
+  --admin-sidebar-background: 197 76% 10%;
+  --admin-sidebar-foreground: 190 50% 94%;
+  --admin-sidebar-primary: 169 79% 54%;
+  --admin-sidebar-primary-foreground: 197 76% 10%;
+  --admin-sidebar-accent: 197 50% 16%;
+  --admin-sidebar-accent-foreground: 190 50% 94%;
+  --admin-sidebar-border: 197 40% 22%;
+  --admin-sidebar-ring: 169 79% 54%;
+  --admin-card-shadow: 0 12px 30px -26px rgba(6, 33, 44, 0.25);
+  --admin-shell-shadow: 0 20px 60px -42px rgba(6, 33, 44, 0.25);
+  --admin-grid-line: hsl(197 76% 10% / 0.035);
+  --admin-grid-strong: hsl(170 83% 34% / 0.15);
+  --admin-shell-glow: hsl(170 83% 34% / 0.08);
+
+  --console-grid: hsl(197 76% 10% / 0.035);
+  --console-glow-primary: hsl(170 83% 34% / 0.06);
+  --console-glow-info: hsl(193 82% 31% / 0.04);
+  --console-panel-shadow:
+    inset 0 1px 0 hsl(170 83% 34% / 0.14),
+    0 18px 36px -34px hsl(170 83% 34% / 0.35);
+
+  --chart-1: 170 83% 34%;
+  --chart-2: 193 82% 31%;
+  --chart-3: 47 100% 42%;
+  --chart-4: 347 77% 41%;
+  --chart-5: 262 52% 40%;
+  --chart-6: 142 72% 29%;
+  --chart-other: 199 16% 58%;
+
+  --selection: 170 83% 34%;
+  color-scheme: light;
+}
+
+/* One flat paper shell; the console-shell class owns the grid and glows. */
+html.admin-dashboard-toto [data-admin-ui] .admin-shell {
+  background: hsl(var(--background));
+}
+
+html.admin-dashboard-toto .admin-dashboard-page {
+  color: hsl(var(--foreground));
+}
+
+/* Treasury metric band — light hairlines, teal wash, instrument mesh. */
+html.admin-dashboard-toto .treasury-grid > * + *::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--border)) 14%,
+    hsl(var(--border)) 86%,
+    transparent
+  );
+}
+@media (min-width: 1024px) {
+  html.admin-dashboard-toto .treasury-grid > * + *::before {
+    background: linear-gradient(
+      180deg,
+      transparent,
+      hsl(var(--border)) 16%,
+      hsl(var(--border)) 84%,
+      transparent
+    );
+  }
+}
+html.admin-dashboard-toto .treasury-panel {
+  background-image: radial-gradient(120% 85% at 50% 0%, rgba(15, 158, 134, 0.05), transparent 70%);
+}
+html.admin-dashboard-toto .treasury-panel::after {
+  background:
+    linear-gradient(90deg, transparent, rgba(15, 158, 134, 0.5), transparent) top / 100% 2px no-repeat,
+    radial-gradient(120% 90% at 50% 0%, rgba(15, 158, 134, 0.08), transparent 68%);
+}
+html.admin-dashboard-toto .treasury-mesh {
+  background-image: radial-gradient(rgba(15, 158, 134, 0.1) 1px, transparent 1px);
+}
+html.admin-dashboard-toto .treasury-rail {
+  border-top-color: hsl(var(--border) / 0.9);
+}
+
+/* Console tables: the primitive's gray row borders/hover are replaced with
+   the day-console hairline and paper hover. */
+html.admin-dashboard-toto .console-table thead tr,
+html.admin-dashboard-toto .console-table tbody tr {
+  border-color: hsl(var(--border));
+}
+html.admin-dashboard-toto .console-table tbody tr:hover {
+  background-color: hsl(var(--muted) / 0.55);
+}
+html.admin-dashboard-toto .console-table tfoot {
+  background-color: transparent;
+}
+
+/* Financial signs use the light status tokens. */
+html.admin-dashboard-toto .text-financial-positive {
+  color: hsl(var(--success));
+}
+html.admin-dashboard-toto .text-financial-negative {
+  color: hsl(var(--destructive));
+}
+
+/* Recharts default tooltip has no color of its own. */
+html.admin-dashboard-toto .recharts-default-tooltip {
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+html.admin-dashboard-toto .recharts-tooltip-label,
+html.admin-dashboard-toto .recharts-tooltip-item {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Ink rail: the last hardcoded green gradient becomes a navy instrument rail
+   with a teal signal. */
+html.admin-dashboard-toto [data-admin-ui] .admin-sidebar-surface {
+  background:
+    linear-gradient(180deg, rgba(46, 230, 197, 0.05), transparent 16%),
+    linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(197 60% 13%) 100%);
+}
+html.admin-dashboard-toto [data-admin-ui] .admin-sidebar-surface [data-sidebar="sidebar"] {
+  background:
+    radial-gradient(circle at 35% 0%, rgba(46, 230, 197, 0.08), transparent 14rem),
+    linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(197 60% 13%) 100%);
+}
+html.admin-dashboard-toto [data-admin-ui] .admin-sidebar-logo::after {
+  background: linear-gradient(90deg, transparent, rgba(46, 230, 197, 0.28), transparent);
+}
+html.admin-dashboard-toto [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div {
+  border-color: rgba(46, 230, 197, 0.3);
+  background: linear-gradient(90deg, rgba(46, 230, 197, 0.16), rgba(46, 230, 197, 0.06));
+}
+html.admin-dashboard-toto [data-admin-ui] .admin-sidebar-brand {
+  border-color: hsl(var(--sidebar-border));
+  background:
+    linear-gradient(135deg, rgba(46, 230, 197, 0.1), transparent 55%),
+    linear-gradient(180deg, rgba(46, 230, 197, 0.06), rgba(4, 16, 24, 0.2));
+}

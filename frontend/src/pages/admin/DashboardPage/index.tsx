@@ -43,13 +43,13 @@ const AdminDashboard = () => {
   const [activitySchedule, setActivitySchedule] = useState<'weekly' | 'monthly' | 'flexible' | null>(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
-  // Literal toto.sg console skin for this dashboard only. The class lives on
-  // <html> so the sidebar and portalled dialogs share the navy/teal tokens;
-  // it is removed on unmount, restoring the light day console elsewhere.
+  // toto.sg light day-console skin for this dashboard only. The class lives
+  // on <html> so the sidebar and portalled dialogs share the paper/teal
+  // tokens; it is removed on unmount, restoring the product palette elsewhere.
   useLayoutEffect(() => {
     const root = document.documentElement;
-    root.classList.add('admin-dashboard-dark');
-    return () => root.classList.remove('admin-dashboard-dark');
+    root.classList.add('admin-dashboard-toto');
+    return () => root.classList.remove('admin-dashboard-toto');
   }, []);
 
   const handleMonthChange = useCallback((value: string) => {
