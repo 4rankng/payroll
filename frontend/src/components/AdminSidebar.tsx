@@ -110,10 +110,11 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
     : location.pathname.startsWith(item.path);
 
   const inner = (
-    <NavLink to={item.path} className="block w-full" onClick={onNavigate}>
+    <NavLink to={item.path} end={item.end} className="block w-full" onClick={onNavigate}>
       <div
         className={cn(
           "relative flex items-center gap-2.5 rounded-lg transition-all duration-150 ease-out cursor-pointer select-none",
+          !isCollapsed && "overflow-hidden",
           isCollapsed
             ? isActive
               ? "h-9 w-9 justify-center mx-auto bg-card/[0.08] ring-1 ring-white/[0.12]"

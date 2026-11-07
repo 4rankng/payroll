@@ -2,7 +2,7 @@
    ADMIN DASHBOARD — toto.sg light day-console.
 
    Scoped to the desktop /admin dashboard only: `AdminDashboard` adds
-   `admin-dashboard-toto` to <html> on mount and removes it on unmount, so the
+   `admin-console-toto` to <html> on mount and removes it on unmount, so the
    rest of the payroll app keeps its own product palette.
 
    Cool paper canvas, white hairline panels, deep teal signal, cyan data hue,
@@ -10,7 +10,7 @@
    data canvas has a contrast anchor.
    ============================================================================ */
 
-html.admin-dashboard-toto {
+html.admin-console-toto {
   --admin-background: 192 33% 95%; /* #EEF6F8 */
   --admin-foreground: 197 76% 10%; /* #06212C */
   --admin-card: 0 0% 100%;
@@ -70,16 +70,16 @@ html.admin-dashboard-toto {
 }
 
 /* One flat paper shell; the console-shell class owns the grid and glows. */
-html.admin-dashboard-toto [data-admin-ui] .admin-shell {
+html.admin-console-toto [data-admin-ui] .admin-shell {
   background: hsl(var(--background));
 }
 
-html.admin-dashboard-toto .admin-dashboard-page {
+html.admin-console-toto .admin-dashboard-page {
   color: hsl(var(--foreground));
 }
 
 /* Treasury metric band — light hairlines, teal wash, instrument mesh. */
-html.admin-dashboard-toto .treasury-grid > * + *::before {
+html.admin-console-toto .treasury-grid > * + *::before {
   background: linear-gradient(
     90deg,
     transparent,
@@ -89,7 +89,7 @@ html.admin-dashboard-toto .treasury-grid > * + *::before {
   );
 }
 @media (min-width: 1024px) {
-  html.admin-dashboard-toto .treasury-grid > * + *::before {
+  html.admin-console-toto .treasury-grid > * + *::before {
     background: linear-gradient(
       180deg,
       transparent,
@@ -99,73 +99,74 @@ html.admin-dashboard-toto .treasury-grid > * + *::before {
     );
   }
 }
-html.admin-dashboard-toto .treasury-panel {
+html.admin-console-toto .treasury-panel {
   background-image: radial-gradient(120% 85% at 50% 0%, rgba(15, 158, 134, 0.05), transparent 70%);
 }
-html.admin-dashboard-toto .treasury-panel::after {
+html.admin-console-toto .treasury-panel::after {
   background:
     linear-gradient(90deg, transparent, rgba(15, 158, 134, 0.5), transparent) top / 100% 2px no-repeat,
     radial-gradient(120% 90% at 50% 0%, rgba(15, 158, 134, 0.08), transparent 68%);
 }
-html.admin-dashboard-toto .treasury-mesh {
+html.admin-console-toto .treasury-mesh {
   background-image: radial-gradient(rgba(15, 158, 134, 0.1) 1px, transparent 1px);
 }
-html.admin-dashboard-toto .treasury-rail {
+html.admin-console-toto .treasury-rail {
   border-top-color: hsl(var(--border) / 0.9);
 }
 
 /* Console tables: the primitive's gray row borders/hover are replaced with
    the day-console hairline and paper hover. */
-html.admin-dashboard-toto .console-table thead tr,
-html.admin-dashboard-toto .console-table tbody tr {
+html.admin-console-toto .console-table thead tr,
+html.admin-console-toto .console-table tbody tr {
   border-color: hsl(var(--border));
 }
-html.admin-dashboard-toto .console-table tbody tr:hover {
+html.admin-console-toto .console-table tbody tr:hover {
   background-color: hsl(var(--muted) / 0.55);
 }
-html.admin-dashboard-toto .console-table tfoot {
+html.admin-console-toto .console-table tfoot {
   background-color: transparent;
 }
 
 /* Financial signs use the light status tokens. */
-html.admin-dashboard-toto .text-financial-positive {
+html.admin-console-toto .text-financial-positive {
   color: hsl(var(--success));
 }
-html.admin-dashboard-toto .text-financial-negative {
+html.admin-console-toto .text-financial-negative {
   color: hsl(var(--destructive));
 }
 
 /* Recharts default tooltip has no color of its own. */
-html.admin-dashboard-toto .recharts-default-tooltip {
+html.admin-console-toto .recharts-default-tooltip {
   background-color: hsl(var(--card)) !important;
   border-color: hsl(var(--border)) !important;
   color: hsl(var(--foreground)) !important;
 }
-html.admin-dashboard-toto .recharts-tooltip-label,
-html.admin-dashboard-toto .recharts-tooltip-item {
+html.admin-console-toto .recharts-tooltip-label,
+html.admin-console-toto .recharts-tooltip-item {
   color: hsl(var(--foreground)) !important;
 }
 
 /* Ink rail: the last hardcoded green gradient becomes a navy instrument rail
    with a teal signal. */
-html.admin-dashboard-toto [data-admin-ui] .admin-sidebar-surface {
+html.admin-console-toto [data-admin-ui] .admin-sidebar-surface {
   background:
     linear-gradient(180deg, rgba(46, 230, 197, 0.05), transparent 16%),
     linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(197 60% 13%) 100%);
 }
-html.admin-dashboard-toto [data-admin-ui] .admin-sidebar-surface [data-sidebar="sidebar"] {
+html.admin-console-toto [data-admin-ui] .admin-sidebar-surface [data-sidebar="sidebar"] {
   background:
     radial-gradient(circle at 35% 0%, rgba(46, 230, 197, 0.08), transparent 14rem),
     linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(197 60% 13%) 100%);
 }
-html.admin-dashboard-toto [data-admin-ui] .admin-sidebar-logo::after {
+html.admin-console-toto [data-admin-ui] .admin-sidebar-logo::after {
   background: linear-gradient(90deg, transparent, rgba(46, 230, 197, 0.28), transparent);
 }
-html.admin-dashboard-toto [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div {
-  border-color: rgba(46, 230, 197, 0.3);
-  background: linear-gradient(90deg, rgba(46, 230, 197, 0.16), rgba(46, 230, 197, 0.06));
+html.admin-console-toto [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div {
+  border-color: transparent;
+  background: hsl(var(--primary) / 0.1);
+  box-shadow: none;
 }
-html.admin-dashboard-toto [data-admin-ui] .admin-sidebar-brand {
+html.admin-console-toto [data-admin-ui] .admin-sidebar-brand {
   border-color: hsl(var(--sidebar-border));
   background:
     linear-gradient(135deg, rgba(46, 230, 197, 0.1), transparent 55%),

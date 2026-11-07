@@ -99,13 +99,19 @@ function MetricContent({ item }: { item: DashboardMetricItem }) {
 
 export function DashboardMetricStrip({ items }: DashboardMetricStripProps) {
   // treasury-grid: fading seams between cells replace per-cell borders.
-  const cols = items.length >= 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3';
+  // Five or more becomes the compact insights-style six-up summary strip.
+  const cols =
+    items.length >= 5
+      ? 'sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6'
+      : items.length >= 4
+        ? 'lg:grid-cols-4'
+        : 'lg:grid-cols-3';
 
   return (
     <section
       aria-label="Tóm tắt kỳ lương"
       className={cn(
-        'treasury-grid grid grid-cols-1 overflow-hidden rounded-lg border border-border bg-card sm:grid-cols-2',
+        'treasury-grid grid grid-cols-1 overflow-hidden rounded-lg border border-border bg-card',
         cols,
       )}
     >

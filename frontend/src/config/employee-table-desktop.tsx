@@ -33,8 +33,8 @@ export const createEmployeeColumns = (
       id: "employee_info",
       accessorKey: "fullname",
       header: "Nhân viên",
-      size: 0,
-      minSize: 0,
+      size: 340,
+      minSize: 300,
       cell: ({ row }) => {
         const employee = row.original;
         const bankOk = hasCompleteBankDetails(employee);
@@ -91,8 +91,8 @@ export const createEmployeeColumns = (
       id: "projects",
       accessorKey: "project_name",
       header: "Dự án",
-      size: 0,
-      minSize: 0,
+      size: 320,
+      minSize: 260,
       cell: ({ row }) => {
         const employee = row.original;
         const projects = getEmployeeProjects(employee);
@@ -151,7 +151,8 @@ export const createEmployeeColumns = (
       id: "bank",
       accessorKey: "bank_name",
       header: "Ngân hàng",
-      size: 0,
+      size: 220,
+      minSize: 180,
       cell: ({ row }) => {
         const employee = row.original;
         const branch = employee.bank?.branch_name;
@@ -171,26 +172,10 @@ export const createEmployeeColumns = (
       },
     },
     {
-      accessorKey: "address",
-      header: "Địa chỉ",
-      cell: ({ row }) => {
-        const raw = (row.getValue("address") as string) || "";
-        const cleaned = raw.replace(/\\'/g, "'");
-        if (!cleaned) return <span className="text-muted-foreground">—</span>;
-        return (
-          <div className="flex items-center gap-1.5 min-w-0" title={cleaned}>
-            <MapPin className="h-3 w-3 shrink-0 text-muted-foreground" />
-            <span className="typography-body-medium text-muted-foreground truncate">
-              {cleaned}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
       accessorKey: "created_at",
       header: "Ngày tạo",
       size: 110,
+      minSize: 96,
       cell: ({ row }) => {
         const date = row.getValue("created_at") as string;
         return (

@@ -97,7 +97,7 @@ interface SettingsGeneralPanelProps {
 }
 
 export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
-  <div className="space-y-3">
+  <div className="columns-1 gap-3 xl:columns-2 [&>*]:mb-3 [&>*]:break-inside-avoid">
     <SettingsSection kicker="Chu kỳ tuần" title="Lương tuần">
       <SettingCard
         title="Tỷ lệ trả lương tuần"

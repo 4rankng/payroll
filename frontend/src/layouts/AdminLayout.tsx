@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -100,10 +100,16 @@ const AdminLayout = () => {
   // data tables get the full remaining width. Desktop keeps it expanded.
   const isTablet = useIsTablet();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isAdmin) return;
-    document.documentElement.classList.add("admin-route-active");
-    return () => document.documentElement.classList.remove("admin-route-active");
+    const root = document.documentElement;
+    // One theme for the whole admin console. The toto light day-console tokens
+    // are promoted from the dashboard pilot to every admin route so navigating
+    // between dashboard, users, projects and settings never repaints the shell.
+    root.classList.add("admin-route-active", "admin-console-toto");
+    return () => {
+      root.classList.remove("admin-route-active", "admin-console-toto");
+    };
   }, [isAdmin]);
 
   return (
