@@ -348,23 +348,23 @@ export const OpsApiKeysSection = () => {
       {/* 1. Tạo khoá ops (pk_ops_*) */}
       <section id="ops-keys-create" aria-labelledby="ops-keys-create-title">
         <Card variant="console">
-          <CardHeader className="console-panel-header p-4 sm:p-5">
+          <CardHeader className="console-panel-header px-3 py-2.5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
                 <Plus className="size-4" aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <CardTitle id="ops-keys-create-title" className="text-sm sm:text-base font-semibold text-foreground">
+                <CardTitle id="ops-keys-create-title" className="font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground">
                   Tạo khoá ops cho agent (payroll-ops-mcp)
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                <CardDescription className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
                   Khoá <span className="font-mono">pk_ops_*</span> chạy với quyền quản trị của bạn, giới hạn bởi phạm vi
                   khoá. Mỗi agent một khoá — audit ghi rõ agent nào gọi gì. Khoá chỉ hiển thị một lần khi tạo.
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-5 space-y-4">
+          <CardContent className="p-3 space-y-3">
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                 <div className="space-y-1.5">
@@ -518,17 +518,17 @@ export const OpsApiKeysSection = () => {
       {/* 2. Danh sách khoá ops */}
       <section id="ops-keys-list" aria-labelledby="ops-keys-list-title">
         <Card variant="console">
-          <CardHeader className="console-panel-header p-4 sm:p-5">
+          <CardHeader className="console-panel-header px-3 py-2.5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-muted-foreground/20 bg-muted text-foreground">
                   <FileKey2 className="size-4" aria-hidden="true" />
                 </div>
                 <div>
-                  <CardTitle id="ops-keys-list-title" className="text-sm sm:text-base font-semibold text-foreground">
+                  <CardTitle id="ops-keys-list-title" className="font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground">
                     Danh sách khoá ops
                   </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                  <CardDescription className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
                     Theo dõi phạm vi (hiệu dụng) và lần dùng gần nhất. Cấp ghi tự hồi sau cửa sổ; thu hồi để chặn ngay.
                   </CardDescription>
                 </div>
@@ -602,16 +602,16 @@ export const OpsApiKeysSection = () => {
       {/* 3. Hướng dẫn cài đặt MCP vào agent */}
       <section id="ops-mcp-install" aria-labelledby="ops-mcp-install-title">
         <Card variant="console">
-          <CardHeader className="console-panel-header p-4 sm:p-5">
+          <CardHeader className="console-panel-header px-3 py-2.5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400">
                 <Terminal className="size-4" aria-hidden="true" />
               </div>
               <div>
-                <CardTitle id="ops-mcp-install-title" className="text-sm sm:text-base font-semibold text-foreground">
+                <CardTitle id="ops-mcp-install-title" className="font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground">
                   Cài đặt MCP vào agent của bạn
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                <CardDescription className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
                   Kết nối payroll-ops-mcp (stdio) vào Hermes, Paseo, Claude Desktop hoặc Claude Code — agent sẽ gọi
                   được API payroll với đúng phạm vi khoá.
                 </CardDescription>
@@ -619,7 +619,7 @@ export const OpsApiKeysSection = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="p-4 sm:p-5 space-y-6 text-xs sm:text-sm">
+          <CardContent className="p-3 space-y-4 text-[13px]">
             <ol className="space-y-5">
               {/* Bước 1 */}
               <li className="space-y-2">

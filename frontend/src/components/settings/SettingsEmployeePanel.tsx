@@ -1,5 +1,6 @@
-import { Users } from 'lucide-react';
-import { useId, useEffect, useState, type ReactNode } from 'react';
+import { useId, useEffect, useState } from 'react';
+
+import { SettingsSection } from '@/components/settings/SettingsSection';
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -48,11 +49,11 @@ const SettingToggleRow = ({
         <div className="min-w-0 space-y-1 md:py-2">
           <Label
             htmlFor={switchId}
-            className="block break-words text-sm font-semibold leading-5 text-foreground"
+            className="block break-words text-[13px] font-medium leading-5 text-foreground"
           >
             {title}
           </Label>
-          <p id={descriptionId} className="break-words text-sm leading-relaxed text-balance text-muted-foreground">
+          <p id={descriptionId} className="break-words text-xs leading-4 text-muted-foreground">
             {description}
           </p>
         </div>
@@ -77,44 +78,6 @@ const SettingToggleRow = ({
         </div>
       </div>
     </div>
-  );
-};
-
-const SettingsSection = ({ icon: Icon, title, description, children }: {
-  icon: typeof Users;
-  title: string;
-  description: string;
-  children: ReactNode;
-}) => {
-  const generatedId = useId().replace(/:/g, '');
-  const headingId = `settings-section-${generatedId}`;
-
-  return (
-    <section
-      aria-labelledby={headingId}
-      className="grid gap-5 border-b px-4 py-7 last:border-b-0 last:pb-7 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:gap-8 lg:px-6"
-    >
-      <div className="flex min-w-0 items-start gap-3 lg:pt-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm">
-          <Icon aria-hidden="true" className="h-[18px] w-[18px]" />
-        </div>
-        <div className="min-w-0 pt-0.5">
-          <h2 id={headingId} className="console-kicker">
-            {title}
-          </h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-balance">
-            {description}
-          </p>
-        </div>
-      </div>
-
-      <div
-        data-slot="settings-group"
-        className="console-panel min-w-0 divide-y overflow-hidden"
-      >
-        {children}
-      </div>
-    </section>
   );
 };
 
@@ -162,12 +125,8 @@ export const SettingsEmployeePanel = () => {
   };
 
   return (
-    <div className="space-y-0">
-      <SettingsSection
-        icon={Users}
-        title="Nhân viên"
-        description="Quy tắc bắt buộc khi tạo hồ sơ nhân viên mới."
-      >
+    <div className="space-y-3">
+      <SettingsSection kicker="Chính sách" title="Nhân viên">
         {isError ? (
           <div role="alert" className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
             <p className="min-w-0 break-words text-sm leading-relaxed text-destructive">

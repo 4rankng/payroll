@@ -278,22 +278,22 @@ export const McpApiKeysSection = () => {
       {/* 1. Tạo khoá MCP */}
       <section id="mcp-keys-create" aria-labelledby="mcp-keys-create-title">
         <Card variant="console">
-          <CardHeader className="console-panel-header p-4 sm:p-5">
+          <CardHeader className="console-panel-header px-3 py-2.5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
                 <Plus className="size-4" aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <CardTitle id="mcp-keys-create-title" className="text-sm sm:text-base font-semibold text-foreground">
+                <CardTitle id="mcp-keys-create-title" className="font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground">
                   Tạo khoá API MCP
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                <CardDescription className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
                   Cấp khoá cho agent (Claude Code, MCP client…) truy cập API. Khoá chỉ hiển thị một lần khi tạo.
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-5 space-y-4">
+          <CardContent className="p-3 space-y-3">
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                 <div className="space-y-1.5">
@@ -425,17 +425,17 @@ export const McpApiKeysSection = () => {
       {/* 2. Danh sách khoá MCP */}
       <section id="mcp-keys-list" aria-labelledby="mcp-keys-list-title">
         <Card variant="console">
-          <CardHeader className="console-panel-header p-4 sm:p-5">
+          <CardHeader className="console-panel-header px-3 py-2.5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-muted-foreground/20 bg-muted text-foreground">
                   <KeyRound className="size-4" aria-hidden="true" />
                 </div>
                 <div>
-                  <CardTitle id="mcp-keys-list-title" className="text-sm sm:text-base font-semibold text-foreground">
+                  <CardTitle id="mcp-keys-list-title" className="font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground">
                     Danh sách khoá MCP
                   </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                  <CardDescription className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
                     Theo dõi khoá, phạm vi và lần dùng gần nhất. Thu hồi để chặn một khoá ngay lập tức.
                   </CardDescription>
                 </div>
@@ -509,23 +509,23 @@ export const McpApiKeysSection = () => {
       {/* 3. Hướng dẫn tích hợp MCP */}
       <section id="mcp-guide" aria-labelledby="mcp-guide-title">
         <Card variant="console">
-          <CardHeader className="console-panel-header p-4 sm:p-5">
+          <CardHeader className="console-panel-header px-3 py-2.5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400">
                 <Bot className="size-4" aria-hidden="true" />
               </div>
               <div>
-                <CardTitle id="mcp-guide-title" className="text-sm sm:text-base font-semibold text-foreground">
+                <CardTitle id="mcp-guide-title" className="font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground">
                   Hướng dẫn tích hợp MCP
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                <CardDescription className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
                   Kết nối agent qua Model Context Protocol (Streamable HTTP) để gọi API payroll.
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
 
-          <CardContent className="p-4 sm:p-5 space-y-6 text-xs sm:text-sm">
+          <CardContent className="p-3 space-y-4 text-[13px]">
             {/* Endpoint */}
             <div className="space-y-2">
               <p className="font-medium text-foreground">Endpoint (Streamable HTTP)</p>

@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   ChevronDown,
   Loader2,
-  MessageCircle,
   PlugZap,
   RefreshCw,
   Send,
@@ -45,22 +44,18 @@ const SettingsSection = ({
   const titleId = `${id}-title`;
 
   return (
-    <section
-      id={id}
-      aria-labelledby={titleId}
-      className="grid gap-5 border-t bg-card px-4 py-6 sm:px-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-8 lg:py-7 xl:grid-cols-[16rem_minmax(0,1fr)]"
-    >
-      <div className="min-w-0">
-        <div className="mb-2 flex items-center gap-2">
-          <h3 id={titleId} className="console-kicker">
-            {title}
-          </h3>
-        </div>
-        <p className="max-w-xs text-sm leading-5 text-muted-foreground">
-          {description}
-        </p>
-      </div>
-      <div className="min-w-0">{children}</div>
+    <section id={id} aria-labelledby={titleId} className="border-t border-border/70">
+      <header className="bg-muted/20 px-3 py-2">
+        <p className="console-kicker text-primary">Zalo ZNS</p>
+        <h3
+          id={titleId}
+          className="mt-0.5 font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground"
+        >
+          {title}
+        </h3>
+        <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">{description}</p>
+      </header>
+      <div className="min-w-0 px-3 py-3">{children}</div>
     </section>
   );
 };
@@ -379,24 +374,19 @@ export const ZaloConnectionSection = () => {
 
   return (
     <div className="console-panel overflow-hidden text-card-foreground">
-      <header className="console-panel-header px-4 py-5 sm:px-6 sm:py-6">
+      <header className="console-panel-header px-3 py-2.5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex min-w-0 items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700">
-              <MessageCircle aria-hidden="true" className="size-5" />
-            </div>
-            <div className="min-w-0">
-              <h2
-                id="zalo-connection-title"
-                className="text-base font-semibold text-foreground sm:text-lg"
-              >
-                Kênh thông báo Zalo ZNS
-              </h2>
-              <p className="mt-1 max-w-2xl text-sm leading-5 text-muted-foreground">
-                Một kết nối dùng chung cho OTP đặt lại mật khẩu và thông báo
-                lương linh hoạt.
-              </p>
-            </div>
+          <div className="min-w-0">
+            <p className="console-kicker text-primary">Kết nối</p>
+            <h2
+              id="zalo-connection-title"
+              className="mt-0.5 font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground"
+            >
+              Kênh thông báo Zalo ZNS
+            </h2>
+            <p className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
+              Dùng chung cho OTP và thông báo lương.
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Badge
@@ -411,7 +401,7 @@ export const ZaloConnectionSection = () => {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-11 gap-1.5 px-2.5 text-sm"
+                className="h-11 gap-1.5 px-2.5 text-[13px] sm:h-9"
                 aria-expanded={showCredentials}
                 aria-controls="zalo-credentials"
                 onClick={() => setShowCredentials((current) => !current)}
@@ -429,7 +419,7 @@ export const ZaloConnectionSection = () => {
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 border-t pt-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+        <div className="mt-3 grid gap-3 border-t pt-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <ol
             aria-label="Tiến độ thiết lập Zalo ZNS"
             className="grid grid-cols-3 gap-3"
@@ -484,7 +474,7 @@ export const ZaloConnectionSection = () => {
       <SettingsSection
         id="zalo-credentials"
         title="Cấu hình kết nối"
-        description="Nhập thông tin ứng dụng và mã truy cập từ Zalo OA Console. Khóa bảo mật không hiển thị lại sau khi lưu."
+        description="Thông tin ứng dụng từ Zalo OA Console."
       >
         <form onSubmit={handleCredentialsSubmit} className="space-y-5">
           <div className="grid gap-5 md:grid-cols-2">
@@ -597,7 +587,7 @@ export const ZaloConnectionSection = () => {
       <SettingsSection
         id="zalo-services"
         title="Dịch vụ sử dụng kết nối"
-        description="Chọn nghiệp vụ được phép gửi qua kênh ZNS. Hai dịch vụ hoạt động độc lập trên cùng một kết nối."
+        description="Nghiệp vụ được phép gửi qua ZNS."
       >
         <div className="overflow-hidden rounded-lg border bg-card">
           <label
@@ -692,7 +682,7 @@ export const ZaloConnectionSection = () => {
       <SettingsSection
         id="zalo-test-send"
         title="Kiểm tra gửi thực tế"
-        description="Gửi một trong hai mẫu đến số điện thoại kiểm tra trước khi đưa kênh vào sử dụng."
+        description="Gửi thử trước khi bật kênh."
       >
         <div className="space-y-2">
           <Label htmlFor="zalo-test-phone">Số điện thoại nhận thử</Label>

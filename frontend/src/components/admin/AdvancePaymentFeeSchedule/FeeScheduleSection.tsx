@@ -15,6 +15,8 @@ import { FeeScheduleFormDialog } from "./FeeScheduleFormDialog";
 import { FeeScheduleDeleteDialog } from "./FeeScheduleDeleteDialog";
 import type { FeeScheduleFormMode } from "./types";
 
+import { SettingsSectionHeader } from '@/components/settings/SettingsSection';
+
 export const FeeScheduleSection = () => {
   const { data: entries = [], isLoading } = useFeeSchedules();
   const deleteMutation = useDeleteFeeSchedule();
@@ -60,27 +62,24 @@ export const FeeScheduleSection = () => {
   }, []);
 
   return (
-    <section className="space-y-5">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight">
-            Phí ứng lương (lương tháng — ứng lương cuối tháng)
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5 max-w-prose leading-relaxed">
-            Mỗi cấu hình áp dụng từ ngày hiệu lực cho đến khi có cấu hình mới
-            thay thế.
-          </p>
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleOpenCreate}
-          className="shrink-0"
-        >
-          <Plus className="h-4 w-4 mr-1.5" />
-          Thêm cấu hình mới
-        </Button>
-      </div>
+    <section className="space-y-3">
+      <SettingsSectionHeader
+        kicker="Phí"
+        title="Phí ứng lương tháng"
+        meta="Cấu hình hiệu lực theo ngày"
+        actions={
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleOpenCreate}
+            className="shrink-0"
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            Thêm cấu hình mới
+          </Button>
+        }
+      />
 
       <FeeScheduleCurrentBanner
         active={activeEntry}

@@ -89,7 +89,8 @@ describe('ApiKeysSection', () => {
     render(<ApiKeysSection />);
 
     // Header & Badge
-    expect(screen.getByText('Khoá API & Tích hợp Machine-to-Machine')).toBeInTheDocument();
+    expect(screen.getByText('Khoá API')).toBeInTheDocument();
+    expect(screen.getByText('Tích hợp')).toBeInTheDocument();
     expect(screen.getByText('Header: X-API-Key')).toBeInTheDocument();
 
     // Metric Rail

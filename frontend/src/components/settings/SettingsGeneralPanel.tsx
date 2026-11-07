@@ -1,5 +1,7 @@
-import { type LucideIcon, Building2, CalendarCheck, CalendarDays, Landmark, Percent, Wallet, X } from 'lucide-react';
-import { useId, type ReactNode } from 'react';
+import { X } from 'lucide-react';
+import { useId } from 'react';
+
+import { SettingsSection } from '@/components/settings/SettingsSection';
 
 import { SettingCard } from '@/components/settings/SettingCard';
 import { Button } from '@/components/ui/button';
@@ -7,13 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import type { SettingsFormState } from '@/hooks/settings/useSettingsForm';
-
-interface SettingsSectionProps {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  children: ReactNode;
-}
 
 interface SettingToggleCardProps {
   title: string;
@@ -45,7 +40,7 @@ const SettingToggleCard = ({
     <div
       data-slot="setting-row"
       className={cn(
-        'group min-w-0 px-4 py-2.5 transition-colors sm:px-5',
+        'group min-w-0 px-3 py-2 transition-colors',
         isDirty && 'bg-warning/5',
       )}
     >
@@ -97,48 +92,13 @@ const SettingToggleCard = ({
   );
 };
 
-const SettingsSection = ({ icon: Icon, title, description, children }: SettingsSectionProps) => {
-  const generatedId = useId().replace(/:/g, '');
-  const headingId = `settings-section-${generatedId}`;
-
-  return (
-    <section
-      aria-labelledby={headingId}
-      className="console-panel min-w-0 overflow-hidden"
-    >
-      <div className="console-panel-header flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 px-4 py-2.5 sm:px-5">
-        <Icon aria-hidden="true" className="size-4 shrink-0 self-center text-primary" />
-        <h2 id={headingId} className="console-kicker shrink-0">
-          {title}
-        </h2>
-        {description && (
-          <p
-            className="min-w-0 flex-1 truncate text-xs leading-4 text-muted-foreground"
-            title={description}
-          >
-            {description}
-          </p>
-        )}
-      </div>
-
-      <div data-slot="settings-group" className="min-w-0 divide-y">
-        {children}
-      </div>
-    </section>
-  );
-};
-
 interface SettingsGeneralPanelProps {
   form: SettingsFormState;
 }
 
 export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
-  <div className="space-y-4">
-    <SettingsSection
-      icon={Percent}
-      title="Lương tuần"
-      description="Thiết lập cho lương tuần: tỷ lệ ngân sách được phép giải ngân theo chu kỳ tuần."
-    >
+  <div className="space-y-3">
+    <SettingsSection kicker="Chu kỳ tuần" title="Lương tuần">
       <SettingCard
         title="Tỷ lệ trả lương tuần"
         description="Phần trăm ngân sách được phép trả theo chu kỳ tuần."
@@ -154,11 +114,7 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
       />
     </SettingsSection>
 
-    <SettingsSection
-      icon={CalendarCheck}
-      title="Lương ngày"
-      description="Thiết lập cho lương ngày: nhân viên tự chấm công và xin ứng lương theo ca làm việc."
-    >
+    <SettingsSection kicker="Chu kỳ ngày" title="Lương ngày">
       <SettingCard
         title="Tỷ lệ ứng lương tự chấm công"
         description="Phần trăm tiền công đã ghi nhận được cộng vào hạn mức ứng lương."
@@ -223,11 +179,7 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
       />
     </SettingsSection>
 
-    <SettingsSection
-      icon={CalendarDays}
-      title="Lương tháng"
-      description="Thiết lập cho kỳ ứng lương cuối tháng: tỷ lệ ngân sách và giới hạn file chuyển lô."
-    >
+    <SettingsSection kicker="Chu kỳ tháng" title="Lương tháng">
       <SettingCard
         title="Tỷ lệ trả lương tháng"
         description="Phần trăm ngân sách được phép trả theo chu kỳ tháng."
@@ -271,11 +223,7 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
       />
     </SettingsSection>
 
-    <SettingsSection
-      icon={Wallet}
-      title="Cảnh báo số dư ví tiền"
-      description="Thông báo đẩy đến mọi quản trị viên khi số dư ví tiền chạm ngưỡng, mỗi lần chạm ngưỡng một lần."
-    >
+    <SettingsSection kicker="Cảnh báo" title="Số dư ví tiền">
       <SettingCard
         title="Ngưỡng cảnh báo số dư ví tiền"
         description="Khi số dư ví tiền xuống dưới ngưỡng này, hệ thống gửi thông báo đẩy đến toàn bộ quản trị viên. Mỗi lần giảm chạm ngưỡng chỉ nhận một thông báo."
@@ -304,11 +252,7 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
       />
     </SettingsSection>
 
-    <SettingsSection
-      icon={Building2}
-      title="Thông tin đối tác"
-      description="Tên doanh nghiệp hiển thị trong các nghiệp vụ tạm ứng."
-    >
+    <SettingsSection kicker="Đối tác" title="Thông tin đối tác">
       <SettingCard
         title="Tên khách hàng"
         description="Tên công ty đối tác sử dụng dịch vụ tạm ứng."
@@ -322,11 +266,7 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
       />
     </SettingsSection>
 
-    <SettingsSection
-      icon={Landmark}
-      title="Tài khoản nhận chuyển khoản lương tuần"
-      description="Thông tin thụ hưởng in trên email sao kê lương tuần và file Excel đính kèm."
-    >
+    <SettingsSection kicker="Ngân hàng" title="Tài khoản nhận lương tuần">
       <SettingToggleCard
         title="Hiện tài khoản nhận chuyển khoản lương tuần"
         description="Khi tắt, sao kê lương tuần (email và file Excel) chỉ là thông báo đối chiếu, không kèm thông tin chuyển khoản."
@@ -373,11 +313,7 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
       />
     </SettingsSection>
 
-    <SettingsSection
-      icon={Landmark}
-      title="Tài khoản nhận chuyển khoản FlexPay (OnePay)"
-      description="Thông tin thụ hưởng in trên email sao kê FlexPay và file Excel đối chiếu đính kèm. Để trống sẽ dùng chung tài khoản lương tuần."
-    >
+    <SettingsSection kicker="Ngân hàng" title="Tài khoản FlexPay (OnePay)">
       <SettingToggleCard
         title="Hiện tài khoản nhận chuyển khoản FlexPay"
         description="Khi tắt, sao kê FlexPay (email và file Excel) chỉ là thông báo đối chiếu, không kèm thông tin chuyển khoản."

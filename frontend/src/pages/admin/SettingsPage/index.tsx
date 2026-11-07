@@ -1,16 +1,9 @@
-import { useCallback, useMemo } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
-// PageHeader's icon slot is widened to ComponentType<SVGProps> (W13a
-// follow-up), so the UU icon fits; page-owned icons are UU as well.
-import { AlertCircle, RefreshCw05, Settings01 } from '@untitledui/icons';
-import {
-  AdminPageCanvas,
-  AdminPageHeaderCard,
-} from '@/components/shared/AdminPageFrame';
+import { useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { AlertCircle, RefreshCw05 } from '@untitledui/icons';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { SettingsGeneralPanel } from '@/components/settings/SettingsGeneralPanel';
 import { SettingsEmployeePanel } from '@/components/settings/SettingsEmployeePanel';
@@ -20,7 +13,6 @@ import {
   VALID_SETTINGS_TABS,
 } from '@/components/settings/SettingsTabList';
 import { useSettingsForm } from '@/hooks/settings/useSettingsForm';
-import { getConsoleKicker } from '@/lib/console';
 import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule/FeeScheduleSection';
 import { WeeklyPaymentFeeScheduleSection } from '@/components/admin/WeeklyPaymentFeeSchedule/WeeklyPaymentFeeScheduleSection';
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
@@ -32,7 +24,6 @@ import { OpsApiKeysSection } from '@/components/settings/OpsApiKeysSection';
 
 const SettingsPage = () => {
   const form = useSettingsForm();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const activeTab =
@@ -53,69 +44,51 @@ const SettingsPage = () => {
     [searchParams, setSearchParams],
   );
 
-  const headerSkeleton = useMemo(
-    () => (
-      <div className="space-y-2">
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-6 w-52" />
-      </div>
-    ),
-    [],
-  );
-
   if (form.isLoading) {
     return (
-      <AdminPageCanvas contentClassName="max-w-[1180px] space-y-6">
-        <AdminPageHeaderCard>{headerSkeleton}</AdminPageHeaderCard>
-        <Skeleton className="h-9 w-full max-w-xl" />
-        <div className="console-panel space-y-3 p-4">
+      <div className="mx-auto max-w-[1280px] space-y-3 p-3 sm:p-4">
+        <PageHeader kicker="Hệ thống" title="Cài đặt" />
+        <Skeleton className="h-9 w-80 max-w-full" />
+        <div className="console-panel space-y-3 p-3">
           <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-72 w-full" />
+          <Skeleton className="h-56 w-full" />
         </div>
-      </AdminPageCanvas>
+      </div>
     );
   }
 
   if (form.loadError) {
     return (
-      <AdminPageCanvas contentClassName="max-w-[1180px] space-y-6">
-        <AdminPageHeaderCard>
-          <PageHeader
-            icon={Settings01}
-            kicker={getConsoleKicker(location.pathname)}
-            title="Cài đặt hệ thống"
-            description="Quản lý các cài đặt nghiệp vụ của hệ thống"
-          />
-        </AdminPageHeaderCard>
+      <div className="mx-auto max-w-[1280px] space-y-3 p-3 sm:p-4">
+        <PageHeader kicker="Hệ thống" title="Cài đặt" />
         <div
           role="alert"
-          className="flex flex-col gap-4 rounded-xl border border-utility-error-300 bg-utility-error-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 sm:flex-row sm:items-center sm:justify-between"
         >
-          <div className="flex min-w-0 items-start gap-3">
-            <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-utility-error-700" />
-            <p className="text-sm text-fg-error-primary">{form.loadError}</p>
+          <div className="flex min-w-0 items-start gap-2.5">
+            <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+            <p className="text-[13px] leading-5 text-destructive">{form.loadError}</p>
           </div>
-          <Button type="button" variant="outline" onClick={form.retryLoading} className="h-11 gap-2">
-            <RefreshCw05 aria-hidden="true" className="h-4 w-4" />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={form.retryLoading}
+            className="h-9 shrink-0 gap-2"
+          >
+            <RefreshCw05 aria-hidden="true" className="h-3.5 w-3.5" />
             Thử lại
           </Button>
         </div>
-      </AdminPageCanvas>
+      </div>
     );
   }
 
   return (
-    <AdminPageCanvas contentClassName="max-w-[1180px] space-y-5">
-      <AdminPageHeaderCard>
-        <PageHeader
-          icon={Settings01}
-          kicker={getConsoleKicker(location.pathname)}
-          title="Cài đặt hệ thống"
-          description="Quản lý các cài đặt nghiệp vụ của hệ thống"
-        />
-      </AdminPageHeaderCard>
+    <div className="mx-auto max-w-[1280px] space-y-3 p-3 sm:p-4">
+      <PageHeader kicker="Hệ thống" title="Cài đặt" />
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-5">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
         <SettingsTabList />
 
         <TabsContent value={SETTINGS_TABS.general} className="mt-0">
@@ -126,11 +99,9 @@ const SettingsPage = () => {
           <SettingsEmployeePanel />
         </TabsContent>
 
-        <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-8">
+        <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-3">
           <WeeklyPaymentFeeScheduleSection />
-          <Separator />
           <FeeScheduleSection />
-          <Separator />
           <DisbursementFeeScheduleSection />
         </TabsContent>
 
@@ -142,13 +113,13 @@ const SettingsPage = () => {
           <AdBannerSection />
         </TabsContent>
 
-        <TabsContent value={SETTINGS_TABS.apiKeys} className="mt-0 space-y-6">
+        <TabsContent value={SETTINGS_TABS.apiKeys} className="mt-0 space-y-3">
           <ApiKeysSection />
           <McpApiKeysSection />
           <OpsApiKeysSection />
         </TabsContent>
       </Tabs>
-    </AdminPageCanvas>
+    </div>
   );
 };
 

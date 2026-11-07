@@ -190,7 +190,7 @@ export const SettingCard = ({
     <div
       data-slot="setting-row"
       className={cn(
-        'group min-w-0 px-4 py-2.5 transition-colors sm:px-5',
+        'group min-w-0 px-3 py-2 transition-colors',
         isDirty && 'bg-warning/5',
       )}
     >

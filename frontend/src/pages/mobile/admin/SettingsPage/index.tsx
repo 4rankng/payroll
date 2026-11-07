@@ -1,11 +1,8 @@
 import { useCallback } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
-// MobilePageHeader's icon slot is widened to ComponentType<SVGProps> (W13a
-// follow-up), so the UU icon fits; page-owned icons are UU as well.
-import { AlertCircle, RefreshCw05, Settings01 } from '@untitledui/icons';
+import { useSearchParams } from 'react-router-dom';
+import { AlertCircle, RefreshCw05 } from '@untitledui/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useSettingsForm } from '@/hooks/settings/useSettingsForm';
 import { SettingsGeneralPanel } from '@/components/settings/SettingsGeneralPanel';
@@ -19,7 +16,6 @@ import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule
 import { WeeklyPaymentFeeScheduleSection } from '@/components/admin/WeeklyPaymentFeeSchedule/WeeklyPaymentFeeScheduleSection';
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
-import { getConsoleKicker } from '@/lib/console';
 import { ZaloConnectionSection } from '@/components/settings/ZaloConnectionSection';
 import { AdBannerSection } from '@/components/settings/AdBannerSection';
 import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
@@ -28,7 +24,6 @@ import { OpsApiKeysSection } from '@/components/settings/OpsApiKeysSection';
 
 const SettingsPageMobile = () => {
   const form = useSettingsForm();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const activeTab =
@@ -52,15 +47,10 @@ const SettingsPageMobile = () => {
   if (form.isLoading) {
     return (
       <div className="min-h-[100dvh] bg-background">
-        <MobilePageHeader
-          title="Cài đặt"
-          icon={Settings01}
-          kicker={getConsoleKicker(location.pathname)}
-          subtitle="Quản lý cấu hình hệ thống"
-        />
-        <div className="px-4 pt-4 space-y-4">
-          <Skeleton className="h-9 w-full" />
-          <div className="console-panel space-y-3 p-4">
+        <MobilePageHeader kicker="Hệ thống" title="Cài đặt" />
+        <div className="space-y-3 px-3 pt-3">
+          <Skeleton className="h-11 w-full" />
+          <div className="console-panel space-y-3 p-3">
             <Skeleton className="h-40 w-full" />
             <Skeleton className="h-40 w-full" />
           </div>
@@ -72,26 +62,23 @@ const SettingsPageMobile = () => {
   if (form.loadError) {
     return (
       <div className="min-h-[100dvh] bg-background">
-        <MobilePageHeader
-          title="Cài đặt"
-          icon={Settings01}
-          kicker={getConsoleKicker(location.pathname)}
-          subtitle="Quản lý cấu hình hệ thống"
-        />
-        <div className="px-4 pt-4">
+        <MobilePageHeader kicker="Hệ thống" title="Cài đặt" />
+        <div className="px-3 pt-3">
           <div
             role="alert"
-            className="space-y-4 rounded-2xl border border-utility-error-300 bg-utility-error-50 p-5"
+            className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3"
           >
-            <div className="flex min-w-0 items-start gap-3">
-              <AlertCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-utility-error-700" />
-              <p className="min-w-0 break-words text-sm leading-relaxed text-fg-error-primary">{form.loadError}</p>
+            <div className="flex min-w-0 items-start gap-2.5">
+              <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <p className="min-w-0 break-words text-[13px] leading-5 text-destructive">
+                {form.loadError}
+              </p>
             </div>
             <Button
               type="button"
               variant="outline"
               onClick={form.retryLoading}
-              className="h-12 w-full gap-2"
+              className="h-11 w-full gap-2"
             >
               <RefreshCw05 aria-hidden="true" className="h-4 w-4" />
               Thử lại
@@ -104,18 +91,10 @@ const SettingsPageMobile = () => {
 
   return (
     <div className="min-h-[100dvh] max-w-full overflow-x-clip bg-background">
-      <MobilePageHeader
-        title="Cài đặt"
-        icon={Settings01}
-        kicker={getConsoleKicker(location.pathname)}
-        subtitle="Quản lý cấu hình hệ thống"
-      />
+      <MobilePageHeader kicker="Hệ thống" title="Cài đặt" />
 
-      {/* Content area with consistent padding, safe-area, and nav bar clearance */}
-      <div
-        className="px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-4"
-      >
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+      <div className="px-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
           <SettingsTabList />
 
           <TabsContent value={SETTINGS_TABS.general} className="mt-0">
@@ -126,11 +105,9 @@ const SettingsPageMobile = () => {
             <SettingsEmployeePanel />
           </TabsContent>
 
-          <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-4">
+          <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-3">
             <WeeklyPaymentFeeScheduleSection />
-            <Separator />
             <FeeScheduleSection />
-            <Separator />
             <DisbursementFeeScheduleSection />
           </TabsContent>
 
@@ -142,7 +119,7 @@ const SettingsPageMobile = () => {
             <AdBannerSection />
           </TabsContent>
 
-          <TabsContent value={SETTINGS_TABS.apiKeys} className="mt-0 space-y-6">
+          <TabsContent value={SETTINGS_TABS.apiKeys} className="mt-0 space-y-3">
             <ApiKeysSection />
             <McpApiKeysSection />
             <OpsApiKeysSection />

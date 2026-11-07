@@ -4,7 +4,6 @@ import { differenceInCalendarDays } from 'date-fns';
 import {
   ArrowLeft,
   Loader2,
-  Megaphone,
   Pause,
   Play,
   Plus,
@@ -25,6 +24,7 @@ import { getErrorMessage } from '@/utils/error-handler';
 import type { AdBanner } from '@/types/api/ad-banner.types';
 
 import { AdBannerComposer } from './AdBannerComposer';
+import { SettingsSectionHeader } from '@/components/settings/SettingsSection';
 
 const DATE_DISPLAY = 'dd/MM/yyyy';
 
@@ -151,36 +151,38 @@ export const AdBannerSection = () => {
 
   if (editing) {
     return (
-      <div className="space-y-6">
-        <div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="-ml-2 h-8 gap-1.5 px-2 text-muted-foreground hover:text-foreground"
-            onClick={() => setEditing(null)}
-          >
-            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-            Chiến dịch quảng cáo
-          </Button>
-
-          <h2 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
-            {editing.clone
+      <div className="space-y-3">
+        <SettingsSectionHeader
+          kicker="Quảng cáo"
+          title={
+            editing.clone
               ? 'Gia hạn chiến dịch'
               : editing.banner
                 ? 'Chỉnh sửa chiến dịch'
-                : 'Tạo chiến dịch quảng cáo'}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {editing.clone
-              ? 'Nội dung được sao chép; thời gian bắt đầu từ hôm nay. Chiến dịch cũ giữ nguyên số liệu.'
-              : 'Quảng cáo hiển thị trên trang chủ của nhân viên thuộc các dự án được chọn.'}
-          </p>
-        </div>
+                : 'Tạo chiến dịch'
+          }
+          meta={
+            editing.clone
+              ? 'Sao chép nội dung; bắt đầu từ hôm nay.'
+              : 'Hiển thị cho nhân viên thuộc dự án được chọn.'
+          }
+          actions={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-11 gap-1.5 sm:h-9"
+              onClick={() => setEditing(null)}
+            >
+              <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+              Chiến dịch
+            </Button>
+          }
+        />
 
         {/* One solid surface; the composer's own field groups are borderless
             so nothing renders as a card inside a card. */}
-        <div className="console-panel p-4 sm:p-6">
+        <div className="console-panel p-3">
           <AdBannerComposer
             key={editing.banner ? `${editing.banner.id}-${editing.clone}` : 'new'}
             initial={editing.banner}
@@ -193,32 +195,35 @@ export const AdBannerSection = () => {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            Chiến dịch quảng cáo
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Mỗi nhân viên chỉ thấy một quảng cáo tại một thời điểm.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Tải lại danh sách"
-            onClick={() => { void refetch(); }}
-            disabled={isFetching}
-          >
-            <RefreshCw className={cn('h-4 w-4', isFetching && 'animate-spin')} />
-          </Button>
-          <Button type="button" className="gap-2" onClick={() => setEditing({ banner: null, clone: false })}>
-            <Plus className="h-4 w-4" /> Tạo chiến dịch
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-3">
+      <SettingsSectionHeader
+        kicker="Quảng cáo"
+        title="Chiến dịch"
+        meta="Mỗi nhân viên thấy một quảng cáo"
+        actions={
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 sm:h-9 sm:w-9"
+              aria-label="Tải lại danh sách"
+              onClick={() => { void refetch(); }}
+              disabled={isFetching}
+            >
+              <RefreshCw className={cn('h-4 w-4', isFetching && 'animate-spin')} />
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              className="h-11 gap-2 sm:h-9"
+              onClick={() => setEditing({ banner: null, clone: false })}
+            >
+              <Plus className="h-4 w-4" /> Tạo chiến dịch
+            </Button>
+          </div>
+        }
+      />
 
       {!isLoading && !isError && banners.length > 0 && (
         <div className="console-panel grid grid-cols-2 divide-x divide-y overflow-hidden sm:grid-cols-4 sm:divide-y-0">
@@ -234,14 +239,13 @@ export const AdBannerSection = () => {
           <Loader2 className="h-5 w-5 animate-spin" />
         </div>
       ) : isError ? (
-        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+        <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-[13px] text-destructive">
           {getErrorMessage(error)}
         </p>
       ) : ordered.length === 0 ? (
-        <div className="console-panel px-6 py-14 text-center">
-          <Megaphone className="mx-auto h-6 w-6 text-muted-foreground" aria-hidden="true" />
-          <p className="mt-3 text-sm font-medium text-foreground">Chưa có chiến dịch nào</p>
-          <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+        <div className="console-panel px-3 py-6 text-center">
+          <p className="text-[13px] font-medium text-foreground">Chưa có chiến dịch nào</p>
+          <p className="mx-auto mt-0.5 max-w-sm text-[11px] leading-4 text-muted-foreground">
             Tạo chiến dịch đầu tiên để bắt đầu hiển thị quảng cáo cho nhân viên.
           </p>
           <Button

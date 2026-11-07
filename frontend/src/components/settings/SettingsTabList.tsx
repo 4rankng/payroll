@@ -23,27 +23,20 @@ const tabs = [
 ] as const;
 
 /**
- * Single TabsList with responsive presentation:
- * - Mobile: horizontally scrollable pill strip; active pill is filled
- *   primary with white text (iOS segment-control feel).
- * - Desktop (sm+): classic underline tabs on a full-width bottom border.
+ * One compact console tab strip: a left-aligned track, 36px desktop / 44px
+ * mobile targets, an active card with a hairline ring. Below `sm` it scrolls
+ * horizontally instead of wrapping into two rows.
  */
 export const SettingsTabList = () => (
-  <div className="min-w-0">
-    <TabsList className="flex h-auto w-full justify-start gap-2 overflow-x-auto overflow-y-hidden rounded-xl border border-border bg-card px-2 py-2 text-muted-foreground shadow-none [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:gap-1 sm:overflow-visible sm:pb-2 sm:justify-start">
+  <div className="min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <TabsList className="inline-flex h-auto w-max min-h-0 items-center justify-start gap-1 rounded-lg border border-border bg-muted/40 p-1 text-muted-foreground">
       {tabs.map(({ value, label, icon: Icon }) => (
         <TabsTrigger
           key={value}
           value={value}
-          className={`
-            shrink-0 items-center gap-2 rounded-full border border-transparent bg-muted/60 px-4 py-2.5 text-sm font-medium shadow-none transition-colors
-            data-[state=active]:border-primary/20 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm
-            hover:text-foreground
-            sm:shrink sm:gap-2 sm:rounded-none sm:border-transparent sm:bg-transparent sm:px-4 sm:py-2.5
-            sm:min-h-11 sm:data-[state=active]:border-primary sm:data-[state=active]:bg-transparent sm:data-[state=active]:text-foreground sm:data-[state=active]:shadow-none
-          `}
+          className="inline-flex h-11 min-h-11 shrink-0 items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] font-medium text-muted-foreground shadow-none transition-colors duration-100 hover:text-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs data-[state=active]:ring-1 data-[state=active]:ring-border sm:h-9 sm:min-h-9 sm:px-3 sm:text-[13px]"
         >
-          <Icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+          <Icon aria-hidden="true" className="hidden h-4 w-4 shrink-0 sm:block" />
           {label}
         </TabsTrigger>
       ))}

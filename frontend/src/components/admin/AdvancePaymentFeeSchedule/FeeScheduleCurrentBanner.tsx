@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   CircleHelp,
   Pencil,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 
@@ -36,7 +35,7 @@ interface Props {
 }
 
 const RuleText = ({ fragments }: { fragments: RuleFragment[] }) => (
-  <p className="text-base sm:text-lg leading-snug tabular-nums text-foreground">
+  <p className="text-xl leading-tight tabular-nums text-foreground">
     {fragments.map((f, i) =>
       f.type === "emphasis" ? (
         <strong key={i} className="font-semibold">
@@ -99,7 +98,7 @@ const ActiveCard = ({
 }) => {
   if (!active) {
     return (
-      <div className="console-panel border-dashed p-5 flex items-center justify-center text-center">
+      <div className="console-panel border-dashed p-3 flex items-center justify-center text-center">
         <p className="text-sm text-muted-foreground">
           Chưa có cấu hình nào đang hoạt động
         </p>
@@ -108,7 +107,7 @@ const ActiveCard = ({
   }
 
   return (
-    <div className="console-panel border-2 border-primary/30 p-4 sm:p-5 relative overflow-hidden">
+    <div className="console-panel border border-primary/40 p-3 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-primary/60" />
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -159,7 +158,7 @@ const UpcomingCard = ({
   const editable = isEntryEditable(entry);
 
   return (
-    <div className="console-panel border-2 border-warning/30 p-4 sm:p-5 relative overflow-hidden">
+    <div className="console-panel border border-warning/40 p-3 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-warning/60" />
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -242,12 +241,11 @@ const UpcomingCard = ({
 const NoUpcomingCard = () => (
   <div
     className={cn(
-      "console-panel border-dashed p-4 sm:p-5",
-      "flex flex-col justify-center text-center gap-2",
+      "console-panel border-dashed p-3",
+      "flex flex-col justify-center text-center",
     )}
   >
-    <Sparkles className="h-5 w-5 text-muted-foreground mx-auto" />
-    <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+    <p className="mx-auto max-w-sm text-[11px] leading-4 text-muted-foreground">
       Không có cấu hình sắp có hiệu lực. Thêm cấu hình mới để thay đổi phí từ
       một ngày trong tương lai.
     </p>

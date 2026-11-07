@@ -38,6 +38,20 @@ The later toto.sg commits (`32843bf` insights gallery, `29e4dbb` pack + drop pro
 18. **Slow-load fallback.** The bank-distribution panel switches from its skeleton to a compact "tải chậm" row with a retry after 8s (the endpoint can stall); no giant empty skeleton.
 19. **Mobile parity.** Mobile dashboards use the same `ConsolePanel` primitives via `MobileOperationsPanel`/`MobileTaskList`; the month bar, header kicker, stat strip (20px value / 9px mono label), sidebar active bar and 13px labels match the desktop contract. Zero rows and navigation-only "tasks" are removed; quick actions/nav keep the destinations.
 
+### Addendum — settings surface (2026-11-07)
+
+Settings is a form surface: controls keep their comfortable size (44px mobile / 36px desktop, 16px mobile inputs), while the chrome adopts the same console grammar.
+
+20. **Shell.** `SettingsPage` drops the white header card and description; a `PageHeader` strip with `kicker="Hệ thống"` / `title="Cài đặt"` sits on the canvas. Desktop content is capped at 1280px with 12px gaps; the mobile page uses the same header and 12px content padding.
+21. **Tabs.** `SettingsTabList` is one compact, left-aligned track (8px radius, 12px mobile / 13px desktop labels, 44px mobile / 36px desktop targets, active card + hairline ring). It scrolls horizontally below `sm` instead of wrapping; icons are hidden on phones so more labels fit.
+22. **Sections.** A shared `SettingsSection` renders a panel header (9px mono kicker, 13px title) and hairline-divided rows; no 40px icon chips and no section paragraph restating the title. General and employee policies use it. `SettingsSectionHeader` is the header-only variant for sections whose body is already a set of panels (fee schedules, Ads).
+23. **Rows.** `SettingCard`/toggle rows use 13px labels, 12px field help, 12px padding; the reserved input/action columns are unchanged so rows do not jump when save/reset appears.
+24. **Fee schedules.** Three fee sections share a `PHÍ · <title> · Cấu hình hiệu lực theo ngày` header with one outline create action; active/upcoming/empty cards are compact (12px padding, 1px signal border, 20px rate, one-line empty state), separated by 12px not 20–32px.
+25. **Integrations.** Zalo, Ads and API headers drop the 40–44px icon chips and 20–24px header padding; titles are 13px with a 9px kicker/meta, and their inner sections are bands/panels rather than oversized hero blocks. API card titles/descriptions settle at 13/11px.
+26. **Mobile.** The same tabs, panels and rows render at 390/320; 44px tabs/inputs and 16px mobile inputs are preserved. The bottom nav remains the only fixed chrome.
+
+Verification: 81 settings tests (page parity, fee-config parity, `SettingCard`, employee policy, Zalo, API/MCP/Ops) pass; `pnpm type-check` and `pnpm build` green; settings overflow clean at 320/390/768/1024/1280/1440.
+
 ## Consequences
 
 - Per-page chrome (glass header cards, radial washes, icon chips) is retired on staff surfaces; `AdminPageHeaderCard` becomes a transparent layout wrapper.

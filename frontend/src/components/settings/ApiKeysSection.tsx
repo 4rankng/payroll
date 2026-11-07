@@ -100,7 +100,7 @@ const APIKeyRow = ({
   const scope = scopeKey === 'unsupported' ? null : SCOPE_META[scopeKey];
 
   return (
-    <li className="flex flex-col gap-3.5 p-4 transition-colors hover:bg-muted/30 sm:gap-4 sm:p-5 md:flex-row md:items-center md:justify-between">
+    <li className="flex flex-col gap-3 p-3 transition-colors hover:bg-muted/30 md:flex-row md:items-center md:justify-between">
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <span className="break-words text-sm font-semibold text-foreground sm:text-base">
@@ -283,31 +283,27 @@ export const ApiKeysSection = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* 1. Header Overview & KPI Metric Rail */}
       <div className="console-panel overflow-hidden">
-        <div className="console-panel-header px-5 py-5 sm:px-6 sm:py-6">
+        <div className="console-panel-header px-3 py-2.5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex items-start gap-3.5">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 shadow-sm">
-                <KeyRound className="size-5.5" aria-hidden="true" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="console-kicker text-primary">Tích hợp</p>
+                <Badge
+                  variant="outline"
+                  className="border-emerald-500/30 bg-emerald-500/10 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300"
+                >
+                  Header: X-API-Key
+                </Badge>
               </div>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="console-kicker">
-                    Khoá API & Tích hợp Machine-to-Machine
-                  </h2>
-                  <Badge
-                    variant="outline"
-                    className="border-emerald-500/30 bg-emerald-500/10 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300"
-                  >
-                    Header: X-API-Key
-                  </Badge>
-                </div>
-                <p className="mt-1 max-w-2xl text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Cấp và quản lý khoá API bảo mật cho hệ thống tuyển dụng TingHire và các vendor tra cứu bảng chấm công.
-                </p>
-              </div>
+              <h2 className="mt-0.5 font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground">
+                Khoá API
+              </h2>
+              <p className="mt-0.5 max-w-2xl text-[11px] leading-4 text-muted-foreground">
+                Quản lý khoá cho TingHire và các vendor tra cứu bảng chấm công.
+              </p>
             </div>
 
             <Button
@@ -329,14 +325,14 @@ export const ApiKeysSection = () => {
         </div>
 
         {/* Metric Rail */}
-        <div className="grid grid-cols-2 divide-x divide-y border-t bg-muted/15 sm:grid-cols-3 sm:divide-y-0 text-sm">
-          <div className="p-3.5 sm:p-4 text-center">
+        <div className="grid grid-cols-2 divide-x divide-y border-t bg-muted/15 text-[13px] sm:grid-cols-3 sm:divide-y-0">
+          <div className="p-2.5 text-center sm:p-3">
             <p className="console-kicker">
               Tổng số khoá
             </p>
             <p className="console-value mt-1 text-xl font-bold tracking-tight text-foreground">{keys.length}</p>
           </div>
-          <div className="p-3.5 sm:p-4 text-center">
+          <div className="p-2.5 text-center sm:p-3">
             <p className="console-kicker">
               Đang hoạt động
             </p>
@@ -345,7 +341,7 @@ export const ApiKeysSection = () => {
               {activeKeysCount}
             </p>
           </div>
-          <div className="p-3.5 sm:p-4 text-center">
+          <div className="p-2.5 text-center sm:p-3">
             <p className="console-kicker">
               Đã thu hồi
             </p>
@@ -360,22 +356,22 @@ export const ApiKeysSection = () => {
       {/* 2. Cấp khoá API mới */}
       <section id="api-keys-create" aria-labelledby="api-keys-create-title">
         <Card variant="console">
-          <CardHeader className="console-panel-header p-4 sm:p-5">
+          <CardHeader className="console-panel-header px-3 py-2.5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
                 <Plus className="size-4" aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <CardTitle id="api-keys-create-title" className="text-sm sm:text-base font-semibold text-foreground">
+                <CardTitle id="api-keys-create-title" className="font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground">
                   Tạo khoá API
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                <CardDescription className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
                   Cấp khoá cho hệ thống tuyển dụng TingHire hoặc vendor tra cứu bảng chấm công. Khoá chỉ hiển thị một lần khi tạo.
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-5 space-y-4">
+          <CardContent className="p-3 space-y-3">
             <form onSubmit={handleCreate} className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                 <div className="space-y-1.5">
@@ -519,17 +515,17 @@ export const ApiKeysSection = () => {
       {/* 3. Khoá đang có */}
       <section id="api-keys-list" aria-labelledby="api-keys-list-title">
         <Card variant="console">
-          <CardHeader className="console-panel-header p-4 sm:p-5">
+          <CardHeader className="console-panel-header px-3 py-2.5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-muted-foreground/20 bg-muted text-foreground">
                   <KeyRound className="size-4" aria-hidden="true" />
                 </div>
                 <div>
-                  <CardTitle id="api-keys-list-title" className="text-sm sm:text-base font-semibold text-foreground">
+                  <CardTitle id="api-keys-list-title" className="font-display text-[13px] font-semibold leading-5 tracking-tight text-foreground">
                     Khoá đang có
                   </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                  <CardDescription className="mt-0.5 text-[11px] leading-4 text-muted-foreground">
                     Danh sách khoá API đã cấp. Thu hồi để chặn một khoá ngay lập tức.
                   </CardDescription>
                 </div>

@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   Pencil,
   Plus,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 
@@ -37,6 +36,8 @@ import {
   isEntryEditable,
   type DisbursementFeeFormMode,
 } from "./helpers";
+
+import { SettingsSectionHeader } from '@/components/settings/SettingsSection';
 
 const formatVnd = (n: number): string =>
   new Intl.NumberFormat("vi-VN").format(n);
@@ -99,28 +100,24 @@ export const DisbursementFeeScheduleSection = () => {
   }, []);
 
   return (
-    <section className="space-y-5">
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight">
-            Phí giao dịch chi hộ
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5 max-w-prose leading-relaxed">
-            Phí cố định cho mỗi giao dịch chi tạm ứng qua nhà cung cấp dịch vụ
-            chi hộ. Mỗi cấu hình áp dụng từ ngày hiệu lực cho đến khi có
-            cấu hình mới thay thế.
-          </p>
-        </div>
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleOpenCreate}
-          className="shrink-0"
-        >
-          <Plus className="h-4 w-4 mr-1.5" />
-          Thêm cấu hình mới
-        </Button>
-      </div>
+    <section className="space-y-3">
+      <SettingsSectionHeader
+        kicker="Phí"
+        title="Phí giao dịch chi hộ"
+        meta="Cấu hình hiệu lực theo ngày"
+        actions={
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleOpenCreate}
+            className="shrink-0"
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            Thêm cấu hình mới
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <ActiveCard active={activeEntry} />
@@ -247,8 +244,8 @@ const ActiveCard = ({
 }) => {
   if (!active) {
     return (
-      <div className="console-panel border-dashed p-5 flex items-center justify-center text-center">
-        <p className="text-sm text-muted-foreground">
+      <div className="console-panel border-dashed p-3 flex items-center justify-center text-center">
+        <p className="text-[13px] text-muted-foreground">
           Chưa có cấu hình nào đang hoạt động
         </p>
       </div>
@@ -256,7 +253,7 @@ const ActiveCard = ({
   }
 
   return (
-    <div className="console-panel border-2 border-primary/30 p-4 sm:p-5 relative overflow-hidden">
+    <div className="console-panel border border-primary/40 p-3 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-primary/60" />
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -269,7 +266,7 @@ const ActiveCard = ({
         </div>
       </div>
 
-      <p className="text-base sm:text-lg leading-snug tabular-nums text-foreground">
+      <p className="text-xl leading-tight tabular-nums text-foreground">
         <strong className="font-semibold">{formatVnd(active.feeVnd)} ₫</strong>
         {" / giao dịch"}
       </p>
@@ -297,7 +294,7 @@ const UpcomingCard = ({
   const editable = isEntryEditable(entry);
 
   return (
-    <div className="console-panel border-2 border-warning/30 p-4 sm:p-5 relative overflow-hidden">
+    <div className="console-panel border border-warning/40 p-3 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-warning/60" />
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -334,7 +331,7 @@ const UpcomingCard = ({
         </div>
       </div>
 
-      <p className="text-base sm:text-lg leading-snug tabular-nums text-foreground">
+      <p className="text-xl leading-tight tabular-nums text-foreground">
         <strong className="font-semibold">{formatVnd(entry.feeVnd)} ₫</strong>
         {" / giao dịch"}
       </p>
@@ -351,9 +348,8 @@ const UpcomingCard = ({
 };
 
 const NoUpcomingCard = () => (
-  <div className="console-panel border-dashed p-4 sm:p-5 flex flex-col justify-center text-center gap-2">
-    <Sparkles className="h-5 w-5 text-muted-foreground mx-auto" />
-    <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
+  <div className="console-panel border-dashed p-3 flex flex-col justify-center text-center gap-1">
+    <p className="mx-auto max-w-sm text-[11px] leading-4 text-muted-foreground">
       Không có cấu hình sắp có hiệu lực. Thêm cấu hình mới để thay đổi phí từ
       một ngày trong tương lai.
     </p>
