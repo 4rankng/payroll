@@ -47,7 +47,7 @@ const SettingsPageMobile = () => {
   if (form.isLoading) {
     return (
       <div className="min-h-[100dvh] bg-background">
-        <MobilePageHeader kicker="Hệ thống" title="Cài đặt" />
+        <MobilePageHeader kicker="Hệ thống" title="Cài đặt" className="px-3" />
         <div className="space-y-3 px-3 pt-3">
           <Skeleton className="h-11 w-full" />
           <div className="console-panel space-y-3 p-3">
@@ -62,7 +62,7 @@ const SettingsPageMobile = () => {
   if (form.loadError) {
     return (
       <div className="min-h-[100dvh] bg-background">
-        <MobilePageHeader kicker="Hệ thống" title="Cài đặt" />
+        <MobilePageHeader kicker="Hệ thống" title="Cài đặt" className="px-3" />
         <div className="px-3 pt-3">
           <div
             role="alert"
@@ -91,7 +91,7 @@ const SettingsPageMobile = () => {
 
   return (
     <div className="min-h-[100dvh] max-w-full overflow-x-clip bg-background">
-      <MobilePageHeader kicker="Hệ thống" title="Cài đặt" />
+      <MobilePageHeader kicker="Hệ thống" title="Cài đặt" className="px-3" />
 
       <div className="px-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-3">
