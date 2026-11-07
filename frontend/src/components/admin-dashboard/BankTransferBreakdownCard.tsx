@@ -114,6 +114,7 @@ export const BankTransferBreakdownCard = memo(function BankTransferBreakdownCard
       kicker="Chi trả"
       title="Ngân hàng nhận lương"
       className={className}
+      bodyClassName="flex flex-1 flex-col justify-center"
       actions={
         !isControlled && projects.length > 0 ? (
           <ProjectSelector

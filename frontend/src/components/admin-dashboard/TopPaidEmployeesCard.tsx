@@ -88,6 +88,7 @@ export const TopPaidEmployeesCard = memo(function TopPaidEmployeesCard({
       title={`Theo nhân viên · ${month ?? 'tất cả'}`}
       isFlush
       className={className}
+      bodyClassName="flex flex-1 flex-col justify-center"
     >
       {isLoading ? (
         <div className="space-y-2 p-3">

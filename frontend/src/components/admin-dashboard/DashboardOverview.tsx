@@ -150,6 +150,7 @@ export function DashboardPriorityList({
       title="Việc cần xử lý"
       isFlush
       className={className}
+      bodyClassName="flex flex-1 flex-col justify-center"
       actions={
         <button
           type="button"

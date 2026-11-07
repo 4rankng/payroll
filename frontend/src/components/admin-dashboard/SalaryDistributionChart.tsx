@@ -50,6 +50,7 @@ export function SalaryDistributionChart({ className }: SalaryDistributionChartPr
       kicker="Phân tích chi trả"
       title="Phân bổ lương"
       className={className}
+      bodyClassName="flex flex-1 flex-col justify-between"
     >
       <div ref={cardRef}>
         {!isVisible || isLoading ? (

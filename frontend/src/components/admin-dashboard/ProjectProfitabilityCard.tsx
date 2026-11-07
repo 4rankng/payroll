@@ -253,12 +253,14 @@ export const ProjectProfitabilityCard = memo(function ProjectProfitabilityCard({
   const hasHidden = hiddenIds.size > 0;
 
   return (
-    <div className={cn('min-w-0 space-y-3', className)}>
+    <div className={cn('grid min-w-0 gap-3 lg:grid-cols-12 lg:items-stretch', className)}>
       {/* ── Weekly line chart ── */}
       <ConsolePanel
         kicker="Dự án"
         title="Lợi nhuận lũy kế"
         description="Theo tuần · 12 tháng gần nhất"
+        className="lg:col-span-7"
+        bodyClassName="flex flex-1 flex-col justify-between"
         actions={
           hasHidden || hasFocus ? (
             <button
@@ -428,7 +430,13 @@ export const ProjectProfitabilityCard = memo(function ProjectProfitabilityCard({
       </ConsolePanel>
 
       {/* ── Ranking table ── */}
-      <ConsolePanel kicker="Xếp hạng" title="Lợi nhuận theo dự án" description="12 tháng gần nhất" isFlush>
+      <ConsolePanel
+        kicker="Xếp hạng"
+        title="Lợi nhuận theo dự án"
+        description="12 tháng gần nhất"
+        isFlush
+        className="lg:col-span-5"
+      >
           {tableLoading ? (
             <div className="px-3 pb-3 space-y-2">
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full rounded" />)}
