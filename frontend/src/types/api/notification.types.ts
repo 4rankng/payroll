@@ -72,19 +72,3 @@ export interface UnreadNotificationResponse {
   count: number;
   message: string;
 }
-
-export interface SendNotificationRequest {
-  recipient_ids: number[];
-  title: string;
-  message: string;
-  content_type?: NotificationContentType;
-  to_all_partners?: boolean;
-  to_all_admins?: boolean;
-  to_all_employees?: boolean;
-}
-
-export interface SendNotificationResponse {
-  status: string;
-  message: string;
-  data?: Notification;
-}

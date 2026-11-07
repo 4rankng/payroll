@@ -293,7 +293,6 @@ const AppContent = () => {
           <Route path="cron-health" element={<ResponsivePage desktopComponent={CronHealthPage} mobileComponent={CronHealthPageMobile} />} />
           <Route path="audit-log" element={<ResponsivePage desktopComponent={AuditLogPage} mobileComponent={AuditLogPageMobile} />} />
           <Route path="zns-tracking" element={<ResponsivePage desktopComponent={ZnsTrackingPage} mobileComponent={ZnsTrackingPageMobile} />} />
-          <Route path="send-notification" element={<Navigate to="/admin/settings?tab=notifications" replace />} />
           <Route path="email" element={<EmailPage />} />
           <Route path="projects/:projectId/payrates/:payrateId/edit" element={<ResponsivePage desktopComponent={PayrateEditPage} mobileComponent={PayrateEditPageMobile} />} />
           <Route path="*" element={<NotFound />} />

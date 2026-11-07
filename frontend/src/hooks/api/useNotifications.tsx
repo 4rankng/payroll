@@ -1,11 +1,9 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationService } from '@/services/api/notification.service';
-import { showSuccessNotification, showErrorNotification } from '@/utils/error-handler';
 import type {
   Notification,
   PaginatedNotificationResponse,
   NotificationFilters,
-  SendNotificationRequest,
 } from '@/types/api/notification.types';
 
 // Query keys
@@ -231,24 +229,4 @@ export const useRefreshNotifications = () => {
   return () => {
     queryClient.invalidateQueries({ queryKey: notificationKeys.all });
   };
-};
-
-/**
- * Hook to send notification to a user (Admin only)
- */
-export const useSendNotification = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: SendNotificationRequest) => notificationService.sendNotification(data),
-    onSuccess: (response) => {
-      showSuccessNotification(response.message || 'Đã gửi thông báo thành công');
-
-      // Invalidate notification queries to ensure recipient sees the new notification
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
-    },
-    onError: (error: Error) => {
-      showErrorNotification(error.message || 'Không thể gửi thông báo');
-    },
-  });
 };

@@ -34,7 +34,6 @@ Page-level route components for the Admin role. Admins have full access to all f
 | `SystemHealthPage/` | System health monitoring dashboard |
 | `CronHealthPage/` | Cron job status and health monitoring |
 | `SettingsPage/` | Application settings configuration |
-| `SendNotificationPage/` | Push notification sender |
 | `components/` | Shared admin page components |
 
 ### DashboardPage/
@@ -148,12 +147,6 @@ Page-level route components for the Admin role. Admins have full access to all f
 | File | Description |
 |------|-------------|
 | `index.tsx` | Settings page |
-
-### SendNotificationPage/
-
-| File | Description |
-|------|-------------|
-| `index.tsx` | Send notification page |
 
 ## For AI Agents
 

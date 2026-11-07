@@ -89,9 +89,6 @@ vi.mock('@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSecti
 vi.mock('@/components/email/AdminEmailComposer', () => ({
   AdminEmailComposer: () => null,
 }));
-vi.mock('@/components/settings/SendNotificationComposer', () => ({
-  SendNotificationComposer: () => null,
-}));
 vi.mock('@/components/settings/ZaloConnectionSection', () => ({
   ZaloConnectionSection: () => <div>Quy trình cấu hình Zalo ZNS</div>,
 }));

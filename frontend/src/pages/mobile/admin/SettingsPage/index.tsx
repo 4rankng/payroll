@@ -19,8 +19,6 @@ import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule
 import { WeeklyPaymentFeeScheduleSection } from '@/components/admin/WeeklyPaymentFeeSchedule/WeeklyPaymentFeeScheduleSection';
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
-import { AdminEmailComposer } from '@/components/email/AdminEmailComposer';
-import { SendNotificationComposer } from '@/components/settings/SendNotificationComposer';
 import { ZaloConnectionSection } from '@/components/settings/ZaloConnectionSection';
 import { AdBannerSection } from '@/components/settings/AdBannerSection';
 import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
@@ -126,19 +124,11 @@ const SettingsPageMobile = () => {
           </TabsContent>
 
           <TabsContent value={SETTINGS_TABS.feeConfig} className="mt-0 space-y-4">
-            <FeeScheduleSection />
-            <Separator />
             <WeeklyPaymentFeeScheduleSection />
             <Separator />
+            <FeeScheduleSection />
+            <Separator />
             <DisbursementFeeScheduleSection />
-          </TabsContent>
-
-          <TabsContent value={SETTINGS_TABS.email} className="mt-0">
-            <AdminEmailComposer embedded />
-          </TabsContent>
-
-          <TabsContent value={SETTINGS_TABS.notifications} className="mt-0">
-            <SendNotificationComposer />
           </TabsContent>
 
           <TabsContent value={SETTINGS_TABS.zalo} className="mt-0">

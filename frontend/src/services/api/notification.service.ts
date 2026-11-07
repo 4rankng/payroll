@@ -1,10 +1,9 @@
-import { apiClient, buildQueryString, ApiResponse } from './client';
+import { apiClient, buildQueryString } from './client';
 import { API_ENDPOINTS } from '@/config/api.config';
 import type {
   Notification,
   NotificationFilters,
   PaginatedNotificationResponse,
-  SendNotificationRequest,
 } from '@/types/api/notification.types';
 
 class NotificationService {
@@ -60,17 +59,6 @@ class NotificationService {
    */
   async markAllAsRead(): Promise<void> {
     await apiClient.put(API_ENDPOINTS.notifications.markAllRead);
-  }
-
-  /**
-   * Send notification to user(s) (Admin only)
-   */
-  async sendNotification(data: SendNotificationRequest): Promise<ApiResponse<Notification>> {
-    const response = await apiClient.post<Notification>(
-      API_ENDPOINTS.notifications.send,
-      data
-    );
-    return response;
   }
 }
 

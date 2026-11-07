@@ -51,9 +51,6 @@ vi.mock("@/components/settings/SettingsEmployeePanel", () => ({
 vi.mock("@/components/email/AdminEmailComposer", () => ({
   AdminEmailComposer: mocks.record("AdminEmailComposer"),
 }));
-vi.mock("@/components/settings/SendNotificationComposer", () => ({
-  SendNotificationComposer: mocks.record("SendNotificationComposer"),
-}));
 vi.mock("@/components/settings/ZaloConnectionSection", () => ({
   ZaloConnectionSection: mocks.record("ZaloConnectionSection"),
 }));
@@ -89,8 +86,8 @@ describe("Settings fee-config parity desktop ↔ mobile (PAYR-21)", () => {
     const mobile = renderSectionOrder(<SettingsPageMobile />);
 
     expect(desktop).toEqual([
-      "FeeScheduleSection",
       "WeeklyPaymentFeeScheduleSection",
+      "FeeScheduleSection",
       "DisbursementFeeScheduleSection",
     ]);
     expect(mobile).toEqual(desktop);

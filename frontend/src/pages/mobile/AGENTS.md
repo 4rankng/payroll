@@ -44,7 +44,6 @@ component renders bare.
 | `LoansPage/index.tsx` | Mobile loan management |
 | `LoansPage/LendersPage.tsx` | Lenders drill-down (paired with desktop `pages/admin/LoansPage/LendersPage.tsx`) |
 | `PayrateEditPage/` | Mobile payrate edit |
-| `SendNotificationPage/index.tsx` | Mobile notification sender |
 | `SettingsPage/index.tsx` | Mobile settings |
 | `SystemHealthPage/index.tsx` | Mobile system health |
 | `UsersPage/index.tsx` | Mobile user management |

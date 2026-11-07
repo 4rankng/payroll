@@ -303,7 +303,6 @@ export const API_ENDPOINTS = {
     unread: '/notifications/unread',
     markRead: (id: number) => `/notifications/${id}/read`,
     markAllRead: '/notifications/read-all',
-    send: '/notification', // Admin only - send notification to user
   },
 
   // Push Notifications (Web Push)

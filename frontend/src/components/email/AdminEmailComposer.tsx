@@ -13,16 +13,12 @@ import { useEmailComposer } from '@/hooks/useEmailComposer';
 
 const recipientLabel = (name: string | undefined, address: string) => name ? `${name} <${address}>` : address;
 
-interface AdminEmailComposerProps {
-  embedded?: boolean;
-}
-
-export function AdminEmailComposer({ embedded = false }: AdminEmailComposerProps) {
+export function AdminEmailComposer() {
   const composer = useEmailComposer();
 
   return (
-    <div className={embedded ? 'space-y-5' : 'p-4 lg:p-6 max-w-[1320px] mx-auto space-y-5 pb-[calc(5rem+env(safe-area-inset-bottom))]'}>
-      {!embedded && <PageHeader icon={Mail01} title="Gửi email" description="Soạn email HTML, chọn địa chỉ gửi đã xác minh và xem trước trước khi gửi." />}
+    <div className="p-4 lg:p-6 max-w-[1320px] mx-auto space-y-5 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+      <PageHeader icon={Mail01} title="Gửi email" description="Soạn email HTML, chọn địa chỉ gửi đã xác minh và xem trước trước khi gửi." />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)]">
         <section className="min-w-0 space-y-4 rounded-xl border bg-card p-4 sm:p-5" aria-labelledby="email-composer-title">
