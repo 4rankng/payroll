@@ -271,3 +271,15 @@ html.admin-console-toto [data-admin-ui] .admin-sidebar-brand {
     line-height: 1.25rem;
   }
 }
+
+/* Untitled UI's vendored brand ladder is static emerald. On the admin console
+   the solid brand button must use the navy-blue primary instead. */
+html.admin-console-toto .bg-brand-solid {
+  background-color: hsl(var(--primary));
+}
+html.admin-console-toto .hover\:bg-brand-solid_hover:hover {
+  background-color: hsl(var(--primary) / 0.9);
+}
+html.admin-console-toto .active\:bg-brand-solid_hover:active {
+  background-color: hsl(var(--primary) / 0.85);
+}
