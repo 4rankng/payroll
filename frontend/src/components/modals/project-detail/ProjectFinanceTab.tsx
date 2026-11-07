@@ -42,9 +42,9 @@ export function ProjectFinanceTab({
                 onChange={(e) => setFormData({ ...formData, budget: parseInt(e.target.value) || 0 })}
                 disabled={!isEditing}
                 placeholder="100000000"
-                className={errors.budget ? 'border-red-500' : ''}
+                className={errors.budget ? 'border-destructive' : ''}
               />
-              {errors.budget && <p className="typography-body-medium text-red-700 mt-1">{errors.budget}</p>}
+              {errors.budget && <p className="typography-body-medium text-destructive mt-1">{errors.budget}</p>}
               {!isEditing && formData.budget && (
                 <p className="typography-body-medium text-muted-foreground mt-1">
                   {formatCurrency(formData.budget)}
@@ -84,19 +84,19 @@ export function ProjectFinanceTab({
               
               <div className="grid grid-cols-1 gap-3 typography-body-medium sm:grid-cols-3 sm:gap-4">
                 <div className="text-center">
-                  <p className="typography-title-large text-blue-700">
+                  <p className="typography-title-large text-primary">
                     {formatCurrency(formData.budget)}
                   </p>
                   <p className="text-muted-foreground">Tổng ngân sách</p>
                 </div>
                 <div className="text-center">
-                  <p className="typography-title-large text-red-700">
+                  <p className="typography-title-large text-destructive">
                     {formatCurrency(formData.total_payout_vnd || 0)}
                   </p>
                   <p className="text-muted-foreground">Đã chi tiêu</p>
                 </div>
                 <div className="text-center">
-                  <p className="typography-title-large text-green-700">
+                  <p className="typography-title-large text-success">
                     {formatCurrency((formData.budget || 0) - (formData.total_payout_vnd || 0))}
                   </p>
                   <p className="text-muted-foreground">Còn lại</p>

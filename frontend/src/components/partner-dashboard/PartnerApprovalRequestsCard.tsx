@@ -1,16 +1,16 @@
-import { Badge } from '@/components/ui/badge';
 import { useApprovalsList } from '@/hooks/api/useApprovals';
 import { cn } from '@/lib/utils';
+import { ConsolePanel } from '@/components/shared/console-panel';
 
-const STATUS_BADGE: Record<string, string> = {
-  pending: 'border-indigo-200 bg-indigo-50 text-indigo-800',
-  rescheduled: 'border-amber-200 bg-amber-50 text-amber-800',
-  escalated: 'border-red-200 bg-red-50 text-red-800',
-  executed: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  approved: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  rejected: 'border-slate-200 bg-slate-50 text-slate-700',
-  cancelled: 'border-slate-200 bg-slate-50 text-slate-700',
-  expired: 'border-slate-200 bg-slate-50 text-slate-700',
+const STATUS_TONE: Record<string, string> = {
+  pending: 'text-info',
+  rescheduled: 'text-warning',
+  escalated: 'text-destructive',
+  executed: 'text-success',
+  approved: 'text-success',
+  rejected: 'text-destructive',
+  cancelled: 'text-muted-foreground',
+  expired: 'text-muted-foreground',
 };
 
 const formatDateTime = (iso?: string | null) => {
@@ -30,39 +30,46 @@ export const PartnerApprovalRequestsCard = ({ compact = false }: { compact?: boo
   if (isLoading || items.length === 0) return null;
 
   return (
-    <section aria-label="Yêu cầu phê duyệt của tôi" className="console-panel text-card-foreground">
-      <header className="console-panel-header">
-        <h2 className="console-kicker">Yêu cầu của tôi</h2>
-        <span className="console-value ml-auto text-[11px] text-muted-foreground">({items.length})</span>
-      </header>
-      <div className={cn(compact ? 'px-4 py-3' : 'console-panel-body')}>
-        <ul className="divide-y divide-border/60">
-          {items.map((item) => (
-            <li key={item.id} className="flex flex-wrap items-center justify-between gap-1.5 py-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm text-foreground">
-                  {item.summary || item.type_label}
+    <ConsolePanel
+      kicker="Phê duyệt"
+      title="Yêu cầu của tôi"
+      className="text-card-foreground"
+      actions={
+        <span className="console-value text-[11px] text-muted-foreground">
+          {items.length} yêu cầu
+        </span>
+      }
+      isFlush={compact}
+      bodyClassName={compact ? 'px-3 py-2' : undefined}
+    >
+      <ul className="divide-y divide-border/60">
+        {items.map((item) => (
+          <li key={item.id} className="flex flex-wrap items-center justify-between gap-1.5 py-1.5">
+            <div className="min-w-0">
+              <p className="truncate text-[13px] text-foreground">
+                {item.summary || item.type_label}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {formatDateTime(item.created_at)}
+                {item.scheduled_at ? ` · thử lại ${formatDateTime(item.scheduled_at)}` : ''}
+              </p>
+              {item.decision_note ? (
+                <p className="text-[11px] text-muted-foreground">
+                  Ghi chú: <span className="text-foreground">{item.decision_note}</span>
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDateTime(item.created_at)}
-                  {item.scheduled_at ? ` · thử lại ${formatDateTime(item.scheduled_at)}` : ''}
-                </p>
-                {item.decision_note ? (
-                  <p className="text-xs text-muted-foreground">
-                    Ghi chú: <span className="text-foreground">{item.decision_note}</span>
-                  </p>
-                ) : null}
-              </div>
-              <Badge variant="outline" className={cn('h-6 shrink-0 px-2 text-xs', STATUS_BADGE[item.status] ?? '')}>
-                {item.status_label}
-              </Badge>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-2.5 text-xs leading-5 text-muted-foreground">
-          Yêu cầu chỉ được thực thi sau khi quản trị viên duyệt — kết quả sẽ được thông báo đến bạn.
-        </p>
-      </div>
-    </section>
+              ) : null}
+            </div>
+            <span
+              className={cn(
+                'console-kicker shrink-0',
+                STATUS_TONE[item.status] ?? 'text-muted-foreground',
+              )}
+            >
+              {item.status_label}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </ConsolePanel>
   );
 };

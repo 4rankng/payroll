@@ -339,7 +339,7 @@ function ProjectDetailsSheet({
         >
           {/* Sticky pill tab bar — breaks out of template's content padding, re-pads.
               'info' value kept for the overview tab so URL deep-links remain stable. */}
-          <div className="-mx-4 sm:-mx-6 sticky top-0 z-10 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border-b px-4 sm:px-6 pb-2 pt-0.5">
+          <div className="-mx-4 sm:-mx-6 sticky top-0 z-10 bg-card border-b border-border/65 px-4 sm:px-6 pb-2 pt-0.5">
             <TabsList className="bg-transparent p-0 h-auto w-full inline-flex gap-1 overflow-x-auto">
               <TabsTrigger
                 value="overview"
@@ -415,7 +415,7 @@ function ProjectDetailsSheet({
                     Vùng nguy hiểm
                   </p>
                 </div>
-                <div className="flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
+                <div className="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-destructive">Xóa dự án</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -552,31 +552,31 @@ function ProjectDetailsSheet({
             <p>Bạn có chắc chắn muốn xóa dự án <strong>"{project?.name}"</strong>?</p>
 
             {project?.status === 'completed' ? (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-red-700 font-medium">🚫 Không thể xóa:</span>
+                  <span className="text-destructive font-medium">🚫 Không thể xóa:</span>
                 </div>
-                <ul className="text-sm text-red-800 space-y-1">
+                <ul className="text-sm text-destructive space-y-1">
                   <li>• Dự án đã hoàn thành không thể xóa</li>
                   <li>• Vui lòng liên hệ quản trị viên nếu cần hỗ trợ</li>
                 </ul>
               </div>
             ) : hasApprovedTimesheets ? (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3 space-y-2">
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-red-700 font-medium">🚫 Không thể xóa:</span>
+                  <span className="text-destructive font-medium">🚫 Không thể xóa:</span>
                 </div>
-                <ul className="text-sm text-red-800 space-y-1">
+                <ul className="text-sm text-destructive space-y-1">
                   <li>• Dự án có bảng công đã duyệt</li>
                   <li>• Vui lòng liên hệ quản trị viên nếu cần hỗ trợ</li>
                 </ul>
               </div>
             ) : (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 space-y-2">
+              <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-yellow-800 font-medium">⚠️ Cảnh báo:</span>
+                  <span className="text-warning font-medium">⚠️ Cảnh báo:</span>
                 </div>
-                <ul className="text-sm text-yellow-800 space-y-1">
+                <ul className="text-sm text-warning space-y-1">
                   <li>• Nhân viên được giao: <strong>{activeEmployeesCount} người</strong></li>
                   <li>• Tất cả dữ liệu chấm công của dự án sẽ bị xóa</li>
                   <li>• Hành động này <strong>không thể hoàn thành</strong></li>

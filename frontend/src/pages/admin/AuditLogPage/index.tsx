@@ -3,7 +3,9 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useAppState } from '@/contexts';
 // UU PRO restyle (W13c): lucide → verified @untitledui/icons.
 import { Clipboard, Loading01 } from '@untitledui/icons';
+import { useLocation } from 'react-router-dom';
 import { useInfiniteAuditLogs } from '@/hooks/api/useAuditLogs';
+import { getConsoleKicker } from '@/lib/console';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll.tsx';
 import {
   AdminPageCanvas,
@@ -23,6 +25,7 @@ type Filters = Omit<AuditLogsQueryParams, 'page' | 'pageSize'>;
 
 export default function AuditLogPage() {
   const { setPageTitle } = useAppState();
+  const location = useLocation();
   React.useEffect(() => { setPageTitle('Nhật ký hoạt động'); }, [setPageTitle]);
 
   const [filters, setFilters] = useState<Filters>({});
@@ -64,14 +67,9 @@ export default function AuditLogPage() {
         <PageHeader
           icon={Clipboard}
           title="Nhật ký hoạt động"
-          description="Lịch sử thao tác của người dùng trong hệ thống"
-        >
-          {totalRecords > 0 && (
-            <span className="text-xs font-medium text-muted-foreground tabular-nums">
-              {totalRecords.toLocaleString('vi-VN')} bản ghi
-            </span>
-          )}
-        </PageHeader>
+          kicker={getConsoleKicker(location.pathname)}
+          meta={totalRecords > 0 ? `${totalRecords.toLocaleString('vi-VN')} bản ghi` : undefined}
+        />
       </AdminPageHeaderCard>
 
       {/* Filters */}

@@ -106,7 +106,7 @@ export function ShiftNamesSection({
     return (
       <div className="border-t pt-2 pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+          <p className="console-kicker">
             Tên ca làm việc
           </p>
           {editActions}
@@ -149,7 +149,7 @@ export function ShiftNamesSection({
   return (
     <div className="border-t pt-2 pb-4">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-6">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+        <p className="console-kicker">
           Tên ca làm việc
         </p>
         {editActions}
@@ -160,7 +160,7 @@ export function ShiftNamesSection({
           Đặt tên hiển thị cho từng ca. Khung giờ và lương trọn ca được thay đổi trong bảng lương.
         </p>
 
-        <div className="overflow-hidden rounded-lg border">
+        <div className="console-panel overflow-hidden">
           <div className="hidden min-[640px]:grid min-[640px]:grid-cols-[180px_200px_minmax(0,1fr)] gap-3 bg-muted/50 px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             <span>Khung giờ</span>
             <span>Lương trọn ca</span>
@@ -178,7 +178,7 @@ export function ShiftNamesSection({
                   <span className="font-mono text-xs text-muted-foreground">{range}</span>
                   {overnight && (
                     <span
-                      className="inline-flex items-center gap-0.5 rounded bg-emerald-50 px-1 py-0.5 text-xs font-medium text-emerald-700 shrink-0"
+                      className="inline-flex items-center gap-0.5 rounded bg-utility-success-50 px-1 py-0.5 text-xs font-medium text-fg-success-primary shrink-0"
                       title="Ca qua đêm"
                     >
                       <Moon className="h-2.5 w-2.5" />
@@ -201,7 +201,7 @@ export function ShiftNamesSection({
                             {position}
                           </span>
                         )}
-                        <span className="shrink-0 font-semibold tabular-nums text-emerald-700">
+                        <span className="shrink-0 font-semibold tabular-nums text-fg-success-primary">
                           {formatShiftPay(amount)}
                         </span>
                       </div>

@@ -420,12 +420,12 @@ function TimesheetEntrySheetComponent({
       <SheetContent
         side="right"
         title="Thêm chấm công"
-        className="p-0 flex flex-col h-full !w-screen max-w-[1200px] mx-auto bg-slate-50"
+        className="p-0 flex flex-col h-full !w-screen max-w-[1200px] mx-auto bg-background"
       >
         {/* Header — title, filters, close */}
-        <div className="flex min-h-16 flex-wrap items-center gap-2 border-b border-emerald-100 bg-card px-4 py-2.5 shadow-[0_6px_18px_-16px_rgba(6,101,52,0.38)] flex-shrink-0">
+        <div className="console-panel-header flex min-h-16 flex-wrap items-center gap-2 bg-card px-4 py-2.5 flex-shrink-0">
           <div className="mr-1 flex items-center gap-2.5 shrink-0">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/15">
               <ClipboardPenLine className="h-4.5 w-4.5" />
             </span>
             <div>
@@ -442,7 +442,7 @@ function TimesheetEntrySheetComponent({
                 role="combobox"
                 aria-expanded={isProjectDropdownOpen}
                 aria-label={selectedProject ? `Dự án: ${selectedProject.name}` : "Chọn dự án"}
-                className="min-h-11 max-w-full justify-between gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 text-xs font-normal hover:bg-card hover:border-primary/25"
+                className="min-h-11 max-w-full justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 text-xs font-normal hover:bg-card hover:border-primary/25"
               >
                 <Building2 className="h-3.5 w-3.5 shrink-0 text-primary" />
                 <span className="min-w-0 truncate">
@@ -491,7 +491,7 @@ function TimesheetEntrySheetComponent({
                 role="combobox"
                 aria-expanded={isEmployeeDropdownOpen}
                 aria-label={selectedEmployee ? `Nhân viên: ${selectedEmployee.fullname}` : "Lọc nhân viên"}
-                className="min-h-11 max-w-full justify-between gap-2 rounded-xl border border-border/60 bg-muted/30 px-3 text-xs font-normal hover:bg-card hover:border-primary/25"
+                className="min-h-11 max-w-full justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 text-xs font-normal hover:bg-card hover:border-primary/25"
                 disabled={availableEmployees.length === 0 || !isPayRateReady}
               >
                 <UsersRound className="h-3.5 w-3.5 shrink-0 text-primary" />
@@ -558,7 +558,7 @@ function TimesheetEntrySheetComponent({
             variant="ghost"
             size="icon"
             onClick={handleCloseClick}
-            className="h-11 w-11 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
+            className="h-11 w-11 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
             aria-label="Đóng"
           >
             <X className="h-4 w-4" />
@@ -567,22 +567,22 @@ function TimesheetEntrySheetComponent({
 
         {/* Global error banner — only for errors not tied to a specific employee */}
         {getErrorsForEmployee(0) && (
-          <div className="px-4 py-2 bg-red-50 border-b border-red-100 flex items-start gap-2 flex-shrink-0">
-            <AlertTriangle className="h-3.5 w-3.5 text-red-700 shrink-0 mt-0.5" />
+          <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/30 flex items-start gap-2 flex-shrink-0">
+            <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
             <div className="space-y-0.5">
               {getErrorsForEmployee(0)!.map((err, i) => (
-                <p key={i} className="text-xs text-red-700">{err}</p>
+                <p key={i} className="text-xs text-destructive">{err}</p>
               ))}
             </div>
           </div>
         )}
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.08),transparent_25rem)]">
+        <div className="flex-1 overflow-y-auto bg-background">
         {/* Content */}
         <div className="px-4 pt-4 pb-6 sm:px-6">
           {!isPayRateReady ? (
-            <div className="border border-amber-200 rounded-2xl p-4 bg-amber-50/80 text-sm text-amber-800 shadow-[0_10px_24px_-22px_rgba(180,83,9,0.45)]">
+            <div className="border border-warning/30 rounded-lg p-4 bg-warning/10 text-sm text-warning">
               {isInitialDataLoading
                 ? 'Đang tải cấu hình mức lương cho dự án này...'
                 : 'Dự án này chưa có cấu hình mức lương. Vui lòng cấu hình mức lương trước khi tạo chấm công.'}
@@ -621,25 +621,25 @@ function TimesheetEntrySheetComponent({
                 <span>
                   <span className="font-semibold text-foreground">{footerSummary.totalHours}h</span> tổng giờ
                 </span>
-                <span className="font-semibold text-emerald-700">{formatCurrency(footerSummary.totalPayout)}</span>
+                <span className="font-semibold text-success">{formatCurrency(footerSummary.totalPayout)}</span>
                 {(footerSummary.newFieldCount > 0 || footerSummary.editedFieldCount > 0 || footerSummary.deletedFieldCount > 0) && (
                   <span className="flex items-center gap-2">
                     {footerSummary.newFieldCount > 0 && (
                       <span className="flex items-center gap-0.5">
-                        <span className="inline-block w-2 h-2 rounded-sm border border-emerald-300 bg-emerald-100" />
-                        <span className="text-emerald-700 font-medium">{footerSummary.newFieldCount} mới</span>
+                        <span className="inline-block w-2 h-2 rounded-sm border border-success/40 bg-success/15" />
+                        <span className="text-success font-medium">{footerSummary.newFieldCount} mới</span>
                       </span>
                     )}
                     {footerSummary.editedFieldCount > 0 && (
                       <span className="flex items-center gap-0.5">
-                        <span className="inline-block w-2 h-2 rounded-sm border border-amber-300 bg-amber-100" />
-                        <span className="text-amber-700 font-medium">{footerSummary.editedFieldCount} sửa</span>
+                        <span className="inline-block w-2 h-2 rounded-sm border border-warning/40 bg-warning/15" />
+                        <span className="text-warning font-medium">{footerSummary.editedFieldCount} sửa</span>
                       </span>
                     )}
                     {footerSummary.deletedFieldCount > 0 && (
                       <span className="flex items-center gap-0.5">
-                        <span className="inline-block w-2 h-2 rounded-sm border border-red-300 bg-red-100" />
-                        <span className="text-red-700 font-medium">{footerSummary.deletedFieldCount} xóa</span>
+                        <span className="inline-block w-2 h-2 rounded-sm border border-destructive/40 bg-destructive/15" />
+                        <span className="text-destructive font-medium">{footerSummary.deletedFieldCount} xóa</span>
                       </span>
                     )}
                   </span>
@@ -648,15 +648,15 @@ function TimesheetEntrySheetComponent({
             ) : (
               <div className="flex items-center gap-2">
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span className="inline-block w-4 h-3.5 rounded border border-emerald-300 bg-emerald-50/70 shrink-0" />
+                  <span className="inline-block w-4 h-3.5 rounded border border-success/40 bg-success/10 shrink-0" />
                   Mới tạo
                 </span>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span className="inline-block w-4 h-3.5 rounded border border-amber-300 bg-amber-50/70 shrink-0" />
+                  <span className="inline-block w-4 h-3.5 rounded border border-warning/40 bg-warning/10 shrink-0" />
                   Đã sửa
                 </span>
                 <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span className="inline-block w-4 h-3.5 rounded border border-red-300 bg-red-50/70 shrink-0" />
+                  <span className="inline-block w-4 h-3.5 rounded border border-destructive/40 bg-destructive/10 shrink-0" />
                   Sẽ xóa
                 </span>
               </div>

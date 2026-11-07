@@ -34,10 +34,10 @@ export const FeeScheduleList = ({
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+      <div className="console-panel space-y-2 p-3">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full" />
       </div>
     );
   }
@@ -52,15 +52,15 @@ export const FeeScheduleList = ({
   }
 
   return (
-    <div tabIndex={0} role="region" aria-label="Lịch sử cấu hình phí ứng lương" className="rounded-lg border bg-card shadow-sm overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-      <Table>
+    <div tabIndex={0} role="region" aria-label="Lịch sử cấu hình phí ứng lương" className="console-panel overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+      <Table variant="console">
         <TableHeader>
           <TableRow>
             <TableHead>Ngày hiệu lực</TableHead>
             <TableHead>Trạng thái</TableHead>
             <TableHead>Cấu trúc phí</TableHead>
             <TableHead>Phí tối thiểu</TableHead>
-            <TableHead>Ghi chú</TableHead>
+            <TableHead className="hidden md:table-cell">Ghi chú</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -81,10 +81,10 @@ export const FeeScheduleList = ({
                   )}
                 </TableCell>
                 <TableCell className="text-sm">{entry.summary}</TableCell>
-                <TableCell className="whitespace-nowrap tabular-nums">
+                <TableCell className="num whitespace-nowrap tabular-nums">
                   {formatCurrency(entry.minFeeVnd)}
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground max-w-[280px]">
+                <TableCell className="hidden text-xs text-muted-foreground md:table-cell max-w-[280px]">
                   {entry.notes ?? ""}
                 </TableCell>
               </TableRow>

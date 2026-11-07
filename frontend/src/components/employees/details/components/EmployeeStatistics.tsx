@@ -87,6 +87,11 @@ export const EmployeeStatistics = memo(({
               Bảng chấm gần nhất: {format(new Date((employee.timesheet_summary as TimesheetSummary).last_timesheet_date), 'dd/MM/yyyy')}
             </p>
           )}
+          {!(employee.timesheet_summary as TimesheetSummary).total_timesheets && (
+            <p className="text-xs text-muted-foreground/80 px-0.5">
+              Chưa có bảng chấm công nào trong kỳ — dữ liệu sẽ xuất hiện sau kỳ chấm đầu tiên.
+            </p>
+          )}
         </div>
       )}
 

@@ -25,7 +25,7 @@ export function TransactionFilters({
     onFiltersChange({ ...filters, [key]: value, page: 1 });
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="console-filter-bar overflow-x-auto">
       <SearchBar
         searchTerm={filters.search ?? ''}
         onSearchChange={(value) => set('search', value || undefined)}
@@ -59,7 +59,7 @@ export function TransactionFilters({
       {hasFilters && (
         <button
           onClick={onClearFilters}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="shrink-0 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           Xóa lọc
         </button>

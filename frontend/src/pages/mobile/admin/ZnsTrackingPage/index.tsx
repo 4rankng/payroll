@@ -1,7 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { useAppState } from '@/contexts';
+import { useLocation } from 'react-router-dom';
 import { MessageSquare01, FilterLines, XClose } from '@untitledui/icons';
 import { useZnsMessages } from '@/hooks/api/useZnsMessages';
+import { getConsoleKicker } from '@/lib/console';
 import { MobilePageShell } from '@/components/shared/MobilePageShell';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -31,7 +33,7 @@ function formatDateTime(iso: string): string {
 /** One ZNS per card — no horizontal table on mobile, full wrap, no truncation. */
 function ZnsCard({ row }: { row: ZnsMessage }) {
   return (
-    <article className="rounded-xl border border-utility-gray-200 bg-white p-3.5">
+    <article className="console-panel p-3.5">
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs tabular-nums text-fg-secondary">{formatDateTime(row.created_at)}</p>
         <ZnsStatusBadge status={row.status} />
@@ -65,6 +67,7 @@ function ZnsCard({ row }: { row: ZnsMessage }) {
 
 export default function ZnsTrackingPageMobile() {
   const { setPageTitle } = useAppState();
+  const location = useLocation();
   React.useEffect(() => { setPageTitle('ZNS tracking'); }, [setPageTitle]);
 
   const [params, setParams] = useState<ZnsMessagesQueryParams>(EMPTY_PARAMS);
@@ -83,6 +86,7 @@ export default function ZnsTrackingPageMobile() {
       <MobilePageHeader
         title="ZNS tracking"
         icon={MessageSquare01}
+        kicker={getConsoleKicker(location.pathname)}
         actions={
           <Button
             type="button"

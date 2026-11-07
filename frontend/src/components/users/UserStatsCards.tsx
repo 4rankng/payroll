@@ -65,7 +65,7 @@ export const UserStatsCards = ({
     return (
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-[52px] rounded-xl border border-border/60 bg-card px-3 py-2.5 flex flex-col gap-1.5">
+          <div key={i} className="h-[52px] rounded-lg border border-border/60 bg-card px-3 py-2.5 flex flex-col gap-1.5">
             <Skeleton className="h-2.5 w-16" />
             <Skeleton className="h-4 w-10" />
           </div>
@@ -76,7 +76,7 @@ export const UserStatsCards = ({
 
   if (error) {
     return (
-      <div className="p-4 border border-border rounded-xl bg-card text-center">
+      <div className="p-4 border border-border rounded-lg bg-card text-center">
         <p className="typography-body-medium text-muted-foreground">
           Không thể tải thống kê người dùng
         </p>

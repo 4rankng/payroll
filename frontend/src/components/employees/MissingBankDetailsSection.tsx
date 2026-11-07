@@ -57,8 +57,8 @@ function WarningReasons({
   const isInvalid = getBankInformationWarningKind(employee) === 'invalid';
   const warningReason = getBankInformationWarningReason(employee);
   const tone = isInvalid
-    ? 'border-rose-300 bg-rose-100 text-rose-800'
-    : 'border-amber-300 bg-amber-100 text-amber-900';
+    ? 'border-destructive/40 bg-destructive/15 text-destructive'
+    : 'border-warning/40 bg-warning/15 text-warning';
 
   return (
     <div className="flex flex-wrap items-start gap-1">
@@ -112,12 +112,12 @@ export const MissingBankDetailsSection = ({
   if (isLoading || totalCount === 0) return null;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-amber-200 bg-card">
+    <div className="overflow-hidden rounded-lg border border-warning/30 bg-card">
       {/* Designed as the app's card + icon-chip component rather than a tinted
           block: amber icon chip, foreground title, and counts as compact
           colour-coded chips that read as data, not as controls. */}
       <div className="flex items-start gap-2.5 px-3 py-2.5 sm:px-4 sm:py-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/15 text-warning">
           <AlertTriangle className="h-4 w-4" aria-hidden="true" />
         </div>
 
@@ -128,13 +128,13 @@ export const MissingBankDetailsSection = ({
           {(invalidCount > 0 || missingCount > 0) && (
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               {invalidCount > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-rose-50 px-1.5 py-0.5 text-xs font-semibold text-rose-700">
+                <span className="inline-flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 text-xs font-semibold text-destructive">
                   Sai thông tin
                   <span className="tabular-nums">{invalidCount}</span>
                 </span>
               )}
               {missingCount > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-700">
+                <span className="inline-flex items-center gap-1 rounded-md bg-warning/10 px-1.5 py-0.5 text-xs font-semibold text-warning">
                   Thiếu thông tin
                   <span className="tabular-nums">{missingCount}</span>
                 </span>
@@ -167,13 +167,13 @@ export const MissingBankDetailsSection = ({
       {isExpanded && rows.length > 0 && (
         <div
           id="missing-bank-details-table"
-          className="border-t border-amber-200"
+          className="border-t border-warning/30"
         >
           {/* Phones get a card list; the table is a desktop-density view. Chosen
               in JS rather than by CSS so only one variant exists in the DOM. */}
           {isMobile ? (
             <ul
-              className="divide-y divide-amber-100"
+              className="divide-y divide-warning/20"
               aria-label="Danh sách cảnh báo thông tin ngân hàng"
             >
             {rows.map((employee, index) => {
@@ -186,7 +186,7 @@ export const MissingBankDetailsSection = ({
                       {index + 1}. {employee.fullname}
                     </span>
                     {hasPending && (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded border border-orange-200 bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded border border-warning/30 bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning">
                         <Clock className="h-2.5 w-2.5" aria-hidden="true" />
                         {employee.timesheet_summary!.pending_timesheets} chờ duyệt
                       </span>
@@ -207,7 +207,7 @@ export const MissingBankDetailsSection = ({
                       type="button"
                       onClick={() => onEmployeeClick(employee)}
                       aria-label={`Mở thông tin nhân viên ${employee.fullname}`}
-                      className="flex w-full flex-col items-start gap-1.5 px-3 py-3 text-left transition-colors active:bg-amber-50"
+                      className="flex w-full flex-col items-start gap-1.5 px-3 py-3 text-left transition-colors active:bg-warning/10"
                     >
                       {content}
                     </button>
@@ -232,17 +232,17 @@ export const MissingBankDetailsSection = ({
                 <caption className="sr-only">
                   Danh sách nhân viên có thông tin ngân hàng không hợp lệ
                 </caption>
-                <thead className="sticky top-0 z-10 bg-amber-100/80 backdrop-blur-sm">
+                <thead className="sticky top-0 z-10 bg-warning/15 ">
                   <tr>
-                    <th className="w-12 px-4 py-2.5 text-left text-xs font-semibold text-amber-900">STT</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-amber-900">Họ và tên</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-amber-900">CCCD</th>
+                    <th className="w-12 px-4 py-2.5 text-left text-xs font-semibold text-warning">STT</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-warning">Họ và tên</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-warning">CCCD</th>
                     {/* Reason column: why is this employee in the list? */}
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-amber-900">Lý do</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-amber-900">Dự án hiện tại</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-warning">Lý do</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-warning">Dự án hiện tại</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-amber-100 bg-card">
+                <tbody className="divide-y divide-warning/20 bg-card">
                   {rows.map((employee, index) => {
                     const hasPending = (employee.timesheet_summary?.pending_timesheets ?? 0) > 0;
                     return (
@@ -264,7 +264,7 @@ export const MissingBankDetailsSection = ({
                         }
                         className={
                           onEmployeeClick
-                            ? 'cursor-pointer transition-colors hover:bg-amber-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-600'
+                            ? 'cursor-pointer transition-colors hover:bg-warning/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-warning'
                             : ''
                         }
                       >
@@ -275,7 +275,7 @@ export const MissingBankDetailsSection = ({
                             {hasPending && (
                               <span
                                 title={`${employee.timesheet_summary!.pending_timesheets} bảng công chờ duyệt`}
-                                className="inline-flex items-center gap-1 rounded border border-orange-200 bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700"
+                                className="inline-flex items-center gap-1 rounded border border-warning/30 bg-warning/15 px-1.5 py-0.5 text-xs font-medium text-warning"
                               >
                                 <Clock className="h-2.5 w-2.5" aria-hidden="true" />
                                 {employee.timesheet_summary!.pending_timesheets} chờ duyệt

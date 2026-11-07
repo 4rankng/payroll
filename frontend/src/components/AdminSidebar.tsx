@@ -137,7 +137,7 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
         />
         {!isCollapsed && (
           <span className={cn(
-            "text-base leading-none truncate flex-1 transition-all duration-150",
+            "text-[13px] leading-none truncate flex-1 transition-all duration-150",
             isActive ? "font-medium text-white" : "font-normal"
           )}>
             {item.title}

@@ -29,7 +29,7 @@ function CellShell({
   className?: string;
 }) {
   return (
-    <TableCell className={`py-1.5 ${right ? 'pl-2 pr-3 text-right' : 'px-2'} ${className}`}>
+    <TableCell className={`py-1.5 ${right ? 'num pl-2 pr-3 text-right' : 'px-2'} ${className}`}>
       {children}
     </TableCell>
   );
@@ -115,7 +115,7 @@ export function LedgerTableRow({ row }: { row: LedgerRow }) {
       {isFirstOfRecord && (
         <TableCell
           rowSpan={recordRowCount}
-          className={`py-1.5 pl-2 pr-3 text-right ${IDENTITY_CELL}`}
+          className={`num py-1.5 pl-2 pr-3 text-right ${IDENTITY_CELL}`}
         >
           <span className="font-financial text-xs font-bold tabular-nums whitespace-nowrap text-emerald-700">
             {formatCurrency(record.total_amount)}

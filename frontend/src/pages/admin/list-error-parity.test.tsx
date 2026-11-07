@@ -27,6 +27,10 @@ vi.mock("@/hooks/api/useCronHealth", () => ({
   useCronJobs: () => mocks.query, useToggleCronJob: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock("@/hooks/users/useUserDataInfinite", () => ({ useUserDataInfinite: () => mocks.query }));
+vi.mock("@/hooks/users/useUserExport", () => ({
+  useUserExport: () => ({ exportUsers: vi.fn(), isExporting: false }),
+}));
+vi.mock("@/hooks/api/useProjects", () => ({ useAllProjects: () => [] }));
 vi.mock("@/hooks/api/useUsers", () => ({
   useUsersSummary: () => ({ data: undefined, isLoading: false }),
   useResetPassword: () => ({ mutate: vi.fn() }),

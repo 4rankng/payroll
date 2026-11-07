@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 // UU PRO restyle (W13c): page chrome on the UU bridge; header icons swapped
 // in TransactionPageHeader. Table/filter machinery stays with W13b.
 import {
@@ -27,6 +28,7 @@ import { useGeneralModals } from '@/hooks/useModalNavigation';
 import { useSendPayrollReportEmail } from '@/hooks/api/usePayrolls';
 import { useSendReconciliationEmail } from '@/hooks/api/useAdvancePaymentReconciliation';
 import { useTableSorting } from '@/utils/sorting';
+import { getConsoleKicker } from '@/lib/console';
 import { extractOnePayFeeIssues } from '@/utils/onepayFeeReport';
 import type { TransactionFilters as FiltersType, Transaction } from '@/services/api/transaction.service';
 import type { OnePayFeeImportResponse, OnePayFeeReportIssue } from '@/types/api/financial.types';
@@ -34,6 +36,7 @@ import { getInitialDateRange } from './utils';
 import { DEFAULT_FILTERS, SORT_FIELD_MAP } from './constants';
 
 const TransactionsPage = () => {
+  const location = useLocation();
   const initialDateRange = getInitialDateRange();
 
   const [filters, setFilters] = useState<FiltersType>(() => ({
@@ -169,6 +172,7 @@ const TransactionsPage = () => {
     <AdminPageCanvas>
       <AdminPageHeaderCard>
         <TransactionPageHeader
+          kicker={getConsoleKicker(location.pathname)}
           onAddTransaction={handleAddTransaction}
           onSendSaoKePayroll={() => setPayrollEmailDialogOpen(true)}
           onSendSaoKeAdvance={() => setAdvanceEmailDialogOpen(true)}

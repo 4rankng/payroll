@@ -11,7 +11,7 @@ const DAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 // Small inline icon + label heading for each info section.
 function SectionLabel({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
   return (
-    <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+    <p className="console-kicker inline-flex items-center gap-1.5 mb-1.5">
       <Icon className="h-3 w-3 opacity-70" />
       {children}
     </p>
@@ -49,7 +49,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
       {/* Basic Info */}
       <section>
         <SectionLabel icon={Info}>Thông tin cơ bản</SectionLabel>
-        <div className="bg-muted/30 rounded-xl px-3 py-1">
+        <div className="console-panel px-3 py-1">
           <Field label="Tên dự án" value={project.name || '-'} />
           <Field label="Mã dự án" value={project.code || '-'} mono />
           <Field label="Khách hàng" value={project.client_name || '-'} />
@@ -64,7 +64,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
       {project.description && (
         <section>
           <SectionLabel icon={FileText}>Mô tả</SectionLabel>
-          <div className="bg-muted/30 rounded-xl px-3 py-2">
+          <div className="console-panel px-3 py-2">
             <p className="text-xs leading-relaxed">{project.description}</p>
           </div>
         </section>
@@ -74,7 +74,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <SectionLabel icon={Wallet}>Kỳ lương tháng</SectionLabel>
-          <div className="bg-muted/30 rounded-xl px-3 py-1">
+          <div className="console-panel px-3 py-1">
             <Field
               label="Bắt đầu"
               value={project.salary_period_from ? `Ngày ${project.salary_period_from}` : 'Ngày 01'}
@@ -88,7 +88,7 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
 
         <div>
           <SectionLabel icon={CalendarOff}>Ngày nghỉ tuần</SectionLabel>
-          <div className="bg-muted/30 rounded-xl px-3 py-2">
+          <div className="console-panel px-3 py-2">
             {offDays === 0 ? (
               <p className="text-xs text-muted-foreground">Không có</p>
             ) : (
@@ -99,8 +99,8 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
                       key={bit}
                       className={`px-1.5 py-0.5 rounded text-xs font-semibold border ${
                         isOffDay(offDays, bit)
-                          ? 'bg-red-100 text-red-700 border-red-400'
-                          : 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                          ? 'bg-utility-error-100 text-fg-error-primary border-utility-error-400'
+                          : 'bg-utility-success-50 text-fg-success-primary border-utility-success-300'
                       }`}
                     >
                       {label}
@@ -109,11 +109,11 @@ export function ProjectInfoTab({ project }: ProjectInfoTabProps) {
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-100 border border-emerald-300" />
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm bg-utility-success-100 border border-utility-success-300" />
                     Ngày thường
                   </span>
                   <span className="flex items-center gap-1">
-                    <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-400" />
+                    <span className="inline-block w-2.5 h-2.5 rounded-sm bg-utility-error-100 border border-utility-error-400" />
                     Ngày nghỉ
                   </span>
                 </div>

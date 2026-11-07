@@ -2,6 +2,8 @@
 // error ladder.
 import { AlertCircle, File05, Mail01, Paperclip, Send01, XClose } from '@untitledui/icons';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { useLocation } from 'react-router-dom';
+import { getConsoleKicker } from '@/lib/console';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,14 +16,20 @@ import { useEmailComposer } from '@/hooks/useEmailComposer';
 const recipientLabel = (name: string | undefined, address: string) => name ? `${name} <${address}>` : address;
 
 export function AdminEmailComposer() {
+  const location = useLocation();
   const composer = useEmailComposer();
 
   return (
     <div className="p-4 lg:p-6 max-w-[1320px] mx-auto space-y-5 pb-[calc(5rem+env(safe-area-inset-bottom))]">
-      <PageHeader icon={Mail01} title="Gửi email" description="Soạn email HTML, chọn địa chỉ gửi đã xác minh và xem trước trước khi gửi." />
+      <PageHeader
+        icon={Mail01}
+        title="Gửi email"
+        description="Soạn email HTML, chọn địa chỉ gửi đã xác minh và xem trước trước khi gửi."
+        kicker={getConsoleKicker(location.pathname)}
+      />
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)]">
-        <section className="min-w-0 space-y-4 rounded-xl border bg-card p-4 sm:p-5" aria-labelledby="email-composer-title">
+        <section className="console-panel min-w-0 space-y-4 p-4 sm:p-5" aria-labelledby="email-composer-title">
           <h2 id="email-composer-title" className="text-base font-semibold">Thông tin email</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -71,7 +79,7 @@ export function AdminEmailComposer() {
 
         <aside className="min-w-0 space-y-3 xl:sticky xl:top-4 xl:self-start" aria-labelledby="email-preview-title">
           <div><h2 id="email-preview-title" className="text-base font-semibold">Xem trước</h2><p className="text-xs text-muted-foreground">Banner TingTing được máy chủ tự động chèn khi gửi.</p></div>
-          <iframe title="Bản xem trước email" sandbox="" srcDoc={composer.previewDocument} className="h-[620px] w-full rounded-xl border bg-white" />
+          <iframe title="Bản xem trước email" sandbox="" srcDoc={composer.previewDocument} className="console-panel h-[620px] w-full bg-card" />
           <div className="flex items-start gap-2 rounded-lg border border-muted bg-muted/40 p-3 text-xs text-muted-foreground"><Paperclip className="mt-0.5 h-4 w-4 shrink-0" />Gmail hiển thị tốt nhất với bảng và CSS inline. JavaScript và nội dung không an toàn không được chạy trong bản xem trước.</div>
         </aside>
       </div>

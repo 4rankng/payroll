@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 // UU PRO restyle (W13c): lucide → verified @untitledui/icons.
 import {
@@ -13,6 +14,7 @@ import {
   AdminPageCanvas,
 } from "@/components/shared/AdminPageFrame";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { getConsoleKicker } from "@/lib/console";
 import WalletTransactionsList from "@/components/wallet/WalletTransactionsList";
 import CreateManualDisbursementDialog from "@/components/wallet/CreateManualDisbursementDialog";
 import { EmployeeAccountLookupDialog } from "@/components/wallet/EmployeeAccountLookupDialog";
@@ -26,6 +28,7 @@ import type { DisbursementRecipientPrefill } from "@/pages/admin/ManualDisbursem
 /* ------------------------------------------------------------------ */
 export default function WalletPage() {
   const queryClient = useQueryClient();
+  const location = useLocation();
   const [disbursementOpen, setDisbursementOpen] = useState(false);
   const [employeeAccountLookupOpen, setEmployeeAccountLookupOpen] = useState(false);
   const [bulkTransferDialogOpen, setBulkTransferDialogOpen] = useState(false);
@@ -58,6 +61,7 @@ export default function WalletPage() {
       <PageHeader
         icon={Wallet01}
         title="Quản lý ví"
+        kicker={getConsoleKicker(location.pathname)}
       >
         <Button
           variant="outline"

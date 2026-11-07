@@ -59,8 +59,8 @@ function batchStatusBadgeClass(status: BulkTransferBatchStatus): string {
       return 'bg-amber-100 text-amber-800 hover:bg-amber-100';
     case 'pending':
     default:
-      return 'bg-slate-100 text-slate-800 hover:bg-slate-100';
-  }
+      return 'bg-muted text-fg-secondary hover:bg-muted';
+    }
 }
 
 export const BulkTransferBatchList = memo(function BulkTransferBatchList({
@@ -111,7 +111,7 @@ export const BulkTransferBatchList = memo(function BulkTransferBatchList({
       {listQuery.isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
           ))}
         </div>
       ) : listQuery.isError ? (
@@ -216,7 +216,7 @@ const BatchCard = memo(function BatchCard({ batch, onClick }: BatchCardProps) {
   );
   return (
     <Card
-      variant="outlined"
+      variant="console"
       onClick={onClick}
       className={cn(
         'cursor-pointer p-3 transition-colors hover:bg-muted/40',

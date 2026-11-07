@@ -51,7 +51,7 @@ interface InfoRowProps {
 
 const InfoRow = ({ icon, label, value }: InfoRowProps) => (
   <li className="grid-cols-[2.5rem_minmax(0,1fr)] gap-2 px-0 py-3 first:pt-0 last:pb-0">
-    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
+    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--employee-accent-soft)] text-[var(--employee-accent)]">
       {icon}
     </span>
     <div className="min-w-0">
@@ -239,7 +239,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
         <div className="flex-1 overflow-y-auto px-4 py-5">
           {isEditing ? (
             <Form {...form}>
-              <form className="rounded-xl space-y-4 border border-[var(--employee-border)] bg-white p-4 shadow-[var(--employee-shadow)]">
+              <form className="rounded-lg space-y-4 border border-[var(--employee-border)] bg-card p-4 shadow-[var(--employee-shadow)]">
                 <div>
                   <p className="employee-type-label-caps font-semibold text-[var(--employee-accent)]">Chỉnh sửa hồ sơ</p>
                   <p className="employee-type-body-sm mt-1 text-[var(--employee-text-secondary)]">Cập nhật các thông tin liên hệ của bạn.</p>
@@ -324,7 +324,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
             </Form>
           ) : (
             <div className="space-y-4">
-              <section className="rounded-xl border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]">
+              <section className="rounded-lg border border-[var(--employee-border)] bg-card shadow-[var(--employee-shadow)]">
                 <div className="gap-3 p-4">
                   <div>
                     <div>
@@ -346,7 +346,7 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
                 </div>
               </section>
 
-              <section className="rounded-xl border border-[var(--employee-border)] bg-white shadow-[var(--employee-shadow)]">
+              <section className="rounded-lg border border-[var(--employee-border)] bg-card shadow-[var(--employee-shadow)]">
                 <div className="gap-3 p-4">
                   <div>
                     <p className="employee-type-label-caps font-semibold text-[var(--employee-accent)]">Tài khoản</p>
@@ -363,13 +363,13 @@ export const UserProfileSheet = ({ isOpen, onClose }: UserProfileSheetProps) => 
         </div>
 
         {/* Footer actions */}
-        <div className="flex-shrink-0 border-t border-[var(--employee-border)] bg-white px-4 py-3 pb-[max(0.75rem,calc(0.75rem+env(safe-area-inset-bottom)))]">
+        <div className="flex-shrink-0 border-t border-[var(--employee-border)] bg-card px-4 py-3 pb-[max(0.75rem,calc(0.75rem+env(safe-area-inset-bottom)))]">
           {isEditing ? (
             <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
               <button
                 type="button"
                 onClick={handleEditToggle}
-                className="inline-flex items-center justify-center rounded-md min-h-11 border border-[var(--employee-border)] bg-white text-sm font-semibold normal-case text-[var(--employee-text)] shadow-none transition-colors hover:bg-[var(--employee-page)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:pointer-events-none disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-md min-h-11 border border-[var(--employee-border)] bg-card text-sm font-semibold normal-case text-[var(--employee-text)] shadow-none transition-colors hover:bg-[var(--employee-page)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--employee-focus-ring)] disabled:pointer-events-none disabled:opacity-50"
                 disabled={form.formState.isSubmitting || updateProfileMutation.isPending}
               >
                 Hủy

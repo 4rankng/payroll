@@ -6,18 +6,18 @@ export function EmployeeBankInfo({ employee }: EmployeeDetailsProps) {
 
   if (!hasBankDetails) {
     return (
-      <div className="flex items-start gap-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-        <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 p-3 bg-warning/10 border border-warning/30 rounded-lg">
+        <AlertCircle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-medium text-amber-900">Chưa có thông tin ngân hàng</p>
-          <p className="text-xs text-amber-700 mt-0.5">Cập nhật để thực hiện thanh toán</p>
+          <p className="text-sm font-medium text-warning">Chưa có thông tin ngân hàng</p>
+          <p className="text-xs text-warning mt-0.5">Cập nhật để thực hiện thanh toán</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-muted/30 rounded-xl px-3 py-1">
+    <div className="bg-muted/30 rounded-lg px-3 py-1">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4">
         <div className="flex items-baseline justify-between gap-2 py-1.5 border-b sm:border-b-0 sm:border-r border-border/50">
           <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">

@@ -93,7 +93,7 @@ function OSGroupCard({
   return (
     <div
       className={cn(
-        "relative rounded-xl border bg-card p-3 overflow-hidden flex flex-col gap-2",
+        "console-panel relative p-3 overflow-hidden flex flex-col gap-2",
         isTop && "ring-1 ring-primary/20",
       )}
     >
@@ -198,7 +198,7 @@ function BrowserGroupCard({
   return (
     <div
       className={cn(
-        "relative rounded-xl border bg-card p-3 overflow-hidden flex flex-col gap-2",
+        "console-panel relative p-3 overflow-hidden flex flex-col gap-2",
         isTop && "ring-1 ring-primary/20",
       )}
     >
@@ -279,7 +279,7 @@ function Skeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-32 rounded-xl bg-muted animate-pulse" />
+        <div key={i} className="h-32 rounded-lg bg-muted animate-pulse" />
       ))}
     </div>
   );

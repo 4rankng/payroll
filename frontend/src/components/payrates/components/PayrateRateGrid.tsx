@@ -14,9 +14,9 @@ const DAY_LABELS: Record<string, string> = {
   'ngày lễ': 'Lễ',
 };
 const DAY_COLORS: Record<string, string> = {
-  'ngày thường': 'bg-blue-50 text-blue-700 border-blue-200',
-  'ngày nghỉ':   'bg-amber-50 text-amber-700 border-amber-200',
-  'ngày lễ':     'bg-red-50 text-red-700 border-red-200',
+  'ngày thường': 'bg-utility-blue-50 text-utility-blue-700 border-utility-blue-200',
+  'ngày nghỉ':   'bg-utility-warning-50 text-utility-warning-700 border-utility-warning-200',
+  'ngày lễ':     'bg-utility-error-50 text-utility-error-700 border-utility-error-200',
 };
 
 interface PayrateRateGridProps {

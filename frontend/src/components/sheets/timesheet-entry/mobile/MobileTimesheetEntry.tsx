@@ -476,7 +476,7 @@ export function MobileTimesheetEntry({
         </div>
 
         {formData.projectId > 0 && !isPayRateReady && (
-          <p className="text-xs text-amber-700 bg-amber-50 rounded-xl px-3 py-2">
+          <p className="text-xs text-warning bg-warning/10 rounded-lg px-3 py-2">
             {isLoadingPayRate
               ? "Đang tải cấu hình lương..."
               : payRateForbidden
@@ -487,7 +487,7 @@ export function MobileTimesheetEntry({
 
         <button
           onClick={() => setFilterOpen(false)}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-opacity active:opacity-80"
+          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-primary-foreground transition-opacity active:opacity-80"
         >
           <Check className="h-4 w-4" />
           Áp dụng
@@ -500,7 +500,7 @@ export function MobileTimesheetEntry({
 
   const content = !formData.projectId ? (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center">
+      <div className="w-16 h-16 rounded-lg bg-muted/60 flex items-center justify-center">
         <SlidersHorizontal className="h-7 w-7 text-muted-foreground" />
       </div>
       <div className="space-y-1">
@@ -579,7 +579,7 @@ export function MobileTimesheetEntry({
           return (
             <div key={emp.id}>
               {/* Employee header */}
-              <div className="flex items-center gap-3 px-4 py-2.5 bg-card/95 backdrop-blur-sm sticky top-0 z-[1] border-b border-border/40">
+              <div className="flex items-center gap-3 px-4 py-2.5 bg-card sticky top-0 z-[1] border-b border-border/40">
                 <UserAvatar
                   name={emp.fullname}
                   size="sm"
@@ -599,8 +599,8 @@ export function MobileTimesheetEntry({
                       className={cn(
                         "flex items-center gap-1 text-xs font-semibold tabular-nums px-2 py-0.5 rounded-full",
                         earnings > 3500000
-                          ? "bg-red-100 text-red-700"
-                          : "bg-emerald-100 text-emerald-700",
+                          ? "bg-destructive/15 text-destructive"
+                          : "bg-success/15 text-success",
                       )}
                     >
                       {earnings > 3500000 && (
@@ -626,7 +626,7 @@ export function MobileTimesheetEntry({
                 );
                 if (globalOnly.length === 0) return null;
                 return (
-                  <div className="px-4 py-2 bg-red-50 border-b border-red-100">
+                  <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/30">
                     <ErrorBanner errors={globalOnly} />
                   </div>
                 );
@@ -651,13 +651,13 @@ export function MobileTimesheetEntry({
                   className={cn(
                     "px-4 pt-3 pb-4 space-y-3",
                     isMarkedForDeletion
-                      ? "bg-red-50/40"
+                      ? "bg-destructive/5"
                       : hasError
                         ? "bg-destructive/5"
                         : activeHourStatus === "excessive"
-                          ? "bg-red-50/40"
+                          ? "bg-destructive/5"
                           : activeHourStatus === "exceeded"
-                            ? "bg-amber-50/40"
+                            ? "bg-warning/5"
                             : "",
                   )}
                 >
@@ -702,9 +702,9 @@ export function MobileTimesheetEntry({
                           <SelectContent>
                             {activeEntry.originalValues &&
                               activeEntryTotalHours > 0 && (
-                                <div className="px-2 py-1.5 mb-1 border-b border-amber-100 bg-amber-50 flex items-start gap-1.5">
-                                  <AlertTriangle className="h-3 w-3 text-amber-700 shrink-0 mt-0.5" />
-                                  <p className="text-xs text-amber-700 leading-tight">
+                                <div className="px-2 py-1.5 mb-1 border-b border-warning/30 bg-warning/10 flex items-start gap-1.5">
+                                  <AlertTriangle className="h-3 w-3 text-warning shrink-0 mt-0.5" />
+                                  <p className="text-xs text-warning leading-tight">
                                     Xóa giờ công trước khi đổi loại ngày
                                   </p>
                                 </div>
@@ -726,7 +726,7 @@ export function MobileTimesheetEntry({
                     {activeEntry.originalValues && !isMarkedForDeletion && (
                       <button
                         onClick={() => handleDeleteEntry(globalIdx)}
-                        className="flex min-h-11 items-center gap-1 rounded-xl px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive hover:bg-destructive/10"
+                        className="flex min-h-11 items-center gap-1 rounded-lg px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-destructive hover:bg-destructive/10"
                         aria-label="Xóa chấm công ngày này"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -800,7 +800,7 @@ export function MobileTimesheetEntry({
                           );
                         }, 0);
                         return rowEarnings > 0 ? (
-                          <span className="text-xs text-emerald-700 font-semibold tabular-nums pl-0.5">
+                          <span className="text-xs text-success font-semibold tabular-nums pl-0.5">
                             {formatCurrency(rowEarnings)}
                           </span>
                         ) : null;
@@ -824,7 +824,7 @@ export function MobileTimesheetEntry({
       <div className="flex items-center gap-2 px-4 h-14 border-b bg-card shrink-0">
         <button
           onClick={handleClose}
-          className="-ml-2 flex h-11 w-11 items-center justify-center rounded-xl transition-colors hover:bg-muted active:bg-muted/80"
+          className="-ml-2 flex h-11 w-11 items-center justify-center rounded-lg transition-colors hover:bg-muted active:bg-muted/80"
           aria-label="Quay lại"
         >
           <ChevronLeft className="h-5 w-5" />
@@ -854,7 +854,7 @@ export function MobileTimesheetEntry({
 
       {/* Global validation summary */}
       {getErrorsForEmployee(0) && (
-        <div className="px-4 py-2 bg-red-50 border-b border-red-100">
+        <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/30">
           <ErrorBanner errors={getErrorsForEmployee(0)!} />
         </div>
       )}

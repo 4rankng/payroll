@@ -25,7 +25,7 @@ export function SummaryPills({ days = 1 }: SummaryPillsProps) {
     return (
       <div className="grid grid-cols-2 gap-3">
         {Array.from({ length: 2 }).map((_, i) => (
-          <Skeleton key={i} className="h-[76px] rounded-xl" />
+          <Skeleton key={i} className="h-[76px] rounded-lg" />
         ))}
       </div>
     );

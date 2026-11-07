@@ -34,7 +34,7 @@ const ACCOUNT_COLORS: Record<string, string> = {
   payable: 'bg-red-100 text-red-800',
   revenue: 'bg-teal-100 text-teal-800',
   expense: 'bg-orange-100 text-orange-800',
-  equity: 'bg-slate-100 text-slate-800',
+  equity: 'bg-muted text-foreground',
   loan: 'bg-amber-100 text-amber-800',
 };
 
@@ -74,10 +74,10 @@ export function LedgerMobileList({
     return (
       <div className="space-y-2">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="bg-card rounded-xl border border-border p-4 animate-pulse">
+          <div key={i} className="console-panel p-4 animate-pulse">
             <div className="flex justify-between mb-2">
-              <div className="h-4 bg-gray-200 rounded w-2/3" />
-              <div className="h-4 bg-gray-200 rounded w-1/5" />
+              <div className="h-4 bg-muted rounded w-2/3" />
+              <div className="h-4 bg-muted rounded w-1/5" />
             </div>
             <div className="h-3 bg-muted rounded w-1/2" />
           </div>
@@ -109,7 +109,7 @@ export function LedgerMobileList({
             <div
               key={entry.id}
               onClick={() => onRowClick?.(entry)}
-              className="bg-card border border-border rounded-xl p-3.5 shadow-sm card-lift transition-all cursor-pointer touch-manipulation"
+              className="console-panel p-3.5 cursor-pointer touch-manipulation transition-colors active:bg-muted/40"
               role="button"
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onRowClick?.(entry); }}

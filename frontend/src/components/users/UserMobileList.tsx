@@ -62,7 +62,7 @@ const UserGridCard = React.memo(function UserGridCard({
     <button
       type="button"
       onClick={() => onRowClick?.(user)}
-      className={`flex w-full flex-col items-center gap-1.5 rounded-xl border p-2.5 text-center transition-all active:scale-[0.98] active:brightness-95 touch-manipulation ${cfg.card}`}
+      className={`flex w-full flex-col items-center gap-1.5 rounded-lg border p-2.5 text-center transition-all active:scale-[0.98] active:brightness-95 touch-manipulation ${cfg.card}`}
       aria-label={`Xem chi tiết ${user.fullname}`}
     >
       <div className="relative">

@@ -34,12 +34,12 @@ export const UserFiltersBar = ({
   const { data: projects } = useAllProjects();
 
   return (
-    <div className={cn('flex items-center gap-1.5 flex-wrap', className)}>
+    <div className={cn('console-filter-bar', className)}>
       <SearchBar
         searchTerm={search}
         onSearchChange={onSearchChange}
         placeholder="Tìm theo tên, email..."
-        className={hideRoleFilter ? 'flex-1 min-w-[200px] max-w-md' : 'w-48'}
+        className={hideRoleFilter ? 'flex-1 min-w-[200px] max-w-md' : 'w-44 sm:w-48 shrink-0'}
       />
       {!hideRoleFilter && (
         <FilterPill

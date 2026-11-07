@@ -70,27 +70,27 @@ export const PaymentHistoryFilters = memo(function PaymentHistoryFilters({
   };
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="console-filter-bar overflow-x-auto">
       <SearchBar
         searchTerm={filters.search || ''}
         onSearchChange={(v) => set('search', v || undefined)}
         placeholder="Tìm tên, CCCD..."
-        className="w-44"
+        className="w-44 shrink-0"
       />
 
       <Input
         type="date"
         value={filters.fromDate || ''}
         onChange={(e) => set('fromDate', e.target.value)}
-        className="h-8 w-[130px] text-xs"
+        className="h-8 w-[130px] shrink-0 text-xs"
         aria-label="Từ ngày"
       />
-      <span className="text-muted-foreground text-xs">–</span>
+      <span className="text-muted-foreground text-xs shrink-0">–</span>
       <Input
         type="date"
         value={filters.toDate || ''}
         onChange={(e) => set('toDate', e.target.value)}
-        className="h-8 w-[130px] text-xs"
+        className="h-8 w-[130px] shrink-0 text-xs"
         aria-label="Đến ngày"
       />
 
@@ -103,7 +103,7 @@ export const PaymentHistoryFilters = memo(function PaymentHistoryFilters({
         ]}
         placeholder="Tất cả dự án"
         searchPlaceholder="Tìm dự án..."
-        triggerClassName="h-8 min-h-0 w-[148px] text-xs"
+        triggerClassName="h-8 min-h-0 w-[148px] shrink-0 text-xs"
       />
 
       <SearchableSelect
@@ -117,13 +117,13 @@ export const PaymentHistoryFilters = memo(function PaymentHistoryFilters({
         placeholder={isLoadingEmployees ? 'Đang tải...' : 'Tất cả nhân viên'}
         disabled={isLoadingEmployees}
         searchPlaceholder="Tìm nhân viên..."
-        triggerClassName="h-8 min-h-0 w-[148px] text-xs"
+        triggerClassName="h-8 min-h-0 w-[148px] shrink-0 text-xs"
       />
 
       {hasFilters && (
         <button
           onClick={onClearFilters}
-          className="flex items-center gap-1 h-8 px-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          className="flex items-center gap-1 h-8 px-2 shrink-0 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <X className="h-3 w-3" />
           Xóa lọc

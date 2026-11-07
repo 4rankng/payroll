@@ -65,8 +65,8 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
       className={cn(
         'group w-full overflow-hidden border text-left transition-all duration-150 hover:border-primary/20 hover:bg-muted/30 active:bg-muted/50',
         compact
-          ? 'rounded-2xl border-utility-gray-300 bg-white shadow-[0_8px_20px_-18px_rgba(15,23,42,0.34)]'
-          : 'rounded-xl border-border bg-card shadow-sm',
+          ? 'console-panel border-utility-gray-300'
+          : 'console-panel border-border',
       )}
     >
       {/* Top bar: action badge + role | datetime + chevron */}
@@ -139,7 +139,7 @@ export function AuditLogCard({ log, onClick, compact = false }: AuditLogCardProp
 
 export function AuditLogCardSkeleton() {
   return (
-    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden animate-pulse">
+    <div className="console-panel overflow-hidden animate-pulse">
       <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-border/60">
         <div className="flex items-center gap-2">
           <div className="h-5 w-16 bg-muted rounded-full" />

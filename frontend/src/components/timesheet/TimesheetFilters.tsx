@@ -90,7 +90,7 @@ export const TimesheetFilters = () => {
         <Sheet>
           <SheetTrigger asChild>
             <button
-              className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-border/60 text-muted-foreground transition-colors hover:border-border hover:text-foreground"
+              className="relative inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border/60 text-muted-foreground transition-colors hover:border-border hover:text-foreground"
               aria-label="Bộ lọc"
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -147,7 +147,7 @@ export const TimesheetFilters = () => {
 
   // ── Desktop ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
+    <div className="console-filter-bar">
       {onSearchChange && (
         <SearchBar
           searchTerm={searchTerm}
@@ -184,7 +184,7 @@ export const TimesheetFilters = () => {
         placeholder="Dự án"
         searchPlaceholder="Tìm dự án..."
         emptyMessage="Không tìm thấy dự án nào."
-        className="h-11 min-h-11 rounded-xl bg-card px-3 text-sm sm:h-9 sm:min-h-9 sm:px-2.5"
+        className="h-11 min-h-11 rounded-lg bg-card px-3 text-sm sm:h-9 sm:min-h-9 sm:px-2.5"
         allOption={{ value: 'all', label: 'Dự án' }}
         pillStyle
       />
@@ -194,7 +194,7 @@ export const TimesheetFilters = () => {
         onChange={onEmployeeChange}
         selectedProject={selectedProject}
         placeholder="Nhân viên"
-        className="inline-flex h-11 min-h-11 items-center gap-1 rounded-xl border border-border/60 bg-card px-3 py-0 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors duration-100 hover:border-border hover:bg-accent/40 hover:text-foreground sm:h-9 sm:min-h-9 sm:px-2.5 [&>svg]:h-3.5 [&>svg]:w-3.5"
+        className="inline-flex h-11 min-h-11 items-center gap-1 rounded-lg border border-border/60 bg-card px-3 py-0 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors duration-100 hover:border-border hover:bg-accent/40 hover:text-foreground sm:h-9 sm:min-h-9 sm:px-2.5 [&>svg]:h-3.5 [&>svg]:w-3.5"
         availableEmployees={(shouldUseProjectEmployees ? projectEmployees : []) as unknown as Employee[]}
         includeAvailableOnly={shouldUseProjectEmployees}
         pillStyle

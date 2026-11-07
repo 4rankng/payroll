@@ -26,7 +26,7 @@ describe('DashboardOverview density', () => {
 
     expect(screen.getByText('Đã trả kỳ này').parentElement?.parentElement).toHaveClass(
       'px-3',
-      'py-3',
+      'py-2.5',
       'sm:px-4',
     );
   });
@@ -55,8 +55,8 @@ describe('DashboardOverview density', () => {
       'sm:min-h-9',
     );
     expect(screen.getByRole('button', { name: /Bảng công chờ duyệt/ })).toHaveClass(
-      'min-h-[68px]',
-      'sm:min-h-[60px]',
+      'min-h-[64px]',
+      'sm:min-h-[52px]',
     );
 
     rerender(
@@ -71,6 +71,27 @@ describe('DashboardOverview density', () => {
       'min-h-11',
       'sm:min-h-9',
     );
+  });
+
+  it('carries the exact figure on compact console KPI values', () => {
+    render(
+      <DashboardMetricStrip
+        items={[
+          {
+            label: 'Đã trả kỳ này',
+            value: '1,03 tỷ',
+            fullValue: '1.026.336.457 ₫',
+            context: 'Tổng đã trả',
+            tone: 'primary',
+          },
+        ]}
+      />,
+    );
+
+    const figure = screen.getByTitle('1.026.336.457 ₫');
+    expect(figure).toHaveClass('console-value');
+    expect(figure).toHaveAttribute('aria-label', '1.026.336.457 ₫');
+    expect(figure).toHaveTextContent('1,03 tỷ');
   });
 
   it('collapses per-project rows behind a toggle and hides the group when empty', () => {

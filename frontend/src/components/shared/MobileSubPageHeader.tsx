@@ -8,6 +8,8 @@ interface MobileSubPageHeaderProps {
   title: string;
   /** Optional subtitle (date, description, etc.) */
   subtitle?: string;
+  /** Mono domain kicker above the title (console contract) */
+  kicker?: string;
   /** Icon displayed in a soft primary container — widened from LucideIcon so
    * both lucide and @untitledui/icons components fit (W13a contract). */
   icon: React.ComponentType<SVGProps<SVGSVGElement>>;
@@ -20,17 +22,16 @@ interface MobileSubPageHeaderProps {
 }
 
 /**
- * Premium sub-page header with back button, icon, title, and optional actions.
+ * Sub-page header with back button, kicker, icon, title, and optional actions.
  * Used for drill-down pages like ActivityUsersPage, LendersPage, etc.
  *
- * Design: now shares the canonical MobilePageHeader visual language
- * (solid white surface, slate border, soft primary icon chip) for consistency.
- * The frosted-glass variant is retired in favor of an opaque surface that
- * matches the top-level page headers.
+ * Console contract: card surface, hairline border, 20px bold title, mono
+ * kicker, ≥44px back button and actions.
  */
 export const MobileSubPageHeader = ({
   title,
   subtitle,
+  kicker,
   icon: Icon,
   onBack,
   actions,
@@ -39,8 +40,8 @@ export const MobileSubPageHeader = ({
   return (
     <div
       className={cn(
-        'sticky top-0 z-20 bg-white',
-        'border-b border-slate-300 shadow-[0_1px_0_rgba(15,23,42,0.04)] shrink-0',
+        'sticky top-0 z-20 bg-card',
+        'border-b border-border shrink-0',
         className,
       )}
       style={{ paddingTop: 'var(--mobile-header-top-padding, calc(env(safe-area-inset-top, 0px) + 1rem))' }}
@@ -49,7 +50,7 @@ export const MobileSubPageHeader = ({
         <Button
           variant="ghost"
           size="icon"
-          className="-ml-1 h-11 w-11 shrink-0 rounded-xl text-slate-700"
+          className="-ml-1 h-11 w-11 shrink-0 rounded-xl text-foreground"
           onClick={onBack}
           aria-label="Quay lại"
         >
@@ -59,11 +60,12 @@ export const MobileSubPageHeader = ({
           <Icon className="h-[18px] w-[18px] text-primary" strokeWidth={2} />
         </div>
         <div className="min-w-0 flex-1">
-          <h1 className="break-words font-display text-lg font-extrabold leading-tight tracking-tight text-slate-950">
+          {kicker && <p className="console-kicker mb-1">{kicker}</p>}
+          <h1 className="break-words font-display text-xl font-bold leading-tight tracking-tight text-foreground">
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-0.5 break-words text-xs font-medium leading-normal text-slate-600">
+            <p className="mt-0.5 break-words text-xs font-medium leading-normal text-muted-foreground">
               {subtitle}
             </p>
           )}

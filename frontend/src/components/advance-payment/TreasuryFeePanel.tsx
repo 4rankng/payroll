@@ -1,8 +1,7 @@
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@/utils/formatters";
-import { AnimatedCurrency } from "@/components/ui/animated-currency";
+import { formatCompactVND, formatCurrency } from "@/utils/formatters";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -75,8 +74,12 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
 
           {/* Value + rate chip */}
           <div className="relative z-[1] mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            <span className="treasury-value max-w-full break-words font-financial text-[22px] font-semibold leading-[1.08] tracking-normal text-foreground tabular-nums">
-              <AnimatedCurrency target={totalFeeEarned} />
+            <span
+              className="treasury-value console-value max-w-full break-words font-financial text-[22px] font-semibold leading-[1.08] tracking-normal text-foreground tabular-nums"
+              title={formatCurrency(totalFeeEarned)}
+              aria-label={formatCurrency(totalFeeEarned)}
+            >
+              {formatCompactVND(totalFeeEarned)}
             </span>
             <span className="rounded bg-emerald-50 px-1.5 py-px font-financial text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200/60 shadow-[0_0_14px_rgba(16,185,129,0.18)]">
               {feePercentage.toFixed(1)}%
@@ -92,8 +95,12 @@ export const TreasuryFeePanel = memo(function TreasuryFeePanel({
                   <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     {col.label}
                   </div>
-                  <div className="mt-0.5 truncate font-financial text-[15px] font-semibold leading-snug text-foreground tabular-nums">
-                    {col.value > 0 ? `~${formatCurrency(col.value)}` : "—"}
+                  <div
+                    className="mt-0.5 truncate font-financial text-[15px] font-semibold leading-snug text-foreground tabular-nums"
+                    title={col.value > 0 ? `~${formatCurrency(col.value)}` : undefined}
+                    aria-label={col.value > 0 ? `~${formatCurrency(col.value)}` : undefined}
+                  >
+                    {col.value > 0 ? `~${formatCompactVND(col.value)}` : "—"}
                   </div>
                 </div>
               ))}

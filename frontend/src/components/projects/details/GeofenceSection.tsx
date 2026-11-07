@@ -100,7 +100,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
   return (
     <div className="border-t pt-2 pb-4">
       <div className="flex items-center justify-between px-4 sm:px-6 py-2">
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+        <p className="console-kicker">
           Vị trí check-in
         </p>
         {!adding && editingIndex === null && (
@@ -118,7 +118,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
 
       <div className="px-4 sm:px-6 space-y-3">
         {/* Radius */}
-        <div className="rounded-lg border bg-muted/20 px-3 py-2">
+        <div className="console-panel px-3 py-2">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-medium">Bán kính chấm công</p>
@@ -179,7 +179,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
             </p>
           </div>
         ) : (
-          <div className="rounded-lg border overflow-hidden">
+          <div className="console-panel overflow-hidden">
             {/* Header */}
             <div className="grid grid-cols-[1fr_100px_100px_72px] gap-2 bg-muted/50 px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <span>Tên cổng</span>
@@ -218,7 +218,7 @@ export function GeofenceSection({ project }: GeofenceSectionProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 shrink-0 text-green-700 hover:text-green-700 hover:bg-green-50"
+                      className="h-6 w-6 shrink-0 text-fg-success-primary hover:text-fg-success-primary hover:bg-utility-success-50"
                       disabled={
                         !editValues.name.trim() ||
                         isNaN(parseFloat(editValues.lat)) ||

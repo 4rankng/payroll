@@ -1,5 +1,7 @@
 import { PageHeader } from '@/components/shared/PageHeader';
-import { Plus, Download, PhoneOff, PhoneIncoming, Users } from 'lucide-react';
+import { getConsoleKicker } from '@/lib/console';
+import { useLocation } from 'react-router-dom';
+import { Plus, Download, PhoneOff, PhoneIncoming } from 'lucide-react';
 import { useAuth } from '@/contexts';
 
 interface EmployeePageHeaderProps {
@@ -21,12 +23,13 @@ export const EmployeePageHeader = ({
   isExporting = false,
 }: EmployeePageHeaderProps) => {
   const { user } = useAuth();
+  const { pathname } = useLocation();
 
   return (
     <PageHeader
+      kicker={getConsoleKicker(pathname)}
       title="Nhân viên"
-      description={`Quản lý thông tin ${totalEmployees} nhân viên trong hệ thống`}
-      icon={Users}
+      meta={`${totalEmployees.toLocaleString('vi-VN')} nhân viên`}
       actions={[
         ...(onExportClick && (user?.role === 'admin' || user?.role === 'partner') ? [{
           label: isExporting ? 'Đang xuất...' : 'Xuất Excel',

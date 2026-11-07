@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 // UU PRO restyle (W13c): lucide → verified @untitledui/icons; daisyUI
 // ct-btn/ct-card/base-100/neutral chrome replaced with equivalent utility
@@ -9,6 +10,7 @@ import {
   Upload01,
   Wallet01,
 } from '@untitledui/icons';
+import { getConsoleKicker } from '@/lib/console';
 import WalletTransactionsList from '@/components/wallet/WalletTransactionsList';
 import CreateManualDisbursementDialog from '@/components/wallet/CreateManualDisbursementDialog';
 import { EmployeeAccountLookupDialog } from '@/components/wallet/EmployeeAccountLookupDialog';
@@ -19,6 +21,7 @@ import type { DisbursementRecipientPrefill } from '@/pages/admin/ManualDisbursem
 
 export default function WalletPageMobile() {
   const queryClient = useQueryClient();
+  const location = useLocation();
   const [disbursementOpen, setDisbursementOpen] = useState(false);
   const [employeeAccountLookupOpen, setEmployeeAccountLookupOpen] = useState(false);
   const [bulkTransferDialogOpen, setBulkTransferDialogOpen] = useState(false);
@@ -49,7 +52,10 @@ export default function WalletPageMobile() {
       <div className="px-4 pt-[var(--mobile-header-top-padding,calc(env(safe-area-inset-top)+1rem))] pb-6">
         <div className="relative z-10 mb-3 flex items-center gap-2 pt-1">
           <Wallet01 className="h-5 w-5 shrink-0 text-white/60" aria-hidden="true" />
-          <h1 className="truncate text-[17px] font-semibold text-fg-white tracking-tight">Ví điện tử</h1>
+          <div className="min-w-0">
+            <p className="console-kicker mb-0.5 text-white/60">{getConsoleKicker(location.pathname)}</p>
+            <h1 className="truncate text-[17px] font-semibold text-fg-white tracking-tight">Ví điện tử</h1>
+          </div>
         </div>
 
         {/* Treasury dark panel — owns balance, sync, as-of meta, the
@@ -86,7 +92,7 @@ export default function WalletPageMobile() {
       </div>
 
       {/* Light transaction panel */}
-      <div className="rounded-t-3xl -mt-4 min-h-[60dvh] bg-white shadow-lg">
+      <div className="rounded-t-3xl -mt-4 min-h-[60dvh] border-t border-border bg-card">
         <div className="space-y-4 px-4 pt-5 pb-[calc(5rem+env(safe-area-inset-bottom))]">
           <WalletTransactionsList />
           <BulkTransferBatchList

@@ -19,9 +19,10 @@ import { createUserMobileConfig } from "@/config/user-table-mobile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw05 } from "@untitledui/icons";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useTableSorting } from "@/utils/sorting";
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { useMediaQuery } from "@/hooks/useBreakpoint";
 import { useAuth } from "@/contexts";
 
 const UsersPage = () => {
@@ -67,6 +68,20 @@ const UsersPage = () => {
   const columns = createUserColumns();
   const mobileConfig = createUserMobileConfig();
 
+  // Console table contract: hide low-value columns at narrow desktop widths
+  // instead of a horizontal rail (the detail sheet keeps every field).
+  const isBelowLg = useMediaQuery("(max-width: 1023.98px)");
+  const isBelowXl = useMediaQuery("(max-width: 1279.98px)");
+  const desktopColumns = useMemo(
+    () =>
+      columns.filter(
+        (column) =>
+          !(isBelowLg && column.id === "current_project_names") &&
+          !(isBelowXl && column.id === "created_at"),
+      ),
+    [columns, isBelowLg, isBelowXl],
+  );
+
   const { sorting, onSortingChange } = useTableSorting(
     filterState.sortBy,
     filterState.sortOrder,
@@ -92,12 +107,14 @@ const UsersPage = () => {
         </AdminPageHeaderCard>
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-2xl" />
+            <div key={i} className="h-[52px] rounded-lg border border-border/60 bg-card px-3 py-2.5">
+              <Skeleton className="h-2.5 w-16" />
+            </div>
           ))}
         </div>
         <AdminSectionCard>
-          <Skeleton className="m-3 h-11 rounded-xl sm:m-4" />
-          <Skeleton className="m-3 h-96 rounded-xl sm:m-4" />
+          <Skeleton className="m-3 h-11 rounded-lg sm:m-4" />
+          <Skeleton className="m-3 h-96 rounded-lg sm:m-4" />
         </AdminSectionCard>
       </AdminPageCanvas>
     );
@@ -111,6 +128,7 @@ const UsersPage = () => {
             onAddUser={() => openAddUser()}
             onExportUsers={() => exportUsers(filterState.filters)}
             isExporting={isExporting}
+            totalUsers={summaryData?.total_users}
           />
         </AdminPageHeaderCard>
       )}
@@ -157,7 +175,7 @@ const UsersPage = () => {
         )}
         {(!userData.error || userData.users.length > 0) && <ResponsiveTable
           data={userData.users.filter((u) => u.role !== 'adv_partner')}
-          columns={columns}
+          columns={desktopColumns}
           mobileFields={mobileConfig.mobileFields}
           rowTitle={mobileConfig.rowTitle}
           rowSubtitle={mobileConfig.rowSubtitle}
@@ -176,6 +194,7 @@ const UsersPage = () => {
           }
           accordionType="single"
           embedded
+          variant="console"
         />}
 
         {!userData.error && userData.hasMore && !userData.isFetchingNextPage && (

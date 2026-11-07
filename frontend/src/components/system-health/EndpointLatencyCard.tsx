@@ -13,7 +13,7 @@ export function EndpointLatencyCard({ endpoint }: Props) {
   const parsed = parseEndpoint(endpoint.endpoint);
 
   return (
-    <Card className="px-3 py-2.5">
+    <Card variant="console" className="px-3 py-2.5">
       {/* Method chip and path on one line; the path wraps to at most two lines
           so a long route stays readable without the row growing unbounded. */}
       <div className="flex items-start gap-1.5">
@@ -42,10 +42,10 @@ export function EndpointLatencyCard({ endpoint }: Props) {
           className={cn(
             "font-bold tabular-nums",
             p95Status === "danger"
-              ? "text-red-700"
-              : p95Status === "warn"
-                ? "text-amber-700"
-                : "text-foreground",
+              ? "text-fg-error-primary"
+                : p95Status === "warn"
+                  ? "text-fg-warning-primary"
+                  : "text-foreground",
           )}
         >
           P95 {endpoint.p95_ms.toLocaleString()}ms

@@ -37,7 +37,7 @@ export function SettlementCard({ settlement, userMap }: SettlementCardProps) {
           {/* Left: Amount, Date, Person */}
           <div className="flex flex-col gap-1.5 min-w-0 flex-1">
             {/* Amount */}
-            <span className="text-lg font-semibold text-emerald-700">
+            <span className="text-lg font-semibold text-success">
               {transactionService.formatCurrency(settlement.amount)}
             </span>
 
@@ -59,10 +59,10 @@ export function SettlementCard({ settlement, userMap }: SettlementCardProps) {
             type="button"
             onClick={handleDownload}
             disabled={!hasProof}
-            className={`flex-shrink-0 rounded-xl p-2 transition-all ${
+            className={`flex-shrink-0 rounded-lg p-2 transition-all ${
               hasProof
-                ? 'text-emerald-700 hover:text-emerald-700 hover:bg-emerald-50 hover:shadow-sm cursor-pointer'
-                : 'text-slate-300 cursor-not-allowed'
+                ? 'text-success hover:text-success hover:bg-success/10 hover:shadow-sm cursor-pointer'
+                : 'text-muted-foreground/40 cursor-not-allowed'
             }`}
             title={hasProof ? 'Tải xuống chứng từ' : 'Không có chứng từ'}
           >

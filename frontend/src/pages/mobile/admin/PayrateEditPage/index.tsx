@@ -346,8 +346,12 @@ export default function PayrateEditPageMobile() {
       <div className="space-y-4 py-4">
         {isLoading ? (
           <div className="space-y-3">
-            <Skeleton className="h-20 rounded-xl" />
-            <Skeleton className="h-64 rounded-xl" />
+            <div className="console-panel p-3">
+              <Skeleton className="h-20 w-full" />
+            </div>
+            <div className="console-panel p-3">
+              <Skeleton className="h-64 w-full" />
+            </div>
           </div>
         ) : (
           <>
@@ -369,8 +373,8 @@ export default function PayrateEditPageMobile() {
 
             {/* Compact editor controls */}
             {!isFlexible && (
-              <section className="-mx-4 border-y border-[hsl(var(--surface-border))] bg-card transition-colors">
-                <div className="px-4 py-3">
+              <section className="console-panel">
+                <div className="console-panel-body">
                   <div className="grid gap-3 min-[380px]:grid-cols-[minmax(0,1fr)_9.5rem] min-[380px]:items-end">
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/5 text-primary">
@@ -446,7 +450,7 @@ export default function PayrateEditPageMobile() {
 
             {/* Confirmation step: creates and rate changes */}
             {saveStep === 'confirm' && (
-              <section className="rounded-xl border border-border bg-card px-4 py-3 text-sm space-y-2">
+              <section className="console-panel console-panel-body text-sm space-y-2">
                 <p className="font-semibold">
                   {isNew ? 'Xác nhận tạo cấu hình mới' : 'Xác nhận cập nhật cấu hình'}
                 </p>
@@ -481,18 +485,18 @@ export default function PayrateEditPageMobile() {
 
             {/* Matrix editor */}
             <section className={cn(
-              '-mx-4 overflow-hidden border-y bg-card transition-all',
-              ratesLocked ? 'border-muted' : 'border-[hsl(var(--surface-border))]',
+              'console-panel overflow-hidden transition-all',
+              ratesLocked && 'border-muted',
               sf?.rates?.status === 'error' && 'ring-2 ring-utility-error-100',
             )}>
               {sf?.rates.status === 'error' && sf.rates.message && (
-                <div className="mx-4 mt-3 space-y-1.5 rounded-xl border border-utility-error-200 bg-utility-error-50 px-3 py-2.5 text-xs">
+                <div className="mx-3 mt-3 space-y-1.5 rounded-xl border border-utility-error-200 bg-utility-error-50 px-3 py-2.5 text-xs">
                   <p className="font-semibold text-fg-error-primary">{sf.rates.message}</p>
                   {sf.rates.hint && <p className="text-utility-error-700">{sf.rates.hint}</p>}
                 </div>
               )}
 
-              <div className={cn('min-w-0 py-3', ratesLocked && 'pointer-events-none select-none opacity-60')}>
+              <div className={cn('console-panel-body min-w-0', ratesLocked && 'pointer-events-none select-none opacity-60')}>
                 <div className="min-w-0">
                   {isFlexible ? (
                     <FlexiblePayrateEditor

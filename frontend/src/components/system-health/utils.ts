@@ -18,12 +18,13 @@ export const ROLE_LABELS: Record<string, string> = {
   employee: "Nhân Viên",
 };
 
+// Method chips on the UU utility ladders — light only (console decision).
 export const METHOD_COLORS: Record<string, string> = {
-  GET:    "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300",
-  POST:   "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
-  PUT:    "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
-  PATCH:  "bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300",
-  DELETE: "bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300",
+  GET:    "bg-utility-blue-100 text-utility-blue-700",
+  POST:   "bg-utility-success-100 text-utility-success-700",
+  PUT:    "bg-utility-warning-100 text-utility-warning-700",
+  PATCH:  "bg-utility-orange-100 text-utility-orange-700",
+  DELETE: "bg-utility-error-100 text-utility-error-700",
 };
 
 export function roleLabel(r: string) {

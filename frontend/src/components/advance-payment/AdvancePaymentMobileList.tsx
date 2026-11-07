@@ -80,7 +80,7 @@ const RequestCard = memo(function RequestCard({
     : null;
 
   return (
-    <AccentStripCard accentColor={statusAccentColorMap[item.status] ?? "gray"}>
+    <AccentStripCard accentColor={statusAccentColorMap[item.status] ?? "gray"} className="console-panel rounded-lg">
       <div className="px-4 pt-3.5 pb-3">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
@@ -109,20 +109,20 @@ const RequestCard = memo(function RequestCard({
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
           <div className="flex items-center gap-1.5">
             <Banknote className="h-3 w-3 text-muted-foreground shrink-0" />
-            <span className="font-semibold text-foreground tabular-nums">
+            <span className="console-value font-semibold text-foreground tabular-nums">
               {formatCurrency(item.requestAmount)}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-muted-foreground">Thực nhận:</span>
-            <span className="font-semibold text-emerald-700 tabular-nums">
+            <span className="console-value font-semibold text-emerald-700 tabular-nums">
               {formatCurrency(item.netAmount)}
             </span>
           </div>
           {latency && latencySecs !== null && (
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
-              <span className={cn("tabular-nums", getPaymentLatencyColor(latencySecs))}>
+              <span className={cn("console-value tabular-nums", getPaymentLatencyColor(latencySecs))}>
                 Độ trễ: {latency}
               </span>
             </div>
@@ -131,7 +131,7 @@ const RequestCard = memo(function RequestCard({
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Clock className="h-3 w-3 shrink-0" />
-            <span className="tabular-nums">
+            <span className="console-value tabular-nums">
               {format(new Date(item.createdAt), "dd/MM/yyyy", { locale: vi })}
             </span>
           </div>
@@ -230,7 +230,7 @@ export function AdvancePaymentMobileList({
         title="Chưa có yêu cầu nào"
         description="Yêu cầu ứng lương sẽ hiển thị tại đây"
         size="sm"
-        className="min-h-[168px] rounded-xl border border-dashed border-slate-300 bg-slate-50/55 py-7"
+        className="min-h-[168px] rounded-xl border border-dashed border-border bg-muted/40 py-7"
       />
     );
   }

@@ -19,22 +19,22 @@ const STATUS_CONFIG = {
   active: {
     label: () => getVietnameseProjectStatus('active'),
     icon: CheckCircle,
-    className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+    className: 'bg-utility-success-50 text-fg-success-primary border-utility-success-200 hover:bg-utility-success-100'
   },
   paused: {
     label: () => getVietnameseProjectStatus('paused'),
     icon: Pause,
-    className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+    className: 'bg-utility-warning-50 text-fg-warning-primary border-utility-warning-200 hover:bg-utility-warning-100'
   },
   completed: {
     label: () => getVietnameseProjectStatus('completed'),
     icon: CheckCircle,
-    className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+    className: 'bg-utility-blue-50 text-utility-blue-700 border-utility-blue-200 hover:bg-utility-blue-100'
   },
   cancelled: {
     label: () => getVietnameseProjectStatus('cancelled'),
     icon: XCircle,
-    className: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+    className: 'bg-utility-error-50 text-fg-error-primary border-utility-error-200 hover:bg-utility-error-100'
   }
 };
 

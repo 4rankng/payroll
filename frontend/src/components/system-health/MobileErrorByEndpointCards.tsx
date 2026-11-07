@@ -37,7 +37,7 @@ export function MobileErrorByEndpointCards({ days = 1 }: MobileErrorByEndpointCa
     return (
       <div className="space-y-2">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-xl" />
+          <Skeleton key={i} className="h-16 w-full rounded-lg" />
         ))}
       </div>
     );
@@ -51,7 +51,7 @@ export function MobileErrorByEndpointCards({ days = 1 }: MobileErrorByEndpointCa
         <div
           key={row.endpoint}
           className={cn(
-            "px-3 py-3 rounded-xl border",
+            "px-3 py-3 rounded-lg border",
             row.errorRate > 20
               ? "bg-utility-error-50/50 border-utility-error-100"
               : row.errorRate > 5

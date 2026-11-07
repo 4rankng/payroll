@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { LedgerPageHeader } from '@/components/ledger/LedgerPageHeader';
+import { getConsoleKicker } from '@/lib/console';
 import { LedgerSummaryCard } from '@/components/ledger/LedgerSummaryCard';
 import { LedgerMobileList } from '@/components/ledger/LedgerMobileList';
 import { TransactionFilters } from '@/components/transaction/TransactionFilters';
@@ -33,6 +34,7 @@ import type { LedgerEntry, AccountMetadata, OnePayFeeImportResponse, OnePayFeeRe
 // transactionToLedgerEntryView adapter (transaction ids preserved).
 const LedgerEntriesPageMobile = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   // Get last 1 year range for initial filters
   const getInitialDateRange = useMemo(() => {
@@ -234,6 +236,7 @@ const LedgerEntriesPageMobile = () => {
   return (
     <MobilePageShell className="mx-auto w-full max-w-[1280px] space-y-4 lg:px-6">
       <LedgerPageHeader
+        kicker={getConsoleKicker(location.pathname)}
         overallBalance={overallBalance}
         netCashFlow={netCashFlow}
         isLoadingBalance={isLoadingBalance}

@@ -94,7 +94,7 @@ export function EditUserModal({ open, onClose, onSubmit, user, loading = false }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="rounded-lg sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Chỉnh sửa người dùng</DialogTitle>
           <DialogDescription>
@@ -177,7 +177,7 @@ export function EditUserModal({ open, onClose, onSubmit, user, loading = false }
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-border/65 pt-3">
           <button
             onClick={handleClose}
             disabled={loading}

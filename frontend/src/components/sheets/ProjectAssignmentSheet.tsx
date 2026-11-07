@@ -233,16 +233,16 @@ function ProjectAssignmentSheet({
             </div>
 
             {selectedProject && !canAssignEmployees && (
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <div className="h-5 w-5 rounded-full bg-amber-100 flex items-center justify-center">
-                    <span className="text-amber-700 text-xs">!</span>
+                  <div className="h-5 w-5 rounded-full bg-warning/15 flex items-center justify-center">
+                    <span className="text-warning text-xs">!</span>
                   </div>
-                  <p className="typography-body-medium text-amber-800 font-medium">
+                  <p className="typography-body-medium text-warning font-medium">
                     Không thể phân công nhân viên
                   </p>
                 </div>
-                <p className="typography-body-small text-amber-700 mt-1 ml-7">
+                <p className="typography-body-small text-warning mt-1 ml-7">
                   Dự án này đã {selectedProject.status === 'completed' ? 'hoàn thành' : 'bị hủy'}.
                   Chỉ có thể phân công nhân viên vào dự án đang ở trạng thái nháp hoặc đang hoạt động.
                 </p>

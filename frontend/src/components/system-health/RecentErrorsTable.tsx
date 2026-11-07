@@ -29,12 +29,12 @@ export function RecentErrorsTable({ days = 1, defaultVisible = 10 }: Props) {
   const visible = expanded ? data : data?.slice(0, defaultVisible);
 
   return (
-    <Card>
+    <Card variant="console">
       <button onClick={() => setOpen((o) => !o)} className="w-full text-left hover:bg-muted/50 transition-colors">
         <CardHeader className="pb-3 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Activity className="h-4 w-4 text-red-700 shrink-0" aria-hidden="true" />
+              <Activity className="h-4 w-4 text-fg-error-primary shrink-0" aria-hidden="true" />
               <CardTitle className="text-sm font-semibold">
                 Lỗi Gần Đây ({days === 1 ? "24h" : `${days}d`})
               </CardTitle>
@@ -70,7 +70,7 @@ export function RecentErrorsTable({ days = 1, defaultVisible = 10 }: Props) {
                       key={`${err.endpoint}-${err.called_at}-${idx}`}
                       className={cn(
                         "flex items-start gap-3 px-4 py-3",
-                        err.status_code >= 500 ? "bg-red-50/50" : ""
+                        err.status_code >= 500 ? "bg-utility-error-50/50" : ""
                       )}
                     >
                       {/* Left: endpoint + user */}

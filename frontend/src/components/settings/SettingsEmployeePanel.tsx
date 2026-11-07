@@ -92,14 +92,14 @@ const SettingsSection = ({ icon: Icon, title, description, children }: {
   return (
     <section
       aria-labelledby={headingId}
-      className="grid gap-5 border-b bg-card px-4 py-7 first:rounded-t-2xl last:rounded-b-2xl last:border-b-0 last:pb-7 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:gap-8 lg:px-6"
+      className="grid gap-5 border-b px-4 py-7 last:border-b-0 last:pb-7 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:gap-8 lg:px-6"
     >
       <div className="flex min-w-0 items-start gap-3 lg:pt-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm">
           <Icon aria-hidden="true" className="h-[18px] w-[18px]" />
         </div>
         <div className="min-w-0 pt-0.5">
-          <h2 id={headingId} className="text-sm font-bold leading-6 text-foreground">
+          <h2 id={headingId} className="console-kicker">
             {title}
           </h2>
           <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-balance">
@@ -110,7 +110,7 @@ const SettingsSection = ({ icon: Icon, title, description, children }: {
 
       <div
         data-slot="settings-group"
-        className="min-w-0 divide-y overflow-hidden rounded-2xl border bg-card shadow-sm"
+        className="console-panel min-w-0 divide-y overflow-hidden"
       >
         {children}
       </div>

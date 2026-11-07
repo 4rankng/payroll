@@ -99,7 +99,7 @@ const ActiveCard = ({
 }) => {
   if (!active) {
     return (
-      <div className="rounded-xl border border-dashed bg-card p-5 flex items-center justify-center text-center">
+      <div className="console-panel border-dashed p-5 flex items-center justify-center text-center">
         <p className="text-sm text-muted-foreground">
           Chưa có cấu hình nào đang hoạt động
         </p>
@@ -108,7 +108,7 @@ const ActiveCard = ({
   }
 
   return (
-    <div className="rounded-xl border-2 border-primary/30 bg-card p-4 sm:p-5 relative overflow-hidden">
+    <div className="console-panel border-2 border-primary/30 p-4 sm:p-5 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-primary/60" />
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -159,7 +159,7 @@ const UpcomingCard = ({
   const editable = isEntryEditable(entry);
 
   return (
-    <div className="rounded-xl border-2 border-warning/30 bg-card p-4 sm:p-5 relative overflow-hidden">
+    <div className="console-panel border-2 border-warning/30 p-4 sm:p-5 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-warning/60" />
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ const UpcomingCard = ({
 const NoUpcomingCard = () => (
   <div
     className={cn(
-      "rounded-xl border border-dashed bg-card p-4 sm:p-5",
+      "console-panel border-dashed p-4 sm:p-5",
       "flex flex-col justify-center text-center gap-2",
     )}
   >

@@ -15,9 +15,10 @@ export const createUserColumns = (
     id: "stt",
     header: "STT",
     size: 40,
+    meta: { align: "right" },
     cell: ({ row }) => {
       return (
-        <div className="text-center typography-label-medium">
+        <div className="text-center typography-label-medium font-financial tabular-nums">
           {row.index + 1}
         </div>
       );
@@ -47,9 +48,10 @@ export const createUserColumns = (
   {
     accessorKey: "mobile",
     header: "SDT",
+    meta: { align: "right" },
     cell: ({ row }) => {
       return (
-        <div className="typography-body-medium">{row.original.mobile || "—"}</div>
+        <div className="typography-body-medium font-financial tabular-nums">{row.original.mobile || "—"}</div>
       );
     },
   },
@@ -102,7 +104,7 @@ export const createUserColumns = (
     cell: ({ row }) => {
       const lastLogin = row.getValue("last_login") as string | undefined;
       return (
-        <div className="typography-body-medium">
+        <div className="typography-body-medium tabular-nums">
           {lastLogin
             ? formatVietnameseDate(lastLogin, "dd/MM/yyyy HH:mm")
             : "Chưa đăng nhập"}
@@ -116,7 +118,7 @@ export const createUserColumns = (
     cell: ({ row }) => {
       const createdAt = row.getValue("created_at") as string;
       return (
-        <div className="typography-body-medium">
+        <div className="typography-body-medium tabular-nums">
           {formatVietnameseDate(createdAt)}
         </div>
       );

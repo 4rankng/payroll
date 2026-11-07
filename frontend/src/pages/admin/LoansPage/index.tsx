@@ -1,5 +1,6 @@
 import { ErrorState } from "@/components/ui/error-state";
 import { useState, useMemo, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ResponsiveTable } from '@/components/ui/responsive-table';
 import {
   AdminPageCanvas,
@@ -8,6 +9,7 @@ import {
   AdminFilterRow,
 } from '@/components/shared/AdminPageFrame';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { getConsoleKicker } from '@/lib/console';
 import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
 import { SearchBar } from '@/components/shared/SearchBar';
 import { FilterPill } from '@/components/shared/FilterPill';
@@ -29,6 +31,7 @@ import {
 import { computeLoansSummary, computeLoanStatItems, filterLoansBySearch } from './utils';
 
 const LoansPage = () => {
+  const location = useLocation();
   const [loanFilters, setLoanFilters] = useState<LoanFilters>({
     page: 1,
     pageSize: 20,
@@ -120,7 +123,8 @@ const LoansPage = () => {
         <PageHeader
           icon={Bank}
           title="Quản lý khoản vay"
-          description="Quản lý chủ nợ và các khoản vay của công ty"
+          kicker={getConsoleKicker(location.pathname)}
+          meta={loansPagination?.totalRecords ? `${loansPagination.totalRecords.toLocaleString('vi-VN')} khoản vay` : undefined}
           actions={[
             {
               label: 'QL Chủ nợ',

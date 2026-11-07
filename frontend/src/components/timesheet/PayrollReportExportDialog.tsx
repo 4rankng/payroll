@@ -68,7 +68,7 @@ export const PayrollReportExportDialog = memo(function PayrollReportExportDialog
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-full sm:max-w-md"
+        className="max-w-full sm:max-w-md rounded-lg"
         contentPadding="none"
         description="Chọn ngày để tải báo cáo sao kê"
       >
@@ -84,7 +84,7 @@ export const PayrollReportExportDialog = memo(function PayrollReportExportDialog
             initialFocus
             locale={vi}
             formatters={formatters}
-            className="rounded-xl p-0 sm:p-3"
+            className="rounded-lg p-0 sm:p-3"
           />
         </div>
 

@@ -41,8 +41,8 @@ export function OffDaysPicker({ value, onChange, disabled }: OffDaysPickerProps)
               className={cn(
                 'w-8 h-8 sm:w-9 sm:h-9 rounded-xl text-xs font-semibold border transition-colors shrink-0',
                 active
-                  ? 'bg-red-100 border-red-400 text-red-700'
-                  : 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100',
+                  ? 'bg-utility-error-100 border-utility-error-400 text-fg-error-primary'
+                  : 'bg-utility-success-50 border-utility-success-300 text-fg-success-primary hover:bg-utility-success-100',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -53,11 +53,11 @@ export function OffDaysPicker({ value, onChange, disabled }: OffDaysPickerProps)
       </div>
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
-          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-100 border border-emerald-300" />
+          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-utility-success-100 border border-utility-success-300" />
           Ngày thường
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-400" />
+          <span className="inline-block w-2.5 h-2.5 rounded-sm bg-utility-error-100 border border-utility-error-400" />
           Ngày nghỉ
         </span>
       </div>

@@ -281,7 +281,7 @@ function LedgerEntryDetailsSheetComponent({
         ) : (
           <div className="space-y-3">
             <section
-              className="rounded-2xl border overflow-hidden border-border/80 bg-card text-card-foreground shadow-none"
+              className="rounded-lg border overflow-hidden border-border/80 bg-card text-card-foreground shadow-none"
               aria-labelledby="ledger-entry-overview"
             >
               <div className="flex flex-col gap-0 p-0">
@@ -355,14 +355,14 @@ function LedgerEntryDetailsSheetComponent({
             </section>
 
             <section
-              className="rounded-2xl border overflow-hidden border-border/80 bg-card text-card-foreground shadow-none"
+              className="rounded-lg border overflow-hidden border-border/80 bg-card text-card-foreground shadow-none"
               aria-labelledby="ledger-financial-info"
             >
               <div className="flex flex-col gap-3 p-4">
                 <h2 id="ledger-financial-info" className="text-sm font-semibold text-foreground">
                   Thông tin tài chính
                 </h2>
-                <dl className="grid w-full grid-cols-2 overflow-hidden rounded-xl border border-border/70 bg-muted/20 min-[440px]:grid-cols-3">
+                <dl className="grid w-full grid-cols-2 overflow-hidden rounded-lg border border-border/70 bg-muted/20 min-[440px]:grid-cols-3">
                   <div className="min-w-0 border-r border-border/60 px-3 py-3">
                     <dt className="whitespace-nowrap flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span className="h-1.5 w-1.5 rounded-full bg-destructive" aria-hidden="true" />
@@ -397,7 +397,7 @@ function LedgerEntryDetailsSheetComponent({
             </section>
 
             <section
-              className="rounded-2xl border border-border/80 bg-card text-card-foreground shadow-none"
+              className="rounded-lg border border-border/80 bg-card text-card-foreground shadow-none"
               aria-labelledby="ledger-system-info"
             >
               <div className="flex flex-col gap-3 p-4">

@@ -31,11 +31,11 @@ function getInputColor(opts: {
     hasOriginalValues && value !== originalValue && !thisFieldDeleted;
   const thisFieldNew = !hasOriginalValues && value > 0;
 
-  if (thisFieldDeleted) return "border-red-300 bg-red-50/70 text-red-700";
+  if (thisFieldDeleted) return "border-destructive/40 bg-destructive/10 text-destructive";
   if (thisFieldEdited)
-    return "border-amber-300 bg-amber-50/70 text-amber-700 font-semibold";
+    return "border-warning/40 bg-warning/10 text-warning font-semibold";
   if (thisFieldNew)
-    return "border-emerald-300 bg-emerald-50/70 text-emerald-700 font-bold";
+    return "border-success/40 bg-success/10 text-success font-bold";
 
   // Saved / unchanged data — no color coding, just plain styling
   return "border-input text-foreground";
@@ -88,7 +88,7 @@ export const HourInputField = memo(
           )}
         />
         {entryAmount > 0 && (
-          <span className="text-xs text-emerald-700 font-medium tabular-nums">
+          <span className="text-xs text-success font-medium tabular-nums">
             {formatVND(entryAmount)}
           </span>
         )}

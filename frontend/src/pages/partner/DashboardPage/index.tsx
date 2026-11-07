@@ -1,8 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { format, startOfMonth } from 'date-fns';
-import { Users, UserCheck, UserX, Banknote, type LucideIcon } from 'lucide-react';
+import { Users, UserCheck, UserX, Banknote } from 'lucide-react';
 import { UserX01 } from '@untitledui/icons';
-import { KpiHeroCard } from '@/components/admin-dashboard/KpiHeroCard';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -12,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { PageHeader } from '@/components/shared/PageHeader';
+import { ConsoleKpi, ConsolePanel } from '@/components/shared/console-panel';
 import { usePartnerDashboard } from '@/hooks/api/useDashboard';
 import { useEmployeeModals } from '@/hooks/useModalNavigation';
 import { MissingMobileSection } from '@/components/employees/MissingMobileSection';
@@ -20,10 +21,10 @@ import { PartnerWorkforceOverviewCard } from '@/components/partner-dashboard/Par
 import { PartnerApprovalRequestsCard } from '@/components/partner-dashboard/PartnerApprovalRequestsCard';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { formatCompactVND } from '@/utils/formatters';
 import type {
   TopPaidEmployeeItem,
   PartnerEmployeeListType,
-  PartnerDashboardMoMChange,
 } from '@/types/api/dashboard.types';
 import type { Employee } from '@/types/api/employee.types';
 import { monthOptions, formatVND } from './utils';
@@ -90,56 +91,6 @@ function MonthSelector({ value, onChange }: { value: string; onChange: (v: strin
   );
 }
 
-// ─── KPI stat row ──────────────────────────────────────────────────────────
-// Stat cards compose the shared admin KpiHeroCard (also used by StatsCards,
-// UserStatsCard, and ProjectStatusCard) rather than a partner-only clone, so
-// the partner and admin dashboards stay visually and behaviorally in sync.
-//
-// The dashboard API exposes point-in-time values + a single MoM delta, not a
-// daily/weekly series, so each card surfaces only the real MoM change — no
-// fabricated sparkline or watermark that implies a trend the data can't support.
-type PartnerStatColor = 'emerald' | 'teal' | 'amber' | 'blue';
-
-interface PartnerStatProps {
-  label: string;
-  value: string | number;
-  icon: LucideIcon;
-  color: PartnerStatColor;
-  change?: PartnerDashboardMoMChange;
-  caption?: string;
-  onClick?: () => void;
-}
-
-function PartnerStat({ label, value, icon, color, change, caption, onClick }: PartnerStatProps) {
-  // Three honest MoM states mapped onto KpiHeroCard's trend/badge: up/down become
-  // a trend pill; an exact 0% becomes a neutral badge. Nothing invents a delta.
-  let trend: { value: string; positive: boolean } | undefined;
-  let badge: { label: string; variant: 'success' | 'warning' | 'danger' | 'neutral' } | undefined;
-  if (change && Number.isFinite(change.change_pct)) {
-    const pct = change.change_pct;
-    if (pct === 0) {
-      badge = { label: '0%', variant: 'neutral' };
-    } else {
-      const sign = pct > 0 ? '+' : '';
-      trend = { value: `${sign}${pct.toFixed(0)}%`, positive: pct > 0 };
-    }
-  }
-
-  return (
-    <KpiHeroCard
-      label={label}
-      value={value}
-      icon={icon}
-      color={color}
-      sublabel={caption}
-      trend={trend}
-      badge={badge}
-      onClick={onClick}
-      className="h-full"
-    />
-  );
-}
-
 // ─── Leaderboard row ───────────────────────────────────────────────────────
 const RANK_BADGE = [
   'bg-warning/15 text-warning ring-1 ring-warning/30',
@@ -176,12 +127,15 @@ function LeaderRow({ item, rank }: { item: TopPaidEmployeeItem; rank: number }) 
 // ─── Skeletons ─────────────────────────────────────────────────────────────
 function StatRowSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="console-panel px-4 py-4">
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="mt-3 h-6 w-24" />
-          <Skeleton className="mt-2 h-3 w-20" />
+        <div key={i} className="console-panel flex items-center gap-2.5 px-3 py-2">
+          <Skeleton className="size-9 shrink-0 rounded-md" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Skeleton className="h-2.5 w-16" />
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-2.5 w-20" />
+          </div>
         </div>
       ))}
     </div>
@@ -217,22 +171,13 @@ function BannerHeader({
   onMonthChange: (v: string) => void;
 }) {
   return (
-    <header className="console-panel px-5 py-4 sm:px-6 sm:py-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <p className="console-kicker mb-2">Kỳ báo cáo</p>
-          <h1 className="font-display text-display-lg font-semibold tracking-tight text-fg-primary">
-            Tổng quan
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Hoạt động nhân viên và tình hình thanh toán · <span className="font-semibold text-foreground">{periodLabel}</span>
-          </p>
-        </div>
-        <div className="flex items-center lg:justify-end">
-          <MonthSelector value={monthValue} onChange={onMonthChange} />
-        </div>
-      </div>
-    </header>
+    <PageHeader
+      kicker="Đối tác"
+      title="Tổng quan"
+      meta={`Nhân sự và thanh toán · ${periodLabel}`}
+    >
+      <MonthSelector value={monthValue} onChange={onMonthChange} />
+    </PageHeader>
   );
 }
 
@@ -269,52 +214,65 @@ const PartnerDashboardPage = () => {
   const showMomBadges = selectedMonth !== ALL_VALUE;
 
   return (
-    <div className="min-h-full p-4 lg:p-6">
-      <div className="mx-auto max-w-[1400px] space-y-5">
+    <div className="min-h-full p-3 sm:p-4">
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-3">
         <BannerHeader
           periodLabel={periodLabel}
           monthValue={selectedMonth}
           onMonthChange={handleMonthChange}
         />
 
-        {/* ── Stat row (4 cards) ── */}
+        {/* ── KPI strip ── */}
         {isLoading ? (
           <StatRowSkeleton />
         ) : (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 motion-safe:animate-fade-in-up">
-            <PartnerStat
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 motion-safe:animate-fade-in-up">
+            <ConsoleKpi
               label="Tổng chi trả"
-              value={formatVND(data?.total_paid_vnd ?? 0)}
+              value={formatCompactVND(data?.total_paid_vnd ?? 0)}
+              title={formatVND(data?.total_paid_vnd ?? 0)}
               icon={Banknote}
-              color="emerald"
-              change={showMomBadges ? data?.mom_paid_amount : undefined}
-              caption={!showMomBadges ? periodLabel : undefined}
+              tone="primary"
+              delta={
+                showMomBadges && (data?.total_paid_vnd ?? 0) > 0
+                  ? { value: data?.mom_paid_amount?.change_pct ?? null }
+                  : undefined
+              }
+              hint={!showMomBadges ? periodLabel : undefined}
               onClick={(data?.total_paid_vnd ?? 0) > 0 ? () => openSheet('paid') : undefined}
             />
-            <PartnerStat
+            <ConsoleKpi
               label="Đang làm việc"
-              value={data?.active_employees ?? 0}
+              value={(data?.active_employees ?? 0).toLocaleString('vi-VN')}
               icon={UserCheck}
-              color="teal"
-              caption="bảng công 14 ngày qua"
+              tone="secondary"
+              hint="bảng công 14 ngày qua"
               onClick={() => openSheet('active')}
             />
-            <PartnerStat
+            <ConsoleKpi
               label="Có thể nghỉ"
-              value={data?.dropped_employees ?? 0}
+              value={(data?.dropped_employees ?? 0).toLocaleString('vi-VN')}
               icon={UserX}
-              color="amber"
-              caption="không bảng công 14 ngày"
-              onClick={(data?.dropped_employees ?? 0) > 0 ? () => openSheet('dropped') : undefined}
+              tone="gold"
+              hint="không bảng công 14 ngày"
+              onClick={
+                (data?.dropped_employees ?? 0) > 0 ? () => openSheet('dropped') : undefined
+              }
             />
-            <PartnerStat
+            <ConsoleKpi
               label="Đã thanh toán"
-              value={data?.paid_employees ?? 0}
+              value={(data?.paid_employees ?? 0).toLocaleString('vi-VN')}
               icon={Users}
-              color="blue"
-              change={showMomBadges ? data?.mom_paid_employees : undefined}
-              caption={!showMomBadges ? 'tất cả thời gian' : undefined}
-              onClick={(data?.paid_employees ?? 0) > 0 ? () => openSheet('paid') : undefined}
+              tone="neutral"
+              delta={
+                showMomBadges && (data?.paid_employees ?? 0) > 0
+                  ? { value: data?.mom_paid_employees?.change_pct ?? null }
+                  : undefined
+              }
+              hint={!showMomBadges ? 'tất cả thời gian' : undefined}
+              onClick={
+                (data?.paid_employees ?? 0) > 0 ? () => openSheet('paid') : undefined
+              }
             />
           </div>
         )}
@@ -324,49 +282,53 @@ const PartnerDashboardPage = () => {
         {/* Mobile warnings render nothing when clean (no dead card). */}
         <MissingMobileSection onEmployeeClick={handleEmployeeClick} />
 
-        {/* ── Analytics grid: workforce donut + leaderboard ── */}
-        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(280px,0.8fr)_minmax(0,2.2fr)]">
-          {/* Workforce donut */}
+        {/* ── Analytics gallery: workforce donut + leaderboard ── */}
+        <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-12">
           <PartnerWorkforceOverviewCard
             active={data?.active_employees ?? 0}
             dropped={data?.dropped_employees ?? 0}
             paid={data?.paid_employees ?? 0}
             isLoading={isLoading}
+            className="h-full lg:col-span-4"
           />
 
-          {/* Leaderboard */}
-          <section className="console-panel">
-            <header className="console-panel-header">
-              <div className="min-w-0 flex-1">
-                <h2 className="console-kicker">Top nhân viên được trả lương</h2>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Xếp hạng theo tổng chi trả {periodLabel}
-                </p>
-              </div>
-              {!isLoading && topEmployees.length > 0 && (
-                <span className="console-value inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-                  {topEmployees.length} nhân viên
-                </span>
+          <ConsolePanel
+            kicker="Chi trả"
+            title="Top nhân viên"
+            description={periodLabel}
+            isFlush
+            className="h-full lg:col-span-8"
+            bodyClassName="flex flex-1 flex-col"
+            actions={
+              !isLoading && topEmployees.length > 0 ? (
+                <span className="console-kicker">{topEmployees.length} nhân viên</span>
+              ) : undefined
+            }
+          >
+            <div
+              className={cn(
+                'px-3 py-2',
+                !isLoading && topEmployees.length === 0 && 'flex flex-1 items-center justify-center',
               )}
-            </header>
-            <div className="console-panel-body">
-            {isLoading ? (
-              <LeaderboardSkeleton />
-            ) : topEmployees.length === 0 ? (
-              <EmptyState
-                title="Chưa có dữ liệu thanh toán"
-                description={`Sẽ hiển thị khi có nhân viên được thanh toán trong ${periodLabel}.`}
-                size="sm"
-              />
-            ) : (
-              <div className="grid grid-cols-1 gap-x-4 gap-y-0.5 min-[1120px]:grid-cols-2">
-                {topEmployees.map((item, idx) => (
-                  <LeaderRow key={item.employee_id} item={item} rank={idx + 1} />
-                ))}
-              </div>
-            )}
+            >
+              {isLoading ? (
+                <LeaderboardSkeleton />
+              ) : topEmployees.length === 0 ? (
+                <EmptyState
+                showIllustration={false}
+                  title="Chưa có dữ liệu thanh toán"
+                  description={`Chưa có chi trả trong ${periodLabel}.`}
+                  size="sm"
+                />
+              ) : (
+                <div className="grid grid-cols-1 gap-x-4 gap-y-0.5 min-[1120px]:grid-cols-2">
+                  {topEmployees.map((item, idx) => (
+                    <LeaderRow key={item.employee_id} item={item} rank={idx + 1} />
+                  ))}
+                </div>
+              )}
             </div>
-          </section>
+          </ConsolePanel>
         </div>
 
         <PartnerEmployeeListSheet

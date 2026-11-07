@@ -75,7 +75,7 @@ export const FeeScheduleCalculator = ({ entries }: Props) => {
 
   return (
     <div
-      className="rounded-xl border bg-card p-4 space-y-3"
+      className="console-panel p-4 space-y-3"
       aria-label="Máy tính phí thử"
     >
       <div className="flex items-center gap-2">

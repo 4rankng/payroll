@@ -1,7 +1,8 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 // UU PRO restyle (W13c): lucide → verified @untitledui/icons; error/warning
 // accents on the UU utility ladders. Validation flow and copy byte-preserved.
+import { getConsoleKicker } from '@/lib/console';
 import {
   ArrowLeft,
   CalendarDate,
@@ -92,6 +93,7 @@ function fieldBorderClass(field: FieldResult | undefined, highlighted = false): 
 export default function PayrateEditPage() {
   const { projectId, payrateId } = useParams<{ projectId: string; payrateId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const numProjectId = Number(projectId);
   const isNew = payrateId === 'new';
@@ -360,7 +362,7 @@ export default function PayrateEditPage() {
     <div className="flex flex-col min-h-screen bg-card">
 
       {/* ── Top bar ── */}
-      <header className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm border-b border-border">
+      <header className="sticky top-0 z-20 bg-card border-b border-border">
         <div className="px-4 sm:px-6 h-14 flex items-center gap-3">
           <button onClick={goBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0">
             <ArrowLeft className="h-4 w-4" />
@@ -394,33 +396,40 @@ export default function PayrateEditPage() {
       </header>
 
       {/* ── Page title ── */}
-      <div className="w-full px-4 sm:px-6 pt-6 pb-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h1 className="text-xl font-semibold">
-            {isNew ? 'Tạo cấu hình lương mới' : 'Chỉnh sửa cấu hình lương'}
-          </h1>
-          {isFlexible && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium bg-utility-success-100 text-fg-success-primary border border-utility-success-200 px-2 py-0.5 rounded-full">
-              <Zap className="h-3 w-3" />
-              Linh hoạt
-            </span>
-          )}
+      <div className="w-full px-4 sm:px-6 pt-4">
+        <div className="console-page-header pr-4">
+          <p className="console-kicker mb-1">{getConsoleKicker(location.pathname)}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl font-semibold">
+              {isNew ? 'Tạo cấu hình lương mới' : 'Chỉnh sửa cấu hình lương'}
+            </h1>
+            {isFlexible && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium bg-utility-success-100 text-fg-success-primary border border-utility-success-200 px-2 py-0.5 rounded-full">
+                <Zap className="h-3 w-3" />
+                Linh hoạt
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {isNew
+              ? isFlexible
+                ? 'Thiết lập ca làm việc (khung giờ) và mức lương theo vị trí, loại ngày'
+                : 'Thiết lập mức lương theo vị trí, loại ngày và khung giờ'
+              : 'Cập nhật mức lương cho cấu hình hiện tại'}
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          {isNew
-            ? isFlexible
-              ? 'Thiết lập ca làm việc (khung giờ) và mức lương theo vị trí, loại ngày'
-              : 'Thiết lập mức lương theo vị trí, loại ngày và khung giờ'
-            : 'Cập nhật mức lương cho cấu hình hiện tại'}
-        </p>
       </div>
 
       {/* ── Body ── */}
       <main className="flex-1 w-full px-4 sm:px-6 py-4 space-y-5">
         {isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-20 rounded-xl" />
-            <Skeleton className="h-64 rounded-xl" />
+          <div className="space-y-4">
+            <div className="console-panel p-3">
+              <Skeleton className="h-20 w-full" />
+            </div>
+            <div className="console-panel p-3">
+              <Skeleton className="h-64 w-full" />
+            </div>
           </div>
         ) : (
           <>
@@ -433,8 +442,8 @@ export default function PayrateEditPage() {
             )}
 
             {/* ── Compact editor controls ── */}
-            <section className="border-y border-border bg-card px-4 transition-colors">
-              <div className="grid gap-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+            <section className="console-panel">
+              <div className="console-panel-body grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
                 {!isFlexible ? (
                   <div className="min-w-0">
                     <div className="flex items-center gap-3">
@@ -523,7 +532,7 @@ export default function PayrateEditPage() {
 
             {/* ── Confirmation step: creates and rate changes ── */}
             {saveStep === 'confirm' && (
-              <section className="rounded-xl border border-border bg-card px-4 py-3 text-sm space-y-2">
+              <section className="console-panel console-panel-body text-sm space-y-2">
                 <p className="font-semibold">
                   {isNew ? 'Xác nhận tạo cấu hình mới' : 'Xác nhận cập nhật cấu hình'}
                 </p>
@@ -557,20 +566,20 @@ export default function PayrateEditPage() {
             )}
 
             <section className={cn(
-              "overflow-hidden border-y bg-card transition-all",
-              ratesLocked ? "border-muted" : "border-border",
+              "console-panel overflow-hidden transition-all",
+              ratesLocked && "border-muted",
               sf?.rates?.status === 'error' && "border-utility-error-300 ring-2 ring-utility-error-100",
             )}>
 
               {/* Rates field feedback — shown inside the section */}
               {sf?.rates.status === 'error' && sf.rates.message && (
-                <div className="mx-4 mt-3 rounded-xl border border-utility-error-200 bg-utility-error-50 px-3 py-2.5 text-xs space-y-1.5">
+                <div className="mx-3 mt-3 rounded-xl border border-utility-error-200 bg-utility-error-50 px-3 py-2.5 text-xs space-y-1.5">
                   <p className="font-semibold text-fg-error-primary">{sf.rates.message}</p>
                   {sf.rates.hint && <p className="text-utility-error-700">{sf.rates.hint}</p>}
                 </div>
               )}
 
-              <div className={cn("p-4", ratesLocked && "opacity-60 pointer-events-none select-none")}>
+              <div className={cn("console-panel-body", ratesLocked && "opacity-60 pointer-events-none select-none")}>
                 {isFlexible ? (
                   <FlexiblePayrateEditor
                     rates={config.rates || {}}
@@ -594,7 +603,7 @@ export default function PayrateEditPage() {
       </main>
 
       {/* ── Mobile save bar ── */}
-      <footer className="sticky bottom-0 sm:hidden border-t border-border bg-card/95 backdrop-blur-sm px-4 py-3 flex gap-3">
+      <footer className="sticky bottom-0 sm:hidden border-t border-border bg-card px-4 py-3 flex gap-3">
         <Button variant="outline" className="flex-1" onClick={goBack} disabled={isValidating || isSaving}>
           Hủy
         </Button>

@@ -156,7 +156,7 @@ export function SendMoneyToLenderModal({ isOpen, onClose, lender }: SendMoneyToL
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-[520px]">
+      <DialogContent className="rounded-lg max-h-[92dvh] overflow-y-auto sm:max-w-[520px]">
         <DialogHeader>
           <DialogTitle>Gửi tiền cho chủ nợ</DialogTitle>
           <DialogDescription>
@@ -197,7 +197,7 @@ export function SendMoneyToLenderModal({ isOpen, onClose, lender }: SendMoneyToL
             <div className="space-y-2">
               <Label className="typography-label-medium">Khoản vay *</Label>
               <Select value={form.loan_id} onValueChange={handleLoanChange}>
-                <SelectTrigger className={errors.loan_id ? 'h-11 border-red-500' : 'h-11'}>
+                <SelectTrigger className={errors.loan_id ? 'h-11 border-destructive' : 'h-11'}>
                   <SelectValue placeholder="Chọn khoản vay" />
                 </SelectTrigger>
                 <SelectContent>
@@ -218,7 +218,7 @@ export function SendMoneyToLenderModal({ isOpen, onClose, lender }: SendMoneyToL
                 inputMode="numeric"
                 value={form.amount ? new Intl.NumberFormat('vi-VN').format(parseAmount(form.amount)) : ''}
                 onChange={(e) => handleAmountChange(e.target.value)}
-                className={errors.amount ? 'h-11 border-red-500' : 'h-11'}
+                className={errors.amount ? 'h-11 border-destructive' : 'h-11'}
                 placeholder="0"
               />
               {errors.amount && <p className="typography-body-small text-financial-negative">{errors.amount}</p>}
@@ -236,7 +236,7 @@ export function SendMoneyToLenderModal({ isOpen, onClose, lender }: SendMoneyToL
                 type="date"
                 value={form.payment_date}
                 onChange={(e) => updateField('payment_date', e.target.value)}
-                className={errors.payment_date ? 'h-11 border-red-500' : 'h-11'}
+                className={errors.payment_date ? 'h-11 border-destructive' : 'h-11'}
               />
               {errors.payment_date && <p className="typography-body-small text-financial-negative">{errors.payment_date}</p>}
             </div>
@@ -263,7 +263,7 @@ export function SendMoneyToLenderModal({ isOpen, onClose, lender }: SendMoneyToL
               />
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="border-t border-border/65 pt-3">
               <Button variant="outline" onClick={onClose} className="min-h-11">
                 Hủy
               </Button>
@@ -314,7 +314,7 @@ export function SendMoneyToLenderModal({ isOpen, onClose, lender }: SendMoneyToL
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="border-t border-border/65 pt-3">
               <Button variant="outline" onClick={() => setStep(1)} disabled={repayLoan.isPending} className="min-h-11">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Quay lại

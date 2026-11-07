@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { getConsoleKicker } from "@/lib/console";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -133,7 +134,7 @@ export function AttendanceMobileCard({
   const showCreditQuota = onCreditQuota != null && canCreditAttendanceQuota(row);
 
   return (
-    <div className="rounded-xl border border-border bg-card p-3.5 shadow-sm">
+    <div className="console-panel p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-foreground">{row.employee_name}</p>
@@ -155,7 +156,7 @@ export function AttendanceMobileCard({
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <span className="text-muted-foreground">Thu nhập:</span>
-            <span className="font-financial font-semibold text-foreground tabular-nums">
+            <span className="console-value font-financial font-semibold text-foreground tabular-nums">
               {row.earning_amount != null ? formatCurrency(row.earning_amount) : "—"}
             </span>
           </div>
@@ -233,6 +234,7 @@ export function AttendanceMobileCard({
 
 const AdvancePaymentsPageMobile = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const isAdvPartner = user?.role === "adv_partner";
 
@@ -370,7 +372,9 @@ const AdvancePaymentsPageMobile = () => {
         </div>
         <div className="space-y-2.5">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
+            <div key={i} className="console-panel p-3.5">
+              <Skeleton className="h-16 w-full" />
+            </div>
           ))}
         </div>
       </div>
@@ -381,6 +385,7 @@ const AdvancePaymentsPageMobile = () => {
     <MobilePageShell className="space-y-3">
       <MobileSurface className="p-3">
         <AdvancePaymentPageHeaderMobile
+          kicker={getConsoleKicker(location.pathname)}
           onImportPayroll={() => setIsImportSheetOpen(true)}
           onViewEmployees={() => navigate("employees")}
           renderOverflowContent={(close) => (
@@ -450,21 +455,21 @@ const AdvancePaymentsPageMobile = () => {
             compact
             monthlyProviderFee={page.providerFees.monthlyProviderFee}
             totalProviderFee={page.providerFees.totalProviderFee}
-            className="rounded-2xl border border-utility-gray-300 shadow-[0_16px_42px_-30px_rgba(15,23,42,0.75)]"
+            className="rounded-lg"
           />
         )}
 
         {/* Treasury summary — one card, stacked stat rows (mirrors desktop hero) */}
         <section
           aria-label="Tổng quan kỳ ứng lương"
-          className="overflow-hidden rounded-2xl border border-utility-gray-300 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05),0_14px_32px_-28px_rgba(15,49,103,0.55)]"
+          className="console-panel overflow-hidden"
         >
           <div className="treasury-grid">
             <AdvPartnerHeroStrip
               {...heroProps}
               compact
               isLoading={page.summaryLoading}
-              className="rounded-none border-0 shadow-none"
+              className="rounded-none border-0 bg-card shadow-none"
             />
             <TreasuryFeePanel
               {...feePanelProps}
@@ -483,7 +488,7 @@ const AdvancePaymentsPageMobile = () => {
             className={cn(
               "flex min-h-11 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors",
               activeTab === "requests"
-                ? "bg-white text-primary shadow-sm"
+                ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground",
             )}
           >
@@ -495,7 +500,7 @@ const AdvancePaymentsPageMobile = () => {
             className={cn(
               "flex min-h-11 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition-colors",
               activeTab === "attendances"
-                ? "bg-white text-primary shadow-sm"
+                ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground",
             )}
           >
@@ -510,14 +515,14 @@ const AdvancePaymentsPageMobile = () => {
       <MobileSurface className="space-y-3 p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-fg-secondary">
+            <p className="console-kicker">
               Yêu cầu
             </p>
             <h2 className="text-[15px] font-bold leading-tight text-fg-primary">
               Danh sách ứng lương
             </h2>
           </div>
-          <div className="grid h-8 min-w-8 place-items-center rounded-full bg-utility-gray-100 px-2 text-xs font-semibold tabular-nums text-fg-secondary">
+          <div className="console-value grid h-8 min-w-8 place-items-center rounded-full bg-utility-gray-100 px-2 text-xs font-semibold tabular-nums text-fg-secondary">
             {page.statusCounts?.all ?? 0}
           </div>
         </div>
@@ -561,14 +566,14 @@ const AdvancePaymentsPageMobile = () => {
         <MobileSurface className="space-y-3 p-3">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-fg-secondary">
+              <p className="console-kicker">
                 Chấm công
               </p>
               <h2 className="text-[15px] font-bold leading-tight text-fg-primary">
                 Chấm công nhân viên
               </h2>
             </div>
-            <div className="grid h-8 min-w-8 place-items-center rounded-full bg-utility-gray-100 px-2 text-xs font-semibold tabular-nums text-fg-secondary">
+            <div className="console-value grid h-8 min-w-8 place-items-center rounded-full bg-utility-gray-100 px-2 text-xs font-semibold tabular-nums text-fg-secondary">
               {attendance.totalRecords ?? 0}
             </div>
           </div>
@@ -654,7 +659,7 @@ const AdvancePaymentsPageMobile = () => {
       <AdvPartnerStatusOverview
         {...statusProps}
         isLoading={page.summaryLoading}
-        className="rounded-2xl border-utility-gray-300 bg-white"
+        className="console-panel rounded-lg"
       />
 
       <ImportPayrollDialog open={isImportSheetOpen} onOpenChange={setIsImportSheetOpen} />

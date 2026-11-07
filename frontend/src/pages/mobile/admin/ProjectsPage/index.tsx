@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,6 +23,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { useProjects } from "@/hooks/api/useProjects";
 import { useProjectFilters } from "@/hooks/projects/useProjectFilters";
 import { useProjectModals } from "@/hooks/useModalNavigation";
+import { getConsoleKicker } from "@/lib/console";
 import { getVietnameseProjectStatus } from "@/utils/vietnamese";
 import { generateMonthOptions } from "@/utils/dateHelpers";
 import { Briefcase01, ChevronLeft, ChevronRight, FilterLines, Plus, XClose } from "@untitledui/icons";
@@ -40,6 +41,7 @@ const STATUS_OPTIONS: { value: Project["status"]; label: string }[] = [
 
 const ProjectsPageMobile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const filterControls = useProjectFilters({ initialFilters: { page: 1, pageSize: ITEMS_PER_PAGE } });
@@ -96,7 +98,9 @@ const ProjectsPageMobile = () => {
           <Skeleton className="h-9 w-24" />
         </div>
         <Skeleton className="h-11 w-full rounded-xl" />
-        <div className="space-y-2">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
+        <div className="console-panel p-3">
+          <div className="space-y-2">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-xl" />)}</div>
+        </div>
       </div>
     );
   }
@@ -107,6 +111,7 @@ const ProjectsPageMobile = () => {
       <MobilePageHeader
         title="Dự án"
         icon={Briefcase01}
+        kicker={getConsoleKicker(location.pathname)}
         actionsLayout="inline"
         actions={
           <Button

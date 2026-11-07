@@ -26,7 +26,7 @@ export function MobileSummaryPills({ days = 1 }: MobileSummaryPillsProps) {
     return (
       <div className="grid grid-cols-2 gap-2">
         {Array.from({ length: 2 }).map((_, i) => (
-          <Skeleton key={i} className="h-[72px] rounded-xl" />
+          <Skeleton key={i} className="h-[72px] rounded-lg" />
         ))}
       </div>
     );

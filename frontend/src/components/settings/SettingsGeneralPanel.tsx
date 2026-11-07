@@ -104,11 +104,11 @@ const SettingsSection = ({ icon: Icon, title, description, children }: SettingsS
   return (
     <section
       aria-labelledby={headingId}
-      className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-xs"
+      className="console-panel min-w-0 overflow-hidden"
     >
-      <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b px-4 py-2.5 sm:px-5">
+      <div className="console-panel-header flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 px-4 py-2.5 sm:px-5">
         <Icon aria-hidden="true" className="size-4 shrink-0 self-center text-primary" />
-        <h2 id={headingId} className="shrink-0 text-[13px] font-semibold leading-5 text-foreground">
+        <h2 id={headingId} className="console-kicker shrink-0">
           {title}
         </h2>
         {description && (

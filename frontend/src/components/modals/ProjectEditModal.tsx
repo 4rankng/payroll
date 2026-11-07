@@ -73,12 +73,12 @@ export function ProjectEditModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="rounded-lg max-w-2xl">
         <DialogClose asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-3 right-3 h-11 w-11 rounded-xl sm:top-4 sm:right-4 sm:h-8 sm:w-8 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="absolute top-3 right-3 h-11 w-11 rounded-lg sm:top-4 sm:right-4 sm:h-8 sm:w-8 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Đóng</span>

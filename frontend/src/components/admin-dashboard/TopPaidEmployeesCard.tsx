@@ -1,16 +1,17 @@
 import { memo } from 'react';
 import { Trophy, UserCheck, UserX } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
+import { ConsolePanel } from '@/components/shared/console-panel';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { useTopPaidEmployees } from '@/hooks/api/useDashboard';
 import type { TopPaidEmployeeItem } from '@/types/api/dashboard.types';
 import { formatFullCurrency as formatVND } from '@/utils/formatters';
+import { cn } from '@/lib/utils';
 
 interface TopPaidEmployeesCardProps {
   month?: string; // YYYY-MM; if undefined shows all-time
+  className?: string;
 }
 
 const EmployeeRow = memo(function EmployeeRow({
@@ -20,71 +21,61 @@ const EmployeeRow = memo(function EmployeeRow({
   item: TopPaidEmployeeItem;
   maxPaid: number;
 }) {
-  const pct = maxPaid > 0 ? (item.total_paid_vnd / maxPaid) * 100 : 0;
   // Amber is rank-1 semantics only; every other rank is neutral.
-  const rankStyle = item.rank === 1
-    ? 'bg-amber-50 border-amber-200 text-amber-700'
-    : 'bg-muted/40 border-border/40 text-muted-foreground';
+  const rankStyle =
+    item.rank === 1
+      ? 'bg-warning/10 text-warning ring-warning/30'
+      : 'bg-muted/50 text-muted-foreground ring-border/60';
+  const width = maxPaid > 0 ? Math.max(4, (item.total_paid_vnd / maxPaid) * 100) : 0;
 
   return (
-    <div className="flex items-center gap-3 py-2">
-      {/* Rank */}
+    <div className="flex items-center gap-2.5 py-1.5">
       <div
-        className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold shrink-0 border ${rankStyle}`}
-      >
-        {item.rank <= 3 ? (
-          <Trophy className="w-3 h-3" />
-        ) : (
-          <span>{item.rank}</span>
+        className={cn(
+          'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ring-1 ring-inset',
+          rankStyle,
         )}
+      >
+        {item.rank === 1 ? <Trophy className="h-3 w-3" aria-hidden="true" /> : <span>{item.rank}</span>}
       </div>
 
-      {/* Avatar + name */}
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <UserAvatar name={item.employee_name} size="sm" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs font-medium text-foreground truncate">{item.employee_name}</span>
-            {item.is_active ? (
-              <Badge
-                variant="outline"
-                className="text-xs px-1 py-0 h-3.5 border-emerald-300 text-emerald-700 bg-emerald-50 shrink-0"
-              >
-                <UserCheck className="w-2.5 h-2.5 mr-0.5" />
-                Đang làm
-              </Badge>
-            ) : (
-              <Badge
-                variant="outline"
-                className="text-xs px-1 py-0 h-3.5 border-rose-300 text-rose-700 bg-rose-50 shrink-0"
-              >
-                <UserX className="w-2.5 h-2.5 mr-0.5" />
-                Nghỉ
-              </Badge>
+      <UserAvatar name={item.employee_name} size="sm" className="shrink-0" />
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="truncate text-[13px] font-medium text-foreground">
+            {item.employee_name}
+          </span>
+          <span
+            className={cn(
+              'inline-flex shrink-0 items-center gap-1 text-[10px] font-medium',
+              item.is_active ? 'text-success' : 'text-destructive',
             )}
-          </div>
-          {/* Progress bar */}
-          <div className="mt-1 h-1 rounded-full bg-muted/60 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-primary/70 transition-all duration-500"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
+          >
+            {item.is_active ? (
+              <UserCheck className="h-2.5 w-2.5" aria-hidden="true" />
+            ) : (
+              <UserX className="h-2.5 w-2.5" aria-hidden="true" />
+            )}
+            {item.is_active ? 'Đang làm' : 'Nghỉ'}
+          </span>
+        </div>
+        {/* 56px rank bar, not a full-width progress bar. */}
+        <div className="mt-1 h-1 w-14 overflow-hidden rounded-full bg-muted/60" aria-hidden="true">
+          <div className="h-full rounded-full bg-primary/70" style={{ width: `${width}%` }} />
         </div>
       </div>
 
-      {/* Amount */}
-      <div className="text-right shrink-0">
-        <span className="console-value text-xs font-semibold tabular-nums text-foreground">
-          {formatVND(item.total_paid_vnd)}
-        </span>
-      </div>
+      <span className="console-value shrink-0 text-[11px] font-semibold text-foreground tabular-nums">
+        {formatVND(item.total_paid_vnd)}
+      </span>
     </div>
   );
 });
 
 export const TopPaidEmployeesCard = memo(function TopPaidEmployeesCard({
   month,
+  className,
 }: TopPaidEmployeesCardProps) {
   const { data, isLoading } = useTopPaidEmployees({ month, limit: 10 });
 
@@ -92,32 +83,35 @@ export const TopPaidEmployeesCard = memo(function TopPaidEmployeesCard({
   const maxPaid = employees[0]?.total_paid_vnd ?? 0;
 
   return (
-    <Card variant="console">
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="w-6 h-6 rounded-full" />
-                <Skeleton className="w-8 h-8 rounded-full" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-3 w-32" />
-                  <Skeleton className="h-1.5 w-full rounded-full" />
-                </div>
-                <Skeleton className="h-3 w-16" />
+    <ConsolePanel
+      kicker="Chi trả"
+      title={`Theo nhân viên · ${month ?? 'tất cả'}`}
+      isFlush
+      className={className}
+    >
+      {isLoading ? (
+        <div className="space-y-2 p-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-2.5">
+              <Skeleton className="h-6 w-6 rounded-full" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-1 w-14 rounded-full" />
               </div>
-            ))}
-          </div>
-        ) : employees.length === 0 ? (
-          <EmptyState title="Chưa có dữ liệu thanh toán" size="sm" className="py-4" />
-        ) : (
-          <div className="divide-y divide-border/60">
-            {employees.map((item) => (
-              <EmployeeRow key={item.employee_id} item={item} maxPaid={maxPaid} />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <Skeleton className="h-3 w-16" />
+            </div>
+          ))}
+        </div>
+      ) : employees.length === 0 ? (
+        <EmptyState title="Chưa có dữ liệu thanh toán" size="sm" showIllustration={false} className="py-4" />
+      ) : (
+        <div className="divide-y divide-border/60 px-3">
+          {employees.map((item) => (
+            <EmployeeRow key={item.employee_id} item={item} maxPaid={maxPaid} />
+          ))}
+        </div>
+      )}
+    </ConsolePanel>
   );
 });

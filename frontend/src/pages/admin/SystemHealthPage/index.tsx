@@ -20,17 +20,26 @@ import {
   TimeRangeToggle,
   type TimeRange,
 } from "@/components/system-health";
+import { useLocation } from "react-router-dom";
 import { useAPISummary, useRecentErrors } from "@/hooks/api/useSystemHealth";
+import { getConsoleKicker } from "@/lib/console";
 import { computeHealthMeta } from "./utils";
 
 export default function SystemHealthPage() {
   const { setPageTitle } = useAppState();
+  const location = useLocation();
   React.useEffect(() => { setPageTitle("Tình trạng API"); }, [setPageTitle]);
 
   const [errorDays, setErrorDays] = useState<TimeRange>(1);
 
   const { data: summaryData } = useAPISummary(errorDays);
   const { data: recentErrors } = useRecentErrors(errorDays);
+
+  const headerMeta = useMemo(() => {
+    if (!summaryData) return undefined;
+    const total = summaryData.reduce((s, d) => s + d.count, 0);
+    return `${total.toLocaleString("vi-VN")} yêu cầu · ${errorDays === 1 ? "24 giờ qua" : "7 ngày qua"}`;
+  }, [summaryData, errorDays]);
 
   const healthResult = useMemo(
     () => computeHealthMeta(summaryData, recentErrors),
@@ -41,7 +50,12 @@ export default function SystemHealthPage() {
   return (
     <AdminPageCanvas>
       <AdminPageHeaderCard>
-        <PageHeader icon={Activity} title="Tình trạng API" description="Giám sát hiệu suất và lỗi của hệ thống">
+        <PageHeader
+          icon={Activity}
+          title="Tình trạng API"
+          kicker={getConsoleKicker(location.pathname)}
+          meta={headerMeta}
+        >
           <div className="flex items-center gap-3">
             <TimeRangeToggle value={errorDays} onChange={setErrorDays} />
             {healthMeta && (

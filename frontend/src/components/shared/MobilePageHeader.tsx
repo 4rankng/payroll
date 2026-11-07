@@ -95,9 +95,11 @@ export const MobilePageHeader = ({
             </Button>
           )}
           {Icon && (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-primary/[0.07]">
-              <Icon className="h-4 w-4 text-primary" strokeWidth={2} />
-            </div>
+            <Icon
+              className="h-5 w-5 shrink-0 text-muted-foreground"
+              aria-hidden="true"
+              strokeWidth={2}
+            />
           )}
           <div className="min-w-0 flex-1">
             {kicker && <p className="console-kicker mb-1">{kicker}</p>}

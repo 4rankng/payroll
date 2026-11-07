@@ -132,7 +132,7 @@ function FilterBody({ filters, onChange }: AuditLogFiltersProps) {
   const reset = () => onChange({ page: 1, pageSize: filters.pageSize });
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="console-filter-bar overflow-x-auto">
       <Input
         type="date"
         aria-label="Từ ngày"

@@ -99,7 +99,7 @@ export function getAdvancePaymentColumns(
       accessorKey: "requestAmount",
       header: "Yêu cầu",
       size: 100,
-      meta: { align: "right" },
+      meta: { align: "right", num: true },
       cell: ({ row }) => (
         <span className="text-xs tabular-nums">
           {formatCurrency(row.original.requestAmount)}
@@ -110,7 +110,7 @@ export function getAdvancePaymentColumns(
       accessorKey: "fee",
       header: "Phí",
       size: 80,
-      meta: { align: "right" },
+      meta: { align: "right", num: true },
       cell: ({ row }) => (
         <div className="text-xs text-muted-foreground tabular-nums text-right">
           {formatCurrency(row.original.fee)}
@@ -121,7 +121,7 @@ export function getAdvancePaymentColumns(
       accessorKey: "netAmount",
       header: "Thực nhận",
       size: 100,
-      meta: { align: "right" },
+      meta: { align: "right", num: true },
       cell: ({ row }) => (
         <div className="text-xs font-semibold tabular-nums text-right text-[hsl(var(--success))]">
           {formatCurrency(row.original.netAmount)}
@@ -157,7 +157,7 @@ export function getAdvancePaymentColumns(
       id: "latency",
       header: "Độ trễ",
       size: 110,
-      meta: { align: "right" },
+      meta: { align: "right", num: true },
       cell: ({ row }) => <LatencyCell row={row.original} />,
     },
     {
@@ -312,6 +312,7 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
     accessorKey: "maxAdvanceAmount",
     header: () => <SortHeader label="Hạn mức" field="max_advance_amount" ctx={sort} />,
     size: 90,
+    meta: { align: "right", num: true },
     cell: ({ row }) => (
       <div className="text-xs font-medium tabular-nums">
         {formatCurrency(row.original.maxAdvanceAmount)}
@@ -322,6 +323,7 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
     accessorKey: "utilizedAmount",
     header: () => <SortHeader label="Đã dùng" field="utilized_amount" ctx={sort} />,
     size: 90,
+    meta: { align: "right", num: true },
     cell: ({ row }) => (
       <div className="text-xs text-orange-700 tabular-nums">
         {formatCurrency(row.original.utilizedAmount)}
@@ -332,6 +334,7 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
     accessorKey: "pendingAmount",
     header: () => <SortHeader label="Chờ xử lý" field="pending_amount" ctx={sort} />,
     size: 90,
+    meta: { align: "right", num: true },
     cell: ({ row }) => (
       <div className="text-xs text-amber-700 tabular-nums">
         {formatCurrency(row.original.pendingAmount)}
@@ -342,6 +345,7 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
     accessorKey: "availableAmount",
     header: () => <SortHeader label="Còn lại" field="available_amount" ctx={sort} />,
     size: 90,
+    meta: { align: "right", num: true },
     cell: ({ row }) => (
       <div className="text-xs font-semibold text-emerald-700 tabular-nums">
         {formatCurrency(row.original.availableAmount)}
@@ -352,6 +356,7 @@ export function getFlexPayColumns(sort: SortContext): ColumnDef<FlexPayEmployeeL
     accessorKey: "totalFeeGenerated",
     header: "Phí thu",
     size: 80,
+    meta: { align: "right", num: true },
     cell: ({ row }) => (
       <div className="text-xs text-muted-foreground tabular-nums">
         {formatCurrency(row.original.totalFeeGenerated)}

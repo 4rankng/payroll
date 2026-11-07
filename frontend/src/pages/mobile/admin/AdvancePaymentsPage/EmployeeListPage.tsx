@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { getConsoleKicker } from "@/lib/console";
 // W13c: lucide → verified @untitledui/icons.
 import { ArrowLeft, Calendar, Download01, Users01 } from "@untitledui/icons";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ import { EmployeeDetailSheet } from "@/components/advance-payment/EmployeeDetail
 
 const EmployeeListPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedEmployee, setSelectedEmployee] =
     useState<FlexPayEmployeeListItem | null>(null);
 
@@ -38,6 +40,7 @@ const EmployeeListPage = () => {
         title="Danh sách nhân viên"
         subtitle="Hạn mức ứng lương theo tháng"
         icon={Users01}
+        kicker={getConsoleKicker(location.pathname)}
         sticky={false}
         bordered={false}
         actions={
@@ -69,36 +72,36 @@ const EmployeeListPage = () => {
           </Button>
         </div>
 
-        {/* Month selector */}
-        <Select
-          value={page.selectedViewMonth ?? ""}
-          onValueChange={(v) => page.setSelectedViewMonth(v || undefined)}
-        >
-          <SelectTrigger aria-label="Tháng ứng lương" className="h-11">
-            <Calendar className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
-            <SelectValue placeholder="Chọn tháng" />
-          </SelectTrigger>
-          <SelectContent>
-            {page.availableMonths.length === 0 ? (
-              <SelectItem value="none" disabled>
-                Chưa có dữ liệu
-              </SelectItem>
-            ) : (
-              page.availableMonths.map((m) => (
-                <SelectItem key={m.forMonth} value={m.forMonth}>
-                  {formatMonthDisplay(m.forMonth)} ({m.employeeCount} NV)
+        {/* Month + sort — one console filter row */}
+        <div className="console-filter-bar">
+          <Select
+            value={page.selectedViewMonth ?? ""}
+            onValueChange={(v) => page.setSelectedViewMonth(v || undefined)}
+          >
+            <SelectTrigger aria-label="Tháng ứng lương" className="h-11 min-w-0 flex-1">
+              <Calendar className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Chọn tháng" />
+            </SelectTrigger>
+            <SelectContent>
+              {page.availableMonths.length === 0 ? (
+                <SelectItem value="none" disabled>
+                  Chưa có dữ liệu
                 </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
+              ) : (
+                page.availableMonths.map((m) => (
+                  <SelectItem key={m.forMonth} value={m.forMonth}>
+                    {formatMonthDisplay(m.forMonth)} ({m.employeeCount} NV)
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
 
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
           <Select
             value={page.flexPayFilters.sortBy ?? "max_advance_amount"}
             onValueChange={page.handleFlexPaySort}
           >
-            <SelectTrigger aria-label="Sắp xếp nhân viên" className="h-11 min-w-0">
+            <SelectTrigger aria-label="Sắp xếp nhân viên" className="h-11 min-w-0 flex-1">
               <SelectValue placeholder="Sắp xếp theo" />
             </SelectTrigger>
             <SelectContent>
@@ -111,7 +114,7 @@ const EmployeeListPage = () => {
           <Button
             type="button"
             variant="outline"
-            className="h-11 min-w-20"
+            className="h-11 min-w-20 shrink-0"
             onClick={() =>
               page.handleFlexPaySort(
                 page.flexPayFilters.sortBy ?? "max_advance_amount",

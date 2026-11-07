@@ -9,6 +9,8 @@ interface ResponsiveTableProps<TData = Record<string, unknown>> {
   // Common props
   data: TData[];
   className?: string;
+  /** Console table contract for the desktop DataTable (mobile is card-based). */
+  variant?: "default" | "console";
 
   // Desktop table props
   columns: ColumnDef<TData>[];
@@ -85,6 +87,7 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
   getRowClassName,
   embedded = false,
   density = "dense",
+  variant,
   stickyFirstColumn = true,
   columnVisibilityKey,
   toolbar,
@@ -122,6 +125,7 @@ export function ResponsiveTable<TData = Record<string, unknown>>({
           embedded={embedded}
           emptyState={emptyState}
           density={density}
+          variant={variant}
           stickyFirstColumn={stickyFirstColumn}
           columnVisibilityKey={columnVisibilityKey}
           toolbar={toolbar}

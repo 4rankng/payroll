@@ -48,17 +48,17 @@ export const DateStrip = memo(
             aria-label={`Ngày ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`}
             onClick={() => onDateSelect(date)}
             className={cn(
-              "flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl shrink-0 min-h-11 min-w-11 transition-all active:scale-95",
+              "flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-lg shrink-0 min-h-11 min-w-11 transition-all active:scale-95",
               isActive
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : markedDel
-                  ? "bg-red-50 text-red-700 border border-red-200"
+                  ? "bg-destructive/10 text-destructive border border-destructive/30"
                   : hasEntryError
-                    ? "bg-red-50 text-red-700 border border-red-200"
+                    ? "bg-destructive/10 text-destructive border border-destructive/30"
                     : filled
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      ? "bg-success/10 text-success border border-success/30"
                       : weekend
-                        ? "bg-orange-50/80 text-orange-700"
+                        ? "bg-warning/10 text-warning"
                         : "bg-muted/50 text-muted-foreground",
             )}
           >
@@ -77,11 +77,11 @@ export const DateStrip = memo(
               className={cn(
                 "w-1 h-1 rounded-full mt-0.5",
                 markedDel && !isActive
-                  ? "bg-red-300"
+                  ? "bg-destructive/40"
                   : filled && !isActive
-                    ? "bg-emerald-500"
+                    ? "bg-success"
                     : hasEntryError && !isActive
-                      ? "bg-red-400"
+                      ? "bg-destructive"
                       : "bg-transparent",
               )}
             />

@@ -53,7 +53,7 @@ const SCOPE_META: Record<
     description:
       'Khoá tích hợp cũ trước khi phân tách phạm vi.',
     badgeClass:
-      'border-slate-500/30 bg-slate-500/10 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300',
+      'border-border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground',
   },
 };
 
@@ -285,8 +285,8 @@ export const ApiKeysSection = () => {
   return (
     <div className="space-y-6">
       {/* 1. Header Overview & KPI Metric Rail */}
-      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
-        <div className="bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent p-5 sm:p-6">
+      <div className="console-panel overflow-hidden">
+        <div className="console-panel-header px-5 py-5 sm:px-6 sm:py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-3.5">
               <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 shadow-sm">
@@ -294,7 +294,7 @@ export const ApiKeysSection = () => {
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-base font-semibold tracking-tight text-foreground sm:text-lg">
+                  <h2 className="console-kicker">
                     Khoá API & Tích hợp Machine-to-Machine
                   </h2>
                   <Badge
@@ -331,25 +331,25 @@ export const ApiKeysSection = () => {
         {/* Metric Rail */}
         <div className="grid grid-cols-2 divide-x divide-y border-t bg-muted/15 sm:grid-cols-3 sm:divide-y-0 text-sm">
           <div className="p-3.5 sm:p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="console-kicker">
               Tổng số khoá
             </p>
-            <p className="mt-1 text-xl font-bold tracking-tight text-foreground">{keys.length}</p>
+            <p className="console-value mt-1 text-xl font-bold tracking-tight text-foreground">{keys.length}</p>
           </div>
           <div className="p-3.5 sm:p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="console-kicker">
               Đang hoạt động
             </p>
-            <p className="mt-1 flex items-center justify-center gap-1.5 text-xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
+            <p className="console-value mt-1 flex items-center justify-center gap-1.5 text-xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
               <span className="size-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
               {activeKeysCount}
             </p>
           </div>
           <div className="p-3.5 sm:p-4 text-center">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="console-kicker">
               Đã thu hồi
             </p>
-            <p className="mt-1 flex items-center justify-center gap-1.5 text-xl font-bold tracking-tight text-muted-foreground">
+            <p className="console-value mt-1 flex items-center justify-center gap-1.5 text-xl font-bold tracking-tight text-muted-foreground">
               <span className="size-2 rounded-full bg-muted-foreground/50 inline-block" />
               {revokedKeysCount}
             </p>
@@ -359,8 +359,8 @@ export const ApiKeysSection = () => {
 
       {/* 2. Cấp khoá API mới */}
       <section id="api-keys-create" aria-labelledby="api-keys-create-title">
-        <Card className="overflow-hidden border-border shadow-sm">
-          <CardHeader className="border-b bg-muted/20 p-4 sm:p-5">
+        <Card variant="console">
+          <CardHeader className="console-panel-header p-4 sm:p-5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
                 <Plus className="size-4" aria-hidden="true" />
@@ -518,8 +518,8 @@ export const ApiKeysSection = () => {
 
       {/* 3. Khoá đang có */}
       <section id="api-keys-list" aria-labelledby="api-keys-list-title">
-        <Card className="overflow-hidden border-border shadow-sm">
-          <CardHeader className="border-b bg-muted/20 p-4 sm:p-5">
+        <Card variant="console">
+          <CardHeader className="console-panel-header p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-muted-foreground/20 bg-muted text-foreground">

@@ -52,7 +52,7 @@ const SettingsSection = ({
     >
       <div className="min-w-0">
         <div className="mb-2 flex items-center gap-2">
-          <h3 id={titleId} className="text-sm font-semibold text-foreground">
+          <h3 id={titleId} className="console-kicker">
             {title}
           </h3>
         </div>
@@ -296,7 +296,7 @@ export const ZaloConnectionSection = () => {
       <div
         role="status"
         aria-live="polite"
-        className="rounded-xl border bg-card px-4 py-12 text-center text-sm text-muted-foreground"
+        className="console-panel px-4 py-12 text-center text-sm text-muted-foreground"
       >
         <Loader2
           aria-hidden="true"
@@ -378,8 +378,8 @@ export const ZaloConnectionSection = () => {
   })();
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card text-card-foreground">
-      <header className="bg-muted/20 px-4 py-5 sm:px-6 sm:py-6">
+    <div className="console-panel overflow-hidden text-card-foreground">
+      <header className="console-panel-header px-4 py-5 sm:px-6 sm:py-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex min-w-0 items-start gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700">

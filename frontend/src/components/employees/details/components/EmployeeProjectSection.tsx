@@ -151,7 +151,7 @@ function ProjectPaymentScheduleControl({
 
       <div className="flex flex-wrap items-center gap-2 typography-label-small text-foreground/80">
         {hasPendingChange && (
-          <Badge variant="outline" className="text-financial-pending border-amber-400 flex items-center gap-1">
+          <Badge variant="outline" className="text-financial-pending border-warning flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
             Chờ: {pendingSchedule ? VIETNAMESE_ASSIGNMENT_LABELS.payment_schedule[pendingSchedule] : ''}
           </Badge>
@@ -306,7 +306,7 @@ function ProjectCard({
   };
 
   return (
-    <div className="border rounded-xl p-3 space-y-2 min-h-[120px] flex flex-col">
+    <div className="border rounded-lg p-3 space-y-2 min-h-[120px] flex flex-col">
       {/* Project Header */}
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0">
@@ -577,7 +577,7 @@ export function EmployeeProjectSection({
 
       {/* Projects Grid */}
       {currentProjects.length === 0 ? (
-        <div className="text-center py-4 border-2 border-dashed border-border rounded-xl">
+        <div className="text-center py-4 border-2 border-dashed border-border rounded-lg">
           <div className="flex flex-col items-center gap-2">
             <Building className="w-8 h-8 text-muted-foreground" />
             <p className="typography-body-medium text-muted-foreground">
@@ -617,7 +617,7 @@ export function EmployeeProjectSection({
           {/* Add Project Card - Show in edit mode or when project linking is allowed */}
           {canAssignProjects && (
             <div
-              className="border-2 border-dashed border-muted-foreground/30 rounded-xl p-3 min-h-[120px] flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors group"
+              className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-3 min-h-[120px] flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors group"
               onClick={handleAssignClick}
               role="button"
               tabIndex={0}
@@ -628,8 +628,8 @@ export function EmployeeProjectSection({
                 }
               }}
             >
-              <Plus className="h-6 w-6 text-muted-foreground group-hover:text-blue-700 mb-2" />
-              <span className="typography-body-small text-foreground/80 group-hover:text-blue-700 text-center">
+              <Plus className="h-6 w-6 text-muted-foreground group-hover:text-primary mb-2" />
+              <span className="typography-body-small text-foreground/80 group-hover:text-primary text-center">
                 Gán thêm dự án
               </span>
             </div>

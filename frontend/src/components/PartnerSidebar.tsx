@@ -76,15 +76,15 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
     >
       <div
         className={cn(
-          "relative flex items-center gap-2.5 rounded-xl transition-all duration-200 cursor-pointer select-none",
+          "relative flex items-center gap-2.5 rounded-lg transition-colors duration-150 cursor-pointer select-none",
           isCollapsed
             ? isActive
               ? "h-9 w-9 justify-center mx-auto bg-card/[0.08] ring-1 ring-white/[0.12]"
               : "h-9 w-9 justify-center mx-auto"
-            : "min-h-9 py-1.5 px-3",
+            : "h-9 px-2.5",
           isActive
             ? "bg-[hsl(var(--primary)/0.08)] text-white"
-            : "text-white/50 hover:bg-card/10 hover:text-white/80 hover:translate-x-0.5"
+            : "text-white/80 hover:bg-card/10 hover:text-white"
         )}
       >
         {isActive && !isCollapsed && (
@@ -100,8 +100,8 @@ const NavItem = React.memo(({ item, isCollapsed, onNavigate }: NavItemProps) => 
         />
         {!isCollapsed && (
           <span className={cn(
-            "text-base leading-snug truncate flex-1",
-            isActive ? "font-semibold text-white" : "font-medium"
+            "text-[13px] leading-snug truncate flex-1",
+            isActive ? "font-medium text-white" : "font-normal"
           )}>
             {item.title}
           </span>

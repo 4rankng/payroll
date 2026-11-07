@@ -84,7 +84,7 @@ export function PayrateMatrixEditor({
             <button
               type="button"
               onClick={hourTypeManager.handleApplySuggestion}
-              className="ml-2 text-xs font-semibold text-red-700 underline underline-offset-2 hover:text-red-900 transition-colors"
+              className="ml-2 text-xs font-semibold text-fg-error-primary underline underline-offset-2 hover:text-utility-error-700 transition-colors"
             >
               Dùng: {hourTypeManager.editingHourTypeSuggestion}
             </button>

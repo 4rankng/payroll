@@ -378,10 +378,18 @@ const TimesheetPageMobile = () => {
         <Skeleton className="h-10 w-full" />
         <div className="grid grid-cols-1 gap-3">
           {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-32" />
+            <div key={i} className="console-panel">
+              <div className="console-panel-body">
+                <Skeleton className="h-32 w-full" />
+              </div>
+            </div>
           ))}
         </div>
-        <Skeleton className="h-96" />
+        <div className="console-panel">
+          <div className="console-panel-body">
+            <Skeleton className="h-96 w-full" />
+          </div>
+        </div>
       </div>
     );
   }

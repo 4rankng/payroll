@@ -72,7 +72,7 @@ export function UserInvestigateTable({ days = 14, limit = 10 }: Props) {
       ) : rows.length === 0 ? (
         <AllClear text="Không có người dùng bất thường" />
       ) : (
-        <div className="divide-y border bg-card rounded-xl overflow-hidden">
+        <div className="console-panel divide-y overflow-hidden">
           {rows.map((row) => {
               const user = userRecord?.[row.userId];
               const isExpanded = expandedUser === row.userId;
@@ -86,8 +86,8 @@ export function UserInvestigateTable({ days = 14, limit = 10 }: Props) {
                     onClick={() => setExpandedUser(isExpanded ? null : row.userId)}
                     className={cn(
                       "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30",
-                      isCritical ? "bg-red-50/50"
-                        : isWarn ? "bg-amber-50/30"
+                      isCritical ? "bg-utility-error-50/50"
+                        : isWarn ? "bg-utility-warning-50/30"
                         : ""
                     )}
                   >
@@ -117,7 +117,7 @@ export function UserInvestigateTable({ days = 14, limit = 10 }: Props) {
                         <span className="text-xs text-muted-foreground">Tổng lỗi:</span>
                         <span className={cn(
                           "text-base font-bold tabular-nums",
-                          isCritical ? "text-red-700" : isWarn ? "text-amber-700" : "text-foreground"
+                          isCritical ? "text-fg-error-primary" : isWarn ? "text-fg-warning-primary" : "text-foreground"
                         )}>
                           {row.totalCount.toLocaleString()}
                         </span>
@@ -138,8 +138,8 @@ export function UserInvestigateTable({ days = 14, limit = 10 }: Props) {
                                 className={cn(
                                   "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium border",
                                   code >= 500
-                                    ? "bg-red-100 border-red-200 text-red-700"
-                                    : "bg-orange-50 border-orange-200 text-orange-700"
+                                    ? "bg-utility-error-100 border-utility-error-200 text-utility-error-700"
+                                    : "bg-utility-orange-50 border-utility-orange-200 text-utility-orange-700"
                                 )}
                               >
                                 <span className="font-mono font-bold">{code}</span>
@@ -175,8 +175,8 @@ export function UserInvestigateTable({ days = 14, limit = 10 }: Props) {
                                 className={cn(
                                   "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium border",
                                   ep.statusCode >= 500
-                                    ? "bg-red-100 border-red-200 text-red-700"
-                                    : "bg-orange-50 border-orange-200 text-orange-700"
+                                    ? "bg-utility-error-100 border-utility-error-200 text-utility-error-700"
+                                    : "bg-utility-orange-50 border-utility-orange-200 text-utility-orange-700"
                                 )}
                               >
                                 <span className="font-mono font-bold">{ep.statusCode}</span>

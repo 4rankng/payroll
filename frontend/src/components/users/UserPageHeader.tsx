@@ -1,18 +1,24 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { Download, Plus, UserCog } from "lucide-react";
+import { getConsoleKicker } from "@/lib/console";
+import { useLocation } from "react-router-dom";
+import { Download, Plus } from "lucide-react";
 
 interface UserPageHeaderProps {
   onAddUser: () => void;
   onExportUsers: () => void;
   isExporting?: boolean;
+  /** Drives the console meta line (exact user count). */
+  totalUsers?: number;
 }
 
-export const UserPageHeader = ({ onAddUser, onExportUsers, isExporting = false }: UserPageHeaderProps) => {
+export const UserPageHeader = ({ onAddUser, onExportUsers, isExporting = false, totalUsers }: UserPageHeaderProps) => {
+  const { pathname } = useLocation();
+
   return (
     <PageHeader
+      kicker={getConsoleKicker(pathname)}
       title="Người dùng"
-      description="Quản lý tài khoản người dùng và phân quyền truy cập hệ thống"
-      icon={UserCog}
+      meta={totalUsers !== undefined ? `${totalUsers.toLocaleString("vi-VN")} người dùng` : undefined}
       actions={[
         {
           label: isExporting ? 'Đang xuất...' : 'Xuất Excel',

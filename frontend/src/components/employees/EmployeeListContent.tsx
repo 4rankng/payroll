@@ -98,6 +98,7 @@ export const EmployeeListContent = ({
             emptyState={<EmployeeTableEmptyState onAddEmployee={onAddEmployee} />}
             sorting={sorting}
             onSortingChange={onSortingChange}
+            variant="console"
           />
         </InfiniteScrollContainer>
       ) : (
@@ -117,6 +118,7 @@ export const EmployeeListContent = ({
           sorting={sorting}
           onSortingChange={onSortingChange}
           embedded={embedded}
+          variant="console"
         />
       )}
     </div>

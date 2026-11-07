@@ -98,11 +98,9 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
   return (
     <section
       aria-label="Trung tâm điều khiển bảng công"
-      className={cn(
-        'rounded-xl border border-border bg-card p-3 shadow-[var(--shadow-soft)] sm:p-4',
-        className,
-      )}
+      className={cn('console-panel', className)}
     >
+      <div className="console-panel-body">
       {/* treasury-grid — the fading seam between the forecast zone and the KPI
           zone replaces the old hard lg:border-r divider. */}
       <div className="treasury-grid grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-0">
@@ -144,6 +142,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
             ))}
           </div>
         </div>
+      </div>
       </div>
     </section>
   );

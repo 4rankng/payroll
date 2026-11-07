@@ -1,9 +1,11 @@
 import { ErrorState } from "@/components/ui/error-state";
 import { useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 // UU PRO restyle (W13c): lucide → verified @untitledui/icons; daisyUI
 // ct-btn chrome replaced with equivalent utility classes.
 import { Check, Clipboard, FilterLines, XClose } from '@untitledui/icons';
 import { useInfiniteAuditLogs } from '@/hooks/api/useAuditLogs';
+import { getConsoleKicker } from '@/lib/console';
 import { useInfiniteScroll } from '@/hooks/use-infinite-scroll.tsx';
 import { AuditLogCard, AuditLogCardSkeleton } from '../../../admin/AuditLogPage/AuditLogCard';
 import { AuditLogDetailSheet } from '../../../admin/AuditLogPage/AuditLogDetailSheet';
@@ -64,7 +66,7 @@ function FilterChipGroup({
               'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors touch-manipulation active:scale-95',
               isActive
                 ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-utility-gray-300 bg-white text-fg-secondary',
+                : 'border-utility-gray-300 bg-card text-fg-secondary',
             )}
           >
             {isActive && <Check className="h-3 w-3" />}
@@ -77,6 +79,7 @@ function FilterChipGroup({
 }
 
 export default function AuditLogPageMobile() {
+  const location = useLocation();
   const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
   const [filters, setFilters] = useState<AuditLogsQueryParams>(EMPTY_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -133,6 +136,7 @@ export default function AuditLogPageMobile() {
       <MobilePageHeader
         title="Nhật ký hoạt động"
         icon={Clipboard}
+        kicker={getConsoleKicker(location.pathname)}
         sticky={false}
         actionsLayout="inline"
         className="border-0 px-0 pb-3 shadow-none"
@@ -144,7 +148,7 @@ export default function AuditLogPageMobile() {
         actions={
           <button
             type="button"
-            className="inline-flex h-11 min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-utility-gray-300 bg-white px-3 text-xs font-semibold text-fg-secondary shadow-none"
+            className="inline-flex h-11 min-h-11 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border border-utility-gray-300 bg-card px-3 text-xs font-semibold text-fg-secondary shadow-none"
             onClick={() => setIsFilterOpen(true)}
           >
             <FilterLines className="h-3.5 w-3.5" />
@@ -243,7 +247,7 @@ export default function AuditLogPageMobile() {
       <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
         <SheetContent
           side="bottom"
-          className="flex h-auto max-h-[85dvh] flex-col overflow-hidden rounded-t-[28px] border-t border-white/70 bg-utility-gray-50/95 p-0 shadow-[0_-24px_80px_-36px_rgba(15,23,42,0.65)] backdrop-blur-xl"
+          className="flex h-auto max-h-[85dvh] flex-col overflow-hidden rounded-t-[28px] p-0"
           title="Bộ lọc nhật ký"
           description="Thu hẹp kết quả theo thời gian, hành động và đối tượng"
         >

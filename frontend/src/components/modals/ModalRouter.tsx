@@ -358,8 +358,8 @@ function TimesheetEntrySheetContainer({
 // Default fallback for unknown or unauthorized modals
 function DefaultModalFallback({ modalId, error, onClose }: { modalId: string; error?: string; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-card/80 backdrop-blur-sm">
-      <div className="bg-card rounded-xl p-6 shadow-sm max-w-md">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral/60">
+      <div className="bg-card rounded-lg p-6 shadow-sm max-w-md">
         <h3 className="typography-title-large text-destructive mb-2">
           {error || 'Modal không tồn tại'}
         </h3>
@@ -367,7 +367,7 @@ function DefaultModalFallback({ modalId, error, onClose }: { modalId: string; er
           {error ? error : `Không tìm thấy modal với ID: ${modalId}`}
         </p>
         <button
-          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-xl typography-body-medium"
+          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg typography-body-medium"
           onClick={onClose}
         >
           Đóng

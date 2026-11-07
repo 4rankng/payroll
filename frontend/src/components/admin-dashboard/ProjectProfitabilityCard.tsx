@@ -4,14 +4,14 @@ import {
   Tooltip, ResponsiveContainer,
   type MouseHandlerDataParam,
 } from 'recharts';
-import { TrendingUp, TrendingDown, BarChart2, Eye, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, Eye, Users } from 'lucide-react';
 import { format } from 'date-fns';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DashboardSectionHeader } from '@/components/admin-dashboard/DashboardSectionHeader';
+import { ConsolePanel, ConsoleStatRow } from '@/components/shared/console-panel';
 import { useProjectProfitability, useProjectWeeklyProfit } from '@/hooks/api/useDashboard';
 import type { ProjectProfitabilityItem, ProjectWeeklySeries } from '@/types/api/dashboard.types';
+import { cn } from '@/lib/utils';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -42,7 +42,7 @@ function formatTooltipDate(label: string): string {
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
-import { formatFullCurrency as formatVND } from '@/utils/formatters';
+import { formatCompactVND, formatFullCurrency as formatVND } from '@/utils/formatters';
 
 // ─── Rank badge ───────────────────────────────────────────────────────────────
 
@@ -166,7 +166,13 @@ const SkeletonRows = ({ count }: { count: number }) => (
 
 const INITIAL_VISIBLE_ROWS = 6;
 
-export const ProjectProfitabilityCard = memo(() => {
+interface ProjectProfitabilityCardProps {
+  className?: string;
+}
+
+export const ProjectProfitabilityCard = memo(function ProjectProfitabilityCard({
+  className,
+}: ProjectProfitabilityCardProps) {
   const { data: profitData, isLoading: tableLoading } = useProjectProfitability();
   const { data: weeklyData, isLoading: chartLoading } = useProjectWeeklyProfit(365);
 
@@ -223,12 +229,23 @@ export const ProjectProfitabilityCard = memo(() => {
     });
   }, [weeklyData, allSeries]);
 
+  const summary = useMemo(() => {
+    const projects = profitData?.projects ?? [];
+    return {
+      total: projects.reduce((sum, item) => sum + item.net_profit_vnd, 0),
+      top: projects[0],
+      count: projects.length,
+    };
+  }, [profitData]);
+
   if (tableLoading && chartLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-[300px] w-full rounded-xl" />
-        <Skeleton className="h-[320px] w-full rounded-xl" />
-      </div>
+      <ConsolePanel kicker="Dự án" title="Lợi nhuận dự án" className={className}>
+        <div className="space-y-3">
+          <Skeleton className="h-16 w-full rounded-lg" />
+          <Skeleton className="h-60 w-full rounded-lg" />
+        </div>
+      </ConsolePanel>
     );
   }
 
@@ -236,25 +253,47 @@ export const ProjectProfitabilityCard = memo(() => {
   const hasHidden = hiddenIds.size > 0;
 
   return (
-    <div className="space-y-4">
+    <div className={cn('min-w-0 space-y-3', className)}>
       {/* ── Weekly line chart ── */}
-      <Card variant="console">
-        <CardHeader className="p-3 sm:p-4 pb-3">
-          <div className="flex items-center justify-between gap-2">
-            {(hasHidden || hasFocus) && (
-              <button
-                onClick={showAll}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors duration-150"
-              >
-                <Eye className="h-3 w-3" />
-                Hiện tất cả
-              </button>
-            )}
-          </div>
+      <ConsolePanel
+        kicker="Dự án"
+        title="Lợi nhuận lũy kế"
+        description="Theo tuần · 12 tháng gần nhất"
+        actions={
+          hasHidden || hasFocus ? (
+            <button
+              onClick={showAll}
+              className="flex min-h-9 items-center gap-1 rounded-lg px-2 text-[11px] text-muted-foreground transition-colors duration-150 hover:text-foreground"
+            >
+              <Eye className="h-3 w-3" aria-hidden="true" />
+              Hiện tất cả
+            </button>
+          ) : undefined
+        }
+      >
+        <ConsoleStatRow
+          className="mb-2"
+          stats={[
+            {
+              label: 'Dẫn đầu',
+              value: summary.top?.project_name ?? '—',
+              hint: summary.top ? formatCompactVND(summary.top.net_profit_vnd) : undefined,
+            },
+            {
+              label: 'Tổng',
+              value: formatCompactVND(summary.total),
+              title: formatVND(summary.total),
+            },
+            {
+              label: 'Dự án',
+              value: summary.count.toLocaleString('vi-VN'),
+            },
+          ]}
+        />
 
-          {/* Legend chips — clicking one dims all others to 20% (cross-fade) */}
-          {allSeries.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1">
+        {/* Legend chips — clicking one dims all others to 20% (cross-fade) */}
+        {allSeries.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1">
               {allSeries.map(s => {
                 const hidden = hiddenIds.has(s.project_id);
                 const dimmed = hasFocus && focusedId !== s.project_id;
@@ -291,9 +330,7 @@ export const ProjectProfitabilityCard = memo(() => {
               })}
             </div>
           )}
-        </CardHeader>
 
-        <CardContent className="p-3 sm:p-4 pt-0">
           {chartLoading ? (
             <Skeleton className="h-[240px] w-full rounded-xl" />
           ) : !chartData.length ? (
@@ -388,13 +425,10 @@ export const ProjectProfitabilityCard = memo(() => {
               </ResponsiveContainer>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </ConsolePanel>
 
       {/* ── Ranking table ── */}
-      <DashboardSectionHeader title="Xếp Hạng Lợi Nhuận" subtitle="12 tháng gần nhất" icon={TrendingUp} />
-      <Card variant="console">
-        <CardContent className="p-0">
+      <ConsolePanel kicker="Xếp hạng" title="Lợi nhuận theo dự án" description="12 tháng gần nhất" isFlush>
           {tableLoading ? (
             <div className="px-3 pb-3 space-y-2">
               {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full rounded" />)}
@@ -444,8 +478,7 @@ export const ProjectProfitabilityCard = memo(() => {
               )}
             </>
           )}
-        </CardContent>
-      </Card>
+      </ConsolePanel>
     </div>
   );
 });

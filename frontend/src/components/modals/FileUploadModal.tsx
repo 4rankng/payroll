@@ -283,12 +283,12 @@ export function FileUploadModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogClose asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-3 right-3 h-11 w-11 rounded-xl sm:top-4 sm:right-4 sm:h-8 sm:w-8 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 z-10"
+            className="absolute top-3 right-3 h-11 w-11 rounded-lg sm:top-4 sm:right-4 sm:h-8 sm:w-8 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 z-10"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Đóng</span>
@@ -318,7 +318,7 @@ export function FileUploadModal({
               </CardHeader>
               <CardContent>
                 <div
-                  className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                     dragOver 
                       ? 'border-border bg-muted/50' 
                       : 'border-border hover:border-border'
@@ -338,7 +338,7 @@ export function FileUploadModal({
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <Upload className="h-12 w-12 mx-auto text-gray-600" />
+                      <Upload className="h-12 w-12 mx-auto text-muted-foreground" />
                       <div>
                         <p className="typography-title-large">Kéo thả file vào đây</p>
                         <p className="text-muted-foreground">hoặc</p>
@@ -381,11 +381,11 @@ export function FileUploadModal({
                     {payrollExportFormats.map((format) => {
                       const IconComponent = format.icon;
                       return (
-                        <Card 
-                          key={format.id} 
+                        <Card
+                          key={format.id}
                           className={`cursor-pointer transition-colors ${
-                            selectedExportFormat.id === format.id 
-                              ? 'ring-2 ring-slate-500 bg-muted/50' 
+                            selectedExportFormat.id === format.id
+                              ? 'ring-2 ring-primary bg-muted/50'
                               : 'hover:bg-muted/50'
                           }`}
                           onClick={() => setSelectedExportFormat(format)}
@@ -471,8 +471,8 @@ export function FileUploadModal({
                   {results.map((result, index) => {
                     const IconComponent = result.success ? CheckCircle : XCircle;
                     return (
-                      <div key={index} className="flex items-start gap-3 p-3 border rounded-xl">
-                        <IconComponent className={`h-5 w-5 mt-0.5 ${result.success ? 'text-green-700' : 'text-red-700'}`} />
+                      <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
+                        <IconComponent className={`h-5 w-5 mt-0.5 ${result.success ? 'text-success' : 'text-destructive'}`} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium truncate">{result.fileName}</p>
@@ -482,7 +482,7 @@ export function FileUploadModal({
                           </div>
                           
                           {result.success && result.recordCount && (
-                            <p className="typography-body-medium text-green-700 mt-1">
+                            <p className="typography-body-medium text-success mt-1">
                               Đã xử lý {result.recordCount} bản ghi
                             </p>
                           )}
@@ -490,7 +490,7 @@ export function FileUploadModal({
                           {result.warnings && result.warnings.length > 0 && (
                             <div className="mt-2">
                               {result.warnings.map((warning, wIndex) => (
-                                <div key={wIndex} className="flex items-center gap-2 typography-body-medium text-yellow-800">
+                                <div key={wIndex} className="flex items-center gap-2 typography-body-medium text-warning">
                                   <AlertTriangle className="h-4 w-4" />
                                   {warning}
                                 </div>
@@ -501,7 +501,7 @@ export function FileUploadModal({
                           {result.errors && result.errors.length > 0 && (
                             <div className="mt-2">
                               {result.errors.map((error, eIndex) => (
-                                <p key={eIndex} className="typography-body-medium text-red-700">
+                                <p key={eIndex} className="typography-body-medium text-destructive">
                                   • {error}
                                 </p>
                               ))}
@@ -527,23 +527,23 @@ export function FileUploadModal({
               </CardHeader>
               <CardContent className="space-y-3 text-foreground">
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center typography-body-medium">1</div>
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center typography-body-medium">1</div>
                   <p>Tải xuống file Excel chứa thông tin chuyển khoản</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center typography-body-medium">2</div>
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center typography-body-medium">2</div>
                   <p>Kiểm tra thông tin tài khoản và số tiền của từng nhân viên</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center typography-body-medium">3</div>
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center typography-body-medium">3</div>
                   <p>Import file vào hệ thống Internet Banking của ngân hàng</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center typography-body-medium">4</div>
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center typography-body-medium">4</div>
                   <p>Thực hiện chuyển khoản hàng loạt theo file đã tạo</p>
                 </div>
                 
-                <div className="mt-4 p-3 bg-card rounded-xl border border-border">
+                <div className="mt-4 p-3 bg-card rounded-lg border border-border">
                   <p className="typography-body-medium">Lưu ý quan trọng:</p>
                   <ul className="typography-body-medium mt-1 space-y-1">
                     <li>• Kiểm tra kỹ thông tin tài khoản trước khi chuyển khoản</li>

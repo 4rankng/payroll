@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import ApprovalsPageMobile from "./index";
@@ -56,7 +57,11 @@ describe("ApprovalsPageMobile pagination (PAYR-19)", () => {
   });
 
   it("không còn cap 15: hiển thị phân trang đầy đủ, không copy 'mở bản máy tính'", () => {
-    render(<ApprovalsPageMobile />);
+    render(
+      <MemoryRouter>
+        <ApprovalsPageMobile />
+      </MemoryRouter>,
+    );
     expect(screen.getAllByText("Yêu cầu A").length).toBeGreaterThan(0);
     expect(screen.getByText(/Trang 1 \/ 5/)).toBeTruthy();
     expect(screen.getAllByText(/66 yêu cầu/).length).toBeGreaterThan(0);
@@ -64,7 +69,11 @@ describe("ApprovalsPageMobile pagination (PAYR-19)", () => {
   });
 
   it("bấm Sau chuyển trang 2; đổi filter reset về trang 1", () => {
-    render(<ApprovalsPageMobile />);
+    render(
+      <MemoryRouter>
+        <ApprovalsPageMobile />
+      </MemoryRouter>,
+    );
     fireEvent.click(screen.getByRole("button", { name: /Sau/ }));
     const listCalls = mocks.listCalls.filter((f) => f.pageSize !== 1);
     expect(listCalls[listCalls.length - 1].page).toBe(2);
@@ -75,7 +84,11 @@ describe("ApprovalsPageMobile pagination (PAYR-19)", () => {
   });
 
   it("Duyệt/Từ chối hiện trên mọi item hiển thị; filter chips giữ nguyên", () => {
-    render(<ApprovalsPageMobile />);
+    render(
+      <MemoryRouter>
+        <ApprovalsPageMobile />
+      </MemoryRouter>,
+    );
     expect(screen.getAllByRole("button", { name: "Duyệt" })).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: "Từ chối" })).toHaveLength(2);
     for (const label of ["Chờ duyệt", "Đã duyệt", "Từ chối", "Leo thang", "Tất cả"]) {

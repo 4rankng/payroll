@@ -257,7 +257,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                     handleInputChange('name', formatted);
                   }
                 }}
-                className={`h-11 ${errors.name ? 'border-red-500' : ''}`}
+                className={`h-11 ${errors.name ? 'border-destructive' : ''}`}
                 placeholder="Nhập tên chủ nợ"
               />
               {errors.name && <p className="typography-body-small text-financial-negative mt-1">{errors.name}</p>}
@@ -282,7 +282,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                   type="email"
                   value={formData.email || ''}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`h-11 ${errors.email ? 'border-red-500' : ''}`}
+                  className={`h-11 ${errors.email ? 'border-destructive' : ''}`}
                   placeholder="email@example.com"
                 />
                 {errors.email && <p className="typography-body-small text-financial-negative mt-1">{errors.email}</p>}
@@ -294,7 +294,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                   id="mobile"
                   value={formData.mobile || ''}
                   onChange={(e) => handleInputChange('mobile', e.target.value)}
-                  className={`h-11 ${errors.mobile ? 'border-red-500' : ''}`}
+                  className={`h-11 ${errors.mobile ? 'border-destructive' : ''}`}
                   placeholder="0912345678"
                 />
                 {errors.mobile && <p className="typography-body-small text-financial-negative mt-1">{errors.mobile}</p>}
@@ -324,7 +324,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                   setSelectedBank(bank);
                   handleInputChange('bank_id', bank?.id != null ? String(bank.id) : '');
                 }}
-                className={errors.bank_id ? 'border-red-500' : ''}
+                className={errors.bank_id ? 'border-destructive' : ''}
                 canCreateBank={isAdmin}
               />
               {errors.bank_id && <p className="typography-body-small text-financial-negative mt-1">{errors.bank_id}</p>}
@@ -337,7 +337,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                   id="bank_account_number"
                   value={formData.bank_account_number || ''}
                   onChange={(e) => handleInputChange('bank_account_number', e.target.value)}
-                  className={`h-11 ${errors.bank_account_number ? 'border-red-500' : ''}`}
+                  className={`h-11 ${errors.bank_account_number ? 'border-destructive' : ''}`}
                   placeholder="1234567890"
                 />
                 {errors.bank_account_number && <p className="typography-body-small text-financial-negative mt-1">{errors.bank_account_number}</p>}
@@ -355,7 +355,7 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                       handleInputChange('bank_account_name', formatted);
                     }
                   }}
-                  className={`h-11 ${errors.bank_account_name ? 'border-red-500' : ''}`}
+                  className={`h-11 ${errors.bank_account_name ? 'border-destructive' : ''}`}
                   placeholder="Nguyễn Văn A"
                 />
                 {errors.bank_account_name && <p className="typography-body-small text-financial-negative mt-1">{errors.bank_account_name}</p>}
@@ -377,13 +377,13 @@ export function EditLenderSheet({ isOpen, onClose, lenderId }: EditLenderSheetPr
                   </div>
                   <div className="space-y-1">
                     <p className="typography-body-small text-muted-foreground">Dư nợ</p>
-                    <p className="typography-body-medium font-semibold text-orange-700">
+                    <p className="typography-body-medium font-semibold text-warning">
                       {new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(lenderData.summary.outstanding_principal)}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <p className="typography-body-small text-muted-foreground">Đã trả</p>
-                    <p className="typography-body-medium font-semibold text-green-700">
+                    <p className="typography-body-medium font-semibold text-success">
                       {new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(lenderData.summary.total_principal_repaid)}
                     </p>
                   </div>

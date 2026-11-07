@@ -60,10 +60,10 @@ export function DeleteEmployeeModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg rounded-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <XCircle className="h-5 w-5 text-red-700" />
+            <XCircle className="h-5 w-5 text-destructive" />
             Xác nhận xóa nhân viên
           </DialogTitle>
           <DialogDescription>
@@ -76,7 +76,7 @@ export function DeleteEmployeeModal({
 
           {/* Timesheet Loading State */}
           {timesheetLoading && (
-            <div className="p-4 border border-border bg-muted/50 rounded-xl">
+            <div className="p-4 border border-border bg-muted/50 rounded-lg">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 animate-spin" />
                 Đang kiểm tra dữ liệu chấm công...
@@ -86,14 +86,14 @@ export function DeleteEmployeeModal({
 
           {/* Timesheet Warning Section */}
           {!timesheetLoading && hasTimesheets && (
-            <div className="p-4 border border-red-200 bg-red-50 rounded-xl">
+            <div className="p-4 border border-destructive/30 bg-destructive/10 rounded-lg">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-red-700 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-red-800">
+                  <p className="text-sm font-medium text-destructive">
                     Không thể xóa nhân viên này
                   </p>
-                  <p className="text-sm text-red-700">
+                  <p className="text-sm text-destructive">
                     Nhân viên này có:
                   </p>
                   <div className="space-y-1 text-xs">
@@ -108,7 +108,7 @@ export function DeleteEmployeeModal({
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-red-700 mt-2">
+                  <p className="text-xs text-destructive mt-2">
                     Vui lòng gỡ bỏ tất cả dữ liệu chấm công trước khi xóa nhân viên.
                   </p>
                 </div>
@@ -118,10 +118,10 @@ export function DeleteEmployeeModal({
 
           {/* General Warning for employees with projects but no timesheets */}
           {currentProjects.length > 0 && !hasTimesheets && (
-            <div className="p-3 border border-amber-200 bg-amber-50 rounded-xl">
+            <div className="p-3 border border-warning/30 bg-warning/10 rounded-lg">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-700 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-800">
+                <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-warning">
                   Nhân viên này đang được gán vào {currentProjects.length} dự án.
                   Hành động này sẽ gỡ bỏ nhân viên khỏi tất cả dự án và không thể hoàn thành.
                 </p>
@@ -130,7 +130,7 @@ export function DeleteEmployeeModal({
           )}
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
+        <div className="flex justify-end gap-2 pt-3 border-t border-border/65">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Hủy bỏ
           </Button>

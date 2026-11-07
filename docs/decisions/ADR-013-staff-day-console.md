@@ -24,6 +24,20 @@ The payroll staff surfaces (Admin, Partner, Accountant — desktop and mobile) c
 
 **Dead-code note:** the spec-referenced components `PremiumStatStrip`, `PendingApprovalCard`, `RecentActivitiesCard`, and `FinancialChart` had no rendering consumers on `main` — the live dashboard implements the same patterns inline in `DashboardOverview.tsx`. Restyling targeted the live components; the unused files were left in place (pre-existing dead code, not made dead by this change).
 
+### Addendum — packed gallery (latest toto.sg insights pass, 2026-11-07)
+
+The later toto.sg commits (`32843bf` insights gallery, `29e4dbb` pack + drop prose, `e15bcbc`/`f58465b` row tightening) moved the console from a stack of cards to a **packed gallery**. Payroll adopts the parts that transfer:
+
+11. **Panels own their headers.** `ConsolePanel` (`components/shared/console-panel.tsx`) renders the mono kicker, 13px title, optional short meta, actions and footer as part of the panel. `DashboardSectionHeader` and `DashboardAreaHeader` are retired; page-level `ConsoleSectionHeading` (16px, meta line, no description) separates galleries.
+12. **Masonry packing.** `MasonryGrid` packs uneven panels on a 12-column track by spanning 1px rows from measured heights (8px gap); below `lg` panels stack normally. Admin finance/workforce galleries use `lg:col-span-7/5/5` so a short panel's column is filled by the next panel instead of leaving page background. The two-panel partner gallery uses a stretch grid, not masonry, so an empty leaderboard fills the row height.
+13. **Observed vs previous period.** `ConsoleDelta` renders a signed change beside the figure. The monthly financial table carries a Δ column (visible at `xl`) and three stat chips (accumulated, latest month, latest revenue); partner KPI tiles carry MoM deltas, suppressed when the current value is zero so a meaningless `+46%` on `0` is never shown.
+14. **Stat chips under charts.** `ConsoleStat`/`ConsoleStatRow` use the bare variant (top hairline) for 2–3 figures under charts: bank donut (headcount, leader, bank count), salary distribution (mean/min/max), profitability (leader/total/count), monthly table. No icon chrome.
+15. **Non-zero row law.** Queues render only real rows: a completed approval queue, a fully disbursed salary queue, a zero activity channel, or a zero mobile task row is omitted. An empty priority panel shows one all-clear line; an empty task list renders nothing.
+16. **No filler prose.** Descriptions that restated a title were removed; remaining descriptions are period/count/source meta. The fair-cage explanatory line from toto is not ported.
+17. **Compact empty states.** `EmptyState` gains `showIllustration`; dashboard empties pass `false` and render text plus a next action only.
+18. **Slow-load fallback.** The bank-distribution panel switches from its skeleton to a compact "tải chậm" row with a retry after 8s (the endpoint can stall); no giant empty skeleton.
+19. **Mobile parity.** Mobile dashboards use the same `ConsolePanel` primitives via `MobileOperationsPanel`/`MobileTaskList`; the month bar, header kicker, stat strip (20px value / 9px mono label), sidebar active bar and 13px labels match the desktop contract. Zero rows and navigation-only "tasks" are removed; quick actions/nav keep the destinations.
+
 ## Consequences
 
 - Per-page chrome (glass header cards, radial washes, icon chips) is retired on staff surfaces; `AdminPageHeaderCard` becomes a transparent layout wrapper.

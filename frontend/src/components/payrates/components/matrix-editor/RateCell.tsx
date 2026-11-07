@@ -36,9 +36,9 @@ export function RateCell({ position, dayType, hourType, rate, readOnly = false, 
     : null;
 
   const diffClasses: Record<DiffState, string> = {
-    new:       'bg-emerald-50 border-emerald-400 text-emerald-900 focus:border-emerald-500 focus:ring-emerald-500/20',
-    modified:  'bg-amber-50  border-amber-400  text-amber-900  focus:border-amber-500  focus:ring-amber-500/20',
-    deleted:   'bg-red-50    border-red-400    text-red-900    focus:border-red-500    focus:ring-red-500/20',
+    new:       'bg-utility-success-50 border-utility-success-400 text-fg-success-primary focus:border-utility-success-500 focus:ring-utility-success-500/20',
+    modified:  'bg-utility-warning-50 border-utility-warning-400 text-fg-warning-primary focus:border-utility-warning-500 focus:ring-utility-warning-500/20',
+    deleted:   'bg-utility-error-50   border-utility-error-400   text-fg-error-primary   focus:border-utility-error-500   focus:ring-utility-error-500/20',
     unchanged: '',
   };
 
@@ -84,9 +84,9 @@ export function RateCell({ position, dayType, hourType, rate, readOnly = false, 
       {hasDiff && (
         <span className={cn(
           "absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full",
-          diffState === 'new'      && "bg-emerald-500",
-          diffState === 'modified' && "bg-amber-500",
-          diffState === 'deleted'  && "bg-red-500",
+          diffState === 'new'      && "bg-utility-success-500",
+          diffState === 'modified' && "bg-utility-warning-500",
+          diffState === 'deleted'  && "bg-utility-error-500",
         )} />
       )}
     </div>

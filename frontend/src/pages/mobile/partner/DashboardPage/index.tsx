@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { MobilePageShell, MobileSurface } from '@/components/shared/MobilePageShell';
+import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import {
   MobileOperationsPanel,
@@ -32,7 +33,7 @@ import { TimesheetMonthSelector } from '@/components/timesheet/TimesheetMonthSel
 import { cn } from '@/lib/utils';
 import type { TopPaidEmployeeItem, PartnerEmployeeListType } from '@/types/api/dashboard.types';
 import type { Employee } from '@/types/api/employee.types';
-import { formatFullCurrency as formatVND } from '@/utils/formatters';
+import { formatFullCurrency as formatVND, formatCompactVND } from '@/utils/formatters';
 
 const ALL_VALUE = 'all';
 
@@ -171,7 +172,7 @@ const PartnerDashboardMobile = () => {
   const operationMetrics = useMemo<MobileOperationMetric[]>(() => [
     {
       label: 'Tổng chi trả',
-      value: formatVND(data?.total_paid_vnd ?? 0),
+      value: formatCompactVND(data?.total_paid_vnd ?? 0),
       helper: momAmountSublabel,
       icon: Banknote,
       tone: 'primary',
@@ -203,36 +204,25 @@ const PartnerDashboardMobile = () => {
     },
   ], [data, momAmountSublabel, momEmployeesSublabel, openSheet]);
 
-  const taskRows = useMemo<MobileTaskRow[]>(() => [
-    {
-      title: 'Nhân viên cần kiểm tra',
-      description: 'Không có bảng công trong 14 ngày gần nhất',
-      value: (data?.dropped_employees ?? 0).toLocaleString('vi-VN'),
-      icon: UserX,
-      tone: (data?.dropped_employees ?? 0) > 0 ? 'warning' : 'success',
-      onClick: (data?.dropped_employees ?? 0) > 0 ? () => openSheet('dropped') : undefined,
-    },
-    {
-      title: 'Bảng công tháng này',
-      description: 'Mở danh sách bảng công để rà soát theo dự án',
-      value: periodLabel,
-      icon: ClipboardList,
-      tone: 'primary',
-      onClick: () => navigate('/partner/timesheet'),
-    },
-    {
-      title: 'Lịch sử thanh toán',
-      description: 'Kiểm tra các kỳ đã chi trả cho nhân sự',
-      value: 'Xem',
-      icon: History,
-      tone: 'neutral',
-      onClick: () => navigate('/partner/timesheet/payment-history'),
-    },
-  ], [data?.dropped_employees, navigate, openSheet, periodLabel]);
+  const taskRows = useMemo<MobileTaskRow[]>(() => {
+    const dropped = data?.dropped_employees ?? 0;
+    if (dropped <= 0) return [];
+
+    return [
+      {
+        title: 'Nhân viên cần kiểm tra',
+        description: 'Không có bảng công trong 14 ngày gần nhất',
+        value: dropped.toLocaleString('vi-VN'),
+        icon: UserX,
+        tone: 'warning',
+        onClick: () => openSheet('dropped'),
+      },
+    ];
+  }, [data?.dropped_employees, openSheet]);
 
   return (
     <MobilePageShell className="space-y-2">
-      <h1 className="py-1 font-display text-xl font-bold tracking-tight text-foreground">Tổng quan</h1>
+      <MobilePageHeader kicker="Đối tác" title="Tổng quan" subtitle={periodLabel} />
       <TimesheetMonthSelector value={selectedMonth} onChange={handleMonthChange} />
 
       {isLoading ? (
@@ -252,7 +242,7 @@ const PartnerDashboardMobile = () => {
           eyebrow={periodLabel}
           title="Theo dõi chi trả"
           primaryLabel="Tổng chi trả"
-          primaryValue={formatVND(data?.total_paid_vnd ?? 0)}
+          primaryValue={formatCompactVND(data?.total_paid_vnd ?? 0)}
           primaryHint={momAmountSublabel}
           metrics={operationMetrics}
           actions={quickActions}

@@ -19,6 +19,8 @@ export interface EmptyStateProps {
   };
   children?: ReactNode;
   variant?: EmptyStateIllustrationVariant;
+  /** Set false on dense console panels — text + action only. */
+  showIllustration?: boolean;
   size?: 'sm' | 'default';
   className?: string;
 }
@@ -45,6 +47,7 @@ export const EmptyState = memo(function EmptyState({
   action,
   children,
   variant,
+  showIllustration = true,
   size = 'default',
   className,
 }: EmptyStateProps) {
@@ -58,10 +61,12 @@ export const EmptyState = memo(function EmptyState({
         className,
       )}
     >
-      <EmptyStateIllustration
-        variant={variant ?? inferVariant(title, description)}
-        className={size === 'default' ? 'h-24 w-24 sm:h-28 sm:w-28' : 'h-16 w-16 sm:h-20 sm:w-20'}
-      />
+      {showIllustration && (
+        <EmptyStateIllustration
+          variant={variant ?? inferVariant(title, description)}
+          className={size === 'default' ? 'h-24 w-24 sm:h-28 sm:w-28' : 'h-16 w-16 sm:h-20 sm:w-20'}
+        />
+      )}
       <div className="min-w-0 max-w-md">
         <p className="text-xs font-semibold text-foreground">{title}</p>
         {description && (

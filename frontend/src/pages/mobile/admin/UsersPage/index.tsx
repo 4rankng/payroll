@@ -23,16 +23,24 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { useUserDataInfinite } from "@/hooks/users/useUserDataInfinite";
 import { useUserModals } from "@/hooks/useModalNavigation";
 import { useUserFiltersWithBackend } from "@/hooks/users/useUserFiltersWithBackend";
+import { useUserExport } from "@/hooks/users/useUserExport";
+import { useAllProjects } from "@/hooks/api/useProjects";
 import { useUsersSummary } from "@/hooks/api/useUsers";
 import { useAuth } from "@/contexts";
-import { FilterLines, Plus, Users01, XClose } from "@untitledui/icons";
+import { useLocation } from "react-router-dom";
+import { getConsoleKicker } from "@/lib/console";
+import { Download01, FilterLines, Plus, Users01, XClose } from "@untitledui/icons";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 const UsersPageMobile = () => {
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const { user } = useAuth();
+  const { pathname } = useLocation();
   const isAdvPartner = user?.role === "adv_partner";
 
   const filterState = useUserFiltersWithBackend();
+  const { exportUsers, isExporting } = useUserExport();
+  const { data: projectsData } = useAllProjects();
   const userData = useUserDataInfinite({
     pageSize: filterState.filters.pageSize,
     sortBy: filterState.filters.sortBy,
@@ -86,8 +94,11 @@ const UsersPageMobile = () => {
   }, [summaryData]);
 
   const activeFilterCount = useMemo(() => {
-    return filterState.role ? 1 : 0;
-  }, [filterState.role]);
+    let count = 0;
+    if (filterState.role) count++;
+    if (filterState.projectId) count++;
+    return count;
+  }, [filterState.role, filterState.projectId]);
 
   if (userData.isLoading && userData.users.length === 0) {
     return (
@@ -96,15 +107,18 @@ const UsersPageMobile = () => {
           <Skeleton className="h-7 w-32" />
           <Skeleton className="h-9 w-16" />
         </div>
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-4 overflow-hidden rounded-lg border border-border bg-card">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-xl" />
+            <div key={i} className={i > 0 ? "flex min-h-16 flex-col justify-center gap-1.5 border-l border-border px-2 py-2.5" : "flex min-h-16 flex-col justify-center gap-1.5 px-2 py-2.5"}>
+              <Skeleton className="h-2.5 w-10" />
+              <Skeleton className="h-3.5 w-8" />
+            </div>
           ))}
         </div>
-        <Skeleton className="h-11 w-full rounded-xl" />
+        <Skeleton className="h-11 w-full rounded-lg" />
         <div className="space-y-2">
           {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full rounded-xl" />
+            <Skeleton key={i} className="h-14 w-full rounded-lg" />
           ))}
         </div>
       </div>
@@ -116,17 +130,30 @@ const UsersPageMobile = () => {
       {/* Header */}
       <MobilePageHeader
         title="Người dùng"
+        kicker={getConsoleKicker(pathname)}
         icon={Users01}
         actions={
           !isAdvPartner ? (
-            <Button
-              size="sm"
-              className="h-11 px-4 btn-admin-primary shrink-0"
-              onClick={() => openAddUser()}
-            >
-              <Plus className="h-4 w-4 mr-1" aria-hidden="true" />
-              Thêm
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-11 w-11 px-0 shrink-0"
+                onClick={() => exportUsers(filterState.filters)}
+                aria-label="Xuất danh sách người dùng"
+                disabled={isExporting}
+              >
+                <Download01 className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <Button
+                size="sm"
+                className="h-11 px-4 btn-admin-primary shrink-0"
+                onClick={() => openAddUser()}
+              >
+                <Plus className="h-4 w-4 mr-1" aria-hidden="true" />
+                Thêm
+              </Button>
+            </div>
           ) : undefined
         }
       />
@@ -156,9 +183,12 @@ const UsersPageMobile = () => {
         </div>
       )}
       {summaryLoading && !isAdvPartner && (
-        <div className="grid grid-cols-4 gap-1.5 px-4 pb-3">
+        <div className="grid grid-cols-4 overflow-hidden rounded-lg border border-border bg-card mx-4 mb-3">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-xl" />
+            <div key={i} className={i > 0 ? "flex min-h-16 flex-col justify-center gap-1.5 border-l border-border px-2 py-2.5" : "flex min-h-16 flex-col justify-center gap-1.5 px-2 py-2.5"}>
+              <Skeleton className="h-2.5 w-10" />
+              <Skeleton className="h-3.5 w-8" />
+            </div>
           ))}
         </div>
       )}
@@ -175,7 +205,7 @@ const UsersPageMobile = () => {
           <Button
             variant="outline"
             size="icon"
-            className="h-11 w-11 rounded-xl border-border/60 bg-card shrink-0 relative"
+            className="h-11 w-11 rounded-lg border-border/60 bg-card shrink-0 relative"
             onClick={() => setFilterSheetOpen(true)}
             aria-label="Bộ lọc"
           >
@@ -207,6 +237,17 @@ const UsersPageMobile = () => {
                   accountant: "Kế toán",
                 }[filterState.role]
               }
+              <XClose className="h-3 w-3" aria-hidden="true" />
+            </button>
+          )}
+          {filterState.projectId !== undefined && (
+            <button
+              type="button"
+              aria-label="Xóa lọc dự án"
+              className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-secondary px-3 text-xs font-semibold text-secondary-foreground"
+              onClick={() => filterState.setProjectId(undefined)}
+            >
+              {projectsData?.find((p) => p.id === filterState.projectId)?.name ?? "Dự án"}
               <XClose className="h-3 w-3" aria-hidden="true" />
             </button>
           )}
@@ -312,6 +353,25 @@ const UsersPageMobile = () => {
                   <SelectItem value="accountant">Kế toán</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Dự án</label>
+              <SearchableSelect
+                value={filterState.projectId !== undefined ? filterState.projectId.toString() : "all"}
+                onChange={(v) =>
+                  filterState.setProjectId(v === "all" ? undefined : parseInt(v))
+                }
+                searchPlaceholder="Tìm dự án..."
+                emptyMessage="Không tìm thấy dự án."
+                triggerAriaLabel="Lọc dự án người dùng"
+                options={[
+                  { value: "all", label: "Tất cả dự án" },
+                  ...(projectsData ?? []).map((p) => ({
+                    value: p.id.toString(),
+                    label: p.name,
+                  })),
+                ]}
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Sắp xếp</label>

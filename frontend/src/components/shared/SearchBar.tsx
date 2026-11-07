@@ -63,7 +63,7 @@ export const SearchBar = React.memo(function SearchBar({
   return (
     <div
       className={cn(
-        'inline-flex min-h-11 items-center gap-2 rounded-xl px-3 py-0 text-sm sm:min-h-9 sm:px-2.5',
+        'inline-flex min-h-11 items-center gap-2 rounded-lg px-3 py-0 text-sm sm:min-h-9 sm:px-2.5',
         'border border-border/60 bg-card text-muted-foreground',
         'hover:border-border hover:text-foreground transition-colors duration-100',
         'focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/20',

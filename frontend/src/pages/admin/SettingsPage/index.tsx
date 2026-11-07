@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 // PageHeader's icon slot is widened to ComponentType<SVGProps> (W13a
 // follow-up), so the UU icon fits; page-owned icons are UU as well.
 import { AlertCircle, RefreshCw05, Settings01 } from '@untitledui/icons';
@@ -20,6 +20,7 @@ import {
   VALID_SETTINGS_TABS,
 } from '@/components/settings/SettingsTabList';
 import { useSettingsForm } from '@/hooks/settings/useSettingsForm';
+import { getConsoleKicker } from '@/lib/console';
 import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule/FeeScheduleSection';
 import { WeeklyPaymentFeeScheduleSection } from '@/components/admin/WeeklyPaymentFeeSchedule/WeeklyPaymentFeeScheduleSection';
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
@@ -31,6 +32,7 @@ import { OpsApiKeysSection } from '@/components/settings/OpsApiKeysSection';
 
 const SettingsPage = () => {
   const form = useSettingsForm();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const activeTab =
@@ -54,8 +56,8 @@ const SettingsPage = () => {
   const headerSkeleton = useMemo(
     () => (
       <div className="space-y-2">
-        <Skeleton className="h-7 w-52" />
-        <Skeleton className="h-4 w-80" />
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-6 w-52" />
       </div>
     ),
     [],
@@ -65,8 +67,8 @@ const SettingsPage = () => {
     return (
       <AdminPageCanvas contentClassName="max-w-[1180px] space-y-6">
         <AdminPageHeaderCard>{headerSkeleton}</AdminPageHeaderCard>
-        <Skeleton className="h-9 w-72" />
-        <div className="space-y-3">
+        <Skeleton className="h-9 w-full max-w-xl" />
+        <div className="console-panel space-y-3 p-4">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-72 w-full" />
         </div>
@@ -80,6 +82,7 @@ const SettingsPage = () => {
         <AdminPageHeaderCard>
           <PageHeader
             icon={Settings01}
+            kicker={getConsoleKicker(location.pathname)}
             title="Cài đặt hệ thống"
             description="Quản lý các cài đặt nghiệp vụ của hệ thống"
           />
@@ -106,6 +109,7 @@ const SettingsPage = () => {
       <AdminPageHeaderCard>
         <PageHeader
           icon={Settings01}
+          kicker={getConsoleKicker(location.pathname)}
           title="Cài đặt hệ thống"
           description="Quản lý các cài đặt nghiệp vụ của hệ thống"
         />

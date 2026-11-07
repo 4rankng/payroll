@@ -6,41 +6,35 @@ import { format, startOfMonth } from 'date-fns';
 // follow-up), so UU's plain-FC icons fit everywhere on this page.
 import {
   AlertTriangle,
-  ArrowUpRight,
-  BarChart03,
-  Building02,
   FolderCheck,
-  ShieldTick,
   SwitchHorizontal01,
-  Trophy01,
-  Users01,
 } from '@untitledui/icons';
 
 import { DashboardLoadingSkeleton } from '@/components/ui/loading-states';
 import { DashboardHeader } from '@/components/admin-dashboard/DashboardHeader';
-import { DashboardSectionHeader } from '@/components/admin-dashboard/DashboardSectionHeader';
 import { RecentEmployeesCard } from '@/components/admin-dashboard/RecentEmployeesCard';
 import { ActivityUsersSheet } from '@/components/admin-dashboard/ActivityUsersSheet';
 import { ProjectProfitabilityCard } from '@/components/admin-dashboard/ProjectProfitabilityCard';
 import { SalaryDistributionChart } from '@/components/admin-dashboard/SalaryDistributionChart';
 import { MonthlyFinancialTable } from '@/components/admin-dashboard/MonthlyFinancialTable';
 import { TopPaidEmployeesCard } from '@/components/admin-dashboard/TopPaidEmployeesCard';
-import { BankTransferBreakdownCard, ProjectSelector } from '@/components/admin-dashboard/BankTransferBreakdownCard';
+import { BankTransferBreakdownCard } from '@/components/admin-dashboard/BankTransferBreakdownCard';
 import { CheckInHealthStrip } from '@/components/admin-dashboard/CheckInHealthStrip';
 import {
   DashboardActivityPanel,
-  DashboardAreaHeader,
   DashboardMetricStrip,
   DashboardPriorityList,
   type DashboardMetricItem,
   type DashboardPriorityItem,
 } from '@/components/admin-dashboard/DashboardOverview';
+import { ConsoleSectionHeading } from '@/components/shared/console-panel';
+import { MasonryGrid } from '@/components/shared/masonry-grid';
 import { useApprovalsList } from '@/hooks/api/useApprovals';
 import { useDashboardData } from '@/hooks/admin-dashboard/useDashboardData';
 import { useDashboardActions } from '@/hooks/admin-dashboard/useDashboardActions';
 import { useDashboardStats } from '@/hooks/admin-dashboard/useDashboardStats';
 import { useTimesheets } from '@/hooks/api/useTimesheets';
-import { useBankUsageAllProjects, useEmployeeActivityStats } from '@/hooks/api/useDashboard';
+import { useEmployeeActivityStats } from '@/hooks/api/useDashboard';
 import { useDashboardNavigation } from '@/hooks/useDashboardNavigation';
 import { CheckInRosterReminderBanner } from '@/components/admin-dashboard/CheckInRosterReminderBanner';
 import { formatFullCurrency as formatVND, formatCompactVND } from '@/utils/formatters';
@@ -48,10 +42,7 @@ import { formatFullCurrency as formatVND, formatCompactVND } from '@/utils/forma
 const AdminDashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(format(startOfMonth(new Date()), 'yyyy-MM'));
   const [activitySchedule, setActivitySchedule] = useState<'weekly' | 'monthly' | 'flexible' | null>(null);
-  const [bankProjectId, setBankProjectId] = useState<number | null>(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-
-  const { data: bankData } = useBankUsageAllProjects();
 
   const handleMonthChange = useCallback((value: string) => {
     setSelectedMonth(value);
@@ -117,20 +108,25 @@ const AdminDashboard = () => {
 
   const activityItems = useMemo(
     () =>
-      activityStats.map((item) => ({
-        label: typeof item.label === 'string' ? item.label : 'Hoạt động',
-        value: item.value,
-        onClick: item.onClick,
-      })),
+      activityStats
+        .map((item) => ({
+          label: typeof item.label === 'string' ? item.label : 'Hoạt động',
+          value: item.value,
+          onClick: item.onClick,
+        }))
+        // Non-zero row law: a zero channel is noise, not a signal.
+        .filter((item) => Number(item.value) > 0),
     [activityStats],
   );
 
   const activityProjectItems = useMemo(
     () =>
-      (activityData?.active_by_project ?? []).map((project) => ({
-        label: project.project_name,
-        value: project.count,
-      })),
+      (activityData?.active_by_project ?? [])
+        .map((project) => ({
+          label: project.project_name,
+          value: project.count,
+        }))
+        .filter((project) => Number(project.value) > 0),
     [activityData],
   );
 
@@ -173,66 +169,66 @@ const AdminDashboard = () => {
       return [];
     }
 
-    return [
-      {
+    const items: DashboardPriorityItem[] = [];
+    const pendingKnown = pendingApprovals !== null;
+    const pendingCount = pendingApprovals ?? 0;
+
+    // Non-zero row law: a completed queue is not a task. Only a real value,
+    // a load failure, or a pending fetch earns a row.
+    if (hasPendingError || !pendingKnown || pendingCount > 0) {
+      items.push({
         title: 'Bảng công chờ duyệt',
-        detail:
-          hasPendingError
-            ? 'Không thể tải hàng đợi toàn hệ thống. Làm mới số liệu để thử lại.'
-            : pendingApprovals === null
-              ? 'Đang tải hàng đợi bảng công trên toàn hệ thống.'
-              : pendingApprovals > 0
-                ? 'Xử lý các bảng công này trước khi khóa sổ lương.'
-                : 'Không có bảng công đang chờ xử lý trên toàn hệ thống.',
-        value: pendingApprovals === null ? '--' : pendingApprovals.toLocaleString('vi-VN'),
-        statusLabel: hasPendingError
-          ? 'Không thể tải'
-          : pendingApprovals === null
-            ? 'Đang tải'
-            : pendingApprovals > 0
-              ? 'Cần duyệt'
-              : 'Đã xử lý',
+        detail: hasPendingError
+          ? 'Không thể tải hàng đợi toàn hệ thống.'
+          : !pendingKnown
+            ? 'Đang tải hàng đợi bảng công.'
+            : 'Xử lý trước khi khóa sổ lương.',
+        value: !pendingKnown ? '--' : pendingCount.toLocaleString('vi-VN'),
+        statusLabel: hasPendingError ? 'Lỗi tải' : !pendingKnown ? 'Đang tải' : 'Cần duyệt',
         icon: AlertTriangle,
-        tone:
-          hasPendingError || pendingApprovals === null
-            ? 'neutral'
-            : pendingApprovals > 0
-              ? 'warning'
-              : 'success',
+        tone: hasPendingError || !pendingKnown ? 'neutral' : 'warning',
         onClick:
-          pendingApprovals !== null && pendingApprovals > 0
+          pendingKnown && pendingCount > 0
             ? dashboardNav.navigateToPendingApprovals
             : undefined,
-      },
-      {
+      });
+    }
+
+    if (data.dashboardSummary.pending_salary_this_month > 0) {
+      items.push({
         title: 'Lương chờ giải ngân',
-        // No paid-salary figure here — that metric belongs to the strip above.
-        detail: `Số tiền sẽ giải ngân sau khi chốt công kỳ ${monthLabel}.`,
+        detail: `Sau khi chốt công kỳ ${monthLabel}.`,
         value: formatVND(data.dashboardSummary.pending_salary_this_month),
-        statusLabel:
-          data.dashboardSummary.pending_salary_this_month > 0 ? 'Cần theo dõi' : 'Đã giải ngân',
+        statusLabel: 'Cần theo dõi',
         icon: SwitchHorizontal01,
-        tone: data.dashboardSummary.pending_salary_this_month > 0 ? 'primary' : 'success',
+        tone: 'primary',
         onClick: dashboardNav.navigateToSalaryLedger,
-      },
-      ...(approvalsQueue.data && (approvalsQueue.data.pagination?.totalRecords ?? 0) + (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0
-        ? [
-            {
-              title: 'Yêu cầu phê duyệt',
-              detail: 'Yêu cầu đang chờ duyệt hoặc đã leo thang.',
-              value: (
-                (approvalsQueue.data.pagination?.totalRecords ?? 0) +
-                (approvalsEscalated.data?.pagination?.totalRecords ?? 0)
-              ).toLocaleString('vi-VN'),
-              statusLabel:
-                (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0 ? 'Có leo thang' : 'Cần duyệt',
-              icon: FolderCheck,
-              tone: (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0 ? 'warning' : 'primary',
-              onClick: () => navigate('/admin/approvals'),
-            } satisfies DashboardPriorityItem,
-          ]
-        : []),
-    ];
+      });
+    }
+
+    const approvalsTotal =
+      (approvalsQueue.data?.pagination?.totalRecords ?? 0) +
+      (approvalsEscalated.data?.pagination?.totalRecords ?? 0);
+
+    if (approvalsTotal > 0) {
+      items.push({
+        title: 'Yêu cầu phê duyệt',
+        detail: 'Đang chờ duyệt hoặc đã leo thang.',
+        value: approvalsTotal.toLocaleString('vi-VN'),
+        statusLabel:
+          (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0
+            ? 'Có leo thang'
+            : 'Cần duyệt',
+        icon: FolderCheck,
+        tone:
+          (approvalsEscalated.data?.pagination?.totalRecords ?? 0) > 0
+            ? 'warning'
+            : 'primary',
+        onClick: () => navigate('/admin/approvals'),
+      });
+    }
+
+    return items;
   }, [
     dashboardNav,
     data.dashboardSummary,
@@ -254,7 +250,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard-page min-h-full bg-transparent">
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-4 overflow-x-hidden p-3 sm:p-4">
+      <div className="mx-auto flex max-w-[1440px] flex-col gap-3 overflow-x-hidden p-3 sm:p-4">
         <div className="motion-reduce:animate-none motion-reduce:opacity-100">
           <DashboardHeader value={selectedMonth} onChange={handleMonthChange} />
         </div>
@@ -263,19 +259,19 @@ const AdminDashboard = () => {
 
         <DashboardMetricStrip items={metricItems} />
 
-        <div
-          data-slot="admin-dashboard-bento"
-          className="admin-dashboard-bento grid grid-cols-1 gap-4 xl:grid-cols-12 xl:items-start"
-        >
-          <div className="min-w-0 space-y-4 xl:col-span-7">
+        <section className="flex flex-col gap-2">
+          <ConsoleSectionHeading
+            kicker="Ưu tiên"
+            title="Vận hành"
+            meta={`Kỳ ${monthLabel}`}
+          />
+          <MasonryGrid>
             <DashboardPriorityList
               items={priorityItems}
               isRefreshing={isDashboardRefreshing}
               onRefresh={handleRefresh}
+              className="lg:col-span-7"
             />
-          </div>
-
-          <div className="min-w-0 xl:col-span-5">
             <DashboardActivityPanel
               monthLabel={monthLabel}
               totalActive={activityData?.active_total}
@@ -283,137 +279,50 @@ const AdminDashboard = () => {
               items={activityItems}
               isLoading={isActivityLoading && !activityData}
               hasError={hasActivityError}
+              className="lg:col-span-5"
             />
-          </div>
+          </MasonryGrid>
+        </section>
 
-          <DashboardAreaHeader
-            eyebrow="Tài chính"
-            title="Dòng tiền và hiệu quả"
-            description="Rà soát lịch sử tài chính, cơ cấu ngân hàng và lợi nhuận theo từng dự án."
-            className="mt-2 xl:col-span-12"
+        <section className="flex flex-col gap-2">
+          <ConsoleSectionHeading
+            kicker="Tiền và hiệu quả"
+            title="Tài chính"
+            meta="12 tháng gần nhất"
           />
+          <MasonryGrid>
+            <MonthlyFinancialTable className="lg:col-span-7" />
+            <BankTransferBreakdownCard className="lg:col-span-5" />
+            <ProjectProfitabilityCard className="lg:col-span-5" />
+          </MasonryGrid>
+        </section>
 
-          <div
-            data-slot="dashboard-finance-bento"
-            className="grid min-w-0 gap-4 xl:col-span-12 xl:grid-cols-12 xl:items-start"
-          >
-            <div className="min-w-0 space-y-4 xl:col-span-7">
-              <section data-slot="dashboard-financial-history" className="admin-dashboard-finance-group min-w-0 space-y-3">
-                <DashboardSectionHeader
-                  eyebrow="Sổ dòng tiền"
-                  title="Lịch sử tài chính"
-                  subtitle="Sổ chi phí, doanh thu và lợi nhuận tích lũy 12 tháng gần nhất."
-                  icon={ArrowUpRight}
-                />
-                <MonthlyFinancialTable />
-              </section>
-
-              <section data-slot="dashboard-bank-distribution" className="admin-dashboard-finance-group min-w-0 space-y-3">
-                <DashboardSectionHeader
-                  eyebrow="Chi trả"
-                  title="Ngân hàng nhận lương"
-                  subtitle="Phân bổ nhân sự theo ngân hàng để rà soát dữ liệu nhận tiền."
-                  icon={Building02}
-                  actions={
-                    bankData && bankData.projects.length > 0 ? (
-                      <ProjectSelector
-                        projects={bankData.projects}
-                        selectedId={bankProjectId}
-                        onSelect={setBankProjectId}
-                      />
-                    ) : undefined
-                  }
-                />
-                <BankTransferBreakdownCard selectedProjectId={bankProjectId} />
-              </section>
-            </div>
-
-            <section
-              data-slot="dashboard-project-profitability"
-              className="admin-dashboard-finance-group min-w-0 space-y-3 xl:col-span-5"
-            >
-              <DashboardSectionHeader
-                eyebrow="Dự án"
-                title="Lợi nhuận dự án"
-                subtitle="Theo dõi đà lợi nhuận và dự án đang kéo kết quả kỳ lương."
-                icon={FolderCheck}
-              />
-              <ProjectProfitabilityCard />
-            </section>
-          </div>
-
-          <DashboardAreaHeader
-            eyebrow="Nhân sự"
-            title="Chi trả và biến động nhân sự"
-            description="Phát hiện phân bổ lương bất thường, đối chiếu nhóm nhận cao và hồ sơ vừa được thêm."
-            className="mt-2 xl:col-span-12"
-          />
-
-          <div
-            data-slot="dashboard-workforce-bento"
-            className="grid min-w-0 gap-4 xl:col-span-12 xl:grid-cols-12 xl:items-start"
-          >
-            <section
-              data-slot="dashboard-salary-distribution"
-              className="admin-dashboard-workforce-group min-w-0 space-y-3 xl:col-span-7 xl:col-start-1 xl:row-start-1"
-            >
-              <DashboardSectionHeader
-                eyebrow="Phân tích chi trả"
-                title="Phân bổ lương"
-                subtitle="Các khoảng lương điển hình để kiểm tra độ lệch trước khi giải ngân."
-                icon={BarChart03}
-              />
-              <SalaryDistributionChart />
-            </section>
-
-            <section
-              data-slot="dashboard-top-paid"
-              className="admin-dashboard-workforce-group min-w-0 space-y-3 xl:col-span-5 xl:col-start-8 xl:row-span-2 xl:row-start-1"
-            >
-              <DashboardSectionHeader
-                eyebrow="Nhân sự"
-                title={`Chi trả theo nhân viên — ${monthLabel}`}
-                subtitle="Nhân viên nhận lương cao nhất trong kỳ đang xem."
-                icon={Trophy01}
-              />
-              <TopPaidEmployeesCard month={monthParam} />
-            </section>
-
-            <section
-              data-slot="dashboard-recent-employees"
-              className="admin-dashboard-workforce-group min-w-0 space-y-3 xl:col-span-7 xl:col-start-1 xl:row-start-2"
-            >
-              <DashboardSectionHeader
-                eyebrow="Nhân sự"
-                title="Nhân viên mới nhất"
-                subtitle="Các hồ sơ vừa được thêm để đối chiếu biên chế dự án."
-                icon={Users01}
-              />
-              <RecentEmployeesCard
-                employees={employees.employees}
-                isLoading={employees.isLoading}
-                isLoadingMore={employees.isLoadingMore}
-                totalEmployees={employees.totalEmployees}
-                weeks={employees.weeks}
-                onEmployeeClick={(employee) => actions.handleEmployeeClick?.(employee)}
-                onLoadMore={employees.loadMore}
-              />
-            </section>
-          </div>
-
-          <section
-            data-slot="dashboard-operational-health"
-            className="admin-dashboard-health-group min-w-0 space-y-3 xl:col-span-12"
-          >
-            <DashboardSectionHeader
-              eyebrow="Sức khỏe vận hành"
-              title="Tự chấm công và hạn mức ứng lương"
-              subtitle="Rà soát lỗi chấm công và hạn mức ứng lương trước khi chốt kỳ."
-              icon={ShieldTick}
+        <section className="flex flex-col gap-2">
+          <ConsoleSectionHeading kicker="Con người" title="Nhân sự" meta={monthLabel} />
+          <MasonryGrid>
+            <SalaryDistributionChart className="lg:col-span-7" />
+            <TopPaidEmployeesCard month={monthParam} className="lg:col-span-5" />
+            <RecentEmployeesCard
+              employees={employees.employees}
+              isLoading={employees.isLoading}
+              isLoadingMore={employees.isLoadingMore}
+              totalEmployees={employees.totalEmployees}
+              weeks={employees.weeks}
+              onEmployeeClick={(employee) => actions.handleEmployeeClick?.(employee)}
+              onLoadMore={employees.loadMore}
+              className="lg:col-span-5"
             />
-            <CheckInHealthStrip month={monthParam} />
-          </section>
-        </div>
+          </MasonryGrid>
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <ConsoleSectionHeading
+            kicker="Sức khỏe"
+            title="Chấm công và hạn mức"
+            meta={monthLabel}
+          />
+          <CheckInHealthStrip month={monthParam} />
+        </section>
       </div>
 
       <ActivityUsersSheet

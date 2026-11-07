@@ -154,10 +154,10 @@ export const CommandPalette = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={close}>
-      <DialogContent className="max-w-2xl" contentPadding="none" hideCloseButton>
+      <DialogContent className="max-w-2xl rounded-lg" contentPadding="none" hideCloseButton>
         <div className="flex flex-col">
           {/* Search Input */}
-          <div className="flex items-center border-b px-3">
+          <div className="flex items-center border-b border-border/65 px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <Input
               ref={inputRef}
@@ -172,13 +172,13 @@ export const CommandPalette = () => {
           <ScrollArea className="max-h-96">
             <div className="p-2">
               {!query.trim() && (
-                <div className="px-2 py-1.5 typography-body-small text-muted-foreground">
+                <div className="px-2 py-1.5 console-kicker">
                   Lệnh phổ biến
                 </div>
               )}
 
               {displayResults.length > 0 ? (
-                <div className="space-y-1">
+                <div className="divide-y divide-border/65">
                   {displayResults.map((result, index) => {
                     const command = availableCommands.find(cmd => cmd.id === result.id);
 
@@ -208,7 +208,7 @@ export const CommandPalette = () => {
           </ScrollArea>
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t px-3 py-2 typography-body-small text-muted-foreground">
+          <div className="flex items-center justify-between border-t border-border/65 px-3 py-2 typography-body-small text-muted-foreground">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
                 <kbd className="h-4 w-4 rounded border bg-muted flex items-center justify-center">

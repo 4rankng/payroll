@@ -86,6 +86,10 @@ export default defineConfig({
     command: 'pnpm exec vite --host localhost --port 3000',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
+    // Pass the API base through when set (e.g. backend on a non-default port
+    // in this environment); vite's DEV default (http://localhost:8080) applies
+    // when unset.
+    env: process.env.VITE_API_BASE_URL ? { VITE_API_BASE_URL: process.env.VITE_API_BASE_URL } : undefined,
     timeout: 120 * 1000,
   },
 

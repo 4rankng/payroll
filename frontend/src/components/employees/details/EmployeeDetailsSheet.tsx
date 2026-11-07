@@ -361,7 +361,7 @@ export function EmployeeDetailsSheet({
                 )}
               </div>
               {isPreviewOnly && (
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-info/30 bg-info/5 px-3 py-2.5">
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-info/30 bg-info/5 px-3 py-2.5">
                   <p className="text-xs text-foreground/80">
                     Bạn đang xem bản xem trước. Thông tin ngân hàng, địa chỉ và lịch sử được ẩn.
                   </p>
@@ -379,13 +379,13 @@ export function EmployeeDetailsSheet({
               <EmployeePersonalInfo employee={employee} />
 
               {/* ── Bank info (view only) ── */}
-              <div className="border-t pt-3 space-y-2">
+              <div className="border-t border-border/65 pt-3 space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Thông tin ngân hàng</p>
                 <EmployeeBankInfo employee={employee} />
               </div>
 
               {/* ── Projects ── */}
-              <div className="border-t pt-3">
+              <div className="border-t border-border/65 pt-3">
                 <EmployeeProjectSection
                   employee={employee}
                   onRemove={isPreviewOnly ? undefined : handleProjectRemove}
@@ -400,7 +400,7 @@ export function EmployeeDetailsSheet({
 
               {/* ── Statistics (management data — hidden in preview) ── */}
               {!isPreviewOnly && (
-                <div className="border-t pt-3">
+                <div className="border-t border-border/65 pt-3">
                   <EmployeeStatistics
                     employee={employee}
                     summaryData={summaryData}
@@ -418,7 +418,7 @@ export function EmployeeDetailsSheet({
 
               {/* ── Permissions ── */}
               {canManageEmployeeAccess && (
-                <div className="border-t pt-3">
+                <div className="border-t border-border/65 pt-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Phân quyền</p>
                   <EmployeeUserAccessTab employee={employee} />
                 </div>
@@ -465,45 +465,45 @@ export function EmployeeDetailsSheet({
 // Personal Information component for view mode
 const EmployeePersonalInfo = React.memo(function EmployeePersonalInfo({ employee }: { employee: Employee }) {
   return (
-    <div className="rounded-xl bg-muted/30 px-3 py-1">
+    <div className="rounded-lg bg-muted/30 px-3 py-1">
         {/* Row 1: username + CCCD */}
-        <div className="grid grid-cols-1 gap-x-4 border-b border-border/50 min-[420px]:grid-cols-2">
+        <div className="grid grid-cols-1 gap-x-4 border-b border-border/65 min-[420px]:grid-cols-2">
           <div className="flex flex-col gap-1 py-2 min-[360px]:flex-row min-[360px]:items-baseline min-[360px]:justify-between">
             <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1"><AtSign className="w-3 h-3" />Đăng nhập</span>
-            <span className="text-xs font-mono font-medium break-all min-[360px]:text-right">{employee.username || '-'}</span>
+            <span className="text-xs font-mono font-medium break-all min-[360px]:text-right">{employee.username || <span className="font-sans text-muted-foreground/60">Chưa cập nhật</span>}</span>
           </div>
           <div className="flex flex-col gap-1 py-2 min-[360px]:flex-row min-[360px]:items-baseline min-[360px]:justify-between">
             <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1"><Hash className="w-3 h-3" />CCCD</span>
-            <span className="text-xs font-mono font-medium break-all min-[360px]:text-right">{employee.cccd || '-'}</span>
+            <span className="text-xs font-mono font-medium break-all min-[360px]:text-right">{employee.cccd || <span className="font-sans text-muted-foreground/60">Chưa cập nhật</span>}</span>
           </div>
         </div>
         {/* Row 2: phone + DOB */}
-        <div className="grid grid-cols-1 gap-x-4 border-b border-border/50 min-[420px]:grid-cols-2">
+        <div className="grid grid-cols-1 gap-x-4 border-b border-border/65 min-[420px]:grid-cols-2">
           <div className="flex flex-col gap-1 py-2 min-[360px]:flex-row min-[360px]:items-baseline min-[360px]:justify-between">
             <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1"><Phone className="w-3 h-3" />Điện thoại</span>
-            <span className="text-xs font-medium break-all min-[360px]:text-right">{employee.mobile || '-'}</span>
+            <span className="text-xs font-medium break-all min-[360px]:text-right">{employee.mobile || <span className="text-muted-foreground/60">Chưa cập nhật</span>}</span>
           </div>
           <div className="flex flex-col gap-1 py-2 min-[360px]:flex-row min-[360px]:items-baseline min-[360px]:justify-between">
             <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1"><Calendar className="w-3 h-3" />Ngày sinh</span>
             <span className="text-xs font-medium min-[360px]:text-right">
-              {employee.date_of_birth ? format(new Date(employee.date_of_birth), 'dd/MM/yyyy') : '-'}
+              {employee.date_of_birth ? format(new Date(employee.date_of_birth), 'dd/MM/yyyy') : <span className="text-muted-foreground/60">Chưa cập nhật</span>}
             </span>
           </div>
         </div>
         {/* Row 3: email + address */}
-        <div className="flex flex-col gap-1 border-b border-border/50 py-2 min-[360px]:flex-row min-[360px]:items-baseline min-[360px]:justify-between">
+        <div className="flex flex-col gap-1 border-b border-border/65 py-2 min-[360px]:flex-row min-[360px]:items-baseline min-[360px]:justify-between">
           <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1"><Mail className="w-3 h-3" />Email</span>
-          <span className="text-xs font-medium break-all min-[360px]:text-right">{employee.email || '-'}</span>
+          <span className="text-xs font-medium break-all min-[360px]:text-right">{employee.email || <span className="text-muted-foreground/60">Chưa cập nhật</span>}</span>
         </div>
-        <div className="flex flex-col gap-1 border-b border-border/50 py-2 min-[360px]:flex-row min-[360px]:items-baseline min-[360px]:justify-between">
+        <div className="flex flex-col gap-1 border-b border-border/65 py-2 min-[360px]:flex-row min-[360px]:items-baseline min-[360px]:justify-between">
           <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1"><MapPin className="w-3 h-3" />Địa chỉ</span>
-          <span className="text-xs font-medium leading-relaxed break-words min-[360px]:text-right">{employee.address || '-'}</span>
+          <span className="text-xs font-medium leading-relaxed break-words min-[360px]:text-right">{employee.address || <span className="text-muted-foreground/60">Chưa cập nhật</span>}</span>
         </div>
         {/* Row 4: join date */}
         <div className="flex flex-col gap-1 py-2 min-[360px]:flex-row min-[360px]:items-baseline min-[360px]:justify-between">
           <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1"><Clock className="w-3 h-3" />Tham gia</span>
           <span className="text-xs font-medium min-[360px]:text-right">
-            {employee.created_at ? format(new Date(employee.created_at), 'dd/MM/yyyy') : '-'}
+            {employee.created_at ? format(new Date(employee.created_at), 'dd/MM/yyyy') : <span className="text-muted-foreground/60">Chưa cập nhật</span>}
           </span>
         </div>
       </div>

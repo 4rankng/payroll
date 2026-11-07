@@ -423,7 +423,7 @@ export function DoubleEntryModal({ isOpen, onClose, projects }: DoubleEntryModal
               <div className="flex items-center justify-between mb-3">
                 <span className="typography-body-medium font-medium">Tổng cộng:</span>
                 {isBalanced ? (
-                  <Badge variant="default" className="bg-green-100 text-green-800 typography-body-small">
+                  <Badge variant="default" className="bg-success_subtle text-success-primary typography-body-small">
                     Cân bằng
                   </Badge>
                 ) : (

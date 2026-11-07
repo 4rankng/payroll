@@ -1,8 +1,9 @@
 import { ErrorState } from "@/components/ui/error-state";
 import { useState, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
+import { getConsoleKicker } from '@/lib/console';
 import { MobileStatStrip } from "@/components/shared/MobileStatStrip";
 import { MobilePagination } from '@/components/shared/MobilePagination';
 import { Button } from '@/components/ui/button';
@@ -70,6 +71,7 @@ const LoanMobileCard = ({ loan, onClick }: { loan: Loan; onClick: (loan: Loan) =
 };
 
 const LoansPageMobile = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const [loanFilters, setLoanFilters] = useState<LoanFilters>({
     page: 1, pageSize: 50, sortBy: 'created_at', sortOrder: 'desc',
@@ -146,6 +148,7 @@ const LoansPageMobile = () => {
       <MobilePageHeader
         title="Khoản vay"
         icon={Bank}
+        kicker={getConsoleKicker(location.pathname)}
         actions={
           <div className="flex items-center gap-2 shrink-0">
             <Button variant="outline" size="sm" className="min-h-11" onClick={() => navigate('lenders')}>

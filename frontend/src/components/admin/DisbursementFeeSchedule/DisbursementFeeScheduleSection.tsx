@@ -138,10 +138,10 @@ export const DisbursementFeeScheduleSection = () => {
       <div className="space-y-2">
         <h3 className="text-sm font-semibold">Lịch sử cấu hình</h3>
         {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+          <div className="console-panel space-y-2 p-3">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
           </div>
         ) : sorted.length === 0 ? (
           <EmptyState
@@ -150,15 +150,15 @@ export const DisbursementFeeScheduleSection = () => {
             description="Thêm cấu hình đầu tiên để bắt đầu áp dụng cho các giao dịch chi hộ"
           />
         ) : (
-          <div tabIndex={0} role="region" aria-label="Lịch sử cấu hình phí chi hộ" className="rounded-lg border bg-card shadow-sm overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-            <Table>
+          <div tabIndex={0} role="region" aria-label="Lịch sử cấu hình phí chi hộ" className="console-panel overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <Table variant="console">
               <TableHeader>
                 <TableRow>
                   <TableHead>Nhà cung cấp</TableHead>
                   <TableHead>Ngày hiệu lực</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Mức phí</TableHead>
-                  <TableHead>Ghi chú</TableHead>
+                  <TableHead className="hidden md:table-cell">Ghi chú</TableHead>
                   {sorted.some((e) => e.isPending) && (
                     <TableHead className="w-[80px] text-right">
                       Hành động
@@ -184,10 +184,10 @@ export const DisbursementFeeScheduleSection = () => {
                           <Badge variant="outline">Đã hết hạn</Badge>
                         )}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap tabular-nums">
+                      <TableCell className="num whitespace-nowrap tabular-nums">
                         {formatVnd(entry.feeVnd)} ₫
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-[280px]">
+                      <TableCell className="hidden text-xs text-muted-foreground md:table-cell max-w-[280px]">
                         {entry.notes ?? ""}
                       </TableCell>
                       {sorted.some((e) => e.isPending) && (
@@ -247,7 +247,7 @@ const ActiveCard = ({
 }) => {
   if (!active) {
     return (
-      <div className="rounded-xl border border-dashed bg-card p-5 flex items-center justify-center text-center">
+      <div className="console-panel border-dashed p-5 flex items-center justify-center text-center">
         <p className="text-sm text-muted-foreground">
           Chưa có cấu hình nào đang hoạt động
         </p>
@@ -256,7 +256,7 @@ const ActiveCard = ({
   }
 
   return (
-    <div className="rounded-xl border-2 border-primary/30 bg-card p-4 sm:p-5 relative overflow-hidden">
+    <div className="console-panel border-2 border-primary/30 p-4 sm:p-5 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-primary/60" />
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -297,7 +297,7 @@ const UpcomingCard = ({
   const editable = isEntryEditable(entry);
 
   return (
-    <div className="rounded-xl border-2 border-warning/30 bg-card p-4 sm:p-5 relative overflow-hidden">
+    <div className="console-panel border-2 border-warning/30 p-4 sm:p-5 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-1 bg-warning/60" />
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
@@ -351,7 +351,7 @@ const UpcomingCard = ({
 };
 
 const NoUpcomingCard = () => (
-  <div className="rounded-xl border border-dashed bg-card p-4 sm:p-5 flex flex-col justify-center text-center gap-2">
+  <div className="console-panel border-dashed p-4 sm:p-5 flex flex-col justify-center text-center gap-2">
     <Sparkles className="h-5 w-5 text-muted-foreground mx-auto" />
     <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
       Không có cấu hình sắp có hiệu lực. Thêm cấu hình mới để thay đổi phí từ

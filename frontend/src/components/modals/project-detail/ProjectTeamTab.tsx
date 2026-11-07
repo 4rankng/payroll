@@ -43,10 +43,10 @@ export function ProjectTeamTab({
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Danh sách nhân viên</h4>
               <div className="space-y-3">
                 {employees.slice(0, 10).map((projectEmployee) => (
-                  <div key={projectEmployee.id} className="flex items-center gap-3 p-3 border rounded-xl">
+                  <div key={projectEmployee.id} className="flex items-center gap-3 p-3 border rounded-lg">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={projectEmployee.employee?.avatar} />
-                      <AvatarFallback className="bg-blue-100 text-blue-700 typography-body-small">
+                      <AvatarFallback className="bg-primary/10 text-primary typography-body-small">
                         {projectEmployee.employee?.fullname ? 
                           projectEmployee.employee.fullname.split(' ').slice(-2).map(n => n[0]).join('').toUpperCase() :
                           'NV'

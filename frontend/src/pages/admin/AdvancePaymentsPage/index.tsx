@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, memo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { getConsoleKicker } from "@/lib/console";
 import { WalletBalanceCard } from "@/components/disbursement/WalletBalanceCard";
 import { TimesheetMonthSelector } from "@/components/timesheet/TimesheetMonthSelector";
 import {
@@ -100,6 +101,7 @@ import type { ActiveTab } from "./types";
 
 const AdvancePaymentsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<ActiveTab>("requests");
   const [isImportSheetOpen, setIsImportSheetOpen] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
@@ -287,14 +289,12 @@ const AdvancePaymentsPage = () => {
         )}
 
         {/* ─── 1. Page header ─── */}
-        <div
-          data-mobile-header
-          className="rounded-2xl border border-white/80 bg-white/82 px-4 py-3 shadow-[0_1px_2px_rgba(16,24,40,0.05),0_18px_48px_-32px_rgba(8,120,62,0.22)] backdrop-blur sm:px-5"
-        >
+        <div data-mobile-header>
           <PageHeader
             title="Quản lý ứng lương"
             description="Xem và quản lý các yêu cầu ứng lương của nhân viên"
             icon={BankNote01}
+            kicker={getConsoleKicker(location.pathname)}
           >
             <TimesheetMonthSelector
               value={page.selectedMonth}
@@ -307,8 +307,7 @@ const AdvancePaymentsPage = () => {
         <section
           aria-label="Tổng quan kỳ ứng lương"
           className={cn(
-            "overflow-hidden rounded-xl border border-utility-gray-300 bg-white",
-            "shadow-[0_1px_2px_rgba(16,24,40,0.05),0_22px_60px_-42px_rgba(8,120,62,0.30)]",
+            "console-panel overflow-hidden",
             isMobile && "mobile-section-enter",
           )}
         >
@@ -336,7 +335,7 @@ const AdvancePaymentsPage = () => {
               {...heroProps}
               isLoading={page.summaryLoading}
               compact={!isAdvPartner}
-              className="border-0 shadow-none"
+              className="border-0 shadow-none before:hidden"
             />
 
             {/* Panel C: Fee earned */}
@@ -353,8 +352,7 @@ const AdvancePaymentsPage = () => {
           data-mobile-stats
           aria-label="Trạng thái xử lý ứng lương"
           className={cn(
-            "overflow-hidden rounded-xl border border-utility-gray-300 bg-white",
-            "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]",
+            "console-panel overflow-hidden",
             isMobile && "mobile-section-enter",
           )}
         >
@@ -376,8 +374,7 @@ const AdvancePaymentsPage = () => {
         <section
           data-mobile-content
           className={cn(
-            "overflow-hidden rounded-xl border border-utility-gray-300 bg-white",
-            "shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)]",
+            "console-panel overflow-hidden",
             isMobile && "mobile-section-enter",
           )}
         >
@@ -385,7 +382,7 @@ const AdvancePaymentsPage = () => {
           {/* Single header row: tabs left, CTA + ⋯ overflow right */}
           <div
             data-mobile-tabs
-            className="flex flex-wrap items-stretch justify-between gap-x-4 border-b border-border bg-white px-3 pt-2 sm:px-5"
+            className="flex flex-wrap items-stretch justify-between gap-x-4 border-b border-border bg-card px-3 pt-2 sm:px-5"
           >
             <TabBarWithBadges
               className="border-b-0"
@@ -595,7 +592,7 @@ const AdvancePaymentsPage = () => {
                     value={attendancePage.filters.status || "all"}
                     onValueChange={attendancePage.handleStatusChange}
                   >
-                    <SelectTrigger className="h-9 w-auto min-w-36 shrink-0 text-sm bg-white">
+                    <SelectTrigger className="h-9 w-auto min-w-36 shrink-0 text-sm bg-card">
                       <SelectValue placeholder="Trạng thái" />
                     </SelectTrigger>
                     <SelectContent>

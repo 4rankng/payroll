@@ -27,17 +27,17 @@ export interface CronJobTableProps {
 
 export function CronJobTable({ jobs, onToggle, isPending }: CronJobTableProps) {
   return (
-    <Card>
+    <Card variant="console">
       <CardContent className="p-0">
-        <Table>
+        <Table variant="console">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">Bật/Tắt</TableHead>
               <TableHead>Tên Job</TableHead>
               <TableHead>Lịch trình</TableHead>
               <TableHead>Trạng thái</TableHead>
-              <TableHead>Lần chạy cuối</TableHead>
-              <TableHead>Thời lượng</TableHead>
+              <TableHead className="text-right">Lần chạy cuối</TableHead>
+              <TableHead className="text-right">Thời lượng</TableHead>
               <TableHead className="max-w-[200px]">Lỗi</TableHead>
             </TableRow>
           </TableHeader>
@@ -51,7 +51,7 @@ export function CronJobTable({ jobs, onToggle, isPending }: CronJobTableProps) {
                     onCheckedChange={(checked) => onToggle(job.name, checked)}
                     disabled={isPending}
                     className={cn(
-                      "data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-red-400"
+                      "data-[state=checked]:bg-primary data-[state=unchecked]:bg-utility-error-400"
                     )}
                   />
                 </TableCell>
@@ -71,13 +71,13 @@ export function CronJobTable({ jobs, onToggle, isPending }: CronJobTableProps) {
                 <TableCell>
                   <CronStatusBadge status={job.last_status} variant="inline" />
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground">
+                <TableCell className="num text-xs text-muted-foreground">
                   {job.last_run ? formatExactTime(job.last_run) : "—"}
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground">
+                <TableCell className="num text-xs text-muted-foreground">
                   {job.last_duration_ms != null ? formatDuration(job.last_duration_ms) : "—"}
                 </TableCell>
-                <TableCell className="max-w-[200px] text-xs text-red-700 truncate">
+                <TableCell className="max-w-[200px] text-xs text-fg-error-primary truncate">
                   {job.last_error ? (
                     <Tooltip>
                       <TooltipTrigger asChild>

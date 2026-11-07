@@ -123,7 +123,7 @@ export function ImportMobilesModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md gap-0">
+      <DialogContent className="rounded-lg sm:max-w-md gap-0">
         <DialogHeader className="pb-1">
           <DialogTitle className="text-sm font-semibold">
             Nhập số điện thoại

@@ -36,8 +36,9 @@ export const loanColumns: ColumnDef<Loan>[] = [
   {
     accessorKey: "principal_amount",
     header: "Tổng vay",
+    meta: { align: "right" as const },
     cell: ({ row }) => (
-      <div className="typography-body-medium">
+      <div className="typography-body-medium text-right tabular-nums">
         {formatVND(row.original.principal_amount)}
       </div>
     ),
@@ -45,8 +46,9 @@ export const loanColumns: ColumnDef<Loan>[] = [
   {
     accessorKey: "interest_rate_bps",
     header: "Lãi suất (%/năm)",
+    meta: { align: "right" as const },
     cell: ({ row }) => (
-      <div className="typography-body-medium">
+      <div className="typography-body-medium text-right tabular-nums">
         {row.original.interest_rate_bps !== null &&
         row.original.interest_rate_bps !== undefined ? (
           `${row.original.interest_rate_bps / 100}%`
@@ -75,13 +77,14 @@ export const loanColumns: ColumnDef<Loan>[] = [
   {
     accessorKey: "next_payment_amount",
     header: "Tiền TT tới",
+    meta: { align: "right" as const },
     cell: ({ row }) => {
       const nextPaymentAmount = row.original.next_payment_amount;
       if (!nextPaymentAmount) {
         return <span className="typography-body-small text-muted-foreground">-</span>;
       }
       return (
-        <div className="typography-body-medium font-semibold">
+        <div className="typography-body-medium text-right font-semibold tabular-nums">
           {formatVND(nextPaymentAmount)}
         </div>
       );

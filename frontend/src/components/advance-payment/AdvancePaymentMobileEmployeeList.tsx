@@ -23,6 +23,7 @@ const EmployeeCard = memo(function EmployeeCard({
   return (
     <AccentStripCard
       accentColor={emp.availableAmount > 0 ? "green" : "orange"}
+      className="console-panel rounded-lg"
     >
       <div className="px-4 pt-3.5 pb-3">
         <button type="button" onClick={() => onPress(emp)} aria-label={`Xem chi tiết ứng lương của ${emp.fullname}`} className="mb-2 flex min-h-11 w-full items-center justify-between gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -38,13 +39,13 @@ const EmployeeCard = memo(function EmployeeCard({
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
           <div>
             <span className="text-muted-foreground">Hạn mức: </span>
-            <span className="font-semibold text-foreground tabular-nums">
+            <span className="console-value font-semibold text-foreground tabular-nums">
               {formatCurrency(emp.maxAdvanceAmount)}
             </span>
           </div>
           <div>
             <span className="text-muted-foreground">Còn lại: </span>
-            <span className="font-semibold text-emerald-700 tabular-nums">
+            <span className="console-value font-semibold text-emerald-700 tabular-nums">
               {formatCurrency(emp.availableAmount)}
             </span>
           </div>
@@ -54,7 +55,7 @@ const EmployeeCard = memo(function EmployeeCard({
           <div className="mt-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
               <span>Đã sử dụng</span>
-              <span className="tabular-nums">
+              <span className="console-value tabular-nums">
                 {Math.round(usedPercentage)}%
               </span>
             </div>

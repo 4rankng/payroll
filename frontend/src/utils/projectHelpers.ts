@@ -9,15 +9,17 @@ export const formatProjectCurrency = (amount: number): string => {
 export const getStatusColor = (status: string): string => {
   switch (status) {
     case "active":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      // Staff day console: semantic status tokens (dark: variants dropped —
+      // staff surfaces are light-only per ADR-013).
+      return "bg-success/10 text-success";
     case "completed":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+      return "bg-info/10 text-info";
     case "draft":
-      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      return "bg-warning/10 text-warning";
     case "cancelled":
-      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+      return "bg-destructive/10 text-destructive";
     case "paused":
-      return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
+      return "bg-warning/15 text-warning";
     default:
       return "bg-secondary text-foreground";
   }

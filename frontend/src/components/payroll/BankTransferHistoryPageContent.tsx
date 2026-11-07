@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 // UU PRO surface (ADR-012): @untitledui/icons + UU bridge tokens throughout.
 import { Calendar, ChevronLeft, ChevronRight, Receipt } from '@untitledui/icons';
+import { useLocation } from 'react-router-dom';
 
 import { PageHeader } from '@/components/shared/PageHeader';
 import { FilterBar } from '@/components/shared/FilterBar';
 import { FilterPill } from '@/components/shared/FilterPill';
+import { getConsoleKicker } from '@/lib/console';
 import {
   AdminPageCanvas,
   AdminPageHeaderCard,
@@ -30,7 +32,7 @@ import {
   BANK_TRANSFER_CYCLE_LABELS,
   getCurrentMonthValue,
 } from '@/utils/bankTransferHistoryHelpers';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatCompactVND } from '@/utils/formatters';
 import { buildLedgerRows, LEDGER_COLUMNS } from './bankTransferLedger';
 import { LedgerMobileRecord, LedgerTableRow } from './BankTransferLedgerRow';
 
@@ -70,7 +72,7 @@ function PayrollMonthPicker({ value, onValueChange, className }: PayrollMonthPic
           type="button"
           variant="outline"
           aria-label={`Chọn tháng kỳ lương, hiện tại ${displayValue}`}
-          className={`mt-0 h-11 w-full justify-between rounded-xl border-utility-gray-300 bg-utility-gray-50/70 px-3 font-sans text-[12px] font-normal tabular-nums text-fg-secondary shadow-none hover:border-utility-gray-300 hover:bg-utility-gray-50 focus-visible:bg-white sm:h-9 ${className ?? ''}`}
+          className={`mt-0 h-11 w-full justify-between rounded-xl border-utility-gray-300 bg-utility-gray-50/70 px-3 font-sans text-[12px] font-normal tabular-nums text-fg-secondary shadow-none hover:border-utility-gray-300 hover:bg-utility-gray-50 focus-visible:bg-card sm:h-9 ${className ?? ''}`}
         >
           {displayValue}
           <Calendar className="h-4 w-4 text-fg-tertiary" aria-hidden="true" />
@@ -112,7 +114,7 @@ function PayrollMonthPicker({ value, onValueChange, className }: PayrollMonthPic
                 className={`min-h-11 rounded-lg border text-[12px] font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
                   isSelected
                     ? 'border-emerald-700 bg-emerald-700 text-white'
-                    : 'border-utility-gray-300 bg-white text-fg-secondary hover:border-emerald-300 hover:bg-emerald-50'
+                    : 'border-utility-gray-300 bg-card text-fg-secondary hover:border-emerald-300 hover:bg-emerald-50'
                 }`}
               >
                 {monthLabel}
@@ -155,8 +157,12 @@ function SummaryBand({
       ) : totalAmount === undefined ? (
         <span className="font-financial text-[13px] font-bold tabular-nums text-fg-tertiary">—</span>
       ) : (
-        <span className="font-financial text-[13px] font-bold tabular-nums text-emerald-700">
-          {formatCurrency(totalAmount)}
+        <span
+          className="font-financial text-[13px] font-bold tabular-nums text-emerald-700"
+          title={formatCurrency(totalAmount)}
+          aria-label={`Tổng đã chuyển: ${formatCurrency(totalAmount)}`}
+        >
+          {formatCompactVND(totalAmount)}
         </span>
       )}
       <span className="text-fg-tertiary" aria-hidden="true">·</span>
@@ -192,6 +198,8 @@ interface BankTransferHistoryPageContentProps {
 
 export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTransferHistoryPageContentProps) {
   const isAdmin = variant === 'admin';
+  const location = useLocation();
+  const kicker = getConsoleKicker(location.pathname);
   const [month, setMonth] = useState(getCurrentMonthValue);
   const [cycle, setCycle] = useState('all');
   const [search, setSearch] = useState('');
@@ -221,14 +229,15 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
   const handlePageChange = (nextPage: number) => setPage(nextPage);
 
   // The records workspace (filters + summary + ledger + pagination) is shared
-  // by both variants; only the page shell and the card treatment differ.
+  // by both variants; only the page shell differs.
   const workspace = (
     <Card
       data-slot="payment-history-workspace"
+      variant="console"
       className={
         isAdmin
-          ? 'admin-payment-history-workspace relative flex flex-col overflow-hidden rounded-2xl border-utility-gray-300 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04),0_20px_56px_-42px_rgba(8,120,62,0.26)] xl:overflow-visible'
-          : 'overflow-hidden rounded-xl border-utility-gray-300 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.42)] xl:overflow-visible xl:rounded-none'
+          ? 'admin-payment-history-workspace relative flex flex-col overflow-hidden xl:overflow-visible'
+          : 'relative flex flex-col overflow-hidden xl:overflow-visible'
       }
     >
       <div className="border-b border-utility-gray-300 p-2.5 sm:p-3 xl:py-1.5">
@@ -285,7 +294,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
         <>
           {/* Wide screens: semantic ledger table, sticky column header. */}
           <div data-slot="payment-history-records" className="hidden xl:block">
-            <Table className="w-full table-fixed">
+            <Table variant="console" className="w-full table-fixed">
               <colgroup>
                 {LEDGER_COLUMNS.map((column) => (
                   <col key={column.id} style={column.width === 'auto' ? undefined : { width: column.width }} />
@@ -345,8 +354,8 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
     </Card>
   );
 
-  // Admin variant rides the standard admin shell (ambient canvas + glass
-  // header card) shared with the other redesigned admin list pages.
+  // Admin variant rides the standard admin shell (ambient canvas + strip
+  // header) shared with the other redesigned admin list pages.
   if (isAdmin) {
     return (
       <AdminPageCanvas>
@@ -355,6 +364,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
             icon={Receipt}
             title="Lịch sử trả lương"
             description="Lịch sử trả lương theo nhân viên và kỳ lương."
+            kicker={kicker}
           />
         </AdminPageHeaderCard>
         {workspace}
@@ -369,7 +379,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
           className="[&_h1]:text-lg sm:[&_h1]:text-xl [&_[data-slot=page-header-description]]:text-xs"
           icon={Receipt}
           title="Bút toán ngân hàng"
-          description="Bút toán ngân hàng theo nhân viên và kỳ lương."
+          kicker={kicker}
         />
       </header>
       {workspace}

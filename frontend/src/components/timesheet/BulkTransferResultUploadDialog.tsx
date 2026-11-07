@@ -136,15 +136,15 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
   // Results display helpers
   const getStatusIcon = useCallback((status: string) => {
     return status === 'paid' ? (
-      <CheckCircle className="w-4 h-4 text-green-700" />
+      <CheckCircle className="w-4 h-4 text-success" />
     ) : (
-      <XCircle className="w-4 h-4 text-red-700" />
+      <XCircle className="w-4 h-4 text-destructive" />
     );
   }, []);
 
   const getStatusBadge = useCallback((status: string) => {
     return status === 'paid' ? (
-      <Badge variant="secondary" className="bg-green-100 text-green-800">
+      <Badge variant="secondary" className="bg-success/10 text-success">
         Thành công
       </Badge>
     ) : (
@@ -157,7 +157,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
   if (showResults && uploadResult) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex max-h-[92dvh] max-w-7xl flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
+        <DialogContent className="max-h-[92dvh] max-w-7xl flex-col gap-0 overflow-hidden rounded-lg" contentPadding="none" hideCloseButton>
           <DialogNavyHeader
             title="Kết quả chuyển tiền"
             description="Chi tiết kết quả xử lý file Excel chuyển tiền hàng loạt."
@@ -165,17 +165,17 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
 
           <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
             {/* Summary */}
-            <div className="grid grid-cols-1 gap-2 rounded-xl border bg-muted/50 p-3 min-[380px]:grid-cols-3 sm:p-4">
+            <div className="grid grid-cols-1 gap-2 rounded-lg border bg-muted/50 p-3 min-[380px]:grid-cols-3 sm:p-4">
               <div className="typography-body-medium min-w-0 text-muted-foreground">
                 <span className="typography-data-large font-semibold text-foreground">{uploadResult.total_txn}</span>
                 <span className="ml-2">Tổng số bản ghi</span>
               </div>
               <div className="typography-body-medium min-w-0 text-muted-foreground">
-                <span className="typography-data-large font-semibold text-emerald-700">{uploadResult.completed_txn}</span>
+                <span className="typography-data-large font-semibold text-success">{uploadResult.completed_txn}</span>
                 <span className="ml-2">Thành công</span>
               </div>
               <div className="typography-body-medium min-w-0 text-muted-foreground">
-                <span className="typography-data-large font-semibold text-red-700">{uploadResult.failed_txn}</span>
+                <span className="typography-data-large font-semibold text-destructive">{uploadResult.failed_txn}</span>
                 <span className="ml-2">Thất bại</span>
               </div>
             </div>
@@ -185,7 +185,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
               <Label className="typography-label-large font-medium">Chi tiết xử lý ({uploadResult.items.length})</Label>
               <div className="grid max-h-[60dvh] grid-cols-1 gap-3 overflow-y-auto pr-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {uploadResult.items.map((detail, index) => (
-                  <div key={index} className="border rounded-xl p-3 bg-card hover:shadow-sm transition-shadow">
+                  <div key={index} className="border rounded-lg p-3 bg-card hover:shadow-sm transition-shadow">
                     <div className="mb-2 flex flex-wrap items-center gap-2">
                       {getStatusIcon(detail.payment_status)}
                       <span className="typography-body-small font-medium text-muted-foreground">Dòng {detail.row}</span>
@@ -216,7 +216,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
             </div>
           </div>
 
-          <DialogFooter className="grid shrink-0 grid-cols-1 gap-2 border-t px-4 py-4 sm:grid-cols-3 sm:gap-4 sm:px-6">
+          <DialogFooter className="grid shrink-0 grid-cols-1 gap-2 border-t border-border/65 px-4 py-3 sm:grid-cols-3 sm:gap-4 sm:px-6">
             <Button
               variant="outline"
               onClick={handleBackToUpload}
@@ -246,7 +246,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[92dvh] max-w-2xl flex-col gap-0 overflow-hidden" contentPadding="none" hideCloseButton>
+      <DialogContent className="max-h-[92dvh] max-w-2xl flex-col gap-0 overflow-hidden rounded-lg" contentPadding="none" hideCloseButton>
         <DialogNavyHeader
           title="Kết quả chuyển tiền"
           description="Tải lên file Excel chứa kết quả chuyển tiền để cập nhật trạng thái thanh toán."
@@ -255,14 +255,14 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-5 sm:px-6">
           {/* Pending Export Hint Banner — Stage A → Stage B handoff hint */}
           {pendingHint && (
-            <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50/60 p-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700">
+            <div className="flex items-start gap-3 rounded-lg border border-info/30 bg-info/10 p-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-info/10 text-info">
                 <Clock3 className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0 space-y-0.5">
-                <p className="text-sm font-medium text-blue-900">
+                <p className="text-sm font-medium text-info">
                   Bạn vừa xuất file chuyển lô{' '}
-                  <span className="text-blue-700">
+                  <span className="text-info">
                     {(() => {
                       const minutesAgo = Math.max(1, Math.round((Date.now() - Date.parse(pendingHint.exportedAt)) / 60000));
                       if (minutesAgo < 60) return `${minutesAgo} phút trước`;
@@ -273,7 +273,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
                     })()}
                   </span>
                 </p>
-                <p className="text-xs text-blue-800">
+                <p className="text-xs text-info">
                   {pendingHint.forMonth
                     ? `Kỳ: ${pendingHint.forMonth}`
                     : pendingHint.fromDate && pendingHint.toDate
@@ -287,7 +287,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
                   dismissPendingExport(pendingHint.id);
                   setPendingHint(null);
                 }}
-                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-blue-700 transition-colors hover:bg-blue-100 hover:text-blue-700"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-info transition-colors hover:bg-info/10 hover:text-info"
                 aria-label="Bỏ qua nhắc nhở"
               >
                 <X className="h-4 w-4" />
@@ -298,7 +298,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
           {/* File Upload Section */}
           <div className="space-y-4">
             <Label className="typography-body-medium">
-              FILE EXCEL <span className="text-red-700">*</span>
+              FILE EXCEL <span className="text-destructive">*</span>
             </Label>
 
             {!selectedFile ? (
@@ -321,22 +321,22 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
                     </p>
                     <p className="typography-body-small text-muted-foreground">
                       Kéo thả hoặc{" "}
-                      <span className="text-blue-700 hover:text-blue-700 font-medium">
+                      <span className="text-info hover:text-info font-medium">
                         chọn file
                       </span>
                     </p>
-                    <p className="typography-body-small text-gray-600">
+                    <p className="typography-body-small text-muted-foreground">
                       Chỉ chấp nhận file Excel (.xls, .xlsx) - Tối đa 10MB
                     </p>
                   </div>
                 </div>
               </FileUpload>
             ) : (
-              <div className="border rounded-xl p-4 bg-muted/50">
+              <div className="border rounded-lg p-4 bg-muted/50">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="w-10 h-10 rounded bg-green-100 flex items-center justify-center">
-                      <FileSpreadsheet className="w-5 h-5 text-green-700" />
+                    <div className="w-10 h-10 rounded bg-success/15 flex items-center justify-center">
+                      <FileSpreadsheet className="w-5 h-5 text-success" />
                     </div>
                     <div className="min-w-0">
                       <p className="typography-body-medium break-words font-medium text-foreground">
@@ -353,7 +353,7 @@ export const BulkTransferResultUploadDialog = memo(function BulkTransferResultUp
                     size="sm"
                     onClick={() => setSelectedFile(null)}
                     disabled={importMutation.isPending}
-                    className="text-red-700 hover:text-red-700 hover:bg-red-50"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <X className="w-4 h-4" />
                   </Button>

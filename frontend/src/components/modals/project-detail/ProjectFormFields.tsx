@@ -23,10 +23,10 @@ interface ProjectFormFieldsProps {
 
 const projectStatuses = [
   { value: 'draft', label: getVietnameseProjectStatus('draft'), color: 'bg-muted', icon: Clock },
-  { value: 'active', label: getVietnameseProjectStatus('active'), color: 'bg-green-500', icon: TrendingUp },
-  { value: 'paused', label: getVietnameseProjectStatus('paused'), color: 'bg-orange-500', icon: Pause },
-  { value: 'completed', label: getVietnameseProjectStatus('completed'), color: 'bg-blue-600', icon: CheckCircle },
-  { value: 'cancelled', label: getVietnameseProjectStatus('cancelled'), color: 'bg-red-500', icon: XCircle }
+  { value: 'active', label: getVietnameseProjectStatus('active'), color: 'bg-success', icon: TrendingUp },
+  { value: 'paused', label: getVietnameseProjectStatus('paused'), color: 'bg-warning', icon: Pause },
+  { value: 'completed', label: getVietnameseProjectStatus('completed'), color: 'bg-info', icon: CheckCircle },
+  { value: 'cancelled', label: getVietnameseProjectStatus('cancelled'), color: 'bg-destructive', icon: XCircle }
 ];
 
 export function ProjectNameField({ formData, setFormData, errors, isEditing }: ProjectFormFieldsProps) {
@@ -38,9 +38,9 @@ export function ProjectNameField({ formData, setFormData, errors, isEditing }: P
         value={formData.name || ''}
         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
         disabled={!isEditing}
-        className={errors.name ? 'border-red-500' : ''}
+        className={errors.name ? 'border-destructive' : ''}
       />
-      {errors.name && <p className="typography-body-medium text-red-700 mt-1">{errors.name}</p>}
+      {errors.name && <p className="typography-body-medium text-destructive mt-1">{errors.name}</p>}
     </div>
   );
 }
@@ -54,9 +54,9 @@ export function ProjectClientField({ formData, setFormData, errors, isEditing }:
         value={formData.client_name || ''}
         onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
         disabled={!isEditing}
-        className={errors.client_name ? 'border-red-500' : ''}
+        className={errors.client_name ? 'border-destructive' : ''}
       />
-      {errors.client_name && <p className="typography-body-medium text-red-700 mt-1">{errors.client_name}</p>}
+      {errors.client_name && <p className="typography-body-medium text-destructive mt-1">{errors.client_name}</p>}
     </div>
   );
 }
@@ -113,9 +113,9 @@ export function ProjectEmployeeCountField({ formData, setFormData, errors, isEdi
         value={formData.employee_count || 1}
         onChange={(e) => setFormData({ ...formData, employee_count: parseInt(e.target.value) || 1 })}
         disabled={!isEditing}
-        className={errors.employee_count ? 'border-red-500' : ''}
+        className={errors.employee_count ? 'border-destructive' : ''}
       />
-      {errors.employee_count && <p className="typography-body-medium text-red-700 mt-1">{errors.employee_count}</p>}
+      {errors.employee_count && <p className="typography-body-medium text-destructive mt-1">{errors.employee_count}</p>}
     </div>
   );
 }
@@ -131,9 +131,9 @@ export function ProjectBudgetField({ formData, setFormData, errors, isEditing }:
         onChange={(e) => setFormData({ ...formData, budget: parseInt(e.target.value) || 0 })}
         disabled={!isEditing}
         placeholder="100000000"
-        className={errors.budget ? 'border-red-500' : ''}
+        className={errors.budget ? 'border-destructive' : ''}
       />
-      {errors.budget && <p className="typography-body-medium text-red-700 mt-1">{errors.budget}</p>}
+      {errors.budget && <p className="typography-body-medium text-destructive mt-1">{errors.budget}</p>}
     </div>
   );
 }
@@ -170,9 +170,9 @@ export function ProjectDateFields({ formData, setFormData, errors, isEditing }: 
             });
           }}
           disabled={!isEditing}
-          className={errors.end_date ? 'border-red-500' : ''}
+          className={errors.end_date ? 'border-destructive' : ''}
         />
-        {errors.end_date && <p className="typography-body-medium text-red-700 mt-1">{errors.end_date}</p>}
+        {errors.end_date && <p className="typography-body-medium text-destructive mt-1">{errors.end_date}</p>}
       </div>
     </div>
   );

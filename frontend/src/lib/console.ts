@@ -17,6 +17,7 @@ const ROUTE_KICKERS: ReadonlyArray<{ prefix: string; kicker: ConsoleKicker }> = 
   // NHÂN SỰ — people records and accounts.
   { prefix: '/admin/users', kicker: 'NHÂN SỰ' },
   { prefix: '/admin/employees', kicker: 'NHÂN SỰ' },
+  { prefix: '/partner/employees', kicker: 'NHÂN SỰ' },
 
   // TÀI CHÍNH — money movement.
   { prefix: '/admin/ledger', kicker: 'TÀI CHÍNH' },

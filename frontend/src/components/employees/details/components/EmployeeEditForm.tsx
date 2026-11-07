@@ -8,7 +8,7 @@ import type { EmployeeFormProps } from "../types";
 
 function FieldGroup({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-card p-4 space-y-3">
+    <div className="rounded-lg border bg-card p-4 space-y-3">
       {children}
     </div>
   );
@@ -17,7 +17,7 @@ function FieldGroup({ children }: { children: React.ReactNode }) {
 function SectionTitle({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
   return (
     <div className="flex items-center gap-2 mb-1">
-      <div className="h-6 w-6 rounded-xl bg-primary/10 flex items-center justify-center">
+      <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center">
         <Icon className="h-3.5 w-3.5 text-primary" />
       </div>
       <span className="text-xs font-semibold text-foreground">{label}</span>
@@ -31,7 +31,7 @@ function Field({ id, label, children, warning }: { id?: string; label: string; c
       <Label htmlFor={id} className="text-xs text-muted-foreground font-medium">{label}</Label>
       {children}
       {warning && (
-        <p className="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
+        <p className="flex items-center gap-1 text-xs text-warning ">
           <AlertCircle className="h-3 w-3 shrink-0" />
           {warning}
         </p>
@@ -70,7 +70,7 @@ export function EmployeeEditForm({
           >
             <Input
               id="fullname"
-              className={`h-11 text-sm sm:h-9 ${nameWarning ? "border-amber-400 focus-visible:ring-amber-400" : ""}`}
+              className={`h-11 text-sm sm:h-9 ${nameWarning ? "border-warning focus-visible:ring-warning" : ""}`}
               value={formData.fullname || ''}
               onChange={(e) => {
                 onInputChange("fullname", e.target.value);
@@ -164,7 +164,7 @@ export function EmployeeEditForm({
           >
             <Input
               id="bank_account_name"
-              className={`h-11 text-sm sm:h-9 ${bankAccountNameWarning ? "border-amber-400 focus-visible:ring-amber-400" : ""}`}
+              className={`h-11 text-sm sm:h-9 ${bankAccountNameWarning ? "border-warning focus-visible:ring-warning" : ""}`}
               value={formData.bank_account_name || ''}
               onChange={(e) => {
                 onInputChange("bank_account_name", e.target.value);

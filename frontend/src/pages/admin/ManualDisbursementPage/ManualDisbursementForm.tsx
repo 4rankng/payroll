@@ -352,7 +352,7 @@ export function ManualDisbursementForm(props: Props) {
           Triggered both by Valid=true+name-differs (rare) and Valid=false+code=name_mismatch
           (the common case the backend returns). */}
       {nameMismatch && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 space-y-3 shadow-sm">
+        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 space-y-3">
           <div className="flex items-start gap-2.5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 border border-amber-200">
               <AlertCircle className="h-3.5 w-3.5 text-amber-700" />
@@ -368,7 +368,7 @@ export function ManualDisbursementForm(props: Props) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div className="rounded-lg border border-amber-200/70 bg-white px-3 py-2">
+            <div className="rounded-lg border border-amber-200/70 bg-card px-3 py-2">
               <p className="text-xs font-bold uppercase tracking-wider text-amber-700 mb-0.5">
                 Bạn nhập
               </p>
@@ -376,7 +376,7 @@ export function ManualDisbursementForm(props: Props) {
                 {nameMismatch.typed || "—"}
               </p>
             </div>
-            <div className="rounded-lg border border-emerald-200 bg-white px-3 py-2">
+            <div className="rounded-lg border border-emerald-200 bg-card px-3 py-2">
               <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-0.5">
                 Ngân hàng xác nhận
               </p>
@@ -402,7 +402,7 @@ export function ManualDisbursementForm(props: Props) {
       {/* ── Row 3: Account type (pill segmented control, full width) ───── */}
       <div className="grid gap-1.5">
         <Label>Loại tài khoản</Label>
-        <div className="flex flex-col gap-1 rounded-xl bg-slate-100 p-1 min-[420px]:flex-row">
+        <div className="flex flex-col gap-1 rounded-xl bg-muted p-1 min-[420px]:flex-row">
           {(["0", "1"] as const).map((opt) => (
             <button
               key={opt}
@@ -412,8 +412,8 @@ export function ManualDisbursementForm(props: Props) {
               className={cn(
                 "flex min-h-11 flex-1 items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold transition-all",
                 state.accountType === opt
-                  ? "bg-white text-slate-900 shadow-sm"
-                  : "text-slate-600 hover:text-slate-700",
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
                 disabled && "cursor-not-allowed opacity-50",
               )}
             >
@@ -514,7 +514,7 @@ export function ManualDisbursementForm(props: Props) {
           <Button
             type="submit"
             disabled={!submitReady || disabled}
-            className="min-h-11 bg-slate-700 px-4 text-xs font-bold uppercase tracking-tight text-white hover:bg-slate-800"
+            className="min-h-11 bg-primary px-4 text-xs font-bold uppercase tracking-tight text-primary-foreground hover:bg-primary/90"
           >
             {disabled && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Chuyển tiền

@@ -1,8 +1,7 @@
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@/utils/formatters";
-import { AnimatedCurrency } from "@/components/ui/animated-currency";
+import { formatCompactVND, formatCurrency } from "@/utils/formatters";
 
 export interface AdvPartnerHeroStripProps {
   /** Gross total of completed advance requests this period
@@ -31,9 +30,8 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
     <section
       aria-label="Giải ngân"
       className={cn(
-        "treasury-panel flex flex-col",
+        "treasury-panel console-panel flex flex-col",
         compact ? "p-3.5" : "p-[22px] px-7",
-        "rounded-xl border border-[#D8E2EE] bg-white shadow-[0_1px_2px_0_rgb(15_23_42/0.04)]",
         className,
       )}
     >
@@ -54,8 +52,12 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
             <span className="treasury-signal bg-emerald-500" />
             Giải ngân kỳ này
           </div>
-          <div className={cn("treasury-value relative z-[1] mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal text-foreground [text-shadow:0_0_36px_rgba(16,185,129,0.22)]", compact ? "text-[clamp(1.5rem,7.5vw,1.75rem)]" : "text-[clamp(1.875rem,7vw,2.25rem)]")}>
-            <AnimatedCurrency target={totalAmount} />
+          <div
+            className={cn("treasury-value console-value relative z-[1] mt-1.5 max-w-full break-words font-financial font-semibold leading-[1.08] tracking-normal text-foreground", compact ? "text-[clamp(1.5rem,7.5vw,1.75rem)]" : "text-[clamp(1.875rem,7vw,2.25rem)]")}
+            title={formatCurrency(totalAmount)}
+            aria-label={formatCurrency(totalAmount)}
+          >
+            {formatCompactVND(totalAmount)}
           </div>
 
           {/* Footer rail — pinned via mt-auto to the shared band baseline so the
@@ -65,8 +67,12 @@ export const AdvPartnerHeroStrip = memo(function AdvPartnerHeroStrip({
               <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 Trung bình /yc
               </div>
-              <div className="mt-0.5 truncate font-financial text-[15px] font-semibold leading-snug text-foreground tabular-nums">
-                {avgPerRequest > 0 ? `~${formatCurrency(avgPerRequest)}` : "—"}
+              <div
+                className="mt-0.5 truncate font-financial text-[15px] font-semibold leading-snug text-foreground tabular-nums"
+                title={avgPerRequest > 0 ? `~${formatCurrency(avgPerRequest)}` : undefined}
+                aria-label={avgPerRequest > 0 ? `~${formatCurrency(avgPerRequest)}` : undefined}
+              >
+                {avgPerRequest > 0 ? `~${formatCompactVND(avgPerRequest)}` : "—"}
               </div>
             </div>
           </div>

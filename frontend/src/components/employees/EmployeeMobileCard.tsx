@@ -52,7 +52,7 @@ export const EmployeeMobileCard = React.memo(function EmployeeMobileCard({
     : null;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card transition-colors">
+    <div className="overflow-hidden rounded-lg border border-border bg-card transition-colors">
       {/* The whole card body is the tap target. Padding lives on the button so
           there is no min-height dead space below the two content rows. */}
       <button

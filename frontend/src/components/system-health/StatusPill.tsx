@@ -33,7 +33,7 @@ interface Props {
 export function StatusPill({ label, value, sub, status, icon: Icon, className }: Props) {
   return (
     <div className={cn(
-      "flex h-full min-w-0 items-start gap-2 rounded-xl border bg-card px-3 py-3 shadow-sm sm:gap-3 sm:px-4 sm:py-3.5",
+      "console-panel flex h-full min-w-0 items-start gap-2 px-3 py-3 sm:gap-3 sm:px-4 sm:py-3.5",
       borderCls[status],
       className,
     )}>
@@ -41,11 +41,11 @@ export function StatusPill({ label, value, sub, status, icon: Icon, className }:
         <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="mb-1.5 text-xs font-semibold uppercase leading-none tracking-[0.08em] text-muted-foreground sm:tracking-wider">
+        <p className="console-kicker mb-1.5">
           {label}
         </p>
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-          <p className={cn("text-xl font-bold tabular-nums leading-none sm:text-2xl", valueCls[status])}>
+          <p className={cn("console-value text-xl font-bold leading-none sm:text-2xl", valueCls[status])}>
             {value}
           </p>
           {sub && (

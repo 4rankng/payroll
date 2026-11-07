@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatCompactVND } from '@/utils/formatters';
 import type { LedgerSummary } from '@/types/api/financial.types';
 import { useMemo, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
@@ -7,12 +7,15 @@ import { cn } from '@/lib/utils';
 interface SupportingMetric {
   label: string;
   value: string;
+  full?: string;
   valueClassName?: string;
 }
 
 interface KpiTile {
   label: string;
   value: string;
+  /** Exact figure for compact values (title + aria-label). */
+  full?: string;
   sub?: string;
   emphasis?: boolean;
   wide?: boolean;
@@ -21,15 +24,19 @@ interface KpiTile {
 
 function KpiTileView({ tile }: { tile: KpiTile }) {
   return (
-    <article className={cn('overflow-hidden rounded-xl border border-border/70 bg-card px-4 py-3', tile.wide && 'sm:col-span-2', tile.emphasis && 'border-primary/40')}>
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+    <article className={cn('console-panel px-3 py-2.5', tile.wide && 'sm:col-span-2')}>
+      <h3 className="console-kicker">
         {tile.label}
       </h3>
-      <p className={cn('mt-1.5 break-words font-financial font-semibold tabular-nums tracking-tight', tile.emphasis ? 'text-2xl text-primary sm:text-3xl' : 'text-lg text-foreground', tile.valueClassName)}>
+      <p
+        className={cn('console-value mt-1.5 break-words font-display text-xl font-semibold tracking-tight', tile.emphasis ? 'text-primary' : 'text-foreground', tile.valueClassName)}
+        title={tile.full}
+        aria-label={tile.full}
+      >
         {tile.value}
       </p>
       {tile.emphasis && tile.sub && (
-        <p className="mt-0.5 text-xs text-muted-foreground">{tile.sub}</p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{tile.sub}</p>
       )}
     </article>
   );
@@ -39,14 +46,14 @@ function SummarySkeleton({ showCapital }: { showCapital: boolean }) {
   return (
     <div className="grid gap-3" aria-busy="true" aria-label="Đang tải tổng quan tài chính">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <Skeleton className="h-[84px] rounded-xl sm:col-span-2" />
+        <Skeleton className="h-[76px] rounded-lg sm:col-span-2" />
         {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-[84px] rounded-xl" />
+          <Skeleton key={i} className="h-[76px] rounded-lg" />
         ))}
       </div>
       <div className="grid gap-3 lg:grid-cols-3">
-        <Skeleton className="h-[124px] rounded-xl lg:col-span-2" />
-        <Skeleton className="h-[124px] rounded-xl" />
+        <Skeleton className="h-[116px] rounded-lg lg:col-span-2" />
+        <Skeleton className="h-[116px] rounded-lg" />
       </div>
       {showCapital && <div className="hidden" aria-hidden="true" />}
     </div>
@@ -66,9 +73,9 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
     const { by_account } = ledgerSummary;
     const payable = by_account.payable?.net_amount ?? 0;
     return [
-      { label: 'Phải thu', value: formatCurrency(by_account.receivable?.net_amount ?? 0) },
-      { label: 'Phải trả', value: formatCurrency(payable), valueClassName: payable < 0 ? 'text-red-700' : undefined },
-      { label: 'Vay nợ', value: formatCurrency(by_account.loan?.net_amount ?? 0) },
+      { label: 'Phải thu', value: formatCompactVND(by_account.receivable?.net_amount ?? 0), full: formatCurrency(by_account.receivable?.net_amount ?? 0) },
+      { label: 'Phải trả', value: formatCompactVND(payable), full: formatCurrency(payable), valueClassName: payable < 0 ? 'text-financial-negative' : undefined },
+      { label: 'Vay nợ', value: formatCompactVND(by_account.loan?.net_amount ?? 0), full: formatCurrency(by_account.loan?.net_amount ?? 0) },
     ];
   }, [ledgerSummary]);
 
@@ -79,10 +86,14 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
     const expense = by_account.expense?.net_amount ?? 0;
     const cash = by_account.cash?.net_amount ?? 0;
     return {
-      cash: formatCurrency(cash),
-      revenue: formatCurrency(revenue),
-      expense: formatCurrency(expense),
-      profit: formatCurrency(revenue - expense),
+      cash: formatCompactVND(cash),
+      cashFull: formatCurrency(cash),
+      revenue: formatCompactVND(revenue),
+      revenueFull: formatCurrency(revenue),
+      expense: formatCompactVND(expense),
+      expenseFull: formatCurrency(expense),
+      profit: formatCompactVND(revenue - expense),
+      profitFull: formatCurrency(revenue - expense),
       margin: revenue > 0 ? `${((revenue - expense) / revenue * 100).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}%` : '—',
     };
   }, [ledgerSummary]);
@@ -101,14 +112,14 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
   // rows become tiles so receivables/payables sit beside cash where they
   // drive action.
   const kpis: KpiTile[] = [
-    { label: 'Thanh khoản hiện tại', value: perf.cash, sub: 'Tiền mặt khả dụng trên sổ cái', emphasis: true, wide: true },
+    { label: 'Thanh khoản hiện tại', value: perf.cash, full: perf.cashFull, sub: 'Tiền mặt khả dụng trên sổ cái', emphasis: true, wide: true },
     ...liabilityItems,
   ];
 
   const perfStats = [
-    { label: 'Doanh thu', value: perf.revenue },
-    { label: 'Chi phí', value: perf.expense },
-    { label: 'Lợi nhuận', value: perf.profit, highlight: true },
+    { label: 'Doanh thu', value: perf.revenue, full: perf.revenueFull },
+    { label: 'Chi phí', value: perf.expense, full: perf.expenseFull },
+    { label: 'Lợi nhuận', value: perf.profit, full: perf.profitFull, highlight: true },
     { label: 'Biên LN', value: perf.margin },
   ];
 
@@ -125,12 +136,12 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
 
       {/* P&L story (2/3) + capital structure (1/3) */}
       <div className="grid gap-3 lg:grid-cols-3">
-        <article className="overflow-hidden rounded-xl border border-border/70 bg-card lg:col-span-2">
-          <div className="border-b border-border/60 px-4 py-2.5">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        <article className="console-panel lg:col-span-2">
+          <div className="console-panel-header">
+            <h3 className="console-kicker">
               Hiệu quả kinh doanh
             </h3>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="ml-auto text-[10px] text-muted-foreground">
               Doanh thu − Chi phí trên sổ cái trong kỳ
             </p>
           </div>
@@ -139,8 +150,10 @@ export function TransactionSummaryCard({ ledgerSummary, isLoading, className, re
               <div key={item.label} className="px-4 py-3">
                 <dt className="text-xs text-muted-foreground">{item.label}</dt>
                 <dd
+                  title={item.full}
+                  aria-label={item.full}
                   className={cn(
-                    'mt-1 break-words font-financial text-base font-semibold tabular-nums text-foreground',
+                    'console-value mt-1 break-words font-financial text-base font-semibold tracking-tight text-foreground',
                     item.highlight && 'text-primary',
                   )}
                 >

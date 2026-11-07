@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 // W13c: lucide → verified @untitledui/icons (same glyph semantics).
 import { CheckCircle } from "@untitledui/icons";
-import { formatCurrency } from "@/utils/formatters";
+import { formatCompactVND, formatCurrency } from "@/utils/formatters";
 
 export interface AdvPartnerStatusOverviewProps {
   totalPaid: number;
@@ -63,8 +63,8 @@ const CELLS: StatusCellDef[] = [
   {
     key: "cancelled",
     label: "Đã hủy",
-    barClass: "bg-slate-400",
-    dotClass: "bg-slate-400",
+    barClass: "bg-utility-gray-400",
+    dotClass: "bg-utility-gray-400",
     getValue: (p) => p.totalCancelled,
     getAmount: (p) => p.totalCancelledAmount,
   },
@@ -100,7 +100,7 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
 
   const chrome = bare
     ? "rounded-none border-0 bg-transparent p-4 shadow-none"
-    : "rounded-xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_0_rgb(15_23_42/0.04)]";
+    : "console-panel p-4";
 
   return (
     <section
@@ -198,12 +198,16 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
                     </span>
                   </div>
                   <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5">
-                    <span className="font-financial text-[17px] font-semibold leading-none tracking-[-0.01em] tabular-nums text-foreground">
+                    <span className="console-value font-financial text-[17px] font-semibold leading-none tracking-[-0.01em] tabular-nums text-foreground">
                       {value}
                     </span>
                     {amount !== undefined && (
-                      <span className="font-financial text-xs font-medium leading-none text-muted-foreground tabular-nums">
-                        {formatCurrency(amount)}
+                      <span
+                        className="font-financial text-xs font-medium leading-none text-muted-foreground tabular-nums"
+                        title={formatCurrency(amount)}
+                        aria-label={formatCurrency(amount)}
+                      >
+                        {formatCompactVND(amount)}
                       </span>
                     )}
                   </div>

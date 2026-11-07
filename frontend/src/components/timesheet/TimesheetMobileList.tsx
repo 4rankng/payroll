@@ -62,7 +62,7 @@ export function TimesheetMobileList() {
     return (
       <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-card rounded-xl border border-border p-4 animate-pulse space-y-2.5">
+          <div key={i} className="console-panel p-4 animate-pulse space-y-2.5">
             <div className="flex justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="h-8 w-8 bg-muted rounded-full" />

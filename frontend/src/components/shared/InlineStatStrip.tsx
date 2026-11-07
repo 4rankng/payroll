@@ -48,7 +48,7 @@ export const InlineStatStrip = memo(function InlineStatStrip({
     if (variant === 'premium') {
       return cn(
         base,
-        'bg-card border-border/40 shadow-soft hover:shadow-card'
+        'bg-card border-border/40 shadow-soft'
       );
     }
 
@@ -112,10 +112,9 @@ export const InlineStatStrip = memo(function InlineStatStrip({
               } : undefined}
             >
               <span className={cn(
-                'w-full break-words text-center font-display font-semibold tabular-nums leading-tight tracking-tight transition-all',
+                'w-full break-words text-center font-display font-semibold tabular-nums leading-tight tracking-tight',
                 'text-base',
                 item.highlight ? 'text-primary' : 'text-foreground',
-                variant === 'premium' && 'group-hover:scale-105',
                 item.valueClassName,
               )}>
                 {formatted}{item.unit}

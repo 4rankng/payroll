@@ -126,16 +126,16 @@ function TransactionDetailsSheetComponent({
 
   const getTransactionTypeBadge = (type: string) => {
     const variants = {
-      revenue: 'bg-emerald-100 text-emerald-800',
-      expense: 'bg-red-100 text-red-800',
-      capital: 'bg-teal-100 text-teal-800',
-      write_off: 'bg-amber-100 text-amber-800',
+      revenue: 'bg-success/10 text-success',
+      expense: 'bg-destructive/10 text-destructive',
+      capital: 'bg-info/10 text-info',
+      write_off: 'bg-warning/10 text-warning',
     };
 
     const label = transactionService.getTransactionTypeDisplay(type, metadata);
 
     return (
-      <Badge className={variants[type as keyof typeof variants] || 'bg-slate-100 text-slate-800'}>
+      <Badge className={variants[type as keyof typeof variants] || 'bg-muted text-foreground'}>
         {label}
       </Badge>
     );
@@ -145,9 +145,9 @@ function TransactionDetailsSheetComponent({
     const baseClassName = 'min-w-[80px] justify-center typography-label-small';
 
     const variants: Record<string, { className: string; variant?: 'outline' }> = {
-      settled: { className: 'bg-emerald-700 text-white border-emerald-700', variant: undefined },
-      pending: { className: 'border-yellow-600 text-yellow-900', variant: 'outline' },
-      partially_settled: { className: 'border-teal-600 text-teal-800', variant: 'outline' },
+      settled: { className: 'bg-success text-white border-success', variant: undefined },
+      pending: { className: 'border-warning/50 text-warning', variant: 'outline' },
+      partially_settled: { className: 'border-info/50 text-info', variant: 'outline' },
     };
 
     const label = transactionService.getStatusDisplay(status, metadata);
@@ -157,7 +157,7 @@ function TransactionDetailsSheetComponent({
       <Badge
         variant={badgeVariant}
         className={`${baseClassName} ${
-          variants[status as keyof typeof variants]?.className || 'border-border text-slate-800'
+          variants[status as keyof typeof variants]?.className || 'border-border text-foreground'
         }`}
       >
         {label}
@@ -333,8 +333,8 @@ function TransactionDetailsSheetComponent({
         avatar={{
           custom: (
             <div className="flex items-center gap-4 flex-1 min-w-0">
-              <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <Receipt className="h-6 w-6 text-blue-700" />
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Receipt className="h-6 w-6 text-primary" />
               </div>
               <div className="space-y-1 flex-1 min-w-0">
                 <h1 className="typography-headline-medium text-base sm:text-lg font-medium">
@@ -359,13 +359,13 @@ function TransactionDetailsSheetComponent({
       avatar={{
         custom: (
           <div className="flex items-center gap-4 flex-1 min-w-0">
-            <div className={`h-12 w-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
-              transaction.transaction_type === 'revenue' ? 'bg-emerald-100' :
-              transaction.transaction_type === 'write_off' ? 'bg-amber-100' : 'bg-red-100'
+            <div className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${
+              transaction.transaction_type === 'revenue' ? 'bg-success/15' :
+              transaction.transaction_type === 'write_off' ? 'bg-warning/15' : 'bg-destructive/10'
             }`}>
               <Receipt className={`h-6 w-6 ${
-                transaction.transaction_type === 'revenue' ? 'text-emerald-700' :
-                transaction.transaction_type === 'write_off' ? 'text-amber-700' : 'text-red-700'
+                transaction.transaction_type === 'revenue' ? 'text-success' :
+                transaction.transaction_type === 'write_off' ? 'text-warning' : 'text-destructive'
               }`} />
             </div>
             <div className="space-y-1 flex-1 min-w-0">
@@ -376,7 +376,7 @@ function TransactionDetailsSheetComponent({
                 {getTransactionTypeBadge(transaction.transaction_type)}
                 {getStatusBadge(transaction.status)}
                 {transaction.reversed_transaction_id && (
-                  <Badge className="bg-muted text-gray-800">
+                  <Badge className="bg-muted text-foreground">
                     Đã đảo ngược
                   </Badge>
                 )}
@@ -425,13 +425,14 @@ function TransactionDetailsSheetComponent({
     >
       <div className="space-y-4 mt-2">
         {/* Amount Section */}
-        <div className="bg-gradient-subtle rounded-xl p-5 space-y-3 shadow-soft border border-border">          <div className="flex items-center gap-2">
+        <div className="rounded-lg p-5 space-y-3 border border-border bg-muted/40">
+          <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
             <span className="typography-label-medium text-muted-foreground uppercase">Số tiền</span>
           </div>
           <div className={`typography-display-large typography-currency break-words text-3xl sm:text-4xl ${
             transaction.transaction_type === 'revenue' ? 'text-financial-positive' :
-            transaction.transaction_type === 'write_off' ? 'text-amber-700' : 'text-financial-negative'
+            transaction.transaction_type === 'write_off' ? 'text-warning' : 'text-financial-negative'
           }`}>
             {formatCurrency(transaction.amount)}
           </div>
@@ -467,13 +468,13 @@ function TransactionDetailsSheetComponent({
         <Separator className="my-3" />
 
         {/* Metadata - 2 column grid */}
-        <div className="space-y-3 bg-surface-secondary rounded-xl p-4 shadow-xs border border-border">          <div className="typography-label-medium text-muted-foreground uppercase font-semibold">Thông tin khác</div>
+        <div className="space-y-3 bg-surface-secondary rounded-lg p-4 shadow-xs border border-border">          <div className="typography-label-medium text-muted-foreground uppercase font-semibold">Thông tin khác</div>
           <div className="grid grid-cols-1 gap-4 typography-body-small min-[420px]:grid-cols-2">
 
             <div className="space-y-1.5">
               <div className="typography-label-small text-muted-foreground">Người tạo</div>
               <div className="flex items-start gap-2">
-                <User className="h-4 w-4 flex-shrink-0 text-slate-600" />
+                <User className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                 <span className="typography-body-medium text-high-contrast font-medium break-words">{createdByName}</span>
               </div>
             </div>
@@ -481,7 +482,7 @@ function TransactionDetailsSheetComponent({
               <div className="space-y-1.5">
                 <div className="typography-label-small text-muted-foreground">Ngày tạo</div>
                 <div className="flex items-start gap-2">
-                  <Calendar className="h-4 w-4 flex-shrink-0 text-slate-600" />
+                  <Calendar className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                   <span className="typography-body-small text-medium-contrast break-words">{formatDate(transaction.created_at)}</span>
                 </div>
               </div>
@@ -489,7 +490,7 @@ function TransactionDetailsSheetComponent({
                 <div className="space-y-1.5">
                   <div className="typography-label-small text-muted-foreground">Ngày thanh toán</div>
                   <div className="flex items-start gap-2">
-                    <Calendar className="h-4 w-4 flex-shrink-0 text-slate-600" />
+                    <Calendar className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                     <span className="typography-body-small text-medium-contrast break-words">
                       {formatSettlementBusinessDate(paymentDate)}
                     </span>
@@ -502,7 +503,7 @@ function TransactionDetailsSheetComponent({
               <div className="space-y-1.5">
                 <div className="typography-label-small text-muted-foreground">Người thanh toán</div>
                 <div className="flex items-start gap-2">
-                  <User className="h-4 w-4 flex-shrink-0 text-slate-600" />
+                  <User className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
                   <span className="typography-body-medium text-high-contrast font-medium break-words">{settledByName}</span>
                 </div>
               </div>
@@ -511,7 +512,7 @@ function TransactionDetailsSheetComponent({
         </div>
 
         {/* Evidence section */}
-        <div className="space-y-4 bg-card rounded-xl p-4 shadow-xs border border-border">          <div className="flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
+        <div className="space-y-4 bg-card rounded-lg p-4 shadow-xs border border-border">          <div className="flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground" />
               <span className="typography-label-medium text-muted-foreground uppercase">Chứng từ giao dịch</span>
@@ -561,13 +562,13 @@ function TransactionDetailsSheetComponent({
 
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm text-medium-contrast break-all">
-              <Link2 className="h-4 w-4 text-slate-600 flex-shrink-0" />
+              <Link2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               {hasEvidenceUrl ? (
                 <a
                   href={transaction?.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-700 hover:underline"
+                  className="text-primary hover:underline"
                 >
                   {transaction?.url}
                 </a>
@@ -578,7 +579,7 @@ function TransactionDetailsSheetComponent({
               )}
             </div>
             <div className="flex items-start gap-2 text-sm text-medium-contrast break-all">
-              <FileText className="h-4 w-4 text-slate-600 flex-shrink-0" />
+              <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               {hasEvidenceAsset ? (
                 <span>{evidenceFileDisplay}</span>
               ) : !hasEvidenceUrl ? (
@@ -588,7 +589,7 @@ function TransactionDetailsSheetComponent({
           </div>
 
           {isEditingEvidence && (
-            <div className="space-y-4 border-t border-border pt-4">
+            <div className="space-y-4 border-t border-border/65 pt-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-muted-foreground">Chứng từ giao dịch</Label>
                 <UrlInput
@@ -607,7 +608,7 @@ function TransactionDetailsSheetComponent({
                     maxFiles={1}
                   />
                 ) : (
-                  <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted/50 px-3 py-2">
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/50 px-3 py-2">
                     <div className="flex min-w-0 items-center gap-2">
                       <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <span className="text-sm font-medium text-foreground break-all">
@@ -619,7 +620,7 @@ function TransactionDetailsSheetComponent({
                       variant="ghost"
                       size="sm"
                       onClick={handleRemoveSelectedFile}
-                      className="h-11 w-11 shrink-0 px-0 text-muted-foreground hover:text-red-700"
+                      className="h-11 w-11 shrink-0 px-0 text-muted-foreground hover:text-destructive"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -631,7 +632,7 @@ function TransactionDetailsSheetComponent({
               </div>
 
               {evidenceError && (
-                <p className="text-sm text-red-700">{evidenceError}</p>
+                <p className="text-sm text-destructive">{evidenceError}</p>
               )}
 
               <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">

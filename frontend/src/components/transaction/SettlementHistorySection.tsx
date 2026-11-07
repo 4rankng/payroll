@@ -43,7 +43,7 @@ export function SettlementHistorySection({ transaction }: SettlementHistorySecti
   return (
     <div className="space-y-4">
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-3 p-3 bg-muted/30 rounded-xl">
+      <div className="grid grid-cols-3 gap-3 p-3 bg-muted/30 rounded-lg">
         <div className="text-center">
           <p className="text-xs text-muted-foreground mb-1">Tổng</p>
           <p className="text-sm font-semibold">
@@ -51,20 +51,20 @@ export function SettlementHistorySection({ transaction }: SettlementHistorySecti
           </p>
         </div>
         <div className="text-center border-l border-r">
-          <p className="text-xs text-emerald-700 mb-1 flex items-center justify-center gap-1">
+          <p className="text-xs text-success mb-1 flex items-center justify-center gap-1">
             <TrendingUp className="h-3 w-3" />
             Đã TT
           </p>
-          <p className="text-sm font-semibold text-emerald-700">
+          <p className="text-sm font-semibold text-success">
             {transactionService.formatCurrency(settledAmount)}
           </p>
         </div>
         <div className="text-center">
-          <p className="text-xs text-red-700 mb-1 flex items-center justify-center gap-1">
+          <p className="text-xs text-destructive mb-1 flex items-center justify-center gap-1">
             <TrendingDown className="h-3 w-3" />
             Còn lại
           </p>
-          <p className="text-sm font-semibold text-red-700">
+          <p className="text-sm font-semibold text-destructive">
             {transactionService.formatCurrency(pendingAmount)}
           </p>
         </div>

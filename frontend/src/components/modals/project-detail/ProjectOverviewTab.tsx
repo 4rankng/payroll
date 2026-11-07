@@ -99,21 +99,21 @@ export function ProjectOverviewTab({
             icon={Users}
             value={formData.employee_count || 0}
             label="Nhân viên"
-            color="text-blue-700"
+            color="text-primary"
           />
 
           <ProjectStatusCard
             icon={DollarSign}
             value={`${Math.round(calculateBudgetUsage())}%`}
             label="Ngân sách đã sử dụng"
-            color="text-green-700"
+            color="text-success"
           />
 
           <ProjectStatusCard
             icon={Target}
             value="-"
             label="Tiến độ"
-            color="text-emerald-700"
+            color="text-success"
           />
 
           <ProjectStatusCard
@@ -133,7 +133,7 @@ export function ProjectOverviewTab({
               }
             })()}
             label="Ngày còn lại"
-            color="text-orange-700"
+            color="text-warning"
           />
         </div>
       )}

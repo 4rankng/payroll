@@ -24,7 +24,7 @@ export function CronJobCard({ job, onToggle, isPending }: CronJobCardProps) {
   return (
     <div
       className={cn(
-        "bg-white rounded-2xl border shadow-sm overflow-hidden",
+        "console-panel overflow-hidden",
         isDisabled ? "border-utility-gray-300 bg-utility-gray-50" : "border-utility-gray-300",
         job.last_status === "failed" && !isDisabled && "border-utility-error-200"
       )}
@@ -41,8 +41,8 @@ export function CronJobCard({ job, onToggle, isPending }: CronJobCardProps) {
             aria-checked={job.is_enabled}
             className="relative flex h-11 w-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed"
           >
-            <span className={cn("flex h-6 w-10 items-center rounded-full p-0.5 transition-colors", job.is_enabled ? "bg-primary" : "bg-slate-300")} aria-hidden="true">
-              <span className={cn("h-5 w-5 rounded-full bg-white shadow-sm transition-transform", job.is_enabled ? "translate-x-4" : "translate-x-0")} />
+            <span className={cn("flex h-6 w-10 items-center rounded-full p-0.5 transition-colors", job.is_enabled ? "bg-primary" : "bg-utility-gray-300")} aria-hidden="true">
+              <span className={cn("h-5 w-5 rounded-full bg-card shadow-sm transition-transform", job.is_enabled ? "translate-x-4" : "translate-x-0")} />
             </span>
             <span className="text-xs font-semibold leading-none text-muted-foreground" aria-hidden="true">{job.is_enabled ? "Bật" : "Tắt"}</span>
           </button>

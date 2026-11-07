@@ -84,7 +84,7 @@ export function RemoveEmployeeSheet({
       >
         <SheetHeader className="flex-shrink-0" style={{ paddingTop: "max(0px, env(safe-area-inset-top))" }}>
           <SheetTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-700" />
+            <AlertTriangle className="w-5 h-5 text-warning" />
             Xóa nhân viên khỏi dự án
           </SheetTitle>
           <SheetDescription>
@@ -102,11 +102,11 @@ export function RemoveEmployeeSheet({
           <div className="space-y-4">
             <RadioGroup value={removalType} onValueChange={(value: "immediate" | "scheduled") => setRemovalType(value)}>
               <div className="space-y-3">
-                <div className="flex items-center space-x-2 p-3 border rounded-xl">
+                <div className="flex items-center space-x-2 p-3 border rounded-lg">
                   <RadioGroupItem value="immediate" id="immediate" />
                   <div className="flex-1">
                     <Label htmlFor="immediate" className="flex items-center gap-2 cursor-pointer">
-                      <Clock className="w-4 h-4 text-red-700" />
+                      <Clock className="w-4 h-4 text-destructive" />
                       <div>
                         <div className="font-medium">Xóa ngay lập tức</div>
                         <div className="typography-body-medium text-muted-foreground">
@@ -117,11 +117,11 @@ export function RemoveEmployeeSheet({
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-2 p-3 border rounded-xl">
+                <div className="flex items-start space-x-2 p-3 border rounded-lg">
                   <RadioGroupItem value="scheduled" id="scheduled" />
                   <div className="flex-1 space-y-3">
                     <Label htmlFor="scheduled" className="flex items-center gap-2 cursor-pointer">
-                      <Calendar className="w-4 h-4 text-blue-700" />
+                      <Calendar className="w-4 h-4 text-primary" />
                       <div>
                         <div className="font-medium">Xóa vào ngày cụ thể</div>
                         <div className="typography-body-medium text-muted-foreground">
@@ -154,10 +154,10 @@ export function RemoveEmployeeSheet({
             </RadioGroup>
 
             {responseMessage && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+              <div className="bg-success/10 border border-success/30 rounded-lg p-3">
                 <div className="flex items-start gap-2">
-                  <div className="w-4 h-4 rounded-full bg-green-500 flex-shrink-0 mt-0.5" />
-                  <div className="typography-body-medium text-green-800">
+                  <div className="w-4 h-4 rounded-full bg-success/100 flex-shrink-0 mt-0.5" />
+                  <div className="typography-body-medium text-success">
                     <div className="font-medium mb-1">Phản hồi từ hệ thống:</div>
                     <p className="typography-body-small">{responseMessage}</p>
                   </div>
@@ -165,10 +165,10 @@ export function RemoveEmployeeSheet({
               </div>
             )}
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+            <div className="bg-warning/10 border border-warning/30 rounded-lg p-3">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
-                <div className="typography-body-medium text-amber-800">
+                <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+                <div className="typography-body-medium text-warning">
                   <div className="font-medium mb-1">Lưu ý:</div>
                   <ul className="space-y-1 typography-body-small">
                     <li>• Hành động này không thể hoàn thành</li>

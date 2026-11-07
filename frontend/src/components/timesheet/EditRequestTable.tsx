@@ -326,6 +326,7 @@ export const EditRequestTable = ({ userRole = 'admin', onRowClick }: EditRequest
     {
       accessorKey: 'hours',
       header: 'Giờ công',
+      meta: { num: true },
       cell: ({ row }) => {
         const request = row.original;
         const timesheet = request.timesheet;
@@ -369,6 +370,7 @@ export const EditRequestTable = ({ userRole = 'admin', onRowClick }: EditRequest
     {
       accessorKey: 'amount',
       header: 'Số tiền',
+      meta: { num: true },
       cell: ({ row }) => {
         const request = row.original;
         const timesheet = request.timesheet;
@@ -470,7 +472,7 @@ export const EditRequestTable = ({ userRole = 'admin', onRowClick }: EditRequest
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h3 className="text-lg font-semibold text-foreground">
+          <h3 className="console-kicker">
             Yêu cầu sửa bảng công
           </h3>
           <Badge variant="destructive" className="h-6 px-2">
@@ -511,14 +513,17 @@ export const EditRequestTable = ({ userRole = 'admin', onRowClick }: EditRequest
         )}
       </div>
 
-      <div className="rounded-xl border border-yellow-200 bg-yellow-50/30 p-4">
-        <DataTable
-          columns={columns}
-          data={requests}
-          onRowClick={handleRowClick}
-          sorting={sorting}
-          onSortingChange={setSorting}
-        />
+      <div className="console-panel">
+        <div className="console-panel-body">
+          <DataTable
+            columns={columns}
+            data={requests}
+            onRowClick={handleRowClick}
+            sorting={sorting}
+            onSortingChange={setSorting}
+            variant="console"
+          />
+        </div>
       </div>
     </div>
   );

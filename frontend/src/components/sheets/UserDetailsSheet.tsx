@@ -155,9 +155,9 @@ function UserDetailsSheet({
         <div className="space-y-3">
           {/* ── Account fields — edit mode shows inputs, view mode shows info rows ── */}
           {isEditing ? (
-            <div className="rounded-xl border bg-card p-4 space-y-3">
+            <div className="rounded-lg border bg-card p-4 space-y-3">
               <div className="flex items-center gap-2 mb-1">
-                <div className="h-5 w-5 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <div className="h-5 w-5 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <LucideUser className="h-3 w-3 text-primary" />
                 </div>
                 <span className="text-xs font-semibold text-foreground">Thông tin tài khoản</span>
@@ -207,7 +207,7 @@ function UserDetailsSheet({
             </div>
           ) : (
             <>
-              <div className="rounded-xl border bg-card">
+              <div className="rounded-lg border bg-card">
                 <div className="flex flex-col gap-1 px-3 py-2.5 border-b border-border/50 min-[380px]:flex-row min-[380px]:items-baseline min-[380px]:justify-between">
                   <span className="text-xs text-muted-foreground shrink-0">Họ tên</span>
                   <span className="text-xs font-medium break-words min-[380px]:text-right">{user.fullname || '-'}</span>
@@ -235,7 +235,7 @@ function UserDetailsSheet({
               </div>
 
               {/* Timestamps */}
-              <div className="grid grid-cols-1 rounded-xl border bg-card min-[380px]:grid-cols-2 min-[380px]:divide-x min-[380px]:divide-border/50">
+              <div className="grid grid-cols-1 rounded-lg border bg-card min-[380px]:grid-cols-2 min-[380px]:divide-x min-[380px]:divide-border/50">
                 <div className="flex flex-col gap-0.5 px-3 py-2.5 border-b border-border/50 min-[380px]:border-b-0">
                   <span className="text-xs text-muted-foreground">Ngày tạo</span>
                   <span className="text-sm font-semibold">{format(new Date(user.created_at), 'dd/MM/yyyy')}</span>
@@ -252,12 +252,12 @@ function UserDetailsSheet({
                 {activityLoading ? (
                   <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="h-12 rounded-xl bg-muted/40 animate-pulse" />
+                      <div key={i} className="h-12 rounded-lg bg-muted/40 animate-pulse" />
                     ))}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
-                    <div className="flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5">
+                    <div className="flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2.5">
                       <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs text-muted-foreground leading-none mb-0.5">Đăng nhập cuối</p>
@@ -268,14 +268,14 @@ function UserDetailsSheet({
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5">
+                    <div className="flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2.5">
                       <Activity className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs text-muted-foreground leading-none mb-0.5">Đăng nhập</p>
-                        <p className="text-sm font-bold text-blue-700">{activityData?.authentication?.total_logins ?? 0}</p>
+                        <p className="text-sm font-bold text-primary tabular-nums">{activityData?.authentication?.total_logins ?? 0}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5">
+                    <div className="flex items-center gap-2.5 rounded-lg border bg-card px-3 py-2.5">
                       <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs text-muted-foreground leading-none mb-0.5">Công</p>

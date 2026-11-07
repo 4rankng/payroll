@@ -221,31 +221,31 @@ export const EntryRow = memo(({
   const isNewWithData = !entry.originalValues && totalHours > 0;
 
   const rowBg = hasErrors
-    ? 'bg-red-50/60'
+    ? 'bg-destructive/5'
     : hourStatus === 'excessive'
-      ? 'bg-red-50/40'
+      ? 'bg-destructive/5'
       : hourStatus === 'exceeded'
-        ? 'bg-amber-50/40'
+        ? 'bg-warning/5'
         : weekdayInfo?.isSunday
-          ? 'bg-red-50/30'
+          ? 'bg-destructive/5'
           : weekdayInfo?.isSaturday
-            ? 'bg-amber-50/40'
+            ? 'bg-warning/5'
             : 'bg-card';
 
   return (
     <>
       {hasErrors && (entryValidation?.errors.length || (rowErrors && rowErrors.length > 0)) && (
-        <TableRow className="border-0 border-b border-red-200">
-          <TableCell colSpan={3} className="py-2 px-3 bg-red-50">
+        <TableRow className="border-0 border-b border-destructive/30">
+          <TableCell colSpan={3} className="py-2 px-3 bg-destructive/10">
             <div className="flex flex-col gap-0.5">
               {entryValidation && !entryValidation.valid && entryValidation.errors.map((err, i) => (
-                <p key={`ev-${i}`} className="text-xs font-medium text-red-700 flex items-center gap-1.5">
+                <p key={`ev-${i}`} className="text-xs font-medium text-destructive flex items-center gap-1.5">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                   {typeof err === 'string' ? err : 'Có lỗi xảy ra'}
                 </p>
               ))}
               {rowErrors && rowErrors.map((err, i) => (
-                <p key={`re-${i}`} className="text-xs font-medium text-red-700 flex items-center gap-1.5">
+                <p key={`re-${i}`} className="text-xs font-medium text-destructive flex items-center gap-1.5">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                   {err}
                 </p>
@@ -261,15 +261,15 @@ export const EntryRow = memo(({
           <div className="flex items-center gap-1.5 pt-0.5">
             <span className={cn(
               'text-xs font-medium tabular-nums',
-              isMarkedForDeletion ? 'text-muted-foreground line-through' : isWeekend ? 'text-orange-700' : 'text-foreground'
+              isMarkedForDeletion ? 'text-muted-foreground line-through' : isWeekend ? 'text-warning' : 'text-foreground'
             )}>
               {formattedDate}
             </span>
             {weekdayInfo && (
               <span className={cn(
                 'text-xs font-medium px-1.5 py-0.5 rounded-full leading-none',
-                weekdayInfo.isSunday ? 'bg-red-100 text-red-700' :
-                weekdayInfo.isSaturday ? 'bg-orange-100 text-orange-700' :
+                weekdayInfo.isSunday ? 'bg-destructive/15 text-destructive' :
+                weekdayInfo.isSaturday ? 'bg-warning/15 text-warning' :
                 'bg-muted text-muted-foreground'
               )}>
                 {weekdayInfo.label}
@@ -290,9 +290,9 @@ export const EntryRow = memo(({
               <SelectContent>
                 {/* Warn user if existing data — changing day type requires deleting hours first */}
                 {entry.originalValues && totalHours > 0 && (
-                  <div className="px-2 py-1.5 mb-1 border-b border-amber-100 bg-amber-50 flex items-start gap-1.5">
-                    <AlertTriangle className="h-3 w-3 text-amber-700 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-700 leading-tight">
+                  <div className="px-2 py-1.5 mb-1 border-b border-warning/30 bg-warning/10 flex items-start gap-1.5">
+                    <AlertTriangle className="h-3 w-3 text-warning shrink-0 mt-0.5" />
+                    <p className="text-xs text-warning leading-tight">
                       Xóa giờ công trước khi đổi loại ngày
                     </p>
                   </div>
@@ -325,17 +325,17 @@ export const EntryRow = memo(({
                   const boxStyle = isDisabled
                     ? 'border-border/40 bg-muted/30 text-muted-foreground'
                     : thisFieldDeleted
-                      ? 'border-red-300 bg-red-50/70 text-red-700'
+                      ? 'border-destructive/40 bg-destructive/10 text-destructive'
                       : thisFieldEdited
-                        ? 'border-amber-300 bg-amber-50/70 text-amber-700 font-semibold'
+                        ? 'border-warning/40 bg-warning/10 text-warning font-semibold'
                         : thisFieldNew
-                          ? 'border-emerald-300 bg-emerald-50/70 text-emerald-700 font-semibold'
+                          ? 'border-success/40 bg-success/10 text-success font-semibold'
                           : hourValue > 16
-                            ? 'border-red-300 bg-red-50/60 text-red-700 font-bold'
+                            ? 'border-destructive/40 bg-destructive/10 text-destructive font-bold'
                             : hourValue > 12
-                              ? 'border-amber-300 bg-amber-50/60 text-amber-700 font-semibold'
+                              ? 'border-warning/40 bg-warning/10 text-warning font-semibold'
                               : hourValue > 0
-                                ? 'border-emerald-300 bg-emerald-50/60 text-emerald-700 font-semibold'
+                                ? 'border-success/40 bg-success/10 text-success font-semibold'
                                 : 'border-border/60 text-muted-foreground';
 
                   const slotEarnings = !isDisabled && hourValue > 0 && getPayRateForEntry
@@ -380,7 +380,7 @@ export const EntryRow = memo(({
                         )}
                       </div>
                       {slotEarnings > 0 && (
-                        <span className="text-xs text-emerald-700 tabular-nums leading-none pl-0.5">
+                        <span className="text-xs text-success tabular-nums leading-none pl-0.5">
                           {formatVND(slotEarnings)}
                         </span>
                       )}
@@ -390,7 +390,7 @@ export const EntryRow = memo(({
                 {hourStatus !== 'normal' && (
                   <span className={cn(
                     'inline-flex items-center gap-0.5 text-xs font-bold px-1 py-0.5 rounded-full self-start',
-                    hourStatus === 'excessive' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                    hourStatus === 'excessive' ? 'bg-destructive/15 text-destructive' : 'bg-warning/15 text-warning'
                   )}>
                     <AlertTriangle className="h-2 w-2" />
                     {totalHours}h

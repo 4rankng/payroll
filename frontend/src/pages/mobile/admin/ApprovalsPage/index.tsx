@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AlertTriangle, ChevronLeft, ChevronRight, ClipboardCheck, Loader2, RefreshCw } from 'lucide-react';
 
 import { ApprovalDecisionModal, type ApprovalDecisionMode } from '@/components/approvals/ApprovalDecisionModal';
+import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getConsoleKicker } from '@/lib/console';
 import { cn } from '@/lib/utils';
 import {
   useApprovalsList,
@@ -31,9 +34,9 @@ const STATUS_BADGE: Record<string, string> = {
   escalated: 'border-red-200 bg-red-50 text-red-800',
   executed: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   approved: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  rejected: 'border-slate-200 bg-slate-50 text-slate-700',
-  cancelled: 'border-slate-200 bg-slate-50 text-slate-700',
-  expired: 'border-slate-200 bg-slate-50 text-slate-700',
+  rejected: 'border-border bg-muted/50 text-muted-foreground',
+  cancelled: 'border-border bg-muted/50 text-muted-foreground',
+  expired: 'border-border bg-muted/50 text-muted-foreground',
 };
 
 const canDecide = (item: ApprovalRequest) => item.status === 'pending' || item.status === 'rescheduled';
@@ -47,6 +50,7 @@ const formatDateTime = (iso?: string | null) => {
 
 /** Mobile approval queue: one-column list, 44px targets, chip filters. */
 const ApprovalsPageMobile = () => {
+  const location = useLocation();
   const [filterKey, setFilterKey] = useState('waiting');
   const [page, setPage] = useState(1);
   const [modal, setModal] = useState<{ mode: ApprovalDecisionMode; request: ApprovalRequest } | null>(null);
@@ -101,33 +105,30 @@ const ApprovalsPageMobile = () => {
 
   return (
     <div className="flex min-h-[100dvh] flex-col overflow-x-clip bg-background pb-[env(safe-area-inset-bottom)]">
-      <header className="sticky top-0 z-10 border-b bg-card/95 px-4 py-3 backdrop-blur">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-background">
-              <ClipboardCheck aria-hidden="true" className="size-5 text-indigo-700" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-semibold text-foreground">Yêu cầu phê duyệt</h1>
-              <p className="truncate text-xs text-muted-foreground">{headerSummary}</p>
-            </div>
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-11 shrink-0"
-            aria-label="Làm mới"
-            onClick={() => {
-              void listQuery.refetch();
-              void waitingQuery.refetch();
-              void escalatedQuery.refetch();
-            }}
-          >
-            <RefreshCw aria-hidden="true" className="size-4" />
-          </Button>
-        </div>
-        <div className="mt-3 -mx-4 flex gap-2 overflow-x-auto px-4 py-1" role="tablist" aria-label="Lọc theo trạng thái">
+      <div className="sticky top-0 z-20 border-b border-border bg-card">
+        <MobilePageHeader
+          title="Yêu cầu phê duyệt"
+          kicker={getConsoleKicker(location.pathname)}
+          subtitle={headerSummary}
+          icon={ClipboardCheck}
+          actions={
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-11 shrink-0"
+              aria-label="Làm mới"
+              onClick={() => {
+                void listQuery.refetch();
+                void waitingQuery.refetch();
+                void escalatedQuery.refetch();
+              }}
+            >
+              <RefreshCw aria-hidden="true" className="size-4" />
+            </Button>
+          }
+        />
+        <div role="tablist" aria-label="Lọc theo trạng thái" className="console-filter-bar overflow-x-auto px-4 pb-2">
           {FILTERS.map((f) => (
             <button
               key={f.key}
@@ -149,45 +150,47 @@ const ApprovalsPageMobile = () => {
             </button>
           ))}
         </div>
-      </header>
+      </div>
 
       <div className="flex-1 space-y-3 p-4 pb-[calc(4rem+env(safe-area-inset-bottom))]">
-        <section aria-label="Chuẩn bị sao kê" className="flex items-end gap-2 rounded-xl border bg-card px-3.5 py-3">
-          <div className="min-w-0 flex-1">
-            <label htmlFor="sao-ke-date-mobile" className="block text-sm font-medium text-foreground">
-              Chuẩn bị sao kê
-            </label>
-            <input
-              id="sao-ke-date-mobile"
-              type="date"
-              value={prepareDate}
-              onChange={(event) => setPrepareDate(event.target.value)}
+        <section aria-label="Chuẩn bị sao kê" className="console-panel">
+          <div className="console-panel-body flex items-end gap-2">
+            <div className="min-w-0 flex-1">
+              <label htmlFor="sao-ke-date-mobile" className="block text-sm font-medium text-foreground">
+                Chuẩn bị sao kê
+              </label>
+              <input
+                id="sao-ke-date-mobile"
+                type="date"
+                value={prepareDate}
+                onChange={(event) => setPrepareDate(event.target.value)}
+                disabled={fileApproval.isPending}
+                className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+                aria-label="Ngày sao kê"
+              />
+            </div>
+            <Button
+              type="button"
+              className="h-11 shrink-0"
               disabled={fileApproval.isPending}
-              className="mt-1.5 h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
-              aria-label="Ngày sao kê"
-            />
+              onClick={handlePrepareSaoKe}
+            >
+              {fileApproval.isPending ? 'Đang…' : 'Chuẩn bị'}
+            </Button>
           </div>
-          <Button
-            type="button"
-            className="h-11 shrink-0"
-            disabled={fileApproval.isPending}
-            onClick={handlePrepareSaoKe}
-          >
-            {fileApproval.isPending ? 'Đang…' : 'Chuẩn bị'}
-          </Button>
         </section>
 
         {escalatedCount ? (
-          <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-            <AlertTriangle aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-red-700" />
-            <p className="text-sm leading-5 text-red-800">
+          <div role="alert" className="flex items-start gap-3 rounded-xl border border-utility-error-200 bg-utility-error-50 px-4 py-3">
+            <AlertTriangle aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-utility-error-700" />
+            <p className="text-sm leading-5 text-fg-error-primary">
               {escalatedCount.toLocaleString('vi-VN')} yêu cầu đã leo thang sau khi hết lượt thử lại — cần quyết định của bạn.
             </p>
           </div>
         ) : null}
 
         {listQuery.isLoading ? (
-          <div role="status" aria-live="polite" className="rounded-xl border bg-card px-4 py-12 text-center">
+          <div role="status" aria-live="polite" className="console-panel px-4 py-12 text-center">
             <Loader2 aria-hidden="true" className="mx-auto mb-3 size-6 animate-spin text-muted-foreground" />
             <p className="text-sm text-muted-foreground">Đang tải…</p>
           </div>
@@ -199,12 +202,12 @@ const ApprovalsPageMobile = () => {
             </Button>
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-xl border bg-card px-4 py-12 text-center">
+          <div className="console-panel px-4 py-12 text-center">
             <p className="text-sm text-muted-foreground">Không có yêu cầu trong mục này.</p>
           </div>
         ) : (
           items.map((item) => (
-            <article key={item.id} className="rounded-xl border bg-card px-4 py-3">
+            <article key={item.id} className="console-panel px-4 py-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium text-foreground">
                   {item.summary || item.type_label}

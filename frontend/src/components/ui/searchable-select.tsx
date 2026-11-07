@@ -106,7 +106,7 @@ export function SearchableSelect({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className={cn('h-11 w-full justify-between font-normal', triggerClassName)}
+          className={cn('min-h-11 w-full justify-between rounded-lg font-normal sm:h-9 sm:min-h-9', triggerClassName)}
         >
           <span className="block truncate">{selected?.label ?? placeholder}</span>
           <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

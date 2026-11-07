@@ -146,12 +146,12 @@ export function ProjectCreateModal({ onProjectCreate, isOpen = false, onClose }:
         setInternalOpen(open);
       }
     }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="rounded-lg max-w-2xl">
         <DialogClose asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-3 right-3 h-11 w-11 rounded-xl sm:top-4 sm:right-4 sm:h-8 sm:w-8 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="absolute top-3 right-3 h-11 w-11 rounded-lg sm:top-4 sm:right-4 sm:h-8 sm:w-8 hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Đóng</span>
@@ -172,9 +172,9 @@ export function ProjectCreateModal({ onProjectCreate, isOpen = false, onClose }:
               placeholder=""
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
-              className={errors.name ? "border-red-500" : ""}
+              className={errors.name ? "border-destructive" : ""}
             />
-            {errors.name && <p className="typography-body-medium text-red-700">{errors.name}</p>}
+            {errors.name && <p className="typography-body-medium text-destructive">{errors.name}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="client">Khách hàng *</Label>
@@ -183,10 +183,10 @@ export function ProjectCreateModal({ onProjectCreate, isOpen = false, onClose }:
               placeholder=""
               value={formData.client_name}
               onChange={(e) => handleInputChange("client_name", e.target.value)}
-              className={errors.client_name ? "border-red-500" : ""}
+              className={errors.client_name ? "border-destructive" : ""}
               required
             />
-            {errors.client_name && <p className="typography-body-medium text-red-700">{errors.client_name}</p>}
+            {errors.client_name && <p className="typography-body-medium text-destructive">{errors.client_name}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="code">Mã dự án</Label>
@@ -213,9 +213,9 @@ export function ProjectCreateModal({ onProjectCreate, isOpen = false, onClose }:
               type="date"
               value={formData.end_date}
               onChange={(e) => handleInputChange("end_date", e.target.value)}
-              className={errors.end_date ? "border-red-500" : ""}
+              className={errors.end_date ? "border-destructive" : ""}
             />
-            {errors.end_date && <p className="typography-body-medium text-red-700">{errors.end_date}</p>}
+            {errors.end_date && <p className="typography-body-medium text-destructive">{errors.end_date}</p>}
           </div>
           <div className="col-span-2 space-y-2">
             <Label htmlFor="description">Mô tả</Label>

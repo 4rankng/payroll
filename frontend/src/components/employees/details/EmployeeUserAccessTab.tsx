@@ -111,7 +111,7 @@ export function EmployeeUserAccessTab({ employee }: EmployeeUserAccessTabProps) 
   // Show permission denied if not admin or employee creator
   if (!canManageEmployeeAccess) {
     return (
-      <div className="mt-3 rounded-xl border bg-muted/20 p-4">
+      <div className="mt-3 rounded-lg border bg-muted/20 p-4">
         <div className="flex flex-col items-center text-center space-y-2">
           <ShieldCheck className="h-8 w-8 text-muted-foreground" />
           <div>
@@ -128,7 +128,7 @@ export function EmployeeUserAccessTab({ employee }: EmployeeUserAccessTabProps) 
   return (
     <div className="space-y-4 mt-3">
       {/* Add User Section */}
-      <div className="rounded-xl border bg-muted/20 p-3 space-y-2">
+      <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
         <div className="flex items-center gap-1.5">
           <UserPlus className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-sm font-medium">Cấp quyền quản lý</span>
@@ -182,7 +182,7 @@ export function EmployeeUserAccessTab({ employee }: EmployeeUserAccessTabProps) 
             Đang tải...
           </div>
         ) : allEmployeeUsers.length === 0 ? (
-          <div className="text-center py-6 text-xs text-muted-foreground border bg-muted/30 rounded-xl">
+          <div className="text-center py-6 text-xs text-muted-foreground border bg-muted/30 rounded-lg">
             Chưa có quản lý nào được cấp quyền.
           </div>
         ) : (
@@ -190,7 +190,7 @@ export function EmployeeUserAccessTab({ employee }: EmployeeUserAccessTabProps) 
             {allEmployeeUsers.map((employeeUser) => (
               <div
                 key={employeeUser.id === 0 ? `creator-${employeeUser.user_id}` : employeeUser.id}
-                className="flex items-center justify-between px-3 py-2.5 border rounded-xl hover:bg-accent/50 transition-colors"
+                className="flex items-center justify-between px-3 py-2.5 border rounded-lg hover:bg-accent/50 transition-colors"
               >
                 <div className="flex min-w-0 items-center gap-2.5">
                   <UserAvatar

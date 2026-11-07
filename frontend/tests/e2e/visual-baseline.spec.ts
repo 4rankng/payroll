@@ -99,12 +99,14 @@ const ADMIN_SURFACES: Surface[] = [
   { title: "admin/projects", path: "/admin/projects" },
   { title: "admin/employees", path: "/admin/employees" },
   { title: "admin/timesheet", path: "/admin/timesheet" },
+  { title: "admin/ledger", path: "/admin/ledger" },
 ];
 
 const PARTNER_SURFACES: Surface[] = [
   { title: "partner/dashboard", path: "/partner/dashboard" },
   { title: "partner/timesheets", path: "/partner/timesheet" },
   { title: "partner/projects", path: "/partner/projects" },
+  { title: "partner/payment-history", path: "/partner/timesheet/payment-history" },
 ];
 
 const VIEWPORTS = [
@@ -158,6 +160,8 @@ test.describe("visual baselines", () => {
       ["**/api/v1/employees/missing-bank-details", "admin--employees-missing-bank-details.json"],
       ["**/api/v1/employees*", "admin--employees.json"],
       ["**/api/v1/projects*", "admin--projects.json"],
+      // Ledger — list + metadata share the /transactions prefix.
+      ["**/api/v1/transactions*", "admin--transactions.json"],
     ],
     partner: [
       ["**/api/v1/dashboard/partner*", "partner--dashboard-partner.json"],
@@ -169,6 +173,10 @@ test.describe("visual baselines", () => {
       ["**/api/v1/timesheets*", "partner--timesheets.json"],
       ["**/api/v1/employees?*", "partner--employees.json"],
       ["**/api/v1/employees/missing-bank-details", "partner--employees-missing-bank-details.json"],
+      // Bank-transfer histories proxy the bank API, which times out in dev —
+      // the captured error body is deterministic, so the baseline certifies
+      // the route's error-state rendering.
+      ["**/api/v1/payrolls/bank-transfer-histories*", "partner--bank-transfer-histories.json"],
     ],
   };
 

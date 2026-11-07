@@ -34,7 +34,7 @@ export const FilterPill = React.memo(function FilterPill({
     <SelectPrimitive.Root value={value} onValueChange={onChange}>
       <SelectPrimitive.Trigger
         className={cn(
-          'group inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-0 text-sm font-medium whitespace-nowrap sm:min-h-9 sm:px-2.5',
+          'group inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-0 text-sm font-medium whitespace-nowrap sm:min-h-9 sm:px-2.5',
           'border transition-colors duration-100 select-none outline-none',
           'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
           !isActive && 'border-border/60 bg-card text-muted-foreground hover:border-border hover:text-foreground hover:bg-accent/40',
@@ -59,7 +59,7 @@ export const FilterPill = React.memo(function FilterPill({
             // must scroll rather than be clipped by the rounded overflow-hidden
             // shell. `--radix-select-content-available-height` is the space
             // Radix measured between the trigger and the viewport edge.
-            'z-50 min-w-[10rem] overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-sm',
+            'z-50 min-w-[10rem] overflow-hidden rounded-lg border bg-popover text-popover-foreground shadow-sm',
             'max-h-[min(20rem,var(--radix-select-content-available-height))]',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',

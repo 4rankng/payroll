@@ -197,12 +197,11 @@ function SettleTransactionModalComponent({
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent
-        overlayClassName="bg-slate-950/80 backdrop-blur-[3px]"
         className="max-h-[calc(100dvh-1rem)] max-w-3xl shadow-none sm:max-h-[calc(100dvh-2rem)]"
       >
         <AlertDialogHeader className="border-b border-emerald-900 bg-emerald-950 pb-5 text-white">
           <div className="flex items-center gap-3">
-            <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${
+            <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg ${
               transaction.transaction_type === 'revenue' ? 'bg-emerald-400/15' : 'bg-red-400/15'
             }`}>
               <CheckCircle className={`h-5 w-5 ${
@@ -227,7 +226,7 @@ function SettleTransactionModalComponent({
               {/* Left Pane: Transaction Info & Payment Details */}
               <div className="space-y-4">
                 {/* Original Transaction Info */}
-                <div className="bg-muted/50 rounded-xl p-3 space-y-2">
+                <div className="bg-muted/50 rounded-lg p-3 space-y-2">
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Thông tin giao dịch</div>
                   <div className="space-y-1 typography-body-small">
                     <div className="flex items-start justify-between gap-4">
@@ -238,11 +237,11 @@ function SettleTransactionModalComponent({
                       <>
                         <div className="flex items-start justify-between gap-4">
                           <span className="text-muted-foreground">Đã thanh toán:</span>
-                          <span className="text-right font-medium text-green-700">{formatCurrency(transaction.settled_amount)}</span>
+                          <span className="text-right font-medium text-success">{formatCurrency(transaction.settled_amount)}</span>
                         </div>
                         <div className="flex items-start justify-between gap-4">
                           <span className="text-muted-foreground">Còn lại:</span>
-                          <span className="text-right font-medium text-amber-700">{formatCurrency(getTransactionRemainingAmount(transaction))}</span>
+                          <span className="text-right font-medium text-warning">{formatCurrency(getTransactionRemainingAmount(transaction))}</span>
                         </div>
                       </>
                     )}
@@ -265,7 +264,7 @@ function SettleTransactionModalComponent({
                       value={watchedAmount}
                       onChange={handleAmountChange}
                       placeholder="0"
-                      className={`pr-12 sm:pr-12 text-right ${errors.amount ? 'border-red-500' : ''}`}
+                      className={`pr-12 sm:pr-12 text-right ${errors.amount ? 'border-destructive' : ''}`}
                       required
                     />
                     <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">
@@ -273,7 +272,7 @@ function SettleTransactionModalComponent({
                     </span>
                   </div>
                   {errors.amount && (
-                    <p className="text-xs text-red-700">{errors.amount.message}</p>
+                    <p className="text-xs text-destructive">{errors.amount.message}</p>
                   )}
                 </div>
 
@@ -287,10 +286,10 @@ function SettleTransactionModalComponent({
                     id="settlement_date"
                     type="date"
                     {...register('settlement_date', { required: 'Ngày thanh toán là bắt buộc' })}
-                    className={errors.settlement_date ? 'border-red-500' : ''}
+                    className={errors.settlement_date ? 'border-destructive' : ''}
                   />
                   {errors.settlement_date && (
-                    <p className="text-xs text-red-700">{errors.settlement_date.message}</p>
+                    <p className="text-xs text-destructive">{errors.settlement_date.message}</p>
                   )}
                 </div>
 
@@ -340,10 +339,10 @@ function SettleTransactionModalComponent({
                           maxFiles={1}
                         />
                       ) : (
-                        <div className="flex items-center justify-between gap-2 p-3 bg-green-50 rounded border">
+                        <div className="flex items-center justify-between gap-2 p-3 bg-success/10 rounded border">
                           <div className="flex min-w-0 flex-1 items-center gap-2">
-                            <Receipt className="h-4 w-4 text-green-700" />
-                            <span className="min-w-0 break-all text-sm text-green-700">
+                            <Receipt className="h-4 w-4 text-success" />
+                            <span className="min-w-0 break-all text-sm text-success">
                               {evidenceFile.name}
                             </span>
                           </div>
@@ -352,7 +351,7 @@ function SettleTransactionModalComponent({
                             variant="ghost"
                             size="sm"
                             onClick={handleRemoveFile}
-                            className="h-11 w-11 p-0 text-muted-foreground hover:text-red-700"
+                            className="h-11 w-11 p-0 text-muted-foreground hover:text-destructive"
                             aria-label="Xóa file chứng từ"
                           >
                             <X className="h-4 w-4" />
@@ -360,7 +359,7 @@ function SettleTransactionModalComponent({
                         </div>
                       )}
                       {fileUploadError && (
-                        <p className="text-xs text-red-700">{fileUploadError}</p>
+                        <p className="text-xs text-destructive">{fileUploadError}</p>
                       )}
                     </div>
                   )}
@@ -383,7 +382,7 @@ function SettleTransactionModalComponent({
               </div>
             </div>
 
-            <AlertDialogFooter className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <AlertDialogFooter className="border-t border-border/65 pt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={onClose}
@@ -407,7 +406,7 @@ function SettleTransactionModalComponent({
         {step === 'confirm' && formData && (
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
-              <div className="bg-muted/50 rounded-xl p-3 space-y-3">
+              <div className="bg-muted/50 rounded-lg p-3 space-y-3">
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Thông tin thanh toán
                 </div>
@@ -458,14 +457,14 @@ function SettleTransactionModalComponent({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-                <p className="typography-body-small text-amber-800">
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
+                <p className="typography-body-small text-warning">
                   Hành động này sẽ thanh toán giao dịch và không thể hoàn tác.
                 </p>
               </div>
             </div>
 
-            <AlertDialogFooter className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <AlertDialogFooter className="border-t border-border/65 pt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={handleBack}

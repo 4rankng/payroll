@@ -91,6 +91,9 @@ interface DataTableProps<TData, TValue> {
   /** "dense" = data-first tablet/desktop mode: 12px text, 40px rows, tighter
    *  padding. "comfortable" (default) keeps the current airy spacing. */
   density?: "comfortable" | "dense";
+  /** "console" applies the staff day-console table contract (.console-table:
+   *  mono 11px uppercase headers, 36px rows). Default unchanged. */
+  variant?: "default" | "console";
   /** Freezes the first (identifier) column: sticky left + opaque background
    *  so row context survives horizontal scrolling (NN/g mobile-tables). */
   stickyFirstColumn?: boolean;
@@ -239,6 +242,7 @@ export function DataTable<TData, TValue>({
   embedded = false,
   emptyState,
   density = "comfortable",
+  variant = "default",
   stickyFirstColumn = false,
   columnVisibilityKey,
   toolbar,
@@ -351,7 +355,7 @@ export function DataTable<TData, TValue>({
             !embedded && "rounded-xl border border-border bg-white shadow-sm"
           )}
         >
-          <Table className="w-full">
+          <Table variant={variant} className="w-full">
               {caption && <caption className="sr-only">{caption}</caption>}
               <TableHeader className="sticky top-0 bg-card z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -446,6 +450,10 @@ export function DataTable<TData, TValue>({
                             className={cn(
                               "align-middle",
                               (cell.column.columnDef.meta as { align?: "left" | "right" | "center" } | undefined)?.align === "right" && "text-right",
+                              // Console table contract: mono right-aligned numerals
+                              // via column meta { num: true } (works with or without
+                              // variant="console"; .num only restyles under it).
+                              (cell.column.columnDef.meta as { num?: boolean } | undefined)?.num && "num tabular-nums",
                               isDense && "text-[12px] leading-4",
                               cellPadding,
                               isFirstCell && getRowClassName?.(row.original),

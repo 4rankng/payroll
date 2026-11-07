@@ -54,14 +54,14 @@ const STATUS_TEXT: Record<Status, string> = {
   paused: 'text-amber-700',
 };
 
-/** Tiny uppercase caption used for section eyebrows and metric labels. */
-const microLabel = 'text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground';
+/** Tiny mono uppercase caption used for section eyebrows and metric labels. */
+const microLabel = 'console-kicker';
 
 /** One cell of the metric rail. Cells share a single bordered strip. */
 const Metric = ({ label, value }: { label: string; value: number }) => (
   <div className="px-4 py-3">
     <p className={microLabel}>{label}</p>
-    <p className="mt-1 text-xl font-semibold tabular-nums leading-none tracking-tight text-foreground">
+    <p className="console-value mt-1 text-xl font-semibold leading-none tracking-tight text-foreground">
       {value}
     </p>
   </div>
@@ -180,7 +180,7 @@ export const AdBannerSection = () => {
 
         {/* One solid surface; the composer's own field groups are borderless
             so nothing renders as a card inside a card. */}
-        <div className="rounded-xl border bg-card p-4 shadow-sm sm:p-6">
+        <div className="console-panel p-4 sm:p-6">
           <AdBannerComposer
             key={editing.banner ? `${editing.banner.id}-${editing.clone}` : 'new'}
             initial={editing.banner}
@@ -221,7 +221,7 @@ export const AdBannerSection = () => {
       </div>
 
       {!isLoading && !isError && banners.length > 0 && (
-        <div className="grid grid-cols-2 divide-x divide-y overflow-hidden rounded-xl border bg-card shadow-sm sm:grid-cols-4 sm:divide-y-0">
+        <div className="console-panel grid grid-cols-2 divide-x divide-y overflow-hidden sm:grid-cols-4 sm:divide-y-0">
           <Metric label="Đang chạy" value={tally.running} />
           <Metric label="Hẹn lịch" value={tally.scheduled} />
           <Metric label="Tạm dừng" value={tally.paused} />
@@ -238,7 +238,7 @@ export const AdBannerSection = () => {
           {getErrorMessage(error)}
         </p>
       ) : ordered.length === 0 ? (
-        <div className="rounded-xl border bg-card px-6 py-14 text-center shadow-sm">
+        <div className="console-panel px-6 py-14 text-center">
           <Megaphone className="mx-auto h-6 w-6 text-muted-foreground" aria-hidden="true" />
           <p className="mt-3 text-sm font-medium text-foreground">Chưa có chiến dịch nào</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
@@ -257,7 +257,7 @@ export const AdBannerSection = () => {
       ) : (
         /* One bordered surface, hairline-divided rows — a console list, not a
            stack of cards. */
-        <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-sm">
+        <ul className="console-panel divide-y overflow-hidden">
           {ordered.map((banner) => {
             const status = statusOf(banner, now);
             const expired = status.key === 'expired';

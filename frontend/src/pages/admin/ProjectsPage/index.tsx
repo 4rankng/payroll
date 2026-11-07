@@ -98,7 +98,12 @@ const ProjectsPage = () => {
   return (
     <AdminPageCanvas>
       <AdminPageHeaderCard>
-        <ProjectPageHeader onCreateProject={() => openCreateProject()} />
+        <ProjectPageHeader
+          onCreateProject={() => openCreateProject()}
+          meta={response?.pagination && response.pagination.totalRecords > 0
+            ? `${response.pagination.totalRecords.toLocaleString('vi-VN')} dự án`
+            : undefined}
+        />
       </AdminPageHeaderCard>
 
       <AdminSectionCard aria-label="Danh sách dự án">
@@ -114,7 +119,6 @@ const ProjectsPage = () => {
               onMonthFilterChange={filterControls.setMonthFilter}
               hasFilters={filterControls.hasFilters}
               onClearFilters={filterControls.clearFilters}
-              className="rounded-none border-0 bg-transparent px-0 py-0 backdrop-blur-none"
             />
           </div>
         </AdminFilterRow>

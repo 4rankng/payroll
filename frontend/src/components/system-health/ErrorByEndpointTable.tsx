@@ -61,7 +61,7 @@ export function ErrorByEndpointTable() {
       ) : rows.length === 0 ? (
         <AllClear text="Không có lỗi" />
       ) : (
-        <div className="border rounded-xl overflow-hidden">
+        <div className="console-panel overflow-hidden">
           <div className="grid grid-cols-[1fr_64px_72px_160px] gap-x-4 px-4 py-2 border-b bg-muted/30
                           text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <button onClick={() => handleSort("endpoint")} className="text-left hover:text-foreground transition-colors">
@@ -82,22 +82,22 @@ export function ErrorByEndpointTable() {
                 className={cn(
                   "grid grid-cols-[1fr_64px_72px_160px] gap-x-4 px-4 py-3 items-center",
                   row.errorRate > 20
-                    ? "bg-red-50/50"
+                    ? "bg-utility-error-50/50"
                     : row.errorRate > 5
-                      ? "bg-amber-50/40"
+                      ? "bg-utility-warning-50/40"
                       : ""
                 )}
               >
                 <div className="overflow-x-auto">
                   <EndpointLabel endpoint={row.endpoint} />
                 </div>
-                <span className="text-right text-sm font-bold text-red-700 tabular-nums">
+                <span className="text-right text-sm font-bold text-fg-error-primary tabular-nums">
                   {row.errorTotal.toLocaleString()}
                 </span>
                 <span className={cn(
                   "text-right text-sm font-semibold tabular-nums",
-                  row.errorRate > 20 ? "text-red-700"
-                    : row.errorRate > 5 ? "text-amber-700"
+                  row.errorRate > 20 ? "text-fg-error-primary"
+                    : row.errorRate > 5 ? "text-fg-warning-primary"
                     : "text-muted-foreground"
                 )}>
                   {row.errorRate.toFixed(1)}%

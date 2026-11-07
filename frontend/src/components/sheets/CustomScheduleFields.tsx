@@ -23,8 +23,8 @@ export function CustomScheduleFields({
   return (
     <div className="space-y-4">
       {/* Simplified Inputs */}
-      <div className="space-y-3 bg-gradient-to-br from-primary-50 to-primary-100/30 border border-primary/20 rounded-xl p-4 shadow-sm">
-        <div className="typography-label-medium text-foreground font-semibold">Thiết lập lịch trả</div>
+      <div className="space-y-3 bg-primary/5 border border-primary/20 rounded-lg p-4">
+        <div className="console-kicker">Thiết lập lịch trả</div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-2">

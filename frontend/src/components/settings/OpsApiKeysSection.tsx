@@ -347,8 +347,8 @@ export const OpsApiKeysSection = () => {
     <div className="space-y-6">
       {/* 1. Tạo khoá ops (pk_ops_*) */}
       <section id="ops-keys-create" aria-labelledby="ops-keys-create-title">
-        <Card className="overflow-hidden border-border shadow-sm">
-          <CardHeader className="border-b bg-muted/20 p-4 sm:p-5">
+        <Card variant="console">
+          <CardHeader className="console-panel-header p-4 sm:p-5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
                 <Plus className="size-4" aria-hidden="true" />
@@ -517,8 +517,8 @@ export const OpsApiKeysSection = () => {
 
       {/* 2. Danh sách khoá ops */}
       <section id="ops-keys-list" aria-labelledby="ops-keys-list-title">
-        <Card className="overflow-hidden border-border shadow-sm">
-          <CardHeader className="border-b bg-muted/20 p-4 sm:p-5">
+        <Card variant="console">
+          <CardHeader className="console-panel-header p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-muted-foreground/20 bg-muted text-foreground">
@@ -601,8 +601,8 @@ export const OpsApiKeysSection = () => {
 
       {/* 3. Hướng dẫn cài đặt MCP vào agent */}
       <section id="ops-mcp-install" aria-labelledby="ops-mcp-install-title">
-        <Card className="overflow-hidden border-border shadow-sm">
-          <CardHeader className="border-b bg-muted/20 p-4 sm:p-5">
+        <Card variant="console">
+          <CardHeader className="console-panel-header p-4 sm:p-5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400">
                 <Terminal className="size-4" aria-hidden="true" />

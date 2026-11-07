@@ -24,6 +24,8 @@ import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { getConsoleKicker } from "@/lib/console";
 import { CheckInEmployeeCard } from "@/components/advance-payment/CheckInEmployeeCard";
 import { CheckInMarkAttendanceDialog } from "@/components/advance-payment/CheckInMarkAttendanceDialog";
 import { CheckInMonthSelector } from "@/components/advance-payment/CheckInMonthSelector";
@@ -281,35 +283,24 @@ export default function CheckInSettingsPage() {
 
   return (
     <main className="mx-auto w-full max-w-[1440px] space-y-4 p-3 pb-24 sm:p-4 lg:p-6">
-      <header className="border-b border-border pb-4">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="min-w-0">
-            <Button
-              type="button"
-              variant="ghost"
-              className="mb-2 h-11 min-h-11 w-fit gap-2 px-1.5 text-sm sm:h-9 sm:min-h-0"
-              onClick={() => navigate(returnPath)}
-              aria-label="Quay lại"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden />
-              Quay lại
-            </Button>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
-                <ScanFace className="h-5 w-5" aria-hidden />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-                  Cấu hình điểm danh
-                </h1>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  Quản lý quyền và theo dõi mức sử dụng theo dự án.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="w-full min-w-0 space-y-1 lg:w-80">
+      <div>
+        <Button
+          type="button"
+          variant="ghost"
+          className="mb-2 h-11 min-h-11 w-fit gap-2 px-1.5 text-sm sm:h-9 sm:min-h-0"
+          onClick={() => navigate(returnPath)}
+          aria-label="Quay lại"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+          Quay lại
+        </Button>
+        <PageHeader
+          title="Cấu hình điểm danh"
+          description="Quản lý quyền và theo dõi mức sử dụng theo dự án."
+          icon={ScanFace}
+          kicker={getConsoleKicker(location.pathname)}
+        >
+          <div className="w-full min-w-0 space-y-1 sm:w-80">
             <label className="text-xs font-medium text-muted-foreground" htmlFor="check-in-project">
               Dự án
             </label>
@@ -326,8 +317,8 @@ export default function CheckInSettingsPage() {
               }))}
             />
           </div>
-        </div>
-      </header>
+        </PageHeader>
+      </div>
 
       {projectsQuery.isLoading ? (
         <div className="flex gap-2 overflow-hidden">
@@ -395,7 +386,7 @@ export default function CheckInSettingsPage() {
           </div>
 
           <section className="space-y-3" aria-label="Danh sách cấu hình điểm danh">
-            <div className="flex flex-col gap-3 rounded-xl border bg-background p-3 shadow-xs lg:flex-row lg:items-end lg:justify-between">
+            <div className="console-filter-bar flex-wrap gap-2 p-3 sm:gap-3 lg:flex-nowrap lg:justify-between">
               <div className="min-w-0 flex-1 space-y-1 lg:max-w-md">
                 <label htmlFor="check-in-employee-search" className="text-xs font-medium text-muted-foreground">
                   Tìm kiếm nhân viên
@@ -479,6 +470,8 @@ export default function CheckInSettingsPage() {
               </Alert>
             ) : null}
 
+            <div className="console-panel">
+              <div className="console-panel-body">
             {configurationQuery.isError && !configuration ? (
               <div className="rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-10 text-center">
                 <h2 className="font-semibold text-foreground">Không thể tải danh sách</h2>
@@ -559,6 +552,8 @@ export default function CheckInSettingsPage() {
                 )}
               </div>
             ) : null}
+              </div>
+            </div>
           </section>
         </>
       )}

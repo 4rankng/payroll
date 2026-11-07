@@ -118,7 +118,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-[500px]">
+      <DialogContent className="rounded-lg max-h-[92dvh] overflow-y-auto sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Thanh toán theo lịch</DialogTitle>
           <DialogDescription>
@@ -135,7 +135,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
                 value={form.schedule_id}
                 onValueChange={(v) => updateField('schedule_id', v)}
               >
-                <SelectTrigger className={cn("h-11", errors.schedule_id && 'border-red-500')}>
+                <SelectTrigger className={cn("h-11", errors.schedule_id && 'border-destructive')}>
                   <SelectValue placeholder="Chọn kỳ thanh toán" />
                 </SelectTrigger>
                 <SelectContent>
@@ -156,8 +156,8 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
                 <p className="typography-body-small text-financial-negative">{errors.schedule_id}</p>
               )}
               {selectedSchedule && (
-                <div className="mt-2 rounded-xl border border-blue-200 bg-blue-50 p-3">
-                  <div className="flex items-start gap-2 typography-body-small font-semibold text-blue-800">
+                <div className="mt-2 rounded-lg border border-info/30 bg-info/10 p-3">
+                  <div className="flex items-start gap-2 typography-body-small font-semibold text-info">
                     <DollarSign className="h-4 w-4" />
                     <span className="break-words">Số tiền: {formatVND(selectedSchedule.amount)}</span>
                   </div>
@@ -172,7 +172,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
                 type="date"
                 value={form.payment_date}
                 onChange={(e) => updateField('payment_date', e.target.value)}
-                className={cn("h-11", errors.payment_date && 'border-red-500')}
+                className={cn("h-11", errors.payment_date && 'border-destructive')}
               />
               {errors.payment_date && (
                 <p className="typography-body-small text-financial-negative">{errors.payment_date}</p>
@@ -205,19 +205,19 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
 
         {step === 2 && selectedSchedule && (
           <div className="space-y-4 py-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-700 flex-shrink-0 mt-0.5" />
+            <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="typography-body-medium font-semibold text-amber-800">
+                <p className="typography-body-medium font-semibold text-warning">
                   Xác nhận thanh toán
                 </p>
-                <p className="typography-body-small text-amber-700">
+                <p className="typography-body-small text-warning">
                   Sau khi thanh toán, bạn không thể hoàn thành. Vui lòng kiểm tra kỹ thông tin trước khi xác nhận.
                 </p>
               </div>
             </div>
 
-            <div className="space-y-3 bg-muted/50 rounded-xl p-3">
+            <div className="space-y-3 bg-muted/50 rounded-lg p-3">
               <div className="typography-label-medium text-muted-foreground uppercase font-semibold">
                 Thông tin thanh toán
               </div>
@@ -235,7 +235,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
 
                 <div className="flex flex-col gap-1 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between">
                   <span className="typography-body-small text-muted-foreground">Số tiền:</span>
-                  <span className="typography-body-medium break-words font-semibold text-blue-700 min-[380px]:text-right">
+                  <span className="typography-body-medium break-words font-semibold text-primary min-[380px]:text-right">
                     {formatVND(selectedSchedule.amount)}
                   </span>
                 </div>
@@ -261,9 +261,9 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
               </div>
             </div>
 
-            <div className="flex items-start gap-2 rounded-xl border border-blue-200 bg-blue-50 p-3">
-              <Calendar className="h-4 w-4 text-blue-700 flex-shrink-0" />
-              <p className="typography-body-small text-blue-800">
+            <div className="flex items-start gap-2 rounded-lg border border-info/30 bg-info/10 p-3">
+              <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
+              <p className="typography-body-small text-info">
                 Dư nợ sau thanh toán: <span className="font-semibold">
                   {formatVND(Math.max(loan.outstanding_principal - selectedSchedule.principal_amount, 0))}
                 </span>
@@ -272,7 +272,7 @@ export function RepayScheduleModal({ isOpen, onClose, loan }: RepayScheduleModal
           </div>
         )}
 
-        <DialogFooter className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <DialogFooter className="border-t border-border/65 pt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {step === 1 && (
             <>
               <button

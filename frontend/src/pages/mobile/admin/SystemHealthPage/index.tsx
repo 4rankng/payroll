@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 // UU PRO restyle (W13c): lucide → verified @untitledui/icons; health meta
 // on the UU utility ladders. Copy and flow unchanged.
 import { Activity, ChevronDown } from "@untitledui/icons";
@@ -16,6 +17,7 @@ import {
   type TimeRange,
 } from "@/components/system-health";
 import { useAPISummary, useRecentErrors } from "@/hooks/api/useSystemHealth";
+import { getConsoleKicker } from "@/lib/console";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobilePageShell } from "@/components/shared/MobilePageShell";
 
@@ -40,6 +42,7 @@ const HEALTH_META: Record<HealthLevel, { label: string; dot: string; pill: strin
 };
 
 export default function SystemHealthPage() {
+  const location = useLocation();
   const [errorDays, setErrorDays] = useState<TimeRange>(1);
   const { data: summaryData } = useAPISummary(errorDays);
   const { data: recentErrors } = useRecentErrors(errorDays);
@@ -63,6 +66,7 @@ export default function SystemHealthPage() {
       <MobilePageHeader
         title="Tình trạng API"
         icon={Activity}
+        kicker={getConsoleKicker(location.pathname)}
         sticky={false}
         actionsLayout="stacked"
         className="border-0 bg-transparent px-0 pb-1 shadow-none"

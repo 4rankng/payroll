@@ -1,11 +1,19 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { TrendingUp, ArrowDown, ArrowUp } from 'lucide-react';
-import { useSalaryDistribution, getCycleSections, buildFixedBins } from '@/hooks/admin-dashboard/useSalaryDistribution';
-import { formatCurrency } from '@/utils/formatters';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  useSalaryDistribution,
+  getCycleSections,
+  buildFixedBins,
+} from '@/hooks/admin-dashboard/useSalaryDistribution';
+import { formatCompactVND, formatCurrency } from '@/utils/formatters';
+import { ConsolePanel, ConsoleStatRow } from '@/components/shared/console-panel';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export function SalaryDistributionChart() {
+interface SalaryDistributionChartProps {
+  className?: string;
+}
+
+export function SalaryDistributionChart({ className }: SalaryDistributionChartProps) {
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -17,62 +25,61 @@ export function SalaryDistributionChart() {
           observer.disconnect();
         }
       },
-      { rootMargin: '200px', threshold: 0.1 }
+      { rootMargin: '200px', threshold: 0.1 },
     );
     if (cardRef.current) observer.observe(cardRef.current);
     const timer = setTimeout(() => {
       setIsVisible(true);
       observer.disconnect();
     }, 3000);
-    return () => { observer.disconnect(); clearTimeout(timer); };
+    return () => {
+      observer.disconnect();
+      clearTimeout(timer);
+    };
   }, []);
 
   const { data, isLoading, isError } = useSalaryDistribution(isVisible);
 
-  const cycleSections = useMemo(() => getCycleSections(data?.data as Record<string, unknown> | undefined), [data]);
-
-  // Loading state
-  if (!isVisible || isLoading) {
-    return (
-      <Card ref={cardRef} variant="console">
-        <CardContent className="p-3 sm:p-4">
-          <div className="h-[280px] flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">Đang tải dữ liệu...</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Error state
-  if (isError || !data?.data) {
-    return (
-      <Card ref={cardRef} variant="console">
-        <CardContent className="p-3 sm:p-4">
-          <div className="h-[280px] flex items-center justify-center">
-            <p className="text-sm text-financial-negative">Không thể tải dữ liệu</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const cycleSections = useMemo(
+    () => getCycleSections(data?.data as Record<string, unknown> | undefined),
+    [data],
+  );
 
   return (
-    <Card ref={cardRef} variant="console">
-      <CardContent className="p-3 sm:p-4">
-        {cycleSections.length > 0 ? (
-          <div className="space-y-6">
+    <ConsolePanel
+      kicker="Phân tích chi trả"
+      title="Phân bổ lương"
+      className={className}
+    >
+      <div ref={cardRef}>
+        {!isVisible || isLoading ? (
+          <div className="space-y-3" aria-label="Đang tải phân bổ lương">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <Skeleton className="h-40 w-full rounded-lg" />
+          </div>
+        ) : isError || !data?.data ? (
+          <div className="py-6 text-center text-[13px] text-destructive">
+            Không thể tải dữ liệu
+          </div>
+        ) : cycleSections.length > 0 ? (
+          <div className="space-y-5">
             {cycleSections.map((section) => (
-              <HorizontalCycleSection key={section.cycle} label={section.label} values={section.values} summary={section.summary} />
+              <HorizontalCycleSection
+                key={section.cycle}
+                label={section.label}
+                values={section.values}
+                summary={section.summary}
+              />
             ))}
           </div>
         ) : (
-          <div className="h-[280px] flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">Không có dữ liệu cho khoảng thời gian này</p>
+          <div className="py-6 text-center text-[13px] text-muted-foreground">
+            Không có dữ liệu cho khoảng thời gian này
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </ConsolePanel>
   );
 }
 
@@ -92,32 +99,35 @@ interface CycleSectionProps {
 function HorizontalCycleSection({ label, values, summary }: CycleSectionProps) {
   const chartData = useMemo(() => (summary ? buildFixedBins(values) : []), [values, summary]);
 
-  const maxCount = useMemo(() => Math.max(...chartData.map(d => d.count), 1), [chartData]);
+  const maxCount = useMemo(() => Math.max(...chartData.map((d) => d.count), 1), [chartData]);
 
   if (!summary) return null;
 
   return (
     <div>
-      <h4 className="text-sm font-medium text-muted-foreground mb-2">{label}</h4>
+      <p className="console-kicker">{label}</p>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 mb-3">
-        {[
-          { title: 'TB', value: formatCurrency(summary.mean), icon: TrendingUp },
-          { title: 'Thấp nhất', value: formatCurrency(summary.min), icon: ArrowDown },
-          { title: 'Cao nhất', value: formatCurrency(summary.max), icon: ArrowUp },
-        ].map(({ title, value, icon: Icon }) => (
-          <div key={title} className="p-2 rounded-xl border border-border/40 bg-muted/30">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <Icon className="h-3 w-3 text-muted-foreground" />
-              <span className="text-xs font-medium text-muted-foreground">{title}</span>
-            </div>
-            <p className="text-sm font-semibold text-foreground">{value}</p>
-          </div>
-        ))}
-      </div>
+      <ConsoleStatRow
+        className="mb-3 mt-1.5"
+        stats={[
+          {
+            label: 'TB',
+            value: formatCompactVND(summary.mean),
+            title: formatCurrency(summary.mean),
+          },
+          {
+            label: 'Thấp nhất',
+            value: formatCompactVND(summary.min),
+            title: formatCurrency(summary.min),
+          },
+          {
+            label: 'Cao nhất',
+            value: formatCompactVND(summary.max),
+            title: formatCurrency(summary.max),
+          },
+        ]}
+      />
 
-      {/* Horizontal bar chart */}
       {chartData.length > 0 && (
         <div
           className="w-full"
@@ -158,7 +168,7 @@ function HorizontalCycleSection({ label, values, summary }: CycleSectionProps) {
                   boxShadow: 'none',
                 }}
                 formatter={(value: number) => [`${value} nhân viên`, 'Số lượng']}
-                labelFormatter={(label) => `Khung lương: ${label}`}
+                labelFormatter={(labelValue) => `Khung lương: ${labelValue}`}
               />
               <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                 {chartData.map((_, i) => (

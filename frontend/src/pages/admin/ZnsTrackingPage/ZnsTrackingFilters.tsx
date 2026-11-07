@@ -37,8 +37,8 @@ export function ZnsTrackingFilters({ filters, onChange }: ZnsTrackingFiltersProp
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Lọc trạng thái">
+    <div className="console-filter-bar overflow-x-auto">
+      <div className="flex gap-1.5" role="group" aria-label="Lọc trạng thái">
         {ZNS_STATUSES.map((status) => {
           const isActive = filters.status?.includes(status) ?? false;
           return (
@@ -51,7 +51,7 @@ export function ZnsTrackingFilters({ filters, onChange }: ZnsTrackingFiltersProp
                 'inline-flex min-h-11 items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
                 isActive
                   ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-utility-gray-300 bg-white text-fg-secondary hover:bg-utility-gray-50'
+                  : 'border-utility-gray-300 bg-card text-fg-secondary hover:bg-utility-gray-50'
               )}
             >
               {ZNS_STATUS_LABELS[status] ?? status}

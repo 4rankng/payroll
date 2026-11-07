@@ -298,8 +298,8 @@ function TransactionFormComponent({
       avatar={{
         custom: (
           <div className="flex items-center gap-4 flex-1 min-w-0">
-            <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <Receipt className="h-6 w-6 text-blue-700" />
+            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Receipt className="h-6 w-6 text-primary" />
             </div>
             <div className="space-y-1 flex-1 min-w-0">
               <h1 className="typography-headline-medium text-base sm:text-lg font-medium">
@@ -372,7 +372,7 @@ function TransactionFormComponent({
                   value={watchedAmount}
                   onChange={handleAmountChange}
                   placeholder="0"
-                  className={`h-11 pr-12 sm:pr-12 text-right ${errors.amount ? 'border-red-500' : ''}`}
+                  className={`h-11 pr-12 sm:pr-12 text-right ${errors.amount ? 'border-destructive' : ''}`}
                 />
                 <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-xs">
                   ₫
@@ -436,7 +436,7 @@ function TransactionFormComponent({
                   required: 'Đối tượng là bắt buộc'
                 })}
                 placeholder={transactionType === 'expense' ? 'Tên nhà cung cấp' : 'Tên khách hàng'}
-                className={`h-11 ${errors.party ? 'border-red-500' : ''}`}
+                className={`h-11 ${errors.party ? 'border-destructive' : ''}`}
               />
               {errors.party && (
                 <p className="text-xs text-financial-negative mt-1">{errors.party.message}</p>
@@ -454,7 +454,7 @@ function TransactionFormComponent({
               })}
               placeholder="Mô tả chi tiết về giao dịch"
               rows={3}
-              className={`min-h-24 resize-none text-sm ${errors.description ? 'border-red-500' : ''}`}
+              className={`min-h-24 resize-none text-sm ${errors.description ? 'border-destructive' : ''}`}
             />
             {errors.description && (
               <p className="text-xs text-financial-negative mt-1">{errors.description.message}</p>
@@ -507,10 +507,10 @@ function TransactionFormComponent({
                   maxFiles={1}
                 />
               ) : (
-                <div className="flex items-center justify-between gap-2 rounded border bg-green-50 p-3">
+                <div className="flex items-center justify-between gap-2 rounded-lg border bg-success/10 p-3">
                   <div className="flex min-w-0 items-center gap-2">
-                    <Receipt className="h-4 w-4 text-green-700" />
-                    <span className="typography-caption break-all text-green-700">
+                    <Receipt className="h-4 w-4 text-success" />
+                    <span className="typography-caption break-all text-success">
                       Đã chọn: {evidenceFile.name}
                     </span>
                   </div>
@@ -520,7 +520,7 @@ function TransactionFormComponent({
                     size="sm"
                     onClick={handleRemoveFile}
                     aria-label="Xóa chứng từ đã chọn"
-                    className="h-11 w-11 shrink-0 p-0 text-muted-foreground hover:text-red-700"
+                    className="h-11 w-11 shrink-0 p-0 text-muted-foreground hover:text-destructive"
                   >
                     <X className="h-4 w-4" />
                   </Button>

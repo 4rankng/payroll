@@ -105,7 +105,7 @@ export function AddUserModal({ isOpen, onClose, onAddUser, existingUsers }: AddU
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="rounded-lg sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Thêm người dùng mới</DialogTitle>
           <DialogDescription>
@@ -189,7 +189,7 @@ export function AddUserModal({ isOpen, onClose, onAddUser, existingUsers }: AddU
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-border/65 pt-3">
           <button
             onClick={handleClose}
             className="inline-flex items-center gap-1.5 h-11 px-3 sm:h-8 rounded border border-border bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors"

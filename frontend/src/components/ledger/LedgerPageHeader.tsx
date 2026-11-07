@@ -27,6 +27,8 @@ import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/utils/formatters';
 
 interface LedgerPageHeaderProps {
+  /** Mono domain kicker (getConsoleKicker(pathname)). */
+  kicker?: string;
   overallBalance?: number;
   netCashFlow?: number;
   isLoadingBalance?: boolean;
@@ -49,6 +51,7 @@ interface LedgerPageHeaderProps {
 }
 
 export function LedgerPageHeader({
+  kicker,
   overallBalance,
   netCashFlow,
   isLoadingBalance = false,
@@ -159,6 +162,7 @@ export function LedgerPageHeader({
     <div className="space-y-4">
       <PageHeader
         title="Sổ Cái"
+        kicker={kicker}
         actions={[
           {
             label: 'Thêm Giao Dịch',
@@ -310,9 +314,9 @@ export function LedgerPageHeader({
       {/* Mobile-only balance + net cash-flow cards (restores the display lost when the
           mobile-only header was consolidated into this shared component). */}
       <div className="sm:hidden grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-border bg-card p-3.5 shadow-sm">
-          <p className="text-xs text-muted-foreground mb-1">Tổng số dư</p>
-          <p className="text-base font-bold text-foreground tabular-nums">
+        <div className="console-panel p-3.5">
+          <p className="console-kicker mb-1">Tổng số dư</p>
+          <p className="console-value text-lg font-bold text-foreground">
             {isLoadingBalance ? (
               <span className="text-muted-foreground text-sm">Đang tải...</span>
             ) : overallBalance !== undefined ? (
@@ -321,14 +325,14 @@ export function LedgerPageHeader({
           </p>
         </div>
         <div className={cn(
-          'rounded-xl border p-3.5 shadow-sm',
+          'console-panel p-3.5',
           isPositive ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50',
         )}>
           <div className="flex items-center gap-1 mb-1">
             <TrendingUp className={cn('h-3 w-3', isPositive ? 'text-emerald-700' : 'text-red-700')} />
             <p className={cn('text-xs', isPositive ? 'text-emerald-700' : 'text-red-700')}>Dòng tiền ròng</p>
           </div>
-          <p className={cn('text-base font-bold tabular-nums', isPositive ? 'text-emerald-800' : 'text-red-800')}>
+          <p className={cn('console-value text-lg font-bold', isPositive ? 'text-emerald-800' : 'text-red-800')}>
             {isLoadingCashFlow ? (
               <span className="text-sm opacity-60">Đang tải...</span>
             ) : netCashFlow !== undefined ? (

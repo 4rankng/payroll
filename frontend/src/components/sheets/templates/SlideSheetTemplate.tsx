@@ -53,7 +53,7 @@ export function SlideSheetTemplate({
         side={isMobile ? "bottom" : "right"}
         className={cn(
           "p-0 flex flex-col h-full",
-          isMobile && "rounded-t-2xl max-h-[94dvh] shadow-[0_-4px_24px_rgba(0,0,0,0.08)]",
+          isMobile && "rounded-t-lg max-h-[94dvh]",
           className || getSizeClasses()
         )}
       >
@@ -67,8 +67,8 @@ export function SlideSheetTemplate({
         {/* Header Section */}
         <SheetHeader
           className={cn(
-            'space-y-0 flex-shrink-0 border-b',
-            compact ? 'px-4 py-2.5' : 'px-4 sm:px-5 py-3'
+            'console-panel-header space-y-0 flex-shrink-0',
+            compact ? 'px-3 py-2' : 'px-3 sm:px-4 py-2'
           )}
         >
           {avatar?.custom ? (
@@ -150,7 +150,7 @@ export function SlideSheetTemplate({
         {footer && (
           <div
             className={cn(
-              'flex-shrink-0 px-4 sm:px-6 py-2.5 border-t bg-card',
+              'flex-shrink-0 px-3 sm:px-4 py-2.5 border-t border-border/65 bg-card',
               isMobile && 'pb-[max(10px,calc(10px+env(safe-area-inset-bottom)))]'
             )}
           >

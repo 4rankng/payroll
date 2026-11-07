@@ -11,10 +11,13 @@ import {
 } from "@/components/shared/AdminPageFrame";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { useCronJobs, useToggleCronJob } from "@/hooks/api/useCronHealth";
+import { useLocation } from "react-router-dom";
+import { getConsoleKicker } from "@/lib/console";
 import { CronJobTable, computeCronSummary } from "@/components/cron-health";
 
 export default function CronHealthPage() {
   const { setPageTitle } = useAppState();
+  const location = useLocation();
   React.useEffect(() => { setPageTitle("Tác vụ định kỳ"); }, [setPageTitle]);
 
   const { data: jobs, isLoading, isError, refetch } = useCronJobs();
@@ -49,7 +52,7 @@ export default function CronHealthPage() {
     <AdminPageCanvas>
       {/* Header */}
       <AdminPageHeaderCard>
-        <PageHeader icon={Clock} title="Tác vụ định kỳ">
+        <PageHeader icon={Clock} title="Tác vụ định kỳ" kicker={getConsoleKicker(location.pathname)}>
           <Badge variant="secondary" className="text-xs font-normal">
             {summary.total} tác vụ
           </Badge>

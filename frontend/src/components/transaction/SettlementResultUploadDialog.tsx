@@ -143,7 +143,7 @@ export const SettlementResultUploadDialog = memo(function SettlementResultUpload
                   size="icon"
                   onClick={handleRemoveFile}
                   disabled={uploadMutation.isPending}
-                  className="h-11 w-11 shrink-0 p-0 text-muted-foreground hover:bg-slate-100:bg-slate-900"
+                  className="h-11 w-11 shrink-0 p-0 text-muted-foreground hover:bg-muted"
                 >
                   <X className="h-4 w-4" />
                   <span className="sr-only">Xóa file</span>

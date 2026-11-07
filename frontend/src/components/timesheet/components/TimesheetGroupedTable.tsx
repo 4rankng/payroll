@@ -79,7 +79,7 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
     <div className="rounded-xl border border-border/50 bg-utility-gray-100 overflow-hidden">
       {/* Scroll only when the desktop workspace is genuinely too narrow. */}
       <div className="overflow-x-auto">
-        <Table className="table-fixed min-w-[860px]">
+        <Table variant="console" className="table-fixed">
           <colgroup>
             <col style={{ width: "4px" }} />
             <col style={{ width: "170px" }} />
@@ -87,9 +87,11 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
             <col style={{ width: "150px" }} />
             <col style={{ width: "80px" }} />
             <col style={{ width: "125px" }} />
-            <col style={{ width: "145px" }} />
+            <col style={{ width: "145px" }} className="hidden lg:table-column" />
             <col style={{ width: "36px" }} />
           </colgroup>
+          {/* Low-value preview column collapses below lg — tablets get the
+              remaining columns without a horizontal rail. */}
           <TableHeader>
             <TableRow className="bg-utility-gray-200 hover:bg-utility-gray-200 border-b border-utility-gray-300">
               <TableHead className="p-0"><span className="sr-only">Trạng thái</span></TableHead>
@@ -105,7 +107,7 @@ export const TimesheetGroupedTable = memo(function TimesheetGroupedTable({
               <TableHead className="border-l border-border/30 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
                 Giờ
               </TableHead>
-              <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
+              <TableHead className="hidden px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap lg:table-cell">
                 {userRole === "admin" ? "Dự án · Đơn giá" : "Đơn giá"}
               </TableHead>
               <TableHead className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right whitespace-nowrap">
@@ -206,13 +208,13 @@ const GroupRow = memo(function GroupRow({
               <GroupStatusSummary group={group} />
             </TableCell>
             {/* [4] total hours */}
-            <TableCell className="border-l border-border/30 px-3 py-2.5 text-right">
+            <TableCell className="num border-l border-border/30 px-3 py-2.5 text-right">
               <span className="typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
                 {formatTimesheetHours(group.totalHours)}h
               </span>
             </TableCell>
             {/* [5] Project preview for Admin summaries; rate lives in expanded rows. */}
-            <TableCell className="px-3 py-2.5 text-right">
+            <TableCell className="hidden px-3 py-2.5 text-right lg:table-cell">
               {userRole === "admin" ? (
                 <AdminGroupProjectColumn group={group} />
               ) : (
@@ -220,7 +222,7 @@ const GroupRow = memo(function GroupRow({
               )}
             </TableCell>
             {/* [6] total amount */}
-            <TableCell className="px-3 py-2.5 text-right">
+            <TableCell className="num px-3 py-2.5 text-right">
               <span className="typography-body-medium font-bold text-foreground tabular-nums whitespace-nowrap">
                 {group.totalAmount.toLocaleString("vi-VN")}
                 <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
@@ -359,9 +361,9 @@ const ProjectSection = memo(function ProjectSection({
               </div>
             </div>
           </TableCell>
-          <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">{formatTimesheetHours(project.totalHours)}h</TableCell>
-          <TableCell className="px-4 py-2.5 text-right text-xs text-muted-foreground">—</TableCell>
-          <TableCell className="px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">
+          <TableCell className="num px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">{formatTimesheetHours(project.totalHours)}h</TableCell>
+          <TableCell className="hidden px-4 py-2.5 text-right text-xs text-muted-foreground lg:table-cell">—</TableCell>
+          <TableCell className="num px-4 py-2.5 text-right text-xs font-bold tabular-nums text-foreground">
             {project.totalAmount.toLocaleString("vi-VN")}
             <span className="ml-[0.2em] align-[0.1em] text-[0.58em] font-bold tracking-normal text-muted-foreground">₫</span>
           </TableCell>
@@ -471,7 +473,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
           {shiftLabel}
         </span>
       </TableCell>
-      <TableCell className="border-l border-border/30 py-2 px-3 text-right">
+      <TableCell className="num border-l border-border/30 py-2 px-3 text-right">
         <span
           className={cn(
             "text-xs font-bold tabular-nums",
@@ -481,7 +483,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
           {formatTimesheetHours(hoursWorked)}h
         </span>
       </TableCell>
-      <TableCell className="py-2 px-3 text-right">
+      <TableCell className="num hidden py-2 px-3 text-right lg:table-cell">
         <p className={cn(
           "text-xs tabular-nums",
           (!entry.payrate || entry.payrate === 0) ? "text-red-700 font-semibold" : "font-medium text-muted-foreground",
@@ -499,7 +501,7 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
           ) : `${entry.payrate?.toLocaleString("vi-VN")}${entry.projectIsFlexible ? "₫/ca" : "₫/giờ"}`}
         </p>
       </TableCell>
-      <TableCell className="py-2 px-3 text-right">
+      <TableCell className="num py-2 px-3 text-right">
         <div className="flex items-center justify-end gap-1">
           <span className="text-xs font-bold text-foreground tabular-nums">
             {(entry.amount || 0).toLocaleString("vi-VN")}

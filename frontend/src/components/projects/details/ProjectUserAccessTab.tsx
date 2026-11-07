@@ -84,7 +84,7 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
   // Show permission denied if the user does not manage this project
   if (!canManageProjectAccess) {
     return (
-      <div className="mt-3 rounded-xl border bg-muted/20 p-4">
+      <div className="mt-3 console-panel p-4">
         <div className="flex flex-col items-center text-center space-y-2">
           <ShieldCheck className="h-8 w-8 text-muted-foreground" />
           <div>
@@ -101,10 +101,10 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
   return (
     <div className="space-y-4 mt-3">
       {/* Add User Section */}
-      <div className="rounded-xl border bg-muted/20 p-3 space-y-2">
+      <div className="console-panel p-3 space-y-2">
         <div className="flex items-center gap-1.5">
           <UserPlus className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-sm font-medium">Cấp quyền quản lý</span>
+          <span className="console-kicker">Cấp quyền quản lý</span>
         </div>
         <p className="text-xs text-muted-foreground">
           Cho phép người dùng khác truy cập và quản lý dự án này.
@@ -146,7 +146,7 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
       <div className="space-y-2">
         <div className="flex items-center gap-1.5 px-0.5">
           <Users className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-sm font-medium">Danh sách người dùng</span>
+          <span className="console-kicker">Danh sách người dùng</span>
           <span className="text-xs text-muted-foreground">· có thể quản lý dự án này</span>
         </div>
         {isLoadingUsers ? (
@@ -155,7 +155,7 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
             Đang tải...
           </div>
         ) : projectUsers.length === 0 ? (
-          <div className="text-center py-6 text-xs text-muted-foreground border bg-muted/30 rounded-xl">
+          <div className="console-panel text-center py-6 text-xs text-muted-foreground">
             Chưa có người dùng nào được cấp quyền quản lý.
           </div>
         ) : (
@@ -163,7 +163,7 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
             {projectUsers.map((projectUser) => (
               <div
                 key={projectUser.id}
-                className="flex items-center justify-between px-3 py-2.5 border rounded-xl hover:bg-accent/50 transition-colors"
+                className="console-panel flex items-center justify-between px-3 py-2.5 hover:bg-accent/50 transition-colors"
               >
                 <div className="flex items-center gap-2.5">
                   <UserAvatar

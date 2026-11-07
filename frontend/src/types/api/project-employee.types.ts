@@ -378,8 +378,8 @@ export const VIETNAMESE_ASSIGNMENT_LABELS = {
     reason: "Lý do",
   },
   payment_schedule: {
-    weekly: "lương tuần",
-    monthly: "lương tháng",
-    flexible: "linh động",
+    weekly: "Lương tuần",
+    monthly: "Lương tháng",
+    flexible: "Linh động",
   },
 } as const;

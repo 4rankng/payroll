@@ -33,7 +33,7 @@ function DuplicateMatchCard({
   showClaim: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2">
+    <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-0.5">
           <p className="typography-body-medium font-semibold text-foreground truncate">
@@ -87,7 +87,7 @@ function DuplicateMatchCard({
 
 function FieldGroup({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-card p-4 space-y-3">
+    <div className="rounded-lg border bg-card p-4 space-y-3">
       {children}
     </div>
   );
@@ -96,7 +96,7 @@ function FieldGroup({ children }: { children: React.ReactNode }) {
 function SectionTitle({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
   return (
     <div className="flex items-center gap-2 mb-1">
-      <div className="h-6 w-6 rounded-xl bg-primary/10 flex items-center justify-center">
+      <div className="h-6 w-6 rounded-lg bg-primary/10 flex items-center justify-center">
         <Icon className="h-3.5 w-3.5 text-primary" />
       </div>
       <span className="typography-headline-small text-foreground">{label}</span>
@@ -108,7 +108,7 @@ function Field({ id, label, required, children }: { id?: string; label: string; 
   return (
     <div className="space-y-1">
       <Label htmlFor={id} className="typography-label-medium text-muted-foreground">
-        {label}{required && <span className="text-red-700 ml-0.5">*</span>}
+        {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {children}
     </div>
@@ -399,7 +399,7 @@ function AddEmployeeSheetComponent({
                     handleInputChange("fullname", formatted);
                   }
                 }}
-                className={cn("h-11 typography-body-medium", errors.fullname && "border-red-500")}
+                className={cn("h-11 typography-body-medium", errors.fullname && "border-destructive")}
               />
               {errors.fullname && <p role="alert" className="typography-body-small text-financial-negative">{errors.fullname}</p>}
             </Field>
@@ -410,7 +410,7 @@ function AddEmployeeSheetComponent({
                 type="date"
                 value={formData.date_of_birth || ''}
                 onChange={(e) => handleInputChange("date_of_birth", e.target.value)}
-                className={cn("h-11 typography-body-medium", errors.date_of_birth && "border-red-500")}
+                className={cn("h-11 typography-body-medium", errors.date_of_birth && "border-destructive")}
               />
               {errors.date_of_birth && <p role="alert" className="typography-body-small text-financial-negative">{errors.date_of_birth}</p>}
             </Field>
@@ -423,7 +423,7 @@ function AddEmployeeSheetComponent({
                 placeholder="001234567890"
                 value={formData.cccd || ''}
                 onChange={(e) => handleInputChange("cccd", e.target.value)}
-                className={cn("h-11 typography-body-medium font-mono tracking-wide", errors.cccd && "border-red-500")}
+                className={cn("h-11 typography-body-medium font-mono tracking-wide", errors.cccd && "border-destructive")}
               />
               {errors.cccd && <p role="alert" className="typography-body-small text-financial-negative">{errors.cccd}</p>}
             </Field>
@@ -434,7 +434,7 @@ function AddEmployeeSheetComponent({
                 placeholder="0901234567"
                 value={formData.mobile || ''}
                 onChange={(e) => handleInputChange("mobile", e.target.value)}
-                className={cn("h-11 typography-body-medium font-mono", errors.mobile && "border-red-500")}
+                className={cn("h-11 typography-body-medium font-mono", errors.mobile && "border-destructive")}
               />
               {errors.mobile && <p role="alert" className="typography-body-small text-financial-negative">{errors.mobile}</p>}
             </Field>
@@ -545,7 +545,7 @@ function AddEmployeeSheetComponent({
                 handleInputChange("bank_id", bank?.id);
               }}
               placeholder="Chọn ngân hàng..."
-              className={errors.bank_id ? 'border-red-500' : ''}
+              className={errors.bank_id ? 'border-destructive' : ''}
               canCreateBank={isAdmin}
             />
             {errors.bank_id && <p role="alert" className="typography-body-small text-financial-negative">{errors.bank_id}</p>}
@@ -558,7 +558,7 @@ function AddEmployeeSheetComponent({
                 placeholder="190123456789"
                 value={formData.bank_account_number || ''}
                 onChange={(e) => handleInputChange("bank_account_number", e.target.value)}
-                className={cn("h-11 typography-body-medium font-mono", errors.bank_account_number && "border-red-500")}
+                className={cn("h-11 typography-body-medium font-mono", errors.bank_account_number && "border-destructive")}
               />
               {errors.bank_account_number && <p role="alert" className="typography-body-small text-financial-negative">{errors.bank_account_number}</p>}
             </Field>
@@ -575,7 +575,7 @@ function AddEmployeeSheetComponent({
                     handleInputChange("bank_account_name", formatted);
                   }
                 }}
-                className={cn("h-11 typography-body-medium", errors.bank_account_name && "border-red-500")}
+                className={cn("h-11 typography-body-medium", errors.bank_account_name && "border-destructive")}
               />
               {errors.bank_account_name && <p role="alert" className="typography-body-small text-financial-negative">{errors.bank_account_name}</p>}
             </Field>

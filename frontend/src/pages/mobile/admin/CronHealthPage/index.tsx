@@ -1,14 +1,17 @@
 import { ErrorState } from "@/components/ui/error-state";
 import React, { useMemo } from "react";
+import { useLocation } from "react-router-dom";
 // UU PRO restyle (W13c): lucide → verified @untitledui/icons; the loading
 // spinner is the UU Loading01 arc (kept animate-spin).
 import { Clock, Loading01 } from "@untitledui/icons";
 import { Badge } from "@/components/ui/badge";
 import { useCronJobs, useToggleCronJob } from "@/hooks/api/useCronHealth";
+import { getConsoleKicker } from "@/lib/console";
 import { CronJobCard, computeCronSummary } from "@/components/cron-health";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 
 export default function CronHealthPageMobile() {
+  const location = useLocation();
   const { data: jobs, isLoading, isError, refetch } = useCronJobs();
   const toggleMutation = useToggleCronJob();
 
@@ -31,6 +34,7 @@ export default function CronHealthPageMobile() {
         <MobilePageHeader
           title="Tác vụ định kỳ"
           icon={Clock}
+          kicker={getConsoleKicker(location.pathname)}
         />
         <div role="alert" className="px-4 pt-4">
           <ErrorState message="Không thể tải danh sách tác vụ. Vui lòng thử lại." onRetry={() => void refetch()} />
@@ -44,6 +48,7 @@ export default function CronHealthPageMobile() {
       <MobilePageHeader
         title="Tác vụ định kỳ"
         icon={Clock}
+        kicker={getConsoleKicker(location.pathname)}
         subtitle={
           <span className="inline-flex items-center gap-1.5 flex-wrap">
             <Badge variant="outline" className="text-xs font-normal text-muted-foreground">

@@ -33,14 +33,15 @@ const ACTION_VARIANT_MAP: Record<string, ActionVariant> = {
   BULK_OPERATION: 'orange',
 };
 
-// Uses semantic CSS variables — works on both light and dark themes
+// Action badge colours on the UU utility ladders — light only (console
+// decision: no dark mode).
 export const VARIANT_CLASSES: Record<ActionVariant, string> = {
-  green:  'bg-utility-success-50 text-fg-success-primary border-utility-success-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
-  blue:   'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800',
-  red:    'bg-utility-error-50 text-fg-error-primary border-utility-error-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-  yellow: 'bg-utility-warning-50 text-fg-warning-primary border-utility-warning-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
-  teal:   'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800',
-  orange: 'bg-utility-warning-50 text-fg-warning-primary border-utility-warning-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800',
+  green:  'bg-utility-success-50 text-fg-success-primary border-utility-success-200',
+  blue:   'bg-utility-blue-50 text-utility-blue-700 border-utility-blue-200',
+  red:    'bg-utility-error-50 text-fg-error-primary border-utility-error-200',
+  yellow: 'bg-utility-warning-50 text-fg-warning-primary border-utility-warning-200',
+  teal:   'bg-utility-blue-100 text-utility-blue-700 border-utility-blue-200',
+  orange: 'bg-utility-warning-50 text-fg-warning-primary border-utility-warning-200',
   gray:   'bg-muted text-muted-foreground border-border',
 };
 

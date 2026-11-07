@@ -7,14 +7,14 @@ interface DeletionStateBannerProps {
 
 export const DeletionStateBanner = memo(
   ({ onUndo }: DeletionStateBannerProps) => (
-    <div className="flex items-center justify-between gap-2 px-3 py-2 bg-red-100 rounded-xl border border-red-200">
+    <div className="flex items-center justify-between gap-2 px-3 py-2 bg-destructive/10 rounded-lg border border-destructive/30">
       <div className="flex items-center gap-2">
-        <Trash2 className="h-3.5 w-3.5 text-red-700 shrink-0" />
-        <p className="text-xs font-medium text-red-700">Sẽ xóa khi lưu</p>
+        <Trash2 className="h-3.5 w-3.5 text-destructive shrink-0" />
+        <p className="text-xs font-medium text-destructive">Sẽ xóa khi lưu</p>
       </div>
       <button
         onClick={onUndo}
-        className="flex items-center gap-1 text-xs font-semibold text-red-700 hover:text-red-800 active:opacity-70 transition-opacity"
+        className="flex items-center gap-1 text-xs font-semibold text-destructive hover:text-destructive/80 active:opacity-70 transition-opacity"
       >
         <Undo2 className="h-3 w-3" />
         Hoàn tác

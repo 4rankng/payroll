@@ -29,6 +29,8 @@ import {
 import { PageHeader } from '@/components/shared/PageHeader';
 
 interface TransactionPageHeaderProps {
+  /** Mono domain kicker (getConsoleKicker(pathname)). */
+  kicker?: string;
   onAddTransaction: () => void;
   onSendSaoKePayroll: () => void;
   onSendSaoKeAdvance: () => void;
@@ -43,6 +45,7 @@ interface TransactionPageHeaderProps {
 }
 
 export function TransactionPageHeader({
+  kicker,
   onAddTransaction,
   onSendSaoKePayroll,
   onSendSaoKeAdvance,
@@ -56,7 +59,7 @@ export function TransactionPageHeader({
   onSimulateSettlement,
 }: TransactionPageHeaderProps) {
   return (
-    <PageHeader title="Sổ Cái" description="Quản lý thu chi và dòng tiền" icon={BookOpen01}>
+    <PageHeader title="Sổ Cái" description="Quản lý thu chi và dòng tiền" icon={BookOpen01} kicker={kicker}>
       <div className="hidden max-w-full flex-wrap items-center justify-end gap-2 min-[1800px]:flex">
         <div className="flex max-w-full items-center divide-x divide-border overflow-hidden rounded-xl border border-border">
           <DropdownMenu>

@@ -79,7 +79,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="max-h-[92dvh] overflow-y-auto sm:max-w-lg shadow-none"
+          className="max-h-[92dvh] overflow-y-auto sm:max-w-lg rounded-lg shadow-none"
           title="Chuyển lô qua nhà cung cấp"
           description="Theo dõi tiến trình chuyển tiền"
         >
@@ -99,11 +99,11 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
                 <p className="text-xs text-muted-foreground">Tổng</p>
               </div>
               <div className="rounded-lg border bg-muted/30 p-3">
-                <p className="text-2xl font-bold text-green-700">{status?.completed ?? 0}</p>
+                <p className="text-2xl font-bold text-success">{status?.completed ?? 0}</p>
                 <p className="text-xs text-muted-foreground">Hoàn tất</p>
               </div>
               <div className="rounded-lg border bg-muted/30 p-3">
-                <p className="text-2xl font-bold text-red-700">{status?.failed ?? 0}</p>
+                <p className="text-2xl font-bold text-destructive">{status?.failed ?? 0}</p>
                 <p className="text-xs text-muted-foreground">Thất bại</p>
               </div>
             </div>
@@ -119,13 +119,13 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
               <div className="flex items-center justify-center gap-2 text-sm font-medium">
                 {status && status.failed === 0 ? (
                   <>
-                    <CheckCircle2 className="w-5 h-5 text-green-700" />
-                    <span className="text-green-700">Tất cả giao dịch đã hoàn tất</span>
+                    <CheckCircle2 className="w-5 h-5 text-success" />
+                    <span className="text-success">Tất cả giao dịch đã hoàn tất</span>
                   </>
                 ) : (
                   <>
-                    <XCircle className="w-5 h-5 text-orange-700" />
-                    <span className="text-orange-700">
+                    <XCircle className="w-5 h-5 text-warning" />
+                    <span className="text-warning">
                       Hoàn tất ({status.completed} thành công, {status.failed} thất bại)
                     </span>
                   </>
@@ -134,7 +134,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
             )}
           </div>
 
-          <DialogFooter className="pt-2">
+          <DialogFooter className="border-t border-border/65 pt-3">
             <Button onClick={() => onOpenChange(false)} className="min-h-11 w-full">
               {isCompleted ? 'Đóng' : 'Đóng'}
             </Button>
@@ -149,7 +149,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="sm:max-w-lg shadow-none"
+          className="sm:max-w-lg rounded-lg shadow-none"
           title="Đang khởi tạo"
           description="Vui lòng đợi..."
         >
@@ -171,7 +171,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
   return (
     <Dialog open={open} onOpenChange={form.handleDialogOpen}>
       <DialogContent
-        className="max-h-[92dvh] overflow-y-auto sm:max-w-lg shadow-none"
+        className="max-h-[92dvh] overflow-y-auto sm:max-w-lg rounded-lg shadow-none"
         title={dialogTitle}
         description={dialogDescription}
       >
@@ -196,7 +196,7 @@ export const BulkTransferExportDialog = memo(function BulkTransferExportDialog({
           {!isOnePay && (
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Chu kỳ trả lương <span className="text-red-700">*</span>
+                Chu kỳ trả lương <span className="text-destructive">*</span>
               </Label>
               <ButtonGroup
                 options={[

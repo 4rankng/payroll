@@ -58,7 +58,7 @@ export const createEmployeeMobileConfig = (
         label: "Điện thoại",
         priority: 2,
         render: (row) => (
-          <div className="typography-body-medium text-gray-600">
+          <div className="typography-body-medium text-muted-foreground">
             {row.mobile || "-"}
           </div>
         ),
@@ -68,7 +68,7 @@ export const createEmployeeMobileConfig = (
         label: "Ngày sinh",
         priority: 2,
         render: (row) => (
-          <div className="typography-body-medium text-gray-600">
+          <div className="typography-body-medium text-muted-foreground tabular-nums">
             {row.date_of_birth
               ? format(new Date(row.date_of_birth), 'dd/MM/yyyy')
               : "-"}
@@ -80,7 +80,7 @@ export const createEmployeeMobileConfig = (
         label: "Địa chỉ",
         priority: 2,
         render: (row) => (
-          <div className="typography-body-medium text-gray-600 line-clamp-2">
+          <div className="typography-body-medium text-muted-foreground line-clamp-2">
             {row.address || "-"}
           </div>
         ),
@@ -90,7 +90,7 @@ export const createEmployeeMobileConfig = (
         label: "Ngân hàng",
         priority: 3,
         render: (row) => (
-          <div className="typography-body-medium text-gray-600">
+          <div className="typography-body-medium text-muted-foreground">
             {row.bank?.branch_name || "-"}
           </div>
         ),

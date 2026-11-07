@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 // UU PRO restyle (W13c): lucide → verified @untitledui/icons.
 import {
   ArrowLeft,
@@ -10,8 +10,10 @@ import {
   Users01,
 } from "@untitledui/icons";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
+import { getConsoleKicker } from "@/lib/console";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LenderCard } from "@/components/lenders/LenderCard";
 import { AddLenderSheet } from "@/components/sheets/AddLenderSheet";
@@ -20,6 +22,7 @@ import { useLenders } from "@/hooks/api/useLoans";
 import type { LenderFilters } from "@/types/api/loan.types";
 
 const LendersPage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
 
   const [filters, setFilters] = useState<LenderFilters>({
@@ -59,7 +62,7 @@ const LendersPage = () => {
       <MobilePageHeader
         icon={CoinsHand}
         title="Chủ nợ"
-        subtitle="Danh sách chủ nợ và thông tin liên quan"
+        kicker={getConsoleKicker(location.pathname)}
         sticky={false}
         bordered={false}
         actions={
@@ -93,8 +96,10 @@ const LendersPage = () => {
       {/* Content */}
       <div className="flex-1 px-4 py-2">
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-sm text-muted-foreground">Đang tải...</div>
+          <div className="space-y-3 py-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-xl" />
+            ))}
           </div>
         ) : lenders.length === 0 ? (
           <EmptyState

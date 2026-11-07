@@ -15,7 +15,7 @@ interface ProjectFiltersProps {
   onMonthFilterChange: (value: string | undefined) => void;
   hasFilters: boolean;
   onClearFilters: () => void;
-  /** Merge point for flattening the default card border inside a parent card. */
+  /** Merge point for layout overrides when the bar nests in a parent strip. */
   className?: string;
 }
 
@@ -41,12 +41,7 @@ export const ProjectFilters = ({
     : 'all';
 
   return (
-    <div
-      className={cn(
-        'flex items-center gap-2 flex-wrap rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-3 py-2',
-        className,
-      )}
-    >
+    <div className={cn('console-filter-bar', className)}>
       <SearchBar
         searchTerm={searchTerm}
         onSearchChange={onSearchChange}

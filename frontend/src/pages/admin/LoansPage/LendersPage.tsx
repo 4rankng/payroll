@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   AdminPageCanvas,
   AdminPageHeaderCard,
@@ -6,9 +7,11 @@ import {
   AdminSectionCard,
 } from "@/components/shared/AdminPageFrame";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { getConsoleKicker } from "@/lib/console";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { SearchBar } from "@/components/shared/SearchBar";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -26,6 +29,7 @@ import type { LenderFilters } from "@/types/api/loan.types";
 /** Desktop variant of the lenders workspace (PAYR-23): dense table for
  *  >=768px, paired with the mobile card page via ResponsivePage. */
 const LendersPage = () => {
+  const location = useLocation();
   const [filters, setFilters] = useState<LenderFilters>({ page: 1, pageSize: 20 });
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [editingLenderId, setEditingLenderId] = useState<number | null>(null);
@@ -51,7 +55,8 @@ const LendersPage = () => {
       <AdminPageHeaderCard>
         <PageHeader
           title="Chủ nợ"
-          description="Danh sách chủ nợ và thông tin liên quan"
+          kicker={getConsoleKicker(location.pathname)}
+          meta={pagination && pagination.totalRecords > 0 ? `${pagination.totalRecords.toLocaleString('vi-VN')} chủ nợ` : undefined}
           actions={[
             {
               label: "Thêm chủ nợ",
@@ -75,7 +80,11 @@ const LendersPage = () => {
         </AdminFilterRow>
 
         {isLoading ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">Đang tải...</p>
+          <div className="space-y-1 py-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-full" />
+            ))}
+          </div>
         ) : lenders.length === 0 ? (
           <EmptyState
             title="Chưa có chủ nợ nào"
@@ -83,15 +92,15 @@ const LendersPage = () => {
             size="sm"
           />
         ) : (
-          <Table>
+          <Table variant="console">
             <TableHeader>
               <TableRow>
                 <TableHead className="whitespace-nowrap">Tên</TableHead>
                 <TableHead className="whitespace-nowrap">CCCD</TableHead>
-                <TableHead className="whitespace-nowrap">Email</TableHead>
+                <TableHead className="hidden whitespace-nowrap lg:table-cell">Email</TableHead>
                 <TableHead className="whitespace-nowrap">SĐT</TableHead>
                 <TableHead className="whitespace-nowrap">Số tài khoản</TableHead>
-                <TableHead className="whitespace-nowrap">Tên tài khoản</TableHead>
+                <TableHead className="hidden whitespace-nowrap lg:table-cell">Tên tài khoản</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -104,19 +113,19 @@ const LendersPage = () => {
                   <TableCell className="align-top text-sm font-medium text-fg-primary">
                     {lender.name}
                   </TableCell>
-                  <TableCell className="align-top text-sm tabular-nums text-fg-secondary">
+                  <TableCell className="num align-top text-sm text-fg-secondary">
                     {lender.cccd || "—"}
                   </TableCell>
-                  <TableCell className="align-top text-sm text-fg-secondary">
+                  <TableCell className="hidden align-top text-sm text-fg-secondary lg:table-cell">
                     {lender.email || "—"}
                   </TableCell>
-                  <TableCell className="align-top text-sm tabular-nums text-fg-secondary">
+                  <TableCell className="num align-top text-sm text-fg-secondary">
                     {lender.mobile || "—"}
                   </TableCell>
-                  <TableCell className="align-top text-sm tabular-nums text-fg-secondary">
+                  <TableCell className="num align-top text-sm text-fg-secondary">
                     {lender.bank_account_number || "—"}
                   </TableCell>
-                  <TableCell className="align-top text-sm text-fg-secondary">
+                  <TableCell className="hidden align-top text-sm text-fg-secondary lg:table-cell">
                     {lender.bank_account_name || "—"}
                   </TableCell>
                 </TableRow>

@@ -47,16 +47,16 @@ export const NotificationItem = ({ notification, showMarkAsRead = true, onClick,
         aria-label={`${notification.title}. ${isUnread ? 'Chưa đọc' : 'Đã đọc'}.`}
       >
         <span className="mb-0.5 flex items-start justify-between gap-2">
-          <span className={cn('line-clamp-2 break-words text-sm leading-snug', isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-600')}>
+          <span className={cn('line-clamp-2 break-words text-sm leading-snug', isUnread ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground')}>
             {notification.title}
           </span>
           <span className="flex items-center gap-1.5 shrink-0">
-            <span className="text-xs text-gray-600 tabular-nums">{formatNotificationDate(notification.created_at)}</span>
+            <span className="text-xs text-muted-foreground tabular-nums">{formatNotificationDate(notification.created_at)}</span>
             {isUnread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />}
           </span>
         </span>
 
-          <span className="text-xs text-gray-600 leading-relaxed line-clamp-2">
+          <span className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
             {getNotificationPreview(notification.message)}
           </span>
       </button>
@@ -68,7 +68,7 @@ export const NotificationItem = ({ notification, showMarkAsRead = true, onClick,
           disabled={markAsRead.isPending}
           aria-label="Đánh dấu đã đọc"
         >
-          <Check className="h-4 w-4 text-emerald-700" />
+          <Check className="h-4 w-4 text-success" />
         </button>
       )}
     </div>

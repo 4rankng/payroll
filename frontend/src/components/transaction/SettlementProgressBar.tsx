@@ -24,21 +24,21 @@ export function SettlementProgressBar({
   // Determine color based on status
   const getProgressColor = () => {
     if (status === 'settled' || percentage === 100) {
-      return 'bg-emerald-500';
+      return 'bg-success';
     }
     if (percentage > 0) {
-      return 'bg-yellow-500';
+      return 'bg-warning';
     }
-    return 'bg-gray-300';
+    return 'bg-muted-foreground/30';
   };
 
   // Determine text color
   const getTextColor = () => {
     if (status === 'settled' || percentage === 100) {
-      return 'text-emerald-700';
+      return 'text-success';
     }
     if (percentage > 0) {
-      return 'text-yellow-800';
+      return 'text-warning';
     }
     return 'text-muted-foreground';
   };
@@ -75,7 +75,7 @@ export function SettlementProgressBar({
           </span>
         )}
       </div>
-      <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-200">
+      <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted">
         <div
           className={cn('h-full transition-all', progressColor)}
           style={{ width: `${percentage}%` }}

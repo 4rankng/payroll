@@ -27,6 +27,7 @@ import { ImportMobilesModal } from "@/components/modals/ImportMobilesModal";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { useTableSorting } from "@/utils/sorting";
+import { useMediaQuery } from "@/hooks/useBreakpoint";
 
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -148,6 +149,17 @@ const EmployeesPage = () => {
     [handleOpenEmployeeSheet],
   );
 
+  // Console table contract: drop the low-value columns at narrow desktop
+  // widths instead of a horizontal rail (the detail sheet keeps every field).
+  const isBelowLg = useMediaQuery("(max-width: 1023.98px)");
+  const desktopColumns = useMemo(
+    () =>
+      columns.filter(
+        (column) => !(isBelowLg && (column.id === "address" || column.id === "created_at")),
+      ),
+    [columns, isBelowLg],
+  );
+
   const mobileConfig = useMemo(
     () =>
       createEmployeeMobileConfig({
@@ -164,9 +176,9 @@ const EmployeesPage = () => {
           <Skeleton className="h-8 w-44" />
           <Skeleton className="mt-2 h-4 w-72" />
         </AdminPageHeaderCard>
-        <Skeleton className="h-14 rounded-xl" />
+        <Skeleton className="h-14 rounded-lg" />
         <AdminSectionCard>
-          <Skeleton className="m-3 h-11 rounded-xl sm:m-4" />
+          <Skeleton className="m-3 h-11 rounded-lg sm:m-4" />
           <div className="border-t border-utility-gray-200">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 border-b border-utility-gray-200 px-4 py-3 last:border-b-0">
@@ -236,7 +248,6 @@ const EmployeesPage = () => {
                   name: p.name,
                   code: p.code,
                 }))}
-                className="rounded-none border-0 bg-transparent px-0 py-0 backdrop-blur-none"
               />
             </div>
           </AdminFilterRow>
@@ -244,7 +255,7 @@ const EmployeesPage = () => {
           <EmployeeListContent
             filteredEmployees={employees}
             dataToDisplay={employees}
-            columns={columns}
+            columns={desktopColumns}
             mobileFields={mobileConfig.mobileFields}
             rowTitle={mobileConfig.rowTitle}
             rowSubtitle={mobileConfig.rowSubtitle}

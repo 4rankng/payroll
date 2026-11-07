@@ -1,8 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { useAppState } from '@/contexts';
+import { useLocation } from 'react-router-dom';
 // UU PRO restyle: lucide → verified @untitledui/icons.
 import { MessageSquare01 } from '@untitledui/icons';
 import { useZnsMessages } from '@/hooks/api/useZnsMessages';
+import { getConsoleKicker } from '@/lib/console';
 import {
   AdminPageCanvas,
   AdminPageHeaderCard,
@@ -45,6 +47,7 @@ function formatDateTime(iso: string): string {
 
 export default function ZnsTrackingPage() {
   const { setPageTitle } = useAppState();
+  const location = useLocation();
   React.useEffect(() => { setPageTitle('ZNS tracking'); }, [setPageTitle]);
 
   const [params, setParams] = useState<ZnsMessagesQueryParams>(EMPTY_PARAMS);
@@ -64,13 +67,9 @@ export default function ZnsTrackingPage() {
           icon={MessageSquare01}
           title="ZNS tracking"
           description="Toàn bộ ZNS hệ thống đã gửi — mọi tính năng, mới nhất trước"
-        >
-          {pagination && pagination.totalRecords > 0 && (
-            <span className="text-xs font-medium text-muted-foreground tabular-nums">
-              {pagination.totalRecords.toLocaleString('vi-VN')} bản ghi
-            </span>
-          )}
-        </PageHeader>
+          kicker={getConsoleKicker(location.pathname)}
+          meta={pagination && pagination.totalRecords > 0 ? `${pagination.totalRecords.toLocaleString('vi-VN')} bản ghi` : undefined}
+        />
       </AdminPageHeaderCard>
 
       <AdminSectionCard aria-label="Bộ lọc ZNS">
@@ -122,37 +121,37 @@ export default function ZnsTrackingPage() {
         </AdminSectionCard>
       ) : (
         <AdminSectionCard aria-label="Danh sách ZNS">
-          <Table>
+          <Table variant="console">
             <TableHeader>
               <TableRow>
                 <TableHead className="whitespace-nowrap">Thời gian gửi</TableHead>
                 <TableHead>Tính năng</TableHead>
-                <TableHead>Template</TableHead>
-                <TableHead>SĐT</TableHead>
+                <TableHead className="hidden lg:table-cell">Template</TableHead>
+                <TableHead className="text-right">SĐT</TableHead>
                 <TableHead>Trạng thái</TableHead>
-                <TableHead>Mã ZNS</TableHead>
+                <TableHead className="hidden lg:table-cell">Mã ZNS</TableHead>
                 <TableHead>Lỗi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row: ZnsMessage) => (
                 <TableRow key={row.id}>
-                  <TableCell className="whitespace-nowrap align-top tabular-nums">
+                  <TableCell className="num whitespace-nowrap align-top">
                     {formatDateTime(row.created_at)}
                   </TableCell>
                   <TableCell className="align-top">
                     {ZNS_FEATURE_LABELS[row.feature] ?? row.feature}
                   </TableCell>
-                  <TableCell className="max-w-[140px] align-top break-all">
+                  <TableCell className="hidden max-w-[140px] align-top break-all lg:table-cell">
                     {row.template_id || '—'}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap align-top tabular-nums">
+                  <TableCell className="num whitespace-nowrap align-top">
                     {row.phone || '—'}
                   </TableCell>
                   <TableCell className="align-top">
                     <ZnsStatusBadge status={row.status} />
                   </TableCell>
-                  <TableCell className="max-w-[160px] align-top break-all">
+                  <TableCell className="hidden max-w-[160px] align-top break-all lg:table-cell">
                     {row.provider_msg_id || '—'}
                   </TableCell>
                   <TableCell className="min-w-[200px] max-w-[360px] align-top">

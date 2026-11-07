@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 
 import WalletPage from './index';
 
@@ -23,7 +24,7 @@ vi.mock('@/components/wallet/EmployeeAccountLookupDialog', () => ({
 
 describe('WalletPage', () => {
   it('exposes the employee account lookup action in the desktop wallet header', () => {
-    render(<WalletPage />);
+    render(<MemoryRouter><WalletPage /></MemoryRouter>);
 
     fireEvent.click(screen.getByRole('button', { name: 'Tra cứu' }));
     expect(screen.getByText('Hộp thoại tra cứu tài khoản')).toBeInTheDocument();

@@ -45,16 +45,16 @@ export function LedgerSummaryCard({ summary, isLoading, className }: LedgerSumma
       </div>
 
       <div className="space-y-2 lg:hidden">
-        <dl className="divide-y divide-border rounded-xl border border-border bg-card px-3">
+        <dl className="console-panel divide-y divide-border px-3">
           {mainItems.map(item => (
             <div key={item.label} className="flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2">
               <dt className="text-xs text-muted-foreground">{item.label}</dt>
-              <dd className="min-w-0 break-words text-right text-sm font-semibold tabular-nums">{item.value}</dd>
+              <dd className="console-value min-w-0 break-words text-right text-sm font-semibold">{item.value}</dd>
             </div>
           ))}
         </dl>
         {accountItems.length > 0 && (
-          <details className="group rounded-xl border border-border bg-card">
+          <details className="console-panel group">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 text-xs font-medium [&::-webkit-details-marker]:hidden">
               Số dư theo tài khoản ({accountItems.length})
               <ChevronDown className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
@@ -63,7 +63,7 @@ export function LedgerSummaryCard({ summary, isLoading, className }: LedgerSumma
               {accountItems.map(item => (
                 <div key={item.label} className="flex min-h-11 flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2">
                   <dt className="text-xs text-muted-foreground">{item.label}</dt>
-                  <dd className="min-w-0 break-words text-right text-sm font-semibold tabular-nums">{item.value}</dd>
+                  <dd className="console-value min-w-0 break-words text-right text-sm font-semibold">{item.value}</dd>
                 </div>
               ))}
             </dl>

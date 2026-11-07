@@ -239,12 +239,12 @@ export function AddProjectSheet({
                     id="name"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`transition-colors ${errors.name ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                    className={`transition-colors ${errors.name ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     placeholder="Nhập tên dự án"
                     disabled={isSaving}
                   />
                   {errors.name && (
-                    <p className="text-xs text-red-700 flex items-center gap-1">
+                    <p className="text-xs text-destructive flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {errors.name}
                     </p>
@@ -259,12 +259,12 @@ export function AddProjectSheet({
                     id="client_name"
                     value={formData.client_name}
                     onChange={(e) => handleInputChange('client_name', e.target.value)}
-                    className={`transition-colors ${errors.client_name ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                    className={`transition-colors ${errors.client_name ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     placeholder="Nhập tên khách hàng"
                     disabled={isSaving}
                   />
                   {errors.client_name && (
-                    <p className="text-xs text-red-700 flex items-center gap-1">
+                    <p className="text-xs text-destructive flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {errors.client_name}
                     </p>
@@ -279,12 +279,12 @@ export function AddProjectSheet({
                     id="code"
                     value={formData.code}
                     onChange={(e) => handleInputChange('code', e.target.value)}
-                    className={`transition-colors font-mono ${errors.code ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                    className={`transition-colors font-mono ${errors.code ? "border-destructive focus-visible:ring-destructive" : ""}`}
                     placeholder="VD: PRJ001"
                     disabled={isSaving}
                   />
                   {errors.code && (
-                    <p className="text-xs text-red-700 flex items-center gap-1">
+                    <p className="text-xs text-destructive flex items-center gap-1">
                       <AlertTriangle className="h-3 w-3" />
                       {errors.code}
                     </p>

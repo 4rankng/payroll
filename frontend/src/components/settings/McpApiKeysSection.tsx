@@ -277,8 +277,8 @@ export const McpApiKeysSection = () => {
     <div className="space-y-6">
       {/* 1. Tạo khoá MCP */}
       <section id="mcp-keys-create" aria-labelledby="mcp-keys-create-title">
-        <Card className="overflow-hidden border-border shadow-sm">
-          <CardHeader className="border-b bg-muted/20 p-4 sm:p-5">
+        <Card variant="console">
+          <CardHeader className="console-panel-header p-4 sm:p-5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
                 <Plus className="size-4" aria-hidden="true" />
@@ -424,8 +424,8 @@ export const McpApiKeysSection = () => {
 
       {/* 2. Danh sách khoá MCP */}
       <section id="mcp-keys-list" aria-labelledby="mcp-keys-list-title">
-        <Card className="overflow-hidden border-border shadow-sm">
-          <CardHeader className="border-b bg-muted/20 p-4 sm:p-5">
+        <Card variant="console">
+          <CardHeader className="console-panel-header p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-muted-foreground/20 bg-muted text-foreground">
@@ -508,8 +508,8 @@ export const McpApiKeysSection = () => {
 
       {/* 3. Hướng dẫn tích hợp MCP */}
       <section id="mcp-guide" aria-labelledby="mcp-guide-title">
-        <Card className="overflow-hidden border-border shadow-sm">
-          <CardHeader className="border-b bg-muted/20 p-4 sm:p-5">
+        <Card variant="console">
+          <CardHeader className="console-panel-header p-4 sm:p-5">
             <div className="flex items-center gap-3">
               <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-400">
                 <Bot className="size-4" aria-hidden="true" />
@@ -557,7 +557,7 @@ export const McpApiKeysSection = () => {
             <div className="space-y-2">
               <p className="font-medium text-foreground">Phạm vi khoá</p>
               <div className="overflow-hidden rounded-lg border border-border/80">
-                <table className="w-full text-left text-xs">
+                <table className="console-table w-full text-left text-xs">
                   <thead className="bg-muted/40 text-muted-foreground">
                     <tr>
                       <th className="px-3 py-2 font-medium">Phạm vi</th>

@@ -108,11 +108,11 @@ export function DisburseLoanModal({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <AlertDialogContent className="rounded-lg max-w-2xl max-h-[90vh] overflow-y-auto">
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-              <Banknote className="h-5 w-5 text-blue-700" />
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Banknote className="h-5 w-5 text-primary" />
             </div>
             <div>
               <AlertDialogTitle className="text-lg font-semibold">
@@ -128,7 +128,7 @@ export function DisburseLoanModal({
         {step === 'form' && (
           <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 mt-4">
             {/* Loan Info Summary */}
-            <div className="bg-muted/50 rounded-xl p-3 space-y-3">
+            <div className="bg-muted/50 rounded-lg p-3 space-y-3">
               <div className="typography-label-small text-muted-foreground">Thông tin khoản vay</div>
               <div className="space-y-2 typography-body-small">
                 <div className="flex justify-between">
@@ -141,7 +141,7 @@ export function DisburseLoanModal({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Số tiền vay:</span>
-                  <span className="font-semibold text-blue-700">{formatVND(loan.principal_amount)}</span>
+                  <span className="font-semibold text-primary">{formatVND(loan.principal_amount)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Lãi suất:</span>
@@ -167,10 +167,10 @@ export function DisburseLoanModal({
                   {...register('disbursement_date', {
                     required: 'Ngày giải ngân là bắt buộc'
                   })}
-                  className={errors.disbursement_date ? 'border-red-500' : ''}
+                  className={errors.disbursement_date ? 'border-destructive' : ''}
                 />
                 {errors.disbursement_date && (
-                  <p className="text-xs text-red-700">{errors.disbursement_date.message}</p>
+                  <p className="text-xs text-destructive">{errors.disbursement_date.message}</p>
                 )}
               </div>
 
@@ -207,7 +207,7 @@ export function DisburseLoanModal({
               </div>
             </div>
 
-            <AlertDialogFooter className="grid grid-cols-2 gap-3">
+            <AlertDialogFooter className="border-t border-border/65 pt-3 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={onClose}
@@ -231,7 +231,7 @@ export function DisburseLoanModal({
         {step === 'confirm' && formData && (
           <div className="space-y-4 mt-4">
             {/* Loan Summary */}
-            <div className="bg-muted/50 rounded-xl p-3 space-y-2">
+            <div className="bg-muted/50 rounded-lg p-3 space-y-2">
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Khoản vay
               </div>
@@ -242,13 +242,13 @@ export function DisburseLoanModal({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Số tiền:</span>
-                  <span className="font-semibold text-blue-700">{formatVND(loan.principal_amount)}</span>
+                  <span className="font-semibold text-primary">{formatVND(loan.principal_amount)}</span>
                 </div>
               </div>
             </div>
 
             {/* Disbursement Details */}
-            <div className="bg-muted/50 rounded-xl p-3 space-y-3">
+            <div className="bg-muted/50 rounded-lg p-3 space-y-3">
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Thông tin giải ngân
               </div>
@@ -279,13 +279,13 @@ export function DisburseLoanModal({
               </div>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-              <p className="typography-body-small text-amber-800">
+            <div className="bg-warning/10 border border-warning/30 rounded-lg p-3">
+              <p className="typography-body-small text-warning">
                 ⚠️ Hành động này sẽ ghi nhận khoản vay đã được giải ngân và không thể hoàn thành.
               </p>
             </div>
 
-            <AlertDialogFooter className="grid grid-cols-2 gap-3">
+            <AlertDialogFooter className="border-t border-border/65 pt-3 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={handleBack}

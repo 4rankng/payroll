@@ -1,7 +1,23 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 
 import { BankTransferHistoryPageContent } from './BankTransferHistoryPageContent';
+import { formatCurrency } from '@/utils/formatters';
+
+// The console header reads the pathname for its kicker — render inside a router.
+const renderContent = (props?: { variant?: 'admin' | 'partner' }) =>
+  render(
+    <MemoryRouter>
+      <BankTransferHistoryPageContent {...props} />
+    </MemoryRouter>,
+  );
+const rerenderContent = (rerender: (ui: React.ReactNode) => void, props?: { variant?: 'admin' | 'partner' }) =>
+  rerender(
+    <MemoryRouter>
+      <BankTransferHistoryPageContent {...props} />
+    </MemoryRouter>,
+  );
 
 const useBankTransferHistories = vi.fn();
 
@@ -53,7 +69,7 @@ describe('BankTransferHistoryPageContent', () => {
   });
 
   it('shows every bank posting and the record total with no expansion step', () => {
-    render(<BankTransferHistoryPageContent />);
+    renderContent();
 
     // Flat ledger: both postings are plain table content — nothing behind a
     // disclosure, no hidden panels.
@@ -78,7 +94,7 @@ describe('BankTransferHistoryPageContent', () => {
   });
 
   it('spans record identity across its postings and numbers every ledger line', () => {
-    const { container } = render(<BankTransferHistoryPageContent />);
+    const { container } = renderContent();
 
     const ledger = container.querySelector('[data-slot="payment-history-records"]')!;
     const bodyRows = Array.from(ledger.querySelectorAll('tbody tr'));
@@ -111,10 +127,14 @@ describe('BankTransferHistoryPageContent', () => {
     result.data.summary = { total_amount: 2_367_588_332, transfer_count: 827, employee_count: 816 };
     useBankTransferHistories.mockReturnValue(result);
 
-    const { container } = render(<BankTransferHistoryPageContent />);
+    const { container } = renderContent();
 
     const summary = within(container.querySelector('[data-slot="payment-history-summary"]')!);
-    expect(summary.getByText(/2\.367\.588\.332\s*₫/)).toBeInTheDocument();
+    // Console contract: compact summary figure, exact figure in title/aria-label.
+    const total = summary.getByText('2,37 tỷ');
+    expect(total).toBeInTheDocument();
+    expect(total).toHaveAttribute('title', formatCurrency(2_367_588_332));
+    expect(total).toHaveAttribute('aria-label', `Tổng đã chuyển: ${formatCurrency(2_367_588_332)}`);
     expect(summary.getByText('827')).toBeInTheDocument();
     expect(summary.getByText('816')).toBeInTheDocument();
   });
@@ -124,7 +144,7 @@ describe('BankTransferHistoryPageContent', () => {
     result.data.data[0].transfers = [];
     useBankTransferHistories.mockReturnValue(result);
 
-    const { container } = render(<BankTransferHistoryPageContent />);
+    const { container } = renderContent();
 
     const ledger = container.querySelector('[data-slot="payment-history-records"]')!;
     const rows = ledger.querySelectorAll('tbody tr');
@@ -142,7 +162,7 @@ describe('BankTransferHistoryPageContent', () => {
     ];
     useBankTransferHistories.mockReturnValue(result);
 
-    render(<BankTransferHistoryPageContent />);
+    renderContent();
 
     expect(screen.getAllByText('FT-LEGACY-001').length).toBeGreaterThan(0);
     // Missing transfer code and paid_at fall back to —, CCCD shows — inline.
@@ -151,7 +171,7 @@ describe('BankTransferHistoryPageContent', () => {
   });
 
   it('selects a month directly without asking for a day', () => {
-    render(<BankTransferHistoryPageContent />);
+    renderContent();
 
     fireEvent.click(screen.getByRole('button', { name: 'Chọn tháng kỳ lương, hiện tại 07/2026' }));
     fireEvent.click(screen.getByRole('button', { name: 'Chọn tháng 08 năm 2026' }));
@@ -161,17 +181,18 @@ describe('BankTransferHistoryPageContent', () => {
   });
 
   it('scopes the admin card treatment to the admin variant', () => {
-    const { container, rerender } = render(<BankTransferHistoryPageContent />);
+    const { container, rerender } = renderContent();
 
     expect(container.querySelector('.admin-payment-history-workspace')).not.toBeInTheDocument();
 
-    rerender(<BankTransferHistoryPageContent variant="admin" />);
+    rerenderContent(rerender, { variant: 'admin' });
 
-    expect(container.querySelector('.admin-payment-history-workspace')).toHaveClass('rounded-2xl');
+    // Both variants share the frozen console workspace panel now.
+    expect(container.querySelector('[data-slot="payment-history-workspace"]')).toHaveClass('console-panel');
   });
 
   it('keeps touch-safe mobile filters while using compact desktop controls', () => {
-    render(<BankTransferHistoryPageContent />);
+    renderContent();
 
     expect(screen.getByRole('button', { name: /Chọn tháng kỳ lương/ })).toHaveClass('h-11', 'sm:h-9');
     expect(screen.getByRole('combobox')).toHaveClass('min-h-11', 'sm:min-h-9');
@@ -186,14 +207,15 @@ describe('BankTransferHistoryPageContent', () => {
     result.data.pagination = { page: 1, pageSize: 20, totalPages: 11, totalRecords: 207 };
     useBankTransferHistories.mockReturnValue(result);
 
-    const { container } = render(<BankTransferHistoryPageContent />);
+    const { container } = renderContent();
 
     // Summary is one slim line inside the workspace — no KPI cards.
     const summary = within(container.querySelector('[data-slot="payment-history-summary"]')!);
     expect(summary.getByText('Tổng đã chuyển')).toBeInTheDocument();
     expect(summary.getByText('bút toán ngân hàng')).toBeInTheDocument();
     expect(summary.getByText('nhân viên')).toBeInTheDocument();
-    expect(summary.getByText(/1\.998\.000\s*₫/)).toBeInTheDocument();
+    // Compact summary figure; the exact amount lives in the title/aria-label.
+    expect(summary.getByText('2 tr')).toHaveAttribute('title', formatCurrency(1_998_000));
     expect(summary.getByText('07/2026')).toBeInTheDocument();
     expect(container.querySelector('.shadow-soft')).not.toBeInTheDocument();
 
@@ -213,7 +235,7 @@ describe('BankTransferHistoryPageContent', () => {
   });
 
   it('renders a semantic ledger table with a sticky header and flat hairline rows', () => {
-    const { container } = render(<BankTransferHistoryPageContent />);
+    const { container } = renderContent();
 
     const ledger = container.querySelector('[data-slot="payment-history-records"]')!;
     const table = ledger.querySelector('table')!;
@@ -241,7 +263,7 @@ describe('BankTransferHistoryPageContent', () => {
   });
 
   it('mirrors the ledger as dense record blocks below the table breakpoint', () => {
-    const { container } = render(<BankTransferHistoryPageContent />);
+    const { container } = renderContent();
 
     const mobile = container.querySelector<HTMLElement>('[data-slot="payment-history-mobile-records"]')!;
     expect(mobile).toHaveClass('xl:hidden');
@@ -255,7 +277,7 @@ describe('BankTransferHistoryPageContent', () => {
   });
 
   it('requests a denser default page now that rows are compact', () => {
-    render(<BankTransferHistoryPageContent />);
+    renderContent();
 
     expect(useBankTransferHistories).toHaveBeenLastCalledWith(
       expect.objectContaining({ page: 1, pageSize: 50 }),
@@ -270,7 +292,7 @@ describe('BankTransferHistoryPageContent', () => {
       refetch: vi.fn(),
     });
 
-    const { container } = render(<BankTransferHistoryPageContent />);
+    const { container } = renderContent();
 
     const skeleton = container.querySelector('[aria-label="Đang tải lịch sử trả lương"]');
     expect(skeleton).toHaveClass('divide-y', 'divide-utility-gray-300');
@@ -284,7 +306,7 @@ describe('BankTransferHistoryPageContent', () => {
   });
 
   it('keeps the partner header below the iOS safe area at every breakpoint', () => {
-    const { container } = render(<BankTransferHistoryPageContent variant="partner" />);
+    const { container } = renderContent({ variant: 'partner' });
 
     expect(container.querySelector('.admin-payment-history-page')).toHaveClass(
       'pt-[calc(env(safe-area-inset-top,0px)+0.75rem)]',
@@ -294,7 +316,7 @@ describe('BankTransferHistoryPageContent', () => {
   });
 
   it('rides the standard admin shell (canvas + glass header) on the admin variant', () => {
-    const { container } = render(<BankTransferHistoryPageContent variant="admin" />);
+    const { container } = renderContent({ variant: 'admin' });
 
     // Admin pages share the ambient canvas and glass header card idiom; the
     // legacy standalone safe-area root belongs to the partner variant only.

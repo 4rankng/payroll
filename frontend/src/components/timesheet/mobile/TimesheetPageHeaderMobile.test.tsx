@@ -1,19 +1,23 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
 import { TimesheetPageHeaderMobile } from './TimesheetPageHeaderMobile';
 
+// The header wires its console kicker via useLocation — render inside a router.
 describe('TimesheetPageHeaderMobile', () => {
   it('exposes the production OnePay export in the Admin mobile actions', () => {
     const onOnePayExport = vi.fn();
 
     render(
-      <TimesheetPageHeaderMobile
-        onAddTimesheet={vi.fn()}
-        onApprovedTimesheetsExport={vi.fn()}
-        onOnePayExport={onOnePayExport}
-        monthValue="2026-07"
-        onMonthChange={vi.fn()}
-      />,
+      <MemoryRouter>
+        <TimesheetPageHeaderMobile
+          onAddTimesheet={vi.fn()}
+          onApprovedTimesheetsExport={vi.fn()}
+          onOnePayExport={onOnePayExport}
+          monthValue="2026-07"
+          onMonthChange={vi.fn()}
+        />
+      </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Thêm tùy chọn' }));
@@ -26,13 +30,15 @@ describe('TimesheetPageHeaderMobile', () => {
     const onRejectUnpaid = vi.fn();
 
     render(
-      <TimesheetPageHeaderMobile
-        onAddTimesheet={vi.fn()}
-        onApprovedTimesheetsExport={vi.fn()}
-        onRejectUnpaid={onRejectUnpaid}
-        monthValue="2026-07"
-        onMonthChange={vi.fn()}
-      />,
+      <MemoryRouter>
+        <TimesheetPageHeaderMobile
+          onAddTimesheet={vi.fn()}
+          onApprovedTimesheetsExport={vi.fn()}
+          onRejectUnpaid={onRejectUnpaid}
+          monthValue="2026-07"
+          onMonthChange={vi.fn()}
+        />
+      </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Thêm tùy chọn' }));
@@ -44,14 +50,16 @@ describe('TimesheetPageHeaderMobile', () => {
 
   it('does not expose the Admin reject-unpaid action to Partner', () => {
     render(
-      <TimesheetPageHeaderMobile
-        onAddTimesheet={vi.fn()}
-        onApprovedTimesheetsExport={vi.fn()}
-        onRejectUnpaid={vi.fn()}
-        userRole="partner"
-        monthValue="2026-07"
-        onMonthChange={vi.fn()}
-      />,
+      <MemoryRouter>
+        <TimesheetPageHeaderMobile
+          onAddTimesheet={vi.fn()}
+          onApprovedTimesheetsExport={vi.fn()}
+          onRejectUnpaid={vi.fn()}
+          userRole="partner"
+          monthValue="2026-07"
+          onMonthChange={vi.fn()}
+        />
+      </MemoryRouter>,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Thêm tùy chọn' }));

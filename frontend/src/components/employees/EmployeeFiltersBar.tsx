@@ -49,14 +49,14 @@ export const EmployeeFiltersBar = ({
 }: EmployeeFiltersBarProps) => {
   return (
     <div className={cn(
-      'flex items-center gap-2 flex-wrap rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm px-3 py-2',
+      'console-filter-bar',
       className,
     )}>
       <SearchBar
         searchTerm={searchTerm}
         onSearchChange={onSearchChange}
         placeholder="Tìm nhân viên..."
-        className="w-44"
+        className="w-40 sm:w-44 shrink-0"
       />
 
       <div className="h-5 w-px bg-border/50 shrink-0 hidden sm:block" />
@@ -69,7 +69,7 @@ export const EmployeeFiltersBar = ({
           searchPlaceholder="Tìm dự án..."
           emptyMessage="Không tìm thấy dự án."
           triggerAriaLabel="Lọc theo dự án"
-          triggerClassName="min-h-11 sm:min-h-9 w-44 justify-between rounded-xl border-border/60 bg-card text-sm font-medium"
+          triggerClassName="w-44 justify-between border-border/60 bg-card text-sm font-medium"
           contentClassName="w-72 max-w-[calc(100vw-2rem)]"
           options={[
             { value: 'all', label: 'Tất cả dự án' },
@@ -85,7 +85,6 @@ export const EmployeeFiltersBar = ({
       <EmployeeStatusFilter
         value={statusFilter}
         onValueChange={onStatusFilterChange}
-        className="h-7"
       />
 
       <FilterPill

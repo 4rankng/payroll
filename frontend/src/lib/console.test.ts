@@ -21,6 +21,7 @@ describe('getConsoleKicker', () => {
     expect(getConsoleKicker('/admin/users/42')).toBe('NHÂN SỰ');
     expect(getConsoleKicker('/admin/employees')).toBe('NHÂN SỰ');
     expect(getConsoleKicker('/admin/employees/')).toBe('NHÂN SỰ');
+    expect(getConsoleKicker('/partner/employees')).toBe('NHÂN SỰ');
   });
 
   it('maps money routes to TÀI CHÍNH', () => {

@@ -98,7 +98,7 @@ export function ResetPasswordModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="rounded-lg sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Đặt lại mật khẩu </DialogTitle>
           <DialogDescription>
@@ -145,7 +145,7 @@ export function ResetPasswordModal({
             </p>
           </div>
 
-          <div className="bg-muted/50 rounded-xl p-3 space-y-2">
+          <div className="bg-muted/50 rounded-lg p-3 space-y-2">
             <h4 className="typography-body-medium">Yêu cầu mật khẩu</h4>
             {password ? (
               <PasswordStrengthIndicator password={password} showRequirements={true} />
@@ -167,7 +167,7 @@ export function ResetPasswordModal({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-border/65 pt-3">
           <button
             onClick={handleClose}
             disabled={loading}
@@ -178,7 +178,7 @@ export function ResetPasswordModal({
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 h-11 px-3 sm:h-8 rounded bg-amber-700 text-white text-sm font-medium whitespace-nowrap hover:bg-amber-800 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            className="inline-flex items-center gap-1.5 h-11 px-3 sm:h-8 rounded bg-warning-solid text-white text-sm font-medium whitespace-nowrap hover:bg-warning-solid_hover transition-colors disabled:opacity-50 disabled:pointer-events-none"
           >
             {loading ? "Đang reset..." : "Đổi mật khẩu"}
           </button>

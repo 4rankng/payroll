@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { MobileSearchInput } from "@/components/shared/MobileSearchInput";
+import { getConsoleKicker } from "@/lib/console";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -60,6 +61,7 @@ const monthOptions = getMonthOptions();
 
 const EmployeesPageMobile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
   const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [moreActionsOpen, setMoreActionsOpen] = useState(false);
@@ -211,15 +213,18 @@ const EmployeesPageMobile = () => {
             <Skeleton className="h-9 w-16" />
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-4 overflow-hidden rounded-lg border border-border bg-card">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-xl" />
+            <div key={i} className={i > 0 ? "flex min-h-16 flex-col justify-center gap-1.5 border-l border-border px-2 py-2.5" : "flex min-h-16 flex-col justify-center gap-1.5 px-2 py-2.5"}>
+              <Skeleton className="h-2.5 w-10" />
+              <Skeleton className="h-3.5 w-8" />
+            </div>
           ))}
         </div>
-        <Skeleton className="h-11 w-full rounded-xl" />
+        <Skeleton className="h-11 w-full rounded-lg" />
         <div className="space-y-2">
           {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full rounded-xl" />
+            <Skeleton key={i} className="h-14 w-full rounded-lg" />
           ))}
         </div>
       </div>
@@ -231,6 +236,7 @@ const EmployeesPageMobile = () => {
       {/* Header */}
       <MobilePageHeader
         title="Nhân viên"
+        kicker={getConsoleKicker(pathname)}
         actions={
           <>
             <Button
@@ -285,9 +291,12 @@ const EmployeesPageMobile = () => {
         </div>
       )}
       {summaryLoading && (
-        <div className="grid grid-cols-4 gap-1.5 px-4 pb-3">
+        <div className="grid grid-cols-4 overflow-hidden rounded-lg border border-border bg-card mx-4 mb-3">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-xl" />
+            <div key={i} className={i > 0 ? "flex min-h-16 flex-col justify-center gap-1.5 border-l border-border px-2 py-2.5" : "flex min-h-16 flex-col justify-center gap-1.5 px-2 py-2.5"}>
+              <Skeleton className="h-2.5 w-10" />
+              <Skeleton className="h-3.5 w-8" />
+            </div>
           ))}
         </div>
       )}
@@ -516,7 +525,7 @@ const EmployeesPageMobile = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-11 w-11 shrink-0 rounded-xl border-border bg-card"
+                  className="h-11 w-11 shrink-0 rounded-lg border-border bg-card"
                   onClick={() =>
                     updateFilters({
                       sortOrder: sortOrder === "asc" ? "desc" : "asc",

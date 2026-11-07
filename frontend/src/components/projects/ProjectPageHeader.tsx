@@ -1,17 +1,22 @@
 import { PageHeader } from '@/components/shared/PageHeader';
+import { useLocation } from 'react-router-dom';
+import { getConsoleKicker } from '@/lib/console';
 import { Plus, Briefcase } from 'lucide-react';
 
 interface ProjectPageHeaderProps {
   onCreateProject: () => void;
-  onAssignEmployees?: () => void;
-  onGenerateReport?: () => void;
+  /** Record count already shown by the page's pagination footer. */
+  meta?: string;
 }
 
-export const ProjectPageHeader = ({ onCreateProject }: ProjectPageHeaderProps) => {
+export const ProjectPageHeader = ({ onCreateProject, meta }: ProjectPageHeaderProps) => {
+  const { pathname } = useLocation();
+
   return (
     <PageHeader
+      kicker={getConsoleKicker(pathname)}
       title="Dự án"
-      description="Theo dõi và quản lý tất cả dự án trong công ty"
+      meta={meta}
       icon={Briefcase}
       actions={[
         {

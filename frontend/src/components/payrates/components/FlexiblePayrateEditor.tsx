@@ -271,11 +271,11 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
         .fpe-sans { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
         .fpe input:focus { outline: none; }
         .fpe *::-webkit-scrollbar { height:8px; width:8px; }
-        .fpe *::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:6px; border:2px solid #fff; }
+        .fpe *::-webkit-scrollbar-thumb { background:hsl(var(--border)); border-radius:6px; border:2px solid hsl(var(--card)); }
         @keyframes shift-ping {
-          0%   { box-shadow: 0 0 0 0 rgba(8,120,62,.5), 0 0 0 3px rgba(8,120,62,.15); border-color: #08783e; }
-          65%  { box-shadow: 0 0 0 8px rgba(8,120,62,0), 0 0 0 3px rgba(8,120,62,.1); }
-          100% { box-shadow: 0 0 0 0 rgba(8,120,62,0), 0 0 0 0 rgba(8,120,62,0); border-color: #e2e8f0; }
+          0%   { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.5), 0 0 0 3px hsl(var(--primary) / 0.15); border-color: hsl(var(--primary)); }
+          65%  { box-shadow: 0 0 0 8px hsl(var(--primary) / 0), 0 0 0 3px hsl(var(--primary) / 0.1); }
+          100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0), 0 0 0 0 hsl(var(--primary) / 0); border-color: hsl(var(--border)); }
         }
         .shift-highlight { animation: shift-ping 1.1s cubic-bezier(.2,.7,.2,1) forwards; }
       `}</style>
@@ -292,23 +292,23 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                 <thead>
                   <tr>
                     {/* corner */}
-                    <th style={{ position:'sticky', top:0, left:0, zIndex:4, background:'#fff', borderRight:'1px solid #e2e8f0', borderBottom:'1px solid #cbd5e1', padding:'12px 14px', width:176, minWidth:176, textAlign:'left' }}>
+                    <th style={{ position:'sticky', top:0, left:0, zIndex:4, background:'hsl(var(--card))', borderRight:'1px solid hsl(var(--border))', borderBottom:'1px solid hsl(var(--border))', padding:'12px 14px', width:176, minWidth:176, textAlign:'left' }}>
                       <div className="flex flex-col leading-tight">
                         <span className="text-xs text-muted-foreground font-semibold">Ca làm việc →</span>
                         <span className="text-sm font-bold text-foreground">Vị trí ↓</span>
-                        <span className="mt-1 text-xs font-semibold text-emerald-700">Lương trọn ca (₫)</span>
+                        <span className="mt-1 text-xs font-semibold text-primary">Lương trọn ca (₫)</span>
                       </div>
                     </th>
                     {/* shift columns */}
                     {shifts.map((s,i) => {
                       const ov = isON(s.start, s.end);
                       return (
-                        <th key={i} style={{ position:'sticky', top:0, zIndex:3, background:'#fff', borderRight:'1px solid #e2e8f0', borderBottom:'1px solid #cbd5e1', padding:'10px 12px', width:152, minWidth:152, textAlign:'left', verticalAlign:'top' }}>
+                        <th key={i} style={{ position:'sticky', top:0, zIndex:3, background:'hsl(var(--card))', borderRight:'1px solid hsl(var(--border))', borderBottom:'1px solid hsl(var(--border))', padding:'10px 12px', width:152, minWidth:152, textAlign:'left', verticalAlign:'top' }}>
                           <div className="flex flex-col gap-0.5">
                             <div className="flex items-center justify-between gap-1.5">
                               {editingShiftIdx === i ? (
                                 <input
-                                  className="fpe-mono h-11 w-[120px] rounded border border-emerald-400 bg-white px-2 text-sm font-bold tracking-tight focus:outline-none focus:ring-1 focus:ring-emerald-200"
+                                  className="fpe-mono h-11 w-[120px] rounded border border-primary/50 bg-card px-2 text-sm font-bold tracking-tight focus:outline-none focus:ring-1 focus:ring-primary/25"
                                   value={editingShiftValue}
                                   onChange={e => setEditingShiftValue(e.target.value)}
                                   onKeyDown={e => {
@@ -325,7 +325,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                               ) : (
                                 <button
                                   type="button"
-                                  className="fpe-mono min-h-11 cursor-pointer text-left text-sm font-bold tracking-tight transition-colors hover:text-emerald-700"
+                                  className="fpe-mono min-h-11 cursor-pointer text-left text-sm font-bold tracking-tight transition-colors hover:text-primary"
                                   onClick={() => startShiftEdit(i)}
                                   title="Nhấn để đổi thời gian ca"
                                   aria-label={`Chỉnh khung giờ ${s.start}-${s.end}`}
@@ -339,7 +339,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             </div>
                             <div className="flex items-center gap-1.5">
                               {s.label && <span className="text-xs text-muted-foreground">{s.label}</span>}
-                              <span className={`text-xs font-semibold ${ov?'text-emerald-700':'text-muted-foreground'}`}>
+                              <span className={`text-xs font-semibold ${ov?'text-primary':'text-muted-foreground'}`}>
                                 {ov && '🌙'}{durH(s.start,s.end)}h
                               </span>
                             </div>
@@ -349,7 +349,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                     })}
                     {/* add-shift column header */}
                     {!readOnly && (
-                      <th style={{ position:'sticky', top:0, zIndex:3, background:'#fff', borderBottom:'1px solid #cbd5e1', padding:'10px 12px', width:120, minWidth:120 }}>
+                      <th style={{ position:'sticky', top:0, zIndex:3, background:'hsl(var(--card))', borderBottom:'1px solid hsl(var(--border))', padding:'10px 12px', width:120, minWidth:120 }}>
                         <button
                           onClick={() => {
                             shiftInputRef.current?.focus();
@@ -357,7 +357,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             setShiftHighlight(true);
                             setTimeout(() => setShiftHighlight(false), 1200);
                           }}
-                          className="flex min-h-11 items-center gap-1 rounded-lg border border-dashed border-border px-3 text-xs font-bold text-emerald-700 transition-colors hover:border-emerald-400 hover:bg-emerald-50/50">
+                          className="flex min-h-11 items-center gap-1 rounded-lg border border-dashed border-border px-3 text-xs font-bold text-primary transition-colors hover:border-primary/50 hover:bg-primary/5">
                           + Thêm ca
                         </button>
                       </th>
@@ -366,13 +366,13 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                 </thead>
                 <tbody>
                   {positions.map((pos, ri) => (
-                    <tr key={pos} style={{ background: ri%2 ? '#fafbfe' : '#fff' }} className="group">
+                    <tr key={pos} style={{ background: ri%2 ? 'hsl(var(--muted) / 0.5)' : 'hsl(var(--card))' }} className="group">
                       {/* position cell */}
-                      <th style={{ position:'sticky', left:0, zIndex:2, borderRight:'1px solid #cbd5e1', borderBottom:'1px solid #e2e8f0', padding:'8px 14px', textAlign:'left', background: ri%2?'#fafbfe':'#fff' }}>
+                      <th style={{ position:'sticky', left:0, zIndex:2, borderRight:'1px solid hsl(var(--border))', borderBottom:'1px solid hsl(var(--border))', padding:'8px 14px', textAlign:'left', background: ri%2?'hsl(var(--muted) / 0.5)':'hsl(var(--card))' }}>
                         <div className="flex items-center justify-between gap-2">
                           {editingPositionName === pos ? (
                             <input
-                              className="h-11 w-full max-w-[140px] rounded border border-emerald-400 bg-white px-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-emerald-200"
+                              className="h-11 w-full max-w-[140px] rounded border border-primary/50 bg-card px-2 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary/25"
                               value={editingPositionValue}
                               onChange={e => setEditingPositionValue(e.target.value)}
                               onKeyDown={e => {
@@ -384,7 +384,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                             />
                           ) : (
                             <span
-                              className={`text-sm font-bold ${!readOnly ? 'cursor-pointer hover:text-emerald-700 transition-colors' : ''}`}
+                              className={`text-sm font-bold ${!readOnly ? 'cursor-pointer hover:text-primary transition-colors' : ''}`}
                               onClick={() => startPositionEdit(pos)}
                               title={readOnly ? undefined : 'Nhấn để đổi tên vị trí'}
                             >
@@ -393,7 +393,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                           )}
                           {!readOnly && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={()=>copyRow(pos)} title="Sao chép sang cả hàng" className="flex h-11 w-11 items-center justify-center rounded border border-border bg-white text-xs text-muted-foreground transition-colors hover:border-emerald-400 hover:text-emerald-700">→</button>
+                              <button onClick={()=>copyRow(pos)} title="Sao chép sang cả hàng" className="flex h-11 w-11 items-center justify-center rounded border border-border bg-card text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary">→</button>
                               <button onClick={()=>togglePos(pos)} title="Xoá vị trí" className="flex h-11 w-11 items-center justify-center rounded text-base leading-none text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive">×</button>
                             </div>
                           )}
@@ -406,7 +406,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                         const has = val > 0;
                         const focused = focusKey === key;
                         return (
-                          <td key={ci} style={{ borderRight:'1px solid #e2e8f0', borderBottom:'1px solid #e2e8f0', padding:4, background: has ? '#f0fdf6' : 'transparent' }}>
+                          <td key={ci} style={{ borderRight:'1px solid hsl(var(--border))', borderBottom:'1px solid hsl(var(--border))', padding:4, background: has ? 'hsl(var(--primary) / 0.06)' : 'transparent' }}>
                             <div className="relative">
                               <input
                                 className="fpe-mono h-11 w-full rounded-lg pl-2 pr-12 text-right text-sm transition-all"
@@ -419,29 +419,29 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                                 onBlur={() => setFocusKey(null)}
                                 onChange={e => setRate(pos, s, e.target.value)}
                                 style={{
-                                  border: `1px solid ${focused ? '#08783e' : 'transparent'}`,
-                                  boxShadow: focused ? '0 0 0 3px #e6f5ed' : 'none',
-                                  background: focused ? '#fff' : 'transparent',
-                                  color: has ? '#047857' : '#0f172a',
+                                  border: `1px solid ${focused ? 'hsl(var(--primary))' : 'transparent'}`,
+                                  boxShadow: focused ? '0 0 0 3px hsl(var(--primary) / 0.15)' : 'none',
+                                  background: focused ? 'hsl(var(--card))' : 'transparent',
+                                  color: has ? 'hsl(var(--primary))' : 'hsl(var(--foreground))',
                                   fontWeight: has ? 600 : 400,
                                 }}
                               />
                               <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs"
-                                style={{ color: has ? '#047857' : '#94a3b8' }}>₫/ca</span>
+                                style={{ color: has ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))' }}>₫/ca</span>
                             </div>
                           </td>
                         );
                       })}
-                      {!readOnly && <td style={{ borderBottom:'1px solid #e2e8f0', background:'transparent' }} />}
+                      {!readOnly && <td style={{ borderBottom:'1px solid hsl(var(--border))', background:'transparent' }} />}
                     </tr>
                   ))}
                   {/* hint row */}
                   {!readOnly && (
                     <tr>
-                      <th style={{ position:'sticky', left:0, zIndex:2, background:'#fff', borderRight:'1px solid #cbd5e1', padding:'8px 14px', textAlign:'left' }}>
+                      <th style={{ position:'sticky', left:0, zIndex:2, background:'hsl(var(--card))', borderRight:'1px solid hsl(var(--border))', padding:'8px 14px', textAlign:'left' }}>
                         <span className="text-xs text-muted-foreground">↓ chọn ở dưới</span>
                       </th>
-                      <td colSpan={shifts.length+1} style={{ padding:'8px 12px', background:'#fff' }}>
+                      <td colSpan={shifts.length+1} style={{ padding:'8px 12px', background:'hsl(var(--card))' }}>
                         <span className="text-xs text-muted-foreground">Thêm vị trí từ danh sách bên dưới</span>
                       </td>
                     </tr>
@@ -452,8 +452,8 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
           ) : (
             /* empty state */
             <div className="flex flex-col items-center justify-center py-12 gap-3 border-t border-border">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="w-6 h-6 text-emerald-700" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-6 h-6 text-primary" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
               </div>
               <p className="text-sm font-bold text-foreground">Ma trận đang trống</p>
               <p className="text-xs text-muted-foreground text-center max-w-xs">
@@ -476,7 +476,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                 aria-labelledby="payrate-positions-heading"
               >
                 <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3"/><path d="M22 19v-1a4 4 0 0 0-3-3.87M16 4.13A4 4 0 0 1 16 11"/></svg>
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="3"/><path d="M22 19v-1a4 4 0 0 0-3-3.87M16 4.13A4 4 0 0 1 16 11"/></svg>
                   <h3 id="payrate-positions-heading" className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Vị trí</h3>
                   <span className="w-full pl-[22px] text-xs text-muted-foreground sm:ml-auto sm:w-auto sm:pl-0">Chọn để thêm hoặc bỏ</span>
                 </div>
@@ -489,9 +489,9 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                       onClick={()=>togglePos(name)}
                       className="fpe-sans inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-xs font-semibold transition-all"
                       style={{
-                        border: `1px solid ${hasPos(name)?'#bfe0cc':'#e2e8f0'}`,
-                        background: hasPos(name)?'#e8f3ec':'#fff',
-                        color: hasPos(name)?'#08783e':'#334155',
+                        border: `1px solid ${hasPos(name)?'hsl(var(--primary) / 0.35)':'hsl(var(--border))'}`,
+                        background: hasPos(name)?'hsl(var(--primary) / 0.10)':'hsl(var(--card))',
+                        color: hasPos(name)?'hsl(var(--primary))':'hsl(var(--foreground))',
                       }}>
                       {hasPos(name) && <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>}
                       {name}
@@ -506,7 +506,7 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                 aria-labelledby="payrate-shifts-heading"
               >
                 <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-700" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                   <h3 id="payrate-shifts-heading" className="text-xs font-bold tracking-[.08em] uppercase text-foreground/70">Ca làm việc</h3>
                   <span className="w-full pl-[22px] text-xs text-muted-foreground sm:ml-auto sm:w-auto sm:pl-0">Chọn ca phổ biến</span>
                 </div>
@@ -521,9 +521,9 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                         onClick={()=>togglePreset(p)}
                         className="fpe-mono inline-flex min-h-11 items-center gap-1 rounded-full border px-3 text-xs font-semibold transition-all"
                         style={{
-                          border:`1px solid ${on?'#bfe0cc':'#e2e8f0'}`,
-                          background: on?'#e8f3ec':'#fff',
-                          color: on?'#08783e':'#334155',
+                          border:`1px solid ${on?'hsl(var(--primary) / 0.35)':'hsl(var(--border))'}`,
+                          background: on?'hsl(var(--primary) / 0.10)':'hsl(var(--card))',
+                          color: on?'hsl(var(--primary))':'hsl(var(--foreground))',
                         }}>
                         {on && <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>}
                         {p.start}–{p.end}
@@ -544,27 +544,27 @@ export function FlexiblePayrateEditor({ rates, onChange, readOnly = false }: Pro
                       aria-label="Khung giờ ca làm việc mới"
                       className={`fpe-mono h-11 rounded-lg border px-3 text-sm transition-colors ${shiftHighlight ? 'shift-highlight' : ''}`}
                       style={{
-                        border: `1px solid ${shiftErr ? '#fbcfcf' : '#e2e8f0'}`,
-                        background: shiftErr ? '#fef2f2' : '#fff',
-                        color: '#0f172a',
+                        border: `1px solid ${shiftErr ? 'hsl(var(--destructive) / 0.35)' : 'hsl(var(--border))'}`,
+                        background: shiftErr ? 'hsl(var(--destructive) / 0.08)' : 'hsl(var(--card))',
+                        color: 'hsl(var(--foreground))',
                       }}
                     />
                     <button
                       type="button"
                       onClick={addCustomShift}
                       className="fpe-sans h-11 rounded-lg px-4 text-sm font-bold text-white transition-colors"
-                      style={{ background:'#08783e' }}>
+                      style={{ background:'hsl(var(--primary))' }}>
                       Thêm ca
                     </button>
                   </div>
                   {shiftErr && (
-                    <div className="mt-1.5 text-xs text-red-700 flex items-center gap-1">
+                    <div className="mt-1.5 text-xs text-destructive flex items-center gap-1">
                       Sai định dạng — cần <span className="fpe-mono">HH:MM-HH:MM</span> (24 giờ)
                       {typeof shiftErr === 'object' && shiftErr.fix && (
                         <button
                           type="button"
                           onClick={() => { setCustomShift(shiftErr.fix); setShiftErr(null); shiftInputRef.current?.focus(); }}
-                          className="fpe-mono font-bold text-emerald-700 underline underline-offset-2 ml-1">
+                          className="fpe-mono font-bold text-primary underline underline-offset-2 ml-1">
                           Dùng: {shiftErr.fix}
                         </button>
                       )}

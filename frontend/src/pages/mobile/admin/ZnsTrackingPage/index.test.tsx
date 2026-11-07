@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import ZnsTrackingPageMobile from './index';
 import type { BackendZnsMessagesResponse } from '@/types/api/zns.types';
@@ -44,7 +45,7 @@ beforeEach(() => {
 
 describe('ZnsTrackingPageMobile', () => {
   it('renders each ZNS as a card with full visible fields', () => {
-    const { container } = render(<ZnsTrackingPageMobile />);
+    const { container } = render(<MemoryRouter><ZnsTrackingPageMobile /></MemoryRouter>);
 
     // One card per ZNS — no table markup on mobile.
     expect(container.querySelectorAll('article')).toHaveLength(1);

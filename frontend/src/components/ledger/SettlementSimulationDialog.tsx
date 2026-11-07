@@ -316,7 +316,7 @@ function StatCard({
 function ExportTable({ exports }: { exports: ExportProjection[] }) {
   return (
     <div className="border rounded-lg overflow-hidden">
-      <Table>
+      <Table variant="console">
         <TableHeader>
           <TableRow>
             <TableHead className="w-20">#</TableHead>
@@ -331,9 +331,9 @@ function ExportTable({ exports }: { exports: ExportProjection[] }) {
             <TableRow key={e.sequence}>
               <TableCell className="font-medium">{e.sequence}</TableCell>
               <TableCell className="text-sm">{formatDate(e.export_date)}</TableCell>
-              <TableCell className="text-right">{e.included_count}</TableCell>
-              <TableCell className="text-right font-mono">{formatCurrency(e.included_amount)}</TableCell>
-              <TableCell className="text-right text-muted-foreground">{e.remaining_count || '—'}</TableCell>
+              <TableCell className="num text-right">{e.included_count}</TableCell>
+              <TableCell className="num text-right">{formatCurrency(e.included_amount)}</TableCell>
+              <TableCell className="num text-right text-muted-foreground">{e.remaining_count || '—'}</TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -345,7 +345,7 @@ function ExportTable({ exports }: { exports: ExportProjection[] }) {
 function RemaindersTable({ remainders }: { remainders: SettlementSimulationResult['remainders'] }) {
   return (
     <div className="border rounded-lg overflow-hidden max-h-72 overflow-y-auto">
-      <Table>
+      <Table variant="console">
         <TableHeader className="sticky top-0 bg-card">
           <TableRow>
             <TableHead>Nhân viên</TableHead>
@@ -360,13 +360,13 @@ function RemaindersTable({ remainders }: { remainders: SettlementSimulationResul
             <TableRow key={`${r.employee_id}-${r.project_id}-${i}`}>
               <TableCell className="font-medium">{r.employee_name}</TableCell>
               <TableCell className="text-sm">{r.project_name}</TableCell>
-              <TableCell className="text-right font-mono">{formatCurrency(r.amount)}</TableCell>
+              <TableCell className="num text-right">{formatCurrency(r.amount)}</TableCell>
               <TableCell className="text-xs text-muted-foreground">
                 {r.timesheet_dates.length > 0
                   ? `${formatDate(r.timesheet_dates[0])}${r.timesheet_dates.length > 1 ? ` (+${r.timesheet_dates.length - 1})` : ''}`
                   : '—'}
               </TableCell>
-              <TableCell className="text-right text-xs">{r.timesheet_ids.length}</TableCell>
+              <TableCell className="num text-right text-xs">{r.timesheet_ids.length}</TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -11,9 +11,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 // UU PRO restyle (W13c): lucide → verified @untitledui/icons; the AdvPartner
 // view rides the same bridge as the admin page (W12 pill idioms kept).
+// Console port: page header on the shared PageHeader primitive.
+import { PageHeader } from "@/components/shared/PageHeader";
+import { getConsoleKicker } from "@/lib/console";
 import {
   Calendar,
   ChevronLeft,
@@ -254,64 +256,40 @@ const AdvPartnerAdvancePaymentsPage = () => {
   return (
     <div className="p-4 lg:p-8 max-w-[1280px] mx-auto space-y-6">
       {/* Zone 1: Header */}
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        {/* Title row — on mobile also includes the month navigator */}
-        <div className="flex items-center justify-between gap-3 sm:block min-w-0">
-          <h1 className="text-[18px] sm:text-[22px] font-semibold text-foreground tracking-tight leading-tight whitespace-nowrap">
-            Quản lý ứng lương
-          </h1>
-          {/* Month nav visible on mobile only here */}
-          <div className="shrink-0 sm:hidden">
-            <MonthNavigator
-              value={page.selectedMonth}
-              onChange={page.setSelectedMonth}
-            />
-          </div>
-        </div>
-
-        {/* Action row */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <Button
-            size="sm"
-            onClick={() => navigate("/adv-partner/advance-payments/check-in-settings")}
-            className="h-8 gap-1.5 rounded-lg px-3 text-[13px] font-medium"
-          >
-            <Scan className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            Cấu hình điểm danh
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => {
+      <PageHeader
+        title="Quản lý ứng lương"
+        kicker={getConsoleKicker(location.pathname)}
+        actions={[
+          {
+            label: "Cấu hình điểm danh",
+            icon: Scan,
+            onClick: () => navigate("/adv-partner/advance-payments/check-in-settings"),
+          },
+          {
+            label: "Xuất sao kê",
+            icon: File05,
+            variant: "outline" as const,
+            onClick: () => {
               apiClient.download(
                 `${API_ENDPOINTS.advancePayments.reconciliation.export}?forMonth=${page.selectedMonth}`,
                 `sao_ke_thanh_toan_${page.selectedMonth}.xlsx`,
               ).catch((error) => { showErrorNotification(error); });
-            }}
-            className="h-8 gap-1.5 rounded-lg border border-utility-gray-300 bg-white px-3 text-[13px] font-medium text-fg-secondary shadow-sm transition-all duration-200 hover:bg-utility-gray-50"
-          >
-            <File05 className="h-3.5 w-3.5 shrink-0" />
-            Xuất sao kê
-          </Button>
-          <Button
-            size="sm"
-            onClick={page.handleExportFlexPayEmployees}
-            disabled={page.exportFlexPayMutation.isPending}
-            aria-label="Xuất danh sách"
-            className="h-8 gap-1.5 rounded-lg border border-utility-gray-300 bg-white px-3 text-[13px] font-medium text-fg-secondary shadow-sm transition-all duration-200 hover:bg-utility-gray-50 disabled:opacity-50"
-          >
-            <Download01 className="h-3.5 w-3.5 shrink-0" />
-            Xuất DS
-          </Button>
-          {/* Month nav on desktop only here */}
-          <div className="hidden sm:flex items-center gap-2 ml-0">
-            <div className="w-px h-4 bg-border/60 mx-1" />
-            <MonthNavigator
-              value={page.selectedMonth}
-              onChange={page.setSelectedMonth}
-            />
-          </div>
-        </div>
-      </header>
+            },
+          },
+          {
+            label: "Xuất DS",
+            icon: Download01,
+            variant: "outline" as const,
+            disabled: page.exportFlexPayMutation.isPending,
+            onClick: page.handleExportFlexPayEmployees,
+          },
+        ]}
+      >
+        <MonthNavigator
+          value={page.selectedMonth}
+          onChange={page.setSelectedMonth}
+        />
+      </PageHeader>
 
       {/* Zone 2 & 3: Hero metrics & Status overview */}
       <div className="space-y-5">
@@ -323,7 +301,7 @@ const AdvPartnerAdvancePaymentsPage = () => {
       </div>
 
       {/* Zone 4: Tabs + Toolbar + Table */}
-      <div className="rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(15_23_42/0.04)] overflow-hidden">
+      <div className="console-panel overflow-hidden">
         {/* Tab bar + filters — stacked on mobile, inline on sm+ */}
         <div className="px-4 sm:px-5 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
 

@@ -25,7 +25,7 @@ export function LoanTypeSelector({ loanType, onChange }: LoanTypeSelectorProps) 
     <div className="space-y-2">
       <Label className="typography-label-medium">Loại khoản vay *</Label>
       <div
-        className="flex w-full flex-col overflow-hidden rounded-xl border border-border bg-card/80 sm:flex-row"
+        className="flex w-full flex-col overflow-hidden rounded-lg border border-border bg-card/80 sm:flex-row"
         role="group"
         aria-label="Chọn loại khoản vay"
       >

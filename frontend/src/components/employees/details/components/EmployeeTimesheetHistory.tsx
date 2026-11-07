@@ -55,7 +55,7 @@ function TimesheetCard({ entry, index }: { entry: EmployeeTimesheetEntry; index:
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="border rounded-xl overflow-hidden">
+    <div className="border rounded-lg overflow-hidden">
       {/* Main row — always visible */}
       <button
         type="button"
@@ -67,7 +67,7 @@ function TimesheetCard({ entry, index }: { entry: EmployeeTimesheetEntry; index:
         <span className="text-sm font-medium flex-1">
           {format(new Date(entry.date), 'dd/MM/yyyy')}
         </span>
-        <span className="text-sm font-semibold text-green-700 shrink-0">
+        <span className="text-sm font-semibold text-success shrink-0">
           {formatCurrency(entry.amount)}
         </span>
         <span className="shrink-0">{getMergedStatusBadge(entry.status, entry.payment_status)}</span>
@@ -94,7 +94,7 @@ function TimesheetCard({ entry, index }: { entry: EmployeeTimesheetEntry; index:
           </div>
           <div>
             <p className="text-xs text-muted-foreground font-medium mb-0.5">Đã thanh toán</p>
-            <p className="text-xs font-semibold text-green-700">
+            <p className="text-xs font-semibold text-success">
               {entry.paid_amount ? formatCurrency(entry.paid_amount) : '0₫'}
             </p>
           </div>
@@ -152,7 +152,7 @@ export const EmployeeTimesheetHistory = memo(({
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lịch sử chấm công</p>
         </div>
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-11 w-full rounded-xl" />
+          <Skeleton key={i} className="h-11 w-full rounded-lg" />
         ))}
       </div>
     );
@@ -181,7 +181,7 @@ export const EmployeeTimesheetHistory = memo(({
       </div>
 
       {timesheetEntries.length === 0 ? (
-        <div className="border rounded-xl px-3">
+        <div className="border rounded-lg px-3">
           <EmptyState title="Chưa có dữ liệu chấm công" size="sm" className="py-4" />
         </div>
       ) : (

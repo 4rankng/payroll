@@ -23,7 +23,7 @@ export const PushNotificationToggle = ({ className }: PushNotificationToggleProp
 
   if (!isSupported) {
     return (
-      <div className={cn('flex min-h-16 items-center gap-3 rounded-xl bg-muted/50 p-3', className)}>
+      <div className={cn('flex min-h-16 items-center gap-3 rounded-lg bg-muted/50 p-3', className)}>
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
           <Smartphone className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -37,13 +37,13 @@ export const PushNotificationToggle = ({ className }: PushNotificationToggleProp
 
   if (permissionStatus === 'denied') {
     return (
-      <div className={cn('flex min-h-16 items-center gap-3 rounded-xl border border-red-100 bg-red-50 p-3', className)}>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100">
-          <BellOff className="h-4 w-4 text-red-700" />
+      <div className={cn('flex min-h-16 items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3', className)}>
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/15">
+          <BellOff className="h-4 w-4 text-destructive" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-red-700">Thông báo đã bị chặn</p>
-          <p className="text-xs text-red-700">Vui lòng bật lại trong cài đặt trình duyệt</p>
+          <p className="text-sm font-medium text-destructive">Thông báo đã bị chặn</p>
+          <p className="text-xs text-destructive">Vui lòng bật lại trong cài đặt trình duyệt</p>
         </div>
       </div>
     );
@@ -60,7 +60,7 @@ export const PushNotificationToggle = ({ className }: PushNotificationToggleProp
   return (
     <div
       className={cn(
-        'flex min-h-16 items-center gap-3 rounded-xl border p-3 transition-colors',
+        'flex min-h-16 items-center gap-3 rounded-lg border p-3 transition-colors',
         isSubscribed
           ? 'border-success/20 bg-success/5'
           : 'border-border bg-card',

@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { InlineStatStrip } from "@/components/shared/InlineStatStrip";
@@ -16,9 +16,8 @@ import { ExportEmployeesModal } from "@/components/modals/ExportEmployeesModal";
 import { MissingBankDetailsSection } from "@/components/employees/MissingBankDetailsSection";
 import { useTableSorting } from "@/utils/sorting";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { Users, Plus, Download } from "lucide-react";
+import { Plus, Download } from "lucide-react";
 import {
   Bank,
   CheckCircle,
@@ -37,6 +36,8 @@ import {
   hasCompleteBankDetails,
 } from "@/types/api/employee.types";
 import { generateMonthOptions } from "@/utils/dateHelpers";
+import { getConsoleKicker } from "@/lib/console";
+import { useMediaQuery } from "@/hooks/useBreakpoint";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -60,6 +61,7 @@ const monthOptions = generateMonthOptions(12).map(o => ({
 
 const EmployeesPage = () => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [poolView, setPoolView] = useState<"mine" | "global">("mine");
 
   const {
@@ -368,6 +370,15 @@ const EmployeesPage = () => {
     [navigate, handleEmployeeClick, poolView, handleClaim, requestAccess.isPending],
   );
 
+  // Console table contract: Ngày tạo is the lowest-value column — hide it at
+  // narrow desktop widths instead of a horizontal rail (the detail sheet and
+  // export keep the field).
+  const isBelowLg = useMediaQuery("(max-width: 1023.98px)");
+  const desktopColumns = useMemo(
+    () => columns.filter((column) => !(isBelowLg && column.id === "created_at")),
+    [columns, isBelowLg],
+  );
+
   const mobileConfig = useMemo(
     () => ({
       mobileFields: [
@@ -440,17 +451,13 @@ const EmployeesPage = () => {
           <Skeleton className="h-7 w-36" />
           <Skeleton className="h-4 w-64" />
         </div>
-        <Skeleton className="h-11 w-full max-w-md rounded-xl" />
-        <div className="rounded-lg border bg-card overflow-hidden">
-          <div className="border-b px-4 py-3">
-            <div className="flex gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-3 w-20" />
-              ))}
-            </div>
+        <Skeleton className="h-11 w-full max-w-md rounded-lg" />
+        <div className="console-panel">
+          <div className="console-panel-header">
+            <Skeleton className="h-3 w-32" />
           </div>
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="border-b px-4 py-3 flex items-center gap-3">
+            <div key={i} className="flex items-center gap-3 border-b border-border/55 px-4 py-3 last:border-b-0">
               <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-3.5 w-36" />
@@ -466,14 +473,14 @@ const EmployeesPage = () => {
   }
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_29rem)] px-4 py-5 lg:px-8 lg:py-7">
+    <div className="min-h-full px-4 py-5 lg:px-8 lg:py-7">
       <div className="mx-auto max-w-[1320px] space-y-4">
 
-        <div className="rounded-xl border border-input bg-card p-5 shadow-xs motion-safe:animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:both] md:p-6">
+        <div className="motion-safe:animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:both]">
           <PageHeader
+            kicker={getConsoleKicker(pathname)}
             title="Nhân viên dự án"
-            description="Danh sách nhân viên trong các dự án được phân quyền"
-            icon={Users}
+            meta={`${(pagination?.totalRecords ?? employees.length).toLocaleString("vi-VN")} nhân viên`}
             actions={[
               {
                 label: isExporting ? 'Đang xuất...' : 'Xuất Excel',
@@ -493,7 +500,7 @@ const EmployeesPage = () => {
         </div>
 
         <div className={cn(
-          "rounded-xl border border-input bg-card p-2 shadow-xs motion-safe:animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:both]",
+          "motion-safe:animate-fade-in-up [animation-delay:100ms] [animation-fill-mode:both]",
           poolView === "global" && "hidden",
         )}>
           <InlineStatStrip
@@ -547,8 +554,8 @@ const EmployeesPage = () => {
         </div>
 
         <div className="motion-safe:animate-fade-in-up [animation-delay:150ms] [animation-fill-mode:both]">
-          <div className="flex items-center gap-2.5 flex-wrap rounded-xl border border-input bg-card px-3 py-3 shadow-xs">
-            <div className="inline-flex items-center rounded-lg border border-border/70 bg-muted/40 p-0.5">
+          <div className="console-filter-bar">
+            <div className="inline-flex shrink-0 items-center rounded-lg border border-border/70 bg-muted/40 p-0.5">
               <button
                 onClick={() => setPoolView("mine")}
                 className={cn(
@@ -579,7 +586,7 @@ const EmployeesPage = () => {
               searchTerm={searchTerm}
               onSearchChange={searchEmployees}
               placeholder="Tìm tên, CCCD hoặc số điện thoại..."
-              className="w-full min-w-[240px] sm:w-72"
+              className="w-56 min-w-0 sm:w-64"
             />
 
             <div className="h-5 w-px bg-border/50 shrink-0 hidden sm:block" />
@@ -613,7 +620,7 @@ const EmployeesPage = () => {
             {hasFilters && (
               <button
                 onClick={clearAllFilters}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground outline-brand transition-colors hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
+                className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground outline-brand transition-colors hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2"
               >
                 <XClose className="h-3 w-3" aria-hidden="true" />
                 Xóa lọc
@@ -623,7 +630,7 @@ const EmployeesPage = () => {
         </div>
 
         {poolView === "global" && (
-          <div className="flex items-center gap-2.5 rounded-xl border border-info/25 bg-info/5 px-4 py-3">
+          <div className="flex items-center gap-2.5 rounded-lg border border-info/25 bg-info/5 px-4 py-3">
             <Globe01 className="h-4 w-4 shrink-0 text-info" aria-hidden="true" />
             <p className="typography-body-medium text-foreground/80">
               Toàn bộ nhân viên trong hệ thống. Nhấn <strong>Yêu cầu quản lý</strong> để thêm nhân viên vào danh sách của bạn thay vì tạo mới trùng lặp.
@@ -633,20 +640,19 @@ const EmployeesPage = () => {
 
         {poolView !== "global" && <MissingBankDetailsSection onEmployeeClick={handleEmployeeClick} />}
 
-        <div className="overflow-hidden rounded-xl border border-input bg-card shadow-xs motion-safe:animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:both]">
-          <div className="flex items-center justify-between gap-3 border-b border-border/55 bg-muted/25 px-4 py-3 sm:px-5">
-            <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10 text-success"><UserCheck01 className="h-3.5 w-3.5" aria-hidden="true" /></span>
-              <div>
-                <p className="text-[12px] font-bold text-foreground">Danh sách nhân sự</p>
-                <p className="text-xs text-muted-foreground">Chọn một nhân viên để xem hồ sơ chi tiết</p>
-              </div>
+        <div className="console-panel motion-safe:animate-fade-in-up [animation-delay:200ms] [animation-fill-mode:both]">
+          <div className="console-panel-header justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="console-kicker">Danh sách nhân sự</span>
+              <span className="hidden truncate text-xs text-muted-foreground min-[420px]:block">
+                Chọn một nhân viên để xem hồ sơ chi tiết
+              </span>
             </div>
-            <span className="rounded-full bg-muted px-2 py-1 text-xs font-bold tabular-nums text-muted-foreground">{pagination?.totalRecords ?? employees.length} người</span>
+            <span className="shrink-0 font-financial text-xs tabular-nums text-muted-foreground">{pagination?.totalRecords ?? employees.length} người</span>
           </div>
           <ResponsiveTable
             data={employees}
-            columns={columns}
+            columns={desktopColumns}
             mobileFields={mobileConfig.mobileFields}
             rowTitle={mobileConfig.rowTitle}
             rowSubtitle={mobileConfig.rowSubtitle}
@@ -657,6 +663,7 @@ const EmployeesPage = () => {
             onPageSizeChange={handlePageSizeChange}
             sorting={sorting}
             onSortingChange={onSortingChange}
+            variant="console"
             emptyState={
               <EmptyState
                 title="Không có nhân viên nào"

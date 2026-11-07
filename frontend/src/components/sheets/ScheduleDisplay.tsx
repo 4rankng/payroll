@@ -29,7 +29,7 @@ export function ScheduleDisplay({
 
   return (
     <div className="space-y-3">
-      <div className="typography-label-medium text-muted-foreground font-semibold">
+      <div className="console-kicker">
         Lịch trả ({schedules.length} kỳ)
       </div>
 
@@ -37,12 +37,12 @@ export function ScheduleDisplay({
         {schedules.map((schedule, index) => (
           <div
             key={schedule.id}
-            className={`relative flex flex-col justify-between rounded-xl border p-4 shadow-sm shadow-slate-100/60 transition-all focus-within:border-blue-500 focus-within:bg-card focus-within:shadow-sm ${
+            className={`relative flex flex-col justify-between rounded-lg border p-4 transition-all focus-within:border-primary focus-within:bg-card ${
               cardColorClasses[index % cardColorClasses.length]
-            } ${index === schedules.length - 1 ? 'bg-slate-100 border-border' : ''}`}
+            } ${index === schedules.length - 1 ? 'bg-muted/60 border-border' : ''}`}
           >
-            <span className={`absolute right-1 top-1 flex h-7 min-w-[2.5rem] items-center justify-center rounded-full px-3 typography-label-small font-semibold shadow-sm ${
-              index === schedules.length - 1 ? 'bg-slate-200 text-foreground' : 'bg-slate-100 text-foreground'
+            <span className={`absolute right-1 top-1 flex h-7 min-w-[2.5rem] items-center justify-center rounded-full px-3 typography-label-small font-semibold ${
+              index === schedules.length - 1 ? 'bg-muted text-foreground' : 'bg-muted/60 text-foreground'
             }`}>
               {index + 1}
             </span>
@@ -76,7 +76,7 @@ export function ScheduleDisplay({
             </div>
 
             {schedule.amount && Number(schedule.amount) > 0 && (
-              <div className={`mt-3 p-3 rounded-xl ${index === schedules.length - 1 ? 'bg-slate-200 border border-border' : 'bg-slate-100'}`}>
+              <div className={`mt-3 p-3 rounded-lg ${index === schedules.length - 1 ? 'bg-muted border border-border' : 'bg-muted/60'}`}>
                 <p className="text-right">
                   {index === schedules.length - 1 && (
                     <span className="typography-label-small text-foreground font-semibold block mb-1">Gốc + Lãi cuối kỳ</span>
@@ -93,29 +93,29 @@ export function ScheduleDisplay({
 
       {/* Summary Section */}
       {summary && (
-        <div className="bg-muted/50 border border-border rounded-xl p-6 space-y-4">
+        <div className="bg-muted/50 border border-border rounded-lg p-6 space-y-4">
           <div className="typography-label-medium text-foreground font-semibold uppercase tracking-wide">XÁC NHẬN THÔNG TIN VAY NỢ</div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="flex flex-col gap-2 bg-card p-4 rounded-xl border border-border">              <span className="typography-label-small text-muted-foreground uppercase tracking-wide">Tổng tiền vay</span>
+            <div className="flex flex-col gap-2 bg-card p-4 rounded-lg border border-border">              <span className="typography-label-small text-muted-foreground uppercase tracking-wide">Tổng tiền vay</span>
               <span className="typography-h2 font-bold text-foreground">
                 {formatVND(summary.principal)}
               </span>
             </div>
 
-            <div className="flex flex-col gap-2 bg-card p-4 rounded-xl border border-border">              <span className="typography-label-small text-muted-foreground uppercase tracking-wide">Tổng tiền trả</span>
+            <div className="flex flex-col gap-2 bg-card p-4 rounded-lg border border-border">              <span className="typography-label-small text-muted-foreground uppercase tracking-wide">Tổng tiền trả</span>
               <span className="typography-h2 font-bold text-foreground">
                 {formatVND(summary.totalRepayment)}
               </span>
             </div>
 
-            <div className="flex flex-col gap-2 bg-card p-4 rounded-xl border border-border">              <span className="typography-label-small text-muted-foreground uppercase tracking-wide">Tổng tiền lãi</span>
+            <div className="flex flex-col gap-2 bg-card p-4 rounded-lg border border-border">              <span className="typography-label-small text-muted-foreground uppercase tracking-wide">Tổng tiền lãi</span>
               <span className="typography-h2 font-bold text-foreground">
                 {formatVND(summary.totalInterest)}
               </span>
             </div>
 
-            <div className="flex flex-col gap-2 bg-card p-4 rounded-xl border border-border">              <span className="typography-label-small text-muted-foreground uppercase tracking-wide">Lãi suất/năm</span>
+            <div className="flex flex-col gap-2 bg-card p-4 rounded-lg border border-border">              <span className="typography-label-small text-muted-foreground uppercase tracking-wide">Lãi suất/năm</span>
               <span className="typography-h3 font-bold text-foreground">
                 {summary.effectiveAnnualRate.toFixed(2)}%
               </span>

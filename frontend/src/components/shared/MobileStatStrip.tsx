@@ -60,7 +60,7 @@ export const MobileStatStrip = ({
           <>
             <span
               className={cn(
-                "text-sm font-bold leading-none tabular-nums",
+                "console-value font-display text-xl font-semibold leading-6 tabular-nums",
                 item.active ? "text-primary" : "text-foreground",
               )}
             >
@@ -68,7 +68,7 @@ export const MobileStatStrip = ({
             </span>
             <span
               className={cn(
-                "text-xs leading-tight",
+                "console-kicker",
                 item.active ? "text-primary" : "text-muted-foreground",
               )}
             >

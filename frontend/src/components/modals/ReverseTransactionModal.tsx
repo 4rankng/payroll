@@ -109,11 +109,11 @@ function ReverseTransactionModalComponent({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="max-w-xl">
+      <AlertDialogContent className="rounded-lg max-w-xl">
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-              <RotateCcw className="h-5 w-5 text-orange-700" />
+            <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
+              <RotateCcw className="h-5 w-5 text-warning" />
             </div>
             <div>
               <AlertDialogTitle className="text-lg font-semibold">
@@ -129,7 +129,7 @@ function ReverseTransactionModalComponent({
         {step === 'form' && (
           <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 mt-4">
             {/* Transaction Info */}
-            <div className="bg-muted/50 rounded-xl p-3 space-y-2">
+            <div className="bg-muted/50 rounded-lg p-3 space-y-2">
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Thông tin giao dịch</div>
               <div className="space-y-1.5 typography-body-small">
                 <div className="flex justify-between">
@@ -139,7 +139,7 @@ function ReverseTransactionModalComponent({
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Số tiền:</span>
                   <span className={`font-semibold ${
-                    transaction.transaction_type === 'revenue' ? 'text-emerald-700' : 'text-red-700'
+                    transaction.transaction_type === 'revenue' ? 'text-success' : 'text-destructive'
                   }`}>
                     {formatCurrency(transaction.amount)}
                   </span>
@@ -158,13 +158,13 @@ function ReverseTransactionModalComponent({
             </div>
 
             {/* Warning Alert */}
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-700 flex-shrink-0 mt-0.5" />
+            <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex gap-3">
+              <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="typography-body-small font-medium text-amber-900">
+                <p className="typography-body-small font-medium text-warning">
                   Lưu ý quan trọng
                 </p>
-                <p className="typography-body-small text-amber-800">
+                <p className="typography-body-small text-warning">
                   Hành động này sẽ tạo một giao dịch đảo ngược để hủy giao dịch gốc. Hai giao dịch sẽ triệt tiêu lẫn nhau trong sổ cái.
                 </p>
               </div>
@@ -183,11 +183,11 @@ function ReverseTransactionModalComponent({
                 rows={3}
               />
               {errors.reason && (
-                <p className="text-xs text-red-700">{errors.reason.message}</p>
+                <p className="text-xs text-destructive">{errors.reason.message}</p>
               )}
             </div>
 
-            <AlertDialogFooter className="grid grid-cols-2 gap-3">
+            <AlertDialogFooter className="border-t border-border/65 pt-3 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={onClose}
@@ -210,7 +210,7 @@ function ReverseTransactionModalComponent({
 
         {step === 'confirm' && formData && (
           <div className="space-y-4 mt-4">
-            <div className="bg-muted/50 rounded-xl p-3 space-y-3">
+            <div className="bg-muted/50 rounded-lg p-3 space-y-3">
               <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Xác nhận đảo ngược
               </div>
@@ -233,13 +233,13 @@ function ReverseTransactionModalComponent({
               </div>
             </div>
 
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-              <p className="typography-body-small text-red-800">
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+              <p className="typography-body-small text-destructive">
                 ⚠️ Hành động này sẽ tạo giao dịch đảo ngược và không thể hoàn thành.
               </p>
             </div>
 
-            <AlertDialogFooter className="grid grid-cols-2 gap-3">
+            <AlertDialogFooter className="border-t border-border/65 pt-3 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={handleBack}

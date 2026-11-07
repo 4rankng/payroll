@@ -1,13 +1,9 @@
 import { useMemo } from 'react';
-import {
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-} from 'recharts';
+import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ConsolePanel, ConsoleStat } from '@/components/shared/console-panel';
 
 interface PartnerWorkforceOverviewCardProps {
   active: number;
@@ -25,23 +21,18 @@ export function PartnerWorkforceOverviewCard({
   className,
 }: PartnerWorkforceOverviewCardProps) {
   return (
-    <section className={cn('console-panel', className)}>
-      <header className="console-panel-header">
-        <div className="min-w-0">
-          <h2 className="console-kicker">Cơ cấu nhân sự</h2>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Phân loại theo trạng thái hoạt động
-          </p>
-        </div>
-      </header>
-      <div className="console-panel-body">
-        {isLoading ? (
-          <Skeleton className="h-[200px] w-full rounded-lg" />
-        ) : (
-          <PartnerWorkforceDonut active={active} dropped={dropped} paid={paid} />
-        )}
-      </div>
-    </section>
+    <ConsolePanel
+      kicker="Cơ cấu"
+      title="Nhân sự"
+      description="Theo trạng thái hoạt động"
+      className={className}
+    >
+      {isLoading ? (
+        <Skeleton className="h-[200px] w-full rounded-lg" />
+      ) : (
+        <PartnerWorkforceDonut active={active} dropped={dropped} paid={paid} />
+      )}
+    </ConsolePanel>
   );
 }
 
@@ -66,14 +57,14 @@ function PartnerWorkforceDonut({
   if (total === 0) {
     return (
       <div className="h-[180px] px-3">
-        <EmptyState title="Chưa có dữ liệu" size="sm" className="h-full py-2" />
+        <EmptyState title="Chưa có dữ liệu" size="sm" showIllustration={false} className="h-full py-2" />
       </div>
     );
   }
 
   return (
     <div>
-      <div className="relative h-[190px]" aria-label="Biểu đồ cơ cấu nhân sự">
+      <div className="relative h-[176px]" aria-label="Biểu đồ cơ cấu nhân sự">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart accessibilityLayer>
             <Pie
@@ -94,36 +85,38 @@ function PartnerWorkforceDonut({
             </Pie>
           </PieChart>
         </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="console-value text-3xl font-extrabold leading-none text-foreground">
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <span className="console-value font-display text-2xl font-semibold leading-none text-foreground">
             {total.toLocaleString('vi-VN')}
           </span>
-          <span className="mt-1 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-            Nhân viên
-          </span>
+          <span className="console-kicker mt-1">Nhân viên</span>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+
+      <div className="mt-2 grid grid-cols-2 gap-3 border-t border-border/70 pt-2">
         {chartData.map((item) => (
-          <div key={item.name} className="rounded-lg bg-muted/40 p-3">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} />
-              <span>{item.name}</span>
+          <div key={item.name} className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span
+                className="h-1.5 w-1.5 shrink-0 rounded-full"
+                style={{ backgroundColor: item.color }}
+                aria-hidden="true"
+              />
+              <span className="console-kicker truncate">{item.name}</span>
             </div>
-            <span className="console-value mt-1 block text-lg font-bold text-foreground">
+            <span className="console-value mt-0.5 block font-display text-xl font-semibold text-foreground">
               {item.value.toLocaleString('vi-VN')}
             </span>
           </div>
         ))}
       </div>
-      <div className="mt-3 flex items-center justify-between gap-3 border-t border-border/60 pt-3">
-        <span className="min-w-0 text-xs leading-snug text-muted-foreground">
-          Đã thanh toán trong kỳ
-        </span>
-        <span className="console-value shrink-0 text-lg font-bold text-foreground">
-          {paid.toLocaleString('vi-VN')}
-        </span>
-      </div>
+
+      <ConsoleStat
+        className="mt-2"
+        label="Đã thanh toán trong kỳ"
+        value={paid.toLocaleString('vi-VN')}
+        hint={cn(paid > 0 ? 'có phát sinh chi trả' : 'chưa có chi trả')}
+      />
     </div>
   );
 }

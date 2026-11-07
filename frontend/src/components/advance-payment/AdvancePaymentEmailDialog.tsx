@@ -83,7 +83,7 @@ const EmailCol = memo(function EmailCol({ label, sublabel, placeholder, value, e
   return (
     <div className="flex flex-col gap-1.5 min-w-0">
       <div className="flex items-center gap-1.5">
-        <span className="text-xs font-semibold">{label}</span>
+        <span className="console-kicker">{label}</span>
         <span className="text-xs text-muted-foreground">{sublabel}</span>
         <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground tabular-nums">{emails.length}</span>
       </div>
@@ -236,7 +236,7 @@ export const AdvancePaymentEmailDialog = memo(function AdvancePaymentEmailDialog
 
           {/* Month selector column */}
           <div className="flex flex-col gap-2 px-4 py-3 sm:w-48 sm:shrink-0 border-b sm:border-b-0">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tháng</p>
+            <p className="console-kicker">Tháng</p>
             <div className="flex flex-wrap gap-1.5">
               {monthOptions.map((month) => (
                 <button

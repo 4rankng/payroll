@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import WalletPageMobile from "./index";
 
 const bulkTransferBatchListProps = vi.fn();
@@ -61,7 +62,7 @@ vi.mock("@/components/wallet/BulkTransferUploadDialog", () => ({
 
 describe("WalletPageMobile", () => {
   it("exposes bulk-transfer upload and progress beside existing wallet actions", () => {
-    render(<WalletPageMobile />);
+    render(<MemoryRouter><WalletPageMobile /></MemoryRouter>);
 
     expect(screen.getByText("Tiến độ chuyển lô")).toBeInTheDocument();
 

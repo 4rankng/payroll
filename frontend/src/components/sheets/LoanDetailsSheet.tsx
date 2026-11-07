@@ -138,8 +138,8 @@ export function LoanDetailsSheet({
     if (!loan) {
       return (
         <div className="flex items-center gap-4 flex-1 min-w-0">
-          <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <Landmark className="h-6 w-6 text-blue-700" />
+          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Landmark className="h-6 w-6 text-primary" />
           </div>
           <div className="space-y-1 flex-1 min-w-0">
             <h1 className="typography-headline-medium text-base sm:text-lg font-medium">
@@ -152,8 +152,8 @@ export function LoanDetailsSheet({
 
     return (
       <div className="flex items-center gap-4 flex-1 min-w-0">
-        <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-          <Landmark className="h-6 w-6 text-blue-700" />
+        <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Landmark className="h-6 w-6 text-primary" />
         </div>
         <div className="space-y-1 flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -212,16 +212,16 @@ export function LoanDetailsSheet({
               key={item.id}
               onClick={() => isPending && handleScheduleClick(item)}
               className={`
-                rounded-xl border bg-card p-3 sm:p-4 shadow-sm flex flex-col gap-3 relative overflow-hidden
+                rounded-lg border bg-card p-3 sm:p-4 shadow-sm flex flex-col gap-3 relative overflow-hidden
                 ${
                   isPending
-                    ? "cursor-pointer hover:border-blue-400 transition-all duration-200 group"
+                    ? "cursor-pointer hover:border-primary transition-all duration-200 group"
                     : "cursor-default opacity-75"
                 }
               `}
             >
               {isPending && (
-                <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/50 transition-colors duration-200 pointer-events-none" />
+                <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors duration-200 pointer-events-none" />
               )}
               <div className="relative flex flex-col gap-2 min-[380px]:flex-row min-[380px]:items-start min-[380px]:justify-between">
                 <div className="min-w-0 space-y-1">
@@ -237,7 +237,7 @@ export function LoanDetailsSheet({
                 <div className="flex flex-wrap items-center gap-2">
                   {isPending && (
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <Check className="h-4 w-4 text-blue-700" />
+                      <Check className="h-4 w-4 text-primary" />
                     </div>
                   )}
                   <Badge
@@ -309,9 +309,9 @@ export function LoanDetailsSheet({
           <div className="space-y-6 pt-1 pb-4">
             {/* Disbursement Status Alert */}
             {!loan.disbursement_date && (
-              <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 sm:p-4 flex items-start gap-3">
-                <Banknote className="h-4 w-4 text-orange-700 flex-shrink-0 mt-0.5" />
-                <p className="typography-body-small text-orange-800">
+              <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 sm:p-4 flex items-start gap-3">
+                <Banknote className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+                <p className="typography-body-small text-warning">
                   <span className="font-semibold">Chưa giải ngân:</span> Khoản
                   vay này chưa được giải ngân. Vui lòng nhấn nút "Giải ngân" bên
                   dưới để hoàn tất.
@@ -320,9 +320,9 @@ export function LoanDetailsSheet({
             )}
 
             {loan.disbursement_date && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-3 sm:p-4 flex items-start gap-3">
-                <CheckCircle className="h-4 w-4 text-green-700 flex-shrink-0 mt-0.5" />
-                <p className="typography-body-small text-green-800">
+              <div className="bg-success/10 border border-success/30 rounded-lg p-3 sm:p-4 flex items-start gap-3">
+                <CheckCircle className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
+                <p className="typography-body-small text-success">
                   <span className="font-semibold">Đã giải ngân:</span>{" "}
                   {formatDate(loan.disbursement_date)}
                 </p>
@@ -335,7 +335,7 @@ export function LoanDetailsSheet({
                 Tổng quan
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-                <div className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
+                <div className="rounded-lg border bg-card p-4 shadow-sm space-y-2">
                   <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase">
                     <Banknote className="h-4 w-4" aria-hidden="true" />
                     <span>Tổng vay</span>
@@ -344,16 +344,16 @@ export function LoanDetailsSheet({
                     {formatVND(loan.principal_amount)}
                   </div>
                 </div>
-                <div className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
+                <div className="rounded-lg border bg-card p-4 shadow-sm space-y-2">
                   <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase">
                     <Wallet className="h-4 w-4" aria-hidden="true" />
                     <span>Dư nợ</span>
                   </div>
-                  <div className="typography-body-medium font-semibold text-orange-700">
+                  <div className="typography-body-medium font-semibold text-warning">
                     {formatVND(loan.outstanding_principal)}
                   </div>
                 </div>
-                <div className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
+                <div className="rounded-lg border bg-card p-4 shadow-sm space-y-2">
                   <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase">
                     <Calendar className="h-4 w-4" aria-hidden="true" />
                     <span>Ngày giải ngân</span>
@@ -364,7 +364,7 @@ export function LoanDetailsSheet({
                       : "Chưa giải ngân"}
                   </div>
                 </div>
-                <div className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
+                <div className="rounded-lg border bg-card p-4 shadow-sm space-y-2">
                   <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase">
                     <Timer className="h-4 w-4" aria-hidden="true" />
                     <span>Kỳ thanh toán tới</span>
@@ -377,7 +377,7 @@ export function LoanDetailsSheet({
                       : "Chưa có lịch"}
                   </div>
                 </div>
-                <div className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
+                <div className="rounded-lg border bg-card p-4 shadow-sm space-y-2">
                   <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase">
                     <CreditCard className="h-4 w-4" aria-hidden="true" />
                     <span>Số tiền kỳ tới</span>
@@ -389,7 +389,7 @@ export function LoanDetailsSheet({
                   </div>
                 </div>
                 {isAutoInterest && (
-                  <div className="rounded-xl border bg-card p-4 shadow-sm space-y-2">
+                  <div className="rounded-lg border bg-card p-4 shadow-sm space-y-2">
                     <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase">
                       <Timer className="h-4 w-4" aria-hidden="true" />
                       <span>Lãi hàng tháng</span>

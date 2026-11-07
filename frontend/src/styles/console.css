@@ -34,6 +34,8 @@
   /* Hairline panel: white card, visible outline, faint emerald crown. */
   .console-panel {
     position: relative;
+    min-width: 0;
+    overflow: hidden;
     border: 1px solid hsl(var(--border));
     border-radius: 0.5rem;
     background: hsl(var(--card));
@@ -133,4 +135,5 @@
 .console-table td.num {
   font-family: var(--font-family-financial);
   text-align: right;
+  white-space: nowrap;
 }

@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { SortingState } from "@tanstack/react-table";
 import { Receipt } from "lucide-react";
 import { ArrowLeft, Download01 } from "@untitledui/icons";
 import { Button } from "@/components/ui/button";
 import { MobilePageHeader } from "@/components/shared/MobilePageHeader";
 import { MobilePageShell, MobileSurface } from "@/components/shared/MobilePageShell";
+import { getConsoleKicker } from "@/lib/console";
 import { PaymentHistoryFilters } from "@/components/payroll/PaymentHistoryFilters";
 import { PaymentHistoryMobileList } from "@/components/payroll/mobile/PaymentHistoryMobileList";
 import { InfiniteScrollContainer } from "@/components/ui/infinite-scroll-container";
@@ -18,6 +19,7 @@ import type { PaymentHistoryFilters as PaymentHistoryFiltersType } from "@/types
 
 const PaymentHistoryPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [sorting] = useState<SortingState>(() => [
     { id: "paid_date", desc: true },
@@ -111,6 +113,7 @@ const PaymentHistoryPage = () => {
         title="Bút toán ngân hàng"
         subtitle="Danh sách các lần thanh toán lương"
         icon={Receipt}
+        kicker={getConsoleKicker(location.pathname)}
         sticky={false}
         bordered={false}
         actions={

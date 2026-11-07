@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   AdminPageCanvas,
   AdminPageHeaderCard,
   AdminSectionCard,
 } from "@/components/shared/AdminPageFrame";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { getConsoleKicker } from "@/lib/console";
 import { SearchBar } from "@/components/shared/SearchBar";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,7 @@ import type { FlexPayEmployeeListItem } from "@/types/api/advance-payment.types"
 /** Desktop variant of the FlexPay employee-limit list (PAYR-23): dense table
  *  for >=768px, paired with the mobile card page via ResponsivePage. */
 const EmployeeListPage = () => {
+  const location = useLocation();
   const [selectedEmployee, setSelectedEmployee] = useState<FlexPayEmployeeListItem | null>(null);
   const page = useAdvancePaymentsPage({ employeesTabActive: true });
 
@@ -51,6 +53,7 @@ const EmployeeListPage = () => {
         <PageHeader
           title="Danh sách nhân viên"
           description="Hạn mức ứng lương theo tháng"
+          kicker={getConsoleKicker(location.pathname)}
           actions={[
             {
               label: "Xuất danh sách",

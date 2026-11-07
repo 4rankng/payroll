@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import ZnsTrackingPage from './index';
 import type { BackendZnsMessagesResponse, ZnsMessagesQueryParams } from '@/types/api/zns.types';
@@ -72,7 +73,7 @@ beforeEach(() => {
 
 describe('ZnsTrackingPage', () => {
   it('renders every tracking row without truncating the error', () => {
-    const { container } = render(<ZnsTrackingPage />);
+    const { container } = render(<MemoryRouter><ZnsTrackingPage /></MemoryRouter>);
 
     expect(screen.getByText('0912345678')).toBeInTheDocument();
     expect(screen.getByText('0987654321')).toBeInTheDocument();
@@ -88,7 +89,7 @@ describe('ZnsTrackingPage', () => {
   });
 
   it('sends the status filter when a status chip is toggled', () => {
-    render(<ZnsTrackingPage />);
+    render(<MemoryRouter><ZnsTrackingPage /></MemoryRouter>);
 
     fireEvent.click(screen.getByRole('button', { name: 'Lỗi' }));
 
@@ -98,7 +99,7 @@ describe('ZnsTrackingPage', () => {
   });
 
   it('sends the feature filter from the dropdown', () => {
-    render(<ZnsTrackingPage />);
+    render(<MemoryRouter><ZnsTrackingPage /></MemoryRouter>);
 
     fireEvent.click(screen.getByRole('combobox', { name: 'Lọc tính năng' }));
     fireEvent.click(within(document.body).getByRole('option', { name: /Thông báo lương/ }));
@@ -108,7 +109,7 @@ describe('ZnsTrackingPage', () => {
   });
 
   it('sends the free-text query and date bounds', () => {
-    render(<ZnsTrackingPage />);
+    render(<MemoryRouter><ZnsTrackingPage /></MemoryRouter>);
 
     fireEvent.change(screen.getByRole('searchbox', { name: 'Tìm SĐT hoặc mã ZNS' }), {
       target: { value: '09123' },
@@ -123,7 +124,7 @@ describe('ZnsTrackingPage', () => {
   });
 
   it('combines status and feature filters', () => {
-    render(<ZnsTrackingPage />);
+    render(<MemoryRouter><ZnsTrackingPage /></MemoryRouter>);
 
     fireEvent.click(screen.getByRole('button', { name: 'Đã gửi' }));
     fireEvent.click(screen.getByRole('combobox', { name: 'Lọc tính năng' }));

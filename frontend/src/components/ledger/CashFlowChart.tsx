@@ -72,7 +72,7 @@ export function CashFlowChart({ className }: CashFlowChartProps) {
 
   if (isLoading) {
     return (
-      <Card className={className}>
+      <Card variant="console" className={className}>
         <CardHeader>
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-4 w-48" />
@@ -86,7 +86,7 @@ export function CashFlowChart({ className }: CashFlowChartProps) {
 
   if (hasError) {
     return (
-      <Card className={className}>
+      <Card variant="console" className={className}>
         <CardHeader>
           <CardTitle className="text-base">Biểu Đồ Dòng Tiền</CardTitle>
           <CardDescription>Không thể tải dữ liệu</CardDescription>
@@ -101,24 +101,24 @@ export function CashFlowChart({ className }: CashFlowChartProps) {
   }
 
   return (
-    <Card className={className}>
+    <Card variant="console" className={className}>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-base flex items-center gap-2">
               Dòng Tiền 6 Tháng Gần Đây
-              {trend === 'up' && <TrendingUp className="h-4 w-4 text-green-700" />}
-              {trend === 'down' && <TrendingDown className="h-4 w-4 text-red-700" />}
+              {trend === 'up' && <TrendingUp className="h-4 w-4 text-financial-positive" />}
+              {trend === 'down' && <TrendingDown className="h-4 w-4 text-financial-negative" />}
             </CardTitle>
             <CardDescription>
               Tổng ròng: {totalNetFlow >= 0 ? '+' : ''}{ledgerService.formatCurrency(totalNetFlow)}
             </CardDescription>
           </div>
           <div className="text-right text-xs text-muted-foreground">
-            <div className="text-green-700">
+            <div className="text-financial-positive">
               ↗ Vào: {ledgerService.formatCurrency(totalInflow)}
             </div>
-            <div className="text-red-700">
+            <div className="text-financial-negative">
               ↘ Ra: {ledgerService.formatCurrency(totalOutflow)}
             </div>
           </div>
@@ -131,7 +131,7 @@ export function CashFlowChart({ className }: CashFlowChartProps) {
             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Dòng Tiền Ròng</h4>
             <ResponsiveContainer width="100%" height={200} minWidth={0}>
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" horizontal vertical={false} />
                 <XAxis
                   dataKey="month"
                   fontSize={11}
@@ -157,10 +157,10 @@ export function CashFlowChart({ className }: CashFlowChartProps) {
                 <Line
                   type="monotone"
                   dataKey="netFlow"
-                  stroke="hsl(var(--primary))"
+                  stroke="hsl(var(--chart-1))"
                   strokeWidth={2}
-                  dot={{ fill: 'hsl(var(--primary))', strokeWidth: 0, r: 3 }}
-                  activeDot={{ r: 4, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
+                  dot={{ fill: 'hsl(var(--chart-1))', strokeWidth: 0, r: 3 }}
+                  activeDot={{ r: 4, stroke: 'hsl(var(--chart-1))', strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -171,7 +171,7 @@ export function CashFlowChart({ className }: CashFlowChartProps) {
             <h4 className="text-sm font-medium mb-2 text-muted-foreground">Thu Chi So Sánh</h4>
             <ResponsiveContainer width="100%" height={200} minWidth={0}>
               <BarChart data={chartData} barGap={10}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" horizontal vertical={false} />
                 <XAxis
                   dataKey="month"
                   fontSize={11}
@@ -199,13 +199,13 @@ export function CashFlowChart({ className }: CashFlowChartProps) {
                 />
                 <Bar
                   dataKey="inflow"
-                  fill="hsl(142 76% 36%)"
+                  fill="hsl(var(--chart-1))"
                   radius={[2, 2, 0, 0]}
                   name="inflow"
                 />
                 <Bar
                   dataKey="outflow"
-                  fill="hsl(0 84% 60%)"
+                  fill="hsl(var(--chart-5))"
                   radius={[2, 2, 0, 0]}
                   name="outflow"
                 />

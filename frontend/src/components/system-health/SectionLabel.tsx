@@ -16,15 +16,13 @@ export function SectionLabel({ children, icon: Icon, className }: SectionLabelPr
         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-xl bg-primary/5 border border-primary/10">
           <Icon className="h-3 w-3 text-primary" />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          {children}
-        </p>
+        <p className="console-kicker">{children}</p>
       </div>
     );
   }
 
   return (
-    <p className={cn("text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3", className)}>
+    <p className={cn("console-kicker mb-3", className)}>
       {children}
     </p>
   );

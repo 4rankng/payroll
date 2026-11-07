@@ -45,7 +45,7 @@ export const AdvPartnerMetricsStrip = memo(function AdvPartnerMetricsStrip({
 
   const chrome = bare
     ? 'rounded-none border-0 bg-transparent p-0 shadow-none'
-    : 'rounded-xl border border-border/70 bg-card shadow-soft';
+    : 'console-panel';
 
   return (
     <section

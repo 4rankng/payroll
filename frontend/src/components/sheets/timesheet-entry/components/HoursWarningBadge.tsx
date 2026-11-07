@@ -11,22 +11,22 @@ export const HoursWarningBadge = memo(
   ({ totalHours, status }: HoursWarningBadgeProps) => (
     <div
       className={cn(
-        "flex items-center gap-2 px-3 py-1.5 rounded-xl",
+        "flex items-center gap-2 px-3 py-1.5 rounded-lg",
         status === "excessive"
-          ? "bg-red-100 border border-red-200"
-          : "bg-amber-100 border border-amber-200",
+          ? "bg-destructive/15 border border-destructive/30"
+          : "bg-warning/15 border border-warning/30",
       )}
     >
       <AlertTriangle
         className={cn(
           "h-3.5 w-3.5 shrink-0",
-          status === "excessive" ? "text-red-700" : "text-amber-700",
+          status === "excessive" ? "text-destructive" : "text-warning",
         )}
       />
       <p
         className={cn(
           "text-xs font-semibold",
-          status === "excessive" ? "text-red-700" : "text-amber-700",
+          status === "excessive" ? "text-destructive" : "text-warning",
         )}
       >
         {totalHours}h —{" "}

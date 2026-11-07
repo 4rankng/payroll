@@ -10,6 +10,8 @@ import {
 import { MoreHorizontal, FileSpreadsheet, Users } from "lucide-react";
 
 interface AdvancePaymentPageHeaderMobileProps {
+  /** Mono domain kicker above the title (console contract). */
+  kicker?: string;
   onImportPayroll: () => void;
   onViewEmployees: () => void;
   overflowContent?: ReactNode;
@@ -18,6 +20,7 @@ interface AdvancePaymentPageHeaderMobileProps {
 }
 
 export function AdvancePaymentPageHeaderMobile({
+  kicker,
   onImportPayroll,
   onViewEmployees,
   overflowContent,
@@ -36,12 +39,10 @@ export function AdvancePaymentPageHeaderMobile({
         </div>
 
         <div className="min-w-0">
-          <h1 className="font-display text-[clamp(1.125rem,5.2vw,1.3125rem)] font-extrabold leading-tight tracking-normal text-slate-950">
+          {kicker ? <p className="console-kicker">{kicker}</p> : null}
+          <h1 className="font-display text-[clamp(1.125rem,5.2vw,1.3125rem)] font-extrabold leading-tight tracking-normal text-foreground">
             Ứng lương
           </h1>
-          <p className="mt-0.5 text-xs font-medium leading-normal text-slate-600">
-            Quản lý yêu cầu ứng lương
-          </p>
         </div>
       </div>
 
@@ -60,7 +61,7 @@ export function AdvancePaymentPageHeaderMobile({
             <Button
               variant="outline"
               size="icon"
-              className="h-11 min-h-11 w-11 min-w-11 rounded-xl border-slate-300 bg-white shadow-sm touch-manipulation"
+              className="h-11 min-h-11 w-11 min-w-11 rounded-xl border-border bg-card shadow-sm touch-manipulation"
               aria-label="Tùy chọn"
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
@@ -68,9 +69,9 @@ export function AdvancePaymentPageHeaderMobile({
           </SheetTrigger>
           <SheetContent
             side="bottom"
-            className="h-auto rounded-t-3xl border-slate-300 bg-white px-4 pb-[max(1rem,calc(1rem+env(safe-area-inset-bottom)))] pt-3 shadow-[0_-20px_48px_rgba(15,23,42,0.16)]"
+            className="h-auto rounded-t-3xl border-border bg-card px-4 pb-[max(1rem,calc(1rem+env(safe-area-inset-bottom)))] pt-3 shadow-lg"
           >
-            <div className="mx-auto mb-3 h-1 w-11 rounded-full bg-slate-300" />
+            <div className="mx-auto mb-3 h-1 w-11 rounded-full bg-muted" />
             <SheetHeader className="mb-3 text-left">
               <SheetTitle>Tùy chọn</SheetTitle>
             </SheetHeader>

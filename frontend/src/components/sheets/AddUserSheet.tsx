@@ -243,9 +243,9 @@ function AddUserSheet({
                         }
                       }}
                       placeholder="Nguyễn Văn A"
-                      className={errors.fullname ? 'border-red-500 h-11' : 'h-11'}
+                      className={errors.fullname ? 'border-destructive h-11' : 'h-11'}
                     />
-                    {errors.fullname && <p className="text-xs text-red-700 mt-0.5">{errors.fullname}</p>}
+                    {errors.fullname && <p className="text-xs text-destructive mt-0.5">{errors.fullname}</p>}
                   </div>
 
                   <div className="space-y-1">
@@ -254,7 +254,7 @@ function AddUserSheet({
                       value={formData.role}
                       onValueChange={(value) => handleInputChange("role", value)}
                     >
-                      <SelectTrigger id="role" className={errors.role ? 'border-red-500 h-11' : 'h-11'}>
+                      <SelectTrigger id="role" className={errors.role ? 'border-destructive h-11' : 'h-11'}>
                         <SelectValue placeholder="Chọn vai trò" />
                       </SelectTrigger>
                       <SelectContent>
@@ -265,7 +265,7 @@ function AddUserSheet({
                         <SelectItem value="accountant">Kế toán</SelectItem>
                       </SelectContent>
                     </Select>
-                    {errors.role && <p className="text-xs text-red-700 mt-0.5">{errors.role}</p>}
+                    {errors.role && <p className="text-xs text-destructive mt-0.5">{errors.role}</p>}
                   </div>
                 </div>
 
@@ -277,9 +277,9 @@ function AddUserSheet({
                       value={formData.username}
                       onChange={(e) => handleInputChange("username", e.target.value)}
                       placeholder="admin123"
-                      className={errors.username ? 'border-red-500 h-11' : 'h-11'}
+                      className={errors.username ? 'border-destructive h-11' : 'h-11'}
                     />
-                    {errors.username && <p className="text-xs text-red-700 mt-0.5">{errors.username}</p>}
+                    {errors.username && <p className="text-xs text-destructive mt-0.5">{errors.username}</p>}
                   </div>
 
                   <div className="space-y-1">
@@ -290,9 +290,9 @@ function AddUserSheet({
                       value={formData.email}
                       onChange={(e) => handleInputChange("email", e.target.value)}
                       placeholder="admin@example.com"
-                      className={errors.email ? 'border-red-500 h-11' : 'h-11'}
+                      className={errors.email ? 'border-destructive h-11' : 'h-11'}
                     />
-                    {errors.email && <p className="text-xs text-red-700 mt-0.5">{errors.email}</p>}
+                    {errors.email && <p className="text-xs text-destructive mt-0.5">{errors.email}</p>}
                   </div>
                 </div>
 
@@ -307,9 +307,9 @@ function AddUserSheet({
                       value={formData.mobile}
                       onChange={(e) => handleInputChange("mobile", e.target.value)}
                       placeholder="090 123 4567"
-                      className={errors.mobile ? "h-11 border-red-500" : "h-11"}
+                      className={errors.mobile ? "h-11 border-destructive" : "h-11"}
                     />
-                    {errors.mobile && <p className="mt-0.5 text-xs text-red-700">{errors.mobile}</p>}
+                    {errors.mobile && <p className="mt-0.5 text-xs text-destructive">{errors.mobile}</p>}
                   </div>
                 )}
 
@@ -322,7 +322,7 @@ function AddUserSheet({
                       value={formData.password}
                       onChange={(e) => handleInputChange("password", e.target.value)}
                       placeholder="Nhập mật khẩu"
-                      className={errors.password ? 'border-red-500 h-11 pr-12' : 'h-11 pr-12'}
+                      className={errors.password ? 'border-destructive h-11 pr-12' : 'h-11 pr-12'}
                     />
                     <Button
                       type="button"
@@ -340,31 +340,31 @@ function AddUserSheet({
                       )}
                     </Button>
                   </div>
-                  {errors.password && <p className="text-xs text-red-700 mt-0.5">{errors.password}</p>}
+                  {errors.password && <p className="text-xs text-destructive mt-0.5">{errors.password}</p>}
                 </div>
 
                 {/* Compact Password Requirements */}
-                <div className="bg-muted/30 rounded-xl p-2.5 space-y-1.5">
+                <div className="bg-muted/30 rounded-lg p-2.5 space-y-1.5">
                   <h4 className="text-xs font-medium text-muted-foreground">Yêu cầu mật khẩu:</h4>
                   <div className="grid grid-cols-1 xs:grid-cols-2 gap-1 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1.5 min-h-[20px]">
-                      <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${formData.password.length >= 8 ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${formData.password.length >= 8 ? 'bg-success' : 'bg-muted-foreground/30'}`} />
                       <span>8+ ký tự</span>
                     </div>
                     <div className="flex items-center gap-1.5 min-h-[20px]">
-                      <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${/(?=.*[a-z])/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${/(?=.*[a-z])/.test(formData.password) ? 'bg-success' : 'bg-muted-foreground/30'}`} />
                       <span>Chữ thường</span>
                     </div>
                     <div className="flex items-center gap-1.5 min-h-[20px]">
-                      <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${/(?=.*[A-Z])/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${/(?=.*[A-Z])/.test(formData.password) ? 'bg-success' : 'bg-muted-foreground/30'}`} />
                       <span>Chữ hoa</span>
                     </div>
                     <div className="flex items-center gap-1.5 min-h-[20px]">
-                      <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${/(?=.*\d)/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${/(?=.*\d)/.test(formData.password) ? 'bg-success' : 'bg-muted-foreground/30'}`} />
                       <span>Số</span>
                     </div>
                     <div className="flex items-center gap-1.5 min-h-[20px] xs:col-span-2">
-                      <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${/(?=.*[!@#$%^&*(),.?":{}|<>])/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <div className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${/(?=.*[!@#$%^&*(),.?":{}|<>])/.test(formData.password) ? 'bg-success' : 'bg-muted-foreground/30'}`} />
                       <span>Ký tự đặc biệt</span>
                     </div>
                   </div>

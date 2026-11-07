@@ -36,7 +36,7 @@ export function ErrorByEndpointCards({ days = 1 }: ErrorByEndpointCardsProps) {
     return (
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-14 w-full rounded-xl" />
+          <Skeleton key={i} className="h-14 w-full rounded-lg" />
         ))}
       </div>
     );
@@ -50,7 +50,7 @@ export function ErrorByEndpointCards({ days = 1 }: ErrorByEndpointCardsProps) {
         <div
           key={row.endpoint}
           className={cn(
-            "flex flex-col gap-2 px-4 py-3 rounded-xl border text-sm",
+            "flex flex-col gap-2 px-4 py-3 rounded-lg border text-sm",
             row.errorRate > 20
               ? "bg-utility-error-50/50 border-utility-error-100"
               : row.errorRate > 5

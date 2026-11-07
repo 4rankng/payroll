@@ -1,7 +1,9 @@
 import { parseTimesheetStatusFilter } from "@/utils/timesheetFilterHelpers";
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
+import { format, parse } from 'date-fns';
+import { getConsoleKicker } from '@/lib/console';
 import {
   CheckDone01,
   ClockStopwatch,
@@ -47,6 +49,7 @@ import type { Timesheet } from '@/types/api/timesheet.types';
 import type { BulkTransferExportParams } from '@/services/api/bulk-transfer.service';
 
 const TimesheetPage = () => {
+  const location = useLocation();
   const [chuyenLoDialogOpen, setChuyenLoDialogOpen] = useState(false);
   const [onePayDialogOpen, setOnePayDialogOpen] = useState(false);
   const [approvedTimesheetsDialogOpen, setApprovedTimesheetsDialogOpen] = useState(false);
@@ -292,9 +295,17 @@ const TimesheetPage = () => {
             <Skeleton className="h-9 w-9" />
           </div>
         </div>
-        <Skeleton className="h-12 w-full rounded-xl" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-80" />
+        <div className="console-panel">
+          <div className="console-panel-body">
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </div>
+        <div className="console-panel">
+          <div className="console-panel-body space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-80 w-full" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -304,7 +315,12 @@ const TimesheetPage = () => {
       {/* ── Header ── */}
       <PageHeader
         title="Bảng công"
-        description="Theo dõi và duyệt bảng công"
+        kicker={getConsoleKicker(location.pathname)}
+        meta={
+          timesheetManagement.selectedMonth !== 'all'
+            ? format(parse(`${timesheetManagement.selectedMonth}-01`, 'yyyy-MM-dd', new Date()), 'MM/yyyy')
+            : undefined
+        }
       >
         <TimesheetMonthSelector
           value={timesheetManagement.selectedMonth}

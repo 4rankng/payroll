@@ -32,7 +32,7 @@ const STATUS_BADGE: Record<string, { badge: string; remaining: string }> = {
   pending:           { badge: 'bg-amber-50 text-amber-700',     remaining: 'text-amber-700'   },
   partially_settled: { badge: 'bg-teal-50 text-teal-700',   remaining: 'text-teal-700'  },
 };
-const FALLBACK_BADGE = { badge: 'bg-slate-100 text-foreground', remaining: 'text-muted-foreground' };
+const FALLBACK_BADGE = { badge: 'bg-muted text-foreground', remaining: 'text-muted-foreground' };
 
 // Color palette keyed by transaction type — chip only
 const TYPE_COLORS: Record<string, string> = {
@@ -47,7 +47,7 @@ function TypeChip({ type, label }: { type: string; label: string }) {
   return (
     <span className={cn(
       'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium leading-none whitespace-nowrap',
-      TYPE_COLORS[type] ?? 'bg-slate-100 text-muted-foreground',
+      TYPE_COLORS[type] ?? 'bg-muted text-muted-foreground',
     )}>
       {label}
     </span>
@@ -61,6 +61,7 @@ const TRANSACTION_STRIP_COLOR: Record<string, string> = {
   pending:           'before:bg-amber-400',
   partially_settled: 'before:bg-teal-500',
 };
+const TRANSACTION_STRIP_FALLBACK = 'before:bg-border';
 
 export function TransactionTable({
   transactions,
@@ -79,7 +80,7 @@ export function TransactionTable({
   [transactionMetadata]);
 
   const getRowClassName = useCallback((txn: Transaction) => {
-    const color = TRANSACTION_STRIP_COLOR[txn.status] ?? 'before:bg-slate-300';
+    const color = TRANSACTION_STRIP_COLOR[txn.status] ?? TRANSACTION_STRIP_FALLBACK;
     return `${TRANSACTION_STRIP_BASE} ${color}`;
   }, []);
 
@@ -134,11 +135,11 @@ export function TransactionTable({
 
         return (
           <div className="flex flex-col items-end gap-0.5">
-            <span className={cn('inline-flex items-center px-2 py-0.5 rounded text-sm font-semibold tabular-nums', badge)}>
+            <span className={cn('inline-flex items-center px-2 py-0.5 rounded text-sm font-semibold font-financial tabular-nums', badge)}>
               {formatCurrency(row.original.amount)}
             </span>
             {row.original.status === 'partially_settled' && remaining > 0 && (
-              <span className={cn('text-xs tabular-nums', remainingColor)}>
+              <span className={cn('text-xs font-financial tabular-nums', remainingColor)}>
                 Còn {formatCurrency(remaining)}
               </span>
             )}
@@ -190,11 +191,11 @@ export function TransactionTable({
         const { badge, remaining: remainingColor } = STATUS_BADGE[txn.status] ?? FALLBACK_BADGE;
         return (
           <div className="flex flex-col items-end gap-0.5">
-            <span className={cn('inline-flex items-center px-2 py-0.5 rounded text-sm font-semibold tabular-nums', badge)}>
+            <span className={cn('inline-flex items-center px-2 py-0.5 rounded text-sm font-semibold font-financial tabular-nums', badge)}>
               {formatCurrency(txn.amount)}
             </span>
             {txn.status === 'partially_settled' && remaining > 0 && (
-              <span className={cn('text-xs tabular-nums', remainingColor)}>
+              <span className={cn('text-xs font-financial tabular-nums', remainingColor)}>
                 Còn {formatCurrency(remaining)}
               </span>
             )}
@@ -242,6 +243,10 @@ export function TransactionTable({
         onSortingChange={onSortingChange}
         getRowClassName={getRowClassName}
         embedded={embedded}
+        // console-table's descendant selectors (thead th / tbody tr / td) scope
+        // from this wrapper onto the inner DataTable — call-site application of
+        // the frozen table contract (ui/* stays untouched).
+        className="console-table"
       />
     </div>
   );

@@ -212,7 +212,7 @@ export function ApprovalDetailsModal() {
                   )}
 
                   {approvalData.rejection_reason && (
-                    <div className="p-3 bg-destructive/10 rounded-xl">
+                    <div className="p-3 bg-destructive/10 rounded-lg">
                       <span className="font-medium typography-body-medium text-destructive">Lý do loại:</span>
                       <p className="mt-1 text-sm text-destructive">{approvalData.rejection_reason}</p>
                     </div>
@@ -299,7 +299,7 @@ export function ApprovalDetailsModal() {
               )}
             </>
           ) : (
-            <div className="p-4 bg-muted rounded-xl text-center">
+            <div className="p-4 bg-muted rounded-lg text-center">
               <p className="typography-body-medium text-muted-foreground">
                 Không tìm thấy thông tin phê duyệt.
               </p>

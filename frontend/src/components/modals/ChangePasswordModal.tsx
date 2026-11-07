@@ -93,7 +93,7 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
         must not be used here — daisyUI tokens are scoped to [data-admin-ui]
         and are undefined inside this Radix portal, so those classes render
         with fallback values (see components/ui/alert-dialog.tsx). */}
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="rounded-lg sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Đổi mật khẩu</DialogTitle>
           <DialogDescription>Cập nhật mật khẩu để giữ tài khoản an toàn.</DialogDescription>
@@ -184,7 +184,7 @@ export const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProp
           </form>
         </Form>
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-border/65 pt-3">
           <Button type="button" variant="outline" className="min-h-11" onClick={handleClose} disabled={isPending}>
             Đóng
           </Button>

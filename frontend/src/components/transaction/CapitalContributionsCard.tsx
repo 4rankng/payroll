@@ -14,8 +14,8 @@ export function CapitalContributionsCard({ contributions, isLoading }: CapitalCo
 
   if (isLoading) {
     return (
-      <div className="h-full overflow-hidden rounded-xl border border-border/70 bg-card" aria-busy="true" aria-label="Đang tải vốn chủ sở hữu">
-        <div className="border-b border-border/60 px-4 py-2.5">
+      <div className="console-panel h-full" aria-busy="true" aria-label="Đang tải vốn chủ sở hữu">
+        <div className="console-panel-header">
           <Skeleton className="h-3 w-28" />
         </div>
         {Array.from({ length: 3 }).map((_, i) => (
@@ -31,9 +31,9 @@ export function CapitalContributionsCard({ contributions, isLoading }: CapitalCo
 
   const total = contributions.reduce((s, c) => s + c.total_contribution, 0);
   return (
-    <article className="h-full overflow-hidden rounded-xl border border-border/70 bg-card">
-      <div className="border-b border-border/60 px-4 py-2.5">
-        <h3 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+    <article className="console-panel h-full">
+      <div className="console-panel-header">
+        <h3 className="console-kicker">
           Vốn chủ sở hữu
         </h3>
       </div>

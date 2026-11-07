@@ -53,7 +53,7 @@ export function PrincipalDateFields({
         <Label className="typography-label-medium opacity-0 pointer-events-none">Tùy chọn</Label>
         <label
           htmlFor="loan-disburse-now"
-          className="flex cursor-pointer select-none items-center gap-2.5 rounded-xl px-3 py-0.5 typography-label-small text-muted-foreground transition-all"
+          className="flex cursor-pointer select-none items-center gap-2.5 rounded-lg px-3 py-0.5 typography-label-small text-muted-foreground transition-all"
         >
           <Switch
             id="loan-disburse-now"

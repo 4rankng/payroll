@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 // MobilePageHeader's icon slot is widened to ComponentType<SVGProps> (W13a
 // follow-up), so the UU icon fits; page-owned icons are UU as well.
 import { AlertCircle, RefreshCw05, Settings01 } from '@untitledui/icons';
@@ -19,6 +19,7 @@ import { FeeScheduleSection } from '@/components/admin/AdvancePaymentFeeSchedule
 import { WeeklyPaymentFeeScheduleSection } from '@/components/admin/WeeklyPaymentFeeSchedule/WeeklyPaymentFeeScheduleSection';
 import { DisbursementFeeScheduleSection } from '@/components/admin/DisbursementFeeSchedule/DisbursementFeeScheduleSection';
 import { MobilePageHeader } from '@/components/shared/MobilePageHeader';
+import { getConsoleKicker } from '@/lib/console';
 import { ZaloConnectionSection } from '@/components/settings/ZaloConnectionSection';
 import { AdBannerSection } from '@/components/settings/AdBannerSection';
 import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
@@ -27,6 +28,7 @@ import { OpsApiKeysSection } from '@/components/settings/OpsApiKeysSection';
 
 const SettingsPageMobile = () => {
   const form = useSettingsForm();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const activeTab =
@@ -53,15 +55,14 @@ const SettingsPageMobile = () => {
         <MobilePageHeader
           title="Cài đặt"
           icon={Settings01}
+          kicker={getConsoleKicker(location.pathname)}
           subtitle="Quản lý cấu hình hệ thống"
         />
         <div className="px-4 pt-4 space-y-4">
-          <Skeleton className="h-11 w-48" />
-          <Skeleton className="h-11 w-64" />
-          <div className="grid grid-cols-1 gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-40" />
-            ))}
+          <Skeleton className="h-9 w-full" />
+          <div className="console-panel space-y-3 p-4">
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-40 w-full" />
           </div>
         </div>
       </div>
@@ -74,6 +75,7 @@ const SettingsPageMobile = () => {
         <MobilePageHeader
           title="Cài đặt"
           icon={Settings01}
+          kicker={getConsoleKicker(location.pathname)}
           subtitle="Quản lý cấu hình hệ thống"
         />
         <div className="px-4 pt-4">
@@ -105,6 +107,7 @@ const SettingsPageMobile = () => {
       <MobilePageHeader
         title="Cài đặt"
         icon={Settings01}
+        kicker={getConsoleKicker(location.pathname)}
         subtitle="Quản lý cấu hình hệ thống"
       />
 
