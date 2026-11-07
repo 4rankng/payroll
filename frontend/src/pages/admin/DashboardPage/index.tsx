@@ -28,6 +28,7 @@ import {
   type DashboardPriorityItem,
 } from '@/components/admin-dashboard/DashboardOverview';
 import { ConsoleSectionHeading } from '@/components/shared/console-panel';
+import { MasonryGrid } from '@/components/shared/masonry-grid';
 import { useApprovalsList } from '@/hooks/api/useApprovals';
 import { useDashboardData } from '@/hooks/admin-dashboard/useDashboardData';
 import { useDashboardActions } from '@/hooks/admin-dashboard/useDashboardActions';
@@ -284,7 +285,7 @@ const AdminDashboard = () => {
             title="Vận hành"
             meta={`Kỳ ${monthLabel}`}
           />
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-stretch">
+          <MasonryGrid>
             <DashboardPriorityList
               items={priorityItems}
               isRefreshing={isDashboardRefreshing}
@@ -300,7 +301,7 @@ const AdminDashboard = () => {
               hasError={hasActivityError}
               className="lg:col-span-4"
             />
-          </div>
+          </MasonryGrid>
         </section>
 
         <section className="flex flex-col gap-2">
@@ -309,10 +310,10 @@ const AdminDashboard = () => {
             title="Tài chính"
             meta="12 tháng gần nhất"
           />
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-stretch">
+          <MasonryGrid>
             <MonthlyFinancialTable className="lg:col-span-8" />
             <BankTransferBreakdownCard className="lg:col-span-4" />
-          </div>
+          </MasonryGrid>
         </section>
 
         <section className="flex flex-col gap-2">
@@ -326,7 +327,7 @@ const AdminDashboard = () => {
 
         <section className="flex flex-col gap-2">
           <ConsoleSectionHeading kicker="Con người" title="Nhân sự" meta={monthLabel} />
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-12 lg:items-stretch">
+          <MasonryGrid>
             <SalaryDistributionChart className="lg:col-span-8" />
             <TopPaidEmployeesCard month={monthParam} className="lg:col-span-4" />
             <RecentEmployeesCard
@@ -339,7 +340,7 @@ const AdminDashboard = () => {
               onLoadMore={employees.loadMore}
               className="lg:col-span-12"
             />
-          </div>
+          </MasonryGrid>
         </section>
 
         <section className="flex flex-col gap-2">
