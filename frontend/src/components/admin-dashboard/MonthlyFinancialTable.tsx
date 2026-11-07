@@ -168,7 +168,7 @@ export const MonthlyFinancialTable = memo(function MonthlyFinancialTable({
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead className="whitespace-nowrap text-left">Tháng</TableHead>
-                  <TableHead className="hidden text-right 2xl:table-cell">Chi phí</TableHead>
+                  <TableHead className="hidden text-right min-[1400px]:table-cell">Chi phí</TableHead>
                   <TableHead className="text-right">Doanh thu</TableHead>
                   <TableHead className="text-right">Lợi nhuận</TableHead>
                   <TableHead className="hidden text-right xl:table-cell">Δ</TableHead>
@@ -180,7 +180,7 @@ export const MonthlyFinancialTable = memo(function MonthlyFinancialTable({
                     <TableCell className="whitespace-nowrap font-medium capitalize">
                       {formatMonthLabel(row.month)}
                     </TableCell>
-                    <TableCell className="num hidden 2xl:table-cell">
+                    <TableCell className="num hidden min-[1400px]:table-cell">
                       {formatVND(row.paid_out)}
                     </TableCell>
                     <TableCell className="num">{formatVND(row.billed)}</TableCell>
