@@ -1,10 +1,11 @@
-import { type LucideIcon, Building2, CalendarCheck, CalendarDays, Landmark, Percent, Wallet } from 'lucide-react';
+import { type LucideIcon, Building2, CalendarCheck, CalendarDays, Landmark, Percent, Wallet, X } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 
 import { SettingCard } from '@/components/settings/SettingCard';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 import type { SettingsFormState } from '@/hooks/settings/useSettingsForm';
 
 interface SettingsSectionProps {
@@ -43,21 +44,27 @@ const SettingToggleCard = ({
   return (
     <div
       data-slot="setting-row"
-      className={`group min-w-0 px-4 py-4 transition-colors sm:px-5 ${isDirty ? 'bg-warning/5' : ''}`}
+      className={cn(
+        'group min-w-0 px-4 py-2.5 transition-colors sm:px-5',
+        isDirty && 'bg-warning/5',
+      )}
     >
-      <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(15rem,20rem)] md:items-start md:gap-6">
-        <div className="min-w-0 space-y-1 md:py-2">
+      <div className="grid min-w-0 items-center gap-x-4 gap-y-2 md:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="min-w-0">
           <Label
             htmlFor={switchId}
-            className="block break-words text-sm font-semibold leading-5 text-foreground"
+            className="block text-[13px] font-medium leading-5 text-foreground"
           >
             {title}
           </Label>
-          <p id={descriptionId} className="break-words text-sm leading-relaxed text-balance text-muted-foreground">
+          <p
+            id={descriptionId}
+            className="text-xs leading-4 text-muted-foreground"
+          >
             {description}
           </p>
         </div>
-        <div className="flex min-w-0 items-center gap-2 md:justify-end md:pt-2">
+        <div className="flex min-w-0 items-center gap-1.5 md:justify-end">
           <Switch
             id={switchId}
             checked={checked}
@@ -67,11 +74,20 @@ const SettingToggleCard = ({
           />
           {isDirty && (
             <>
-              <Button size="sm" onClick={onSave} disabled={isSaving}>
-                Lưu
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                aria-label="Hoàn tác"
+                title="Hoàn tác"
+                onClick={onReset}
+                disabled={isSaving}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X aria-hidden="true" className="h-4 w-4" />
               </Button>
-              <Button size="sm" variant="outline" onClick={onReset} disabled={isSaving}>
-                Hoàn tác
+              <Button type="button" size="sm" onClick={onSave} disabled={isSaving}>
+                {isSaving ? 'Đang lưu…' : 'Lưu'}
               </Button>
             </>
           )}
@@ -88,26 +104,24 @@ const SettingsSection = ({ icon: Icon, title, description, children }: SettingsS
   return (
     <section
       aria-labelledby={headingId}
-      className="grid gap-5 border-b bg-card px-4 py-7 first:rounded-t-2xl last:rounded-b-2xl last:border-b-0 last:pb-7 lg:grid-cols-[minmax(12rem,0.65fr)_minmax(0,1.35fr)] lg:gap-8 lg:px-6"
+      className="min-w-0 overflow-hidden rounded-xl border bg-card shadow-xs"
     >
-      <div className="flex min-w-0 items-start gap-3 lg:pt-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/10 bg-primary/5 text-primary shadow-sm">
-          <Icon aria-hidden="true" className="h-[18px] w-[18px]" />
-        </div>
-        <div className="min-w-0 pt-0.5">
-          <h2 id={headingId} className="text-sm font-bold leading-6 text-foreground">
-            {title}
-          </h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-balance">
+      <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b px-4 py-2.5 sm:px-5">
+        <Icon aria-hidden="true" className="size-4 shrink-0 self-center text-primary" />
+        <h2 id={headingId} className="shrink-0 text-[13px] font-semibold leading-5 text-foreground">
+          {title}
+        </h2>
+        {description && (
+          <p
+            className="min-w-0 flex-1 truncate text-xs leading-4 text-muted-foreground"
+            title={description}
+          >
             {description}
           </p>
-        </div>
+        )}
       </div>
 
-      <div
-        data-slot="settings-group"
-        className="min-w-0 divide-y overflow-hidden rounded-2xl border bg-card shadow-sm"
-      >
+      <div data-slot="settings-group" className="min-w-0 divide-y">
         {children}
       </div>
     </section>
@@ -119,7 +133,7 @@ interface SettingsGeneralPanelProps {
 }
 
 export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
-  <div className="space-y-0">
+  <div className="space-y-4">
     <SettingsSection
       icon={Percent}
       title="Lương tuần"

@@ -180,43 +180,46 @@ export const SettingCard = ({
     setCurrencyInputError('Chỉ nhập số nguyên dương, không nhập số lẻ');
   };
 
+  // Dense row grid (owner density directive 2026-10-12): label column, fixed
+  // value column, fixed action column so rows never shift when actions mount.
+  const rowGridClass = isSliderMode
+    ? 'md:grid-cols-[minmax(0,1fr)_minmax(18rem,1.1fr)_6rem]'
+    : 'md:grid-cols-[minmax(0,1fr)_13rem_6rem]';
+
   return (
     <div
       data-slot="setting-row"
       className={cn(
-        'group min-w-0 px-4 py-4 transition-colors sm:px-5',
+        'group min-w-0 px-4 py-2.5 transition-colors sm:px-5',
         isDirty && 'bg-warning/5',
       )}
     >
-      <div className="grid min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(15rem,20rem)] md:items-start md:gap-6">
-        <div className="min-w-0 space-y-1 md:py-2">
+      <div
+        className={cn(
+          'grid min-w-0 items-center gap-x-4 gap-y-2 md:auto-rows-min',
+          rowGridClass,
+        )}
+      >
+        <div className="min-w-0">
           <Label
             htmlFor={inputId}
-            className="block break-words text-sm font-semibold leading-5 text-foreground"
+            className="block text-[13px] font-medium leading-5 text-foreground"
           >
             {title}
           </Label>
           {description && (
             <p
               id={descriptionId}
-              className="break-words text-sm leading-relaxed text-muted-foreground text-balance"
+              className="text-xs leading-4 text-muted-foreground"
             >
               {description}
             </p>
           )}
         </div>
 
-        <div className="min-w-0 space-y-2">
-          {isSliderMode ? (
-            <div className="space-y-4">
-              {/* Large currency readout */}
-              <div className="text-right">
-                <span className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
-                  {formatVndDigits(value)}
-                </span>
-                <span className="ml-1 text-sm font-medium text-muted-foreground">₫</span>
-              </div>
-              {/* Thick-track slider with large thumb for 44px touch target */}
+        {isSliderMode ? (
+          <div className="min-w-0 space-y-1.5">
+            <div className="flex items-center gap-3">
               <Slider
                 aria-label={title}
                 min={Number(min)}
@@ -228,44 +231,49 @@ export const SettingCard = ({
                   onChange(String(next));
                 }}
                 disabled={isSaving || isUnavailable}
-                className="py-3 [&_[role=slider]]:h-11 [&_[role=slider]]:w-11 [&_[role=slider]]:border-[3px] [&_[role=slider]]:shadow-md [&>div]:h-3"
+                className="min-w-0 flex-1"
               />
-              <div className="flex items-center justify-between text-xs tabular-nums text-muted-foreground">
-                <span>{formatVndDigits(String(min))} ₫</span>
-                <span>{formatVndDigits(String(max))} ₫</span>
-              </div>
-              {/* Quick stops — precise values are hard to hit by dragging */}
-              {sliderPresets && sliderPresets.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {sliderPresets.map((preset) => {
-                    const isSelected = value === preset;
-                    return (
-                      <Button
-                        key={preset}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        aria-pressed={isSelected}
-                        disabled={isSaving || isUnavailable}
-                        onClick={() => {
-                          setCurrencyInputError(null);
-                          onChange(preset);
-                        }}
-                        className={cn(
-                          'h-11 rounded-full px-3 text-xs font-semibold tabular-nums',
-                          isSelected && 'border-primary bg-primary/5 text-primary',
-                        )}
-                      >
-                        {formatVndDigits(preset)}
-                      </Button>
-                    );
-                  })}
-                </div>
-              )}
+              <span className="w-28 shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
+                {formatVndDigits(value)}
+                <span className="ml-0.5 text-xs font-medium text-muted-foreground">₫</span>
+              </span>
             </div>
-          ) : (
-          <div className="flex items-center gap-2">
-            <div className="relative min-w-0 flex-1">
+            <div className="flex items-center justify-between text-[11px] tabular-nums text-muted-foreground">
+              <span>{formatVndDigits(String(min))} ₫</span>
+              <span>{formatVndDigits(String(max))} ₫</span>
+            </div>
+            {/* Quick stops — precise values are hard to hit by dragging */}
+            {sliderPresets && sliderPresets.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {sliderPresets.map((preset) => {
+                  const isSelected = value === preset;
+                  return (
+                    <Button
+                      key={preset}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      aria-pressed={isSelected}
+                      disabled={isSaving || isUnavailable}
+                      onClick={() => {
+                        setCurrencyInputError(null);
+                        onChange(preset);
+                      }}
+                      className={cn(
+                        'rounded-md px-2 font-semibold tabular-nums',
+                        isSelected && 'border-primary bg-primary/5 text-primary',
+                      )}
+                    >
+                      {formatVndDigits(preset)}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="min-w-0 space-y-1">
+            <div className="relative min-w-0">
               <Input
                 id={inputId}
                 name={inputId}
@@ -284,14 +292,14 @@ export const SettingCard = ({
                 onChange={(event) => handleValueChange(event.target.value)}
                 disabled={isSaving || isUnavailable}
                 className={cn(
-                  'h-12 min-w-0 bg-white text-base font-semibold tabular-nums',
+                  'w-full bg-card tabular-nums',
                   visibleSuffix && 'pr-8 sm:pr-8',
                   displayMode === 'currency-vnd' && 'text-right',
                   displayMode === 'account-number',
                   hasVisibleError && 'border-destructive focus-visible:ring-destructive/20',
                   isDirty &&
                     !hasVisibleError &&
-                    'border-amber-400 focus-visible:ring-amber-200/40',
+                    'border-warning focus-visible:ring-warning/20',
                   inputClassName,
                 )}
                 min={type === 'number' && displayMode === 'default' ? String(min) : undefined}
@@ -305,26 +313,26 @@ export const SettingCard = ({
                 }
               />
               {visibleSuffix && (
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted-foreground">
+                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
                   {visibleSuffix}
                 </span>
               )}
             </div>
+            {visibleError && (
+              <div
+                id={errorId}
+                role="alert"
+                aria-live="polite"
+                className="flex min-w-0 items-start gap-1 text-destructive"
+              >
+                <AlertCircle aria-hidden="true" className="mt-0.5 h-3 w-3 shrink-0" />
+                <span className="min-w-0 break-words text-xs">{visibleError}</span>
+              </div>
+            )}
           </div>
-          )}
+        )}
 
-          {visibleError && (
-            <div
-              id={errorId}
-              role="alert"
-              aria-live="polite"
-              className="flex min-w-0 items-start gap-1.5 text-destructive"
-            >
-              <AlertCircle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span className="min-w-0 break-words text-xs">{visibleError}</span>
-            </div>
-          )}
-
+        <div className="flex items-center justify-end gap-1.5 md:min-w-[6rem]">
           {isUnavailable && onRetry ? (
             <Button
               type="button"
@@ -332,39 +340,39 @@ export const SettingCard = ({
               variant="outline"
               onClick={onRetry}
               disabled={isSaving}
-              className="h-11 w-full gap-1.5 text-xs"
+              className="gap-1.5"
             >
-              <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
+              <RefreshCw aria-hidden="true" data-icon className="h-3.5 w-3.5" />
               Thử lại
             </Button>
           ) : isDirty ? (
-            <div className="flex items-center gap-2">
+            <>
               <Button
                 type="button"
-                size="sm"
+                size="icon"
                 variant="ghost"
+                aria-label="Hoàn tác"
+                title="Hoàn tác"
                 onClick={() => {
                   setCurrencyInputError(null);
                   onReset();
                 }}
                 disabled={isSaving}
-                className="h-11 flex-1 gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground"
               >
-                <X aria-hidden="true" className="h-3.5 w-3.5" />
-                Hoàn tác
+                <X aria-hidden="true" className="h-4 w-4" />
               </Button>
               <Button
                 type="button"
                 size="sm"
-                variant="default"
+                aria-label="Lưu thay đổi"
                 onClick={onSave}
                 disabled={isSaving || isInvalid}
-                className="h-11 flex-1 gap-1.5 text-sm"
               >
-                <Check aria-hidden="true" className="h-3.5 w-3.5" />
-                <span aria-live="polite">{isSaving ? 'Đang lưu…' : 'Lưu thay đổi'}</span>
+                <Check aria-hidden="true" data-icon className="h-3.5 w-3.5" />
+                <span aria-live="polite">{isSaving ? 'Đang lưu…' : 'Lưu'}</span>
               </Button>
-            </div>
+            </>
           ) : null}
         </div>
       </div>
