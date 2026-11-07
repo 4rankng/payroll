@@ -115,7 +115,7 @@ const RequestCard = memo(function RequestCard({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-muted-foreground">Thực nhận:</span>
-            <span className="console-value font-semibold text-emerald-700 tabular-nums">
+            <span className="console-value font-semibold text-success tabular-nums">
               {formatCurrency(item.netAmount)}
             </span>
           </div>

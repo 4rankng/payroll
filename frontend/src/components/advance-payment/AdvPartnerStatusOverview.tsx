@@ -39,8 +39,8 @@ const CELLS: StatusCellDef[] = [
   {
     key: "completed",
     label: "Hoàn tất",
-    barClass: "bg-gradient-to-r from-emerald-500 to-emerald-400",
-    dotClass: "bg-emerald-500",
+    barClass: "bg-gradient-to-r from-primary to-info",
+    dotClass: "bg-primary",
     getValue: (p) => p.totalPaid,
     getAmount: (p) => p.totalPaidAmount,
   },

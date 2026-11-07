@@ -65,7 +65,7 @@ interface DashboardActivityPanelProps {
  *  neutral muted. The strip's color carries meaning, never decoration. */
 const SIGNAL_TONE: Record<DashboardTone, string> = {
   primary: 'bg-primary',
-  success: 'bg-emerald-500',
+  success: 'bg-success',
   warning: 'bg-amber-500',
   neutral: 'bg-muted-foreground/40',
 };

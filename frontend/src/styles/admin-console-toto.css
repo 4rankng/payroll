@@ -17,18 +17,18 @@ html.admin-console-toto {
   --admin-card-foreground: 197 76% 10%;
   --admin-popover: 0 0% 100%;
   --admin-popover-foreground: 197 76% 10%;
-  --admin-primary: 170 83% 26%; /* #0B7A67 — AA text on paper */
+  --admin-primary: 193 82% 31%; /* #0E7490 — blue-cyan, matches the navy rail */
   --admin-primary-foreground: 0 0% 100%;
-  --admin-secondary: 193 82% 31%; /* #0E7490 */
+  --admin-secondary: 201 96% 42%;
   --admin-secondary-foreground: 0 0% 100%;
   --admin-muted: 195 42% 93%; /* #E4F0F4 */
   --admin-muted-foreground: 199 22% 35%; /* #45606C */
   --admin-accent-soft: 168 55% 93%; /* #E3F7F3 */
-  --admin-accent-foreground: 170 83% 26%;
+  --admin-accent-foreground: 193 82% 31%;
   --admin-border: 196 30% 75%; /* hairline; controls are darker below */
   --admin-input: 196 22% 58%;
-  --admin-ring: 170 83% 34%;
-  --admin-success: 142 72% 29%;
+  --admin-ring: 193 82% 45%;
+  --admin-success: 193 82% 31%;
   --admin-success-foreground: 0 0% 100%;
   --admin-warning: 28 82% 37%;
   --admin-warning-foreground: 0 0% 100%;
@@ -38,12 +38,12 @@ html.admin-console-toto {
   --admin-destructive-foreground: 0 0% 100%;
   --admin-sidebar-background: 197 76% 10%;
   --admin-sidebar-foreground: 190 50% 94%;
-  --admin-sidebar-primary: 169 79% 54%;
+  --admin-sidebar-primary: 193 82% 60%;
   --admin-sidebar-primary-foreground: 197 76% 10%;
   --admin-sidebar-accent: 197 50% 16%;
   --admin-sidebar-accent-foreground: 190 50% 94%;
   --admin-sidebar-border: 197 40% 22%;
-  --admin-sidebar-ring: 169 79% 54%;
+  --admin-sidebar-ring: 193 82% 60%;
   --admin-card-shadow: 0 12px 30px -26px rgba(6, 33, 44, 0.25);
   --admin-shell-shadow: 0 20px 60px -42px rgba(6, 33, 44, 0.25);
   --admin-grid-line: hsl(197 76% 10% / 0.035);
@@ -57,8 +57,8 @@ html.admin-console-toto {
     inset 0 1px 0 hsl(170 83% 34% / 0.14),
     0 18px 36px -34px hsl(170 83% 34% / 0.35);
 
-  --chart-1: 170 83% 34%;
-  --chart-2: 193 82% 31%;
+  --chart-1: 193 82% 45%;
+  --chart-2: 201 96% 50%;
   --chart-3: 47 100% 42%;
   --chart-4: 347 77% 41%;
   --chart-5: 262 52% 40%;

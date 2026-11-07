@@ -118,13 +118,13 @@ export function AttendanceMobileCard({
   const statusBadgeClass = needsAttendanceApprovalRepair(row)
     ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
     : row.review_action === "approved"
-    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+    ? "border-success/30 bg-success/10 text-success"
     : row.review_action === "rejected"
     ? "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
     : getAttendanceOperationalStatus(row) === "checked_in"
     ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
     : getAttendanceOperationalStatus(row) === "completed"
-    ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/40 dark:text-green-300"
+    ? "border-success/30 bg-success/10 text-success"
     : getAttendanceOperationalStatus(row) === "orphaned"
     ? "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
     : "border-border bg-muted text-muted-foreground";
@@ -198,7 +198,7 @@ export function AttendanceMobileCard({
           <Button
             type="button"
             variant="outline"
-            className="min-h-11 flex-1 gap-1.5 px-2 text-xs text-fg-success-primary"
+            className="min-h-11 flex-1 gap-1.5 px-2 text-xs text-success"
             onClick={() => onApprove(row)}
           >
             <Check className="h-4 w-4" />

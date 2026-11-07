@@ -18,7 +18,7 @@ interface StatusOption {
 const STATUS_OPTIONS: StatusOption[] = [
   { value: "all",       label: "Tất cả",    dotClass: "" },
   { value: "pending",   label: "Chờ xử lý", dotClass: "bg-amber-400" },
-  { value: "completed", label: "Hoàn tất",  dotClass: "bg-emerald-500" },
+  { value: "completed", label: "Hoàn tất",  dotClass: "bg-success" },
   { value: "failed",    label: "Thất bại",  dotClass: "bg-red-400" },
   { value: "cancelled", label: "Đã hủy",    dotClass: "bg-gray-400" },
 ];

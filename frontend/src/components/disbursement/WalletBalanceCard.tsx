@@ -100,7 +100,7 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
       <div
         className="pointer-events-none absolute inset-0 z-[1]"
         style={{
-          backgroundImage: 'linear-gradient(rgba(124,245,222,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(124,245,222,0.10) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(rgba(103,232,249,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(103,232,249,0.10) 1px, transparent 1px)',
           backgroundSize: '28px 28px',
           maskImage: 'radial-gradient(140% 110% at 0% 0%, black 25%, transparent 78%)',
           WebkitMaskImage: 'radial-gradient(140% 110% at 0% 0%, black 25%, transparent 78%)',
@@ -147,8 +147,8 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="led-pulse h-1.5 w-1.5 rounded-full bg-[#7CF5DE] shadow-[0_0_0_3px_rgba(124,245,222,0.22)]" />
-                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#7CF5DE]">
+                    <span className="led-pulse h-1.5 w-1.5 rounded-full bg-[#67E8F9] shadow-[0_0_0_3px_rgba(103,232,249,0.22)]" />
+                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#67E8F9]">
                       Ví tiền
                     </span>
                   </div>
@@ -169,10 +169,10 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                   "text-[clamp(1.375rem,7.5vw,1.5rem)]",
                   isLow
                     ? "text-utility-error-400 [text-shadow:0_0_32px_rgba(248,113,113,0.35)]"
-                    : "text-white [text-shadow:0_0_36px_rgba(124,245,222,0.30)]"
+                    : "text-white [text-shadow:0_0_36px_rgba(103,232,249,0.30)]"
                 )}>
                   {formatCurrency(available).replace('₫', '')}
-                  <span className="ml-1 font-medium text-[#7CF5DE]">₫</span>
+                  <span className="ml-1 font-medium text-[#67E8F9]">₫</span>
                 </div>
 
                 {hasDivergence && showProviderBalance && providerBalance && (
@@ -232,8 +232,8 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                 {/* Balance cluster */}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="led-pulse h-1.5 w-1.5 rounded-full bg-[#7CF5DE] shadow-[0_0_0_3px_rgba(124,245,222,0.22)]" />
-                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#7CF5DE]">
+                    <span className="led-pulse h-1.5 w-1.5 rounded-full bg-[#67E8F9] shadow-[0_0_0_3px_rgba(103,232,249,0.22)]" />
+                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#67E8F9]">
                       Ví tiền
                     </span>
                   </div>
@@ -243,10 +243,10 @@ export function WalletBalanceCard({ monthlyProviderFee, totalProviderFee, classN
                       "text-[clamp(1.5rem,3vw,1.75rem)]",
                       isLow
                         ? "text-utility-error-400 [text-shadow:0_0_32px_rgba(248,113,113,0.35)]"
-                        : "text-white [text-shadow:0_0_36px_rgba(124,245,222,0.30)]"
+                        : "text-white [text-shadow:0_0_36px_rgba(103,232,249,0.30)]"
                     )}>
                       {formatCurrency(available).replace('₫', '')}
-                      <span className={cn("ml-1 font-medium", isLow ? "text-utility-error-400/80" : "text-[#7CF5DE]")}>₫</span>
+                      <span className={cn("ml-1 font-medium", isLow ? "text-utility-error-400/80" : "text-[#67E8F9]")}>₫</span>
                     </div>
                     {hasDivergence && showProviderBalance && providerBalance && (
                       <div className="inline-flex items-center gap-1 rounded border border-utility-warning-500/30 bg-utility-warning-500/10 px-2 py-0.5 text-xs font-medium text-utility-warning-400">
