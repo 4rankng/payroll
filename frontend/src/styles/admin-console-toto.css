@@ -172,3 +172,102 @@ html.admin-console-toto [data-admin-ui] .admin-sidebar-brand {
     linear-gradient(135deg, rgba(46, 230, 197, 0.1), transparent 55%),
     linear-gradient(180deg, rgba(46, 230, 197, 0.06), rgba(4, 16, 24, 0.2));
 }
+
+
+/* Mobile settings: the base stylesheet's blanket h1–h4 mobile scaling made the
+   compact form read like a landing page. Scope the form back to 11/12px text;
+   inputs stay 16px so iOS never zooms on focus. */
+@media (max-width: 640px) {
+  .settings-mobile-page {
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  .settings-mobile-page h1 {
+    font-size: 1.25rem; /* 20px page title */
+    line-height: 1.6;
+  }
+
+  .settings-mobile-page h2,
+  .settings-mobile-page h3 {
+    font-size: 0.8125rem; /* 13px panel title */
+    line-height: 1.25rem;
+  }
+
+  .settings-mobile-page [data-slot="setting-row"] label {
+    font-size: 0.75rem; /* 12px setting label */
+    line-height: 1.25rem;
+  }
+
+  .settings-mobile-page [data-slot="setting-row"] p {
+    font-size: 0.6875rem; /* 11px description / error */
+    line-height: 1rem;
+  }
+
+  .settings-mobile-page [data-slot="setting-row"] input {
+    font-size: 0.75rem; /* 12px: dense mobile form, as requested */
+    line-height: 1.25rem;
+  }
+
+  .settings-mobile-page [role="tab"] {
+    font-size: 0.75rem; /* 12px tab */
+  }
+
+  .settings-mobile-page [data-slot="setting-row"] button {
+    font-size: 0.75rem;
+  }
+}
+
+
+/* The base stylesheet scales h1–h4 on phones; the console pages own their
+   type. Keep admin mobile headings in the 12–18px band. */
+@media (max-width: 640px) {
+  html.admin-console-toto {
+    --surface-page: 192 33% 95%;
+    --surface-border: 196 30% 75%;
+  }
+
+  html.admin-console-toto h1 {
+    font-size: 1.125rem; /* 18px */
+    line-height: 1.5;
+  }
+  html.admin-console-toto h2 {
+    font-size: 0.875rem; /* 14px */
+    line-height: 1.25rem;
+  }
+  html.admin-console-toto h3 {
+    font-size: 0.8125rem; /* 13px */
+    line-height: 1.25rem;
+  }
+  html.admin-console-toto h4 {
+    font-size: 0.75rem; /* 12px */
+    line-height: 1rem;
+  }
+
+  .advance-mobile-page [aria-label="Giải ngân"] .console-value,
+  .advance-mobile-page [aria-label="Ví tiền"] .treasury-value,
+  .advance-mobile-page .treasury-panel .console-value {
+    font-size: 1.25rem; /* 20px */
+    line-height: 1.3;
+  }
+
+  .advance-mobile-page button {
+    font-size: 0.75rem;
+  }
+
+  /* Mobile admin controls follow the same 12px density as the desktop
+     console. This intentionally overrides the old 16px input floor. */
+  html.admin-console-toto input,
+  html.admin-console-toto textarea,
+  html.admin-console-toto select,
+  html.admin-console-toto [role="combobox"],
+  html.admin-console-toto [role="tab"] {
+    font-size: 0.75rem;
+  }
+
+  /* Keep the settings panel title below the global mobile h2 rule. */
+  .settings-mobile-page section h2 {
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+}

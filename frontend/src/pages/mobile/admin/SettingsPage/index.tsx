@@ -46,7 +46,7 @@ const SettingsPageMobile = () => {
 
   if (form.isLoading) {
     return (
-      <div className="min-h-[100dvh] bg-background">
+      <div className="settings-mobile-page min-h-[100dvh] bg-background">
         <MobilePageHeader kicker="Hệ thống" title="Cài đặt" className="px-3" />
         <div className="space-y-3 px-3 pt-3">
           <Skeleton className="h-11 w-full" />
@@ -61,7 +61,7 @@ const SettingsPageMobile = () => {
 
   if (form.loadError) {
     return (
-      <div className="min-h-[100dvh] bg-background">
+      <div className="settings-mobile-page min-h-[100dvh] bg-background">
         <MobilePageHeader kicker="Hệ thống" title="Cài đặt" className="px-3" />
         <div className="px-3 pt-3">
           <div
@@ -90,7 +90,7 @@ const SettingsPageMobile = () => {
   }
 
   return (
-    <div className="min-h-[100dvh] max-w-full overflow-x-clip bg-background">
+    <div className="settings-mobile-page min-h-[100dvh] max-w-full overflow-x-clip bg-background">
       <MobilePageHeader kicker="Hệ thống" title="Cài đặt" className="px-3" />
 
       <div className="px-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-3">

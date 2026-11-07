@@ -382,8 +382,8 @@ const AdvancePaymentsPageMobile = () => {
   }
 
   return (
-    <MobilePageShell className="space-y-3">
-      <MobileSurface className="p-3">
+    <MobilePageShell className="advance-mobile-page space-y-3">
+      <MobileSurface className="border-0 bg-transparent p-0">
         <AdvancePaymentPageHeaderMobile
           kicker={getConsoleKicker(location.pathname)}
           onImportPayroll={() => setIsImportSheetOpen(true)}
@@ -440,7 +440,7 @@ const AdvancePaymentsPageMobile = () => {
           )}
         />
 
-        <div className="mt-3 overflow-x-auto rounded-xl border border-utility-gray-300 bg-utility-gray-50 p-1">
+        <div className="mt-2 overflow-x-auto">
           <TimesheetMonthSelector
             value={page.selectedMonth}
             onChange={page.setSelectedMonth}
