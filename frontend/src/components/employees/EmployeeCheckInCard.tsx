@@ -208,6 +208,22 @@ function createOutsideGeofenceLocationIssue(isCheckOut = false): LocationPermiss
 // HH:mm formatter used elsewhere in this card; dates and timezone suffixes are
 // intentionally not shown in the compact employee reference.
 
+/** One dense "HH:mm – HH:mm" cell in the shift table. Each bound is its own
+ *  span so screen readers (and tests) can address the individual times; the
+ *  separator is decorative. */
+function ShiftTimeRange({ startIso, endIso }: { startIso?: string | null; endIso?: string | null }) {
+  return (
+    <span
+      role="cell"
+      className="flex items-baseline justify-center gap-1 whitespace-nowrap text-sm font-bold tracking-tight tabular-nums text-[var(--employee-text)]"
+    >
+      <span>{safeFormatTime(startIso)}</span>
+      <span aria-hidden="true" className="font-medium text-fg-tertiary">–</span>
+      <span>{safeFormatTime(endIso)}</span>
+    </span>
+  );
+}
+
 export function AttendanceReference({
   checkInTarget,
   shiftStart,
@@ -248,11 +264,7 @@ export function AttendanceReference({
       activeScheduleWindow?.shift_start === schedule.shift_start &&
       activeScheduleWindow.shift_end === schedule.shift_end
   );
-  const [selectedShiftIndex, setSelectedShiftIndex] = useState(activeIndex >= 0 ? activeIndex : 0);
-  const selectedSchedule = schedules[selectedShiftIndex] ?? schedules[0];
   const shiftSelectorId = useId();
-  const selectedShiftTabId = `${shiftSelectorId}-tab-${selectedShiftIndex}`;
-  const selectedShiftPanelId = `${shiftSelectorId}-panel`;
   const additionalGatesId = `${shiftSelectorId}-additional-gates`;
   const [showAdditionalGates, setShowAdditionalGates] = useState(false);
 
@@ -273,55 +285,44 @@ export function AttendanceReference({
             </span>
             Ca làm việc
           </h3>
-          {schedules.length > 1 ? (
-            <div className="mt-5 grid grid-cols-2 rounded-2xl border border-[var(--employee-border-strong)] bg-[var(--employee-page)] p-1.5" role="tablist" aria-label="Chọn ca làm">
-              {schedules.map((schedule, index) => (
-                <button
-                  key={`${schedule.shift_start}-${schedule.shift_end}`}
-                  type="button"
-                  role="tab"
-                  id={`${shiftSelectorId}-tab-${index}`}
-                  aria-controls={selectedShiftPanelId}
-                  aria-selected={selectedShiftIndex === index}
-                  onClick={() => setSelectedShiftIndex(index)}
-                  className={`employee-type-action min-h-12 rounded-xl font-semibold transition-colors duration-200 ${selectedShiftIndex === index ? "bg-[var(--employee-accent)] text-white" : "text-fg-secondary hover:bg-[var(--employee-surface)] hover:text-[var(--employee-text)]"}`}
-                >
-                  {resolveShiftLabel(schedule, index)}
-                </button>
-              ))}
-            </div>
-          ) : null}
-          {selectedSchedule ? (
-            <div
-              id={selectedShiftPanelId}
-              aria-labelledby={selectedShiftTabId}
-              className="mt-5 overflow-hidden rounded-[22px] border border-[var(--employee-border-strong)] bg-[var(--employee-surface)]"
-              role="tabpanel"
-            >
-              <div role="table" aria-label="Khung giờ ca làm">
-                <div role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] border-b border-[var(--employee-border)] bg-[var(--employee-surface-muted)]/70 px-5 py-2.5">
-                  <span role="columnheader" aria-label="Loại giờ" />
-                  <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Từ</span>
-                  <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Đến</span>
-                </div>
-                {[
-                  { label: "Ca làm", startIso: selectedSchedule.shift_start, endIso: selectedSchedule.shift_end },
-                  { label: "Vào làm", startIso: selectedSchedule.check_in_window_start, endIso: selectedSchedule.check_in_window_end },
-                  { label: "Tan ca", startIso: selectedSchedule.check_out_window_start, endIso: selectedSchedule.check_out_window_end },
-                ].map((row) => {
-                  const start = safeFormatTime(row.startIso);
-                  const end = safeFormatTime(row.endIso);
-                  return (
-                    <div key={row.label} role="row" className="grid grid-cols-[minmax(0,1fr)_minmax(4.5rem,0.7fr)_minmax(4.5rem,0.7fr)] items-center border-b border-[var(--employee-border)] px-5 py-4 last:border-b-0">
-                      <span role="rowheader" className="employee-type-body font-semibold text-fg-secondary">{row.label}</span>
-                      <span role="cell" className="text-center text-lg font-bold tracking-tight text-[var(--employee-text)]">{start}</span>
-                      <span role="cell" className="text-center text-lg font-bold tracking-tight text-[var(--employee-text)]">{end}</span>
-                    </div>
-                  );
-                })}
+          {/* Every configured shift is visible at once — no tab switching. One
+              dense row per shift: shift hours, check-in window, check-out
+              window; the live shift row is highlighted. */}
+          <div className="mt-5 overflow-x-auto rounded-[22px] border border-[var(--employee-border-strong)] bg-[var(--employee-surface)]">
+            <div role="table" aria-label="Khung giờ ca làm" className="min-w-[340px]">
+              <div role="row" className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center border-b border-[var(--employee-border)] bg-[var(--employee-surface-muted)]/70 px-4 py-2.5">
+                <span role="columnheader" className="employee-type-pill uppercase text-fg-tertiary">Ca</span>
+                <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Ca làm</span>
+                <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Vào làm</span>
+                <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Tan ca</span>
               </div>
+              {schedules.map((schedule, index) => {
+                const active = index === activeIndex;
+                return (
+                  <div
+                    key={`${schedule.shift_start}-${schedule.shift_end}-${index}`}
+                    role="row"
+                    className={`grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1 border-b border-[var(--employee-border)] px-4 py-3 last:border-b-0 ${active ? "bg-[var(--employee-accent-soft)]" : ""}`}
+                  >
+                    <span role="rowheader" className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="employee-type-body font-semibold text-fg-secondary">
+                        {resolveShiftLabel(schedule, index)}
+                      </span>
+                      {active && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--employee-accent-border)] bg-[var(--employee-surface)] px-2 py-0.5 text-xs font-bold uppercase tracking-[0.05em] text-[var(--employee-accent)]">
+                          <span className="size-1.5 rounded-full bg-[var(--employee-accent)]" aria-hidden="true" />
+                          Đang diễn ra
+                        </span>
+                      )}
+                    </span>
+                    <ShiftTimeRange startIso={schedule.shift_start} endIso={schedule.shift_end} />
+                    <ShiftTimeRange startIso={schedule.check_in_window_start} endIso={schedule.check_in_window_end} />
+                    <ShiftTimeRange startIso={schedule.check_out_window_start} endIso={schedule.check_out_window_end} />
+                  </div>
+                );
+              })}
             </div>
-          ) : null}
+          </div>
         </div>
       ) : null}
       {gates.length > 0 ? (

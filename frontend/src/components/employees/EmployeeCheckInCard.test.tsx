@@ -74,8 +74,9 @@ describe("AttendanceReference", () => {
 
     expect(screen.getByRole("heading", { name: "Ca làm việc" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: "Khung giờ ca làm" })).toBeInTheDocument();
-    expect(screen.getByText("Từ")).toBeInTheDocument();
-    expect(screen.getByText("Đến")).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Ca làm" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Vào làm" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Tan ca" })).toBeInTheDocument();
     expect(screen.getByText(localTime("2026-07-12T08:00:00+07:00"))).toBeInTheDocument();
     expect(screen.getByText(localTime("2026-07-12T17:00:00+07:00"))).toBeInTheDocument();
     expect(screen.getByText(localTime("2026-07-12T07:00:00+07:00"))).toBeInTheDocument();
@@ -160,7 +161,7 @@ describe("AttendanceReference", () => {
     expect(screen.getByRole("list", { name: "Các điểm chấm công khác" })).toHaveTextContent("Cổng bãi xe");
   });
 
-  it("selects the active shift and lets employees review another configured shift", () => {
+  it("shows every configured shift at once and marks the live one", () => {
     const morning = {
       shift_start: "2026-07-12T06:00:00+07:00",
       shift_end: "2026-07-12T14:00:00+07:00",
@@ -180,25 +181,24 @@ describe("AttendanceReference", () => {
 
     render(<AttendanceReference scheduleWindows={[morning, evening]} activeScheduleWindow={evening} />);
 
-    const firstShiftTab = screen.getByRole("tab", { name: "Ca ngày" });
-    const secondShiftTab = screen.getByRole("tab", { name: "Ca đêm" });
-
-    expect(secondShiftTab).toHaveAttribute("aria-selected", "true");
-    expect(secondShiftTab).toHaveAttribute("aria-controls");
-    expect(screen.getByRole("tabpanel")).toHaveAttribute("aria-labelledby", secondShiftTab.id);
-    expect(screen.getByText(localTime(evening.shift_start))).toBeInTheDocument();
-    expect(screen.getByText(localTime(evening.shift_end))).toBeInTheDocument();
-    expect(screen.getByText(localTime(evening.check_out_window_end))).toBeInTheDocument();
-
-    fireEvent.click(firstShiftTab);
-
-    expect(firstShiftTab).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByText(localTime(morning.shift_start))).toBeInTheDocument();
-    expect(screen.getByText(localTime(morning.check_in_window_start))).toBeInTheDocument();
-    expect(screen.getByText(localTime(morning.check_out_window_end))).toBeInTheDocument();
+    // Both shifts are visible without any tab switching…
+    expect(screen.getByText("Ca ngày")).toBeInTheDocument();
+    expect(screen.getByText("Ca đêm")).toBeInTheDocument();
+    const morningRow = screen.getByRole("row", { name: /Ca ngày/ });
+    expect(within(morningRow).getByText(localTime(morning.shift_start))).toBeInTheDocument();
+    expect(within(morningRow).getByText(localTime(morning.check_in_window_start))).toBeInTheDocument();
+    expect(within(morningRow).getByText(localTime(morning.check_out_window_end))).toBeInTheDocument();
+    const eveningRow = screen.getByRole("row", { name: /Ca đêm/ });
+    expect(within(eveningRow).getByText(localTime(evening.shift_start))).toBeInTheDocument();
+    expect(within(eveningRow).getByText(localTime(evening.check_out_window_end))).toBeInTheDocument();
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+    expect(screen.queryByRole("tabpanel")).not.toBeInTheDocument();
+    // …and the active shift is flagged.
+    expect(within(eveningRow).getByText("Đang diễn ra")).toBeInTheDocument();
+    expect(within(morningRow).queryByText("Đang diễn ra")).not.toBeInTheDocument();
   });
 
-  it("uses admin-configured shift_name for tab labels when provided", () => {
+  it("uses admin-configured shift_name for row labels when provided", () => {
     const day = {
       shift_start: "2026-07-12T09:00:00+07:00",
       shift_end: "2026-07-12T18:00:00+07:00",
@@ -220,11 +220,12 @@ describe("AttendanceReference", () => {
 
     render(<AttendanceReference scheduleWindows={[day, night]} activeScheduleWindow={day} />);
 
-    // Admin names replace the legacy "Ca ngày"/"Ca đêm" labels.
-    expect(screen.getByRole("tab", { name: /Ca làm/ })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Ca đêm/ })).toBeInTheDocument();
-    // Legacy fallback labels should NOT appear.
-    expect(screen.queryByRole("tab", { name: "Ca ngày" })).not.toBeInTheDocument();
+    // Admin names replace the legacy "Ca ngày"/"Ca đêm" labels; the column
+    // header "Ca làm" stays distinct from a row label with the same text.
+    expect(screen.getByRole("columnheader", { name: "Ca làm" })).toBeInTheDocument();
+    expect(screen.getByRole("rowheader", { name: /^Ca làm/ })).toBeInTheDocument();
+    expect(screen.getByRole("rowheader", { name: "Ca đêm" })).toBeInTheDocument();
+    expect(screen.queryByText("Ca ngày")).not.toBeInTheDocument();
   });
 
   it("shows only shift names without an overnight badge", () => {
@@ -247,12 +248,11 @@ describe("AttendanceReference", () => {
 
     render(<AttendanceReference scheduleWindows={[day, night]} activeScheduleWindow={night} />);
 
-    const nightTab = screen.getByRole("tab", { name: "Ca đêm" });
-    expect(nightTab).toHaveTextContent("Ca đêm");
-    const dayTab = screen.getByRole("tab", { name: "Ca ngày" });
-    expect(dayTab).toHaveTextContent("Ca ngày");
+    expect(screen.getByText("Ca ngày")).toBeInTheDocument();
+    expect(screen.getByText("Ca đêm")).toBeInTheDocument();
     expect(screen.queryByText("Qua đêm")).not.toBeInTheDocument();
   });
+
 });
 
 describe("EmployeeCheckInCard geofence guidance", () => {
