@@ -378,7 +378,7 @@ export function DataTable<TData, TValue>({
                             isDense && "h-9 text-[11px] uppercase tracking-wide font-semibold",
                             headerPadding,
                             isFirstColumn &&
-                              "sticky left-0 z-20 bg-card shadow-[4px_0_8px_-4px_rgba(0,0,0,0.15)]"
+                              "sticky left-0 z-20 bg-card/90 backdrop-blur-sm"
                           )}
                           style={getColumnSizingStyles(header.column)}
                         >
@@ -460,7 +460,7 @@ export function DataTable<TData, TValue>({
                               cellPadding,
                               isFirstCell && getRowClassName?.(row.original),
                               isFirstCell &&
-                                "sticky left-0 z-10 bg-card shadow-[4px_0_8px_-4px_rgba(0,0,0,0.12)]"
+                                "sticky left-0 z-10 bg-card/90 backdrop-blur-sm"
                             )}
                             style={getColumnSizingStyles(cell.column)}
                           >
