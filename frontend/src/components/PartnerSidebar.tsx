@@ -41,6 +41,7 @@ import {
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserProfileSheet } from "@/components/sheets/UserProfileSheet";
 import { SidebarToggle } from "@/components/shared/SidebarToggle";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useAuth } from "@/contexts";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { MODAL_IDS } from "@/constants/modalRegistry";
@@ -167,6 +168,7 @@ const PartnerSidebar = () => {
           >
             {!isCollapsed && (
               <>
+                <img src="/logo-square.png" alt="" aria-hidden="true" className="h-7 w-7 shrink-0 object-contain" />
                 <img src="/tingting-white.png" alt="TingTing" className="admin-logo-white h-7 object-contain" />
                 <img src="/tingting-black.png" alt="" aria-hidden="true" className="admin-logo-black hidden h-7 object-contain" />
               </>
@@ -187,6 +189,9 @@ const PartnerSidebar = () => {
         {/* Footer — user menu */}
         <SidebarSeparator className="bg-card/[0.06] m-0 shrink-0" />
         <SidebarFooter className="p-2 shrink-0">
+          <div className={cn("flex gap-2", isCollapsed ? "flex-col items-center" : "items-center")}>
+          {/* Theme toggle rides the account card — the rail has the room. */}
+          <ThemeToggle className="shrink-0 border-sidebar-border/60 bg-transparent text-sidebar-foreground hover:bg-sidebar-accent/70" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -196,7 +201,7 @@ const PartnerSidebar = () => {
                   "outline-white/70 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2",
                   "bg-card/[0.04] border border-white/[0.06]",
                   "hover:bg-card/[0.08] hover:border-white/[0.1]",
-                  isCollapsed ? "h-9 w-9 justify-center self-center" : "h-auto min-h-[40px] px-2.5 py-2 gap-2.5"
+                  isCollapsed ? "h-9 w-9 justify-center self-center" : "h-auto min-h-[40px] px-2.5 py-2 gap-2.5 flex-1 min-w-0"
                 )}
               >
                 {isCollapsed && user && (
@@ -207,7 +212,7 @@ const PartnerSidebar = () => {
                 {!isCollapsed && user && (
                   <>
                     <div className="flex flex-col min-w-0 flex-1 text-left">
-                      <span className="text-xs text-white/45 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
+                      <span className="text-xs text-white/45 truncate leading-tight font-semibold tracking-wide">Xin chào</span>
                       <span className="text-[12.5px] font-semibold truncate leading-tight text-white/90">{user.name}</span>
                     </div>
                     <ChevronSelectorVertical className="w-3.5 h-3.5 shrink-0 text-white/45" aria-hidden="true" />
@@ -262,6 +267,7 @@ const PartnerSidebar = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
 
           {!isCollapsed && (
             <p className="text-xs text-white/70 text-center pt-1 pb-1 tracking-wide select-none">
