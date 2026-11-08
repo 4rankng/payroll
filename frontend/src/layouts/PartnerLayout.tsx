@@ -49,7 +49,7 @@ const PartnerLayoutInner = ({ isPartner }: { isPartner: boolean }) => {
           id="main-content"
           className="console-shell min-h-0 flex-1 overflow-auto"
         >
-          <div className="min-h-full mobile-main-content animate-page-enter max-w-[1320px] mx-auto">
+          <div className="min-h-full mobile-main-content animate-page-enter max-w-[1480px] mx-auto">
             <SectionErrorBoundary sectionName="trang đối tác">
               <Outlet />
             </SectionErrorBoundary>

@@ -378,7 +378,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
         <PageHeader
           className="[&_h1]:text-lg sm:[&_h1]:text-xl [&_[data-slot=page-header-description]]:text-xs"
           icon={Receipt}
-          title="Bút toán ngân hàng"
+          title="Lịch sử trả lương"
           kicker={kicker}
         />
       </header>
