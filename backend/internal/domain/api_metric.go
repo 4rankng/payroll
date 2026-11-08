@@ -106,6 +106,9 @@ type APIMetricRepository interface {
 	// Create records a new API metric
 	Create(ctx context.Context, metric *APIMetric) error
 
+	// CreateBatch records multiple API metrics in one bulk insert
+	CreateBatch(ctx context.Context, metrics []*APIMetric) error
+
 	// GetSummary returns aggregated API call statistics for a date range
 	GetSummary(ctx context.Context, fromDate, toDate time.Time, sortBy string) ([]APIMetricSummary, error)
 

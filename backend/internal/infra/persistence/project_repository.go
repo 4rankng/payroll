@@ -316,23 +316,32 @@ func (r *ProjectRepository) GetByIDWithEmployeeCount(ctx context.Context, id uin
 // This matches the logic in applyAccessibilityFilter to ensure consistency
 // Access paths: project creator, explicit project_users, created employee assignments, employee access via employee_users
 func (r *ProjectRepository) getAccessibleProjectIDs(ctx context.Context, userID uint) ([]uint, error) {
-	// Use a single optimized query to get all accessible project IDs
-	// Matching the logic in applyAccessibilityFilter:
-	// 1. Projects created by the user
+	// One UNION of keyed lookups — the old LEFT JOIN + OR form probed every
+	// join arm for every project row. Each branch below is served by an
+	// existing index, and the semantics are identical to applyAccessibilityFilter:
+	// 1. Projects created by the user (owner access not revoked)
 	// 2. Projects shared via project_users
 	// 3. Projects where the user created an employee assignment
 	// 4. Projects where the user has access to an assigned employee via employee_users
 	var accessibleIDs []uint
 
-	query := r.DB.WithContext(ctx).Model(&domain.Project{}).
-		Select("DISTINCT projects.id").
-		Joins("LEFT JOIN project_users pu ON pu.project_id = projects.id AND pu.user_id = ? AND pu.deleted_at IS NULL", userID).
-		Joins("LEFT JOIN project_employees pe ON pe.project_id = projects.id AND pe.deleted_at IS NULL").
-		Joins("LEFT JOIN employee_users eu ON eu.employee_id = pe.employee_id AND eu.user_id = ? AND eu.deleted_at IS NULL", userID).
-		Where("(projects.created_by = ? AND projects.owner_revoked_at IS NULL) OR pu.id IS NOT NULL OR pe.created_by = ? OR eu.id IS NOT NULL", userID, userID).
-		Where("projects.deleted_at IS NULL")
-
-	err := query.Pluck("projects.id", &accessibleIDs).Error
+	err := r.DB.WithContext(ctx).Raw(`
+		SELECT p.id FROM projects p
+		 WHERE p.created_by = ? AND p.owner_revoked_at IS NULL AND p.deleted_at IS NULL
+		UNION
+		SELECT p.id FROM projects p
+		 INNER JOIN project_users pu ON pu.project_id = p.id AND pu.user_id = ? AND pu.deleted_at IS NULL
+		 WHERE p.deleted_at IS NULL
+		UNION
+		SELECT p.id FROM projects p
+		 INNER JOIN project_employees pe ON pe.project_id = p.id AND pe.created_by = ? AND pe.deleted_at IS NULL
+		 WHERE p.deleted_at IS NULL
+		UNION
+		SELECT p.id FROM projects p
+		 INNER JOIN project_employees pe2 ON pe2.project_id = p.id AND pe2.deleted_at IS NULL
+		 INNER JOIN employee_users eu ON eu.employee_id = pe2.employee_id AND eu.user_id = ? AND eu.deleted_at IS NULL
+		 WHERE p.deleted_at IS NULL
+	`, userID, userID, userID, userID).Scan(&accessibleIDs).Error
 	if err != nil {
 		return nil, r.errorHandler.HandleListError(err, "accessible project IDs")
 	}
@@ -449,12 +458,17 @@ func (r *ProjectRepository) getSharedProjectIDs(ctx context.Context, userID uint
 func (r *ProjectRepository) getEmployeeAccessibleProjectIDs(ctx context.Context, userID uint) ([]uint, error) {
 	var employeeProjectIDs []uint
 
-	err := r.DB.WithContext(ctx).Model(&domain.Project{}).
-		Select("DISTINCT projects.id").
-		Joins("LEFT JOIN project_employees pe ON pe.project_id = projects.id AND pe.deleted_at IS NULL").
-		Joins("LEFT JOIN employee_users eu ON eu.employee_id = pe.employee_id AND eu.user_id = ? AND eu.deleted_at IS NULL", userID).
-		Where("(pe.created_by = ? OR eu.id IS NOT NULL) AND projects.deleted_at IS NULL", userID).
-		Pluck("projects.id", &employeeProjectIDs).Error
+	// Last two branches of getAccessibleProjectIDs, as one UNION of keyed lookups.
+	err := r.DB.WithContext(ctx).Raw(`
+		SELECT p.id FROM projects p
+		 INNER JOIN project_employees pe ON pe.project_id = p.id AND pe.created_by = ? AND pe.deleted_at IS NULL
+		 WHERE p.deleted_at IS NULL
+		UNION
+		SELECT p.id FROM projects p
+		 INNER JOIN project_employees pe2 ON pe2.project_id = p.id AND pe2.deleted_at IS NULL
+		 INNER JOIN employee_users eu ON eu.employee_id = pe2.employee_id AND eu.user_id = ? AND eu.deleted_at IS NULL
+		 WHERE p.deleted_at IS NULL
+	`, userID, userID).Scan(&employeeProjectIDs).Error
 
 	if err != nil {
 		employeeProjectIDs = []uint{} // Continue with empty employee projects

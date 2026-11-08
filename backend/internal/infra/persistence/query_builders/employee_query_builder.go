@@ -187,34 +187,51 @@ func (b *EmployeeQueryBuilder) ApplyAccessControl(query *gorm.DB, filters domain
 
 	userID := *filters.AccessibleBy
 
-	// Get shared employee IDs for the user via employee_users table
-	var sharedEmployeeIDs []uint
-	err := b.DB.Model(&domain.EmployeeUser{}).
-		Select("employee_id").
-		Where("user_id = ? AND deleted_at IS NULL", userID).
-		Pluck("employee_id", &sharedEmployeeIDs).Error
-
+	ids, err := resolveAccessibleEmployeeIDs(b.DB, userID)
 	if err != nil {
-		// If shared query fails, just filter by created_by and project assignments to prevent total failure
-		query = query.Where(
-			"employees.created_by = ? OR EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = employees.id AND pe.created_by = ? AND pe.deleted_at IS NULL) OR EXISTS (SELECT 1 FROM project_employees pe2 INNER JOIN project_users pu ON pe2.project_id = pu.project_id WHERE pe2.employee_id = employees.id AND pu.user_id = ? AND pe2.deleted_at IS NULL AND pu.deleted_at IS NULL AND pe2.start_date <= NOW() AND (pe2.last_date IS NULL OR pe2.last_date > NOW()))",
-			userID, userID, userID,
-		)
-	} else if len(sharedEmployeeIDs) > 0 {
-		// Include owned, shared, and assigned employees
-		query = query.Where(
-			"employees.created_by = ? OR employees.id IN (?) OR EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = employees.id AND pe.created_by = ? AND pe.deleted_at IS NULL) OR EXISTS (SELECT 1 FROM project_employees pe2 INNER JOIN project_users pu ON pe2.project_id = pu.project_id WHERE pe2.employee_id = employees.id AND pu.user_id = ? AND pe2.deleted_at IS NULL AND pu.deleted_at IS NULL AND pe2.start_date <= NOW() AND (pe2.last_date IS NULL OR pe2.last_date > NOW()))",
-			userID, sharedEmployeeIDs, userID, userID,
-		)
-	} else {
-		// Include owned and assigned employees if no shared employees found
-		query = query.Where(
+		// Resolution failed: fall back to the row-local predicate (no shared-ID
+		// prequery) so the request still returns correctly scoped rows.
+		slog.Warn("employee_access_resolution_failed", "error", err, "user_id", userID)
+		return query.Where(
 			"employees.created_by = ? OR EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = employees.id AND pe.created_by = ? AND pe.deleted_at IS NULL) OR EXISTS (SELECT 1 FROM project_employees pe2 INNER JOIN project_users pu ON pe2.project_id = pu.project_id WHERE pe2.employee_id = employees.id AND pu.user_id = ? AND pe2.deleted_at IS NULL AND pu.deleted_at IS NULL AND pe2.start_date <= NOW() AND (pe2.last_date IS NULL OR pe2.last_date > NOW()))",
 			userID, userID, userID,
 		)
 	}
 
-	return query
+	if len(ids) == 0 {
+		return query.Where("1 = 0")
+	}
+
+	return query.Where("employees.id IN (?)", ids)
+}
+
+// resolveAccessibleEmployeeIDs returns the IDs of all employees visible to the
+// user: employees they created, employees shared via employee_users, employees
+// with a project_employees row they created, and employees assigned to a
+// project the user holds a project_users grant on (the active-date window
+// applies only to this last branch — matching the historical EXISTS branches
+// exactly). One UNION of keyed lookups replaces the per-row OR-of-EXISTS
+// predicate MySQL previously evaluated for every employee row. Shared by
+// EmployeeQueryBuilder and EmployeeProjectQueryBuilder.
+func resolveAccessibleEmployeeIDs(db *gorm.DB, userID uint) ([]uint, error) {
+	var ids []uint
+	err := db.Raw(`
+		SELECT id FROM employees WHERE created_by = ? AND deleted_at IS NULL
+		UNION
+		SELECT employee_id FROM employee_users WHERE user_id = ? AND deleted_at IS NULL
+		UNION
+		SELECT employee_id FROM project_employees WHERE created_by = ? AND deleted_at IS NULL
+		UNION
+		SELECT pe2.employee_id
+		FROM project_employees pe2
+		INNER JOIN project_users pu ON pe2.project_id = pu.project_id
+		WHERE pu.user_id = ?
+		  AND pe2.deleted_at IS NULL
+		  AND pu.deleted_at IS NULL
+		  AND pe2.start_date <= NOW()
+		  AND (pe2.last_date IS NULL OR pe2.last_date > NOW())
+	`, userID, userID, userID, userID).Scan(&ids).Error
+	return ids, err
 }
 
 // BuildGetByIDsQuery builds a query for getting employees by IDs with batching

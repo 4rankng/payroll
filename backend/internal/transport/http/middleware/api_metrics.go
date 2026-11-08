@@ -4,6 +4,8 @@ import (
 	"context"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"api-server/internal/domain"
@@ -124,9 +126,72 @@ const ClientSourceHeader = "X-Client-Source"
 // test suite (backend/tests/integration).
 const ClientSourceIntegrationTest = "integration-test"
 
-// APIMetrics middleware collects API call statistics
+// APIMetrics middleware collects API call statistics.
+//
+// Persistence is amortised: endpoint IDs are resolved once per distinct
+// method+normalized-path (api_endpoints is a static mapping, uk_method_path)
+// and metrics are enqueued to an in-memory queue drained by a single flusher
+// goroutine that writes one multi-row INSERT per second instead of a
+// SELECT+INSERT pair per request. The flusher is started lazily on the first
+// recorded metric.
 func APIMetrics(repo domain.APIMetricRepository) gin.HandlerFunc {
 	logger := observability.GetLogger()
+
+	endpointIDs := &sync.Map{}
+	var flusherOnce sync.Once
+	queue := make(chan *domain.APIMetric, 1024)
+	var dropped atomic.Uint64
+
+	resolveEndpointID := func(method, normalizedPath string) (uint, bool) {
+		key := method + " " + normalizedPath
+		if v, ok := endpointIDs.Load(key); ok {
+			return v.(uint), true
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		id, err := repo.FindOrCreateEndpoint(ctx, method, normalizedPath)
+		if err != nil {
+			logger.Error("Failed to find/create endpoint",
+				"method", method,
+				"path", normalizedPath,
+				"error", err)
+			return 0, false
+		}
+		endpointIDs.Store(key, id)
+		return id, true
+	}
+
+	startFlusher := func() {
+		flusherOnce.Do(func() {
+			go func() {
+				ticker := time.NewTicker(time.Second)
+				defer ticker.Stop()
+				for range ticker.C {
+					batch := make([]*domain.APIMetric, 0, 200)
+				drain:
+					for len(batch) < 200 {
+						select {
+						case m := <-queue:
+							batch = append(batch, m)
+						default:
+							break drain
+						}
+					}
+					if len(batch) == 0 {
+						continue
+					}
+					ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+					err := repo.CreateBatch(ctx, batch)
+					cancel()
+					if err != nil {
+						logger.Error("Failed to record API metric",
+							"count", len(batch),
+							"error", err)
+					}
+				}
+			}()
+		})
+	}
 
 	return func(c *gin.Context) {
 		// Attach per-request DB metrics container to the request context
@@ -169,42 +234,33 @@ func APIMetrics(repo domain.APIMetricRepository) gin.HandlerFunc {
 		statusCode := c.Writer.Status()
 		method := c.Request.Method
 
-		// Record metric asynchronously to avoid blocking the response
-		go func() {
-			// Create a background context with timeout to prevent hanging goroutines
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
+		endpointID, ok := resolveEndpointID(method, normalizedPath)
+		if !ok {
+			return
+		}
 
-			// Find or create endpoint record using normalized path
-			endpointID, err := repo.FindOrCreateEndpoint(ctx, method, normalizedPath)
-			if err != nil {
-				logger.Error("Failed to find/create endpoint",
-					"method", method,
-					"path", normalizedPath,
-					"original_path", path,
-					"error", err)
-				return
-			}
+		startFlusher()
 
-			// Create metric record
-			metric := &domain.APIMetric{
-				EndpointID: endpointID,
-				StatusCode: statusCode,
-				UserID:     userID,
-				DurationMs: duration,
-				CalledAt:   startTime,
-			}
+		metric := &domain.APIMetric{
+			EndpointID: endpointID,
+			StatusCode: statusCode,
+			UserID:     userID,
+			DurationMs: duration,
+			CalledAt:   startTime,
+		}
 
-			if err := repo.Create(ctx, metric); err != nil {
-				logger.Error("Failed to record API metric",
-					"method", method,
-					"path", normalizedPath,
-					"original_path", path,
-					"status", statusCode,
-					"error", err)
-				// Don't return here, as we're in a goroutine and this error shouldn't affect the main request
+		// Non-blocking enqueue: a full queue drops the metric (stats are
+		// best-effort) rather than blocking the response.
+		select {
+		case queue <- metric:
+		default:
+			n := dropped.Add(1)
+			if n%100 == 1 {
+				logger.Warn("api_metrics_queue_dropped",
+					"dropped_total", n,
+					"queue_capacity", cap(queue))
 			}
-		}()
+		}
 	}
 }
 

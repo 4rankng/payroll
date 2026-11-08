@@ -6,11 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/audit"
 	"api-server/internal/app/services/identity"
+	"api-server/internal/app/services/infrastructure"
 	"api-server/internal/app/services/otp"
 	"api-server/internal/app/services/user"
 	"api-server/internal/config"
@@ -40,6 +42,9 @@ type AuthService struct {
 	googleClientID       string
 	nonceStore           *cache.NonceStore
 	captchaService       *CaptchaService
+	// lookupCache fronts the per-request blacklist and tokens_invalid_before
+	// DB lookups with a 5s cache. Nil disables caching (test constructions).
+	lookupCache *infrastructure.CacheService
 }
 
 type Claims struct {
@@ -55,7 +60,7 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeRepository, blacklistedTokenRepo domain.BlacklistedTokenRepository, eventBus domain.EventBus, jwtSecret string, accessTTL time.Duration, otpService *otp.OTPService, otpCfg config.OTPConfig, googleClientID string, nonceStore *cache.NonceStore, captchaService *CaptchaService, logger *slog.Logger) *AuthService {
+func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeRepository, blacklistedTokenRepo domain.BlacklistedTokenRepository, eventBus domain.EventBus, jwtSecret string, accessTTL time.Duration, otpService *otp.OTPService, otpCfg config.OTPConfig, googleClientID string, nonceStore *cache.NonceStore, captchaService *CaptchaService, lookupCache *infrastructure.CacheService, logger *slog.Logger) *AuthService {
 	return &AuthService{
 		userService:          userService,
 		employeeRepo:         employeeRepo,
@@ -68,6 +73,7 @@ func NewAuthService(userService *user.UserService, employeeRepo domain.EmployeeR
 		googleClientID:       googleClientID,
 		nonceStore:           nonceStore,
 		captchaService:       captchaService,
+		lookupCache:          lookupCache,
 		logger:               logger,
 	}
 }
@@ -406,6 +412,21 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 	}, nil
 }
 
+// authLookupCacheTTL bounds staleness of the blacklist and
+// tokens_invalid_before caches in ValidateToken. Write paths
+// (Logout, RevokeUserTokens) delete their key, so an in-app revocation is
+// visible immediately; the TTL only caps how long a cached "still valid"
+// verdict survives without invalidation.
+const authLookupCacheTTL = 5 * time.Second
+
+func authBlacklistCacheKey(jti string) string {
+	return "auth:bl:" + jti
+}
+
+func authTokensInvalidBeforeCacheKey(userID uint) string {
+	return "auth:tib:" + strconv.FormatUint(uint64(userID), 10)
+}
+
 func (s *AuthService) ValidateToken(ctx context.Context, tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
 		// Verify the signing method to prevent algorithm confusion attacks
@@ -425,12 +446,12 @@ func (s *AuthService) ValidateToken(ctx context.Context, tokenString string) (*C
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		// Check if token is blacklisted
-		isBlacklisted, err := s.blacklistedTokenRepo.IsBlacklisted(ctx, claims.ID)
+		blacklisted, err := s.isTokenBlacklisted(ctx, claims.ID)
 		if err != nil {
 			return nil, domain.NewInternalError(constants.MsgFailedToCheckTokenBlacklistVN, err)
 		}
 
-		if isBlacklisted {
+		if blacklisted {
 			return nil, domain.NewUnauthorizedError(constants.MsgTokenBlacklistedVN)
 		}
 
@@ -438,16 +459,100 @@ func (s *AuthService) ValidateToken(ctx context.Context, tokenString string) (*C
 		// user's sessions (RevokeUserTokens), any JWT issued before that instant
 		// is rejected even though its signature/expiry are still valid. This closes
 		// the gap where a stolen token would otherwise live for the full 14-day TTL.
-		if user, err := s.userService.UserRepo.GetByID(ctx, claims.UserID); err == nil && user.TokensInvalidBefore != nil {
-			if claims.IssuedAt == nil || claims.IssuedAt.Before(*user.TokensInvalidBefore) {
-				return nil, domain.NewUnauthorizedError(constants.MsgTokenBlacklistedVN)
-			}
+		if s.tokenInvalidatedForUser(ctx, claims) {
+			return nil, domain.NewUnauthorizedError(constants.MsgTokenBlacklistedVN)
 		}
 
 		return claims, nil
 	}
 
 	return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
+}
+
+// isTokenBlacklisted reports whether the JWT ID is blacklisted, with a 5s
+// cache in front of the DB lookup so a request burst authenticating with the
+// same token hits the blacklist table once instead of per request. Cached "1"
+// → blacklisted, "0" → not; cache errors fall through to the DB.
+func (s *AuthService) isTokenBlacklisted(ctx context.Context, jti string) (bool, error) {
+	if s.lookupCache != nil {
+		var cached string
+		if err := s.lookupCache.Get(ctx, authBlacklistCacheKey(jti), &cached); err == nil {
+			switch cached {
+			case "1":
+				return true, nil
+			case "0":
+				return false, nil
+			}
+		}
+	}
+
+	blacklisted, err := s.blacklistedTokenRepo.IsBlacklisted(ctx, jti)
+	if err != nil {
+		return false, err
+	}
+
+	if s.lookupCache != nil {
+		value := "0"
+		if blacklisted {
+			value = "1"
+		}
+		if err := s.lookupCache.Set(ctx, authBlacklistCacheKey(jti), value, authLookupCacheTTL); err != nil {
+			s.logger.Warn("Failed to cache token blacklist lookup", "error", err)
+		}
+	}
+	return blacklisted, nil
+}
+
+// tokenInvalidatedForUser reports whether claims were issued before the
+// user's tokens_invalid_before instant, with a 5s cache in front of the user
+// lookup. A failed user lookup is swallowed (token not rejected) — same
+// semantics as the previous inline check.
+func (s *AuthService) tokenInvalidatedForUser(ctx context.Context, claims *Claims) bool {
+	invalidatedAt := func(tib *time.Time) bool {
+		return tib != nil && (claims.IssuedAt == nil || claims.IssuedAt.Before(*tib))
+	}
+
+	if s.lookupCache != nil {
+		var cached string
+		if err := s.lookupCache.Get(ctx, authTokensInvalidBeforeCacheKey(claims.UserID), &cached); err == nil {
+			if cached == "" {
+				return false
+			}
+			if tib, err := time.Parse(time.RFC3339Nano, cached); err == nil {
+				return invalidatedAt(&tib)
+			}
+			// Unparseable cached value: fall through to the DB.
+		}
+	}
+
+	user, err := s.userService.UserRepo.GetByID(ctx, claims.UserID)
+	if err != nil {
+		return false
+	}
+
+	if s.lookupCache != nil {
+		cached := ""
+		if user.TokensInvalidBefore != nil {
+			cached = user.TokensInvalidBefore.Format(time.RFC3339Nano)
+		}
+		if err := s.lookupCache.Set(ctx, authTokensInvalidBeforeCacheKey(claims.UserID), cached, authLookupCacheTTL); err != nil {
+			s.logger.Warn("Failed to cache tokens_invalid_before", "error", err)
+		}
+	}
+
+	return invalidatedAt(user.TokensInvalidBefore)
+}
+
+// invalidateBlacklistCache drops the cached not-blacklisted verdict for a JTI.
+// Every blacklist write (Logout, password change) must call it so the
+// revocation is enforced on the next request, not after the 5s TTL.
+func (s *AuthService) invalidateBlacklistCache(ctx context.Context, jti string) {
+	if s.lookupCache == nil {
+		return
+	}
+	if err := s.lookupCache.Delete(ctx, authBlacklistCacheKey(jti)); err != nil {
+		s.logger.Warn("Failed to invalidate token blacklist cache", "error", err, "jti", jti)
+	}
 }
 
 // generateAccessToken mints the 14-day access JWT. otpVerified is propagated
@@ -495,6 +600,8 @@ func (s *AuthService) Logout(ctx context.Context, tokenString, ipAddress, userAg
 		return domain.NewInternalError(constants.MsgFailedToBlacklistTokenVN, err)
 	}
 
+	s.invalidateBlacklistCache(ctx, claims.ID)
+
 	// Publish UserLogoutEvent for audit logging
 	// Get user's full name for audit message
 	userFullName := claims.Username
@@ -540,6 +647,14 @@ func (s *AuthService) RevokeUserTokens(ctx context.Context, userID uint, revoked
 		return err
 	}
 	s.logger.Info("Revoked all user tokens via tokens_invalid_before", "user_id", userID, "revoked_by", revokedByUserID, "invalid_before", now)
+
+	// Drop any cached tokens_invalid_before verdict so the revocation is
+	// enforced on the very next request instead of after the 5s TTL.
+	if s.lookupCache != nil {
+		if err := s.lookupCache.Delete(ctx, authTokensInvalidBeforeCacheKey(userID)); err != nil {
+			s.logger.Warn("Failed to invalidate tokens_invalid_before cache", "error", err, "user_id", userID)
+		}
+	}
 
 	// RT-M4: also kill any in-flight OTP login session for this user, so a
 	// revocation mid-second-step cannot be completed by an attacker who later
@@ -607,6 +722,8 @@ func (s *AuthService) ChangePasswordAndBlacklistToken(ctx context.Context, userI
 		s.logger.Error("Failed to blacklist token after password change", "error", err, "user_id", userID, "jti", claims.ID)
 		return nil
 	}
+
+	s.invalidateBlacklistCache(ctx, claims.ID)
 
 	s.logger.Info("Token blacklisted after password change", "user_id", userID, "jti", claims.ID)
 	return nil

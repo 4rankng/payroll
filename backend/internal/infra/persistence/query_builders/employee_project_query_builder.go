@@ -3,6 +3,7 @@ package query_builders
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"api-server/internal/domain"
@@ -438,31 +439,20 @@ func (b *EmployeeProjectQueryBuilder) applyFilters(query *gorm.DB, filters domai
 	if filters.AccessibleBy != nil {
 		if !filters.SkipAccessibilityFilter {
 			userID := *filters.AccessibleBy
-			// Get shared employee IDs for the user via employee_users table
-			var sharedEmployeeIDs []uint
-			err := b.db.Model(&domain.EmployeeUser{}).
-				Select("employee_id").
-				Where("user_id = ? AND deleted_at IS NULL", userID).
-				Pluck("employee_id", &sharedEmployeeIDs).Error
-
+			ids, err := resolveAccessibleEmployeeIDs(b.db, userID)
 			if err != nil {
-				// If shared query fails, just filter by created_by and project assignments to prevent total failure
+				// Resolution failed: fall back to the row-local predicate (no
+				// shared-ID prequery) so the request still returns correctly
+				// scoped rows.
+				slog.Warn("employee_access_resolution_failed", "error", err, "user_id", userID)
 				query = query.Where(
 					"employees.created_by = ? OR EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = employees.id AND pe.created_by = ? AND pe.deleted_at IS NULL) OR EXISTS (SELECT 1 FROM project_employees pe2 INNER JOIN project_users pu ON pe2.project_id = pu.project_id WHERE pe2.employee_id = employees.id AND pu.user_id = ? AND pe2.deleted_at IS NULL AND pu.deleted_at IS NULL AND pe2.start_date <= NOW() AND (pe2.last_date IS NULL OR pe2.last_date > NOW()))",
 					userID, userID, userID,
 				)
-			} else if len(sharedEmployeeIDs) > 0 {
-				// Include owned, shared, and assigned employees
-				query = query.Where(
-					"employees.created_by = ? OR employees.id IN (?) OR EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = employees.id AND pe.created_by = ? AND pe.deleted_at IS NULL) OR EXISTS (SELECT 1 FROM project_employees pe2 INNER JOIN project_users pu ON pe2.project_id = pu.project_id WHERE pe2.employee_id = employees.id AND pu.user_id = ? AND pe2.deleted_at IS NULL AND pu.deleted_at IS NULL AND pe2.start_date <= NOW() AND (pe2.last_date IS NULL OR pe2.last_date > NOW()))",
-					userID, sharedEmployeeIDs, userID, userID,
-				)
+			} else if len(ids) == 0 {
+				query = query.Where("1 = 0")
 			} else {
-				// Include owned and assigned employees if no shared employees found
-				query = query.Where(
-					"employees.created_by = ? OR EXISTS (SELECT 1 FROM project_employees pe WHERE pe.employee_id = employees.id AND pe.created_by = ? AND pe.deleted_at IS NULL) OR EXISTS (SELECT 1 FROM project_employees pe2 INNER JOIN project_users pu ON pe2.project_id = pu.project_id WHERE pe2.employee_id = employees.id AND pu.user_id = ? AND pe2.deleted_at IS NULL AND pu.deleted_at IS NULL AND pe2.start_date <= NOW() AND (pe2.last_date IS NULL OR pe2.last_date > NOW()))",
-					userID, userID, userID,
-				)
+				query = query.Where("employees.id IN (?)", ids)
 			}
 		}
 	}

@@ -4,7 +4,6 @@ import (
 	"api-server/internal/pkg/clock"
 	"api-server/internal/pkg/timeutil"
 	"context"
-	"strings"
 	"time"
 
 	"api-server/internal/domain"
@@ -631,18 +630,27 @@ func partnerAccessCondition() (string, func(partnerID uint) []interface{}) {
 }
 
 // partnerScopeCondition is the precomputed equivalent of partnerAccessCondition().
-// It substitutes the 3 correlated EXISTS subqueries with a simple
-// `t.employee_id IN (...) OR t.project_id IN (...)` predicate against the
-// materialised PartnerScope ID sets. The optimiser serves this via index lookups
-// on timesheets(employee_id, ...) and timesheets(project_id, ...), which is far
-// cheaper than re-running the EXISTS branches for every row of a large scan.
+// It substitutes the 3 correlated EXISTS subqueries with keyed
+// `t.employee_id IN (...)` / `t.project_id IN (...)` predicates against the
+// materialised PartnerScope ID sets, which the optimiser serves via index
+// lookups on timesheets(employee_id, ...) and timesheets(project_id, ...) —
+// far cheaper than re-running the EXISTS branches for every row of a scan.
 //
-// The caller must ensure scope.EmployeeIDs and scope.ProjectIDs are non-nil
-// (empty slices are fine — GORM expands `IN (?)` with an empty slice into a
-// always-false predicate). Use PartnerScope.Empty() to short-circuit callers
-// that want to skip the query entirely when the partner can see nothing.
+// Only non-empty ID sets emit a predicate, so a one-sided scope never drags a
+// dead `IN (NULL)` arm into the query; an entirely empty scope yields "1 = 0".
+// Callers that want to skip the query entirely can still use
+// PartnerScope.Empty() up front.
 func partnerScopeCondition(scope *PartnerScope) (string, []interface{}) {
-	return "(t.employee_id IN (?) OR t.project_id IN (?))", []interface{}{scope.EmployeeIDs, scope.ProjectIDs}
+	switch {
+	case len(scope.EmployeeIDs) > 0 && len(scope.ProjectIDs) > 0:
+		return "(t.employee_id IN (?) OR t.project_id IN (?))", []interface{}{scope.EmployeeIDs, scope.ProjectIDs}
+	case len(scope.EmployeeIDs) > 0:
+		return "t.employee_id IN (?)", []interface{}{scope.EmployeeIDs}
+	case len(scope.ProjectIDs) > 0:
+		return "t.project_id IN (?)", []interface{}{scope.ProjectIDs}
+	default:
+		return "1 = 0", nil
+	}
 }
 
 // GetPartnerEmployeeStats returns active, dropped, and paid employee counts for a given partner.
@@ -669,10 +677,13 @@ func (r *TimesheetAnalyticsRepository) GetPartnerEmployeeStats(ctx context.Conte
 
 	accessCond, accessArgs := partnerScopeCondition(scope)
 
-	paidDateFilter := ""
+	// paidWindow applies the selected-month filter inside both paid
+	// aggregations. Empty when no month is selected — paid metrics then cover
+	// the whole 60-day history window (same as the old paidDateFilter).
+	paidWindow := ""
 	paidArgs := []interface{}{}
 	if startDate != nil && endDate != nil {
-		paidDateFilter = " AND t.date >= ? AND t.date < ?"
+		paidWindow = " AND vt.date >= ? AND vt.date < ?"
 		paidArgs = append(paidArgs, *startDate, *endDate)
 	}
 
@@ -683,53 +694,50 @@ func (r *TimesheetAnalyticsRepository) GetPartnerEmployeeStats(ctx context.Conte
 		TotalPaidAmount  float64 `gorm:"column:total_paid_amount"`
 	}
 
-	// Single query using a CTE that materialises the "timesheets visible to
-	// this partner" set once, then aggregates 4 different metrics from it.
-	// The CTE no longer needs the employees join — the scope ID set already
-	// encodes the employee-visible paths, so the predicate is a simple
-	// employee_id/project_id IN-list against an index.
+	// Single grouped pass over the materialised visible set — no scalar
+	// subqueries, no correlated NOT EXISTS against the CTE. Semantics are
+	// identical to the previous shape:
+	//   active  ⟺ per-employee MAX(date) >= cutoff
+	//   dropped ⟺ per-employee MAX(date) <  cutoff (within the 60d window)
+	//   paid metrics via conditional aggregation over the selected month.
 	//
-	// ARG ORDERING (red-team F7/CRIT-2): positional placeholders appear in
-	// the query in this exact order —
-	//   1. accessCond's 2 IN (?) placeholders  → accessArgs (EmployeeIDs, ProjectIDs)
-	//   2. CTE bound `t.date >= ?`             → historyStart
-	//   3. active `vt.date >= ?`               → cutoff
-	//   4. dropped `vt.date < ?`               → cutoff
-	//   5. dropped NOT EXISTS `vt2.date >= ?`  → cutoff
-	//   6+. paidDateFilter's 2 placeholders     → paidArgs
+	// ARG ORDERING: positional placeholders appear in this exact order —
+	//   1. accessCond's IN (?) placeholders → accessArgs
+	//   2. CTE bound `t.date >= ?`          → historyStart
+	//   3. active `x.last_date >= ?`        → cutoff
+	//   4. dropped `x.last_date < ?`        → cutoff
+	//   5+. paidWindow's placeholders — 2 per aggregation; paidArgs is
+	//       appended twice (paid_in_month, then paid_amount_month)
 	// The args slice below MUST match this order. The regression test
-	// pins it; any future edit that re-orders placeholders or args without
-	// updating the other will fail that test.
+	// (TestGetPartnerEmployeeStatsWindow) pins it; any future edit that
+	// re-orders placeholders or args without updating the other will fail
+	// that test.
 	query := `
 		WITH visible_t AS (
-			SELECT t.id, t.employee_id, t.date, t.payment_status, t.paid_amount, t.project_id
+			SELECT t.employee_id, t.date, t.payment_status, t.paid_amount
 			FROM timesheets t
 			WHERE t.deleted_at IS NULL
 			  AND ` + accessCond + `
 			  AND t.date >= ?
 		)
 		SELECT
-			(SELECT COUNT(DISTINCT vt.employee_id)
-			 FROM visible_t vt
-			 WHERE vt.date >= ?
-			) AS active_employees,
-			(SELECT COUNT(DISTINCT vt.employee_id)
-			 FROM visible_t vt
-			 WHERE vt.date < ?
-			   AND NOT EXISTS (
-			     SELECT 1 FROM visible_t vt2
-			     WHERE vt2.employee_id = vt.employee_id
-			       AND vt2.date >= ?
-			   )
-			) AS dropped_employees,
-			COUNT(DISTINCT CASE WHEN vt.payment_status = 'paid' THEN vt.employee_id END) AS paid_employees,
-			COALESCE(SUM(CASE WHEN vt.payment_status = 'paid' THEN vt.paid_amount ELSE 0 END), 0) AS total_paid_amount
-		FROM visible_t vt
-		WHERE 1 = 1` + strings.ReplaceAll(paidDateFilter, "t.date", "vt.date")
+			COALESCE(SUM(x.last_date >= ?), 0) AS active_employees,
+			COALESCE(SUM(x.last_date <  ?), 0) AS dropped_employees,
+			COALESCE(SUM(x.paid_in_month), 0) AS paid_employees,
+			COALESCE(SUM(x.paid_amount_month), 0) AS total_paid_amount
+		FROM (
+			SELECT vt.employee_id,
+			       MAX(vt.date) AS last_date,
+			       MAX(CASE WHEN vt.payment_status = 'paid'` + paidWindow + ` THEN 1 ELSE 0 END) AS paid_in_month,
+			       COALESCE(SUM(CASE WHEN vt.payment_status = 'paid'` + paidWindow + ` THEN vt.paid_amount ELSE 0 END), 0) AS paid_amount_month
+			FROM visible_t vt
+			GROUP BY vt.employee_id
+		) x`
 
 	args := append([]interface{}{}, accessArgs...)
 	args = append(args, historyStart)
-	args = append(args, cutoff, cutoff, cutoff)
+	args = append(args, cutoff, cutoff)
+	args = append(args, paidArgs...)
 	args = append(args, paidArgs...)
 	if err := r.db.WithContext(ctx).Raw(query, args...).Scan(&result).Error; err != nil {
 		return nil, err

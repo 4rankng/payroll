@@ -1,0 +1,4 @@
+-- Data backfill only: no automated rollback.
+-- Reverting would require restoring the pre-migration JSON of every updated
+-- transaction_codes row; the previous NULL from_date is recoverable only from
+-- backups. Rolling forward (re-running the up migration) is a no-op.

@@ -71,8 +71,9 @@ func (r *TimesheetQueryRepository) GetByIDsWithoutRelations(ctx context.Context,
 // only need the timesheet date — e.g. bank-transfer-histories cycle resolution,
 // which previously loaded ~5,000 full rows + relations just to read Date.Year/Month/Day.
 //
-// Uses the BatchProcessor to stay under MySQL's packet limit. Ordering is not
-// applied because callers consume the result via map lookup.
+// Chunked to stay under MySQL's packet limit (2000 IDs ≈ 18 KB SQL, well under
+// the 32768-byte QuerySizeLimit the codebase assumes). Ordering is not applied
+// because callers consume the result via map lookup.
 func (r *TimesheetQueryRepository) GetTimesheetDatesByIDs(ctx context.Context, ids []uint) (map[uint]time.Time, error) {
 	result := make(map[uint]time.Time, len(ids))
 	if len(ids) == 0 {
@@ -84,8 +85,13 @@ func (r *TimesheetQueryRepository) GetTimesheetDatesByIDs(ctx context.Context, i
 		Date time.Time `gorm:"column:date"`
 	}
 
-	err := r.batchProcessor.ProcessInBatches(ctx, ids, func(batch interface{}) error {
-		batchIDs := batch.([]uint)
+	const dateLookupChunk = 2000
+	for i := 0; i < len(ids); i += dateLookupChunk {
+		end := i + dateLookupChunk
+		if end > len(ids) {
+			end = len(ids)
+		}
+		batchIDs := ids[i:end]
 		var rows []idDate
 		if err := r.db.WithContext(ctx).
 			Table("timesheets").
@@ -93,15 +99,11 @@ func (r *TimesheetQueryRepository) GetTimesheetDatesByIDs(ctx context.Context, i
 			Where("id IN ?", batchIDs).
 			Where("deleted_at IS NULL").
 			Find(&rows).Error; err != nil {
-			return err
+			return nil, err
 		}
 		for _, row := range rows {
 			result[row.ID] = row.Date
 		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
 	}
 	return result, nil
 }

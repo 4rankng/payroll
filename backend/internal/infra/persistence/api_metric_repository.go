@@ -55,6 +55,18 @@ func (r *APIMetricRepository) Create(ctx context.Context, metric *domain.APIMetr
 	return nil
 }
 
+// CreateBatch records multiple metrics in one multi-row insert, capped at 200
+// rows per statement (matches the middleware flusher's batch size).
+func (r *APIMetricRepository) CreateBatch(ctx context.Context, metrics []*domain.APIMetric) error {
+	if len(metrics) == 0 {
+		return nil
+	}
+	if err := r.DB.WithContext(ctx).CreateInBatches(metrics, 200).Error; err != nil {
+		return domain.NewInternalError("failed to create API metrics batch", err)
+	}
+	return nil
+}
+
 // FindOrCreateEndpoint finds an existing endpoint or creates a new one
 func (r *APIMetricRepository) FindOrCreateEndpoint(ctx context.Context, method, path string) (uint, error) {
 	var endpoint domain.APIEndpoint
