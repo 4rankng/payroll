@@ -785,11 +785,8 @@ html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark [class*
 }
 
 /* --- mobile/tablet chrome: admin-daisy.css paints opaque white for the
-   bottom nav, sheets, tiles, and dropdown surfaces (rgba(255,255,255,.96+));
-   re-point at the console card/popover surfaces. --- */
-html.admin-console-toto.dark [data-admin-ui] .admin-dropdown-surface {
-  background: hsl(var(--popover));
-}
+   bottom nav, sheets, and tiles (rgba(255,255,255,.96+));
+   re-point at the console card surface. --- */
 html.admin-console-toto.dark [data-admin-ui] .admin-mobile-nav {
   background: hsl(var(--card) / 0.96);
 }

@@ -30,7 +30,7 @@ const DialogOverlay = React.forwardRef<
     ref={ref}
     className={cn(
       "fixed inset-0 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      mobileOverlay ? "bg-black/40" : "bg-black/80",
+      mobileOverlay ? "bg-black/40 dark:bg-black/60" : "bg-black/80",
       className
     )}
     {...props}
