@@ -36,14 +36,16 @@ html.admin-console-toto {
   --admin-info-foreground: 0 0% 100%;
   --admin-destructive: 347 77% 41%;
   --admin-destructive-foreground: 0 0% 100%;
-  --admin-sidebar-background: 197 76% 10%;
-  --admin-sidebar-foreground: 190 50% 94%;
-  --admin-sidebar-primary: 193 82% 60%;
-  --admin-sidebar-primary-foreground: 197 76% 10%;
-  --admin-sidebar-accent: 197 50% 16%;
-  --admin-sidebar-accent-foreground: 190 50% 94%;
-  --admin-sidebar-border: 197 40% 22%;
-  --admin-sidebar-ring: 193 82% 60%;
+  /* Light rail (user call): the sidebar follows the light theme instead of
+     the old dark ink rail. Dark keeps its own rail tokens in the dark block. */
+  --admin-sidebar-background: 210 30% 98%;
+  --admin-sidebar-foreground: 199 22% 35%;
+  --admin-sidebar-primary: 193 82% 31%;
+  --admin-sidebar-primary-foreground: 0 0% 100%;
+  --admin-sidebar-accent: 195 42% 93%;
+  --admin-sidebar-accent-foreground: 197 76% 10%;
+  --admin-sidebar-border: 196 30% 80%;
+  --admin-sidebar-ring: 193 82% 40%;
   --admin-card-shadow: 0 12px 30px -26px rgba(6, 33, 44, 0.25);
   --admin-shell-shadow: 0 20px 60px -42px rgba(6, 33, 44, 0.25);
   --admin-grid-line: hsl(197 76% 10% / 0.035);
@@ -227,18 +229,8 @@ html.admin-console-toto .recharts-tooltip-item {
   color: hsl(var(--foreground)) !important;
 }
 
-/* Ink rail: the last hardcoded green gradient becomes a navy instrument rail
-   with a teal signal. */
-html.admin-console-toto [data-admin-ui] .admin-sidebar-surface {
-  background:
-    linear-gradient(180deg, rgba(46, 230, 197, 0.05), transparent 16%),
-    linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(197 60% 13%) 100%);
-}
-html.admin-console-toto [data-admin-ui] .admin-sidebar-surface [data-sidebar="sidebar"] {
-  background:
-    radial-gradient(circle at 35% 0%, rgba(46, 230, 197, 0.08), transparent 14rem),
-    linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(197 60% 13%) 100%);
-}
+/* Ink rail surfaces: gradient endpoints are theme-scoped in the dark section
+   below (light rail endpoint vs dark rail endpoint). */
 html.admin-console-toto [data-admin-ui] .admin-sidebar-logo::after {
   background: linear-gradient(90deg, transparent, rgba(46, 230, 197, 0.28), transparent);
 }
@@ -247,12 +239,12 @@ html.admin-console-toto [data-admin-ui] .admin-sidebar-surface a[aria-current="p
   background: hsl(var(--primary) / 0.1);
   box-shadow: none;
 }
-html.admin-console-toto [data-admin-ui] .admin-sidebar-brand {
-  border-color: hsl(var(--sidebar-border));
-  background:
-    linear-gradient(135deg, rgba(46, 230, 197, 0.1), transparent 55%),
-    linear-gradient(180deg, rgba(46, 230, 197, 0.06), rgba(4, 16, 24, 0.2));
-}
+/* Logo marks: the white wordmark serves the dark rail; the black wordmark
+   (tingting-black.png) serves the light rail. The colorful square mark works
+   on both. (.admin-sidebar-brand has no element in the markup — the logo
+   header is .admin-sidebar-logo.) */
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .admin-logo-white { display: none; }
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .admin-logo-black { display: block; }
 
 
 /* Mobile settings: the base stylesheet's blanket h1–h4 mobile scaling made the
@@ -565,3 +557,143 @@ html.admin-console-toto.dark .hover\:bg-gray-100:hover { background-color: hsl(v
 html.admin-console-toto.dark .hover\:border-utility-gray-300:hover { border-color: hsl(var(--input)); }
 html.admin-console-toto.dark .hover\:text-fg-primary:hover { color: hsl(var(--foreground)); }
 html.admin-console-toto.dark .hover\:text-fg-secondary:hover { color: hsl(var(--foreground) / 0.92); }
+html.admin-console-toto.dark .hover\:bg-white:hover { background-color: hsl(var(--muted)); }
+
+/* The UU brand-section wrapper paints a static dark-emerald canvas on mobile
+   admin pages; dark console paints its own canvas token instead. Light theme
+   keeps the committed brand wash. */
+html.admin-console-toto.dark .bg-brand-section_subtle { background-color: hsl(var(--background)); }
+
+/* --- light sidebar: tinted light surface per the approved palette.
+   Solid #F3F7F8 rail, #DCE7EA hairline, #264653 menu ink (w500), #54707B
+   labels/icons (darkened one step from #5F7A85 to clear 4.5:1 on #F3F7F8),
+   teal hover wash, active row rgba(14,116,144,.10) with #0B5F76 ink and a
+   3px #0E7490 accent bar. !important on the ink rules: the group labels and
+   chevrons ship !text-white/* utilities that beat plain declarations. --- */
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface {
+  background: hsl(192 26% 96%);
+  border-right: 1px solid hsl(188 25% 89%);
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [data-sidebar="sidebar"],
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [data-sidebar="header"],
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [data-sidebar="content"],
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [data-sidebar="footer"] {
+  background: transparent;
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [class*="text-white/9"],
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [class*="text-white/8"] {
+  color: hsl(198 37% 24%);
+  font-weight: 500;
+  font-size: 14px;
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [class*="text-white/7"],
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [class*="text-white/6"] {
+  color: hsl(197 17% 41%) !important;
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .hover\:text-white:hover {
+  color: hsl(198 37% 24%) !important;
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div {
+  background-color: rgba(14, 116, 144, 0.10);
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div,
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div [class*="text-white"],
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div svg {
+  color: hsl(193 84% 25%) !important;
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div .animate-pill-appear {
+  width: 3px;
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .hover\:bg-card\/\[0\.06\]:hover,
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .hover\:bg-card\/\[0\.08\]:hover { background-color: rgba(14, 116, 144, 0.06); }
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .bg-card\/\[0\.04\],
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .bg-card\/\[0\.08\] { background-color: rgba(14, 116, 144, 0.05); }
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .bg-card\/\[0\.06\],
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .bg-card\/\[0\.08\][class*="ring"],
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .ring-white\/\[0\.12\] { --tw-ring-color: hsl(188 25% 89%); background-color: hsl(188 25% 89%); }
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .border-white\/\[0\.06\],
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .hover\:border-white\/\[0\.1\]:hover { border-color: hsl(188 25% 89%); }
+html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface svg { stroke-width: 1.75; }
+/* Dark keeps the ink rail: teal signal wash over the sidebar tokens. */
+html.admin-console-toto.dark [data-admin-ui] .admin-sidebar-surface {
+  background:
+    linear-gradient(180deg, rgba(46, 230, 197, 0.05), transparent 16%),
+    linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(197 60% 13%) 100%);
+}
+html.admin-console-toto.dark [data-admin-ui] .admin-sidebar-surface [data-sidebar="sidebar"] {
+  background:
+    radial-gradient(circle at 35% 0%, rgba(46, 230, 197, 0.08), transparent 14rem),
+    linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(197 60% 13%) 100%);
+}
+
+/* --- WalletBalanceCard hero: a dark HUD instrument by design; on the light
+   console it becomes a light instrument — pale teal wash, hairline ring,
+   dark ink, HUD grid at 5% ink. Dark theme keeps the HUD untouched. --- */
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark {
+  color: hsl(198 37% 24%);
+  background: linear-gradient(135deg, hsl(190 45% 97%) 0%, hsl(193 40% 94%) 100%);
+  --tw-ring-color: hsl(188 25% 89%);
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark .treasury-aurora,
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark .band-sheen { display: none; }
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark > div[style*="linear-gradient"] {
+  background-image:
+    linear-gradient(rgba(6, 33, 44, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 33, 44, 0.05) 1px, transparent 1px) !important;
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark .text-\[\#67E8F9\] { color: hsl(193 82% 31%); }
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark .bg-\[\#67E8F9\] { background-color: hsl(193 82% 31%); }
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark .shadow-\[0_0_0_3px_rgba\(103\,232\,249\,0\.22\)\] { box-shadow: 0 0 0 3px hsl(193 82% 31% / 0.18); }
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark .text-white {
+  color: hsl(198 37% 24%);
+  text-shadow: none;
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark [class*="text-utility-error-4"] {
+  color: hsl(var(--destructive)) !important;
+  text-shadow: none;
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark [class*="text-utility-warning-4"] {
+  color: hsl(28 82% 37%);
+  text-shadow: none;
+}
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark [class*="border-white/"] { border-color: rgba(6, 33, 44, 0.12); }
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark [class*="bg-white/"] {
+  background-color: rgba(6, 33, 44, 0.05);
+  color: hsl(var(--muted-foreground));
+}
+
+/* --- mobile/tablet chrome: admin-daisy.css paints opaque white for the
+   bottom nav, sheets, tiles, and dropdown surfaces (rgba(255,255,255,.96+));
+   re-point at the console card/popover surfaces. --- */
+html.admin-console-toto.dark [data-admin-ui] .admin-dropdown-surface {
+  background: hsl(var(--popover));
+}
+html.admin-console-toto.dark [data-admin-ui] .admin-mobile-nav {
+  background: hsl(var(--card) / 0.96);
+}
+html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet,
+html.admin-console-toto.dark [data-admin-ui] .admin-mobile-tile {
+  background: hsl(var(--card) / 0.98);
+}
+
+/* --- status chip fills: the -100 steps and alpha-suffixed -50 variants the
+   exact selectors above cannot reach (WalletTransactionsList status map,
+   ErrorByEndpointCards severity washes). Hover variants carry the same
+   value as the base fill, so attribute matching is safe here. --- */
+html.admin-console-toto.dark [class*="bg-utility-success-50/"],
+html.admin-console-toto.dark .bg-utility-success-100,
+html.admin-console-toto.dark .hover\:bg-utility-success-100:hover { background-color: hsl(var(--success) / 0.14); }
+html.admin-console-toto.dark [class*="bg-utility-warning-50/"],
+html.admin-console-toto.dark .bg-utility-warning-100,
+html.admin-console-toto.dark .hover\:bg-utility-warning-100:hover { background-color: hsl(var(--warning) / 0.14); }
+html.admin-console-toto.dark [class*="bg-utility-error-50/"],
+html.admin-console-toto.dark .bg-utility-error-100,
+html.admin-console-toto.dark .hover\:bg-utility-error-100:hover { background-color: hsl(var(--destructive) / 0.14); }
+html.admin-console-toto.dark .bg-cyan-100,
+html.admin-console-toto.dark .hover\:bg-cyan-100:hover,
+html.admin-console-toto.dark [class*="bg-cyan-100/"],
+html.admin-console-toto.dark [class*="bg-blue-100/"] { background-color: hsl(var(--info) / 0.12); }
+html.admin-console-toto.dark .border-utility-error-100,
+html.admin-console-toto.dark .border-utility-error-200 { border-color: hsl(var(--destructive) / 0.4); }
+html.admin-console-toto.dark .border-utility-warning-100,
+html.admin-console-toto.dark .border-utility-warning-200 { border-color: hsl(var(--warning) / 0.4); }

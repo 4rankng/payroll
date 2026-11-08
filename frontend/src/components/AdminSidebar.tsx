@@ -181,12 +181,14 @@ interface NavGroupProps {
   items: MenuItem[];
   isCollapsed: boolean;
   isExpanded: boolean;
+  /** A child route of this group is the current route. */
+  containsActive: boolean;
   onToggle: (key: string) => void;
   onNavigate: () => void;
 }
 
 const NavGroup = React.memo(
-  ({ label, groupKey, items, isCollapsed, isExpanded, onToggle, onNavigate }: NavGroupProps) => {
+  ({ label, groupKey, items, isCollapsed, isExpanded, containsActive, onToggle, onNavigate }: NavGroupProps) => {
     const contentRef = useRef<HTMLDivElement>(null);
     const [contentHeight, setContentHeight] = useState<number | undefined>(undefined);
 
@@ -217,9 +219,13 @@ const NavGroup = React.memo(
         <button
           type="button"
           onClick={() => onToggle(groupKey)}
-          className="mt-4 flex min-h-10 w-full cursor-pointer select-none items-center px-2.5 py-1 group/label"
+          className="mt-4 flex min-h-7 w-full cursor-pointer select-none items-center gap-1.5 px-2.5 py-0.5 group/label"
           aria-expanded={isExpanded}
         >
+          {/* Collapsed group hiding the current route still marks itself. */}
+          {containsActive && !isExpanded && (
+            <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[hsl(var(--primary))]" />
+          )}
           <span className="console-kicker flex-1 text-left !text-white/70 transition-colors group-hover/label:!text-white/90">
             {label}
           </span>
@@ -298,6 +304,13 @@ const AdminSidebar = () => {
     }
     return null;
   }, [location.pathname, filteredMenuItems]);
+
+  // The group owning the current route always stays reachable: re-expand it
+  // when the route moves (manual collapse still wins until navigation).
+  useEffect(() => {
+    if (!activeGroupKey) return;
+    setExpandedGroups((prev) => (prev.has(activeGroupKey) ? prev : new Set([...prev, activeGroupKey])));
+  }, [activeGroupKey]);
 
   const allGroupKeys = useMemo(
     () => new Set(menuGroups.filter((g) => g.label !== null).map((g) => g.key)),
@@ -419,7 +432,8 @@ const AdminSidebar = () => {
               <>
                 <div className="flex min-w-0 items-center gap-2.5" aria-label="TingTing">
                   <img src="/logo-square.png" alt="" aria-hidden="true" className="h-7 w-7 object-contain" />
-                  <img src="/tingting-white.png" alt="TingTing" className="h-6 w-auto object-contain" />
+                  <img src="/tingting-white.png" alt="TingTing" className="admin-logo-white h-6 w-auto object-contain" />
+                  <img src="/tingting-black.png" alt="" aria-hidden="true" className="admin-logo-black hidden h-6 w-auto object-contain" />
                 </div>
                 <SidebarToggle />
               </>
@@ -451,6 +465,7 @@ const AdminSidebar = () => {
                 items={items}
                 isCollapsed={isCollapsed}
                 isExpanded={expandedGroups.has(key)}
+                containsActive={key === activeGroupKey}
                 onToggle={handleToggleGroup}
                 onNavigate={handleNavigate}
               />
@@ -492,7 +507,7 @@ const AdminSidebar = () => {
                   {!isCollapsed && user && (
                     <>
                       <div className="flex flex-col min-w-0 flex-1 text-left">
-                        <span className="text-xs text-white/75 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
+                        <span className="text-xs text-white/75 truncate leading-tight font-semibold tracking-wide">Xin chào</span>
                         <span className="text-base font-medium truncate leading-tight text-white/90">{user.name}</span>
                       </div>
                       <ChevronUp className="w-3.5 h-3.5 shrink-0 text-white/60" />
