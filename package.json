@@ -1,5 +1,6 @@
 {
   "dependencies": {
     "docx": "^9.15.3"
-  }
+  },
+  "version": "1.19.4"
 }
