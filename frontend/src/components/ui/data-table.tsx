@@ -366,10 +366,12 @@ export function DataTable<TData, TValue>({
                       const isFirstColumn = stickyFirstColumn && headerIndex === 0;
 
                       const align = (header.column.columnDef.meta as { align?: "left" | "right" | "center" } | undefined)?.align;
+                      const colSize = header.column.getSize();
                       return (
                         <TableHead
                           key={header.id}
                           scope="col"
+                          style={colSize > 0 ? { width: colSize } : undefined}
                           className={cn(
                             "whitespace-nowrap text-left typography-label-medium text-muted-foreground border-0",
                             align === "right" && "text-right",

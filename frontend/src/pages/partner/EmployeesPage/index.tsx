@@ -142,8 +142,8 @@ const EmployeesPage = () => {
         ? [{
             id: "managed_by",
             header: "Quản lý",
-            size: 0,
-            minSize: 0,
+            size: 300,
+            minSize: 220,
             accessorFn: (row: Employee) => row.creator_name || "",
             cell: ({ row }: { row: { original: Employee } }) => {
               const employee = row.original;
@@ -186,8 +186,8 @@ const EmployeesPage = () => {
       {
         accessorKey: "fullname",
         header: "Nhân viên",
-        size: 0,
-        minSize: 0,
+        size: 340,
+        minSize: 260,
         cell: ({ row }) => {
           const employee = row.original;
           const pendingCount = employee.timesheet_summary?.pending_timesheets ?? 0;
@@ -265,8 +265,8 @@ const EmployeesPage = () => {
       {
         id: "project_info",
         header: "Dự án",
-        size: 0,
-        minSize: 0,
+        size: 430,
+        minSize: 300,
         accessorFn: (row) => {
           const projects = getEmployeeProjects(row);
           return projects.length > 0 ? projects[0].name : "";
@@ -329,7 +329,7 @@ const EmployeesPage = () => {
       ...(poolView !== "global" ? [{
         id: "bank",
         header: "Ngân hàng",
-        size: 0,
+        size: 300,
         accessorFn: (row) => row.bank?.branch_name || "",
         cell: ({ row }) => {
           const employee = row.original;
@@ -357,7 +357,7 @@ const EmployeesPage = () => {
       {
         accessorKey: "created_at",
         header: "Ngày tạo",
-        size: 100,
+        size: 110,
         cell: ({ row }) => (
           <span className="typography-body-medium text-muted-foreground tabular-nums">
             {row.original.created_at

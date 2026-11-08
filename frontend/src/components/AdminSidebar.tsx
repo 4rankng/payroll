@@ -19,9 +19,11 @@ import {
   Home01,
   Key01,
   LogOut01,
+  Moon01,
   MessageSquare01,
   Receipt,
   Settings01,
+  Sun,
   UserCircle,
   UserEdit,
   Users01,
@@ -59,6 +61,7 @@ import { SidebarToggle } from "@/components/shared/SidebarToggle";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useAuth } from "@/contexts";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
+import { useAdminTheme } from "@/hooks/useAdminTheme";
 import { MODAL_IDS } from "@/constants/modalRegistry";
 import { useUnreadNotifications } from "@/hooks/api/useNotifications";
 import { generateAvatarUrl } from "@/utils/avatarHelpers";
@@ -267,6 +270,8 @@ const AdminSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { theme, toggle: toggleTheme } = useAdminTheme();
+  const dark = theme === "dark";
   const { isMobile, setOpenMobile, open, openMobile } = useSidebar();
   const { openModal } = useModalNavigation();
   const isCollapsed = getSidebarCollapsedState({ isMobile, open, openMobile });
@@ -478,8 +483,6 @@ const AdminSidebar = () => {
         <SidebarSeparator className="bg-card/[0.06] m-0 shrink-0" />
         <SidebarFooter className="p-2 shrink-0">
           <div className={cn("flex gap-2", isCollapsed ? "flex-col items-center" : "items-center")}>
-          {/* Theme toggle rides the account card — the rail has the room. */}
-          <ThemeToggle className="shrink-0 border-sidebar-border/60 bg-transparent text-sidebar-foreground hover:bg-sidebar-accent/70" />
           <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -558,6 +561,14 @@ const AdminSidebar = () => {
                 <DropdownMenuItem onClick={() => openModal(MODAL_IDS.NOTIFICATION_SHEET)}>
                   <Bell01 className="mr-2 h-4 w-4" aria-hidden="true" />
                   Thông báo
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={toggleTheme}>
+                  {dark ? (
+                    <Sun className="mr-2 h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Moon01 className="mr-2 h-4 w-4" aria-hidden="true" />
+                  )}
+                  {dark ? "Chế độ sáng" : "Chế độ tối"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-fg-error-primary focus:text-fg-error-primary">
