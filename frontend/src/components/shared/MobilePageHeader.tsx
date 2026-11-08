@@ -117,8 +117,18 @@ export const MobilePageHeader = ({
               </p>
             )}
           </div>
+          {/* Stacked headers put the full width on the action row below, so a
+              toggle living there always wraps onto its own line (the buttons
+              div is w-full). Title-row placement is the established pattern —
+              the wallet page carries the toggle the same way. Inline headers
+              keep the toggle beside the actions. */}
+          {actionsLayout === 'stacked' && showThemeToggle && (
+            <div className="ml-auto flex shrink-0 items-center md:hidden [&_button]:h-11 [&_button]:w-11 [&_button]:min-h-0 [&_button]:rounded-xl [&_button]:p-0">
+              <ThemeToggle />
+            </div>
+          )}
         </div>
-        {(actions || showThemeToggle) && (
+        {(actions || (showThemeToggle && actionsLayout === 'inline')) && (
           <div
             className={cn(
               'flex flex-wrap items-center gap-2 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl',
@@ -128,7 +138,7 @@ export const MobilePageHeader = ({
             )}
           >
             {actions}
-            {showThemeToggle && (
+            {showThemeToggle && actionsLayout === 'inline' && (
               <div className="ml-auto flex shrink-0 items-center md:hidden [&_button]:h-11 [&_button]:w-11 [&_button]:min-h-0 [&_button]:rounded-xl [&_button]:p-0">
                 <ThemeToggle />
               </div>

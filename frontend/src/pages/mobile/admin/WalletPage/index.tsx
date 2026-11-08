@@ -48,14 +48,17 @@ export default function WalletPageMobile() {
   };
 
   return (
-    <div className="min-h-dvh bg-brand-section_subtle text-fg-white">
-      {/* Dark hero zone */}
+    <div className="min-h-dvh bg-background text-foreground">
+      {/* Hero zone — theme tokens throughout: the light theme renders the
+          same pale instrument panel the treasury card already converts to
+          (admin-console-toto.css re-skins .treasury-panel--dark), so the
+          hero canvas must not stay near-black forest in light mode. */}
       <div className="px-4 pt-[var(--mobile-header-top-padding,calc(env(safe-area-inset-top)+1rem))] pb-6">
         <div className="relative z-10 mb-3 flex items-center gap-2 pt-1">
-          <Wallet01 className="h-5 w-5 shrink-0 text-white/60" aria-hidden="true" />
+          <Wallet01 className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
           <div className="min-w-0 flex-1">
-            <p className="console-kicker mb-0.5 text-white/60">{getConsoleKicker(location.pathname)}</p>
-            <h1 className="truncate text-[17px] font-semibold text-fg-white tracking-tight">Ví điện tử</h1>
+            <p className="console-kicker mb-0.5 text-muted-foreground">{getConsoleKicker(location.pathname)}</p>
+            <h1 className="truncate text-[17px] font-semibold text-foreground tracking-tight">Ví điện tử</h1>
           </div>
           {/* Admin routes carry the theme toggle in the title row on phones. */}
           {typeof document !== 'undefined' && document.querySelector('[data-admin-ui]') && (
@@ -74,7 +77,7 @@ export default function WalletPageMobile() {
           <button
             type="button"
             onClick={() => setEmployeeAccountLookupOpen(true)}
-            className="inline-flex h-auto min-h-11 flex-col items-center justify-center gap-1 rounded-xl border border-white/20 bg-white/5 px-1 py-2 text-xs font-semibold text-fg-white shadow-none"
+            className="inline-flex h-auto min-h-11 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-card px-1 py-2 text-xs font-semibold text-foreground shadow-none"
           >
             <SearchMd className="h-4 w-4" aria-hidden="true" />
             Tra cứu tài khoản
@@ -82,7 +85,7 @@ export default function WalletPageMobile() {
           <button
             type="button"
             onClick={() => setBulkTransferDialogOpen(true)}
-            className="inline-flex h-auto min-h-11 flex-col items-center justify-center gap-1 rounded-xl border border-white/20 bg-white/5 px-1 py-2 text-xs font-semibold text-fg-white shadow-none"
+            className="inline-flex h-auto min-h-11 flex-col items-center justify-center gap-1 rounded-xl border border-border bg-card px-1 py-2 text-xs font-semibold text-foreground shadow-none"
           >
             <Upload01 className="h-4 w-4" aria-hidden="true" />
             Tải file
