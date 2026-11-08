@@ -682,19 +682,36 @@ html.admin-console-toto :is([data-admin-ui], [data-partner-ui]) .console-table t
   }
 }
 /* Account/more sheets: the tile icon chips ship white/75-80 fills tuned for
-   light chrome. On the dark sheet they wash out — flip to the teal-signal
-   treatment (danger chips keep their rose identity at dark-tint values). */
-html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet [class*="bg-white/7"],
-html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet [class*="bg-white/8"] {
-  background-color: rgba(46, 230, 197, 0.10);
-  border-color: rgba(46, 230, 197, 0.35);
+   light chrome. On the dark sheet they wash out — flip to a muted teal-signal
+   fill so the label stays the focal point (danger chips keep their rose
+   identity at dark-tint values).
+   Sheets mount in a Radix portal at document.body — OUTSIDE [data-admin-ui]
+   — so every rule here routes by the html class pair only (same reason the
+   role="dialog" block above does). */
+html.admin-console-toto.dark .admin-mobile-sheet [class*="bg-white/7"],
+html.admin-console-toto.dark .admin-mobile-sheet [class*="bg-white/8"] {
+  background-color: hsl(169 79% 54% / 0.15);
+  border-color: hsl(169 79% 54% / 0.25);
 }
-html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet [class*="text-rose-7"] {
+html.admin-console-toto.dark .admin-mobile-sheet [class*="text-rose-7"] {
   color: hsl(350 100% 80%);
 }
-html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet [class*="border-white/8"],
-html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet [class*="border-white/7"] {
-  border-color: rgba(46, 230, 197, 0.35);
+/* Danger tiles: rose-50/rose-200 light chips become rose-tinted dark chips,
+   and the white/75 icon chip inside a danger tile follows the rose signal,
+   not the teal one. */
+html.admin-console-toto.dark .admin-mobile-sheet [class*="bg-rose-5"],
+html.admin-console-toto.dark .admin-mobile-sheet [class*="border-rose-2"] {
+  background-color: hsl(343 100% 68% / 0.14);
+  border-color: hsl(343 100% 68% / 0.35);
+}
+html.admin-console-toto.dark .admin-mobile-sheet [class*="text-rose-7"] [class*="bg-white/7"],
+html.admin-console-toto.dark .admin-mobile-sheet [class*="text-rose-7"] [class*="bg-white/8"] {
+  background-color: hsl(343 100% 68% / 0.16);
+  border-color: hsl(343 100% 68% / 0.35);
+}
+html.admin-console-toto.dark .admin-mobile-sheet [class*="border-white/8"],
+html.admin-console-toto.dark .admin-mobile-sheet [class*="border-white/7"] {
+  border-color: hsl(169 79% 54% / 0.25);
 }
 
 /* --- Employee details drawer: header aligns with the body (24px padding,
@@ -776,9 +793,24 @@ html.admin-console-toto.dark [data-admin-ui] .admin-dropdown-surface {
 html.admin-console-toto.dark [data-admin-ui] .admin-mobile-nav {
   background: hsl(var(--card) / 0.96);
 }
-html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet,
-html.admin-console-toto.dark [data-admin-ui] .admin-mobile-tile {
+/* Elevation ladder (portal-proof, see the chip block above): dark page canvas
+   5% lightness → sheet --card 10% → tiles --popover 13% → hover/active steps
+   above. Teal signal carries the sheet hairline; the upward shadow lifts the
+   sheet off the content it covers. */
+html.admin-console-toto.dark .admin-mobile-sheet {
   background: hsl(var(--card) / 0.98);
+  border-top-color: hsl(169 79% 54% / 0.2);
+  box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.5);
+}
+html.admin-console-toto.dark .admin-mobile-tile {
+  background: hsl(var(--popover));
+  border-color: hsl(169 79% 54% / 0.2);
+}
+html.admin-console-toto.dark .admin-mobile-sheet .admin-mobile-tile:hover {
+  background-color: hsl(199 62% 16%);
+}
+html.admin-console-toto.dark .admin-mobile-sheet .admin-mobile-tile:active {
+  background-color: hsl(199 66% 18%);
 }
 
 /* --- status chip fills: the -100 steps and alpha-suffixed -50 variants the

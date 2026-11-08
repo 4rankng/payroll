@@ -96,13 +96,13 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
     ) : null;
 
   const sheetSurfaceClass =
-    "admin-mobile-sheet flex h-auto max-h-[78dvh] flex-col overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-border bg-card/95 px-0 pb-0 pt-0 backdrop-blur-xl";
+    "admin-mobile-sheet flex h-auto max-h-[78dvh] flex-col overflow-hidden rounded-t-[30px] border-x-0 border-b-0 border-t border-border bg-card/95 px-0 pb-0 pt-0 shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.25)] backdrop-blur-xl";
 
   const openGroupTitle = openGroup?.title ?? "Điều hướng";
 
   const renderSheetHandle = () => (
     <div className="flex justify-center pt-2.5">
-      <div className="h-1.5 w-12 rounded-full bg-[hsl(var(--border))]" />
+      <div className="h-1.5 w-12 rounded-full bg-[hsl(var(--muted-foreground)/0.5)]" />
     </div>
   );
 
@@ -120,7 +120,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
           "active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--secondary))] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--background))]",
           tone === "default" &&
             isActive &&
-            "border-[hsl(var(--primary))/0.25] !bg-[hsl(var(--primary))] text-white",
+            "border-[hsl(var(--primary))/0.25] !bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]",
           tone === "default" &&
             !isActive &&
             "text-[hsl(var(--foreground))] hover:border-[hsl(var(--border))] hover:bg-white",
@@ -136,7 +136,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
             tone === "danger"
               ? "border-white/80 bg-white/75 text-rose-700"
               : isActive
-                ? "border-white/10 bg-white/15 text-white"
+                ? "border-white/10 bg-white/15 text-[hsl(var(--primary-foreground))]"
                 : "border-[hsl(var(--border))/0.8] bg-white/80 text-[hsl(var(--primary))]"
           )}
         >
@@ -148,7 +148,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
             tone === "danger"
               ? "text-rose-700"
               : isActive
-                ? "text-white"
+                ? "text-[hsl(var(--primary-foreground))]"
                 : "text-[hsl(var(--foreground))]"
           )}
         >
@@ -345,9 +345,7 @@ export const MobileBottomNav = ({ groups, moreItems }: MobileBottomNavProps) => 
           className={sheetSurfaceClass}
           title="Chức năng khác"
         >
-          <div className="flex justify-center pt-2.5">
-            <div className="h-1.5 w-12 rounded-full bg-[hsl(var(--border))]" />
-          </div>
+          {renderSheetHandle()}
           <ul className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto bg-transparent px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 sm:grid-cols-3 sm:px-5">
             {moreItems?.map((item) => {
               const isActive = item.path ? location.pathname.startsWith(item.path) : false;
