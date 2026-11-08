@@ -246,6 +246,35 @@ describe("AdvancePaymentRequestForm", () => {
     expect(screen.queryByRole("button", { name: "Yêu cầu ứng lương" })).not.toBeInTheDocument();
   });
 
+  it("treats a sub-minimum remaining quota as exhausted instead of a generic lock", () => {
+    // 1,000 ₫ left of 9,721,000 ₫: below the 10,000 ₫ request minimum, so the
+    // card must say the quota is used up — not "Chưa mở / Chưa thể ứng lương".
+    render(
+      <AdvancePaymentRequestForm
+        {...baseProps}
+        info={{
+          ...info,
+          canRequest: false,
+          remainingAmount: 1_000,
+          quotas: [
+            {
+              ...info.quotas[0],
+              maxAdvanceAmount: 9_721_000,
+              completedAmount: 9_720_000,
+              remainingAmount: 1_000,
+            },
+          ],
+        }}
+      />
+    );
+
+    expect(screen.getAllByText("Đã dùng hết hạn mức").length).toBeGreaterThan(0);
+    expect(screen.getByText("Đã dùng 9.720.000 ₫")).toBeInTheDocument();
+    expect(screen.queryByText("Chưa thể ứng lương")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Số tiền muốn ứng")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Yêu cầu ứng lương" })).not.toBeInTheDocument();
+  });
+
   it("shows a proportional allowance summary for partially used quota", () => {
     render(
       <AdvancePaymentRequestForm

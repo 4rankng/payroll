@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { getDefaultAdvanceMonth } from "@/utils/advancePaymentHelpers";
+import { useSettingByKey } from "@/hooks/api/useSettings";
 import {
   useAdvancePayments,
   useAdvancePaymentSummary,
@@ -24,7 +25,25 @@ export function useAdvancePaymentsPage(options?: { employeesTabActive?: boolean 
     page: 1,
     pageSize: 20,
   });
-  const [selectedMonth, setSelectedMonth] = useState<string>(getDefaultAdvanceMonth());
+  // Opens on the heuristic default immediately; once the configured window-open
+  // day arrives (an early window e.g. day 7 makes current-month requests land
+  // before day 10), re-default once — unless the admin already chose a month.
+  const { data: windowOpenDaySetting } = useSettingByKey(
+    "self_check_in_advance_window_open_day",
+  );
+  const [selectedMonth, setSelectedMonthRaw] = useState<string>(getDefaultAdvanceMonth());
+  const monthTouchedRef = useRef(false);
+  const setSelectedMonth = useCallback((month: string) => {
+    monthTouchedRef.current = true;
+    setSelectedMonthRaw(month);
+  }, []);
+  const configuredWindowDay = windowOpenDaySetting?.value
+    ? Number.parseInt(windowOpenDaySetting.value, 10)
+    : Number.NaN;
+  useEffect(() => {
+    if (Number.isNaN(configuredWindowDay) || monthTouchedRef.current) return;
+    setSelectedMonthRaw(getDefaultAdvanceMonth(new Date(), configuredWindowDay));
+  }, [configuredWindowDay]);
   const [flexPayFilters, setFlexPayFilters] = useState<FlexPayEmployeeFilters>({
     page: 1,
     pageSize: 20,

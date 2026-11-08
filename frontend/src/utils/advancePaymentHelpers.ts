@@ -415,18 +415,22 @@ export const ADVANCE_REQUEST_WINDOW_OPEN_DAY = 10;
 /**
  * Default month (YYYY-MM) to open the admin advance-payments list on.
  *
- * From `ADVANCE_REQUEST_WINDOW_OPEN_DAY` onward, a new self-check-in request
- * lands in the current calendar month (the request window opens on day 10);
- * before that, new non-check-in requests land in the previous month (tail of
- * the previous advance period). Defaulting the admin list to that same month
- * keeps freshly-created requests visible without manually switching the
- * selector.
+ * From the configured window-open day onward, a new self-check-in request
+ * lands in the current calendar month; before that, new non-check-in requests
+ * land in the previous month (tail of the previous advance period).
+ * Defaulting the admin list to that same month keeps freshly-created requests
+ * visible without manually switching the selector. `windowOpenDay` is the
+ * Admin-configured value when the caller has it (falls back to the mirrored
+ * backend default 10).
  *
- * `now` is injectable for testing.
+ * Both parameters are injectable for testing.
  */
-export function getDefaultAdvanceMonth(now: Date = new Date()): string {
+export function getDefaultAdvanceMonth(
+  now: Date = new Date(),
+  windowOpenDay: number = ADVANCE_REQUEST_WINDOW_OPEN_DAY,
+): string {
   const monthDate =
-    now.getDate() < ADVANCE_REQUEST_WINDOW_OPEN_DAY
+    now.getDate() < windowOpenDay
       ? new Date(now.getFullYear(), now.getMonth() - 1, 1)
       : now;
   return `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
@@ -522,12 +526,14 @@ export function getFeeBreakdown(amount: number): {
 /**
  * The salary period the self check-in advance surface serves right now.
  *
- * The backend owns this rule, and the UI must not restate it: during the
- * days 1-8 tail the check-in flow serves the PREVIOUS month (the regular flow
- * refuses a check-in period outright), and from day 10 it serves the current
- * month, with day 9 locked. So the response's own `forMonth` wins whenever it
- * has arrived; the calendar below is only the pre-response fallback so the
- * first paint does not flash the wrong surface.
+ * The backend owns this rule, and the UI must not restate it: from the
+ * admin-configured window-open day (which may sit inside the days 1-8 tail,
+ * e.g. day 7) the check-in flow serves the CURRENT month, and before that it
+ * serves the previous month during the tail, with a locked gap in between
+ * when the window opens after the cutoff. So the response's own `forMonth`
+ * wins whenever it has arrived; the calendar below is only the pre-response
+ * fallback (default window day 10) so the first paint does not flash the
+ * wrong surface.
  */
 export function resolveCheckInServedMonth(input: {
   servedMonth?: string | null;

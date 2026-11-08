@@ -73,6 +73,91 @@ func TestIsCheckInRequestWindowOpenConfiguredDay(t *testing.T) {
 	}
 }
 
+// With a window-open day inside the days 1-8 tail (7 < RequestCutoffDay 8),
+// the current month opens ON the configured day while the previous month's
+// tail stays open: both periods are requestable during the overlap, and the
+// "xin ứng từ ngày 7" employee-facing message must hold.
+func TestIsCheckInRequestWindowOpenEarlyWindowOverlapsTail(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*3600)
+	cases := []struct {
+		name     string
+		now      time.Time
+		forMonth string
+		want     bool
+	}{
+		{"day 6 current month - locked before window", time.Date(2026, 11, 6, 12, 0, 0, 0, loc), "2026-11", false},
+		{"day 6 previous tail - open", time.Date(2026, 11, 6, 12, 0, 0, 0, loc), "2026-10", true},
+		{"day 7 current month - open on window day", time.Date(2026, 11, 7, 0, 1, 0, 0, loc), "2026-11", true},
+		{"day 8 current month - open", time.Date(2026, 11, 8, 23, 59, 0, 0, loc), "2026-11", true},
+		{"day 8 previous tail - still open in overlap", time.Date(2026, 11, 8, 23, 59, 0, 0, loc), "2026-10", true},
+		{"day 9 previous tail - closed after cutoff", time.Date(2026, 11, 9, 0, 1, 0, 0, loc), "2026-10", false},
+		{"day 9 current month - open", time.Date(2026, 11, 9, 0, 1, 0, 0, loc), "2026-11", true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, 7); got != c.want {
+				t.Errorf("isCheckInRequestWindowOpen(%s, %s, 7) = %v, want %v",
+					c.now.Format("2006-01-02"), c.forMonth, got, c.want)
+			}
+		})
+	}
+}
+
+// The info endpoint must serve the current month once the early window opens,
+// not the previous-month tail it served the day before.
+func TestCheckInRequestPeriodServesCurrentMonthOnEarlyWindow(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*3600)
+	cases := []struct {
+		name         string
+		now          time.Time
+		wantForMonth string
+		wantOpen     bool
+	}{
+		{"day 6 - previous tail served", time.Date(2026, 11, 6, 12, 0, 0, 0, loc), "2026-10", true},
+		{"day 7 - current month served", time.Date(2026, 11, 7, 0, 1, 0, 0, loc), "2026-11", true},
+		{"day 8 - current month served", time.Date(2026, 11, 8, 23, 59, 0, 0, loc), "2026-11", true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			forMonth, open := checkInRequestPeriod(c.now, 7)
+			if forMonth != c.wantForMonth || open != c.wantOpen {
+				t.Errorf("checkInRequestPeriod(%s, 7) = (%s, %v), want (%s, %v)",
+					c.now.Format("2006-01-02"), forMonth, open, c.wantForMonth, c.wantOpen)
+			}
+		})
+	}
+}
+
+// The setting is valid as low as day 1 (bounds 1-28): with windowOpenDay=1 the
+// current month must be requestable from the 1st, all month, while the
+// previous tail keeps its days 1-8 window.
+func TestIsCheckInRequestWindowOpenDayOne(t *testing.T) {
+	loc := time.FixedZone("ICT", 7*3600)
+	cases := []struct {
+		name     string
+		now      time.Time
+		forMonth string
+		want     bool
+	}{
+		{"day 1 current month - open", time.Date(2026, 11, 1, 0, 1, 0, 0, loc), "2026-11", true},
+		{"day 1 previous tail - open", time.Date(2026, 11, 1, 0, 1, 0, 0, loc), "2026-10", true},
+		{"day 2 previous tail - open", time.Date(2026, 11, 2, 12, 0, 0, 0, loc), "2026-10", true},
+		{"day 9 previous tail - closed", time.Date(2026, 11, 9, 12, 0, 0, 0, loc), "2026-10", false},
+		{"day 28 current month - open", time.Date(2026, 11, 28, 23, 59, 0, 0, loc), "2026-11", true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, 1); got != c.want {
+				t.Errorf("isCheckInRequestWindowOpen(%s, %s, 1) = %v, want %v",
+					c.now.Format("2006-01-02"), c.forMonth, got, c.want)
+			}
+		})
+	}
+	if forMonth, open := checkInRequestPeriod(time.Date(2026, 11, 1, 0, 1, 0, 0, loc), 1); forMonth != "2026-11" || !open {
+		t.Errorf("checkInRequestPeriod(day 1, window 1) = (%s, %v), want (2026-11, true)", forMonth, open)
+	}
+}
+
 // TestDefaultSelfCheckInAdvancePercentage verifies the fallback percentage and
 // integer advanceable formula (salary * percent / 100). Floor semantics, no
 // float drift.

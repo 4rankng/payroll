@@ -132,11 +132,13 @@ const FlexiblePayEmployeePage = () => {
   const calculateFeeMutation = useCalculateFee();
   const regularRequestMutation = useRequestAdvancePayment();
   const checkInRequestMutation = useRequestCheckInAdvance();
-  // Month decides the endpoint, and the surface that owns the month is the one
-  // whose served period matched. Both mutations share the same payload.
-  const requestMutation = isCheckIn ? checkInRequestMutation : regularRequestMutation;
+  // A check-in employee's requests ALWAYS go through the check-in endpoint:
+  // during the tail/window overlap it accepts both the previous tail month
+  // and the current month, while the regular endpoint refuses periods funded
+  // by check-in earnings outright.
+  const requestMutation = isCheckInEnabled ? checkInRequestMutation : regularRequestMutation;
   // After a submit, refetch whichever surface owns the requested month.
-  const refetchOwnedInfo = isCheckIn ? checkInInfoQuery.refetch : regularInfoQuery.refetch;
+  const refetchOwnedInfo = isCheckInEnabled ? checkInInfoQuery.refetch : regularInfoQuery.refetch;
   const cancelMutation = useCancelAdvancePaymentRequest();
   const updatePasswordMutation = useUpdateEmployeePassword();
 
@@ -144,18 +146,34 @@ const FlexiblePayEmployeePage = () => {
   const history = historyResponse?.data ?? EMPTY_HISTORY;
   const historyTotal = historyResponse?.pagination?.totalRecords ?? history.length;
 
+  // When a check-in employee views a month the check-in surface does not serve
+  // (e.g. the previous tail month during the window overlap), the quota
+  // numbers come from the regular surface — carry the check-in window-open day
+  // across so the form's "next window" copy stays truthful.
+  const formInfo =
+    isCheckInEnabled && !isCheckIn && checkInInfoQuery.data?.data?.windowOpenDay !== undefined
+      ? { ...info, windowOpenDay: checkInInfoQuery.data?.data?.windowOpenDay }
+      : info;
+
   // Which month the app opens on. A non-check-in employee can request against
   // the previous payroll month through the cutoff, and the API's forMonth is
   // authoritative for that case. A check-in employee opens on the period their
-  // own surface serves: during the 1-8 tail that is the PREVIOUS month, which
-  // is also the only period the regular flow will not refuse, so the prior-month
-  // heuristic below would be actively wrong for them.
+  // own surface serves — the current month from the configured window-open day
+  // (even during the days 1-8 tail when the admin opened the window early),
+  // otherwise the previous month during that tail.
   useEffect(() => {
     if (profileLoading || !profile || infoLoading || !info || initialMonthResolvedRef.current) return;
+    // The check-in surface's forMonth is authoritative and may name the
+    // CURRENT month during an early window (open day inside the days 1-8
+    // tail) — the pre-response calendar fallback cannot know that, so the
+    // initial month must wait for the real answer.
+    if (isCheckInEnabled && !checkInInfoQuery.data?.data && !checkInInfoQuery.isError) return;
 
     let initialMonth: string | undefined;
     if (isCheckInEnabled) {
-      initialMonth = checkInServesMonth;
+      // An explicit ?month= is a deliberate view (shared link, history
+      // browsing) — keep it, same as the non-check-in branch below.
+      initialMonth = hasExplicitMonth ? undefined : checkInServesMonth;
     } else {
       initialMonth = getInitialEmployeeAdvanceMonth(info?.forMonth, false, hasExplicitMonth);
     }
@@ -172,6 +190,8 @@ const FlexiblePayEmployeePage = () => {
     profileLoading,
     profile,
     regularInfoQuery.data,
+    checkInInfoQuery.data,
+    checkInInfoQuery.isError,
     checkInServesMonth,
     currentCalMonth,
     prevCalMonth,
@@ -270,7 +290,11 @@ const FlexiblePayEmployeePage = () => {
     setPasswordSheetOpen(false);
   };
 
-  const isInitialLoading = profileLoading || infoLoading;
+  // Hold the skeleton until the initial month can be resolved authoritatively
+  // (the check-in surface response names the served period) so an early
+  // window never flashes the wrong period's card first.
+  const isInitialLoading =
+    profileLoading || infoLoading || (isCheckInEnabled && checkInInfoQuery.isLoading);
 
   if (isInitialLoading) {
     return (
@@ -337,7 +361,7 @@ const FlexiblePayEmployeePage = () => {
           <section id="employee-advance-request" className="scroll-mt-24 lg:col-start-1 lg:row-start-1">
             <AdvancePaymentRequestForm
               key={`${formKey}-${month.value}`}
-              info={info}
+              info={formInfo}
               viewMonth={month.value}
               // The check-in surface serves exactly the requestable period;
               // closed/exhausted derives from its own quota, not the regular
@@ -349,7 +373,11 @@ const FlexiblePayEmployeePage = () => {
                     ? !isPriorMonthRequestable(new Date(), prevCalMonth, regularInfoQuery.data?.data)
                     : isPastAdvancePaymentPeriod(month.value, info.forMonth)
               }
-              isSelfCheckInFlow={isCheckIn}
+              // Every request a check-in employee submits rides the check-in
+              // endpoint (see requestMutation), so the form uses that flow's
+              // copy — including for a previous-month tail view whose quota
+              // numbers still come from the regular surface below.
+              isSelfCheckInFlow={isCheckInEnabled}
               history={history}
               feeDetails={feeDetails}
               feeError={feeError}

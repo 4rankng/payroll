@@ -366,6 +366,14 @@ describe("getDefaultAdvanceMonth", () => {
     expect(getDefaultAdvanceMonth(new Date(2026, 0, 10, 12))).toBe("2026-01");
   });
 
+  it("honours a configured early window-open day instead of the fallback 10", () => {
+    // Admin opened the window on day 7: on day 7 the current month already
+    // owns new requests; on day 6 the previous-month tail still does.
+    expect(getDefaultAdvanceMonth(new Date(2026, 6, 7, 12), 7)).toBe("2026-07");
+    expect(getDefaultAdvanceMonth(new Date(2026, 6, 6, 12), 7)).toBe("2026-06");
+    expect(getDefaultAdvanceMonth(new Date(2026, 6, 1, 12), 1)).toBe("2026-07");
+  });
+
   it("returns a YYYY-MM string when called with no argument", () => {
     expect(getDefaultAdvanceMonth()).toMatch(/^\d{4}-\d{2}$/);
   });

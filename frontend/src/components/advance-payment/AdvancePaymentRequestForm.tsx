@@ -155,7 +155,11 @@ export function AdvancePaymentRequestForm({
 
   const awaitingPayroll =
     !isSelfCheckInFlow && !isPastMonth && quotaSummary.maxAdvanceAmount <= 0;
-  const quotaExhausted = quotaSummary.maxAdvanceAmount > 0 && selectedQuotaRemaining <= 0;
+  // The backend refuses requests below the 10,000 ₫ minimum (same constant),
+  // so a sub-minimum remaining amount is an exhausted quota for display too —
+  // otherwise the card falls through to a misleading generic "Chưa mở".
+  const quotaExhausted =
+    quotaSummary.maxAdvanceAmount > 0 && selectedQuotaRemaining < ADVANCE_PAYMENT_CONSTANTS.MIN_AMOUNT;
   // Before window-open day the next check-in period is not requestable yet,
   // so an exhausted prior month must point at the opening date instead of a
   // dead-end "choose the current period".
