@@ -118,21 +118,21 @@ export const MobilePageHeader = ({
             )}
           </div>
         </div>
-        {actions && (
+        {(actions || showThemeToggle) && (
           <div
             className={cn(
-              'flex shrink-0 flex-wrap items-center justify-end gap-2 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl',
+              'flex flex-wrap items-center gap-2 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:rounded-xl',
               actionsLayout === 'inline'
-                ? 'ml-auto basis-auto max-w-[52%]'
-                : 'basis-full max-w-full sm:basis-auto sm:max-w-[56%]',
+                ? 'ml-auto basis-auto max-w-[52%] justify-end'
+                : 'w-full justify-end',
             )}
           >
             {actions}
-          </div>
-        )}
-        {showThemeToggle && (
-          <div className="ml-auto flex shrink-0 items-center md:hidden [&_button]:h-9 [&_button]:w-9 [&_button]:min-h-0 [&_button]:rounded-lg [&_button]:p-0">
-            <ThemeToggle />
+            {showThemeToggle && (
+              <div className="ml-auto flex shrink-0 items-center md:hidden [&_button]:h-11 [&_button]:w-11 [&_button]:min-h-0 [&_button]:rounded-xl [&_button]:p-0">
+                <ThemeToggle />
+              </div>
+            )}
           </div>
         )}
       </div>

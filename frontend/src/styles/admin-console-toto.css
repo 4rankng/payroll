@@ -653,6 +653,29 @@ html.admin-console-toto.partner-route-active :is([role="dialog"], [role="menu"],
   html.admin-console-toto ::-webkit-scrollbar,
   html.admin-console-toto body::-webkit-scrollbar { width: 0; height: 0; }
 }
+/* Console filter strip on touch widths (mobile + tablet): search field, date
+   range, tabs and buttons share the 12px console type rhythm — the desktop
+   16px input floor reads oversized next to 13px body copy. */
+@media (max-width: 1023.98px) {
+  html.admin-console-toto :is(.admin-filter-bar, .console-filter-bar) :is(input, [role="combobox"], button, [role="button"], [role="tab"]) {
+    font-size: 12px;
+  }
+}
+/* Account/more sheets: the tile icon chips ship white/75-80 fills tuned for
+   light chrome. On the dark sheet they wash out — flip to the teal-signal
+   treatment (danger chips keep their rose identity at dark-tint values). */
+html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet [class*="bg-white/7"],
+html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet [class*="bg-white/8"] {
+  background-color: rgba(46, 230, 197, 0.10);
+  border-color: rgba(46, 230, 197, 0.35);
+}
+html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet [class*="text-rose-7"] {
+  color: hsl(350 100% 80%);
+}
+html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet [class*="border-white/8"],
+html.admin-console-toto.dark [data-admin-ui] .admin-mobile-sheet [class*="border-white/7"] {
+  border-color: rgba(46, 230, 197, 0.35);
+}
 
 /* --- Employee details drawer: header aligns with the body (24px padding,
    space-between, 76px band) instead of the shared centered panel-header; the

@@ -54,7 +54,9 @@ describe('MobilePageHeader', () => {
     const actionsContainer = action.parentElement;
     const headerRow = screen.getByRole('heading', { name: 'Dự án' }).parentElement?.parentElement?.parentElement;
 
-    expect(actionsContainer).toHaveClass('basis-full', 'max-w-full', 'sm:basis-auto');
+    // Stacked layout gives the actions their own full-width row (no theme
+    // toggle mounted outside the admin surface → it renders without one).
+    expect(actionsContainer).toHaveClass('w-full', 'justify-end');
     expect(headerRow).toHaveClass('flex-wrap', 'sm:flex-nowrap');
   });
 });
