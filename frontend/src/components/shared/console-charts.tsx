@@ -81,8 +81,10 @@ const RADIUS = 44;
 const RING = 10;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-/** One donut: 10px ring segments from 12 o'clock, centre figure, stacked
- *  legend with whole-percent shares. Total ≤ 0 renders the bare track ring. */
+/** One donut: 10px ring segments from 12 o'clock with the headline figure
+ *  beside it (never inside — full currency strings outgrow the hole), plus a
+ *  stacked legend with whole-percent shares. Total ≤ 0 renders the bare
+ *  track ring. */
 export function ConsoleDonut({
   segments,
   centreValue,
@@ -106,35 +108,42 @@ export function ConsoleDonut({
 
   return (
     <div className={className}>
-      <div className="relative mx-auto w-[120px]" role="img" aria-label={`${centreLabel} ${centreValue}`}>
-        <svg viewBox="0 0 120 120" width={120} height={120}>
-          <g transform="rotate(-90 60 60)">
-            <circle
-              cx={60}
-              cy={60}
-              r={RADIUS}
-              fill="none"
-              strokeWidth={RING}
-              stroke="hsl(var(--border) / 0.5)"
-            />
-            {arcs.map((arc, index) => (
+      <div className="flex items-center gap-4">
+        <div className="relative w-[120px] shrink-0" role="img" aria-label={`${centreLabel} ${centreValue}`}>
+          <svg viewBox="0 0 120 120" width={120} height={120}>
+            <g transform="rotate(-90 60 60)">
               <circle
-                key={index}
                 cx={60}
                 cy={60}
                 r={RADIUS}
                 fill="none"
                 strokeWidth={RING}
-                stroke={arc.color}
-                strokeDasharray={arc.dasharray}
-                strokeDashoffset={arc.dashoffset}
+                stroke="hsl(var(--border) / 0.5)"
               />
-            ))}
-          </g>
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-          <span className="console-value font-display text-xl font-bold leading-none">{centreValue}</span>
-          <span className="console-kicker">{centreLabel}</span>
+              {arcs.map((arc, index) => (
+                <circle
+                  key={index}
+                  cx={60}
+                  cy={60}
+                  r={RADIUS}
+                  fill="none"
+                  strokeWidth={RING}
+                  stroke={arc.color}
+                  strokeDasharray={arc.dasharray}
+                  strokeDashoffset={arc.dashoffset}
+                />
+              ))}
+            </g>
+          </svg>
+        </div>
+        {/* Figure sits BESIDE the ring, never inside it: a full currency
+            string is wider than the 78px hole and used to collide with the
+            ring segments. */}
+        <div className="min-w-0 flex-1">
+          <span className="console-value block break-words font-display text-xl font-bold leading-tight">
+            {centreValue}
+          </span>
+          <span className="console-kicker mt-1 block">{centreLabel}</span>
         </div>
       </div>
 
