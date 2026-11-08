@@ -387,7 +387,7 @@ export default function TimesheetsPage() {
 
   return (
     <div className="min-h-full bg-[radial-gradient(circle_at_100%_0%,rgba(8,120,62,0.12),transparent_29rem)] p-3 sm:p-4">
-      <div className="mx-auto max-w-[1320px] space-y-4">
+      <div className="mx-auto max-w-[1480px] space-y-4">
 
         {/* Header */}
         <div className="rounded-xl border border-input bg-card p-3 shadow-xs motion-safe:animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:both] sm:p-4">

@@ -595,7 +595,9 @@ html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [
   font-size: 14px;
 }
 html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [class*="text-white/7"],
-html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [class*="text-white/6"] {
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [class*="text-white/6"],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [class*="text-white/5"],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [class*="text-white/4"] {
   color: hsl(197 17% 41%) !important;
 }
 html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .hover\:text-white:hover {
@@ -635,14 +637,32 @@ html.admin-console-toto.dark :is([data-admin-ui] .admin-sidebar-surface, [data-p
 }
 
 /* --- partner portal surfaces --- */
-/* The partner shell paints its own canvas (no .admin-shell wrapper). */
+/* Partner shell paints its own canvas (no .admin-shell wrapper). */
 html.admin-console-toto [data-partner-ui].partner-shell-scope { background: hsl(var(--background)); }
+/* Same bell-clearance policy as the admin frame: at ≥768px the fixed bell
+   sits inside the content flow edge and the 4.5rem reserve goes away. */
+@media (min-width: 768px) {
+  html.admin-console-toto [data-partner-ui] .mobile-main-content { padding-right: 0; }
+}
 /* Radix portals dropdown/dialog content at body level — outside
    [data-partner-ui] — so this routes by the html class pair. */
 html.admin-console-toto.partner-route-active :is([role="dialog"], [role="menu"], [role="listbox"], [role="select-content"]) {
   border-color: hsl(var(--border));
   background-color: hsl(var(--popover));
   color: hsl(var(--popover-foreground));
+}
+/* Console tables: collapse ignores corner radii, so the square header band
+   leaves light notches at the card's rounded top corners. Separate (spacing 0)
+   lets the band round with the card. */
+html.admin-console-toto :is([data-admin-ui], [data-partner-ui]) .console-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+html.admin-console-toto :is([data-admin-ui], [data-partner-ui]) .console-table thead th:first-child {
+  border-top-left-radius: 8px;
+}
+html.admin-console-toto :is([data-admin-ui], [data-partner-ui]) .console-table thead th:last-child {
+  border-top-right-radius: 8px;
 }
 /* Touch widths: classic scrollbars reserve a gutter strip the fixed bottom
    nav cannot cover (the "gap to the right edge"). Overlay-style scrolling is

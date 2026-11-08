@@ -56,6 +56,7 @@ import {
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserProfileSheet } from "@/components/sheets/UserProfileSheet";
 import { SidebarToggle } from "@/components/shared/SidebarToggle";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useAuth } from "@/contexts";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { MODAL_IDS } from "@/constants/modalRegistry";
@@ -476,6 +477,9 @@ const AdminSidebar = () => {
         {/* Footer — user menu */}
         <SidebarSeparator className="bg-card/[0.06] m-0 shrink-0" />
         <SidebarFooter className="p-2 shrink-0">
+          <div className={cn("flex gap-2", isCollapsed ? "flex-col items-center" : "items-center")}>
+          {/* Theme toggle rides the account card — the rail has the room. */}
+          <ThemeToggle className="shrink-0 border-sidebar-border/60 bg-transparent text-sidebar-foreground hover:bg-sidebar-accent/70" />
           <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -490,7 +494,7 @@ const AdminSidebar = () => {
                     "admin-sidebar-account relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer outline-none",
                     "bg-card/[0.04] border border-white/[0.06]",
                     "hover:bg-card/[0.08] hover:border-white/[0.1]",
-                    isCollapsed ? "h-9 w-9 justify-center self-center" : "h-auto min-h-11 px-2.5 py-2 gap-2.5 lg:min-h-[40px]"
+                    isCollapsed ? "h-9 w-9 justify-center self-center" : "h-auto min-h-11 min-w-0 flex-1 px-2.5 py-2 gap-2.5 lg:min-h-[40px]"
                   )}
                 >
                   {isCollapsed && user && (
@@ -562,6 +566,7 @@ const AdminSidebar = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
 
           {!isCollapsed && (
             <p className="text-xs text-white/70 text-center pt-1 pb-1 tracking-wide select-none">

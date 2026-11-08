@@ -474,7 +474,7 @@ const EmployeesPage = () => {
 
   return (
     <div className="min-h-full px-4 py-5 lg:px-8 lg:py-7">
-      <div className="mx-auto max-w-[1320px] space-y-4">
+      <div className="mx-auto max-w-[1480px] space-y-4">
 
         <div className="motion-safe:animate-fade-in-up [animation-delay:50ms] [animation-fill-mode:both]">
           <PageHeader

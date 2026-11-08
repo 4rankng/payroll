@@ -59,7 +59,7 @@ export default function WalletPageMobile() {
           </div>
           {/* Admin routes carry the theme toggle in the title row on phones. */}
           {typeof document !== 'undefined' && document.querySelector('[data-admin-ui]') && (
-            <div className="[&_button]:h-11 [&_button]:w-11 [&_button]:min-h-0 [&_button]:rounded-xl [&_button]:p-0">
+            <div className="md:hidden [&_button]:h-11 [&_button]:w-11 [&_button]:min-h-0 [&_button]:rounded-xl [&_button]:p-0">
               <ThemeToggle />
             </div>
           )}

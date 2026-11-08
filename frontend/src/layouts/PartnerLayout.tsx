@@ -3,7 +3,6 @@ import { Outlet } from "react-router-dom";
 import PartnerSidebar from "@/components/PartnerSidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { NotificationFAB } from "@/components/notifications/NotificationFAB";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
@@ -36,13 +35,6 @@ const PartnerLayoutInner = ({ isPartner }: { isPartner: boolean }) => {
       data-theme={isPartner ? "congtruong" : undefined}
       className={isPartner ? "partner-shell-scope relative flex h-dvh w-full group/layout" : "relative flex h-dvh w-full group/layout"}
     >
-      {/* Sticky appearance switch, mirroring AdminLayout (phones use the
-          page-header toggle inside MobilePageHeader). */}
-      {isPartner && (
-        <div className="fixed right-3 top-3 z-40 hidden md:block">
-          <ThemeToggle className="bg-card/80 shadow-sm backdrop-blur-sm" />
-        </div>
-      )}
       <PartnerSidebar />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <main

@@ -50,7 +50,7 @@ export function AdvancePaymentPageHeaderMobile({
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
         {/* Admin routes carry the theme toggle in the title row on phones. */}
         {typeof document !== "undefined" && document.querySelector("[data-admin-ui]") && (
-          <div className="[&_button]:h-11 [&_button]:min-h-0 [&_button]:w-11 [&_button]:rounded-xl [&_button]:p-0">
+          <div className="md:hidden [&_button]:h-11 [&_button]:min-h-0 [&_button]:w-11 [&_button]:rounded-xl [&_button]:p-0">
             <ThemeToggle />
           </div>
         )}

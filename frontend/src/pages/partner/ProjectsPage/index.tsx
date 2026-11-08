@@ -274,7 +274,7 @@ const ProjectsPage = () => {
 
   return (
     <div className="min-h-full bg-[radial-gradient(circle_at_top_right,rgba(8,120,62,0.10),transparent_31rem)] px-4 py-5 lg:px-8 lg:py-7">
-      <div className="mx-auto max-w-[1320px] space-y-5">
+      <div className="mx-auto max-w-[1480px] space-y-5">
         <div className="rounded-xl border border-input bg-card p-5 shadow-xs md:p-6">
           <PageHeader
             title="Dự án"
