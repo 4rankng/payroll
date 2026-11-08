@@ -60,19 +60,21 @@ export const EmployeeActions = memo(({
   }
 
   // ─── View mode — delete/reset/close ──────────────────────────────────────
-  // All actions share one row of equal cells. Icon sits above the label (the
-  // same pattern the mobile wallet action row uses) so a long Vietnamese label
-  // like "Đổi mật khẩu" still fits a third of a 320px sheet without truncation.
+  // Desktop: destructive "Xóa" sits left and isolated; "Đổi mật khẩu" and
+  // "Đóng" right-align as quiet outline buttons — a dismiss never outshouts
+  // the real actions. Phones keep the full-width stacked grid (tap targets).
   const actions = [
     canDelete && onDelete
       ? {
           key: "delete",
           label: "Xóa",
           icon: Trash2,
+          variant: "ghost" as const,
           onClick: onDelete,
           className: cn(
             "border border-destructive/30 bg-destructive/10 text-destructive",
             "hover:bg-destructive/20 hover:text-destructive",
+            "sm:mr-auto",
           ),
         }
       : null,
@@ -81,8 +83,9 @@ export const EmployeeActions = memo(({
           key: "reset",
           label: "Đổi mật khẩu",
           icon: KeyRound,
+          variant: "outline" as const,
           onClick: onResetPassword,
-          className: "border border-border bg-card text-foreground hover:bg-muted",
+          className: "",
         }
       : null,
     onClose
@@ -90,6 +93,7 @@ export const EmployeeActions = memo(({
           key: "close",
           label: "Đóng",
           icon: X,
+          variant: "outline" as const,
           onClick: onClose,
           className: "",
         }
@@ -99,22 +103,17 @@ export const EmployeeActions = memo(({
   if (actions.length === 0) return null;
 
   return (
-    <div
-      className="grid gap-2"
-      style={{
-        gridTemplateColumns: `repeat(${actions.length}, minmax(0, 1fr))`,
-      }}
-    >
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
       {actions.map((action) => {
         const Icon = action.icon;
         return (
           <Button
             key={action.key}
             type="button"
-            variant={action.key === "close" ? "default" : "ghost"}
+            variant={action.variant}
             onClick={action.onClick}
             className={cn(
-              "h-auto min-h-11 flex-col gap-1 px-2 py-2 text-xs",
+              "h-11 min-h-11 w-full flex-row items-center justify-center gap-2 px-4 text-sm font-medium sm:w-auto sm:px-5 rounded-lg",
               action.className,
             )}
           >

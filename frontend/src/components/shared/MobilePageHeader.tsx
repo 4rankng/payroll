@@ -3,6 +3,7 @@
 import type { ComponentType, SVGProps } from 'react';
 import { ArrowLeft } from '@untitledui/icons';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { cn } from '@/lib/utils';
 
 interface MobilePageHeaderProps {
@@ -52,6 +53,10 @@ export const MobilePageHeader = ({
   bordered = false,
   className,
 }: MobilePageHeaderProps) => {
+  // Admin routes carry the toto theme toggle in the title row on phones — the
+  // viewport corner belongs to the OS status bar there. Partner/employee
+  // mobile headers (no [data-admin-ui] wrapper) render without it.
+  const showThemeToggle = typeof document !== 'undefined' && !!document.querySelector('[data-admin-ui]');
   return (
     <div
       className={cn(
@@ -123,6 +128,11 @@ export const MobilePageHeader = ({
             )}
           >
             {actions}
+          </div>
+        )}
+        {showThemeToggle && (
+          <div className="ml-auto flex shrink-0 items-center md:hidden [&_button]:h-9 [&_button]:w-9 [&_button]:min-h-0 [&_button]:rounded-lg [&_button]:p-0">
+            <ThemeToggle />
           </div>
         )}
       </div>

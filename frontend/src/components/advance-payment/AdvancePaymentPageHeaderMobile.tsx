@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import {
   Sheet,
   SheetContent,
@@ -47,6 +48,12 @@ export function AdvancePaymentPageHeaderMobile({
       </div>
 
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
+        {/* Admin routes carry the theme toggle in the title row on phones. */}
+        {typeof document !== "undefined" && document.querySelector("[data-admin-ui]") && (
+          <div className="[&_button]:h-9 [&_button]:min-h-0 [&_button]:w-9 [&_button]:rounded-lg [&_button]:p-0">
+            <ThemeToggle />
+          </div>
+        )}
         <Button
           onClick={onImportPayroll}
           size="sm"

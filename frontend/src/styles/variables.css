@@ -385,37 +385,40 @@
 
   [data-partner-ui],
   html.partner-route-active {
-    --background: var(--partner-background);
-    --foreground: var(--partner-foreground);
-    --card: var(--partner-card);
-    --card-foreground: var(--partner-card-foreground);
-    --popover: var(--partner-popover);
-    --popover-foreground: var(--partner-popover-foreground);
-    --primary: var(--partner-primary);
-    --primary-foreground: var(--partner-primary-foreground);
-    --secondary: var(--partner-secondary);
-    --secondary-foreground: var(--partner-secondary-foreground);
-    --muted: var(--partner-muted);
-    --muted-foreground: var(--partner-muted-foreground);
-    --accent: var(--partner-accent-soft);
-    --accent-foreground: var(--partner-accent-foreground);
-    --border: var(--partner-border);
-    --input: var(--partner-input);
-    --ring: var(--partner-ring);
-    --success: var(--partner-success);
-    --success-foreground: var(--partner-success-foreground);
-    --warning: var(--partner-warning);
-    --info: var(--partner-info);
-    --destructive: var(--partner-destructive);
-    --destructive-foreground: var(--partner-destructive-foreground);
-    --sidebar-background: var(--partner-sidebar-background);
-    --sidebar-foreground: var(--partner-sidebar-foreground);
-    --sidebar-primary: var(--partner-sidebar-primary);
-    --sidebar-primary-foreground: var(--partner-sidebar-primary-foreground);
-    --sidebar-accent: var(--partner-sidebar-accent);
-    --sidebar-accent-foreground: var(--partner-sidebar-accent-foreground);
-    --sidebar-border: var(--partner-sidebar-border);
-    --sidebar-ring: var(--partner-sidebar-ring);
+    /* Partner routes now share the toto console design (user call): the alias
+       re-points at the same --admin-* tokens the admin scope uses, so light,
+       dark and every structural rule stay in lockstep across roles. */
+    --background: var(--admin-background);
+    --foreground: var(--admin-foreground);
+    --card: var(--admin-card);
+    --card-foreground: var(--admin-card-foreground);
+    --popover: var(--admin-popover);
+    --popover-foreground: var(--admin-popover-foreground);
+    --primary: var(--admin-primary);
+    --primary-foreground: var(--admin-primary-foreground);
+    --secondary: var(--admin-secondary);
+    --secondary-foreground: var(--admin-secondary-foreground);
+    --muted: var(--admin-muted);
+    --muted-foreground: var(--admin-muted-foreground);
+    --accent: var(--admin-accent-soft);
+    --accent-foreground: var(--admin-accent-foreground);
+    --border: var(--admin-border);
+    --input: var(--admin-input);
+    --ring: var(--admin-ring);
+    --success: var(--admin-success);
+    --success-foreground: var(--admin-success-foreground);
+    --warning: var(--admin-warning);
+    --info: var(--admin-info);
+    --destructive: var(--admin-destructive);
+    --destructive-foreground: var(--admin-destructive-foreground);
+    --sidebar-background: var(--admin-sidebar-background);
+    --sidebar-foreground: var(--admin-sidebar-foreground);
+    --sidebar-primary: var(--admin-sidebar-primary);
+    --sidebar-primary-foreground: var(--admin-sidebar-primary-foreground);
+    --sidebar-accent: var(--admin-sidebar-accent);
+    --sidebar-accent-foreground: var(--admin-sidebar-accent-foreground);
+    --sidebar-border: var(--admin-sidebar-border);
+    --sidebar-ring: var(--admin-sidebar-ring);
     --partner-accent: 43 81% 63%;
   }
 }

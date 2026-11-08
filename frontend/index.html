@@ -32,11 +32,12 @@
     <meta name="build-version" content="%BUILD_VERSION%" />
 
     <!-- Admin dark console: pre-paint guard. Re-applies the persisted theme
-         before first paint so /admin never flashes light on reload. The class
-         is scoped to /admin paths; useAdminTheme removes it when leaving. -->
+         before first paint so /admin and /partner never flash light on
+         reload. The class is scoped to those paths; useAdminTheme removes it
+         when leaving. -->
     <script>
       try {
-        if (location.pathname.startsWith('/admin') && localStorage.getItem('payroll-admin-theme') === 'dark') {
+        if ((location.pathname.startsWith('/admin') || location.pathname.startsWith('/partner')) && localStorage.getItem('payroll-admin-theme') === 'dark') {
           document.documentElement.classList.add('dark');
         }
       } catch (e) {}

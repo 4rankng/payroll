@@ -150,6 +150,11 @@ html.admin-console-toto.dark {
   --chart-other: 199 24% 60%;
 
   --selection: 169 79% 54%;
+
+  /* Mobile-shell surface tokens (variables.css defines them light-only);
+     map to the console canvas/border so tablet+phone shells go dark. */
+  --surface-page: var(--admin-background);
+  --surface-border: var(--admin-border);
 }
 
 /* One flat paper shell; the console-shell class owns the grid and glows. */
@@ -243,8 +248,8 @@ html.admin-console-toto [data-admin-ui] .admin-sidebar-surface a[aria-current="p
    (tingting-black.png) serves the light rail. The colorful square mark works
    on both. (.admin-sidebar-brand has no element in the markup — the logo
    header is .admin-sidebar-logo.) */
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .admin-logo-white { display: none; }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .admin-logo-black { display: block; }
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .admin-logo-white { display: none; }
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .admin-logo-black { display: block; }
 
 
 /* Mobile settings: the base stylesheet's blanket h1–h4 mobile scaling made the
@@ -561,8 +566,11 @@ html.admin-console-toto.dark .hover\:bg-white:hover { background-color: hsl(var(
 
 /* The UU brand-section wrapper paints a static dark-emerald canvas on mobile
    admin pages; dark console paints its own canvas token instead. Light theme
-   keeps the committed brand wash. */
+   keeps the committed brand wash. The un-suffixed .bg-brand-section is the
+   mobile dashboard's full-page canvas — without this the dark phone view gets
+   a light header over dark cards. */
 html.admin-console-toto.dark .bg-brand-section_subtle { background-color: hsl(var(--background)); }
+html.admin-console-toto.dark .bg-brand-section { background-color: hsl(var(--background)); }
 
 /* --- light sidebar: tinted light surface per the approved palette.
    Solid #F3F7F8 rail, #DCE7EA hairline, #264653 menu ink (w500), #54707B
@@ -570,60 +578,109 @@ html.admin-console-toto.dark .bg-brand-section_subtle { background-color: hsl(va
    teal hover wash, active row rgba(14,116,144,.10) with #0B5F76 ink and a
    3px #0E7490 accent bar. !important on the ink rules: the group labels and
    chevrons ship !text-white/* utilities that beat plain declarations. --- */
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface {
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) {
   background: hsl(192 26% 96%);
   border-right: 1px solid hsl(188 25% 89%);
 }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [data-sidebar="sidebar"],
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [data-sidebar="header"],
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [data-sidebar="content"],
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [data-sidebar="footer"] {
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [data-sidebar="sidebar"],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [data-sidebar="header"],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [data-sidebar="content"],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [data-sidebar="footer"] {
   background: transparent;
 }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [class*="text-white/9"],
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [class*="text-white/8"] {
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [class*="text-white/9"],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [class*="text-white/8"] {
   color: hsl(198 37% 24%);
   font-weight: 500;
   font-size: 14px;
 }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [class*="text-white/7"],
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface [class*="text-white/6"] {
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [class*="text-white/7"],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [class*="text-white/6"] {
   color: hsl(197 17% 41%) !important;
 }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .hover\:text-white:hover {
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .hover\:text-white:hover {
   color: hsl(198 37% 24%) !important;
 }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div {
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) a[aria-current="page"] > div {
   background-color: rgba(14, 116, 144, 0.10);
 }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div,
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div [class*="text-white"],
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div svg {
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) a[aria-current="page"] > div,
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) a[aria-current="page"] > div [class*="text-white"],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) a[aria-current="page"] > div svg {
   color: hsl(193 84% 25%) !important;
 }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface a[aria-current="page"] > div .animate-pill-appear {
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) a[aria-current="page"] > div .animate-pill-appear {
   width: 3px;
 }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .hover\:bg-card\/\[0\.06\]:hover,
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .hover\:bg-card\/\[0\.08\]:hover { background-color: rgba(14, 116, 144, 0.06); }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .bg-card\/\[0\.04\],
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .bg-card\/\[0\.08\] { background-color: rgba(14, 116, 144, 0.05); }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .bg-card\/\[0\.06\],
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .bg-card\/\[0\.08\][class*="ring"],
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .ring-white\/\[0\.12\] { --tw-ring-color: hsl(188 25% 89%); background-color: hsl(188 25% 89%); }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .border-white\/\[0\.06\],
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface .hover\:border-white\/\[0\.1\]:hover { border-color: hsl(188 25% 89%); }
-html.admin-console-toto:not(.dark) [data-admin-ui] .admin-sidebar-surface svg { stroke-width: 1.75; }
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .hover\:bg-card\/\[0\.06\]:hover,
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .hover\:bg-card\/\[0\.08\]:hover { background-color: rgba(14, 116, 144, 0.06); }
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .bg-card\/\[0\.04\],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .bg-card\/\[0\.08\] { background-color: rgba(14, 116, 144, 0.05); }
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .bg-card\/\[0\.06\],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .bg-card\/\[0\.08\][class*="ring"],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .ring-white\/\[0\.12\] { --tw-ring-color: hsl(188 25% 89%); background-color: hsl(188 25% 89%); }
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .border-white\/\[0\.06\],
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) .hover\:border-white\/\[0\.1\]:hover { border-color: hsl(188 25% 89%); }
+html.admin-console-toto:not(.dark) :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) svg { stroke-width: 1.75; }
 /* Dark keeps the ink rail: teal signal wash over the sidebar tokens. */
-html.admin-console-toto.dark [data-admin-ui] .admin-sidebar-surface {
+html.admin-console-toto.dark :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) {
   background:
     linear-gradient(180deg, rgba(46, 230, 197, 0.05), transparent 16%),
     linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(197 60% 13%) 100%);
 }
-html.admin-console-toto.dark [data-admin-ui] .admin-sidebar-surface [data-sidebar="sidebar"] {
+html.admin-console-toto.dark :is([data-admin-ui] .admin-sidebar-surface, [data-partner-ui] .partner-sidebar-surface) [data-sidebar="sidebar"] {
   background:
     radial-gradient(circle at 35% 0%, rgba(46, 230, 197, 0.08), transparent 14rem),
     linear-gradient(180deg, hsl(var(--sidebar-background)) 0%, hsl(197 60% 13%) 100%);
+}
+
+/* --- partner portal surfaces --- */
+/* The partner shell paints its own canvas (no .admin-shell wrapper). */
+html.admin-console-toto [data-partner-ui].partner-shell-scope { background: hsl(var(--background)); }
+/* Radix portals dropdown/dialog content at body level — outside
+   [data-partner-ui] — so this routes by the html class pair. */
+html.admin-console-toto.partner-route-active :is([role="dialog"], [role="menu"], [role="listbox"], [role="select-content"]) {
+  border-color: hsl(var(--border));
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+}
+/* Touch widths: classic scrollbars reserve a gutter strip the fixed bottom
+   nav cannot cover (the "gap to the right edge"). Overlay-style scrolling is
+   the mobile norm — hide the strip; touch scrolling needs no indicator. */
+@media (max-width: 1023.98px) {
+  html.admin-console-toto,
+  html.admin-console-toto body { scrollbar-width: none; }
+  html.admin-console-toto ::-webkit-scrollbar,
+  html.admin-console-toto body::-webkit-scrollbar { width: 0; height: 0; }
+}
+
+/* --- Employee details drawer: header aligns with the body (24px padding,
+   space-between, 76px band) instead of the shared centered panel-header; the
+   footer pads to the same rhythm and carries a soft top shadow. Tokens only —
+   both themes come from --card/--border/--foreground/--muted-foreground. --- */
+[data-admin-ui] .employee-details-sheet .console-panel-header {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 76px;
+  padding: 12px 16px;
+  border-bottom: 1px solid hsl(var(--border) / 0.65);
+}
+[data-admin-ui] .employee-details-sheet .console-panel-header > div:first-of-type {
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+}
+[data-admin-ui] .employee-details-sheet .sheet-close-btn { align-self: center; }
+[data-admin-ui] .employee-details-sheet .sheet-footer {
+  padding: 16px 24px;
+  box-shadow: 0 -8px 16px rgba(0, 0, 0, 0.06);
+}
+@media (min-width: 640px) {
+  [data-admin-ui] .employee-details-sheet .console-panel-header { padding: 12px 24px; }
+}
+@media (max-width: 639px) {
+  [data-admin-ui] .employee-details-sheet .console-panel-header { min-height: 64px; }
 }
 
 /* --- WalletBalanceCard hero: a dark HUD instrument by design; on the light
@@ -659,6 +716,11 @@ html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark [class*
 html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark [class*="border-white/"] { border-color: rgba(6, 33, 44, 0.12); }
 html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark [class*="bg-white/"] {
   background-color: rgba(6, 33, 44, 0.05);
+  color: hsl(var(--muted-foreground));
+}
+/* Slashed white inks (labels, timestamps, pending rail) → muted dark. The
+   exact-class .text-white rule above keeps the balance value darker. */
+html.admin-console-toto:not(.dark) [data-admin-ui] .treasury-panel--dark [class*="text-white/"] {
   color: hsl(var(--muted-foreground));
 }
 

@@ -166,7 +166,10 @@ const PartnerSidebar = () => {
             )}
           >
             {!isCollapsed && (
-              <img src="/tingting-white.png" alt="TingTing" className="h-7 object-contain" />
+              <>
+                <img src="/tingting-white.png" alt="TingTing" className="admin-logo-white h-7 object-contain" />
+                <img src="/tingting-black.png" alt="" aria-hidden="true" className="admin-logo-black hidden h-7 object-contain" />
+              </>
             )}
             <SidebarToggle />
           </div>

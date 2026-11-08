@@ -218,10 +218,11 @@
 
   /* The blur lives on an inner layer, never on the fixed root: a
      backdrop-filter on a position:fixed bar misplaces it during scroll on
-     iOS Safari (it detaches from the viewport bottom). */
-  [data-admin-ui] .admin-mobile-nav-backdrop {
-    backdrop-filter: blur(18px);
-  }
+     iOS Safari (it detaches from the viewport bottom). The blur itself is
+     gone as of v1.19.4 — even on the inner layer it promoted the fixed bar
+     into a composited layer that drifted mid-scroll; the 96%-opaque surface
+     reads the same without it. */
+  [data-admin-ui] .admin-mobile-nav-backdrop { will-change: auto; }
 
   [data-admin-ui] .admin-mobile-nav::before { content: none; }
 

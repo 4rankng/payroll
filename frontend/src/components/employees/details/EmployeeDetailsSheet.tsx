@@ -226,12 +226,13 @@ export function EmployeeDetailsSheet({
     if (!employee || isEditing || isPreviewOnly) return undefined;
     return (
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={handleExport}
         disabled={isExporting}
+        title="Xuất hồ sơ"
         aria-label={isExporting ? "Đang xuất hồ sơ nhân viên" : "Xuất Excel hồ sơ nhân viên"}
-        className={isNarrowViewport ? "min-h-11 min-w-11 px-3 gap-1 text-xs" : "min-h-11 px-3 gap-1.5"}
+        className={isNarrowViewport ? "min-h-9 min-w-9 px-2.5 gap-1 text-xs" : "min-h-9 px-3 gap-1.5 text-sm"}
       >
         <FileDown className="h-3.5 w-3.5" />
         {!isNarrowViewport && "Xuất Excel"}
@@ -331,7 +332,7 @@ export function EmployeeDetailsSheet({
         avatar={avatar}
         footer={isEditing ? editingFooter : footer}
         headerActions={headerActions}
-        className={isNarrowViewport ? "w-full p-0" : "w-full md:w-[60%] min-w-[800px] p-0"}
+        className={isNarrowViewport ? "employee-details-sheet w-full p-0" : "employee-details-sheet w-full md:w-[60%] min-w-[800px] p-0"}
       >
         <div className="space-y-3 py-1">
           {/* ── Personal info / Edit form ── */}

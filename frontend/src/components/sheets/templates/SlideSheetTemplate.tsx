@@ -84,7 +84,7 @@ export function SlideSheetTemplate({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-11 w-11 rounded-full flex-shrink-0 self-start text-muted-foreground hover:text-foreground hover:bg-muted touch-manipulation"
+                  className="sheet-close-btn h-9 w-9 rounded-lg flex-shrink-0 self-center text-muted-foreground hover:text-foreground hover:bg-muted touch-manipulation"
                   aria-label="Đóng"
                 >
                   <X className="h-4 w-4" />
@@ -125,7 +125,7 @@ export function SlideSheetTemplate({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-11 w-11 rounded-full flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted touch-manipulation"
+                  className="sheet-close-btn h-9 w-9 rounded-lg flex-shrink-0 self-center text-muted-foreground hover:text-foreground hover:bg-muted touch-manipulation"
                   aria-label="Đóng"
                 >
                   <X className="h-4 w-4" />
@@ -150,7 +150,7 @@ export function SlideSheetTemplate({
         {footer && (
           <div
             className={cn(
-              'flex-shrink-0 px-3 sm:px-4 py-2.5 border-t border-border/65 bg-card',
+              'sheet-footer flex-shrink-0 px-3 sm:px-6 py-2.5 border-t border-border/65 bg-card',
               isMobile && 'pb-[max(10px,calc(10px+env(safe-area-inset-bottom)))]'
             )}
           >

@@ -11,6 +11,7 @@ import {
   Wallet01,
 } from '@untitledui/icons';
 import { getConsoleKicker } from '@/lib/console';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import WalletTransactionsList from '@/components/wallet/WalletTransactionsList';
 import CreateManualDisbursementDialog from '@/components/wallet/CreateManualDisbursementDialog';
 import { EmployeeAccountLookupDialog } from '@/components/wallet/EmployeeAccountLookupDialog';
@@ -52,10 +53,16 @@ export default function WalletPageMobile() {
       <div className="px-4 pt-[var(--mobile-header-top-padding,calc(env(safe-area-inset-top)+1rem))] pb-6">
         <div className="relative z-10 mb-3 flex items-center gap-2 pt-1">
           <Wallet01 className="h-5 w-5 shrink-0 text-white/60" aria-hidden="true" />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="console-kicker mb-0.5 text-white/60">{getConsoleKicker(location.pathname)}</p>
             <h1 className="truncate text-[17px] font-semibold text-fg-white tracking-tight">Ví điện tử</h1>
           </div>
+          {/* Admin routes carry the theme toggle in the title row on phones. */}
+          {typeof document !== 'undefined' && document.querySelector('[data-admin-ui]') && (
+            <div className="[&_button]:h-9 [&_button]:w-9 [&_button]:min-h-0 [&_button]:rounded-lg [&_button]:p-0">
+              <ThemeToggle />
+            </div>
+          )}
         </div>
 
         {/* Treasury dark panel — owns balance, sync, as-of meta, the

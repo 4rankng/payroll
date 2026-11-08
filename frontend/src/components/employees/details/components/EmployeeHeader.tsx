@@ -32,23 +32,23 @@ export function EmployeeHeader({ employee, showName = true }: EmployeeHeaderProp
   }, [employee?.created_by, isAdmin]);
 
   return (
-    <div className="flex items-center gap-3 w-full">
+    <div className="flex items-center gap-3 w-full min-w-0">
       <UserAvatar
         size="md"
         name={employee.fullname}
         username={employee.username}
         cccd={employee.cccd}
-        className="border-2 border-muted flex-shrink-0"
+        className="h-11 w-11 flex-shrink-0"
       />
 
       <div className="flex-1 min-w-0">
         {showName && (
-          <h1 className="text-sm font-semibold leading-tight truncate mb-0.5">
+          <h1 className="text-lg font-semibold leading-tight text-foreground truncate mb-0.5">
             {employee.fullname}
           </h1>
         )}
         {isAdmin && employee.created_by && (
-          <div className="text-xs text-muted-foreground truncate">
+          <div className="mt-0.5 text-[13px] text-muted-foreground truncate">
             Người tạo: {creatorName || `ID #${employee.created_by}`}
           </div>
         )}
