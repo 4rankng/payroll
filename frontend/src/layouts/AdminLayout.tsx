@@ -3,6 +3,7 @@ import { useLayoutEffect } from "react";
 import AdminSidebar from "@/components/AdminSidebar";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { NotificationFAB } from "@/components/notifications/NotificationFAB";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { SectionErrorBoundary } from "@/components/ErrorBoundary";
@@ -120,6 +121,13 @@ const AdminLayout = () => {
           data-theme={isAdmin ? "congtruong" : undefined}
           className={isAdmin ? "admin-shell-scope" : "w-full min-w-0"}
         >
+          {/* Sticky appearance switch: reachable from every admin route
+              regardless of page chrome. z-40 sits under portal dropdowns. */}
+          {isAdmin && (
+            <div className="fixed right-3 top-3 z-40">
+              <ThemeToggle className="bg-card/80 shadow-sm backdrop-blur-sm" />
+            </div>
+          )}
           <div className="w-full min-w-0 [container-type:inline-size]">
             <AdminLayoutInner />
           </div>

@@ -462,91 +462,91 @@ const AdminSidebar = () => {
         <SidebarSeparator className="bg-card/[0.06] m-0 shrink-0" />
         <SidebarFooter className="p-2 shrink-0">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                aria-label={
-                  user
-                    ? `Tài khoản: ${user.name}${unreadCount > 0 ? `, ${unreadCount} thông báo chưa đọc` : ""}`
-                    : "Tài khoản"
-                }
-                aria-haspopup="menu"
-                className={cn(
-                  "admin-sidebar-account relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer outline-none",
-                  "bg-card/[0.04] border border-white/[0.06]",
-                  "hover:bg-card/[0.08] hover:border-white/[0.1]",
-                  isCollapsed ? "h-9 w-9 justify-center self-center" : "h-auto min-h-11 px-2.5 py-2 gap-2.5 lg:min-h-[40px]"
-                )}
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={
+                    user
+                      ? `Tài khoản: ${user.name}${unreadCount > 0 ? `, ${unreadCount} thông báo chưa đọc` : ""}`
+                      : "Tài khoản"
+                  }
+                  aria-haspopup="menu"
+                  className={cn(
+                    "admin-sidebar-account relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer outline-none",
+                    "bg-card/[0.04] border border-white/[0.06]",
+                    "hover:bg-card/[0.08] hover:border-white/[0.1]",
+                    isCollapsed ? "h-9 w-9 justify-center self-center" : "h-auto min-h-11 px-2.5 py-2 gap-2.5 lg:min-h-[40px]"
+                  )}
+                >
+                  {isCollapsed && user && (
+                    // Neutral glyph rather than a letter monogram, so the
+                    // collapsed rail matches the avatar language used everywhere
+                    // else.
+                    <img
+                      src={generateAvatarUrl()}
+                      alt=""
+                      aria-hidden="true"
+                      className="h-6 w-6 rounded-full"
+                    />
+                  )}
+                  {!isCollapsed && user && (
+                    <>
+                      <div className="flex flex-col min-w-0 flex-1 text-left">
+                        <span className="text-xs text-white/75 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
+                        <span className="text-base font-medium truncate leading-tight text-white/90">{user.name}</span>
+                      </div>
+                      <ChevronUp className="w-3.5 h-3.5 shrink-0 text-white/60" />
+                    </>
+                  )}
+                  {unreadCount > 0 && (
+                    <span className={cn(
+                      "absolute h-4 min-w-4 flex items-center justify-center px-1",
+                      isCollapsed ? "-top-0.5 -right-0.5" : "-top-1.5 -right-1.5",
+                      "text-xs font-semibold rounded-full bg-utility-error-600 text-white",
+                      "animate-badge-pulse"
+                    )}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-56 z-[9999]"
+                side="top"
+                align={isCollapsed ? "center" : "end"}
+                sideOffset={8}
               >
-                {isCollapsed && user && (
-                  // Neutral glyph rather than a letter monogram, so the
-                  // collapsed rail matches the avatar language used everywhere
-                  // else.
-                  <img
-                    src={generateAvatarUrl()}
-                    alt=""
-                    aria-hidden="true"
-                    className="h-6 w-6 rounded-full"
-                  />
-                )}
-                {!isCollapsed && user && (
+                {user && (
                   <>
-                    <div className="flex flex-col min-w-0 flex-1 text-left">
-                      <span className="text-xs text-white/75 truncate leading-tight uppercase font-semibold tracking-wide">Xin chào</span>
-                      <span className="text-base font-medium truncate leading-tight text-white/90">{user.name}</span>
-                    </div>
-                    <ChevronUp className="w-3.5 h-3.5 shrink-0 text-white/60" />
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-sm font-semibold">{user.name}</p>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                        <p className="text-xs text-muted-foreground">{isAdvPartner ? 'Quản lý ứng lương' : 'Quản trị viên'}</p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
                   </>
                 )}
-                {unreadCount > 0 && (
-                  <span className={cn(
-                    "absolute h-4 min-w-4 flex items-center justify-center px-1",
-                    isCollapsed ? "-top-0.5 -right-0.5" : "-top-1.5 -right-1.5",
-                    "text-xs font-semibold rounded-full bg-utility-error-600 text-white",
-                    "animate-badge-pulse"
-                  )}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              className="w-56 z-[9999]"
-              side="top"
-              align={isCollapsed ? "center" : "end"}
-              sideOffset={8}
-            >
-              {user && (
-                <>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col gap-0.5">
-                      <p className="text-sm font-semibold">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
-                      <p className="text-xs text-muted-foreground">{isAdvPartner ? 'Quản lý ứng lương' : 'Quản trị viên'}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              <DropdownMenuItem onClick={() => setShowProfile(true)}>
-                <UserCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                Thông tin cá nhân
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openModal(MODAL_IDS.CHANGE_PASSWORD)}>
-                <Key01 className="mr-2 h-4 w-4" aria-hidden="true" />
-                Đổi mật khẩu
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => openModal(MODAL_IDS.NOTIFICATION_SHEET)}>
-                <Bell01 className="mr-2 h-4 w-4" aria-hidden="true" />
-                Thông báo
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout} className="text-fg-error-primary focus:text-fg-error-primary">
-                <LogOut01 className="mr-2 h-4 w-4" aria-hidden="true" />
-                Đăng xuất
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem onClick={() => setShowProfile(true)}>
+                  <UserCircle className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Thông tin cá nhân
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => openModal(MODAL_IDS.CHANGE_PASSWORD)}>
+                  <Key01 className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Đổi mật khẩu
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => openModal(MODAL_IDS.NOTIFICATION_SHEET)}>
+                  <Bell01 className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Thông báo
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-fg-error-primary focus:text-fg-error-primary">
+                  <LogOut01 className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Đăng xuất
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
           {!isCollapsed && (
             <p className="text-xs text-white/70 text-center pt-1 pb-1 tracking-wide select-none">

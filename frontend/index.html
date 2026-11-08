@@ -31,6 +31,17 @@
     <meta name="build-timestamp" content="%BUILD_TIMESTAMP%" />
     <meta name="build-version" content="%BUILD_VERSION%" />
 
+    <!-- Admin dark console: pre-paint guard. Re-applies the persisted theme
+         before first paint so /admin never flashes light on reload. The class
+         is scoped to /admin paths; useAdminTheme removes it when leaving. -->
+    <script>
+      try {
+        if (location.pathname.startsWith('/admin') && localStorage.getItem('payroll-admin-theme') === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#0a2540" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

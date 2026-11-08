@@ -210,6 +210,64 @@ describe("WCAG 2.2 AA non-text contrast (3:1)", () => {
 });
 
 // ---------------------------------------------------------------------------
+// toto.sg admin console (admin-console-toto.css) — light AND dark appearances.
+// The dark appearance ships with the admin dark console; both must hold the
+// same AA text contract and the 1.4.11 focus-ring contract. Hairline borders
+// are a deliberate toto design device: 1.4.11's 3:1 applies to boundaries
+// required to identify a component (focus rings, control outlines) — console
+// panels are identified by surface + shadow, and separators are decorative —
+// so borders are held to a ≥1.5:1 "discernible hairline" floor instead.
+// ---------------------------------------------------------------------------
+
+const totoCss = readFileSync(resolve(__dirname, "../styles/admin-console-toto.css"), "utf8");
+
+/** Reads a token from a top-level `html.admin-console-toto[.dark] { }` block.
+ *  `name` is the role suffix: the file declares every token --admin-prefixed
+ *  (chart, selection, and console tokens are unprefixed; none are asserted
+ *  here). The ` {` suffix in the marker distinguishes the block opener from
+ *  descendant selectors that share the prefix. */
+function totoToken(name: string, dark: boolean): string {
+  const marker = dark ? "html.admin-console-toto.dark {" : "html.admin-console-toto {";
+  const start = totoCss.indexOf(marker);
+  const block = totoCss.slice(start, totoCss.indexOf("}", start));
+  const m = block.match(new RegExp(`--admin-${name}:\\s*([^;]+);`));
+  expect(m, `token --admin-${name} must exist in ${marker}`).toBeTruthy();
+  return m![1].trim();
+}
+
+describe("WCAG AA contrast contract — toto admin console (light + dark)", () => {
+  it.each(["light", "dark"] as const)("text pairs meet 4.5:1 in %s", (mode) => {
+    const dark = mode === "dark";
+    const pairs: Array<[string, string, string]> = [
+      ["foreground/background", totoToken("foreground", dark), totoToken("background", dark)],
+      ["card-foreground/card", totoToken("card-foreground", dark), totoToken("card", dark)],
+      ["muted-foreground/card", totoToken("muted-foreground", dark), totoToken("card", dark)],
+      ["primary-foreground/primary", totoToken("primary-foreground", dark), totoToken("primary", dark)],
+      ["destructive-foreground/destructive", totoToken("destructive-foreground", dark), totoToken("destructive", dark)],
+      ["sidebar-foreground/sidebar-background", totoToken("sidebar-foreground", dark), totoToken("sidebar-background", dark)],
+    ];
+    for (const [label, fg, bg] of pairs) {
+      expect(contrastRatio(fg, bg), `${mode}: ${label}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it.each(["light", "dark"] as const)("focus ring meets 3:1 on card and canvas in %s (1.4.11)", (mode) => {
+    const dark = mode === "dark";
+    const ring = totoToken("ring", dark);
+    expect(contrastRatio(ring, totoToken("card", dark)), `${mode}: ring/card`).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(ring, totoToken("background", dark)), `${mode}: ring/background`).toBeGreaterThanOrEqual(3);
+  });
+
+  it.each(["light", "dark"] as const)("hairline border stays discernible on card in %s (≥1.5:1)", (mode) => {
+    const dark = mode === "dark";
+    expect(
+      contrastRatio(totoToken("border", dark), totoToken("card", dark)),
+      `${mode}: border/card`,
+    ).toBeGreaterThanOrEqual(1.5);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Tailwind palette gate — ad-hoc `text-<family>-<step>` classes used in src/
 // must resolve to ≥4.5:1 against the surfaces where text lives (white, muted).
 // Reads the live source tree so a future reintroduction of a failing class

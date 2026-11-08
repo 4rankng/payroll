@@ -89,7 +89,7 @@ export const AdminFilterRow = ({
 }) => (
   <div
     className={cn(
-      'flex flex-wrap items-center justify-between gap-3 border-b border-utility-gray-300 px-3 py-3 sm:px-5',
+      'flex flex-wrap items-center justify-between gap-3 border-b border-border px-3 py-3 sm:px-5',
       className,
     )}
   >

@@ -47,7 +47,7 @@ export const PageHeader = ({
         data-admin-surface="header"
         className={cn(
           // Console strip: 3px signal mark, hairline bottom — no card, no
-          // shadow, no icon chip. Replaces the old admin-page-header card.
+          // shadow, no icon chip.
           'console-page-header flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4',
           className,
         )}

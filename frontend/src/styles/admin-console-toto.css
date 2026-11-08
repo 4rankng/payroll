@@ -1,9 +1,9 @@
 /* ============================================================================
    ADMIN DASHBOARD — toto.sg light day-console.
 
-   Scoped to the desktop /admin dashboard only: `AdminDashboard` adds
-   `admin-console-toto` to <html> on mount and removes it on unmount, so the
-   rest of the payroll app keeps its own product palette.
+   Scoped to admin routes: `AdminLayout` adds `admin-console-toto` to <html>
+   on mount and removes it on unmount, so the rest of the payroll app keeps
+   its own product palette.
 
    Cool paper canvas, white hairline panels, deep teal signal, cyan data hue,
    gold rank, rose negative. The sidebar stays a dark ink rail so the light
@@ -27,7 +27,7 @@ html.admin-console-toto {
   --admin-accent-foreground: 193 82% 31%;
   --admin-border: 196 30% 75%; /* hairline; controls are darker below */
   --admin-input: 196 22% 58%;
-  --admin-ring: 193 82% 45%;
+  --admin-ring: 193 82% 40%; /* focus ring; ≥3:1 on white cards and the light canvas (WCAG 1.4.11) */
   --admin-success: 193 82% 31%;
   --admin-success-foreground: 0 0% 100%;
   --admin-warning: 28 82% 37%;
@@ -67,6 +67,87 @@ html.admin-console-toto {
 
   --selection: 170 83% 34%;
   color-scheme: light;
+}
+
+/* ============================================================================
+   DARK CONSOLE — the same component language on the toto.sg dark canvas
+   (canvas #041018, surface #07202c, teal signal #2ee6c5, cyan data hue, pink
+   heat). `useAdminTheme` adds `dark` to <html> and the FOUC guard in
+   index.html re-adds it pre-paint; light stays the default. Because the
+   variables.css alias block re-points --background/--card/--border/… at the
+   --admin-* tokens for every admin surface, overriding the tokens here re-skins
+   the whole shell, the console layer, and the Recharts series with no component
+   changes. Dark tokens exist ONLY in this file, so non-admin routes are
+   structurally immune to html.dark.
+   ============================================================================ */
+
+html.admin-console-toto.dark {
+  color-scheme: dark;
+
+  /* Surfaces & ink — toto.sg dark console (toto.sg src/styles/theme.css dark pairs) */
+  --admin-background: 204 71% 5%;          /* #041018 canvas */
+  --admin-foreground: 193 70% 94%;         /* #e8f7fb ink */
+  --admin-card: 199 73% 10%;               /* #07202c surface */
+  --admin-card-foreground: 193 70% 94%;
+  --admin-popover: 199 70% 13%;            /* #0a2a39 surface-2 */
+  --admin-popover-foreground: 193 70% 94%;
+  --admin-muted: 199 70% 13%;
+  --admin-muted-foreground: 196 37% 72%;   /* #9cc4d2 ink-muted */
+  --admin-accent-soft: 186 76% 11%;        /* #072f33 signal-soft */
+  --admin-accent-foreground: 169 86% 72%;  /* #7cf5de signal-strong */
+
+  /* Signal & status */
+  --admin-primary: 169 79% 54%;            /* #2ee6c5 signal */
+  --admin-primary-foreground: 204 71% 5%;
+  --admin-secondary: 192 100% 60%;         /* #35d6ff data cyan */
+  --admin-secondary-foreground: 204 71% 5%;
+  --admin-success: 169 79% 54%;
+  --admin-success-foreground: 204 71% 5%;
+  --admin-warning: 47 92% 53%;             /* #f5c518 gold (toto theme.css) */
+  --admin-warning-foreground: 204 71% 5%;
+  --admin-info: 192 100% 60%;
+  --admin-info-foreground: 204 71% 5%;
+  --admin-destructive: 343 100% 68%;       /* #ff5c8a heat-hot */
+  --admin-destructive-foreground: 204 71% 5%;
+
+  /* Hairlines & controls */
+  --admin-border: 198 65% 20%;             /* #124155 line */
+  --admin-input: 198 59% 27%;              /* #1c566e line-strong */
+  --admin-ring: 169 79% 54%;
+
+  /* Sidebar rail: slightly lighter than canvas, hairline-separated */
+  --admin-sidebar-background: 199 73% 10%;
+  --admin-sidebar-foreground: 196 37% 72%;
+  --admin-sidebar-primary: 169 79% 54%;
+  --admin-sidebar-primary-foreground: 204 71% 5%;
+  --admin-sidebar-accent: 199 70% 13%;
+  --admin-sidebar-accent-foreground: 193 70% 94%;
+  --admin-sidebar-border: 198 65% 20%;
+  --admin-sidebar-ring: 169 79% 54%;
+
+  /* Shadows / grid / glows */
+  --admin-card-shadow: 0 12px 30px -26px rgba(2, 8, 12, 0.55);
+  --admin-shell-shadow: 0 20px 60px -42px rgba(2, 8, 12, 0.7);
+  --admin-grid-line: hsl(193 70% 94% / 0.04);
+  --admin-grid-strong: hsl(169 79% 54% / 0.15);
+  --admin-shell-glow: hsl(169 79% 54% / 0.08);
+  --console-grid: hsl(193 70% 94% / 0.05);
+  --console-glow-primary: hsl(169 79% 54% / 0.10);
+  --console-glow-info: hsl(192 100% 60% / 0.06);
+  --console-panel-shadow:
+    inset 0 1px 0 hsl(169 79% 54% / 0.18),
+    0 28px 60px -46px hsl(169 79% 54% / 0.65);
+
+  /* Chart series — same six roles, dark-optimized */
+  --chart-1: 169 79% 54%;
+  --chart-2: 192 100% 60%;
+  --chart-3: 47 92% 53%;
+  --chart-4: 343 100% 68%;
+  --chart-5: 262 60% 62%;
+  --chart-6: 142 60% 45%;
+  --chart-other: 199 24% 60%;
+
+  --selection: 169 79% 54%;
 }
 
 /* One flat paper shell; the console-shell class owns the grid and glows. */
@@ -283,3 +364,204 @@ html.admin-console-toto .hover\:bg-brand-solid_hover:hover {
 html.admin-console-toto .active\:bg-brand-solid_hover:active {
   background-color: hsl(var(--primary) / 0.85);
 }
+
+/* ============================================================================
+   DARK CONSOLE — structural counterparts. Most light rules above are already
+   token-driven (seam hairlines, table rows, tooltip text) and flip with the
+   token block on their own; the rules below replace the hardcoded light-teal
+   washes and the light tooltip surface that tokens cannot reach.
+   ============================================================================ */
+
+html.admin-console-toto.dark .treasury-panel {
+  background-image: radial-gradient(120% 85% at 50% 0%, rgba(46, 230, 197, 0.07), transparent 70%);
+}
+
+html.admin-console-toto.dark .treasury-mesh {
+  background-image: radial-gradient(rgba(232, 247, 251, 0.07) 1px, transparent 1px);
+}
+
+html.admin-console-toto.dark .recharts-default-tooltip {
+  background-color: hsl(var(--popover)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* --- solid buttons → console signal surfaces with dark ink.
+   The UU solids pair a static light-family fill with white copy; on the dark
+   console the fills become the light signal tokens, so the copy flips to the
+   dark foreground baked into each --admin-*-foreground pair. --- */
+html.admin-console-toto.dark .bg-brand-solid {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+html.admin-console-toto.dark [class*="text-button-primary-icon"] { color: hsl(var(--primary-foreground)); }
+html.admin-console-toto.dark .bg-success-solid {
+  background-color: hsl(var(--success));
+  color: hsl(var(--success-foreground));
+}
+html.admin-console-toto.dark .hover\:bg-success-solid_hover:hover,
+html.admin-console-toto.dark .active\:bg-success-solid_hover:active { background-color: hsl(var(--success) / 0.85); }
+html.admin-console-toto.dark .bg-error-solid {
+  background-color: hsl(var(--destructive));
+  color: hsl(var(--destructive-foreground));
+}
+html.admin-console-toto.dark .hover\:bg-error-solid_hover:hover,
+html.admin-console-toto.dark .active\:bg-error-solid_hover:active { background-color: hsl(var(--destructive) / 0.85); }
+html.admin-console-toto.dark [class*="text-button-destructive-primary-icon"] { color: hsl(var(--destructive-foreground)); }
+html.admin-console-toto.dark .bg-warning-solid {
+  background-color: hsl(var(--warning));
+  color: hsl(var(--warning-foreground));
+}
+html.admin-console-toto.dark .hover\:bg-warning-solid_hover:hover,
+html.admin-console-toto.dark .active\:bg-warning-solid_hover:active { background-color: hsl(var(--warning) / 0.85); }
+
+/* --- ghost button ink: the UU ghost variant uses the bare tertiary/
+   secondary_static keys (not fg-*) for its copy and hover surface. --- */
+html.admin-console-toto.dark .text-tertiary,
+html.admin-console-toto.dark .text-secondary { color: hsl(var(--foreground) / 0.92); }
+html.admin-console-toto.dark .hover\:text-tertiary_hover:hover,
+html.admin-console-toto.dark .hover\:text-tertiary-hover:hover { color: hsl(var(--foreground)); }
+html.admin-console-toto.dark .hover\:bg-secondary_hover:hover { background-color: hsl(var(--muted)); }
+
+/* ============================================================================
+   DARK CONSOLE — static ink re-skin. Vendored UU components and legacy pages
+   carry literal utility classes tuned for light paper (fg-* inks, utility-gray
+   ladders, emerald/rose/amber status colors). Tokens cannot reach them, so the
+   rules below re-point those exact classes at the console tokens while
+   `html.dark` is on. Scope is total: `dark` only ever exists under /admin
+   (useAdminTheme cleanup), so partner/employee/login are structurally immune.
+   Unlayered rules beat Tailwind's layered utilities regardless of order.
+   ============================================================================ */
+
+/* --- UU fg ink ladder → console ink --- */
+html.admin-console-toto.dark .text-fg-primary { color: hsl(var(--foreground)); }
+html.admin-console-toto.dark .text-fg-secondary { color: hsl(var(--foreground) / 0.92); }
+html.admin-console-toto.dark .text-fg-tertiary { color: hsl(var(--muted-foreground)); }
+html.admin-console-toto.dark .text-fg-quaternary { color: hsl(var(--muted-foreground) / 0.85); }
+html.admin-console-toto.dark .text-fg-disabled { color: hsl(var(--muted-foreground) / 0.75); }
+html.admin-console-toto.dark .text-fg-disabled_subtle { color: hsl(var(--muted-foreground) / 0.75); }
+html.admin-console-toto.dark .text-fg-error-primary { color: hsl(var(--destructive)); }
+html.admin-console-toto.dark .text-fg-error-secondary { color: hsl(var(--destructive) / 0.9); }
+html.admin-console-toto.dark .text-fg-warning-primary { color: hsl(var(--warning)); }
+html.admin-console-toto.dark .text-fg-success-primary { color: hsl(var(--success)); }
+
+/* --- neutral gray/slate text ladders --- */
+html.admin-console-toto.dark .text-utility-gray-300,
+html.admin-console-toto.dark .text-gray-300,
+html.admin-console-toto.dark .text-utility-gray-400,
+html.admin-console-toto.dark .text-gray-400,
+html.admin-console-toto.dark .text-slate-400 { color: hsl(var(--muted-foreground) / 0.8); }
+html.admin-console-toto.dark .text-utility-gray-500,
+html.admin-console-toto.dark .text-gray-500,
+html.admin-console-toto.dark .text-slate-500,
+html.admin-console-toto.dark .text-utility-gray-600,
+html.admin-console-toto.dark .text-gray-600 { color: hsl(var(--muted-foreground)); }
+html.admin-console-toto.dark .text-utility-gray-700,
+html.admin-console-toto.dark .text-gray-700,
+html.admin-console-toto.dark .text-slate-600,
+html.admin-console-toto.dark .text-slate-700,
+html.admin-console-toto.dark .text-utility-gray-800,
+html.admin-console-toto.dark .text-gray-800,
+html.admin-console-toto.dark .text-slate-800,
+html.admin-console-toto.dark .text-utility-gray-900,
+html.admin-console-toto.dark .text-gray-900,
+html.admin-console-toto.dark .text-slate-900 { color: hsl(var(--foreground)); }
+
+/* --- status text ladders → console status tokens --- */
+html.admin-console-toto.dark .text-emerald-500, html.admin-console-toto.dark .text-emerald-600,
+html.admin-console-toto.dark .text-emerald-700, html.admin-console-toto.dark .text-emerald-800,
+html.admin-console-toto.dark .text-green-500, html.admin-console-toto.dark .text-green-600,
+html.admin-console-toto.dark .text-green-700, html.admin-console-toto.dark .text-green-800,
+html.admin-console-toto.dark .text-teal-500, html.admin-console-toto.dark .text-teal-600,
+html.admin-console-toto.dark .text-teal-700, html.admin-console-toto.dark .text-teal-800,
+html.admin-console-toto.dark .text-utility-success-600, html.admin-console-toto.dark .text-utility-success-700 { color: hsl(var(--success)); }
+html.admin-console-toto.dark .text-rose-500, html.admin-console-toto.dark .text-rose-600,
+html.admin-console-toto.dark .text-rose-700, html.admin-console-toto.dark .text-rose-800,
+html.admin-console-toto.dark .text-red-500, html.admin-console-toto.dark .text-red-600,
+html.admin-console-toto.dark .text-red-700, html.admin-console-toto.dark .text-red-800,
+html.admin-console-toto.dark .text-utility-error-600, html.admin-console-toto.dark .text-utility-error-700 { color: hsl(var(--destructive)); }
+html.admin-console-toto.dark .text-amber-500, html.admin-console-toto.dark .text-amber-600,
+html.admin-console-toto.dark .text-amber-700, html.admin-console-toto.dark .text-amber-800,
+html.admin-console-toto.dark .text-yellow-500, html.admin-console-toto.dark .text-yellow-600,
+html.admin-console-toto.dark .text-yellow-700, html.admin-console-toto.dark .text-yellow-800,
+html.admin-console-toto.dark .text-orange-500, html.admin-console-toto.dark .text-orange-600,
+html.admin-console-toto.dark .text-orange-700, html.admin-console-toto.dark .text-orange-800,
+html.admin-console-toto.dark .text-utility-warning-600, html.admin-console-toto.dark .text-utility-warning-700 { color: hsl(var(--warning)); }
+html.admin-console-toto.dark .text-sky-500, html.admin-console-toto.dark .text-sky-600,
+html.admin-console-toto.dark .text-sky-700, html.admin-console-toto.dark .text-sky-800,
+html.admin-console-toto.dark .text-blue-500, html.admin-console-toto.dark .text-blue-600,
+html.admin-console-toto.dark .text-blue-700, html.admin-console-toto.dark .text-blue-800,
+html.admin-console-toto.dark .text-cyan-500, html.admin-console-toto.dark .text-cyan-600,
+html.admin-console-toto.dark .text-cyan-700, html.admin-console-toto.dark .text-cyan-800 { color: hsl(var(--info)); }
+html.admin-console-toto.dark .text-indigo-500, html.admin-console-toto.dark .text-indigo-600,
+html.admin-console-toto.dark .text-indigo-700, html.admin-console-toto.dark .text-indigo-800,
+html.admin-console-toto.dark .text-violet-500, html.admin-console-toto.dark .text-violet-600,
+html.admin-console-toto.dark .text-violet-700, html.admin-console-toto.dark .text-violet-800,
+html.admin-console-toto.dark .text-purple-500, html.admin-console-toto.dark .text-purple-600,
+html.admin-console-toto.dark .text-purple-700, html.admin-console-toto.dark .text-purple-800 { color: hsl(262 60% 62%); }
+html.admin-console-toto.dark .text-utility-brand-600, html.admin-console-toto.dark .text-utility-brand-700 { color: hsl(var(--primary)); }
+
+/* --- light chip fills → token-tinted surfaces ---
+   Attribute matching catches the alpha-suffixed variants Tailwind compiles as
+   separate classes (bg-utility-gray-50/70 etc.), which exact selectors miss. */
+html.admin-console-toto.dark [class*="bg-utility-gray-50/"] { background-color: hsl(var(--muted) / 0.6); }
+html.admin-console-toto.dark [class*="bg-utility-gray-100/"],
+html.admin-console-toto.dark .bg-utility-gray-50,
+html.admin-console-toto.dark .bg-gray-50 { background-color: hsl(var(--muted)); }
+html.admin-console-toto.dark .bg-utility-gray-100,
+html.admin-console-toto.dark .bg-gray-100,
+html.admin-console-toto.dark .bg-gray-200 { background-color: hsl(var(--accent-soft)); }
+html.admin-console-toto.dark .bg-utility-brand-50 { background-color: hsl(var(--primary) / 0.10); }
+html.admin-console-toto.dark .bg-utility-success-50,
+html.admin-console-toto.dark .bg-emerald-50,
+html.admin-console-toto.dark .bg-green-50,
+html.admin-console-toto.dark .bg-emerald-100,
+html.admin-console-toto.dark .bg-green-100,
+html.admin-console-toto.dark .bg-teal-50,
+html.admin-console-toto.dark .bg-teal-100 { background-color: hsl(var(--success) / 0.14); }
+html.admin-console-toto.dark .bg-utility-error-50,
+html.admin-console-toto.dark .bg-rose-50,
+html.admin-console-toto.dark .bg-rose-100,
+html.admin-console-toto.dark .bg-red-50,
+html.admin-console-toto.dark .bg-red-100 { background-color: hsl(var(--destructive) / 0.14); }
+html.admin-console-toto.dark .bg-utility-warning-50,
+html.admin-console-toto.dark .bg-amber-50,
+html.admin-console-toto.dark .bg-amber-100,
+html.admin-console-toto.dark .bg-yellow-50,
+html.admin-console-toto.dark .bg-yellow-100 { background-color: hsl(var(--warning) / 0.14); }
+html.admin-console-toto.dark .bg-emerald-700,
+html.admin-console-toto.dark .bg-emerald-600 { background-color: hsl(var(--success)); color: hsl(var(--success-foreground)); }
+html.admin-console-toto.dark .bg-sky-50,
+html.admin-console-toto.dark .bg-sky-100,
+html.admin-console-toto.dark .bg-blue-50,
+html.admin-console-toto.dark .bg-blue-100 { background-color: hsl(var(--info) / 0.12); }
+
+/* --- hairline rings/borders → console hairlines --- */
+html.admin-console-toto.dark .ring-utility-gray-200,
+html.admin-console-toto.dark .ring-utility-gray-300,
+html.admin-console-toto.dark .ring-gray-200,
+html.admin-console-toto.dark .ring-gray-300,
+html.admin-console-toto.dark .border-utility-gray-100,
+html.admin-console-toto.dark .border-utility-gray-200,
+html.admin-console-toto.dark .border-utility-gray-300,
+html.admin-console-toto.dark .border-gray-200,
+html.admin-console-toto.dark .border-gray-300,
+html.admin-console-toto.dark .border-slate-200,
+html.admin-console-toto.dark .border-slate-300 { --tw-ring-color: hsl(var(--border)); border-color: hsl(var(--border)); }
+html.admin-console-toto.dark .ring-utility-brand-200 { --tw-ring-color: hsl(var(--primary) / 0.4); }
+html.admin-console-toto.dark .ring-utility-success-200,
+html.admin-console-toto.dark .ring-emerald-600 { --tw-ring-color: hsl(var(--success) / 0.5); }
+html.admin-console-toto.dark .ring-utility-error-200 { --tw-ring-color: hsl(var(--destructive) / 0.4); }
+html.admin-console-toto.dark .ring-utility-warning-200 { --tw-ring-color: hsl(var(--warning) / 0.4); }
+html.admin-console-toto.dark .border-emerald-300,
+html.admin-console-toto.dark .border-emerald-200 { border-color: hsl(var(--success) / 0.45); }
+html.admin-console-toto.dark .border-emerald-700,
+html.admin-console-toto.dark .border-emerald-600 { border-color: hsl(var(--success)); }
+
+/* --- light hover affordances → console hover surfaces --- */
+html.admin-console-toto.dark .hover\:bg-utility-gray-50:hover,
+html.admin-console-toto.dark .hover\:bg-gray-50:hover { background-color: hsl(var(--muted)); }
+html.admin-console-toto.dark .hover\:bg-utility-gray-100:hover,
+html.admin-console-toto.dark .hover\:bg-gray-100:hover { background-color: hsl(var(--accent-soft)); }
+html.admin-console-toto.dark .hover\:border-utility-gray-300:hover { border-color: hsl(var(--input)); }
+html.admin-console-toto.dark .hover\:text-fg-primary:hover { color: hsl(var(--foreground)); }
+html.admin-console-toto.dark .hover\:text-fg-secondary:hover { color: hsl(var(--foreground) / 0.92); }
