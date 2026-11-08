@@ -95,7 +95,7 @@ func TestGetEmployeeAdvanceInfoServesCheckInFundedQuotaWhenServiceOff(t *testing
 
 	svc := NewService(&Config{
 		AdvancePaymentRepo: &quotaSourceAdvanceRepo{
-			months: []string{"2026-10"},
+			months:     []string{"2026-10"},
 			maxByMonth: map[string]uint64{"2026-10": 9_721_000},
 			rowsByMonth: map[string][]*domain.AdvancePayment{
 				"2026-10": {{ForMonth: "2026-10", MaxAdvAmount: 9_721_000, Salary: 13_887_142}},
@@ -132,7 +132,7 @@ func TestGetEmployeeAdvanceInfoStillLocksCheckInPeriodForCheckInEmployee(t *test
 
 	svc := NewService(&Config{
 		AdvancePaymentRepo: &quotaSourceAdvanceRepo{
-			months: []string{"2026-10"},
+			months:     []string{"2026-10"},
 			maxByMonth: map[string]uint64{"2026-10": 9_721_000},
 			rowsByMonth: map[string][]*domain.AdvancePayment{
 				"2026-10": {{ForMonth: "2026-10", MaxAdvAmount: 9_721_000, Salary: 13_887_142}},
@@ -179,8 +179,8 @@ func setQuotaSourceClock(t *testing.T, now time.Time) {
 // check-in earnings (Salary > 0, no workbook stamp).
 type quotaSourceAdvanceRepo struct {
 	domain.AdvancePaymentRepository
-	months     []string
-	maxByMonth map[string]uint64
+	months      []string
+	maxByMonth  map[string]uint64
 	rowsByMonth map[string][]*domain.AdvancePayment
 }
 

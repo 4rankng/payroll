@@ -55,10 +55,18 @@ describe("NotificationFAB không đè nội dung (PAYR-28)", () => {
   });
 
   it("content frame có FAB clearance rail ≥768px (admin + partner)", () => {
+    // Admin: since the console rework (3ba947af) the rail is NOT a full-height
+    // frame gutter — the frame keeps padding-right 0 and the page headers
+    // (.console-page-header / [data-mobile-header]) carry the 4.5rem clearance
+    // so the fixed bell never sits on them without guttering the tables.
     const adminCss = readFileSync(resolve(process.cwd(), "src/styles/admin-daisy.css"), "utf8");
     expect(adminCss).toMatch(
-      /@media \(min-width: 768px\)[\s\S]{0,200}admin-page-frame\s*\{\s*padding-right: 4\.5rem;/,
+      /@media \(min-width: 768px\)[\s\S]{0,400}admin-page-frame\s*\{\s*padding-right: 0;/,
     );
+    expect(adminCss).toMatch(
+      /@media \(min-width: 768px\)[\s\S]{0,400}admin-page-inner :is\(\.console-page-header, \[data-mobile-header\]\)\s*\{\s*padding-right: 4\.5rem;/,
+    );
+    // Partner shells keep the full rail on the content frame.
     const baseCss = readFileSync(resolve(process.cwd(), "src/styles/base.css"), "utf8");
     expect(baseCss).toMatch(
       /@media \(min-width: 768px\)[\s\S]{0,200}mobile-main-content\s*\{\s*padding-right: 4\.5rem;/,
