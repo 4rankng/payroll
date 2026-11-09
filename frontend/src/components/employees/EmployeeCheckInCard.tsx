@@ -208,18 +208,18 @@ function createOutsideGeofenceLocationIssue(isCheckOut = false): LocationPermiss
 // HH:mm formatter used elsewhere in this card; dates and timezone suffixes are
 // intentionally not shown in the compact employee reference.
 
-/** One dense "HH:mm – HH:mm" cell in the shift table. Each bound is its own
- *  span so screen readers (and tests) can address the individual times; the
- *  separator is decorative. */
+/** One "HH:mm start over HH:mm end" cell in the shift table. The bounds stack
+ *  on two centered lines so a narrow phone column fits them without the
+ *  columns crowding into each other; each bound is its own span so screen
+ *  readers (and tests) can address the individual times. */
 function ShiftTimeRange({ startIso, endIso }: { startIso?: string | null; endIso?: string | null }) {
   return (
     <span
       role="cell"
-      className="flex items-baseline justify-center gap-1 whitespace-nowrap text-sm font-bold tracking-tight tabular-nums text-[var(--employee-text)]"
+      className="flex flex-col items-center gap-0.5 leading-tight tabular-nums text-[var(--employee-text)]"
     >
-      <span>{safeFormatTime(startIso)}</span>
-      <span aria-hidden="true" className="font-medium text-fg-tertiary">–</span>
-      <span>{safeFormatTime(endIso)}</span>
+      <span className="text-sm font-bold">{safeFormatTime(startIso)}</span>
+      <span className="text-xs font-semibold text-fg-tertiary">{safeFormatTime(endIso)}</span>
     </span>
   );
 }
@@ -287,41 +287,41 @@ export function AttendanceReference({
           </h3>
           {/* Every configured shift is visible at once — no tab switching. One
               dense row per shift: shift hours, check-in window, check-out
-              window; the live shift row is highlighted. */}
-          <div className="mt-5 overflow-x-auto rounded-[22px] border border-[var(--employee-border-strong)] bg-[var(--employee-surface)]">
-            <div role="table" aria-label="Khung giờ ca làm" className="min-w-[340px]">
-              <div role="row" className="grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center border-b border-[var(--employee-border)] bg-[var(--employee-surface-muted)]/70 px-4 py-2.5">
-                <span role="columnheader" className="employee-type-pill uppercase text-fg-tertiary">Ca</span>
-                <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Ca làm</span>
-                <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Vào làm</span>
-                <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Tan ca</span>
-              </div>
-              {schedules.map((schedule, index) => {
-                const active = index === activeIndex;
-                return (
-                  <div
-                    key={`${schedule.shift_start}-${schedule.shift_end}-${index}`}
-                    role="row"
-                    className={`grid grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1 border-b border-[var(--employee-border)] px-4 py-3 last:border-b-0 ${active ? "bg-[var(--employee-accent-soft)]" : ""}`}
-                  >
-                    <span role="rowheader" className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="employee-type-body font-semibold text-fg-secondary">
-                        {resolveShiftLabel(schedule, index)}
-                      </span>
-                      {active && (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--employee-accent-border)] bg-[var(--employee-surface)] px-2 py-0.5 text-xs font-bold uppercase tracking-[0.05em] text-[var(--employee-accent)]">
-                          <span className="size-1.5 rounded-full bg-[var(--employee-accent)]" aria-hidden="true" />
-                          Đang diễn ra
-                        </span>
-                      )}
-                    </span>
-                    <ShiftTimeRange startIso={schedule.shift_start} endIso={schedule.shift_end} />
-                    <ShiftTimeRange startIso={schedule.check_in_window_start} endIso={schedule.check_in_window_end} />
-                    <ShiftTimeRange startIso={schedule.check_out_window_start} endIso={schedule.check_out_window_end} />
-                  </div>
-                );
-              })}
+              window; the live shift row is highlighted. The table renders
+              flat — no card nested inside the status card — so the content
+              keeps the full width on phones. */}
+          <div role="table" aria-label="Khung giờ ca làm" className="mt-3">
+            <div role="row" className="grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.75fr)_minmax(0,0.75fr)_minmax(0,0.75fr)] items-center border-b border-[var(--employee-border-strong)] px-1 pb-1.5">
+              <span role="columnheader" className="employee-type-pill uppercase text-fg-tertiary">Ca</span>
+              <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Ca làm</span>
+              <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Vào làm</span>
+              <span role="columnheader" className="employee-type-pill text-center uppercase text-fg-tertiary">Tan ca</span>
             </div>
+            {schedules.map((schedule, index) => {
+              const active = index === activeIndex;
+              return (
+                <div
+                  key={`${schedule.shift_start}-${schedule.shift_end}-${index}`}
+                  role="row"
+                  className={`grid grid-cols-[minmax(0,1.1fr)_minmax(0,0.75fr)_minmax(0,0.75fr)_minmax(0,0.75fr)] items-center gap-1 border-b border-[var(--employee-border)] px-1 py-2 last:border-b-0 ${active ? "rounded-lg bg-[var(--employee-accent-soft)] ring-1 ring-inset ring-[var(--employee-accent-border)]" : ""}`}
+                >
+                  <span role="rowheader" className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="employee-type-body font-semibold text-fg-secondary">
+                      {resolveShiftLabel(schedule, index)}
+                    </span>
+                    {active && (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--employee-accent-border)] bg-[var(--employee-surface)] px-2 py-0.5 text-xs font-bold uppercase tracking-[0.05em] text-[var(--employee-accent)]">
+                        <span className="size-1.5 rounded-full bg-[var(--employee-accent)]" aria-hidden="true" />
+                        Đang diễn ra
+                      </span>
+                    )}
+                  </span>
+                  <ShiftTimeRange startIso={schedule.shift_start} endIso={schedule.shift_end} />
+                  <ShiftTimeRange startIso={schedule.check_in_window_start} endIso={schedule.check_in_window_end} />
+                  <ShiftTimeRange startIso={schedule.check_out_window_start} endIso={schedule.check_out_window_end} />
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : null}
