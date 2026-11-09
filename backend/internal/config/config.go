@@ -57,6 +57,10 @@ type AppConfig struct {
 type DBConfig struct {
 	Driver string
 	DSN    string
+	// AutoMigrate applies pending SQL migrations (backend/migrations/*.up.sql)
+	// at boot through the schema_migrations ledger. Default true; set
+	// DB_AUTO_MIGRATE=false to pin the schema during an incident.
+	AutoMigrate bool
 	// Connection pool settings
 	MaxIdleConns    int
 	MaxOpenConns    int
@@ -381,6 +385,7 @@ func Load() (*Config, error) {
 		DB: DBConfig{
 			Driver:              getEnv("DB_DRIVER", "mysql"),
 			DSN:                 getEnv("DB_DSN", "user:pass@tcp(localhost:3306)/appdb?parseTime=true&loc=Local"),
+			AutoMigrate:         parseBool(getEnv("DB_AUTO_MIGRATE", "true")),
 			MaxIdleConns:        parseInt(getEnv("DB_MAX_IDLE_CONNS", "10")),
 			MaxOpenConns:        parseInt(getEnv("DB_MAX_OPEN_CONNS", "100")),
 			ConnMaxLifetime:     parseDuration(getEnv("DB_CONN_MAX_LIFETIME", "1h")),
