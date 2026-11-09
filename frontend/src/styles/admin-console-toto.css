@@ -97,6 +97,10 @@ html.admin-console-toto.dark {
   --admin-muted-foreground: 196 37% 72%;   /* #9cc4d2 ink-muted */
   --admin-accent-soft: 186 76% 11%;        /* #072f33 signal-soft */
   --admin-accent-foreground: 169 86% 72%;  /* #7cf5de signal-strong */
+  /* Bare-name alias used by the light-surface remaps below (chip fills,
+     hover/focus affordances). Without it those rules compute to invalid →
+     transparent, so dark-console hovers/focus fills silently vanish. */
+  --accent-soft: var(--admin-accent-soft);
 
   /* Signal & status */
   --admin-primary: 169 79% 54%;            /* #2ee6c5 signal */
