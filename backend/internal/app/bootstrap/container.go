@@ -383,6 +383,7 @@ func NewContainer(cfg *config.Config, version string) (*Container, error) {
 		workers.NewCreditQuotaSweepWorker(services.Attendance),
 		walletBulkRowWorker,
 		walletBulkSvc,
+		workers.NewBankUsageSummaryWorker(services.Dashboard, infra.Logger),
 	)
 	asynqHandlers.SetApprovalRetryProcessor(services.Approval)
 	asynqinfra.RegisterHandlers(asynqServer, asynqHandlers)

@@ -11,6 +11,7 @@ func RegisterHandlers(srv *Server, h *Handlers) {
 	srv.Mux().Handle(TaskEmployeeImport, asynqlib.HandlerFunc(h.HandleEmployeeImport))
 	srv.Mux().Handle(TaskBCCImport, asynqlib.HandlerFunc(h.HandleBCCImport))
 	srv.Mux().Handle(TaskBCCImportSweep, asynqlib.HandlerFunc(h.HandleBCCImportSweep))
+	srv.Mux().Handle(TaskDashboardBankUsageRefresh, asynqlib.HandlerFunc(h.HandleBankUsageSummaryRefresh))
 	srv.Mux().Handle(TaskImportJob, asynqlib.HandlerFunc(h.HandleImportJob))
 	srv.Mux().Handle(TaskFlexPaySalaryNotification, asynqlib.HandlerFunc(h.HandleFlexPaySalaryNotification))
 	srv.Mux().Handle(TaskFlexPaySalaryNotificationSweep, asynqlib.HandlerFunc(h.HandleFlexPaySalaryNotificationSweep))
@@ -95,7 +96,21 @@ func RegisterPeriodicTasks(srv *Server, _ *Client) error {
 	); err != nil {
 		return fmt.Errorf("failed to register salary notification recovery sweep: %w", err)
 	}
-	logger.Info("Registered asynq periodic tasks", "bcc_import_recovery", "1m", "salary_notification_recovery", "1m")
+	// Bank-usage summary: the dashboard cards serve this snapshot instead of
+	// the 90s-class legacy scans (see app/services/dashboard/bank_usage_summary.go).
+	if _, err := srv.Scheduler().Register(
+		"@every 2m",
+		asynqlib.NewTask(TaskDashboardBankUsageRefresh, nil),
+		asynqlib.Queue(QueueLow),
+	); err != nil {
+		return fmt.Errorf("failed to register bank usage summary refresh: %w", err)
+	}
+	logger.Info(
+		"Registered asynq periodic tasks",
+		"bcc_import_recovery", "1m",
+		"salary_notification_recovery", "1m",
+		"bank_usage_summary_refresh", "2m",
+	)
 	return nil
 }
 

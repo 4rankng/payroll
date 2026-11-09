@@ -18,6 +18,17 @@ func (s *Service) GetBankUsage(ctx context.Context, req *dto.BankUsageRequest) (
 }
 
 func (s *Service) getBankUsageOverall(ctx context.Context) (*dto.BankUsageResponse, error) {
+	overallScope := uint(0)
+	if rows, ok := s.bankUsageSummaryFresh(ctx, &overallScope); ok {
+		items, totalEmployees, totalPaid, totalTransfers := bankUsageItemsFromSummary(rows)
+		return &dto.BankUsageResponse{
+			Banks:          items,
+			TotalEmployees: totalEmployees,
+			TotalPaidVND:   totalPaid,
+			TotalTransfers: totalTransfers,
+		}, nil
+	}
+
 	rows, err := s.TimesheetAnalyticsRepo.GetBankUsageOverall(ctx)
 	if err != nil {
 		s.logger.Error("Failed to get overall bank usage", "error", err)
@@ -57,6 +68,23 @@ func (s *Service) getBankUsageOverall(ctx context.Context) (*dto.BankUsageRespon
 }
 
 func (s *Service) getBankUsageForProject(ctx context.Context, projectID uint) (*dto.BankUsageResponse, error) {
+	projectScope := projectID
+	if rows, ok := s.bankUsageSummaryFresh(ctx, &projectScope); ok {
+		items, totalEmployees, totalPaid, totalTransfers := bankUsageItemsFromSummary(rows)
+		projectName := ""
+		if project, err := s.ProjectRepo.GetByID(ctx, projectID); err == nil && project != nil {
+			projectName = project.Name
+		}
+		return &dto.BankUsageResponse{
+			Banks:          items,
+			TotalEmployees: totalEmployees,
+			TotalPaidVND:   totalPaid,
+			TotalTransfers: totalTransfers,
+			ProjectID:      &projectScope,
+			ProjectName:    projectName,
+		}, nil
+	}
+
 	rows, err := s.TimesheetAnalyticsRepo.GetBankUsageByProject(ctx, projectID)
 	if err != nil {
 		s.logger.Error("Failed to get bank usage for project", "project_id", projectID, "error", err)
@@ -116,6 +144,16 @@ func (s *Service) GetBankUsageAllProjects(ctx context.Context) (*dto.BankUsageAl
 	var cached dto.BankUsageAllProjectsResponse
 	if err := s.CacheService.Get(ctx, cacheKey, &cached); err == nil {
 		return &cached, nil
+	}
+
+	// Precomputed summary first (see bank_usage_summary.go); the legacy scans
+	// below only run when the snapshot is missing or stale, and each fallback
+	// kicks one background refresh.
+	if rows, ok := s.bankUsageSummaryFresh(ctx, nil); ok {
+		if response := s.bankUsageAllProjectsFromSummary(ctx, rows); response != nil {
+			_ = s.CacheService.Set(ctx, cacheKey, response, constants.DashboardSummaryCacheTTL)
+			return response, nil
+		}
 	}
 
 	projectRows, err := s.TimesheetAnalyticsRepo.GetBankUsageAllProjects(ctx)

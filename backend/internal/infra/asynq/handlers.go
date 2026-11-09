@@ -18,9 +18,12 @@ var logger = observability.GetLogger().With("component", "asynq")
 
 // Task type constants
 const (
-	TaskEmployeeImport                 = "employee:import"
-	TaskBCCImport                      = "timesheet:bcc_import"
-	TaskBCCImportSweep                 = "timesheet:bcc_import_sweep"
+	TaskEmployeeImport = "employee:import"
+	TaskBCCImport      = "timesheet:bcc_import"
+	TaskBCCImportSweep = "timesheet:bcc_import_sweep"
+	// TaskDashboardBankUsageRefresh is the periodic rebuild of the dashboard
+	// bank-usage summary snapshot (see app/services/dashboard/bank_usage_summary.go).
+	TaskDashboardBankUsageRefresh      = "dashboard:bank_usage_refresh"
 	TaskImportJob                      = "import:job"
 	TaskFlexPaySalaryNotification      = "zns:flexpay_salary_notification"
 	TaskFlexPaySalaryNotificationSweep = "zns:flexpay_salary_notification_sweep"
@@ -136,6 +139,7 @@ type Handlers struct {
 	// booking + sweeper handlers — they share the same batch_repo/txnSvc).
 	walletBulkRowWorker *workers.WalletBulkTransferRowWorker
 	walletBulkSvc       WalletBulkServiceHandler
+	bankUsageSummary    *workers.BankUsageSummaryWorker
 }
 
 // WalletBulkServiceHandler is the narrow port for the wallet_bulk service's
@@ -169,6 +173,7 @@ func NewHandlers(
 	creditQuotaSweepWorker *workers.CreditQuotaSweepWorker,
 	walletBulkRowWorker *workers.WalletBulkTransferRowWorker,
 	walletBulkSvc WalletBulkServiceHandler,
+	bankUsageSummaryWorker *workers.BankUsageSummaryWorker,
 ) *Handlers {
 	return &Handlers{
 		employeeImportWorker:            employeeImportWorker,
@@ -191,6 +196,7 @@ func NewHandlers(
 		creditQuotaSweepWorker:          creditQuotaSweepWorker,
 		walletBulkRowWorker:             walletBulkRowWorker,
 		walletBulkSvc:                   walletBulkSvc,
+		bankUsageSummary:                bankUsageSummaryWorker,
 	}
 }
 
@@ -218,6 +224,13 @@ func (h *Handlers) HandleFlexPaySalaryNotificationSweep(ctx context.Context, _ *
 		return nil
 	}
 	return h.flexPaySalaryNotificationWorker.Recover(ctx)
+}
+
+func (h *Handlers) HandleBankUsageSummaryRefresh(ctx context.Context, _ *asynqlib.Task) error {
+	if h.bankUsageSummary == nil {
+		return nil
+	}
+	return h.bankUsageSummary.Refresh(ctx)
 }
 
 func (h *Handlers) HandleBCCImport(ctx context.Context, t *asynqlib.Task) error {
