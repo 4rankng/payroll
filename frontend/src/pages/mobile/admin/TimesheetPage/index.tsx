@@ -374,7 +374,7 @@ const TimesheetPageMobile = () => {
     timesheetManagement.timesheets.length === 0
   ) {
     return (
-      <div className="max-w-full space-y-4 overflow-hidden p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+      <div className="max-w-full space-y-3 overflow-hidden p-3 pb-[calc(5rem+env(safe-area-inset-bottom))]">
         <Skeleton className="h-10 w-full" />
         <div className="grid grid-cols-1 gap-3">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -395,7 +395,7 @@ const TimesheetPageMobile = () => {
   }
 
   return (
-    <div className="max-w-full space-y-4 overflow-hidden p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+    <div className="max-w-full space-y-3 overflow-hidden p-3 pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <TimesheetPageHeaderMobile
         onAddTimesheet={handleAddTimesheet}
         onApprovedTimesheetsExport={() => setApprovedTimesheetsDialogOpen(true)}

@@ -10,7 +10,7 @@ export interface PayrollMetricCardProps {
   supportText?: string;
   /** Headline KPI — gets a navy base tint + larger figure. */
   primary?: boolean;
-  /** Span both columns once the KPI grid has enough width for a two-column layout. */
+  /** Span both columns on the two-column phone grid; lg+ grid is single-row so spans are dropped. */
   mobileSpan?: boolean;
   selected?: boolean;
   disabled?: boolean;
@@ -31,7 +31,7 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
   onClick,
   className,
 }: PayrollMetricCardProps) {
-  const spanCls = mobileSpan ? 'col-span-2' : '';
+  const spanCls = mobileSpan ? 'max-lg:col-span-2' : '';
   if (isLoading) {
     return (
       <div
@@ -74,12 +74,13 @@ export const PayrollMetricCard = memo(function PayrollMetricCard({
       <div className="min-w-0 flex flex-col gap-0.5">
         <span
           className={cn(
-            'whitespace-nowrap font-financial font-bold leading-none tabular-nums tracking-tight',
+            'break-words font-financial font-bold leading-none tabular-nums tracking-tight',
             primary
-              ? 'text-[clamp(1.125rem,2.2vw,1.75rem)]'
+              // 16–20px so full VND totals stay unclipped in the 5-tile lg row.
+              ? 'text-[clamp(1rem,1.5vw,1.25rem)]'
               // 16px on phones so full VND totals fit a half-width cell; the
-              // desktop grid has room for the larger figure.
-              : 'text-base sm:text-[1.5rem]',
+              // desktop grid scales 16–20px for the same reason.
+              : 'text-base sm:text-[clamp(1rem,1.5vw,1.25rem)]',
             selected ? 'text-primary' : 'text-foreground',
           )}
         >
