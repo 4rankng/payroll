@@ -28,11 +28,15 @@ const THEME = {
     activeTabCount: 'bg-success/10 text-success',
     loaderColor: 'text-success',
   },
+  // corporate: same green header — `bg-primary` is the admin console's NEON
+  // signal teal in the dark theme, unusable as a full-width surface. The
+  // active-tab ink follows --card/--foreground so it survives the dark
+  // console (white pill in light, dark pill in dark).
   corporate: {
-    headerBg: 'bg-primary',
-    activeTabText: 'text-primary',
-    activeTabCount: 'bg-primary/10 text-primary',
-    loaderColor: 'text-primary',
+    headerBg: 'bg-gradient-to-b from-employee-800 to-employee-700',
+    activeTabText: 'text-foreground',
+    activeTabCount: 'bg-success/10 text-success',
+    loaderColor: 'text-success',
   },
 } as const;
 
