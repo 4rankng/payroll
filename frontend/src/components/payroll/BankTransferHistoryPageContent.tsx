@@ -218,6 +218,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
   const records = useMemo(() => data?.data ?? [], [data]);
   const pagination = data?.pagination;
   const summary = data?.summary;
+  const isEmpty = !isLoading && !isError && records.length === 0;
 
   const ledgerRows = useMemo(() => buildLedgerRows(records), [records]);
 
@@ -234,11 +235,10 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
     <Card
       data-slot="payment-history-workspace"
       variant="console"
-      className={
-        isAdmin
-          ? 'admin-payment-history-workspace relative flex flex-col overflow-hidden xl:overflow-visible'
-          : 'relative flex flex-col overflow-hidden xl:overflow-visible'
-      }
+      className={`
+        ${isAdmin ? 'admin-payment-history-workspace relative flex flex-col overflow-hidden xl:overflow-visible' : 'relative flex flex-col overflow-hidden xl:overflow-visible'}
+        ${isEmpty ? 'flex-1' : ''}
+      `}
     >
       <div className="border-b border-utility-gray-300 p-2.5 sm:p-3 xl:py-1.5">
         <FilterBar className="gap-2">
@@ -283,11 +283,15 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
         </div>
       )}
 
-      {!isLoading && !isError && records.length === 0 && (
-        <EmptyState
-          title="Chưa có giao dịch đã hoàn tất"
-          description="Chọn tháng hoặc kỳ lương khác để xem lịch sử."
-        />
+      {isEmpty && (
+        // PAYR-34: căn giữa dọc — empty state chiếm phần canvas còn lại
+        // thay vì dính đỉnh với ~55% trang trống bên dưới.
+        <div className="flex flex-1 items-center justify-center" data-slot="payment-history-empty-center">
+          <EmptyState
+            title="Chưa có giao dịch đã hoàn tất"
+            description="Chọn tháng hoặc kỳ lương khác để xem lịch sử."
+          />
+        </div>
       )}
 
       {!isLoading && !isError && records.length > 0 && (
@@ -358,7 +362,14 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
   // header) shared with the other redesigned admin list pages.
   if (isAdmin) {
     return (
-      <AdminPageCanvas>
+      // PAYR-34: min-h-full + flex-col để workspace empty state kéo đầy
+      // chiều cao còn lại của canvas (căn giữa dọc). .admin-empty-stretch
+      // kích chuỗi height/flex frame/inner trong admin-daisy.css — chỉ bật
+      // khi TRỐNG để trang có dữ liệu vẫn cao tự nhiên.
+      <AdminPageCanvas
+        className={isEmpty ? 'admin-empty-stretch' : undefined}
+        contentClassName="flex min-h-full flex-col"
+      >
         <AdminPageHeaderCard>
           <PageHeader
             icon={Receipt}
