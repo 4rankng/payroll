@@ -66,6 +66,9 @@ export const useBankUsage = (params?: BankUsageParams) => {
   return useQuery({
     queryKey: QueryKeys.dashboard.bankUsage(params?.project_id),
     queryFn: () => dashboardService.getBankUsage(params),
+    // Heavy server-side aggregations behind a 5-minute cache; a failed call
+    // retried 4× stacks 4 concurrent scans and freezes the DB box.
+    retry: 1,
   });
 };
 
@@ -74,6 +77,7 @@ export const useBankUsageAllProjects = () => {
   return useQuery({
     queryKey: QueryKeys.dashboard.bankUsageAllProjects(),
     queryFn: () => dashboardService.getBankUsageAllProjects(),
+    retry: 1,
   });
 };
 

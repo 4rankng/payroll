@@ -39,8 +39,8 @@ const CELLS: StatusCellDef[] = [
   {
     key: "completed",
     label: "Hoàn tất",
-    barClass: "bg-gradient-to-r from-primary to-info",
-    dotClass: "bg-primary",
+    barClass: "bg-success",
+    dotClass: "bg-success",
     getValue: (p) => p.totalPaid,
     getAmount: (p) => p.totalPaidAmount,
   },
@@ -147,8 +147,8 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
               announce a misleading completion percentage). */}
           <div
             className={cn(
-              "relative mt-2.5 h-2 overflow-hidden rounded-full bg-muted ring-1 ring-inset ring-black/[0.06]",
-              totalPaid > 0 && "shadow-[0_0_10px_rgba(16,185,129,0.20)]",
+              "relative mt-2.5 h-2 overflow-hidden rounded-full bg-muted ring-1 ring-inset ring-border",
+              totalPaid > 0 && "shadow-[0_0_10px_hsl(var(--success)/0.25)]",
             )}
             aria-hidden="true"
           >
@@ -173,12 +173,14 @@ export const AdvPartnerStatusOverview = memo(function AdvPartnerStatusOverview({
               })}
             </div>
             {/* Tick separators — notch track + fill with the band surface
-                color to get the discrete LED-cell look. */}
+                color to get the discrete LED-cell look. The band surface is
+                the live --card token, so notches cut dark in the dark theme
+                instead of flashing white. */}
             <div
               className="pointer-events-none absolute inset-0"
               style={{
                 backgroundImage:
-                  "repeating-linear-gradient(90deg, transparent 0, transparent 10px, #ffffff 10px, #ffffff 12px)",
+                  "repeating-linear-gradient(90deg, transparent 0, transparent 10px, hsl(var(--card)) 10px, hsl(var(--card)) 12px)",
               }}
             />
           </div>
