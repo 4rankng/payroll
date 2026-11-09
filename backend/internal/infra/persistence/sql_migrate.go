@@ -90,6 +90,7 @@ func RunPendingSQLMigrations(ctx context.Context, db *gorm.DB, files fs.FS, logg
 		return fmt.Errorf("glob migrations: %w", err)
 	}
 	migrations := make([]sqlMigration, 0, len(entries))
+	seenVersions := map[int64]string{}
 	for _, entry := range entries {
 		match := sqlMigrationVersionRe.FindStringSubmatch(entry)
 		if match == nil {
@@ -98,6 +99,17 @@ func RunPendingSQLMigrations(ctx context.Context, db *gorm.DB, files fs.FS, logg
 		version, err := strconv.ParseInt(match[1], 10, 64)
 		if err != nil {
 			return fmt.Errorf("parse version of %s: %w", entry, err)
+		}
+		if first, dup := seenVersions[version]; dup {
+			// Real collisions exist (014, 016, 025, 133 — distinct migrations
+			// that share a number). The runner executes only the first file
+			// per version; live databases already carry both effects from the
+			// manual flows. Flag it so a future collision cannot slip by.
+			logger.Warn("Duplicate migration version",
+				"version", version, "files", []string{first, entry},
+				"note", "only the first file is executed by the runner")
+		} else {
+			seenVersions[version] = entry
 		}
 		migrations = append(migrations, sqlMigration{version: version, name: entry})
 	}
