@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { FileDropZone } from "./FileDropZone";
 import { useImportFlexTemplate } from "@/hooks/api/useAdvancePayments";
+import { useSettingByKey } from "@/hooks/api/useSettings";
 import { formatMonthDisplay } from "@/utils/advancePaymentHelpers";
 import { FileSpreadsheet, Loader2, CalendarDays, CheckCircle2, Users, FolderKanban, Link } from "lucide-react";
 import type { ImportJobStatus, ImportJobStatusResponse } from "@/types/api/advance-payment.types";
@@ -26,15 +27,30 @@ interface ImportPayrollDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+/** Day of month new advance requests are refused (admin-configured, bounds
+ * 2-15). Mirrors `domain.DefaultAdvanceRequestStopDay`; the settings row
+ * `advance_request_stop_day` overrides it. */
+const DEFAULT_ADVANCE_REQUEST_STOP_DAY = 9;
+
+function parseRequestStopDay(raw: string | undefined): number {
+  const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN;
+  return Number.isFinite(parsed) && parsed >= 2 && parsed <= 15
+    ? parsed
+    : DEFAULT_ADVANCE_REQUEST_STOP_DAY;
+}
+
 /** Generate month options for the salary period. Payroll for a month is
- * imported early in the following month, so before day 9 the window is
- * still [previous, current] (default = previous); from day 9 it becomes
- * [current, next] (default = current). */
-function getMonthOptions(): Array<{ value: string; label: string; isCurrent: boolean }> {
-  const now = new Date();
-  const startOffset = now.getDate() < 9 ? -1 : 0;
-  return [0, 1].map((index) => {
-    const offset = startOffset + index;
+ * imported early in the following month, so while the request tail is open
+ * (day < advance_request_stop_day) the previous month's table is still
+ * needed: the window is [previous, current] (default = previous). From the
+ * stop day onward only [current] remains — the next month is never offered. */
+export function getMonthOptions(
+  stopDay: number,
+  now: Date = new Date(),
+): Array<{ value: string; label: string; isCurrent: boolean }> {
+  const startOffset = now.getDate() < stopDay ? -1 : 0;
+  const offsets = startOffset === -1 ? [-1, 0] : [0];
+  return offsets.map((offset) => {
     const d = new Date(now.getFullYear(), now.getMonth() + offset, 1);
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     const label = `Tháng ${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
@@ -49,8 +65,19 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
   const [importResult, setImportResult] = useState<ImportJobStatusResponse | null>(null);
   const [forceReprocess, setForceReprocess] = useState(false);
 
-  const monthOptions = useMemo(() => getMonthOptions(), []);
+  // The request tail length is Admin-configurable; the import window follows
+  // it so the previous month stays importable while requests are still open.
+  const { data: stopDaySetting } = useSettingByKey("advance_request_stop_day");
+  const stopDay = useMemo(() => parseRequestStopDay(stopDaySetting?.value), [stopDaySetting]);
+
+  const monthOptions = useMemo(() => getMonthOptions(stopDay), [stopDay]);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthOptions[0].value);
+  // The default month may shift once the settings row arrives; follow it
+  // until the admin picks a month manually.
+  const manualMonthRef = useRef(false);
+  useEffect(() => {
+    if (!manualMonthRef.current) setSelectedMonth(monthOptions[0].value);
+  }, [monthOptions]);
 
   const importTemplateMutation = useImportFlexTemplate({
     onProgress: (percentage) => setImportProgress(percentage),
@@ -190,7 +217,13 @@ export function ImportPayrollDialog({ open, onOpenChange }: ImportPayrollDialogP
                   <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
                   Kỳ lương
                 </label>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <Select
+                  value={selectedMonth}
+                  onValueChange={(value) => {
+                    manualMonthRef.current = true;
+                    setSelectedMonth(value);
+                  }}
+                >
                   <SelectTrigger className="h-auto rounded-lg border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 transition-colors hover:border-slate-300 focus:ring-2 focus:ring-emerald-500/40 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
