@@ -559,6 +559,16 @@ html.admin-console-toto.dark .hover\:bg-utility-gray-50:hover,
 html.admin-console-toto.dark .hover\:bg-gray-50:hover { background-color: hsl(var(--muted)); }
 html.admin-console-toto.dark .hover\:bg-utility-gray-100:hover,
 html.admin-console-toto.dark .hover\:bg-gray-100:hover { background-color: hsl(var(--accent-soft)); }
+/* Focus/open/press states of the same affordance: Radix Select and Menu items
+   carry focus:bg-utility-gray-100 (the select dropdown's selected option is
+   focused on open; the dropdown sub-trigger uses data-[state=open]:...).
+   Without these variants the dark console keeps the raw #f2f4f7 chip behind
+   near-white popover copy — invisible item text. */
+html.admin-console-toto.dark .focus\:bg-utility-gray-100:focus,
+html.admin-console-toto.dark .focus\:bg-gray-100:focus,
+html.admin-console-toto.dark .active\:bg-utility-gray-100:active,
+html.admin-console-toto.dark .active\:bg-gray-100:active,
+html.admin-console-toto.dark .data-\[state\=open\]\:bg-utility-gray-100[data-state=open] { background-color: hsl(var(--accent-soft)); }
 html.admin-console-toto.dark .hover\:border-utility-gray-300:hover { border-color: hsl(var(--input)); }
 html.admin-console-toto.dark .hover\:text-fg-primary:hover { color: hsl(var(--foreground)); }
 html.admin-console-toto.dark .hover\:text-fg-secondary:hover { color: hsl(var(--foreground) / 0.92); }
