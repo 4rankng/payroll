@@ -31,6 +31,21 @@ var sqlMigrationsBaseline int64 = 145
 
 var sqlMigrationVersionRe = regexp.MustCompile(`^0*(\d+)_`)
 
+// sqlTableHasColumn reports whether a column exists. information_schema is
+// MySQL-specific; on dialects without it (sqlite tests — where the runner
+// always created the full shape itself) the column is assumed present.
+func sqlTableHasColumn(ctx context.Context, db *gorm.DB, table, column string) (bool, error) {
+	var count int64
+	err := db.WithContext(ctx).Raw(
+		`SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+		table, column,
+	).Scan(&count).Error
+	if err != nil {
+		return true, nil
+	}
+	return count > 0, nil
+}
+
 type sqlMigration struct {
 	version int64
 	name    string
@@ -46,13 +61,28 @@ type sqlMigration struct {
 // stored routines; comment lines (`--`) pass through to the server untouched.
 // Opt out per environment with DB_AUTO_MIGRATE=false.
 func RunPendingSQLMigrations(ctx context.Context, db *gorm.DB, files fs.FS, logger *slog.Logger) error {
+	// The ledger predates the runner: live DBs carry it as a bare
+	// golang-migrate table (version + dirty, tracking only the LATEST version
+	// — that is why baseline recording must tolerate already-present rows).
 	if err := db.WithContext(ctx).Exec(`
 		CREATE TABLE IF NOT EXISTS schema_migrations (
 			version    BIGINT UNSIGNED PRIMARY KEY,
-			applied_at DATETIME(3) NOT NULL
+			dirty      TINYINT NOT NULL DEFAULT 0,
+			applied_at DATETIME(3) NULL
 		)
 	`).Error; err != nil {
 		return fmt.Errorf("create schema_migrations: %w", err)
+	}
+	hasAppliedAt, err := sqlTableHasColumn(ctx, db, "schema_migrations", "applied_at")
+	if err != nil {
+		return fmt.Errorf("inspect schema_migrations: %w", err)
+	}
+	if !hasAppliedAt {
+		if err := db.WithContext(ctx).Exec(
+			`ALTER TABLE schema_migrations ADD COLUMN applied_at DATETIME(3) NULL AFTER dirty`,
+		).Error; err != nil {
+			return fmt.Errorf("add applied_at column: %w", err)
+		}
 	}
 
 	entries, err := fs.Glob(files, "*_*.up.sql")
@@ -89,8 +119,22 @@ func RunPendingSQLMigrations(ctx context.Context, db *gorm.DB, files fs.FS, logg
 		}
 		if migration.version <= sqlMigrationsBaseline {
 			// Shipped before the runner: assumed applied by the manual flows.
+			// golang-migrate tracked only the LATEST version (144), so most
+			// baseline versions are absent — but partial seeds from crashed
+			// boots may exist, hence the existence check instead of a blind
+			// INSERT.
+			var exists int64
+			if err := db.WithContext(ctx).Raw(
+				`SELECT COUNT(*) FROM schema_migrations WHERE version = ?`,
+				migration.version,
+			).Scan(&exists).Error; err != nil {
+				return fmt.Errorf("check baseline migration %d: %w", migration.version, err)
+			}
+			if exists > 0 {
+				continue
+			}
 			if err := db.WithContext(ctx).Exec(
-				`INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)`,
+				`INSERT INTO schema_migrations (version, dirty, applied_at) VALUES (?, 0, ?)`,
 				migration.version, now,
 			).Error; err != nil {
 				return fmt.Errorf("record baseline migration %d: %w", migration.version, err)
@@ -110,7 +154,7 @@ func RunPendingSQLMigrations(ctx context.Context, db *gorm.DB, files fs.FS, logg
 				}
 			}
 			return tx.Exec(
-				`INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)`,
+				`INSERT INTO schema_migrations (version, dirty, applied_at) VALUES (?, 0, ?)`,
 				migration.version, time.Now(),
 			).Error
 		})
