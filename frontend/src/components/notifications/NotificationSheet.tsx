@@ -18,9 +18,13 @@ import type { Notification } from '@/types/api/notification.types';
 type NotificationVariant = 'employee' | 'corporate';
 
 const THEME = {
+  // employee: the portal's dark-green header language (ForceChangePassword
+  // header, UserProfileSheet hero) — `bg-neutral`/`text-neutral` are NOT in
+  // the token bridge, so they compiled to nothing (transparent header =
+  // white text on white, invisible title/tabs/"Đọc tất cả").
   employee: {
-    headerBg: 'bg-neutral',
-    activeTabText: 'text-neutral',
+    headerBg: 'bg-gradient-to-b from-employee-800 to-employee-700',
+    activeTabText: 'text-employee-800',
     activeTabCount: 'bg-success/10 text-success',
     loaderColor: 'text-success',
   },
