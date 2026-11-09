@@ -371,7 +371,6 @@ export function DataTable<TData, TValue>({
                         <TableHead
                           key={header.id}
                           scope="col"
-                          style={colSize > 0 ? { width: colSize } : undefined}
                           className={cn(
                             "whitespace-nowrap text-left typography-label-medium text-muted-foreground border-0",
                             align === "right" && "text-right",
@@ -380,7 +379,10 @@ export function DataTable<TData, TValue>({
                             isFirstColumn &&
                               "sticky left-0 z-20 bg-card/90 backdrop-blur-sm"
                           )}
-                          style={getColumnSizingStyles(header.column)}
+                          style={{
+                            ...(colSize > 0 ? { width: colSize } : undefined),
+                            ...getColumnSizingStyles(header.column),
+                          }}
                         >
                           {header.isPlaceholder ? null : canSort ? (
                             <Button

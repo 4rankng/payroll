@@ -17,29 +17,10 @@ import type { Notification } from '@/types/api/notification.types';
 
 type NotificationVariant = 'employee' | 'corporate';
 
-const THEME = {
-  // employee: the portal's dark-green header language (ForceChangePassword
-  // header, UserProfileSheet hero) — `bg-neutral`/`text-neutral` are NOT in
-  // the token bridge, so they compiled to nothing (transparent header =
-  // white text on white, invisible title/tabs/"Đọc tất cả").
-  employee: {
-    headerBg: 'bg-gradient-to-b from-employee-800 to-employee-700',
-    activeTabText: 'text-employee-800',
-    activeTabCount: 'bg-success/10 text-success',
-    loaderColor: 'text-success',
-  },
-  // corporate: same green header — `bg-primary` is the admin console's NEON
-  // signal teal in the dark theme, unusable as a full-width surface. The
-  // active-tab ink follows --card/--foreground so it survives the dark
-  // console (white pill in light, dark pill in dark).
-  corporate: {
-    headerBg: 'bg-gradient-to-b from-employee-800 to-employee-700',
-    activeTabText: 'text-foreground',
-    activeTabCount: 'bg-success/10 text-success',
-    loaderColor: 'text-success',
-  },
-} as const;
-
+// Header/tab chrome is token-only (bg-card/bg-muted/foreground/border) so it
+// follows the console's light/dark themes and the employee portal without a
+// per-variant palette — a static green slab is wrong on both canvases.
+// `variant` stays only as the daisyUI theme scope (data-theme below).
 type NotificationView = 'unread' | 'all';
 
 interface NotificationSheetProps {
@@ -51,7 +32,6 @@ interface NotificationSheetProps {
 export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: NotificationSheetProps) => {
   const isMobile = useIsMobile();
   const headerPaddingTop = `calc(env(safe-area-inset-top, 0px) + 0.875rem)`;
-  const theme = THEME[variant];
   const [activeView, setActiveView] = useState<NotificationView>('unread');
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -87,7 +67,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
 
   const renderLoading = () => (
     <div className="flex items-center justify-center py-16">
-      <Loader2 className={`h-5 w-5 animate-spin ${theme.loaderColor}`} />
+      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
     </div>
   );
 
@@ -144,23 +124,23 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
         >
           {/* Header */}
           <div
-            className={cn("px-4 pb-4 text-white", theme.headerBg)}
+            className="border-b border-border bg-card px-4 pb-4 text-foreground"
             style={{ paddingTop: headerPaddingTop }}
           >
             <div className="mb-3 flex items-center justify-between gap-2">
               <button
                 onClick={onClose}
-                className="inline-flex items-center justify-center rounded-full h-11 min-h-11 w-11 border-0 bg-transparent p-0 text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                className="inline-flex items-center justify-center rounded-full h-11 min-h-11 w-11 border-0 bg-transparent p-0 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Đóng"
               >
                 <ArrowLeft className="h-6 w-6" />
               </button>
-              <h2 className="min-w-0 flex-1 text-center text-base font-bold text-white">Thông báo</h2>
+              <h2 className="min-w-0 flex-1 text-center text-base font-bold text-foreground">Thông báo</h2>
               {activeView === 'unread' && unreadNotifications.length > 0 ? (
                 <button
                   onClick={() => markAllAsRead.mutate()}
                   disabled={markAllAsRead.isPending}
-                  className="inline-flex items-center justify-center gap-1.5 h-11 min-h-11 max-w-[6.75rem] shrink-0 rounded-md border-0 bg-transparent px-2 text-xs font-medium text-white transition-colors hover:bg-white/10 disabled:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                  className="inline-flex items-center justify-center gap-1.5 h-11 min-h-11 max-w-[6.75rem] shrink-0 rounded-md border-0 bg-transparent px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Đánh dấu tất cả đã đọc"
                 >
                   {markAllAsRead.isPending
@@ -174,7 +154,7 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
             </div>
 
             {/* Tab switcher */}
-            <div role="tablist" aria-label="Lọc thông báo" className="grid grid-cols-2 gap-1 rounded-lg bg-white/10 p-1">
+            <div role="tablist" aria-label="Lọc thông báo" className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
               {([
                 { value: 'unread' as const, label: 'Chưa đọc', count: unreadCount },
                 { value: 'all'    as const, label: 'Tất cả',   count: null },
@@ -187,14 +167,14 @@ export const NotificationSheet = ({ isOpen, onClose, variant = 'employee' }: Not
                   onClick={() => setActiveView(tab.value)}
                   className={`inline-flex items-center justify-center h-11 min-h-11 w-full gap-1.5 rounded-lg border-0 py-0 text-sm font-semibold transition-colors ${
                     activeView === tab.value
-                      ? `bg-card ${theme.activeTabText}`
-                      : 'text-white hover:text-white'
+                      ? 'bg-card text-foreground shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {tab.label}
                   {tab.count != null && tab.count > 0 && (
                     <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full leading-none ${
-                      activeView === tab.value ? theme.activeTabCount : 'bg-white/15 text-white'
+                      activeView === tab.value ? 'bg-success/10 text-success' : 'bg-foreground/10 text-foreground'
                     }`}>
                       {tab.count > 99 ? '99+' : tab.count}
                     </span>

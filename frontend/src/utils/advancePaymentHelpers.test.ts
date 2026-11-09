@@ -381,10 +381,11 @@ describe("getDefaultAdvanceMonth", () => {
 
 describe("isPriorMonthRequestable", () => {
   const prevMonth = "2026-07";
-  const infoWithPrevQuota = {
+  const infoWithPrevQuota: AdvancePaymentInfo = {
+    ...baseInfo,
     forMonth: "2026-08",
-    quotas: [{ forMonth: "2026-07", maxAdvanceAmount: 3_000_000 }],
-  } as never;
+    quotas: [{ ...baseInfo.quotas[0], forMonth: "2026-07", maxAdvanceAmount: 3_000_000 }],
+  };
 
   it("allows the prior month on day 8 when prev-month quota exists", () => {
     expect(isPriorMonthRequestable(new Date(2026, 7, 8, 23, 59), prevMonth, infoWithPrevQuota)).toBe(true);
@@ -396,15 +397,15 @@ describe("isPriorMonthRequestable", () => {
   });
 
   it("rejects when no prev-month quota exists", () => {
-    const emptyInfo = { forMonth: "2026-08", quotas: [] } as never;
+    const emptyInfo: AdvancePaymentInfo = { ...baseInfo, quotas: [] };
     expect(isPriorMonthRequestable(new Date(2026, 7, 5), prevMonth, emptyInfo)).toBe(false);
   });
 
   it("rejects when quota exists but is zero", () => {
-    const zeroQuota = {
-      forMonth: "2026-08",
-      quotas: [{ forMonth: "2026-07", maxAdvanceAmount: 0 }],
-    } as never;
+    const zeroQuota: AdvancePaymentInfo = {
+      ...baseInfo,
+      quotas: [{ ...baseInfo.quotas[0], forMonth: "2026-07", maxAdvanceAmount: 0 }],
+    };
     expect(isPriorMonthRequestable(new Date(2026, 7, 5), prevMonth, zeroQuota)).toBe(false);
   });
 
@@ -413,13 +414,13 @@ describe("isPriorMonthRequestable", () => {
   });
 
   it("keeps the prior month requestable on day 10 when requestStopDay is 12", () => {
-    const info = { ...infoWithPrevQuota, requestStopDay: 12 } as never;
+    const info: AdvancePaymentInfo = { ...infoWithPrevQuota, requestStopDay: 12 };
     expect(isPriorMonthRequestable(new Date(2026, 7, 10), prevMonth, info)).toBe(true);
     expect(isPriorMonthRequestable(new Date(2026, 7, 11, 23, 59), prevMonth, info)).toBe(true);
   });
 
   it("refuses the prior month on day 12 when requestStopDay is 12", () => {
-    const info = { ...infoWithPrevQuota, requestStopDay: 12 } as never;
+    const info: AdvancePaymentInfo = { ...infoWithPrevQuota, requestStopDay: 12 };
     expect(isPriorMonthRequestable(new Date(2026, 7, 12, 0, 0), prevMonth, info)).toBe(false);
   });
 });
