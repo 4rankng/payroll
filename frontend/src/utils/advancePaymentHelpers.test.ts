@@ -411,11 +411,22 @@ describe("isPriorMonthRequestable", () => {
   it("rejects when regular info is unavailable", () => {
     expect(isPriorMonthRequestable(new Date(2026, 7, 5), prevMonth, undefined)).toBe(false);
   });
+
+  it("keeps the prior month requestable on day 10 when requestStopDay is 12", () => {
+    const info = { ...infoWithPrevQuota, requestStopDay: 12 } as never;
+    expect(isPriorMonthRequestable(new Date(2026, 7, 10), prevMonth, info)).toBe(true);
+    expect(isPriorMonthRequestable(new Date(2026, 7, 11, 23, 59), prevMonth, info)).toBe(true);
+  });
+
+  it("refuses the prior month on day 12 when requestStopDay is 12", () => {
+    const info = { ...infoWithPrevQuota, requestStopDay: 12 } as never;
+    expect(isPriorMonthRequestable(new Date(2026, 7, 12, 0, 0), prevMonth, info)).toBe(false);
+  });
 });
 
 
 describe("resolveCheckInServedMonth", () => {
-  const months = { currentMonth: "2026-10", previousMonth: "2026-09" };
+  const months = { currentMonth: "2026-10", previousMonth: "2026-09", stopDay: 9 };
 
   it("follows the server during the days 1-8 tail", () => {
     // The tail is exactly when the check-in flow serves the PREVIOUS month
@@ -450,6 +461,7 @@ describe("resolveCheckInServedMonth", () => {
         today: new Date(2026, 10, 1),
         currentMonth: "2026-11",
         previousMonth: "2026-10",
+        stopDay: 9,
       }),
     ).toBe("2026-11");
   });
@@ -463,6 +475,16 @@ describe("resolveCheckInServedMonth", () => {
     ).toBe("2026-10");
     expect(
       resolveCheckInServedMonth({ today: new Date(2026, 9, 20), ...months }),
+    ).toBe("2026-10");
+  });
+
+  it("uses the configured stop day for the pre-response fallback", () => {
+    // Stop day 12: day 10 is still inside the previous-month tail, day 12 is not.
+    expect(
+      resolveCheckInServedMonth({ ...months, stopDay: 12, today: new Date(2026, 9, 10) }),
+    ).toBe("2026-09");
+    expect(
+      resolveCheckInServedMonth({ ...months, stopDay: 12, today: new Date(2026, 9, 12) }),
     ).toBe("2026-10");
   });
 });

@@ -51,6 +51,12 @@ const mocks = vi.hoisted(() => ({
       value_type: 'number',
     },
     {
+      id: 17,
+      key: 'advance_request_stop_day',
+      value: '9',
+      value_type: 'number',
+    },
+    {
       id: 7,
       key: 'transfer_bank_account_holder',
       value: 'CONG TY LUONG TUAN',
@@ -227,6 +233,34 @@ describe('useSettingsForm', () => {
     ];
     act(() => options.onSuccess());
     expect(result.current.originalSelfCheckInAdvanceWindowOpenDay).toBe('15');
+  });
+
+  it('loads and saves the advance request stop day', async () => {
+    const { result } = renderHook(() => useSettingsForm());
+
+    await waitFor(() => {
+      expect(result.current.advanceRequestStopDay).toBe('9');
+    });
+    expect(result.current.originalAdvanceRequestStopDay).toBe('9');
+
+    act(() => {
+      result.current.setAdvanceRequestStopDay('12');
+    });
+    act(() => {
+      result.current.handleSaveAdvanceRequestStopDay();
+    });
+
+    expect(mocks.mutate).toHaveBeenCalledWith(
+      { id: 17, data: { value: '12' } },
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
+
+    const [, options] = mocks.mutate.mock.calls.at(-1) as [
+      unknown,
+      { onSuccess: () => void },
+    ];
+    act(() => options.onSuccess());
+    expect(result.current.originalAdvanceRequestStopDay).toBe('12');
   });
 
   it('mirrors the weekly account into unset FlexPay fields', async () => {
