@@ -58,7 +58,6 @@ import {
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { UserProfileSheet } from "@/components/sheets/UserProfileSheet";
 import { SidebarToggle } from "@/components/shared/SidebarToggle";
-import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { useAuth } from "@/contexts";
 import { useModalNavigation } from "@/hooks/useModalNavigation";
 import { useAdminTheme } from "@/hooks/useAdminTheme";
@@ -100,6 +99,15 @@ const menuGroups = [
   { key: "tai-chinh", label: "Tài chính" },
   { key: "he-thong", label: "Hệ thống" },
 ] as const;
+
+// Footer quick-action icon buttons (notifications + appearance) — same
+// surface vocabulary as the account trigger below them.
+const quickActionButtonClass = cn(
+  "relative inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg",
+  "border border-white/[0.06] bg-card/[0.04] text-white/70 outline-none",
+  "transition-colors duration-200 hover:border-white/[0.1] hover:bg-card/[0.08] hover:text-white/90",
+  "focus-visible:outline-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+);
 
 interface NavItemProps {
   item: MenuItem;
@@ -482,16 +490,56 @@ const AdminSidebar = () => {
         {/* Footer — user menu */}
         <SidebarSeparator className="bg-card/[0.06] m-0 shrink-0" />
         <SidebarFooter className="p-2 shrink-0">
+          {/* Quick actions: notifications + appearance — reachable directly,
+              outside the account menu (collapsed rail stacks them). */}
+          <div className={cn("mb-1.5 flex", isCollapsed ? "flex-col items-center gap-1" : "items-center gap-1.5")}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={unreadCount > 0 ? `Thông báo (${unreadCount} chưa đọc)` : "Thông báo"}
+                  onClick={() => openModal(MODAL_IDS.NOTIFICATION_SHEET)}
+                  className={quickActionButtonClass}
+                >
+                  <Bell01 className="h-4 w-4" aria-hidden="true" />
+                  {unreadCount > 0 && (
+                    <span className={cn(
+                      "absolute -top-1 -right-1 h-4 min-w-4 flex items-center justify-center px-1",
+                      "text-xs font-semibold rounded-full bg-utility-error-600 text-white",
+                      "animate-badge-pulse"
+                    )}>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Thông báo</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={dark ? "Chế độ sáng" : "Chế độ tối"}
+                  onClick={toggleTheme}
+                  className={quickActionButtonClass}
+                >
+                  {dark ? (
+                    <Sun className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <Moon01 className="h-4 w-4" aria-hidden="true" />
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{dark ? "Chế độ sáng" : "Chế độ tối"}</TooltipContent>
+            </Tooltip>
+          </div>
+
           <div className={cn("flex gap-2", isCollapsed ? "flex-col items-center" : "items-center")}>
           <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  aria-label={
-                    user
-                      ? `Tài khoản: ${user.name}${unreadCount > 0 ? `, ${unreadCount} thông báo chưa đọc` : ""}`
-                      : "Tài khoản"
-                  }
+                  aria-label={user ? `Tài khoản: ${user.name}` : "Tài khoản"}
                   aria-haspopup="menu"
                   className={cn(
                     "admin-sidebar-account relative flex items-center w-full rounded-xl transition-all duration-200 cursor-pointer outline-none",
@@ -520,16 +568,6 @@ const AdminSidebar = () => {
                       <ChevronUp className="w-3.5 h-3.5 shrink-0 text-white/60" />
                     </>
                   )}
-                  {unreadCount > 0 && (
-                    <span className={cn(
-                      "absolute h-4 min-w-4 flex items-center justify-center px-1",
-                      isCollapsed ? "-top-0.5 -right-0.5" : "-top-1.5 -right-1.5",
-                      "text-xs font-semibold rounded-full bg-utility-error-600 text-white",
-                      "animate-badge-pulse"
-                    )}>
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                  )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -557,18 +595,6 @@ const AdminSidebar = () => {
                 <DropdownMenuItem onClick={() => openModal(MODAL_IDS.CHANGE_PASSWORD)}>
                   <Key01 className="mr-2 h-4 w-4" aria-hidden="true" />
                   Đổi mật khẩu
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => openModal(MODAL_IDS.NOTIFICATION_SHEET)}>
-                  <Bell01 className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Thông báo
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={toggleTheme}>
-                  {dark ? (
-                    <Sun className="mr-2 h-4 w-4" aria-hidden="true" />
-                  ) : (
-                    <Moon01 className="mr-2 h-4 w-4" aria-hidden="true" />
-                  )}
-                  {dark ? "Chế độ sáng" : "Chế độ tối"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-fg-error-primary focus:text-fg-error-primary">
