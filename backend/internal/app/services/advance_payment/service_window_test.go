@@ -16,20 +16,46 @@ func TestIsRequestWindowLocked(t *testing.T) {
 	newPeriodStart := time.Date(2026, 6, 20, 9, 0, 0, 0, clock.DefaultLocation)
 	openDay := time.Date(2026, 6, 25, 9, 0, 0, 0, clock.DefaultLocation)
 
-	if !isRequestWindowLocked(lockedGap, false) {
+	if !isRequestWindowLocked(lockedGap, 9, false) {
 		t.Fatalf("expected day 19 without quota to stay locked")
 	}
-	if isRequestWindowLocked(lockedGap, true) {
+	if isRequestWindowLocked(lockedGap, 9, true) {
 		t.Fatalf("expected day 19 with uploaded quota to unlock requests")
 	}
-	if !isRequestWindowLocked(newPeriodStart, false) {
+	if !isRequestWindowLocked(newPeriodStart, 9, false) {
 		t.Fatalf("expected day 20 without quota to stay locked")
 	}
-	if !isRequestWindowLocked(openDay, false) {
+	if !isRequestWindowLocked(openDay, 9, false) {
 		t.Fatalf("expected day 25 without quota to stay locked")
 	}
-	if isRequestWindowLocked(openDay, true) {
+	if isRequestWindowLocked(openDay, 9, true) {
 		t.Fatalf("expected day 25 with uploaded quota to stay open")
+	}
+}
+
+// A configured stop day of 12 shifts the tail boundary: days 10-11 stay
+// requestable, day 12 refuses (locked without quota), days 12-19 stay the
+// gap until the period rolls on day 20.
+func TestIsRequestWindowLockedConfiguredStopDay(t *testing.T) {
+	tailDay10 := time.Date(2026, 6, 10, 9, 0, 0, 0, clock.DefaultLocation)
+	tailDay11 := time.Date(2026, 6, 11, 23, 59, 0, 0, clock.DefaultLocation)
+	stopDay := time.Date(2026, 6, 12, 0, 0, 30, 0, clock.DefaultLocation)
+	gapDay15 := time.Date(2026, 6, 15, 9, 0, 0, 0, clock.DefaultLocation)
+
+	if isRequestWindowLocked(tailDay10, 12, false) {
+		t.Fatalf("expected day 10 inside a stop day 12 tail to stay unlocked")
+	}
+	if isRequestWindowLocked(tailDay11, 12, false) {
+		t.Fatalf("expected day 11 (last tail day) to stay unlocked")
+	}
+	if !isRequestWindowLocked(stopDay, 12, false) {
+		t.Fatalf("expected day 12 (stop day) without quota to be locked")
+	}
+	if !isRequestWindowLocked(gapDay15, 12, false) {
+		t.Fatalf("expected gap day 15 without quota to stay locked")
+	}
+	if isRequestWindowLocked(stopDay, 12, true) {
+		t.Fatalf("expected day 12 with uploaded quota to unlock requests")
 	}
 }
 
@@ -38,28 +64,48 @@ func TestIsRequestMonthAllowed(t *testing.T) {
 	day20 := time.Date(2026, 6, 20, 9, 0, 0, 0, clock.DefaultLocation)
 	day25 := time.Date(2026, 6, 25, 9, 0, 0, 0, clock.DefaultLocation)
 
-	if !isRequestMonthAllowed(day5, "2026-05") {
+	if !isRequestMonthAllowed(day5, 9, "2026-05") {
 		t.Fatalf("expected day 5 to allow previous calendar month only")
 	}
-	if isRequestMonthAllowed(day5, "2026-06") {
+	if isRequestMonthAllowed(day5, 9, "2026-06") {
 		t.Fatalf("did not expect day 5 to allow current calendar month (tail = previous month only)")
 	}
-	if isRequestMonthAllowed(day5, "2026-04") {
+	if isRequestMonthAllowed(day5, 9, "2026-04") {
 		t.Fatalf("did not expect day 5 to allow unrelated month")
 	}
 
-	if !isRequestMonthAllowed(day20, "2026-06") {
+	if !isRequestMonthAllowed(day20, 9, "2026-06") {
 		t.Fatalf("expected day 20 to allow current month when quota exists")
 	}
-	if isRequestMonthAllowed(day20, "2026-05") {
+	if isRequestMonthAllowed(day20, 9, "2026-05") {
 		t.Fatalf("did not expect day 20 to allow previous month")
 	}
 
-	if !isRequestMonthAllowed(day25, "2026-06") {
+	if !isRequestMonthAllowed(day25, 9, "2026-06") {
 		t.Fatalf("expected day 25 to allow current month")
 	}
-	if isRequestMonthAllowed(day25, "2026-05") {
+	if isRequestMonthAllowed(day25, 9, "2026-05") {
 		t.Fatalf("did not expect day 25 to allow previous month")
+	}
+}
+
+// With stop day 12 the previous month stays the servable period through
+// day 11; from day 12 the current month takes over.
+func TestIsRequestMonthAllowedConfiguredStopDay(t *testing.T) {
+	day10 := time.Date(2026, 6, 10, 9, 0, 0, 0, clock.DefaultLocation)
+	day12 := time.Date(2026, 6, 12, 9, 0, 0, 0, clock.DefaultLocation)
+
+	if !isRequestMonthAllowed(day10, 12, "2026-05") {
+		t.Fatalf("expected day 10 (stop day 12) to allow previous calendar month")
+	}
+	if isRequestMonthAllowed(day10, 12, "2026-06") {
+		t.Fatalf("did not expect day 10 (stop day 12) to allow current month")
+	}
+	if !isRequestMonthAllowed(day12, 12, "2026-06") {
+		t.Fatalf("expected day 12 (stop day) to allow current month")
+	}
+	if isRequestMonthAllowed(day12, 12, "2026-05") {
+		t.Fatalf("did not expect day 12 (stop day) to allow previous month")
 	}
 }
 

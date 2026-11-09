@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,10 +13,10 @@ import (
 )
 
 // Hybrid employees (self-checkin enabled + prior-month FlexPay quota) may use
-// the regular endpoint ONLY for the previous-period tail (days 1-9). The
-// current month must go through the self-checkin flow whose window opens on
-// the Admin-configured window-open day — the regular endpoint must never
-// serve it to them.
+// the regular endpoint ONLY for the previous-period tail (days 1 through
+// stopDay-1, stop day default 9). The current month must go through the
+// self-checkin flow whose window opens on the Admin-configured window-open
+// day — the regular endpoint must never serve it to them.
 func TestCreateRequestHybridWindow(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -68,6 +69,64 @@ func TestCreateRequestHybridWindow(t *testing.T) {
 			}
 			if !tc.wantErr && err != nil {
 				t.Fatalf("expected acceptance, got: %v", err)
+			}
+		})
+	}
+}
+
+// With the Admin-configured stop day at 12, the regular endpoint's previous-
+// period tail extends to day 11: day 10 is still accepted and day 12 refuses
+// with the dynamic "Đã quá hạn ngày 11" message.
+func TestCreateRequestHybridWindowConfiguredStopDay(t *testing.T) {
+	cases := []struct {
+		name     string
+		now      time.Time
+		forMonth string
+		wantErr  bool
+	}{
+		{"day 10 prev month (tail still open under stop day 12)", time.Date(2026, 8, 10, 9, 0, 0, 0, clock.DefaultLocation), "2026-07", false},
+		{"day 11 prev month (last tail day)", time.Date(2026, 8, 11, 23, 0, 0, 0, clock.DefaultLocation), "2026-07", false},
+		{"day 12 prev month (stop day — refused)", time.Date(2026, 8, 12, 0, 0, 30, 0, clock.DefaultLocation), "2026-07", true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeClock := clock.NewFake(tc.now)
+			clock.SetGlobal(fakeClock)
+			t.Cleanup(func() { clock.SetGlobal(clock.New()) })
+
+			svc := NewService(&Config{
+				AdvancePaymentRepo: &hybridCreateAdvanceRepo{
+					byMonth: map[string][]*domain.AdvancePayment{
+						"2026-07": {{ID: 1, ProjectID: 5, MaxAdvAmount: 3_000_000}},
+						"2026-08": {{ID: 2, ProjectID: 5, MaxAdvAmount: 5_000_000}},
+					},
+				},
+				AdvancePaymentRequestRepo: &hybridCreateRequestRepo{},
+				ProjectEmployeeRepo: &hybridCreateProjectEmployeeRepo{
+					assignments: []*domain.ProjectEmployee{
+						{
+							EmployeeID:            99,
+							ProjectID:             5,
+							PaymentSchedule:       string(domain.PaymentScheduleFlexible),
+							CheckInEnabled:        true,
+							AdvanceRequestEnabled: true,
+						},
+					},
+				},
+				FeeResolver:       &hybridStubFeeResolver{},
+				GetRequestStopDay: func(_ context.Context) uint64 { return 12 },
+			}, slog.New(slog.NewTextHandler(io.Discard, nil)))
+
+			_, err := svc.CreateRequest(context.Background(), 99, 500_000, tc.forMonth)
+			if tc.wantErr && err == nil {
+				t.Fatalf("expected rejection for %s", tc.forMonth)
+			}
+			if !tc.wantErr && err != nil {
+				t.Fatalf("expected acceptance, got: %v", err)
+			}
+			if tc.wantErr && !strings.Contains(err.Error(), "ngày 11") {
+				t.Errorf("refusal = %v, want it to name the last allowed day 11", err)
 			}
 		})
 	}

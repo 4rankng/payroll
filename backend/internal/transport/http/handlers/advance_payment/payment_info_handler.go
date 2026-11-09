@@ -48,6 +48,12 @@ func (h *AdvancePaymentHandler) GetMyAdvancePaymentInfo(c *gin.Context) {
 		resp.ProviderMaxTransferAmount = uint64(limits.MaxAmount)
 	}
 
+	// Expose the configured request stop day so the employee app mirrors the
+	// admin-configured request tail.
+	if cfg.GetRequestStopDay != nil {
+		resp.RequestStopDay = int(cfg.GetRequestStopDay(c.Request.Context()))
+	}
+
 	for i, q := range info.Quotas {
 		resp.Quotas[i] = dto.AdvancePaymentQuotaResponse{
 			ForMonth:         q.ForMonth,

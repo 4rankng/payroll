@@ -86,23 +86,23 @@ type CheckInAdvanceInfo struct {
 //
 //   - days windowOpenDay through month end: the CURRENT month, open — the
 //     admin-configured window-open day (default 10) governs this edge.
-//   - days 1 through RequestCutoffDay (the previous period's tail): the
-//     PREVIOUS month, open — the same tail the regular endpoint serves.
-//   - When windowOpenDay falls inside the tail (e.g. day 7 with cutoff day 8)
+//   - days 1 through stopDay-1 (the previous period's tail): the PREVIOUS
+//     month, open — the same tail the regular endpoint serves.
+//   - When windowOpenDay falls inside the tail (e.g. day 7 with stop day 9)
 //     the two windows overlap: from day windowOpenDay BOTH periods are
 //     requestable and the info endpoint serves the CURRENT month, so the
 //     employee-facing "xin ứng từ ngày %d" promise holds before the tail
 //     closes.
-//   - Otherwise (days cutoff+1 .. windowOpenDay-1): locked gap.
+//   - Otherwise (days stopDay .. windowOpenDay-1): locked gap.
 //
 // Months older than the tail are always locked: a period cannot be requested
 // after it rolls past its window.
-func checkInRequestPeriod(now time.Time, windowOpenDay int) (forMonth string, open bool) {
+func checkInRequestPeriod(now time.Time, windowOpenDay int, stopDay int) (forMonth string, open bool) {
 	currentCalMonth := now.Format("2006-01")
 	if now.Day() >= windowOpenDay {
 		return currentCalMonth, true
 	}
-	if IsBeforeCutoff(now) {
+	if clock.IsBeforeCutoff(now, stopDay) {
 		return now.AddDate(0, -1, 0).Format("2006-01"), true
 	}
 	return currentCalMonth, false
@@ -113,12 +113,12 @@ func checkInRequestPeriod(now time.Time, windowOpenDay int) (forMonth string, op
 // configured window-open day through month end, and the previous month through
 // the request-cutoff tail. Both are open when the windows overlap (a
 // window-open day inside the tail); every other month is refused.
-func isCheckInRequestWindowOpen(now time.Time, forMonth string, windowOpenDay int) bool {
+func isCheckInRequestWindowOpen(now time.Time, forMonth string, windowOpenDay int, stopDay int) bool {
 	switch forMonth {
 	case now.Format("2006-01"):
 		return now.Day() >= windowOpenDay
 	case now.AddDate(0, -1, 0).Format("2006-01"):
-		return IsBeforeCutoff(now)
+		return clock.IsBeforeCutoff(now, stopDay)
 	default:
 		return false
 	}
@@ -133,10 +133,11 @@ func (s *Service) GetCheckInAdvanceInfo(ctx context.Context, employeeID uint64) 
 
 	now := clock.Now()
 	// The screen must describe the period the employee can actually request
-	// right now: the previous month during the days 1-8 tail, the current month
-	// from the configured window-open day, nothing in between.
+	// right now: the previous month during the days 1..stopDay-1 tail, the
+	// current month from the configured window-open day, nothing in between.
 	windowOpenDay := s.checkInWindowOpenDay(ctx)
-	servedMonth, windowOpen := checkInRequestPeriod(now, windowOpenDay)
+	stopDay := s.requestStopDay(ctx)
+	servedMonth, windowOpen := checkInRequestPeriod(now, windowOpenDay, stopDay)
 
 	info := &CheckInAdvanceInfo{
 		ForMonth:      servedMonth,
@@ -254,15 +255,16 @@ func (s *Service) CreateCheckInAdvanceRequest(ctx context.Context, employeeID ui
 	}
 
 	windowOpenDay := s.checkInWindowOpenDay(ctx)
+	stopDay := s.requestStopDay(ctx)
 	now := clock.Now()
 	if forMonth == "" {
-		forMonth, _ = checkInRequestPeriod(now, windowOpenDay)
+		forMonth, _ = checkInRequestPeriod(now, windowOpenDay, stopDay)
 	}
-	if !isCheckInRequestWindowOpen(now, forMonth, windowOpenDay) {
+	if !isCheckInRequestWindowOpen(now, forMonth, windowOpenDay, stopDay) {
 		return nil, domain.NewValidationError(fmt.Sprintf(
 			"Bạn có thể xin ứng lương cho kỳ %s: từ ngày 1 đến ngày %d của tháng sau, hoặc từ ngày %d đến cuối tháng của kỳ hiện tại.",
 			FormatMonthDisplay(now.AddDate(0, -1, 0).Format("2006-01")),
-			clock.RequestCutoffDay,
+			stopDay-1,
 			windowOpenDay,
 		))
 	}

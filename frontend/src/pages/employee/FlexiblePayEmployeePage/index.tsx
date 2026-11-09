@@ -33,6 +33,7 @@ import { AdvancePaymentHistoryCard } from "@/components/advance-payment/AdvanceP
 import { AdvancePaymentConfirmSheet } from "@/components/advance-payment/AdvancePaymentConfirmSheet";
 import { NotificationSheet } from "@/components/notifications/NotificationSheet";
 import {
+  ADVANCE_REQUEST_STOP_DAY,
   formatPayrollMonthRange,
   getInitialEmployeeAdvanceMonth,
   isPastAdvancePaymentPeriod,
@@ -111,6 +112,9 @@ const FlexiblePayEmployeePage = () => {
     currentMonth: currentCalMonth,
     previousMonth: prevCalMonth,
     today: new Date(),
+    // Pre-response fallback only; the regular info query is declared below
+    // (its enabled flag depends on this result, so it cannot feed this call).
+    stopDay: checkInInfoQuery.data?.data?.requestStopDay ?? ADVANCE_REQUEST_STOP_DAY,
   });
   const isCheckIn = isCheckInEnabled && checkInServesMonth === selectedMonth;
   const regularInfoQuery = useAdvancePaymentInfo({ enabled: !isCheckInEnabled || !isCheckIn });

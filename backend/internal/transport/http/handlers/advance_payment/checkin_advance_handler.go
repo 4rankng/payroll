@@ -57,6 +57,11 @@ func (h *AdvancePaymentHandler) GetMyCheckInAdvanceInfo(c *gin.Context) {
 	if cfg.GetSelfCheckInAdvancePercentage != nil {
 		resp.AdvancePercentage = cfg.GetSelfCheckInAdvancePercentage(c.Request.Context())
 	}
+	// Expose the configured request stop day so the employee app mirrors the
+	// admin-configured request tail.
+	if cfg.GetRequestStopDay != nil {
+		resp.RequestStopDay = int(cfg.GetRequestStopDay(c.Request.Context()))
+	}
 	if cfg.GetTransferLimits != nil {
 		limits := cfg.GetTransferLimits(c.Request.Context())
 		resp.ProviderMinTransferAmount = uint64(limits.MinAmount)

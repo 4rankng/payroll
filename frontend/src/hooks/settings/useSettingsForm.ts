@@ -10,6 +10,7 @@ const SETTINGS_KEYS = {
   SELF_CHECK_IN_ADVANCE_PERCENTAGE: 'self_check_in_advance_percentage',
   SELF_CHECK_IN_ADVANCE_HOLD_HOURS: 'self_check_in_advance_hold_hours',
   SELF_CHECK_IN_ADVANCE_WINDOW_OPEN_DAY: 'self_check_in_advance_window_open_day',
+  ADVANCE_REQUEST_STOP_DAY: 'advance_request_stop_day',
   TRANSFER_BANK_HOLDER: 'transfer_bank_account_holder',
   TRANSFER_BANK_NUMBER: 'transfer_bank_account_number',
   TRANSFER_BANK_NAME: 'transfer_bank_name',
@@ -48,6 +49,8 @@ export interface SettingsFormState {
   originalSelfCheckInAdvanceHoldHours: string;
   selfCheckInAdvanceWindowOpenDay: string;
   originalSelfCheckInAdvanceWindowOpenDay: string;
+  advanceRequestStopDay: string;
+  originalAdvanceRequestStopDay: string;
   transferBankHolder: string;
   originalTransferBankHolder: string;
   transferBankNumber: string;
@@ -75,6 +78,7 @@ export interface SettingsFormState {
   setSelfCheckInAdvancePercentage: (v: string) => void;
   setSelfCheckInAdvanceHoldHours: (v: string) => void;
   setSelfCheckInAdvanceWindowOpenDay: (v: string) => void;
+  setAdvanceRequestStopDay: (v: string) => void;
   setTransferBankHolder: (v: string) => void;
   setTransferBankNumber: (v: string) => void;
   setTransferBankName: (v: string) => void;
@@ -91,6 +95,7 @@ export interface SettingsFormState {
   handleSaveSelfCheckInAdvancePercentage: () => void;
   handleSaveSelfCheckInAdvanceHoldHours: () => void;
   handleSaveSelfCheckInAdvanceWindowOpenDay: () => void;
+  handleSaveAdvanceRequestStopDay: () => void;
   handleSaveTransferBank: () => void;
   handleSaveTransferBankVisible: () => void;
   handleSaveFlexPayTransferBank: () => void;
@@ -113,6 +118,7 @@ export function useSettingsForm(): SettingsFormState {
     SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_PERCENTAGE,
     SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_HOLD_HOURS,
     SETTINGS_KEYS.SELF_CHECK_IN_ADVANCE_WINDOW_OPEN_DAY,
+    SETTINGS_KEYS.ADVANCE_REQUEST_STOP_DAY,
     SETTINGS_KEYS.TRANSFER_BANK_HOLDER,
     SETTINGS_KEYS.TRANSFER_BANK_NUMBER,
     SETTINGS_KEYS.TRANSFER_BANK_NAME,
@@ -142,6 +148,8 @@ export function useSettingsForm(): SettingsFormState {
   const [originalSelfCheckInAdvanceHoldHours, setOriginalSelfCheckInAdvanceHoldHours] = useState('');
   const [selfCheckInAdvanceWindowOpenDay, setSelfCheckInAdvanceWindowOpenDay] = useState('');
   const [originalSelfCheckInAdvanceWindowOpenDay, setOriginalSelfCheckInAdvanceWindowOpenDay] = useState('');
+  const [advanceRequestStopDay, setAdvanceRequestStopDay] = useState('');
+  const [originalAdvanceRequestStopDay, setOriginalAdvanceRequestStopDay] = useState('');
   const [transferBankHolder, setTransferBankHolder] = useState('');
   const [originalTransferBankHolder, setOriginalTransferBankHolder] = useState('');
   const [transferBankNumber, setTransferBankNumber] = useState('');
@@ -242,6 +250,14 @@ export function useSettingsForm(): SettingsFormState {
         setSelfCheckInAdvanceWindowOpenDay(selfCheckInAdvanceWindowOpenDaySetting.value);
         setOriginalSelfCheckInAdvanceWindowOpenDay(selfCheckInAdvanceWindowOpenDaySetting.value);
       }
+      const advanceRequestStopDaySetting = settings.find(
+        (s) => s?.key === SETTINGS_KEYS.ADVANCE_REQUEST_STOP_DAY,
+      );
+      // The migration seeds this row; a missing row (fresh env before the
+      // migration ran) falls back to the backend default of 9.
+      const advanceRequestStopDayValue = advanceRequestStopDaySetting?.value ?? '9';
+      setAdvanceRequestStopDay(advanceRequestStopDayValue);
+      setOriginalAdvanceRequestStopDay(advanceRequestStopDayValue);
       // Missing rows fall back to the shared defaults so admins see what is
       // currently printed on statements before saving an override.
       setTransferBankHolder(transferBankHolderSetting?.value ?? TRANSFER_BANK_DEFAULTS.HOLDER);
@@ -384,6 +400,18 @@ export function useSettingsForm(): SettingsFormState {
     );
   };
 
+  const handleSaveAdvanceRequestStopDay = () => {
+    if (!settings || !Array.isArray(settings)) return;
+    const setting = settings.find(
+      (item) => item?.key === SETTINGS_KEYS.ADVANCE_REQUEST_STOP_DAY,
+    );
+    if (!setting) return;
+    updateMutation.mutate(
+      { id: setting.id, data: { value: advanceRequestStopDay } },
+      { onSuccess: () => setOriginalAdvanceRequestStopDay(advanceRequestStopDay) },
+    );
+  };
+
   const handleSaveBulkTransferWorkbookLimitVnd = async () => {
     if (!bulkTransferWorkbookLimitSetting) return;
 
@@ -496,6 +524,8 @@ export function useSettingsForm(): SettingsFormState {
     originalSelfCheckInAdvanceHoldHours,
     selfCheckInAdvanceWindowOpenDay,
     originalSelfCheckInAdvanceWindowOpenDay,
+    advanceRequestStopDay,
+    originalAdvanceRequestStopDay,
     transferBankHolder,
     originalTransferBankHolder,
     transferBankNumber,
@@ -525,6 +555,7 @@ export function useSettingsForm(): SettingsFormState {
     setSelfCheckInAdvancePercentage,
     setSelfCheckInAdvanceHoldHours,
     setSelfCheckInAdvanceWindowOpenDay,
+    setAdvanceRequestStopDay,
     setTransferBankHolder,
     setTransferBankNumber,
     setTransferBankName,
@@ -541,6 +572,7 @@ export function useSettingsForm(): SettingsFormState {
     handleSaveSelfCheckInAdvancePercentage,
     handleSaveSelfCheckInAdvanceHoldHours,
     handleSaveSelfCheckInAdvanceWindowOpenDay,
+    handleSaveAdvanceRequestStopDay,
     handleSaveTransferBank,
     handleSaveTransferBankVisible,
     handleSaveFlexPayTransferBank,

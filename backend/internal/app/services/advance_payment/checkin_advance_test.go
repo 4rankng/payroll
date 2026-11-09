@@ -15,7 +15,8 @@ import (
 // TestIsCheckInRequestWindowOpen covers the self-check-in advance request
 // window. A check-in period must have exactly ONE request path, so the flow
 // mirrors the regular endpoint's calendar: the previous month during the
-// days 1-8 tail, the current month from day 10, and nothing at all on day 9.
+// days 1..stopDay-1 tail (stop day default 9), the current month from day
+// 10, and nothing at all on the stop day itself.
 // Financial correctness depends on this.
 func TestIsCheckInRequestWindowOpen(t *testing.T) {
 	loc := time.FixedZone("ICT", 7*3600) // Asia/Ho_Chi_Minh = UTC+7, no tz DB needed
@@ -40,7 +41,7 @@ func TestIsCheckInRequestWindowOpen(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, SelfCheckInAdvanceWindowOpenDay); got != c.want {
+			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, SelfCheckInAdvanceWindowOpenDay, AdvanceRequestStopDay); got != c.want {
 				t.Errorf("isCheckInRequestWindowOpen(%s, %s) = %v, want %v",
 					c.now.Format("2006-01-02"), c.forMonth, got, c.want)
 			}
@@ -65,7 +66,7 @@ func TestIsCheckInRequestWindowOpenConfiguredDay(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, 15); got != c.want {
+			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, 15, AdvanceRequestStopDay); got != c.want {
 				t.Errorf("isCheckInRequestWindowOpen(%s, %s, 15) = %v, want %v",
 					c.now.Format("2006-01-02"), c.forMonth, got, c.want)
 			}
@@ -73,8 +74,8 @@ func TestIsCheckInRequestWindowOpenConfiguredDay(t *testing.T) {
 	}
 }
 
-// With a window-open day inside the days 1-8 tail (7 < RequestCutoffDay 8),
-// the current month opens ON the configured day while the previous month's
+// With a window-open day inside the request tail (7 < stop day 9), the
+// current month opens ON the configured day while the previous month's
 // tail stays open: both periods are requestable during the overlap, and the
 // "xin ứng từ ngày 7" employee-facing message must hold.
 func TestIsCheckInRequestWindowOpenEarlyWindowOverlapsTail(t *testing.T) {
@@ -95,7 +96,7 @@ func TestIsCheckInRequestWindowOpenEarlyWindowOverlapsTail(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, 7); got != c.want {
+			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, 7, AdvanceRequestStopDay); got != c.want {
 				t.Errorf("isCheckInRequestWindowOpen(%s, %s, 7) = %v, want %v",
 					c.now.Format("2006-01-02"), c.forMonth, got, c.want)
 			}
@@ -119,7 +120,7 @@ func TestCheckInRequestPeriodServesCurrentMonthOnEarlyWindow(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			forMonth, open := checkInRequestPeriod(c.now, 7)
+			forMonth, open := checkInRequestPeriod(c.now, 7, AdvanceRequestStopDay)
 			if forMonth != c.wantForMonth || open != c.wantOpen {
 				t.Errorf("checkInRequestPeriod(%s, 7) = (%s, %v), want (%s, %v)",
 					c.now.Format("2006-01-02"), forMonth, open, c.wantForMonth, c.wantOpen)
@@ -130,7 +131,7 @@ func TestCheckInRequestPeriodServesCurrentMonthOnEarlyWindow(t *testing.T) {
 
 // The setting is valid as low as day 1 (bounds 1-28): with windowOpenDay=1 the
 // current month must be requestable from the 1st, all month, while the
-// previous tail keeps its days 1-8 window.
+// previous tail keeps its days 1..stopDay-1 window.
 func TestIsCheckInRequestWindowOpenDayOne(t *testing.T) {
 	loc := time.FixedZone("ICT", 7*3600)
 	cases := []struct {
@@ -147,13 +148,13 @@ func TestIsCheckInRequestWindowOpenDayOne(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, 1); got != c.want {
+			if got := isCheckInRequestWindowOpen(c.now, c.forMonth, 1, AdvanceRequestStopDay); got != c.want {
 				t.Errorf("isCheckInRequestWindowOpen(%s, %s, 1) = %v, want %v",
 					c.now.Format("2006-01-02"), c.forMonth, got, c.want)
 			}
 		})
 	}
-	if forMonth, open := checkInRequestPeriod(time.Date(2026, 11, 1, 0, 1, 0, 0, loc), 1); forMonth != "2026-11" || !open {
+	if forMonth, open := checkInRequestPeriod(time.Date(2026, 11, 1, 0, 1, 0, 0, loc), 1, AdvanceRequestStopDay); forMonth != "2026-11" || !open {
 		t.Errorf("checkInRequestPeriod(day 1, window 1) = (%s, %v), want (2026-11, true)", forMonth, open)
 	}
 }
@@ -194,12 +195,41 @@ func TestCheckInAdvanceConstants(t *testing.T) {
 	if SelfCheckInAdvanceWindowOpenDay != int(domain.DefaultSelfCheckInAdvanceWindowOpenDay) {
 		t.Errorf("SelfCheckInAdvanceWindowOpenDay = %d, want int(domain.DefaultSelfCheckInAdvanceWindowOpenDay)", SelfCheckInAdvanceWindowOpenDay)
 	}
+	if domain.DefaultAdvanceRequestStopDay != 9 {
+		t.Errorf("DefaultAdvanceRequestStopDay = %d, want 9 (requests allowed through day 8, day 9 is the sao kê day)", domain.DefaultAdvanceRequestStopDay)
+	}
+	if AdvanceRequestStopDay != int(domain.DefaultAdvanceRequestStopDay) {
+		t.Errorf("AdvanceRequestStopDay = %d, want int(domain.DefaultAdvanceRequestStopDay)", AdvanceRequestStopDay)
+	}
 	if minCheckInAdvanceRequest != 10000 {
 		t.Errorf("minCheckInAdvanceRequest = %d, want 10000", minCheckInAdvanceRequest)
 	}
 	if CheckInAdvanceDisclaimerVN == "" {
 		t.Error("CheckInAdvanceDisclaimerVN must not be empty")
 	}
+}
+
+// TestRequestStopDayResolution proves requestStopDay follows the Admin
+// setting: a wired getter wins, a nil getter falls back to the domain
+// default (9).
+func TestRequestStopDayResolution(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+
+	t.Run("configured stop day governs", func(t *testing.T) {
+		svc := NewService(&Config{
+			GetRequestStopDay: func(_ context.Context) uint64 { return 12 },
+		}, logger)
+		if got := svc.requestStopDay(context.Background()); got != 12 {
+			t.Errorf("requestStopDay() = %d, want 12", got)
+		}
+	})
+
+	t.Run("nil getter falls back to default", func(t *testing.T) {
+		svc := NewService(&Config{}, logger)
+		if got := svc.requestStopDay(context.Background()); got != AdvanceRequestStopDay {
+			t.Errorf("requestStopDay() = %d, want fallback %d", got, AdvanceRequestStopDay)
+		}
+	})
 }
 
 // windowDayAdvanceRepo serves the Sum* aggregates GetCheckInAdvanceInfo needs.

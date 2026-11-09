@@ -12,6 +12,7 @@ import (
 	"api-server/internal/app/services/advance_payment"
 	"api-server/internal/app/services/asset"
 	"api-server/internal/app/services/cleanup"
+	"api-server/internal/app/services/config"
 	"api-server/internal/app/services/ledger"
 	"api-server/internal/app/services/notification"
 	"api-server/internal/app/services/project"
@@ -47,6 +48,7 @@ func registerSchedulerJobs(
 	walletBalanceAlertService *notification.WalletBalanceAlertService,
 	assetSvc *asset.AssetService,
 	checkInActivationReminderService *notification.CheckInActivationReminderService,
+	settingsConfigSvc *config.SettingsConfigService,
 	logger *slog.Logger,
 ) {
 	// Helper for template rendering
@@ -323,14 +325,19 @@ func registerSchedulerJobs(
 		},
 	})
 
-	// 9. Cancel pending flexible advance payment requests - 9th at 23:59 (last day of the tail window)
+	// 9. Cancel pending flexible advance payment requests - daily at 23:59;
+	// acts only on the configured stop day (the first day new requests are
+	// refused), i.e. after the request tail has just closed.
 	s.AddJob(scheduler.Job{
 		Name:    "cancel_flexible_pending_requests",
-		Cron:    "59 23 9 * *",
+		Cron:    "59 23 * * *",
 		Enabled: true,
 		Handler: func() {
 			ctx := context.Background()
 			now := clock.Now()
+			if now.Day() != int(settingsConfigSvc.GetAdvanceRequestStopDay(ctx)) {
+				return // request tail still open on other days
+			}
 			currentMonth := advance_payment.GetCurrentMonthFromTime(now)
 
 			logger.Info("Starting cancellation of pending flexible advance payment requests",
@@ -350,14 +357,18 @@ func registerSchedulerJobs(
 		},
 	})
 
-	// 10. FlexPay sao ke reminder - 9th at 9:00 AM
+	// 10. FlexPay sao ke reminder - daily at 9:00 AM; acts only on the
+	// configured stop day (the first day new requests are refused).
 	s.AddJob(scheduler.Job{
 		Name:    "send_flexible_sao_ke_reminder",
-		Cron:    "0 9 9 * *",
+		Cron:    "0 9 * * *",
 		Enabled: true,
 		Handler: func() {
 			ctx := context.Background()
 			now := clock.Now()
+			if now.Day() != int(settingsConfigSvc.GetAdvanceRequestStopDay(ctx)) {
+				return // request tail still open on other days
+			}
 			prevMonth := now.AddDate(0, -1, 0)
 			forMonth := prevMonth.Format("2006-01")
 

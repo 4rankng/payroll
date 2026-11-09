@@ -358,8 +358,8 @@ export function isPastAdvancePaymentPeriod(viewMonth: string, activeMonth: strin
 
 /**
  * Whether a self-check-in employee may still request the PREVIOUS payroll
- * month via the regular (admin-upload) flow — the days 1–8 tail that closes
- * at the FlexPay request cutoff.
+ * month via the regular (admin-upload) flow — the tail before the configured
+ * request stop day (the first day new requests are refused; default 9).
  *
  * UX-only gate: the backend re-validates the window in
  * `CreateRequest` (`isRequestMonthAllowed` / `IsBeforeCutoff`), so a stale
@@ -367,20 +367,28 @@ export function isPastAdvancePaymentPeriod(viewMonth: string, activeMonth: strin
  *
  * @param now                client "today" (injectable for tests)
  * @param prevMonth          previous payroll month (YYYY-MM)
- * @param regularInfo        regular-flow advance info (the quota source)
+ * @param regularInfo        regular-flow advance info (the quota source; its
+ *                           requestStopDay drives the day gate)
  */
 export function isPriorMonthRequestable(
   now: Date,
   prevMonth: string,
   regularInfo: AdvancePaymentInfo | undefined,
 ): boolean {
-  if (now.getDate() > ADVANCE_REQUEST_CUTOFF_DAY) return false;
+  const stopDay = regularInfo?.requestStopDay ?? ADVANCE_REQUEST_STOP_DAY;
+  if (now.getDate() >= stopDay) return false;
   const quotas = Array.isArray(regularInfo?.quotas) ? regularInfo.quotas : [];
   return quotas.some((quota) => quota.forMonth === prevMonth && quota.maxAdvanceAmount > 0);
 }
 
-/** Last day of the month-overhang tail (parity with backend RequestCutoffDay). */
-export const ADVANCE_REQUEST_CUTOFF_DAY = 8;
+/**
+ * Day of month new advance requests are refused — parity with the backend
+ * stop day (`domain.DefaultAdvanceRequestStopDay`). The Admin-configured
+ * value arrives via the API (`requestStopDay`); this constant is only the
+ * fallback for older payloads. Update it only when the backend default
+ * changes.
+ */
+export const ADVANCE_REQUEST_STOP_DAY = 9;
 
 
 /**
@@ -527,22 +535,23 @@ export function getFeeBreakdown(amount: number): {
  * The salary period the self check-in advance surface serves right now.
  *
  * The backend owns this rule, and the UI must not restate it: from the
- * admin-configured window-open day (which may sit inside the days 1-8 tail,
- * e.g. day 7) the check-in flow serves the CURRENT month, and before that it
- * serves the previous month during the tail, with a locked gap in between
- * when the window opens after the cutoff. So the response's own `forMonth`
- * wins whenever it has arrived; the calendar below is only the pre-response
- * fallback (default window day 10) so the first paint does not flash the
- * wrong surface.
+ * admin-configured window-open day (which may sit inside the request tail
+ * before the stop day, e.g. day 7 with stop day 9) the check-in flow serves
+ * the CURRENT month, and before that it serves the previous month during the
+ * tail, with a locked gap in between when the window opens after the stop
+ * day. So the response's own `forMonth` wins whenever it has arrived; the
+ * calendar below is only the pre-response fallback (default window day 10)
+ * so the first paint does not flash the wrong surface.
  */
 export function resolveCheckInServedMonth(input: {
   servedMonth?: string | null;
   currentMonth: string;
   previousMonth: string;
   today: Date;
+  stopDay: number;
 }): string {
   if (input.servedMonth) return input.servedMonth;
-  return input.today.getDate() <= ADVANCE_REQUEST_CUTOFF_DAY
+  return input.today.getDate() < input.stopDay
     ? input.previousMonth
     : input.currentMonth;
 }

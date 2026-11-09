@@ -48,6 +48,10 @@ type Config struct {
 	// the self-check-in advance request window opens (default 10, bounds
 	// 1-28). Nil in tests; callers fall back to SelfCheckInAdvanceWindowOpenDay.
 	GetSelfCheckInAdvanceWindowOpenDay func(ctx context.Context) uint64
+	// GetRequestStopDay returns the configured day of month from which new
+	// advance requests are refused (default 9, bounds 2-15). Nil in tests;
+	// callers fall back to AdvanceRequestStopDay.
+	GetRequestStopDay func(ctx context.Context) uint64
 	// GetTransferLimits returns the active disbursement provider's per-transfer
 	// amount bounds. Returns zero-value limits when no provider is configured.
 	// Used by CreateRequest to fail-fast when the net amount (after fee) would

@@ -177,6 +177,23 @@ export const SettingsGeneralPanel = ({ form }: SettingsGeneralPanelProps) => (
         wholeNumber
         suffix="ngày"
       />
+      <SettingCard
+        title="Ngày khóa yêu cầu ứng lương"
+        description="Từ ngày này trong tháng, nhân viên không thể tạo yêu cầu ứng lương mới. Mặc định 9, tối đa 15."
+        value={form.advanceRequestStopDay}
+        originalValue={form.originalAdvanceRequestStopDay}
+        onChange={form.setAdvanceRequestStopDay}
+        onSave={form.handleSaveAdvanceRequestStopDay}
+        onReset={() => form.setAdvanceRequestStopDay(form.originalAdvanceRequestStopDay)}
+        isDirty={form.advanceRequestStopDay !== form.originalAdvanceRequestStopDay}
+        isSaving={form.isSaving}
+        type="number"
+        min={2}
+        max={15}
+        step={1}
+        wholeNumber
+        suffix="ngày"
+      />
     </SettingsSection>
 
     <SettingsSection kicker="Chu kỳ tháng" title="Lương tháng">

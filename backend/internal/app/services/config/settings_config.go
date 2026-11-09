@@ -15,19 +15,20 @@ import (
 
 // Setting keys for business configuration
 const (
-	SettingKeyWeeklyPaymentPercentage   = "bulk_transfer_payment_percentage" // Reusing existing key for weekly
-	SettingKeyMonthlyPaymentPercentage  = "monthly_payment_percentage"
-	SettingKeyPartnerCompany            = "partner_company"
-	SettingKeyAdvancePaymentPercentage  = "advance_payment_percentage"
-	SettingKeyBulkTransferWorkbookLimit = "bulk_transfer_workbook_limit_vnd"
-	SettingKeySelfCheckInAdvancePercent = "self_check_in_advance_percentage"
-	SettingKeySelfCheckInAdvanceHold    = "self_check_in_advance_hold_hours"
+	SettingKeyWeeklyPaymentPercentage         = "bulk_transfer_payment_percentage" // Reusing existing key for weekly
+	SettingKeyMonthlyPaymentPercentage        = "monthly_payment_percentage"
+	SettingKeyPartnerCompany                  = "partner_company"
+	SettingKeyAdvancePaymentPercentage        = "advance_payment_percentage"
+	SettingKeyBulkTransferWorkbookLimit       = "bulk_transfer_workbook_limit_vnd"
+	SettingKeySelfCheckInAdvancePercent       = "self_check_in_advance_percentage"
+	SettingKeySelfCheckInAdvanceHold          = "self_check_in_advance_hold_hours"
 	SettingKeySelfCheckInAdvanceWindowOpenDay = "self_check_in_advance_window_open_day"
-	SettingKeyWalletBalanceAlert        = "wallet_balance_alert_threshold_vnd"
-	SettingKeyTransferBankHolder        = "transfer_bank_account_holder"
-	SettingKeyTransferBankNumber        = "transfer_bank_account_number"
-	SettingKeyTransferBankName          = "transfer_bank_name"
-	SettingKeyTransferBankVisible       = "transfer_bank_visible"
+	SettingKeyAdvanceRequestStopDay           = "advance_request_stop_day"
+	SettingKeyWalletBalanceAlert              = "wallet_balance_alert_threshold_vnd"
+	SettingKeyTransferBankHolder              = "transfer_bank_account_holder"
+	SettingKeyTransferBankNumber              = "transfer_bank_account_number"
+	SettingKeyTransferBankName                = "transfer_bank_name"
+	SettingKeyTransferBankVisible             = "transfer_bank_visible"
 
 	// Employee data-quality policy: when on, every employee CREATE path
 	// (manual form, Excel import, BCC/FlexPay import) must carry a mobile
@@ -77,13 +78,23 @@ const (
 
 	// Bounds for the self-check-in advance window-open day. Owner decision
 	// (2026-11-07): the window may open as early as day 1 — days 1-9 overlap
-	// the regular admin-upload calendar tail (clock.RequestCutoffDay = 8) but
-	// the self-check-in flow is independent of it. A day above 28 is
-	// unreachable in February. Bounds keep the employee-facing "từ ngày X"
-	// message truthful.
+	// the regular admin-upload calendar tail (advance_request_stop_day − 1 = 8
+	// by default) but the self-check-in flow is independent of it. A day above
+	// 28 is unreachable in February. Bounds keep the employee-facing "từ ngày
+	// X" message truthful.
 	DefaultSelfCheckInAdvanceWindowOpenDay = domain.DefaultSelfCheckInAdvanceWindowOpenDay
 	MinSelfCheckInAdvanceWindowOpenDay     = uint64(1)
 	MaxSelfCheckInAdvanceWindowOpenDay     = uint64(28)
+
+	// Bounds for the advance request stop day: the day of month from which new
+	// advance requests are refused (previous-period tail = days 1..stopDay-1).
+	// Default 9 reproduces the historical hardcode — requests allowed through
+	// day 8, day 9 reserved for the admin's sao kê. Min 2 keeps at least day 1
+	// requestable; max 15 keeps the last allowed day ≤14, below
+	// PeriodCycleStartDay = 20 so the three-phase window stays coherent.
+	DefaultAdvanceRequestStopDay = domain.DefaultAdvanceRequestStopDay
+	MinAdvanceRequestStopDay     = uint64(2)
+	MaxAdvanceRequestStopDay     = uint64(15)
 
 	// Bounds for the wallet low-balance alert threshold. The alert fires once
 	// per downward crossing of this value; defaults to 50 million VND.
@@ -328,6 +339,28 @@ func parseSelfCheckInAdvanceWindowOpenDay(setting *domain.Settings) (uint64, err
 	return value, nil
 }
 
+func parseAdvanceRequestStopDay(setting *domain.Settings) (uint64, error) {
+	if setting == nil || setting.Value == nil {
+		return 0, domain.NewValidationError("ngày khóa yêu cầu ứng lương không được để trống")
+	}
+	if setting.ValueType != domain.ValueTypeNumber {
+		return 0, domain.NewValidationError("ngày khóa yêu cầu ứng lương phải là số")
+	}
+
+	raw := *setting.Value
+	if raw == "" || strings.TrimSpace(raw) != raw || (len(raw) > 1 && raw[0] == '0') || strings.IndexFunc(raw, func(r rune) bool {
+		return r < '0' || r > '9'
+	}) >= 0 {
+		return 0, domain.NewValidationError("ngày khóa yêu cầu ứng lương phải là số nguyên từ 2 đến 15")
+	}
+
+	value, err := strconv.ParseUint(raw, 10, 64)
+	if err != nil || value < MinAdvanceRequestStopDay || value > MaxAdvanceRequestStopDay {
+		return 0, domain.NewValidationError("ngày khóa yêu cầu ứng lương phải là số nguyên từ 2 đến 15")
+	}
+	return value, nil
+}
+
 // GetSelfCheckInAdvanceHoldDuration returns the authoritative post-checkout
 // holding duration before self-check-in earnings become advanceable. Financial
 // scheduling bypasses cache so a completed Admin update governs the next
@@ -388,6 +421,39 @@ func (s *SettingsConfigService) GetSelfCheckInAdvanceWindowOpenDay(ctx context.C
 			"error", err,
 		)
 		return DefaultSelfCheckInAdvanceWindowOpenDay
+	}
+
+	return day
+}
+
+// GetAdvanceRequestStopDay returns the configured day of month from which new
+// advance requests are refused (default 9, bounds 2-15); the previous-period
+// request tail is days 1..stopDay-1. Reads bypass cache so a completed Admin
+// update governs the next request; missing or invalid persisted data falls
+// back to the long-standing default.
+func (s *SettingsConfigService) GetAdvanceRequestStopDay(ctx context.Context) uint64 {
+	if s.settingsService == nil {
+		return DefaultAdvanceRequestStopDay
+	}
+
+	setting, err := s.settingsService.GetSettingByKeyAuthoritative(ctx, SettingKeyAdvanceRequestStopDay)
+	if err != nil {
+		observability.GetLogger().Warn(
+			"failed to get advance request stop day setting, using default",
+			"key", SettingKeyAdvanceRequestStopDay,
+			"error", err,
+		)
+		return DefaultAdvanceRequestStopDay
+	}
+
+	day, err := parseAdvanceRequestStopDay(setting)
+	if err != nil {
+		observability.GetLogger().Warn(
+			"invalid advance request stop day setting, using default",
+			"key", SettingKeyAdvanceRequestStopDay,
+			"error", err,
+		)
+		return DefaultAdvanceRequestStopDay
 	}
 
 	return day

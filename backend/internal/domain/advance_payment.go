@@ -15,6 +15,13 @@ const DefaultSelfCheckInAdvancePercentage uint64 = 70
 // the Admin setting is missing or invalid.
 const DefaultSelfCheckInAdvanceWindowOpenDay uint64 = 10
 
+// DefaultAdvanceRequestStopDay is the fallback day of month from which new
+// advance requests are refused (the previous-period request tail is days
+// 1..stopDay-1) when the Admin setting is missing or invalid. Default 9
+// reproduces the historical hardcode: requests allowed through day 8, day 9
+// reserved for the admin's sao kê.
+const DefaultAdvanceRequestStopDay uint64 = 9
+
 // QuotaCreditHoldDuration is the default self-check-out earning hold when the
 // Admin setting is missing or invalid. Check-out enqueues a deferred credit task
 // after the configured hold; admin manual approvals credit immediately and

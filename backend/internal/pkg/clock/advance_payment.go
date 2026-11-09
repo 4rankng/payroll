@@ -8,15 +8,6 @@ const (
 	// rolls over to the next month. Days 1–19 belong to the previous month's
 	// period; from the 20th onward the current month's period begins.
 	PeriodCycleStartDay = 20
-
-	// RequestCutoffDay is the last day of the month (in the following calendar
-	// month) through which employees may still request an advance for the
-	// previous period.  The request window runs from PeriodCycleStartDay of
-	// the current month through RequestCutoffDay of the next month (inclusive).
-	// Concretely the window is day 20 of month M through day 8 of month M+1.
-	// Day 9 of M+1 is reserved for the admin's sao kê to VFIC — employees must
-	// have stopped requesting by then.
-	RequestCutoffDay = 8
 )
 
 // CurrentAdvanceMonth returns the advance payment period month for "now".
@@ -46,46 +37,19 @@ func NextAdvanceMonthFromTime(t time.Time) string {
 	return t.Format("2006-01")
 }
 
-// EffectiveAdvanceMonth returns the month that CreateRequest would use right now,
-// accounting for the three-phase window rule:
-//   - Days 1–8   (tail of previous period): request for the previous advance month
-//   - Days 9–19  (locked gap): locked unless the current month's salary data exists
-//   - Days 20+   (new period open): request for the current advance month,
-//     provided admin has already uploaded bang lương for that month
-func EffectiveAdvanceMonth(c Clock) string {
-	return EffectiveAdvanceMonthFromTime(c.Now())
+// IsBeforeCutoff returns true when t is still inside the previous period's
+// request tail: day of month strictly below the configured request stop day
+// (the day new requests are refused). The stop day comes from the
+// advance_request_stop_day setting (default 9), so the tail is days
+// 1..stopDay-1.
+func IsBeforeCutoff(t time.Time, requestStopDay int) bool {
+	return t.Day() < requestStopDay
 }
 
-// EffectiveAdvanceMonthFromTime returns the effective month for a given time.
-func EffectiveAdvanceMonthFromTime(t time.Time) string {
-	if IsBeforeCutoff(t) {
-		return AdvanceMonthFromTime(t)
-	}
-	return NextAdvanceMonthFromTime(t)
-}
-
-// IsBeforeCutoff returns true if the given time is within the tail-end of the
-// previous period's request window (days 1 through RequestCutoffDay inclusive).
-func IsBeforeCutoff(t time.Time) bool {
-	return t.Day() <= RequestCutoffDay
-}
-
-// IsAfterCutoff returns true if the given time is past the cutoff day.
-func IsAfterCutoff(t time.Time) bool {
-	return t.Day() > RequestCutoffDay
-}
-
-// IsInLockedGap returns true when the date falls in the inter-period gap
-// (after the cutoff window but before the new period starts: days 9–19).
-func IsInLockedGap(t time.Time) bool {
-	return t.Day() > RequestCutoffDay && t.Day() < PeriodCycleStartDay
-}
-
-// IsInNewPeriod returns true when the date is on or after the new period
-// start day (days 20+), meaning the current calendar month's advance period
-// has begun.
-func IsInNewPeriod(t time.Time) bool {
-	return t.Day() >= PeriodCycleStartDay
+// IsInLockedGap returns true when t has passed the request stop day but the
+// new period has not started yet (days stopDay..PeriodCycleStartDay-1).
+func IsInLockedGap(t time.Time, requestStopDay int) bool {
+	return t.Day() >= requestStopDay && t.Day() < PeriodCycleStartDay
 }
 
 // FormatMonthDisplay converts "2006-01" to "MM/YYYY" for display.

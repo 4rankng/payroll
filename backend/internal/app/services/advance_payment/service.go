@@ -41,6 +41,21 @@ func (s *Service) GetConfig() *Config {
 	return s.config
 }
 
+// AdvanceRequestStopDay is the fallback day of month from which new advance
+// requests are refused (previous-period tail = days 1..stopDay-1) when the
+// Admin setting is absent or invalid. Centralized alongside the configurable
+// self-check-in advance window-open day.
+const AdvanceRequestStopDay = int(domain.DefaultAdvanceRequestStopDay)
+
+// requestStopDay resolves the configured advance request stop day. Nil in
+// tests and boot-order gaps; callers then get the typed domain default.
+func (s *Service) requestStopDay(ctx context.Context) int {
+	if s.config.GetRequestStopDay != nil {
+		return int(s.config.GetRequestStopDay(ctx))
+	}
+	return AdvanceRequestStopDay
+}
+
 // GetEmployeeAdvanceInfoByUserID returns advance payment information for the authenticated user
 func (s *Service) GetEmployeeAdvanceInfoByUserID(ctx context.Context, userID uint64) (*domain.EmployeeAdvanceInfo, error) {
 	// Look up employee by user ID
@@ -77,8 +92,9 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 	}
 
 	now := clock.Now()
-	isBeforeCutoff := IsBeforeCutoff(now)
-	isInLockedGap := IsInLockedGap(now)
+	stopDay := s.requestStopDay(ctx)
+	isBeforeCutoff := clock.IsBeforeCutoff(now, stopDay)
+	isInLockedGap := clock.IsInLockedGap(now, stopDay)
 
 	// Determine valid months for flexible employees
 	// They earn quota by calendar month.
@@ -98,12 +114,13 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		validMonths = append(validMonths, months...)
 	} else {
 		if isBeforeCutoff {
-			// Days 1-9 (tail of the previous period): withdraw from the
-			// previous month's salary only.
+			// Days 1 through stopDay-1 (tail of the previous period): withdraw
+			// from the previous month's salary only.
 			validMonths = append(validMonths, prevCalMonth)
 		} else if isInLockedGap {
-			// Days 10-19: show the current month quota. Requesting stays locked
-			// only until admin uploads bang cham cong for that month.
+			// Days stopDay through 19 (locked gap): show the current month
+			// quota. Requesting stays locked only until admin uploads bang
+			// cham cong for that month.
 			validMonths = append(validMonths, currentCalMonth)
 		} else {
 			currentMonthMax, err := s.config.AdvancePaymentRepo.SumMaxAdvByEmployeeMonth(ctx, employeeID, currentCalMonth)
@@ -187,7 +204,7 @@ func (s *Service) GetEmployeeAdvanceInfo(ctx context.Context, employeeID uint64)
 		}
 	}
 
-	if !eligibility.hasCheckInEnabled && isRequestWindowLocked(now, hasCurrentMonthQuota) {
+	if !eligibility.hasCheckInEnabled && isRequestWindowLocked(now, stopDay, hasCurrentMonthQuota) {
 		info.CanRequest = false
 		info.CanRequestTitle = fmt.Sprintf(constants.MsgAdvanceCutoffTitleVN, FormatMonthDisplay(prevCalMonth))
 		info.CanRequestReason = fmt.Sprintf(constants.MsgAdvanceCutoffWaitingUploadVN, FormatMonthDisplay(currentCalMonth))
@@ -281,20 +298,22 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 
 	// Enforce the three-phase window rule for flexible employees
 	now := clock.Now()
+	stopDay := s.requestStopDay(ctx)
 
 	currentCalMonth := now.Format("2006-01")
 	prevCalMonth := now.AddDate(0, -1, 0).Format("2006-01")
 
 	if eligibility.hasCheckInEnabled {
 		// Hybrid employee (self-checkin enabled): the regular endpoint serves
-		// ONLY the previous-period tail — days 1-8 of the current month, for the
-		// previous month. Current-month requests must go through the self-checkin
-		// flow (/me/check-in-advance), whose window opens on the Admin-configured
-		// window-open day; allowing the current month here from day 9 would
-		// bypass that window.
-		if !IsBeforeCutoff(now) {
+		// ONLY the previous-period tail — days 1 through stopDay-1 of the
+		// current month, for the previous month. Current-month requests must
+		// go through the self-checkin flow (/me/check-in-advance), whose
+		// window opens on the Admin-configured window-open day; allowing the
+		// current month here from the configured stop day would bypass that
+		// window.
+		if !clock.IsBeforeCutoff(now, stopDay) {
 			if forMonth == prevCalMonth {
-				return nil, domain.NewValidationError(constants.MsgAdvanceRequestCutoffVN)
+				return nil, domain.NewValidationError(fmt.Sprintf(constants.MsgAdvanceRequestCutoffVN, stopDay-1))
 			}
 			return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
 		}
@@ -302,7 +321,7 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 			return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
 		}
 	}
-	if !eligibility.hasCheckInEnabled && !isRequestMonthAllowed(now, forMonth) {
+	if !eligibility.hasCheckInEnabled && !isRequestMonthAllowed(now, stopDay, forMonth) {
 		return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
 	}
 
@@ -312,8 +331,8 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 		return nil, errors.Wrap(err, "failed to get advance payments")
 	}
 	if len(advPayments) == 0 {
-		if IsInLockedGap(now) && forMonth == currentCalMonth {
-			return nil, domain.NewValidationError(constants.MsgAdvanceRequestCutoffVN)
+		if clock.IsInLockedGap(now, stopDay) && forMonth == currentCalMonth {
+			return nil, domain.NewValidationError(fmt.Sprintf(constants.MsgAdvanceRequestCutoffVN, stopDay-1))
 		}
 		return nil, domain.NewValidationError(constants.MsgSalaryInfoNotFoundForMonthVN)
 	}
@@ -379,16 +398,17 @@ func (s *Service) CreateRequest(ctx context.Context, employeeID uint64, requestA
 	return req, nil
 }
 
-func isRequestWindowLocked(now time.Time, hasCurrentMonthQuota bool) bool {
-	return !IsBeforeCutoff(now) && !hasCurrentMonthQuota
+func isRequestWindowLocked(now time.Time, stopDay int, hasCurrentMonthQuota bool) bool {
+	return !clock.IsBeforeCutoff(now, stopDay) && !hasCurrentMonthQuota
 }
 
-func isRequestMonthAllowed(now time.Time, forMonth string) bool {
+func isRequestMonthAllowed(now time.Time, stopDay int, forMonth string) bool {
 	currentCalMonth := now.Format("2006-01")
 	prevCalMonth := now.AddDate(0, -1, 0).Format("2006-01")
 
-	if IsBeforeCutoff(now) {
-		// Days 1-9 (tail of the previous period): previous month only.
+	if clock.IsBeforeCutoff(now, stopDay) {
+		// Days 1 through stopDay-1 (tail of the previous period): previous
+		// month only.
 		return forMonth == prevCalMonth
 	}
 

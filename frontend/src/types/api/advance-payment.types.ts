@@ -62,6 +62,8 @@ export interface AdvancePaymentInfo {
   windowOpenDay?: number;
   /** Self-check-in flow: configured advance percentage (e.g. 70). Used to show the per-shift advanceable amount. */
   advancePercentage?: number;
+  /** Day of month new advance requests are refused (admin-configured). */
+  requestStopDay?: number;
 }
 
 /**
