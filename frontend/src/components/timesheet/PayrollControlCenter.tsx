@@ -40,7 +40,8 @@ const fmtInt = (n: number | null | undefined): string => (n ?? 0).toLocaleString
 
 /**
  * Unified "Payroll Control Center" — one panel pairing the cash-readiness
- * forecast (left, 5 cols) with the operational KPI grid (right, 7 cols).
+ * forecast (left, 3 cols) with the operational KPI grid (right, 9 cols,
+ * five tiles on one row at lg+).
  *
  * KPI selection is derived from `activeFilter` (the same state the table's
  * status dropdown uses), so the two never desync. Clicking a tile toggles
@@ -73,7 +74,6 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
       label: 'Chờ thanh toán',
       value: formatCurrency(summary?.pendingPaymentAmount ?? 0),
       primary: true,
-      mobileSpan: true,
       filter: 'pending_payment',
     },
     {
@@ -83,10 +83,12 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
       filter: 'approved',
     },
     {
+      // Full-width on the 2-col phone grid so the 5 tiles fill every row
+      // (2+2+1); dropped at lg where the grid is one row of five.
       key: 'paid',
       label: 'Đã thanh toán',
       value: formatCurrency(summary?.paidAmount ?? 0),
-      className: 'lg:col-span-3',
+      mobileSpan: true,
       filter: 'paid',
     },
   ];
@@ -104,10 +106,10 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
       {/* treasury-grid — the fading seam between the forecast zone and the KPI
           zone replaces the old hard lg:border-r divider. */}
       <div className="treasury-grid grid grid-cols-1 gap-3 lg:grid-cols-12 lg:gap-0">
-        {/* Cash readiness — 5 columns. Zone ownership: this panel owns the
+        {/* Cash readiness — 3 columns. Zone ownership: this panel owns the
             forecast numbers (reserve, interval, reliability); the KPI grid owns
             the operational counts. No metric appears in both zones. */}
-        <div className="lg:col-span-5 lg:pr-5">
+        <div className="lg:col-span-3 lg:pr-4">
           <CashReadinessCard
             data={cashReadiness.data}
             isLoading={cashReadiness.isLoading}
@@ -115,8 +117,8 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
           />
         </div>
 
-        {/* Operational KPIs — 7 columns */}
-        <div className="lg:col-span-7 lg:pl-5">
+        {/* Operational KPIs — 9 columns; five tiles on one row (lg+). */}
+        <div className="lg:col-span-9 lg:pl-4">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h2 className="font-display text-[13px] font-bold tracking-tight text-foreground">
               Chỉ số vận hành
@@ -126,7 +128,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
             </span>
           </div>
 
-          <div className="grid auto-rows-fr grid-cols-2 gap-2 lg:grid-cols-4">
+          <div className="grid auto-rows-fr grid-cols-2 gap-2 lg:grid-cols-5">
             {metrics.map((m) => (
               <PayrollMetricCard
                 key={m.key}

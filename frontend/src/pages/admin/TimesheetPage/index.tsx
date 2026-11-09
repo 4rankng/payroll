@@ -311,7 +311,7 @@ const TimesheetPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-[1280px] space-y-4 p-3 sm:p-4">
+    <div className="mx-auto max-w-[1280px] space-y-3 p-3 sm:p-4">
       {/* ── Header ── */}
       <PageHeader
         title="Bảng công"
@@ -322,11 +322,16 @@ const TimesheetPage = () => {
             : undefined
         }
       >
-        <TimesheetMonthSelector
-          value={timesheetManagement.selectedMonth}
-          onChange={timesheetManagement.setSelectedMonth}
-        />
-        <div className="flex items-center gap-px rounded-xl border border-border overflow-hidden">
+        {/* PAYR-33: one control cluster — period picker and bulk actions share a
+            single bordered strip so they read (and wrap) as one unit. Stacks
+            internally below lg where the sidebar leaves it no room. */}
+        <div className="flex w-full max-w-full flex-col overflow-hidden rounded-xl border border-border bg-card lg:w-auto lg:flex-row lg:items-stretch">
+          <TimesheetMonthSelector
+            value={timesheetManagement.selectedMonth}
+            onChange={timesheetManagement.setSelectedMonth}
+            className="rounded-none border-0 shadow-none lg:w-auto lg:shrink-0"
+          />
+          <div className="flex flex-1 flex-wrap items-center gap-px border-t border-border lg:flex-none lg:border-l lg:border-t-0">
           <button
             onClick={handleBulkApprove}
             className="inline-flex items-center gap-1.5 h-9 px-3 bg-card text-foreground text-sm font-medium whitespace-nowrap hover:bg-muted transition-colors border-r border-border"
@@ -405,6 +410,7 @@ const TimesheetPage = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
       </PageHeader>
 

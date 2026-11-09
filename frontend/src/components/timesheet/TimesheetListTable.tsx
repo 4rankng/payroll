@@ -46,7 +46,7 @@ export function TimesheetListTable() {
   );
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-3">
       {state.userRole === "admin" && (
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {[
