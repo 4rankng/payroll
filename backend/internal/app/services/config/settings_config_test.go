@@ -489,3 +489,77 @@ func TestValidateBusinessSettingValidatesWindowOpenDay(t *testing.T) {
 	invalid := "0"
 	require.Error(t, validateBusinessSetting(selfCheckInAdvanceWindowOpenDaySetting(&invalid)))
 }
+
+func advanceRequestStopDaySetting(value *string) *domain.Settings {
+	return &domain.Settings{
+		Key:       SettingKeyAdvanceRequestStopDay,
+		Value:     value,
+		ValueType: domain.ValueTypeNumber,
+	}
+}
+
+func TestParseAdvanceRequestStopDayBoundaries(t *testing.T) {
+	for _, value := range []uint64{2, 9, 12, 15} {
+		raw := strconv.FormatUint(value, 10)
+		parsed, err := parseAdvanceRequestStopDay(advanceRequestStopDaySetting(&raw))
+		require.NoError(t, err)
+		assert.Equal(t, value, parsed)
+	}
+
+	for _, raw := range []string{"1", "16", "09", "abc", "", " 9 "} {
+		_, err := parseAdvanceRequestStopDay(advanceRequestStopDaySetting(&raw))
+		require.Error(t, err, "value %q must be rejected", raw)
+	}
+}
+
+func TestValidateBusinessSettingValidatesAdvanceRequestStopDay(t *testing.T) {
+	valid := "9"
+	require.NoError(t, validateBusinessSetting(advanceRequestStopDaySetting(&valid)))
+
+	invalid := "16"
+	require.Error(t, validateBusinessSetting(advanceRequestStopDaySetting(&invalid)))
+}
+
+func TestSettingsConfigServiceGetAdvanceRequestStopDay(t *testing.T) {
+	valid := "12"
+	reader := &stubSettingReader{setting: advanceRequestStopDaySetting(&valid)}
+	service := NewSettingsConfigService(reader)
+
+	assert.Equal(t, uint64(12), service.GetAdvanceRequestStopDay(context.Background()))
+	assert.Equal(t, 1, reader.calls)
+
+	updated := "9"
+	reader.setting = advanceRequestStopDaySetting(&updated)
+	assert.Equal(t, uint64(9), service.GetAdvanceRequestStopDay(context.Background()))
+	assert.Equal(t, 2, reader.calls, "the request stop day must bypass the local cache")
+}
+
+func TestSettingsConfigServiceGetAdvanceRequestStopDayFallsBackToDefault(t *testing.T) {
+	tests := []struct {
+		name    string
+		setting *domain.Settings
+		err     error
+	}{
+		{name: "missing", err: errors.New("not found")},
+		{name: "nil value", setting: advanceRequestStopDaySetting(nil)},
+		{name: "below minimum", setting: advanceRequestStopDaySetting(stringPointer("1"))},
+		{name: "above maximum", setting: advanceRequestStopDaySetting(stringPointer("16"))},
+		{name: "leading zero", setting: advanceRequestStopDaySetting(stringPointer("09"))},
+		{name: "non numeric", setting: advanceRequestStopDaySetting(stringPointer("abc"))},
+		{
+			name: "wrong type",
+			setting: &domain.Settings{
+				Key:       SettingKeyAdvanceRequestStopDay,
+				Value:     stringPointer("9"),
+				ValueType: domain.ValueTypeString,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			service := NewSettingsConfigService(&stubSettingReader{setting: tt.setting, err: tt.err})
+			assert.Equal(t, DefaultAdvanceRequestStopDay, service.GetAdvanceRequestStopDay(context.Background()))
+		})
+	}
+}
