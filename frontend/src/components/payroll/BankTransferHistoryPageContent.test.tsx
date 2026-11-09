@@ -324,4 +324,35 @@ describe('BankTransferHistoryPageContent', () => {
     expect(container.querySelector('[data-mobile-header]')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Lịch sử trả lương' })).toBeInTheDocument();
   });
+
+  it('centers the empty state vertically instead of pinning it to the top (PAYR-34)', () => {
+    useBankTransferHistories.mockReturnValue({
+      data: {
+        status: 'success',
+        message: '',
+        data: [],
+        summary: { total_amount: 0, transfer_count: 0, employee_count: 0 },
+        pagination: { page: 1, pageSize: 50, totalPages: 1, totalRecords: 0 },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    const { container } = renderContent({ variant: 'admin' });
+
+    // Canvas trở thành flex column full-height để workspace chiếm phần
+    // trang còn lại thay vì cụm lại trên đỉnh với ~55% bên dưới trống.
+    const canvas = container.firstElementChild as HTMLElement;
+    expect(canvas).toHaveClass('admin-empty-stretch');
+    const canvasInner = canvas.firstElementChild as HTMLElement;
+    expect(canvasInner).toHaveClass('flex', 'min-h-full', 'flex-col');
+
+    const card = container.querySelector('[data-slot="payment-history-workspace"]')!;
+    expect(card).toHaveClass('flex-1');
+
+    const center = container.querySelector('[data-slot="payment-history-empty-center"]')!;
+    expect(center).toHaveClass('flex', 'flex-1', 'items-center', 'justify-center');
+    expect(within(center as HTMLElement).getByText('Chưa có giao dịch đã hoàn tất')).toBeInTheDocument();
+    expect(within(center as HTMLElement).getByText('Chọn tháng hoặc kỳ lương khác để xem lịch sử.')).toBeInTheDocument();
+  });
 });

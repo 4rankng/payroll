@@ -181,8 +181,10 @@ const ApprovalsPage = () => {
         </div>
       ) : null}
 
+      {/* PAYR-34: bỏ h-11 cứng — min-h-11 của TabsList là đủ; h cứng + content
+          44px vừa khít sinh vertical scrollbar thừa bên phải tab "Tất cả". */}
       <Tabs value={filterKey} onValueChange={(next) => { setFilterKey(next); setPage(1); }} className="console-filter-bar mb-4">
-        <TabsList className="h-11 w-full justify-start overflow-x-auto sm:w-auto">
+        <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
           {FILTERS.map((f) => (
             <TabsTrigger key={f.key} value={f.key} className="h-9 px-3 text-sm">
               {f.label}

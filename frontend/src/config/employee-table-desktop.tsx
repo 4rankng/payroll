@@ -160,11 +160,14 @@ export const createEmployeeColumns = (
           return <span className="text-muted-foreground">—</span>;
         }
         return (
-          <div className="flex items-center gap-2 min-w-0 max-w-[180px]">
+          // Shipmate-uiux doctrine (PAYR-34): wrap full — no hard clip, no
+          // ellipsis. Long bank names (e.g. "Nông nghiệp và Phát triển Nông thôn")
+          // flow onto extra lines instead of being cut mid-word.
+          <div className="flex items-center gap-2 min-w-0">
             <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/5 border border-primary/10 shrink-0">
               <Landmark className="h-3 w-3 text-primary" />
             </div>
-            <span className="typography-body-medium text-foreground/80 truncate" title={branch}>
+            <span className="typography-body-medium text-foreground/80 break-words min-w-0">
               {branch}
             </span>
           </div>

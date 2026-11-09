@@ -248,8 +248,12 @@ function SortHeader({ label, field, ctx }: { label: string; field: string; ctx: 
   const isActive = ctx.sortBy === field;
   const Icon = isActive ? (ctx.sortOrder === "ASC" ? ArrowUp : ArrowDown) : ChevronSelectorVertical;
   return (
+    // PAYR-34: inline-flex (không phải flex) — button là inline-level box,
+    // th `text-right` (từ meta.align="right") mới căn được nó sang phải
+    // khớp với giá trị số bên dưới; display:flex block-level full-width
+    // khiến header số căn trái lệch với giá trị căn phải.
     <button
-      className="flex items-center gap-1 hover:text-foreground transition-colors"
+      className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
       onClick={() => ctx.onSort(field)}
     >
       {label}
