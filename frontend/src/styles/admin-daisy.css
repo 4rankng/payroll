@@ -120,35 +120,6 @@
     border-radius: 1.4rem;
   }
 
-  /* PAYR-34: vertical centering of the payment-history empty state. The
-     min-h-full percentage chain breaks on auto-height parents (flex-basis
-     auto keeps flexed sizes indefinite), so opt-in pages pin the frame and
-     inner to an explicit 100% height — then the canvas marker stretches and
-     the workspace's flex-1 can actually fill the viewport. Only active while
-     the page is empty, so tall data pages keep natural growth. */
-  [data-admin-ui] .admin-page-frame:has(> .admin-page-inner > .admin-empty-stretch) {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  [data-admin-ui]
-    .admin-page-frame:has(> .admin-page-inner > .admin-empty-stretch)
-    > .admin-page-inner {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  [data-admin-ui] .admin-empty-stretch {
-    /* flex:1 (basis 0%), NOT `1 0 auto` — an auto/content flex-basis leaves
-       the item's main size indefinite, so the inner min-h-full percentage
-       never resolves and the chain stops here. */
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
   [data-admin-ui] .admin-shell-rail {
     display: none;
   }
