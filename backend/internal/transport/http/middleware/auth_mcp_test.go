@@ -109,7 +109,7 @@ func seedMCPKey(t *testing.T, repo *fakeMCPKeyRepo, users *fakeMCPUsers, scope d
 func runAuthGate(t *testing.T, svc *mcpapikey.Service, method, path, apiKey string) (*httptest.ResponseRecorder, any) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
-	m := NewAuthMiddleware(nil, svc, nil, config.OpsMCPConfig{})
+	m := NewAuthMiddleware(nil, svc, nil, config.OpsMCPConfig{}, false)
 
 	r := gin.New()
 	r.Use(m.Authenticate())
@@ -209,7 +209,7 @@ func TestMCPKeyFullScopeAllowsMutation(t *testing.T) {
 // no Authorization header it is still the familiar 401).
 func TestJWTPathUnchanged(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	m := NewAuthMiddleware(nil, mcpapikey.NewService(newFakeMCPKeyRepo(), &fakeMCPUsers{byID: map[uint]*domain.User{}}, nil, nil), nil, config.OpsMCPConfig{})
+	m := NewAuthMiddleware(nil, mcpapikey.NewService(newFakeMCPKeyRepo(), &fakeMCPUsers{byID: map[uint]*domain.User{}}, nil, nil), nil, config.OpsMCPConfig{}, false)
 
 	r := gin.New()
 	r.Use(m.Authenticate())

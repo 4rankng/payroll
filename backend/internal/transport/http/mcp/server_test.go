@@ -92,7 +92,7 @@ func newTestEngine() (*gin.Engine, *mcpapikey.Service) {
 	keys := mcpapikey.NewService(repo, users, nil, nil)
 
 	engine := gin.New()
-	auth := middleware.NewAuthMiddleware(nil, keys, nil, config.OpsMCPConfig{})
+	auth := middleware.NewAuthMiddleware(nil, keys, nil, config.OpsMCPConfig{}, false)
 	v1 := engine.Group("/api/v1")
 	// Stub REST surface behind the real auth chain (mirrors the protected
 	// group in production).

@@ -4,7 +4,7 @@ import { authManager } from '@/lib/auth';
 
 export const useAccountMetadata = () => {
   const role = authManager.getUserRole();
-  const enabled = authManager.isTokenValid() && role === 'admin';
+  const enabled = authManager.hasSession() && role === 'admin';
   return useQuery({
     queryKey: ['ledger-account-metadata'],
     queryFn: async () => {

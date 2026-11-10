@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/auth"
@@ -12,6 +13,7 @@ import (
 	"api-server/internal/app/services/zaloreset"
 	"api-server/internal/constants"
 	"api-server/internal/transport/http/helpers"
+	"api-server/internal/transport/http/middleware"
 	"api-server/internal/transport/http/response"
 
 	"github.com/gin-gonic/gin"
@@ -22,15 +24,47 @@ type AuthHandler struct {
 	userService          *user.UserService
 	passwordResetService *passwordreset.Service
 	zaloResetService     *zaloreset.Service
+	// Session cookie parameters (PAYR-37B item 4): Max-Age for freshly minted
+	// tokens and the Secure flag (on in production, off in dev).
+	cookieTTL    time.Duration
+	cookieSecure bool
 }
 
-func NewAuthHandler(authService *auth.AuthService, userService *user.UserService, passwordResetService *passwordreset.Service, zaloResetService *zaloreset.Service) *AuthHandler {
+func NewAuthHandler(authService *auth.AuthService, userService *user.UserService, passwordResetService *passwordreset.Service, zaloResetService *zaloreset.Service, cookieTTL time.Duration, cookieSecure bool) *AuthHandler {
 	return &AuthHandler{
 		authService:          authService,
 		userService:          userService,
 		passwordResetService: passwordResetService,
 		zaloResetService:     zaloResetService,
+		cookieTTL:            cookieTTL,
+		cookieSecure:         cookieSecure,
 	}
+}
+
+// setSessionCookieFromLogin mints the HttpOnly session cookie when a login
+// flow produced an access token (PAYR-37B item 4). OTP-gated logins return
+// otp_required without a token — nothing to set until /auth/login/verify
+// succeeds. The token is still present in the JSON body for legacy cached
+// clients during the migration window; the new SPA never reads it.
+func (h *AuthHandler) setSessionCookieFromLogin(c *gin.Context, loginResponse *dto.LoginResponse) {
+	if loginResponse == nil || loginResponse.AccessToken == "" {
+		return
+	}
+	middleware.SetAuthCookie(c, loginResponse.AccessToken, h.cookieTTL, h.cookieSecure)
+}
+
+// extractBearerToken returns the raw token from an Authorization: Bearer
+// header, or "" when the header is absent or malformed.
+func extractBearerToken(c *gin.Context) string {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		return ""
+	}
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 || parts[0] != "Bearer" || parts[1] == "" {
+		return ""
+	}
+	return parts[1]
 }
 
 // @Summary User login
@@ -59,6 +93,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	h.setSessionCookieFromLogin(c, loginResponse)
 	response.Success(c, loginResponse, "Login successful")
 }
 
@@ -130,6 +165,7 @@ func (h *AuthHandler) VerifyLoginOTP(c *gin.Context) {
 		return
 	}
 
+	h.setSessionCookieFromLogin(c, loginResponse)
 	response.Success(c, loginResponse, "Login successful")
 }
 
@@ -314,20 +350,19 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 // @Failure 500 {object} response.ErrorResponse
 // @Router /logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// Extract token from Authorization header
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
+	// Token arrives via the Authorization header (legacy clients) or the
+	// HttpOnly session cookie (PAYR-37B item 4).
+	token := extractBearerToken(c)
+	if token == "" {
+		if cookieToken, err := c.Cookie(middleware.AuthCookieName); err == nil {
+			token = cookieToken
+		}
+	}
+	if token == "" {
 		response.Unauthorized(c, constants.MsgAuthorizationHeaderRequiredVN)
 		return
 	}
 
-	parts := strings.SplitN(authHeader, " ", 2)
-	if len(parts) != 2 || parts[0] != "Bearer" {
-		response.Unauthorized(c, constants.MsgInvalidAuthorizationFormatVN)
-		return
-	}
-
-	token := parts[1]
 	ipAddress := c.ClientIP()
 	userAgent := c.GetHeader("User-Agent")
 
@@ -338,6 +373,8 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		return
 	}
 
+	// Drop the session cookie regardless of which channel carried the token.
+	middleware.ClearAuthCookie(c, h.cookieSecure)
 	response.Success(c, nil, "Logout successful")
 }
 
@@ -360,20 +397,19 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	// Extract token from Authorization header
-	authHeader := c.GetHeader("Authorization")
-	if authHeader == "" {
+	// Token arrives via the Authorization header (legacy clients) or the
+	// HttpOnly session cookie (PAYR-37B item 4); the current token is
+	// blacklisted as part of the password change.
+	token := extractBearerToken(c)
+	if token == "" {
+		if cookieToken, err := c.Cookie(middleware.AuthCookieName); err == nil {
+			token = cookieToken
+		}
+	}
+	if token == "" {
 		response.Unauthorized(c, constants.MsgAuthorizationHeaderRequiredVN)
 		return
 	}
-
-	parts := strings.SplitN(authHeader, " ", 2)
-	if len(parts) != 2 || parts[0] != "Bearer" {
-		response.Unauthorized(c, constants.MsgInvalidAuthorizationFormatVN)
-		return
-	}
-
-	token := parts[1]
 
 	var req dto.ChangePasswordRequest
 	if !helpers.BindJSON(c, &req) {
@@ -454,5 +490,6 @@ func (h *AuthHandler) GoogleLogin(c *gin.Context) {
 		return
 	}
 
+	h.setSessionCookieFromLogin(c, loginResponse)
 	response.Success(c, loginResponse, "Login successful")
 }

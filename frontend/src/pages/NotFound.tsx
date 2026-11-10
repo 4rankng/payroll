@@ -10,7 +10,7 @@ const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isAuthenticated = authManager.isTokenValid();
+  const isAuthenticated = authManager.hasSession();
   const userRole = authManager.getUserRole();
 
   useEffect(() => {

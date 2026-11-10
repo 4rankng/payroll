@@ -106,28 +106,28 @@ const PageSuspenseFallback = React.memo(() => (
 ));
 
 const LogoutRedirect = () => {
-  authManager.removeToken();
+  authManager.clearSession();
   return <Navigate to="/login" replace />;
 };
 
 // Component to handle root redirects safely
 const RootRedirect = () => {
-  const isTokenValid = authManager.isTokenValid();
-  const userRole = isTokenValid ? authManager.getUserRole() : null;
+  const hasSession = authManager.hasSession();
+  const userRole = hasSession ? authManager.getUserRole() : null;
 
-  if (isTokenValid && userRole === "admin") {
+  if (hasSession && userRole === "admin") {
     return <Navigate to="/admin" replace />;
   }
-  if (isTokenValid && userRole === "partner") {
+  if (hasSession && userRole === "partner") {
     return <Navigate to="/partner/dashboard" replace />;
   }
-  if (isTokenValid && userRole === "adv_partner") {
+  if (hasSession && userRole === "adv_partner") {
     return <Navigate to="/adv-partner/advance-payments" replace />;
   }
-  if (isTokenValid && userRole === "accountant") {
+  if (hasSession && userRole === "accountant") {
     return <Navigate to="/accountant" replace />;
   }
-  if (isTokenValid && userRole === "employee") {
+  if (hasSession && userRole === "employee") {
     return <Navigate to="/employee" replace />;
   }
   return <Navigate to="/login" replace />;

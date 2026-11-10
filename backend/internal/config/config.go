@@ -426,7 +426,10 @@ func Load() (*Config, error) {
 			HashSalt:   getEnv("HASH_SALT", ""),
 		},
 		CORS: CORSConfig{
-			AllowOrigins:     parseStringSlice(getEnv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,https://tingting.vip,https://www.tingting.vip")),
+			// localhost:5173 = vite dev server. Needed for the cookie session
+			// (PAYR-37B): dev FE on :5173 calls the API on :8080 cross-origin,
+			// and credentialed CORS requires an exact origin match.
+			AllowOrigins:     parseStringSlice(getEnv("CORS_ALLOW_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173,https://tingting.vip,https://www.tingting.vip")),
 			AllowCredentials: parseBool(getEnv("CORS_ALLOW_CREDENTIALS", "true")),
 		},
 		Notification: NotificationConfig{

@@ -149,7 +149,7 @@ const PartnerSidebar = () => {
   }, [isMobile, setOpenMobile]);
 
   const handleLogout = useCallback(() => {
-    authManager.removeToken();
+    authManager.clearSession();
     localStorage.removeItem("userRole");
     localStorage.removeItem("username");
     logout();

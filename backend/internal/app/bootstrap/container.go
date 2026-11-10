@@ -477,7 +477,7 @@ func initHandlers(services *bootstrapServices.Services, repos *bootstrapRepos.Re
 
 	return &Handlers{
 		User:                 handlers.NewUserHandler(services.User, services.PasswordResetJobManager, services.Audit),
-		Auth:                 handlers.NewAuthHandler(services.Auth, services.User, services.EmailPasswordReset, services.ZaloPasswordReset),
+		Auth:                 handlers.NewAuthHandler(services.Auth, services.User, services.EmailPasswordReset, services.ZaloPasswordReset, cfg.Auth.AccessTTL, cfg.App.Env == "production"),
 		Dashboard:            handlers.NewDashboardHandler(services.Dashboard),
 		Project:              handlers.NewProjectHandlerWithServices(services.Project, services.Payrate, services.Timesheet, services.ProjectEmployee, services.ProjectPermission, clk),
 		Employee:             handlers.NewEmployeeHandlerWithServices(services.Employee, services.Timesheet, services.ProjectEmployee, services.EmployeePermission, services.Audit, clk),
@@ -572,7 +572,7 @@ func initMiddleware(authService *auth.AuthService, authorizationService *auth.Au
 	}
 
 	return &Middleware{
-		Auth:                      middleware.NewAuthMiddleware(authService, mcpKeyService, opsKeyService, cfg.OpsMCP),
+		Auth:                      middleware.NewAuthMiddleware(authService, mcpKeyService, opsKeyService, cfg.OpsMCP, cfg.App.Env == "production"),
 		Authorization:             authorizationMiddleware,
 		LoginRateLimit:            middleware.CreateLoginRateLimit(cfg.Redis.Addr),
 		PasswordResetRateLimit:    middleware.CreatePasswordResetRateLimit(cfg.Redis.Addr, cfg.PasswordReset.RateLimitPerHour),

@@ -126,8 +126,8 @@ const Login = () => {
   }, [isLoading, isAuthenticated, navigate]);
 
   useEffect(() => {
-    if (!authManager.isTokenValid()) {
-      authManager.removeToken();
+    if (!authManager.hasSession()) {
+      authManager.clearSession();
     }
   }, []);
 

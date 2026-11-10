@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { authManager, type AppRole } from '@/lib/auth';
+import { authService } from '@/services/api/auth.service';
 import { generateAvatarUrl } from '@/utils/avatarHelpers';
 
 interface User {
@@ -20,7 +21,7 @@ interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, user: User) => void;
+  login: (user: User) => void;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
 }
@@ -38,17 +39,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     const initializeAuth = () => {
-      const token = authManager.getToken();
-      const payload = authManager.getTokenPayload();
+      const userRole = authManager.getUserRole();
 
-      if (token && payload && authManager.isTokenValid()) {
-        // Extract user info from JWT payload and stored data
+      if (userRole && authManager.hasSession()) {
+        // Restore the session from the stored profile (display data only —
+        // the credential is the server-managed HttpOnly cookie, PAYR-37B).
+        const username = localStorage.getItem('userUsername') || '';
         const userData: User = {
-          id: String(payload.user_id),
+          id: String(authManager.getUserId() ?? ''),
           email: localStorage.getItem('userEmail') || '',
-          name: localStorage.getItem('userName') || getDisplayName(payload.username, payload.role),
-          username: payload.username,
-          role: payload.role,
+          name: localStorage.getItem('userName') || getDisplayName(username, userRole),
+          username,
+          role: userRole,
           status: (localStorage.getItem('userStatus') as 'active' | 'inactive') || 'active',
           avatar: generateAvatarUrl(),
           created_at: localStorage.getItem('userCreatedAt') || undefined,
@@ -69,6 +71,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     initializeAuth();
 
+    // One-time migration (PAYR-37B): a session created by the pre-cookie
+    // bundle still holds a legacy localStorage token. Exchange it for the
+    // HttpOnly cookie via /auth/me, then re-evaluate the auth state. On any
+    // failure the stale token is discarded and the user simply re-logs in.
+    authService
+      .bootstrapLegacySession()
+      .then((converted) => {
+        if (converted) initializeAuth();
+      })
+      .catch(() => {
+        // Network error during bootstrap — keep whatever state we resolved.
+      });
+
     const handleAuthChanged = () => {
       initializeAuth();
     };
@@ -88,13 +103,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, [queryClient]);
 
-  const login = (token: string, userData: User) => {
-    authManager.setToken(token);
+  // Session state (cookie + expiry metadata) is managed by auth.service via
+  // authManager.setSessionMeta; the context only tracks the profile.
+  const login = (userData: User) => {
     setUser(userData);
   };
 
   const logout = () => {
-    authManager.removeToken();
+    authManager.clearSession();
     setUser(null);
     queryClient.clear();
     sessionStorage.removeItem('payroll-query-cache');
@@ -111,7 +127,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const value: AuthContextValue = {
     user,
-    isAuthenticated: !!user && authManager.isTokenValid(),
+    isAuthenticated: !!user,
     isLoading,
     login,
     logout,
