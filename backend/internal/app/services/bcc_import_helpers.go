@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -382,9 +383,11 @@ func mergeSTKRows(base, stk []excelparser.STKRow) []excelparser.STKRow {
 // earliestInMonthDay returns the smallest day-of-month carrying hours inside
 // the import month, or 0 when the file has no in-month entries. Date-row
 // files straddle months (e.g. 21/08–24/09): out-of-month days must not feed
-// the payrate probe, which targets a day of the import month. Zero-hour
-// entries (deletion requests) are skipped too — removing công must not
-// demand a payrate.
+// the position-deduction probe, which targets a day of the import month.
+// Zero-hour entries (deletion requests) are skipped too. Used only to pick
+// the probe date for assignment-position deduction — rate resolution is
+// per-entry-date through the shared payrate resolver (PAYR-36) and does not
+// consume this value.
 func earliestInMonthDay(employees []excelparser.BCCEmployeeData, year int, month time.Month) int {
 	earliest := 0
 	for _, emp := range employees {
@@ -437,4 +440,51 @@ func resolveBCCEntryTarget(
 		}
 	}
 	return rateTarget{}, false
+}
+
+// bccCrossMonthError enforces the one-file-per-month import contract
+// (PAYR-36 owner ruling 2026-11-10): a payroll cycle straddling two months
+// (e.g. 29/10–07/11) pasted into one file is an uploader mistake, not a
+// software case — it must fail with an actionable split-file error instead of
+// silently dropping the foreign days or re-booking them under the wrong
+// month. dates are the file's WORKED full-calendar dates (hours > 0, so a
+// zero cell never blocks); day-number templates carry no month identity and
+// cannot be checked, which is why only full-date flows call this.
+func bccCrossMonthError(dates []time.Time, year int, month time.Month, loc *time.Location) string {
+	monthStart := time.Date(year, month, 1, 0, 0, 0, 0, loc)
+	monthEnd := monthStart.AddDate(0, 1, -1)
+	var stray []time.Time
+	for _, d := range dates {
+		day := time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, loc)
+		if day.Before(monthStart) || day.After(monthEnd) {
+			stray = append(stray, day)
+		}
+	}
+	if len(stray) == 0 {
+		return ""
+	}
+	sort.Slice(stray, func(i, j int) bool { return stray[i].Before(stray[j]) })
+	return fmt.Sprintf("File có ngày công ngoài tháng đang import (tháng %s) — tách file theo từng tháng (29-31/10 một file, 1-7/11 một file). Các ngày bị lẫn: %s",
+		monthStart.Format("01/2006"), formatStrayDates(stray))
+}
+
+// formatStrayDates renders sorted stray days as compact contiguous runs per
+// month: "1-7/11/2026, 29/12/2026".
+func formatStrayDates(stray []time.Time) string {
+	var parts []string
+	for i := 0; i < len(stray); {
+		j := i
+		for j+1 < len(stray) &&
+			stray[j+1].Month() == stray[i].Month() && stray[j+1].Year() == stray[i].Year() &&
+			stray[j+1].Day() == stray[j].Day()+1 {
+			j++
+		}
+		if j == i {
+			parts = append(parts, stray[i].Format("2/1/2006"))
+		} else {
+			parts = append(parts, fmt.Sprintf("%d-%s", stray[i].Day(), stray[j].Format("2/1/2006")))
+		}
+		i = j + 1
+	}
+	return strings.Join(parts, ", ")
 }

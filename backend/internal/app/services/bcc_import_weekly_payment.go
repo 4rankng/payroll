@@ -39,29 +39,21 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	}
 	positionByCCCD, blockedEmployeeCCCDs, positionErrors := buildWeeklyPaymentPositions(parsed.Sheets)
 
-	// 2-3. Shared setup: month parsing, lock, payrate lookup. The earliest
-	// worked day lets the lookup accept a payrate that starts mid-month but
-	// is already active on the file's first worked day.
-	earliestDay := 0
-	for _, sh := range parsed.Sheets {
-		for _, emp := range sh.Employees {
-			for _, e := range emp.Entries {
-				if e.Day > 0 && (earliestDay == 0 || e.Day < earliestDay) {
-					earliestDay = e.Day
-				}
-			}
-		}
-	}
-	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth, earliestDay)
+	// 2-3. Shared setup: month parsing, lock, per-date payrate resolver
+	// (PAYR-36: rates resolve by each entry's own work date, never an anchor).
+	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
 	if err != nil {
 		return fail(err.Error())
 	}
 	defer releaseLock()
 	year, month, monthStart := ictx.year, ictx.month, ictx.monthStart
 	loc := monthStart.Location()
+	flatRatesFor := ictx.resolver.ratesFor
 
-	// 4. Resolve payrates for the ACTUAL timesheet dates in the file.
-	rates := newWeeklyRateResolver(s, ctx, projectID)
+	// No cross-month check here: weekly-payment entries carry day-of-month
+	// numbers only (WeeklyPaymentEntryData.Day), so a foreign month has no
+	// identity in the file to detect — the one-file-per-month contract
+	// (bccCrossMonthError) is enforceable only on full-date templates.
 
 	// 5. STK auto-creation.
 	importErrors := append([]domain.ImportError(nil), positionErrors...)
@@ -102,7 +94,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	// 7. Build timesheet entries for each salary-tier sheet.
 	entries, flexibleEmployeeIDs, totalRows, entryErrors := s.buildWeeklyPaymentEntries(
 		ctx, parsed, year, month, loc, rows, empNames, stkNameByCCCD,
-		blockedEmployeeCCCDs, rates.forDate, projectID, includeFlexibleEmployees)
+		blockedEmployeeCCCDs, flatRatesFor, projectID, includeFlexibleEmployees)
 	importErrors = append(importErrors, entryErrors...)
 
 	// 7b. Align assignment start dates with the entries this file proves.

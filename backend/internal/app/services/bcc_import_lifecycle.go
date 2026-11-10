@@ -403,17 +403,17 @@ func (s *BCCImportService) updateAssetMetadata(ctx context.Context, assetID uint
 	return nil
 }
 
-// prepareImportContext performs the shared setup: month parsing, distributed lock,
-// and payrate lookup. earliestEntryDay is the smallest day-of-month (within the
-// import month) carrying hours in the uploaded file, or 0 when the file has no
-// entries yet. Returns the context and a cleanup function that must be
-// deferred by the caller to release the lock.
-func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID uint, effectiveMonth string, earliestEntryDay int) (*bccImportContext, func(), error) {
+// prepareImportContext performs the shared setup: month parsing, distributed
+// lock, and payrate resolution. PAYR-36: all import paths resolve payrates
+// through the returned shared resolver — the config for a work date is the
+// nearest from_date at or before that date, never a single file-level anchor.
+// Returns the context and a cleanup function that must be deferred by the
+// caller to release the lock.
+func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID uint, effectiveMonth string) (*bccImportContext, func(), error) {
 	// Use time.Local so the lookup date matches the MySQL driver's location: the DSN uses
 	// loc=Local, so cfg.Loc == time.Local. clock.Now() is pinned to Asia/Ho_Chi_Minh, which
 	// diverges from time.Local in UTC containers (e.g. the scratch prod image) and shifts the
-	// day boundary by 7h — breaking `from_date <= monthStart` when the import month starts on
-	// the payrate's effective date. Same loc=Local precedent as timesheet_entry_table.go.
+	// day boundary by 7h. Same loc=Local precedent as timesheet_entry_table.go.
 	loc := time.Local
 	year, month, err := parseForMonth(effectiveMonth)
 	if err != nil {
@@ -427,30 +427,26 @@ func (s *BCCImportService) prepareImportContext(ctx context.Context, projectID u
 	}
 	release := func() { s.releaseImportLock(ctx, projectID, effectiveMonth, lockValue) }
 
-	// Anchor the payrate lookup at the file's earliest worked day: a config
-	// effective mid-month must serve a file whose entries all fall after it.
-	// Files without in-month entries keep the month-start anchor. A miss at
-	// the lookup date is terminal — no config can be active at month start
-	// yet not active on a later day.
-	lookupDate := monthStart
-	if earliestEntryDay > 0 {
-		lookupDate = time.Date(year, month, earliestEntryDay, 0, 0, 0, 0, loc)
-	}
-	payrate, err := s.payrateRepo.GetActiveByProjectAndDate(ctx, projectID, lookupDate)
+	configs, err := s.payrateRepo.GetByProject(ctx, projectID)
 	if err != nil {
 		release()
 		return nil, nil, fmt.Errorf("không tìm thấy bảng lương cho dự án: %v", err)
 	}
-	flatRates, err := payrate.Payrate.Flatten()
+	resolver, err := newPayrateResolver(configs, loc)
 	if err != nil {
 		release()
 		return nil, nil, fmt.Errorf("lỗi phân tích cấu hình lương: %v", err)
+	}
+	monthEnd := monthStart.AddDate(0, 1, -1)
+	if !resolver.coversMonth(monthStart, monthEnd) {
+		release()
+		return nil, nil, fmt.Errorf("không tìm thấy bảng lương cho dự án: không có bảng lương nào hiệu lực trong tháng %s", effectiveMonth)
 	}
 
 	return &bccImportContext{
 		year:       year,
 		month:      month,
 		monthStart: monthStart,
-		flatRates:  flatRates,
+		resolver:   resolver,
 	}, release, nil
 }

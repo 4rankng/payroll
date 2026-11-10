@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"sort"
 	"strings"
 	"time"
 
@@ -40,41 +39,45 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 		return fail(fmt.Sprintf("lỗi phân tích file BCC tuần: %v", err))
 	}
 
-	// 2-3. Shared setup: month parsing, lock, payrate lookup. The earliest
-	// worked day lets the lookup accept a payrate that starts mid-month but
-	// is already active on the file's first worked day.
-	earliestDay := 0
-	for _, sh := range parsed.Sheets {
-		for _, emp := range sh.Employees {
-			for _, e := range emp.Entries {
-				if d := e.Date.Day(); d > 0 && (earliestDay == 0 || d < earliestDay) {
-					earliestDay = d
-				}
-			}
-		}
-	}
-	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth, earliestDay)
+	// 2-3. Shared setup: month parsing, lock, per-date payrate resolver
+	// (PAYR-36: rates resolve by each entry's own work date, never an anchor).
+	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
 	if err != nil {
 		return fail(err.Error())
 	}
 	defer releaseLock()
-	year, month, monthStart, flatRates := ictx.year, ictx.month, ictx.monthStart, ictx.flatRates
+	year, month, monthStart := ictx.year, ictx.month, ictx.monthStart
 	loc := monthStart.Location()
+	monthEnd := monthStart.AddDate(0, 1, -1)
+	flatRatesFor := ictx.resolver.ratesFor
 
-	// 4. Resolve payrates for the ACTUAL timesheet dates in the file, not monthStart.
-	rates := newWeeklyRateResolver(s, ctx, projectID)
+	// One-file-per-month contract (PAYR-36 owner ruling): worked days outside
+	// the import month fail with a split-file error before shift validation.
+	var workedDates []time.Time
+	for _, sh := range parsed.Sheets {
+		for _, emp := range sh.Employees {
+			for _, e := range emp.Entries {
+				if e.Hours > 0 {
+					workedDates = append(workedDates, e.Date)
+				}
+			}
+		}
+	}
+	if reason := bccCrossMonthError(workedDates, year, month, loc); reason != "" {
+		return fail(reason)
+	}
 
 	// 4b. Every sheet's shift type must exist in the payrate config active
 	// for the dates that sheet actually has entries on. Zero-hour entries
 	// (deletion requests) carry no rate burden.
-	if reason := weeklyBCCConfigError(parsed, year, month, loc, rates.forDate); reason != "" {
+	if reason := weeklyBCCConfigError(parsed, year, month, loc, flatRatesFor); reason != "" {
 		return fail(reason)
 	}
 
-	// 5. STK auto-creation.
+	// 5. STK auto-creation. Default position comes from the union of the
+	// month's config positions (PAYR-36), sorted for a deterministic pick.
 	blockedEmployeeCCCDs := make(map[string]struct{})
-	availablePositions := getPositions(flatRates)
-	sort.Strings(availablePositions)
+	availablePositions := ictx.resolver.positionNamesForMonth(monthStart, monthEnd)
 	defaultPosition := ""
 	if len(availablePositions) > 0 {
 		defaultPosition = availablePositions[0]
@@ -116,7 +119,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	// 7. Build timesheet entries for each shift-type sheet.
 	entries, flexibleEmployeeIDs, totalRows, entryErrors := s.buildWeeklyBCCEntries(
 		ctx, parsed, year, month, loc, rows, empNames, stkNameByCCCD,
-		blockedEmployeeCCCDs, rates.forDate, projectID, includeFlexibleEmployees)
+		blockedEmployeeCCCDs, flatRatesFor, projectID, includeFlexibleEmployees)
 	importErrors = append(importErrors, entryErrors...)
 
 	// 7b. Align assignment start dates with the entries this file proves.

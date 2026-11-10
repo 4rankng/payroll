@@ -1,21 +1,26 @@
 package services
 
 import (
-	excelparser "api-server/internal/app/services/excel"
 	"testing"
+	"time"
+
+	excelparser "api-server/internal/app/services/excel"
 
 	"golang.org/x/text/unicode/norm"
 )
 
 func TestValidateSheetPositions_Normalization(t *testing.T) {
-	flatRates := map[string]int{
-		"Chia chọn.ngày thường.ca ngày":   37500,
-		"Chia chọn.ngày thường.tăng ca":   56250,
-		"Xuất hàng.ngày thường.ca ngày":   48750,
-		"Xuất hàng.ngày thường.tăng ca":   56250,
-		"Lái xe nâng.ngày thường.ca ngày": 42307,
-		"Lái xe nâng.ngày thường.tăng ca": 63460,
-	}
+	resolver := mustTestResolver(t, time.Local,
+		testPayrate(1, time.Date(2026, time.October, 1, 0, 0, 0, 0, time.Local), `{
+			"Chia chọn.ngày thường.ca ngày": 37500,
+			"Chia chọn.ngày thường.tăng ca": 56250,
+			"Xuất hàng.ngày thường.ca ngày": 48750,
+			"Xuất hàng.ngày thường.tăng ca": 56250,
+			"Lái xe nâng.ngày thường.ca ngày": 42307,
+			"Lái xe nâng.ngày thường.tăng ca": 63460
+		}`))
+	monthStart := time.Date(2026, time.October, 1, 0, 0, 0, 0, time.Local)
+	monthEnd := monthStart.AddDate(0, 1, -1)
 
 	// Test matching when sheet name has different casing, spacing, and NFD diacritics
 	parsed := &excelparser.MultiPositionImportData{
@@ -26,7 +31,7 @@ func TestValidateSheetPositions_Normalization(t *testing.T) {
 		},
 	}
 
-	reason := validateSheetPositions(parsed, flatRates)
+	reason := validateSheetPositions(parsed, resolver, monthStart, monthEnd)
 	if reason != "" {
 		t.Fatalf("expected valid positions, got error: %s", reason)
 	}
@@ -37,7 +42,7 @@ func TestValidateSheetPositions_Normalization(t *testing.T) {
 			{Position: "Bốc xếp"},
 		},
 	}
-	reasonMissing := validateSheetPositions(parsedMissing, flatRates)
+	reasonMissing := validateSheetPositions(parsedMissing, resolver, monthStart, monthEnd)
 	if reasonMissing == "" {
 		t.Fatal("expected failure for unconfigured position 'Bốc xếp', got empty reason")
 	}

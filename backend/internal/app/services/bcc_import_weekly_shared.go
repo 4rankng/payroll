@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"log/slog"
-	"time"
 
 	excelparser "api-server/internal/app/services/excel"
 	"api-server/internal/domain"
@@ -51,38 +50,6 @@ func (s *BCCImportService) healAssignmentByProfileCCCD(
 		"project_id", projectID,
 		"cccd", cccd)
 	return assignment
-}
-
-// weeklyRateResolver resolves the payrate config active on a given date,
-// cached per day. A payrate can change mid-month; a weekly file's visible
-// days (e.g. June 8-14) may fall under a different payrate than the 1st of
-// the month, so rates are looked up per entry date, never at monthStart.
-type weeklyRateResolver struct {
-	s         *BCCImportService
-	ctx       context.Context
-	projectID uint
-	cache     map[string]map[string]int
-}
-
-func newWeeklyRateResolver(s *BCCImportService, ctx context.Context, projectID uint) *weeklyRateResolver {
-	return &weeklyRateResolver{s: s, ctx: ctx, projectID: projectID, cache: make(map[string]map[string]int)}
-}
-
-// forDate returns the flattened payrate active on d (nil when no payrate
-// covers the date — cached as such).
-func (r *weeklyRateResolver) forDate(d time.Time) map[string]int {
-	key := d.Format("2006-01-02")
-	if fr, ok := r.cache[key]; ok {
-		return fr
-	}
-	var fr map[string]int
-	if pr, err := r.s.payrateRepo.GetActiveByProjectAndDate(r.ctx, r.projectID, d); err == nil {
-		if f, ferr := pr.Payrate.Flatten(); ferr == nil {
-			fr = f
-		}
-	}
-	r.cache[key] = fr // cache (nil if no payrate covers this date)
-	return fr
 }
 
 // weeklySTKNameLookup builds the STK CCCD→Name map for cross-validation.

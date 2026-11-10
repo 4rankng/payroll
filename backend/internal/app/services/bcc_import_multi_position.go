@@ -42,29 +42,25 @@ func (s *BCCImportService) processMultiPositionUpload(
 		return fail(fmt.Sprintf("lỗi phân tích file BCC đa vị trí: %v", err))
 	}
 
-	// 2-4. Shared setup: month parsing, lock, payrate lookup. The earliest
-	// worked day lets the lookup accept a payrate that starts mid-month but
-	// is already active on the file's first worked day.
-	earliestDay := 0
-	for _, sh := range parsed.Sheets {
-		for _, emp := range sh.Employees {
-			for _, e := range emp.Entries {
-				if e.DayNum > 0 && (earliestDay == 0 || e.DayNum < earliestDay) {
-					earliestDay = e.DayNum
-				}
-			}
-		}
-	}
-	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth, earliestDay)
+	// 2-4. Shared setup: month parsing, lock, per-date payrate resolver.
+	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
 	if err != nil {
 		return fail(err.Error())
 	}
 	defer releaseLock()
-	year, month, monthStart, flatRates := ictx.year, ictx.month, ictx.monthStart, ictx.flatRates
+	year, month, monthStart, resolver := ictx.year, ictx.month, ictx.monthStart, ictx.resolver
 	loc := monthStart.Location()
+	monthEnd := monthStart.AddDate(0, 1, -1)
 
-	// All sheet positions must exist in the payrate config.
-	if reason := validateSheetPositions(parsed, flatRates); reason != "" {
+	// No cross-month check here: multi-position sheets carry day-of-month
+	// numbers only (PositionEntryData.DayNum), so a foreign month has no
+	// identity in the file to detect — the one-file-per-month contract
+	// (bccCrossMonthError) is enforceable only on full-date templates.
+
+	// All sheet positions must exist in the payrate configs effective during
+	// the import month (union rule, PAYR-36) — a position added to the config
+	// mid-month is valid for a full-month file.
+	if reason := validateSheetPositions(parsed, resolver, monthStart, monthEnd); reason != "" {
 		return fail(reason)
 	}
 
@@ -74,7 +70,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 6. STK auto-creation with CCCD→position lookup.
 	positionCorrections, stkErrors := s.autoCreateMultiPositionSTK(
-		ctx, xf, cccdToPosition, getPositions(flatRates), projectID, uploaderID)
+		ctx, xf, cccdToPosition, resolver.positionNamesForMonth(monthStart, monthEnd), projectID, uploaderID)
 	importErrors = append(importErrors, stkErrors...)
 
 	// 6.5. Apply position corrections via ProjectEmployeeService (outside STK transaction)
@@ -102,7 +98,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 8. Build timesheet entries for each position sheet.
 	entries, flexibleEmployeeIDs, totalRows, entryErrors := s.buildMultiPositionEntries(
-		ctx, parsed, flatRates, year, month, loc,
+		ctx, parsed, resolver, year, month, loc,
 		byCCCD, byCode, byCCCDAndPosition, projectID, uploaderID, includeFlexibleEmployees)
 	importErrors = append(importErrors, entryErrors...)
 
@@ -145,17 +141,23 @@ func (s *BCCImportService) processMultiPositionUpload(
 }
 
 // validateSheetPositions returns a failure reason when any sheet's position is
-// absent from the payrate config, or "" when all positions are configured.
-func validateSheetPositions(parsed *excelparser.MultiPositionImportData, flatRates map[string]int) string {
-	availablePositions := getPositions(flatRates)
-	availableSet := make(map[string]bool, len(availablePositions))
-	for _, p := range availablePositions {
-		availableSet[bccNormName(p)] = true
+// absent from every payrate config effective in the import month, or "" when
+// all positions are configured. PAYR-36 union rule: a position added to a
+// config mid-month is valid for a full-month file, so membership is checked
+// against the union of the month's configs — never against one anchored
+// config. The failure text is the unified missing-position message.
+func validateSheetPositions(
+	parsed *excelparser.MultiPositionImportData,
+	resolver *payrateResolver,
+	monthStart, monthEnd time.Time,
+) string {
+	availableSet := make(map[string]bool)
+	for name := range resolver.monthPositions(monthStart, monthEnd) {
+		availableSet[name] = true
 	}
 	for _, sheet := range parsed.Sheets {
 		if !availableSet[bccNormName(sheet.Position)] {
-			return fmt.Sprintf("vị trí \"%s\" không có trong cấu hình lương. Các vị trí khả dụng: %s",
-				sheet.Position, strings.Join(availablePositions, ", "))
+			return resolver.missingPositionMessage(sheet.Position, monthStart, monthEnd)
 		}
 	}
 	return ""
@@ -389,7 +391,7 @@ func (s *BCCImportService) applyPositionCorrections(ctx context.Context, correct
 func (s *BCCImportService) buildMultiPositionEntries(
 	ctx context.Context,
 	parsed *excelparser.MultiPositionImportData,
-	flatRates map[string]int,
+	resolver *payrateResolver,
 	year int,
 	month time.Month,
 	loc *time.Location,
@@ -406,8 +408,9 @@ func (s *BCCImportService) buildMultiPositionEntries(
 	// (ngày thường, ngày nghỉ, ngày lễ) — dayTypePriority and rateTarget are the
 	// shared package-level declarations.
 	for _, sheet := range parsed.Sheets {
-		// Build position-scoped rate-to-target map.
-		rateToTarget := buildRateToTarget(flatRates, bccNormName(sheet.Position)+".")
+		// Position-scoped rate→target prefix; the map itself is built per
+		// entry date below (PAYR-36: rates follow each row's own work date).
+		posPrefix := bccNormName(sheet.Position) + "."
 
 		for _, emp := range sheet.Employees {
 			totalRows++
@@ -467,6 +470,9 @@ func (s *BCCImportService) buildMultiPositionEntries(
 					continue
 				}
 
+				// Rate resolution follows the entry's own work date: the
+				// config active on `date` prices the row (PAYR-36).
+				rateToTarget := resolver.rateToTargetFor(date, posPrefix)
 				target, ok := lookupRateTarget(rateToTarget, entry.RateVND)
 				if !ok || entry.RateVND == 0 {
 					importErrors = append(importErrors, domain.ImportError{
@@ -491,20 +497,6 @@ func (s *BCCImportService) buildMultiPositionEntries(
 	}
 
 	return entries, flexibleEmployeeIDs, totalRows, importErrors
-}
-
-// getPositions extracts unique position names from flattened payrate paths.
-func getPositions(flatRates map[string]int) []string {
-	seen := make(map[string]bool)
-	var positions []string
-	for path := range flatRates {
-		parts := strings.Split(path, ".")
-		if len(parts) >= 1 && parts[0] != "" && !seen[parts[0]] {
-			seen[parts[0]] = true
-			positions = append(positions, parts[0])
-		}
-	}
-	return positions
 }
 
 // bccNormName normalizes a Vietnamese name for case/whitespace/Unicode-form
