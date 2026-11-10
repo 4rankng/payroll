@@ -71,18 +71,21 @@ export interface LedgerColumn {
 
 /**
  * Column order is the contract between <colgroup>, the header row and every
- * body row — cells are rendered in exactly this order. Widths budget for the
- * narrowest table breakpoint (xl=1280 with sidebar): fixed columns total
- * ~762px, leaving the rest for the employee column.
+ * body row — cells are rendered in exactly this order. Widths sum to 1180px;
+ * under table-fixed any leftover/deficit is distributed proportionally, so the
+ * employee column stays near its 300px budget instead of swallowing the whole
+ * remainder (the canvas caps at 1480px → employee ≈ 364px worst case). Bank
+ * reference (16 digits) and transfer code (12 chars) widths are sized to their
+ * longest value so break-all never splits them mid-token.
  */
 export const LEDGER_COLUMNS: LedgerColumn[] = [
   { id: 'stt', label: 'STT', width: '36px' },
-  { id: 'employee', label: 'Nhân viên', width: 'auto' },
-  { id: 'period', label: 'Kỳ thanh toán', width: '112px' },
-  { id: 'paymentDate', label: 'Ngày thanh toán', width: '90px' },
-  { id: 'transferCode', label: 'Ghi chú CK', width: '96px' },
-  { id: 'bankReference', label: 'Mã GD ngân hàng', width: '124px' },
-  { id: 'processedAt', label: 'Thời gian xử lý', width: '88px' },
-  { id: 'amount', label: 'Số tiền', width: '108px', alignRight: true },
-  { id: 'recordTotal', label: 'Thực nhận (kỳ)', width: '108px', alignRight: true },
+  { id: 'employee', label: 'Nhân viên', width: '300px' },
+  { id: 'period', label: 'Kỳ thanh toán', width: '118px' },
+  { id: 'paymentDate', label: 'Ngày thanh toán', width: '100px' },
+  { id: 'transferCode', label: 'Ghi chú CK', width: '130px' },
+  { id: 'bankReference', label: 'Mã GD ngân hàng', width: '160px' },
+  { id: 'processedAt', label: 'Thời gian xử lý', width: '96px' },
+  { id: 'amount', label: 'Số tiền', width: '120px', alignRight: true },
+  { id: 'recordTotal', label: 'Thực nhận (kỳ)', width: '120px', alignRight: true },
 ];
