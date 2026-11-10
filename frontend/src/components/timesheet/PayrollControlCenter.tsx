@@ -1,5 +1,7 @@
 import { memo } from 'react';
+import { Info } from 'lucide-react';
 import { CashReadinessCard } from './CashReadinessCard';
+import { getCashReadinessDisplay } from './cashReadinessDisplay';
 import { PayrollMetricCard } from './PayrollMetricCard';
 import { formatCurrency } from '@/utils/formatters';
 import { cn } from '@/lib/utils';
@@ -97,6 +99,8 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
     onFilterChange(activeFilter === m.filter ? 'all' : m.filter);
   };
 
+  const cashFooter = cashReadiness.data ? getCashReadinessDisplay(cashReadiness.data) : null;
+
   return (
     <section
       aria-label="Trung tâm điều khiển bảng công"
@@ -128,7 +132,7 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
             </span>
           </div>
 
-          <div className="grid auto-rows-fr grid-cols-2 gap-2 lg:grid-cols-5">
+          <div className="grid auto-rows-fr grid-cols-2 gap-2 lg:auto-rows-[112px] lg:grid-cols-5">
             {metrics.map((m) => (
               <PayrollMetricCard
                 key={m.key}
@@ -145,6 +149,28 @@ export const PayrollControlCenter = memo(function PayrollControlCenter({
           </div>
         </div>
       </div>
+
+      {/* Calibration caveat earns its own full-width line instead of stacking
+          under the forecast column and stretching the panel. */}
+      {cashFooter && (
+        <div className="flex items-start gap-2 border-t border-border pt-2.5 text-xs leading-snug text-muted-foreground">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <p className="min-w-0">
+            <span className="font-semibold text-foreground">{cashFooter.reliabilityLabel}. </span>
+            {cashFooter.reliabilityDescription}
+            {cashFooter.accuracyMetrics.length > 0 && (
+              <span className="ml-2 inline-flex flex-wrap gap-x-3 gap-y-0.5">
+                {cashFooter.accuracyMetrics.map((metric) => (
+                  <span key={metric.label} className="inline-flex gap-1">
+                    <span>{metric.label}</span>
+                    <span className="font-semibold tabular-nums text-foreground">{metric.value}</span>
+                  </span>
+                ))}
+              </span>
+            )}
+          </p>
+        </div>
+      )}
       </div>
     </section>
   );

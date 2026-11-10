@@ -14,6 +14,19 @@ export interface CashReadinessAccuracyMetric {
   value: string;
 }
 
+/**
+ * Unit-suffixed VND for tight forecast surfaces — the exact grouped figure
+ * stays in title attributes and the ledger. Compact, never truncated.
+ */
+export function formatCompactVnd(vnd: number): string {
+  const abs = Math.abs(vnd);
+  const fmt = (value: number): string => value.toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+  if (abs >= 1_000_000_000) return `${fmt(vnd / 1_000_000_000)} tỷ ₫`;
+  if (abs >= 1_000_000) return `${fmt(vnd / 1_000_000)} tr ₫`;
+  if (abs >= 1_000) return `${fmt(vnd / 1_000)}k ₫`;
+  return `${fmt(vnd)} ₫`;
+}
+
 export interface CashReadinessDisplay {
   expectedPayout: number;
   recommendedReserve: number;
