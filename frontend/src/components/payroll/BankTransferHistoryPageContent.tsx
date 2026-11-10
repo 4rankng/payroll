@@ -13,6 +13,7 @@ import {
 } from '@/components/shared/AdminPageFrame';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { MobilePagination } from '@/components/shared/MobilePagination';
+import { cn } from '@/lib/utils';
 import { SearchBar } from '@/components/shared/SearchBar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -158,7 +159,10 @@ function SummaryBand({
         <span className="font-financial text-[13px] font-bold tabular-nums text-fg-tertiary">—</span>
       ) : (
         <span
-          className="font-financial text-[13px] font-bold tabular-nums text-emerald-700"
+          className={cn(
+            'font-financial text-[13px] tabular-nums',
+            totalAmount === 0 ? 'font-normal text-fg-tertiary' : 'font-bold text-emerald-700',
+          )}
           title={formatCurrency(totalAmount)}
           aria-label={`Tổng đã chuyển: ${formatCurrency(totalAmount)}`}
         >
@@ -166,12 +170,12 @@ function SummaryBand({
         </span>
       )}
       <span className="text-fg-tertiary" aria-hidden="true">·</span>
-      <span className="font-financial text-xs font-semibold tabular-nums text-fg-primary">
+      <span className={cn('font-financial text-xs tabular-nums', !isLoading && transferCount === 0 ? 'font-normal text-fg-tertiary' : 'font-semibold text-fg-primary')}>
         {isLoading || transferCount === undefined ? '—' : transferCount}
       </span>
       <span className="text-xs text-fg-tertiary">bút toán ngân hàng</span>
       <span className="text-fg-tertiary" aria-hidden="true">·</span>
-      <span className="font-financial text-xs font-semibold tabular-nums text-fg-primary">
+      <span className={cn('font-financial text-xs tabular-nums', !isLoading && employeeCount === 0 ? 'font-normal text-fg-tertiary' : 'font-semibold text-fg-primary')}>
         {isLoading || employeeCount === undefined ? '—' : employeeCount}
       </span>
       <span className="text-xs text-fg-tertiary">nhân viên</span>
@@ -229,6 +233,31 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
 
   const handlePageChange = (nextPage: number) => setPage(nextPage);
 
+  // Shared column contract: the data ledger and the empty-state table render
+  // the exact same header so an empty month still reads as a ledger.
+  const ledgerTableHead = (
+    <>
+      <colgroup>
+        {LEDGER_COLUMNS.map((column) => (
+          <col key={column.id} style={column.width === 'auto' ? undefined : { width: column.width }} />
+        ))}
+      </colgroup>
+      <TableHeader className="sticky top-0 z-10">
+        <TableRow className="border-b border-utility-gray-300 bg-utility-gray-50/95 hover:bg-transparent">
+          {LEDGER_COLUMNS.map((column) => (
+            <TableHead
+              key={column.id}
+              scope="col"
+              className={`whitespace-normal px-2 font-display text-[11px] font-bold uppercase leading-tight tracking-[0.06em] text-fg-tertiary ${column.alignRight ? 'text-right' : ''}`}
+            >
+              {column.label}
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+    </>
+  );
+
   // The records workspace (filters + summary + ledger + pagination) is shared
   // by both variants; only the page shell differs.
   const workspace = (
@@ -237,7 +266,6 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
       variant="console"
       className={`
         ${isAdmin ? 'admin-payment-history-workspace relative flex flex-col overflow-hidden xl:overflow-visible' : 'relative flex flex-col overflow-hidden xl:overflow-visible'}
-        ${isEmpty ? 'flex-1' : ''}
       `}
     >
       <div className="border-b border-utility-gray-300 p-2.5 sm:p-3 xl:py-1.5">
@@ -284,14 +312,38 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
       )}
 
       {isEmpty && (
-        // PAYR-34: căn giữa dọc — empty state chiếm phần canvas còn lại
-        // thay vì dính đỉnh với ~55% trang trống bên dưới.
-        <div className="flex flex-1 items-center justify-center" data-slot="payment-history-empty-center">
-          <EmptyState
-            title="Chưa có giao dịch đã hoàn tất"
-            description="Chọn tháng hoặc kỳ lương khác để xem lịch sử."
-          />
-        </div>
+        // Compact, content-sized empty state. The PAYR-34 full-canvas centered
+        // stage shrank the whole page to fit-content (flex ancestors + mx-auto
+        // disable stretch) and read as a failure state; this keeps the
+        // ledger's column contract visible instead.
+        <>
+          <div className="hidden xl:block">
+            <Table variant="console" className="w-full table-fixed">
+              {ledgerTableHead}
+              <TableBody>
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={LEDGER_COLUMNS.length} className="px-2 py-5">
+                    <EmptyState
+                      size="sm"
+                      showIllustration={false}
+                      className="justify-start"
+                      title="Chưa có giao dịch đã hoàn tất"
+                      description="Chọn tháng hoặc kỳ lương khác để xem lịch sử."
+                    />
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+          <div className="xl:hidden">
+            <EmptyState
+              size="sm"
+              showIllustration={false}
+              title="Chưa có giao dịch đã hoàn tất"
+              description="Chọn tháng hoặc kỳ lương khác để xem lịch sử."
+            />
+          </div>
+        </>
       )}
 
       {!isLoading && !isError && records.length > 0 && (
@@ -299,24 +351,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
           {/* Wide screens: semantic ledger table, sticky column header. */}
           <div data-slot="payment-history-records" className="hidden xl:block">
             <Table variant="console" className="w-full table-fixed">
-              <colgroup>
-                {LEDGER_COLUMNS.map((column) => (
-                  <col key={column.id} style={column.width === 'auto' ? undefined : { width: column.width }} />
-                ))}
-              </colgroup>
-              <TableHeader className="sticky top-0 z-10">
-                <TableRow className="border-b border-utility-gray-300 bg-utility-gray-50/95 hover:bg-transparent">
-                  {LEDGER_COLUMNS.map((column) => (
-                    <TableHead
-                      key={column.id}
-                      scope="col"
-                      className={`whitespace-normal px-2 font-display text-[11px] font-bold uppercase leading-tight tracking-[0.06em] text-fg-tertiary ${column.alignRight ? 'text-right' : ''}`}
-                    >
-                      {column.label}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
+              {ledgerTableHead}
               <TableBody className="[&_tr:last-child]:border-0">
                 {ledgerRows.map((row) => (
                   <LedgerTableRow key={row.key} row={row} />
@@ -362,14 +397,7 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
   // header) shared with the other redesigned admin list pages.
   if (isAdmin) {
     return (
-      // PAYR-34: min-h-full + flex-col để workspace empty state kéo đầy
-      // chiều cao còn lại của canvas (căn giữa dọc). .admin-empty-stretch
-      // kích chuỗi height/flex frame/inner trong admin-daisy.css — chỉ bật
-      // khi TRỐNG để trang có dữ liệu vẫn cao tự nhiên.
-      <AdminPageCanvas
-        className={isEmpty ? 'admin-empty-stretch' : undefined}
-        contentClassName="flex min-h-full flex-col"
-      >
+      <AdminPageCanvas>
         <AdminPageHeaderCard>
           <PageHeader
             icon={Receipt}

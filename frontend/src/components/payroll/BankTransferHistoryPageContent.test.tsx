@@ -325,7 +325,7 @@ describe('BankTransferHistoryPageContent', () => {
     expect(screen.getByRole('heading', { name: 'Lịch sử trả lương' })).toBeInTheDocument();
   });
 
-  it('centers the empty state vertically instead of pinning it to the top (PAYR-34)', () => {
+  it('renders a compact content-sized empty state instead of a full-canvas stage', () => {
     useBankTransferHistories.mockReturnValue({
       data: {
         status: 'success',
@@ -340,19 +340,21 @@ describe('BankTransferHistoryPageContent', () => {
     });
     const { container } = renderContent({ variant: 'admin' });
 
-    // Canvas trở thành flex column full-height để workspace chiếm phần
-    // trang còn lại thay vì cụm lại trên đỉnh với ~55% bên dưới trống.
+    // PAYR-34 reversal: no stretch chain — the page keeps natural width and
+    // height, and the empty state sizes to content inside the ledger card,
+    // keeping the column contract visible on xl.
     const canvas = container.firstElementChild as HTMLElement;
-    expect(canvas).toHaveClass('admin-empty-stretch');
-    const canvasInner = canvas.firstElementChild as HTMLElement;
-    expect(canvasInner).toHaveClass('flex', 'min-h-full', 'flex-col');
+    expect(canvas).not.toHaveClass('admin-empty-stretch');
 
     const card = container.querySelector('[data-slot="payment-history-workspace"]')!;
-    expect(card).toHaveClass('flex-1');
+    expect(card).not.toHaveClass('flex-1');
+    expect(container.querySelector('[data-slot="payment-history-empty-center"]')).toBeNull();
 
-    const center = container.querySelector('[data-slot="payment-history-empty-center"]')!;
-    expect(center).toHaveClass('flex', 'flex-1', 'items-center', 'justify-center');
-    expect(within(center as HTMLElement).getByText('Chưa có giao dịch đã hoàn tất')).toBeInTheDocument();
-    expect(within(center as HTMLElement).getByText('Chọn tháng hoặc kỳ lương khác để xem lịch sử.')).toBeInTheDocument();
+    // Desktop renders the real header + one colSpan row; the message renders
+    // once per breakpoint (xl table row + stacked fallback).
+    expect(container.querySelector('th')).not.toBeNull();
+    expect(container.querySelector('td[colspan]')).not.toBeNull();
+    expect(screen.getAllByText('Chưa có giao dịch đã hoàn tất').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Chọn tháng hoặc kỳ lương khác để xem lịch sử.').length).toBeGreaterThan(0);
   });
 });
