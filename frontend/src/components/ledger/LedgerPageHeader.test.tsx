@@ -25,7 +25,7 @@ describe("LedgerPageHeader action menu (PAYR-20)", () => {
     vi.clearAllMocks();
   });
 
-  it("sheet 'Tùy chọn khác' có đủ nghiệp vụ export sao kê / phí OnePay / settlement", () => {
+  it("sheet 'Tùy chọn khác' có đủ nghiệp vụ export sao kê / phí OnePay / settlement", async () => {
     render(<LedgerPageHeader {...handlers} />);
 
     const expected: Array<[string, () => void]> = [
@@ -37,8 +37,11 @@ describe("LedgerPageHeader action menu (PAYR-20)", () => {
     ];
     for (const [label, fn] of expected) {
       // The action sheet closes after each pick — reopen it for the next one.
+      // findByRole (not getByRole): Radix mounts the sheet through a portal and
+      // unmount timing differs across environments, so never assume the content
+      // is synchronously in the DOM right after the trigger click.
       fireEvent.click(screen.getByRole("button", { name: "Tùy chọn khác" }));
-      fireEvent.click(screen.getByRole("button", { name: label }));
+      fireEvent.click(await screen.findByRole("button", { name: label }));
       expect(fn).toHaveBeenCalledTimes(1);
     }
   });
