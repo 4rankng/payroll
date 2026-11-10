@@ -19,7 +19,11 @@ type APIClient struct {
 	BaseURL    string
 	HTTPClient *http.Client
 	Token      string
-	Headers    map[string]string
+	// CookieToken authenticates via the HttpOnly session cookie channel
+	// (PAYR-37B) instead of the Authorization header. When set, no Bearer
+	// header is attached — mirroring the cookie-only browser client.
+	CookieToken string
+	Headers     map[string]string
 }
 
 func NewAPIClient(baseURL string) *APIClient {
@@ -43,6 +47,45 @@ func (c *APIClient) WithToken(token string) *APIClient {
 		Token:      token,
 		Headers:    c.Headers,
 	}
+}
+
+// WithCookie returns a shallow copy authenticating via the session cookie.
+func (c *APIClient) WithCookie(cookieToken string) *APIClient {
+	return &APIClient{
+		BaseURL:     c.BaseURL,
+		HTTPClient:  c.HTTPClient,
+		CookieToken: cookieToken,
+		Headers:     c.Headers,
+	}
+}
+
+// LoginCookie authenticates and stores the token in the cookie channel —
+// it also captures the Set-Cookie attributes the server emitted so tests can
+// pin the cookie contract (HttpOnly, SameSite, Path).
+func (c *APIClient) LoginCookie(username, password string) (*LoginResponse, []*http.Cookie, error) {
+	body := LoginRequest{Username: username, Password: password}
+	var resp LoginResponse
+	httpResp, err := c.doRequest(http.MethodPost, "/api/v1/auth/login", body)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer func() { _ = httpResp.Body.Close() }()
+
+	apiResp, err := parseResponse(httpResp)
+	if err != nil {
+		return nil, nil, err
+	}
+	if httpResp.StatusCode >= 400 || apiResp.Status == "error" {
+		return nil, nil, fmt.Errorf("login failed (HTTP %d): %s", httpResp.StatusCode, apiResp.Message)
+	}
+	if err := json.Unmarshal(apiResp.Data, &resp); err != nil {
+		return nil, nil, fmt.Errorf("unmarshal login response: %w", err)
+	}
+	if resp.AccessToken == "" {
+		return nil, nil, fmt.Errorf("login returned no access token")
+	}
+	c.CookieToken = resp.AccessToken
+	return &resp, httpResp.Cookies(), nil
 }
 
 // Login authenticates and stores the token.
@@ -212,7 +255,11 @@ func (c *APIClient) doRequest(method, path string, body any) (*http.Response, er
 	// Tag test traffic so the backend excludes it from api_metrics;
 	// System Health dashboards then reflect real usage only.
 	req.Header.Set(middleware.ClientSourceHeader, middleware.ClientSourceIntegrationTest)
-	if c.Token != "" {
+	if c.CookieToken != "" {
+		// Cookie channel: no Authorization header — the session cookie is
+		// the credential, exactly like the browser client.
+		req.AddCookie(&http.Cookie{Name: middleware.AuthCookieName, Value: c.CookieToken})
+	} else if c.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.Token)
 	}
 

@@ -38,8 +38,8 @@ vi.mock("@/contexts", () => ({
 
 vi.mock("@/lib/auth", () => ({
   authManager: {
-    isTokenValid: () => false,
-    removeToken: vi.fn(),
+    hasSession: () => false,
+    clearSession: vi.fn(),
     getUserRole: vi.fn(),
   },
 }));

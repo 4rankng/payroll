@@ -91,6 +91,10 @@ func main() {
 	// Phase 7: Auth & User Management
 	runAuthUserTests(client, testData, reporter, cfg)
 
+	// Phase 7.4: Server-side role enforcement pin (PAYR-37 item 5) + cookie
+	// channel auth (PAYR-37 item 4).
+	runRoleEnforcementTests(client, testData, reporter, cfg)
+
 	// Phase 7.5: Self-service password reset (no-token contracts; see flow file)
 	runPasswordResetTests(client, testData, reporter, cfg)
 

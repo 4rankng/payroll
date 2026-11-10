@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import NotFound from './NotFound';
 
 const auth = vi.hoisted(() => ({ role: 'employee', valid: true }));
-vi.mock('@/lib/auth', () => ({ authManager: { isTokenValid: () => auth.valid, getUserRole: () => auth.role } }));
+vi.mock('@/lib/auth', () => ({ authManager: { hasSession: () => auth.valid, getUserRole: () => auth.role } }));
 vi.mock('@/lib/logger', () => ({ logNotFoundPath: vi.fn() }));
 
 describe('404 recovery', () => {

@@ -72,8 +72,10 @@ const OTPLogin = () => {
         code: trimmed,
       });
       const data = response.data;
-      if (data?.access_token && data?.user) {
-        login(data.access_token, {
+      if (data?.user) {
+        // Session cookie is set by the server; register the profile in
+        // AuthContext.
+        login({
           id: String(data.user.id),
           email: data.user.email,
           name: data.user.fullname,
@@ -87,7 +89,7 @@ const OTPLogin = () => {
         else if (data.user.role === "employee") navigate("/employee", { replace: true });
         else navigate("/", { replace: true });
       } else {
-        setError("Không nhận được token. Vui lòng thử lại.");
+        setError("Không nhận được thông tin người dùng. Vui lòng thử lại.");
       }
     } catch (err) {
       // The backend returns a generic 401 for invalid code/session/lockout so

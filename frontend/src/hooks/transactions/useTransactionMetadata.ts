@@ -9,7 +9,7 @@ import type { TransactionMetadata } from '@/services/api/transaction.service';
  */
 export const useTransactionMetadata = () => {
   const role = authManager.getUserRole();
-  const enabled = authManager.isTokenValid() && role === 'admin';
+  const enabled = authManager.hasSession() && role === 'admin';
   return useQuery<TransactionMetadata>({
     queryKey: ['transactionMetadata'],
     queryFn: () => transactionService.getTransactionMetadata(),

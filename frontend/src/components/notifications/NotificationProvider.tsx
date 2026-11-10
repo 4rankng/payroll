@@ -17,7 +17,7 @@ interface NotificationProviderProps {
  * - Foreground push handler (shows native notification even when app is open)
  */
 export const NotificationProvider = ({ children }: NotificationProviderProps) => {
-  const isAuthenticated = authManager.isTokenValid();
+  const isAuthenticated = authManager.hasSession();
   const { isSubscribed, isSupported, requestPermission } = usePushNotifications();
   const { data: unreadData } = useUnreadNotifications(isAuthenticated);
 

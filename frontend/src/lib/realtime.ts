@@ -1,4 +1,4 @@
-import { authManager } from './auth';
+
 
 export interface RealtimeEvent {
   type: 'notification' | 'activity' | 'data-update' | 'approval' | 'system';
@@ -48,17 +48,13 @@ class RealtimeService {
       return;
     }
 
-    const token = authManager.getToken();
-    if (!token) {
-      console.warn('No auth token available for WebSocket connection');
-      return;
-    }
-
+    // PAYR-37B: client JS no longer holds a token, so none is appended to
+    // the URL. The gateway carries the session cookie on same-origin
+    // upgrades automatically.
     this.isConnecting = true;
 
     try {
-      // Include token in WebSocket URL or use subprotocol
-      this.ws = new WebSocket(`${this.config.url}?token=${token}`);
+      this.ws = new WebSocket(this.config.url);
 
       this.ws.onopen = () => {
         this.isConnecting = false;

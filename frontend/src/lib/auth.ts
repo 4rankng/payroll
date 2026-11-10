@@ -1,21 +1,35 @@
-import { jwtDecode } from 'jwt-decode';
-
 export type AppRole = 'admin' | 'partner' | 'employee' | 'adv_partner' | 'accountant';
 
-interface TokenPayload {
-  exp: number;
-  user_id: number;
-  username: string;
-  role: AppRole;
-  sub: string;
-  nbf: number;
-  iat: number;
-  jti: string;
+// PAYR-37B item 4: the JWT no longer lives in localStorage. The server sets it
+// as an HttpOnly cookie (SameSite=Lax, Secure in production) and client JS
+// cannot read it. What remains client-side is the user PROFILE (display data,
+// not a credential) and an expiry timestamp for proactive session-expiry UI.
+//
+// Legacy key kept ONLY for the migration window: sessions created by the old
+// bundle still have this token stored; the bootstrap flow exchanges it for a
+// cookie once, then deletes it (see bootstrapLegacySession in auth.service).
+export const LEGACY_TOKEN_KEY = 'auth_token';
+
+const SESSION_EXPIRES_KEY = 'auth_session_expires_at'; // epoch ms — metadata, not the token
+export const USER_ID_KEY = 'userId';
+
+/**
+ * Parse an expiry metadata value defensively. Any non-finite/past value means
+ * "unknown or expired" depending on the caller.
+ */
+function readSessionExpiresAt(): number | null {
+  try {
+    const raw = localStorage.getItem(SESSION_EXPIRES_KEY);
+    if (!raw) return null;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+  } catch {
+    return null;
+  }
 }
 
 class AuthManager {
   private static instance: AuthManager;
-  private tokenKey = 'auth_token';
   private tokenExpiryWarningShown = false;
   private sessionTimeoutId: NodeJS.Timeout | null = null;
 
@@ -31,24 +45,61 @@ class AuthManager {
     return AuthManager.instance;
   }
 
-  // Use localStorage for persistent 7-day login
-  // sessionStorage clears on tab close — users would need to re-login every time
-  setToken(token: string): void {
-    localStorage.setItem(this.tokenKey, token);
-    // Start session monitoring after setting token
+  /**
+   * Record session expiry metadata after a successful login. The cookie
+   * lifetime is managed entirely by the server; this timestamp only drives
+   * the client-side "phiên sắp hết hạn" warning and auto-logout timer.
+   * Pass null when the remaining lifetime is unknown (legacy bootstrap).
+   */
+  setSessionMeta(expiresInSeconds: number | null): void {
+    try {
+      if (expiresInSeconds && expiresInSeconds > 0) {
+        localStorage.setItem(SESSION_EXPIRES_KEY, String(Date.now() + expiresInSeconds * 1000));
+      } else {
+        localStorage.removeItem(SESSION_EXPIRES_KEY);
+      }
+    } catch {
+      // localStorage unavailable (private mode): the session still works —
+      // only the proactive expiry warning is lost.
+    }
+    // Start session monitoring after setting session metadata
     this.startSessionMonitoring();
     this.notifyAuthChanged();
   }
 
-  getToken(): string | null {
-    const token = localStorage.getItem(this.tokenKey);
-
-    return token;
+  /**
+   * Whether a session is considered active. This is a UI heuristic only —
+   * the server is the source of truth (it authenticates every request via
+   * the HttpOnly cookie, and a 401 interceptor clears the session).
+   */
+  hasSession(): boolean {
+    if (typeof window === 'undefined') return false;
+    let profilePresent = false;
+    try {
+      profilePresent = localStorage.getItem('userRole') !== null;
+    } catch {
+      return false;
+    }
+    if (!profilePresent) return false;
+    const expiresAt = readSessionExpiresAt();
+    // No expiry metadata (e.g. legacy-bootstrapped session): trust the
+    // profile; the server rejects expired sessions on the next request.
+    if (expiresAt === null) return true;
+    return expiresAt > Date.now();
   }
 
+  getUserId(): number | null {
+    try {
+      const raw = localStorage.getItem(USER_ID_KEY);
+      if (!raw) return null;
+      const id = Number(raw);
+      return Number.isFinite(id) && id > 0 ? id : null;
+    } catch {
+      return null;
+    }
+  }
 
-  removeToken(): void {
-    localStorage.removeItem(this.tokenKey);
+  clearSession(): void {
     this.clearStoredUser();
     if (this.sessionTimeoutId) {
       clearTimeout(this.sessionTimeoutId);
@@ -57,62 +108,17 @@ class AuthManager {
     this.notifyAuthChanged();
   }
 
-  isTokenValid(): boolean {
-    const token = this.getToken();
-    if (!token) return false;
-
-    try {
-      const decoded = jwtDecode<TokenPayload>(token);
-      const currentTime = Date.now() / 1000;
-      return decoded.exp > currentTime;
-    } catch {
-      return false;
-    }
-  }
-
-  getTokenPayload(): TokenPayload | null {
-    const token = this.getToken();
-    if (!token) return null;
-
-    try {
-      return jwtDecode<TokenPayload>(token);
-    } catch {
-      return null;
-    }
-  }
-
-  getUserRole(): AppRole | null {
-    const payload = this.getTokenPayload();
-
-    return payload?.role || null;
-  }
-
-  getUserId(): number | null {
-    const payload = this.getTokenPayload();
-
-    return payload?.user_id || null;
-  }
-
-  getTokenExpiry(): Date | null {
-    const payload = this.getTokenPayload();
-    if (!payload) return null;
-    return new Date(payload.exp * 1000);
-  }
-
   startSessionMonitoring(): void {
     if (this.sessionTimeoutId) {
       clearTimeout(this.sessionTimeoutId);
+      this.sessionTimeoutId = null;
     }
 
-    const checkTokenExpiry = () => {
-      const token = this.getToken();
-      if (!token) return;
+    const checkSessionExpiry = () => {
+      const expiresAt = readSessionExpiresAt();
+      if (expiresAt === null) return; // unknown lifetime — server enforces
 
-      const expiry = this.getTokenExpiry();
-      if (!expiry) return;
-
-      const now = new Date();
-      const timeUntilExpiry = expiry.getTime() - now.getTime();
+      const timeUntilExpiry = expiresAt - Date.now();
 
       // Warn 5 minutes before expiry
       if (timeUntilExpiry <= 5 * 60 * 1000 && timeUntilExpiry > 0 && !this.tokenExpiryWarningShown) {
@@ -120,16 +126,16 @@ class AuthManager {
         this.showExpiryWarning();
       }
 
-      // Auto logout when token expires
+      // Auto logout when the session expires
       if (timeUntilExpiry <= 0) {
-        this.handleTokenExpired();
+        this.handleSessionExpired();
       } else {
         // Check again in 1 minute
-        this.sessionTimeoutId = setTimeout(checkTokenExpiry, 60 * 1000);
+        this.sessionTimeoutId = setTimeout(checkSessionExpiry, 60 * 1000);
       }
     };
 
-    checkTokenExpiry();
+    checkSessionExpiry();
   }
 
   private showExpiryWarning(): void {
@@ -140,8 +146,8 @@ class AuthManager {
     window.dispatchEvent(event);
   }
 
-  private handleTokenExpired(): void {
-    this.removeToken();
+  private handleSessionExpired(): void {
+    this.clearSession();
     const event = new CustomEvent('token-expired', {
       detail: { message: 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.' }
     });
@@ -165,15 +171,48 @@ class AuthManager {
     return userRole !== null && roles.includes(userRole);
   }
 
+  getUserRole(): AppRole | null {
+    try {
+      return (localStorage.getItem('userRole') as AppRole | null) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Legacy token left by the pre-cookie bundle, if any. */
+  getLegacyToken(): string | null {
+    try {
+      return localStorage.getItem(LEGACY_TOKEN_KEY);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Remove the legacy token after it has been exchanged for a cookie. */
+  clearLegacyToken(): void {
+    try {
+      localStorage.removeItem(LEGACY_TOKEN_KEY);
+    } catch {
+      // ignore
+    }
+  }
+
   private clearStoredUser(): void {
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userUsername');
-    localStorage.removeItem('userStatus');
-    localStorage.removeItem('userCreatedAt');
-    localStorage.removeItem('userUpdatedAt');
-    localStorage.removeItem('userLastLogin');
+    try {
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userUsername');
+      localStorage.removeItem(USER_ID_KEY);
+      localStorage.removeItem('userStatus');
+      localStorage.removeItem('userCreatedAt');
+      localStorage.removeItem('userUpdatedAt');
+      localStorage.removeItem('userLastLogin');
+      localStorage.removeItem(SESSION_EXPIRES_KEY);
+      localStorage.removeItem(LEGACY_TOKEN_KEY);
+    } catch {
+      // ignore
+    }
   }
 
   private notifyAuthChanged(): void {

@@ -31,8 +31,8 @@ export const useLogin = () => {
       queryClient.clear();
       sessionStorage.removeItem('payroll-query-cache');
 
-      // Store token and user data in AuthContext
-      login(data.access_token, {
+      // Session cookie is set by the server; register the profile in AuthContext
+      login({
         id: String(data.user.id),
         email: data.user.email,
         name: data.user.fullname,
@@ -82,8 +82,8 @@ export const useGoogleLogin = () => {
       queryClient.clear();
       sessionStorage.removeItem('payroll-query-cache');
 
-      // Store token and user data in AuthContext
-      login(data.access_token, {
+      // Session cookie is set by the server; register the profile in AuthContext
+      login({
         id: String(data.user.id),
         email: data.user.email,
         name: data.user.fullname,

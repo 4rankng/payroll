@@ -135,7 +135,7 @@ func opsAuthFixture(t *testing.T) (*fakeOpsKeyRepo, *fakeOpsUsers, *opsapikey.Se
 func runOpsAuthGate(t *testing.T, svc *opsapikey.Service, opsCfg config.OpsMCPConfig, method, path, apiKey string, body io.Reader) (*httptest.ResponseRecorder, map[string]any) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
-	m := NewAuthMiddleware(nil, nil, svc, opsCfg)
+	m := NewAuthMiddleware(nil, nil, svc, opsCfg, false)
 
 	r := gin.New()
 	r.Use(m.Authenticate())
@@ -269,7 +269,7 @@ func TestOpsKeyRateLimitSeparateTier(t *testing.T) {
 	cfg := config.OpsMCPConfig{Disabled: false, RatePerMin: 2}
 
 	gin.SetMode(gin.TestMode)
-	m := NewAuthMiddleware(nil, nil, svc, cfg)
+	m := NewAuthMiddleware(nil, nil, svc, cfg, false)
 	r := gin.New()
 	r.Use(m.Authenticate())
 	r.Any("/*path", func(c *gin.Context) { c.String(http.StatusOK, "reached handler") })
@@ -315,7 +315,7 @@ func TestMCPHandshakeRejectsOpsKey(t *testing.T) {
 // refused rather than trusted.
 func TestOpsKeyNilServiceFailsClosed(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	m := NewAuthMiddleware(nil, nil, nil, opsCfgOn())
+	m := NewAuthMiddleware(nil, nil, nil, opsCfgOn(), false)
 	r := gin.New()
 	r.Use(m.Authenticate())
 	r.Any("/*path", func(c *gin.Context) { c.String(http.StatusOK, "reached handler") })

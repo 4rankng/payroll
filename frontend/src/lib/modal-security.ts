@@ -6,13 +6,25 @@ import { authManager } from '@/lib/auth';
  * Handles encryption, hashing, and secure parameter management for modal deep links
  */
 
-// Get session-based encryption key
-const getEncryptionKey = (): string => {
-  const token = authManager.getToken();
-  if (!token) throw new Error('No active session for encryption');
-  
-  // Use first 32 chars of token as encryption key
-  return CryptoJS.SHA256(token).toString().substring(0, 32);
+// Per-tab random secret (sessionStorage) replacing the old token-derived key
+// (PAYR-37B item 4: client JS can no longer read the token). Stable within
+// the tab session — modal deep-link params encrypted in this tab decrypt in
+// this tab — and unknown to any other session.
+const MODAL_SESSION_KEY_STORAGE = 'payroll_modal_sec_key';
+
+const getSessionSecret = (): string => {
+  try {
+    let secret = sessionStorage.getItem(MODAL_SESSION_KEY_STORAGE);
+    if (!secret) {
+      const bytes = new Uint8Array(32);
+      crypto.getRandomValues(bytes);
+      secret = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+      sessionStorage.setItem(MODAL_SESSION_KEY_STORAGE, secret);
+    }
+    return secret;
+  } catch {
+    throw new Error('No active session for encryption');
+  }
 };
 
 /**
@@ -20,7 +32,7 @@ const getEncryptionKey = (): string => {
  */
 export const encryptModalData = (data: Record<string, unknown>): string => {
   try {
-    const key = getEncryptionKey();
+    const key = getSessionSecret();
     const encrypted = CryptoJS.AES.encrypt(JSON.stringify(data), key).toString();
     // URL-safe base64 encoding
     return encrypted.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
@@ -35,7 +47,7 @@ export const encryptModalData = (data: Record<string, unknown>): string => {
  */
 export const decryptModalData = <T = Record<string, unknown>>(encryptedData: string): T => {
   try {
-    const key = getEncryptionKey();
+    const key = getSessionSecret();
     // Restore base64 padding and characters
     const restored = encryptedData.replace(/-/g, '+').replace(/_/g, '/');
     const padded = restored + '==='.slice((restored.length + 3) % 4);
@@ -58,7 +70,7 @@ export const decryptModalData = <T = Record<string, unknown>>(encryptedData: str
  * Generate secure hash for IDs to prevent enumeration
  */
 export const hashId = (id: number | string): string => {
-  const key = getEncryptionKey();
+  const key = getSessionSecret();
   const hash = CryptoJS.HmacSHA256(id.toString(), key).toString();
   // Return first 12 characters for shorter URLs
   return hash.substring(0, 12);
@@ -168,18 +180,20 @@ const getRoleBasedPermissions = (role: string): string[] => {
  * Get current security context
  */
 export const getSecurityContext = (): SecurityContext => {
-  const token = authManager.getToken();
+  const hasSession = authManager.hasSession();
   const role = authManager.getUserRole();
   const userId = authManager.getUserId();
-  
-  if (!token || !role || !userId) {
+
+  if (!hasSession || !role || !userId) {
     throw new Error('Invalid session - user not authenticated');
   }
-  
+
   return {
     userId,
     userRole: role,
-    sessionId: CryptoJS.SHA256(token).toString().substring(0, 16),
+    // Per-session fingerprint (was: hash of the JWT) — detects a session
+    // change between context creation and validation.
+    sessionId: CryptoJS.SHA256(getSessionSecret()).toString().substring(0, 16),
     permissions: getRoleBasedPermissions(role),
     timestamp: Date.now()
   };

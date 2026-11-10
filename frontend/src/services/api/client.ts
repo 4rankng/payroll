@@ -55,6 +55,12 @@ class ApiClient {
     this.client = axios.create({
       baseURL: `${API_CONFIG.baseURL}${API_CONFIG.apiV1}`,
       timeout: API_CONFIG.timeout,
+      // Session lives in an HttpOnly cookie (PAYR-37B item 4): the browser
+      // must send it on every API call, including the cross-origin dev setup
+      // (localhost:5173 → localhost:8080; CORS allows credentials). No
+      // Authorization header is attached anymore — client JS cannot read the
+      // token.
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -103,10 +109,8 @@ class ApiClient {
     // Request interceptor
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        const token = authManager.getToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
+        // Authentication is the HttpOnly session cookie (withCredentials on
+        // the instance) — no client-readable token is attached here.
         const method = (config.method ?? 'get').toUpperCase();
         const isJsonRead = method === 'GET' && (config.responseType ?? 'json') === 'json';
         if (isJsonRead && !config.signal && typeof AbortController !== 'undefined') {
@@ -198,7 +202,7 @@ class ApiClient {
               duration: 5000,
             });
 
-            authManager.removeToken();
+            authManager.clearSession();
             // Only redirect if not already on login page to prevent infinite loops
             if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
               setTimeout(() => {

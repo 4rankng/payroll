@@ -37,15 +37,34 @@ export function clearPendingOtp(): void {
   sessionStorage.removeItem(OTP_PENDING_KEY);
 }
 
+/**
+ * Persist the user profile returned by the login endpoints. Display data
+ * only — the credential itself is the server-managed HttpOnly cookie
+ * (PAYR-37B item 4).
+ */
+function storeUserProfile(user: User): void {
+  localStorage.setItem('userRole', user.role);
+  localStorage.setItem('userName', user.fullname);
+  localStorage.setItem('userEmail', user.email ?? '');
+  localStorage.setItem('userUsername', user.username);
+  localStorage.setItem('userId', String(user.id));
+  localStorage.setItem('userCreatedAt', user.created_at);
+  localStorage.setItem('userUpdatedAt', user.updated_at);
+  if (user.last_login) {
+    localStorage.setItem('userLastLogin', user.last_login);
+  }
+}
+
 class AuthService {
   /**
    * Login user with credentials.
    *
    * RT-C3: when the response requires the email-OTP second factor
    * (otp_required=true), this method stores the pending session id under a
-   * DISTINCT key (otp_pending in sessionStorage) and returns WITHOUT calling
-   * authManager.setToken or writing any user fields. The caller (useAuth) must
-   * route to the OTP entry screen instead of navigating to the dashboard.
+   * DISTINCT key (otp_pending in sessionStorage) and returns WITHOUT creating
+   * a session (no profile write, no cookie — the cookie only arrives from
+   * /auth/login/verify). The caller (useAuth) must route to the OTP entry
+   * screen instead of navigating to the dashboard.
    */
   async login(credentials: LoginCredentials): Promise<ApiResponse<LoginResponse>> {
     const response = await apiClient.post<LoginResponse>(
@@ -62,21 +81,13 @@ class AuthService {
       return response;
     }
 
-    if (response.data && response.data.access_token && response.data.user) {
-      // Store token in auth manager
-      authManager.setToken(response.data.access_token);
-
-      // Store user info in localStorage for quick access
+    if (response.data && response.data.user) {
+      // Session = HttpOnly cookie set by the server (PAYR-37B item 4). The
+      // response body's access_token is ignored — client JS must never hold
+      // the token. Store only the user profile for display + role-based UI.
       const user = response.data.user;
-      localStorage.setItem('userRole', user.role);
-      localStorage.setItem('userName', user.fullname);
-      localStorage.setItem('userEmail', user.email);
-      localStorage.setItem('userUsername', user.username);
-      localStorage.setItem('userCreatedAt', user.created_at);
-      localStorage.setItem('userUpdatedAt', user.updated_at);
-      if (user.last_login) {
-        localStorage.setItem('userLastLogin', user.last_login);
-      }
+      storeUserProfile(user);
+      authManager.setSessionMeta(response.data.expires_in ?? null);
     }
 
     return response;
@@ -100,19 +111,10 @@ class AuthService {
       return response;
     }
 
-    if (response.data && response.data.access_token && response.data.user) {
-      authManager.setToken(response.data.access_token);
-
+    if (response.data && response.data.user) {
       const user = response.data.user;
-      localStorage.setItem('userRole', user.role);
-      localStorage.setItem('userName', user.fullname);
-      localStorage.setItem('userEmail', user.email ?? '');
-      localStorage.setItem('userUsername', user.username);
-      localStorage.setItem('userCreatedAt', user.created_at);
-      localStorage.setItem('userUpdatedAt', user.updated_at);
-      if (user.last_login) {
-        localStorage.setItem('userLastLogin', user.last_login);
-      }
+      storeUserProfile(user);
+      authManager.setSessionMeta(response.data.expires_in ?? null);
     }
 
     return response;
@@ -120,8 +122,8 @@ class AuthService {
 
   /**
    * Complete the email-OTP login by submitting the 6-digit code. On success
-   * the backend returns the real access token + user; this method stores them
-   * exactly as login() would have, and clears the pending session id.
+   * the server sets the session cookie + returns the user; this method stores
+   * the profile exactly as login() would have, and clears the pending id.
    */
   async verifyLoginOtp(req: VerifyOTPRequest): Promise<ApiResponse<LoginResponse>> {
     const response = await apiClient.post<LoginResponse>(
@@ -129,19 +131,10 @@ class AuthService {
       req
     );
 
-    if (response.data && response.data.access_token && response.data.user) {
-      authManager.setToken(response.data.access_token);
-
+    if (response.data && response.data.user) {
       const user = response.data.user;
-      localStorage.setItem('userRole', user.role);
-      localStorage.setItem('userName', user.fullname);
-      localStorage.setItem('userEmail', user.email);
-      localStorage.setItem('userUsername', user.username);
-      localStorage.setItem('userCreatedAt', user.created_at);
-      localStorage.setItem('userUpdatedAt', user.updated_at);
-      if (user.last_login) {
-        localStorage.setItem('userLastLogin', user.last_login);
-      }
+      storeUserProfile(user);
+      authManager.setSessionMeta(response.data.expires_in ?? null);
       clearPendingOtp();
     }
 
@@ -157,19 +150,13 @@ class AuthService {
   }
 
   /**
-   * Clear all locally-stored session data (token + cached user fields).
-   * Shared by logout() and by callers that skip the logout API call because
-   * the backend already invalidated the token (e.g. after a password change).
+   * Clear all locally-stored session state (cached user fields + expiry
+   * metadata). Shared by logout() and by callers that skip the logout API
+   * call because the backend already invalidated the session (e.g. after a
+   * password change). Key removal lives in AuthManager.clearStoredUser.
    */
   clearLocalSession(): void {
-    authManager.removeToken();
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userUsername');
-    localStorage.removeItem('userCreatedAt');
-    localStorage.removeItem('userUpdatedAt');
-    localStorage.removeItem('userLastLogin');
+    authManager.clearSession();
   }
 
   /**
@@ -288,14 +275,15 @@ class AuthService {
 
 
   /**
-   * Check if user is authenticated
+   * Check if a session is considered active (UI heuristic — the server
+   * authenticates every request via the HttpOnly cookie).
    */
   isAuthenticated(): boolean {
-    return authManager.isTokenValid();
+    return authManager.hasSession();
   }
 
   /**
-   * Get user role from stored token
+   * Get user role from the stored profile
    */
   getUserRole(): AppRole | null {
     return authManager.getUserRole();
@@ -316,10 +304,41 @@ class AuthService {
   }
 
   /**
-   * Validate session by checking if token is valid
+   * Validate session by checking local session state
    */
   validateSession(): boolean {
     return this.isAuthenticated();
+  }
+
+  /**
+   * One-time migration bootstrap (PAYR-37B item 4): a session created by the
+   * pre-cookie bundle still holds the JWT in localStorage. Send it once as a
+   * Bearer header — the server validates it AND auto-sets the session cookie
+   * on the response — then persist the profile and delete the legacy token.
+   * Returns true when a legacy session was converted (or a stale one was
+   * cleaned up), so the caller can refresh auth state.
+   */
+  async bootstrapLegacySession(): Promise<boolean> {
+    const legacyToken = authManager.getLegacyToken();
+    if (!legacyToken || authManager.hasSession()) {
+      return false;
+    }
+
+    try {
+      const response = await apiClient.get<User>(API_ENDPOINTS.auth.me, {
+        headers: { Authorization: `Bearer ${legacyToken}` },
+      });
+      if (response.data?.id) {
+        storeUserProfile(response.data);
+        // Remaining cookie lifetime is server-managed; no expiry metadata.
+        authManager.setSessionMeta(null);
+      }
+    } finally {
+      // Whether the exchange succeeded or the token was rejected/expired,
+      // the legacy localStorage token has no future — remove it.
+      authManager.clearLegacyToken();
+    }
+    return true;
   }
 
   /**
