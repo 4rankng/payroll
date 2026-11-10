@@ -223,7 +223,14 @@ class AssetService {
     }
 
     try {
-      new URL(url);
+      const parsed = new URL(url.trim());
+      // PAYR-37: chỉ chấp nhận http/https — chặn javascript:, data:, vbscript:
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return {
+          isValid: false,
+          error: 'Chỉ chấp nhận URL bắt đầu bằng http:// hoặc https://',
+        };
+      }
       return { isValid: true };
     } catch {
       return {

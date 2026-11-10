@@ -1,10 +1,9 @@
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { 
-  encryptModalData, 
-  decryptModalData, 
-  sanitizeParam, 
+import {
+  encryptModalData,
+  decryptModalData,
   isValidParam,
   getSecurityContext,
   type SecurityContext

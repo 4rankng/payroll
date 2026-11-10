@@ -56,6 +56,15 @@ func TestEmployeeRepository_GetPaidWithoutMobile(t *testing.T) {
 			`DELETE FROM timesheets WHERE id BETWEEN ? AND ?`,
 			`DELETE FROM payrates WHERE id BETWEEN ? AND ?`,
 			`DELETE FROM project_employees WHERE id BETWEEN ? AND ?`,
+			// project_users is the one FK child missing here historically: a
+			// leftover row blocks DELETE FROM projects (fk_project_users_project)
+			// and DELETE FROM users (fk_projects_creator) silently — the deletes
+			// error and are ignored — so the next run collides with
+			// "Duplicate entry" on the fixture id band. Clean it by both
+			// referencing columns before the parents. (PAYR-37)
+			`DELETE FROM project_users WHERE project_id BETWEEN ? AND ?`,
+			`DELETE FROM project_users WHERE user_id BETWEEN ? AND ?`,
+			`DELETE FROM project_users WHERE granted_by BETWEEN ? AND ?`,
 			`DELETE FROM employees WHERE id BETWEEN ? AND ?`,
 			`DELETE FROM projects WHERE id BETWEEN ? AND ?`,
 			`DELETE FROM users WHERE id BETWEEN ? AND ?`,

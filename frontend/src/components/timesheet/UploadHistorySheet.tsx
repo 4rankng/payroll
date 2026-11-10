@@ -74,14 +74,14 @@ function ResultCounts({ item, errors, groups, onToggleErrors, errorsOpen }: {
   if (item.created_count > 0) {
     segments.push(
       <span key="created">
-        <span className="font-medium tabular-nums text-emerald-600">{item.created_count}</span> tạo mới
+        <span className="font-medium tabular-nums text-emerald-700">{item.created_count}</span> tạo mới
       </span>,
     );
   }
   if (item.skipped_count > 0) {
     segments.push(
       <span key="skipped">
-        <span className="font-medium tabular-nums text-amber-600">{item.skipped_count}</span> bỏ qua
+        <span className="font-medium tabular-nums text-amber-800">{item.skipped_count}</span> bỏ qua
       </span>,
     );
   }
@@ -94,7 +94,7 @@ function ResultCounts({ item, errors, groups, onToggleErrors, errorsOpen }: {
         onClick={onToggleErrors}
         aria-expanded={errorsOpen}
         aria-label={errorsOpen ? 'Ẩn lỗi' : `Xem ${errors.length} lỗi${suffix}`}
-        className="inline-flex items-center gap-0.5 text-red-600 transition-colors hover:underline underline-offset-2"
+        className="inline-flex items-center gap-0.5 text-red-700 transition-colors hover:underline underline-offset-2"
       >
         <span className="font-medium tabular-nums">{item.error_count}</span> lỗi
         <Chevron className={cn('h-3 w-3 transition-transform duration-150', errorsOpen && 'rotate-90')} aria-hidden="true" />
@@ -103,7 +103,7 @@ function ResultCounts({ item, errors, groups, onToggleErrors, errorsOpen }: {
   } else if (item.error_count > 0) {
     segments.push(
       <span key="errors">
-        <span className="font-medium tabular-nums text-red-600">{item.error_count}</span> lỗi
+        <span className="font-medium tabular-nums text-red-700">{item.error_count}</span> lỗi
       </span>,
     );
   }
