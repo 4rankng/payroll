@@ -357,7 +357,7 @@ export const UploadHistorySheet = memo(function UploadHistorySheet({
           <div className="overflow-hidden rounded-lg border border-border bg-card">
             <div className="divide-y divide-border/60">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full rounded-none" />
+                <Skeleton key={i} className="h-[54px] w-full rounded-none" />
               ))}
             </div>
           </div>

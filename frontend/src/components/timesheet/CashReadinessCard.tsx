@@ -115,14 +115,15 @@ export function CashReadinessCard({ data, isLoading, isError }: CashReadinessCar
           <p
             className="font-financial text-xs font-semibold tabular-nums text-foreground"
             title={`Từ ${formatCurrency(display.intervalLower)} đến ${formatCurrency(display.intervalUpper)}`}
+            aria-label={`Từ ${formatCurrency(display.intervalLower)} đến ${formatCurrency(display.intervalUpper)}`}
           >
             {formatCompactVnd(display.intervalLower)} – {formatCompactVnd(display.intervalUpper)}
           </p>
         </div>
-        <div className="mt-1.5 h-1 rounded-full bg-muted/60">
+        <div className="relative mt-1.5 h-1 rounded-full bg-muted/60">
           <div
-            className="h-2.5 w-2.5 -translate-y-[3px] rounded-full bg-primary"
-            style={{ marginInlineStart: `${reservePositionPct}%` }}
+            className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"
+            style={{ left: `${reservePositionPct}%` }}
             role="presentation"
           />
         </div>
