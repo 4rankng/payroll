@@ -5,6 +5,13 @@ import { VitePWA } from "vite-plugin-pwa";
 import type { PluginOption } from "vite";
 import packageJson from "./package.json";
 
+// PAYR-37: security headers cho dev/preview server — khớp với serve.json (prod).
+const SECURITY_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "SAMEORIGIN",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+} as const;
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -12,11 +19,15 @@ export default defineConfig(({ mode }) => ({
     host: "127.0.0.1",
     port: 3000,
     cors: false,
+    // PAYR-37: security headers parity với prod (serve.json) để dev/preview
+    // không lọt header scan và hành vi khác prod.
+    headers: SECURITY_HEADERS,
   },
   preview: {
     host: "127.0.0.1",
     port: 4173,
     cors: false,
+    headers: SECURITY_HEADERS,
   },
   define: {
     __APP_VERSION__: JSON.stringify(packageJson.version),

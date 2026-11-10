@@ -88,18 +88,6 @@ export const verifyHashedId = (id: number | string, hash: string): boolean => {
 };
 
 /**
- * Sanitize URL parameters to prevent XSS
- */
-export const sanitizeParam = (param: string): string => {
-  return param
-    .replace(/[<>]/g, '') // Remove potential HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/data:/gi, '') // Remove data: protocol
-    .replace(/vbscript:/gi, '') // Remove vbscript: protocol
-    .trim();
-};
-
-/**
  * Validate parameter format
  */
 export const isValidParam = (param: string, type: 'hash' | 'encrypted' | 'plain' = 'plain'): boolean => {

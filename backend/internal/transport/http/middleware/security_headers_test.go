@@ -26,7 +26,7 @@ func TestSecurityHeaders(t *testing.T) {
 			expectedHSTS: false,
 			expectedHeader: map[string]string{
 				"X-Content-Type-Options":  "nosniff",
-				"X-Frame-Options":         "DENY",
+				"X-Frame-Options":         "SAMEORIGIN",
 				"X-XSS-Protection":        "1; mode=block",
 				"Referrer-Policy":         "strict-origin-when-cross-origin",
 				"Permissions-Policy":      "geolocation=(self), microphone=(), camera=()",
@@ -39,7 +39,7 @@ func TestSecurityHeaders(t *testing.T) {
 			expectedHSTS: true,
 			expectedHeader: map[string]string{
 				"X-Content-Type-Options":    "nosniff",
-				"X-Frame-Options":           "DENY",
+				"X-Frame-Options":           "SAMEORIGIN",
 				"X-XSS-Protection":          "1; mode=block",
 				"Referrer-Policy":           "strict-origin-when-cross-origin",
 				"Permissions-Policy":        "geolocation=(self), microphone=(), camera=()",
@@ -56,7 +56,7 @@ func TestSecurityHeaders(t *testing.T) {
 			expectedHSTS:        true,
 			expectedHeader: map[string]string{
 				"X-Content-Type-Options":    "nosniff",
-				"X-Frame-Options":           "DENY",
+				"X-Frame-Options":           "SAMEORIGIN",
 				"Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
 			},
 		},

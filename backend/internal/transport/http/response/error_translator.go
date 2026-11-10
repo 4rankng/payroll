@@ -7,6 +7,44 @@ import (
 	"api-server/internal/constants"
 )
 
+// internalDetailRe matches Go/OS internals that must never reach clients:
+// stack-frame file references (file.go:12), goroutine dumps, panics, runtime
+// errors, absolute filesystem paths (unix + windows) and raw MySQL server
+// error codes. (PAYR-37)
+var internalDetailRe = regexp.MustCompile(`\.[Gg][Oo]:\d+|(?i:goroutine)\s+\d+\s*\[|(?i:panic)\s*[:(]|(?i:runtime error:)|(^|[\s("'\x60+:,])/(?:[\w.\-~]+/)+[\w.\-~]+|(?i:[a-z]:\\)|(?i:error)\s+1\d{3}`)
+
+// rawErrorFragmentRe matches raw error syntax (stdlib/syscall English without
+// Vietnamese diacritics) that dangles after an internal-detail cut, e.g. the
+// word "open" left of "open /app/x.csv: no such file".
+var rawErrorFragmentRe = regexp.MustCompile(`^[a-z0-9][a-z0-9 .,'()_-]*$`)
+
+// sanitizeInternalDetails removes server internals from an outgoing error
+// message. Handlers pass err.Error() verbatim in many places; anything that
+// looks like an implementation detail is cut at the first marker so responses
+// never expose stack traces or server paths. A dangling raw-error fragment
+// before the cut is dropped too. When nothing readable remains, the category
+// fallback is returned. Messages without internals pass through unchanged.
+// (PAYR-37)
+func sanitizeInternalDetails(message, fallback string) string {
+	loc := internalDetailRe.FindStringIndex(message)
+	if loc == nil {
+		return message
+	}
+	cleaned := strings.TrimRight(message[:loc[0]], " \t\r\n:;,.-")
+
+	// A raw-error tail often starts after ": " ("Xử lý file: open /app/x" —
+	// cutting the path leaves the syscall word "open" dangling). Drop it when
+	// it is pure raw-error syntax rather than the friendly message.
+	if i := strings.LastIndex(cleaned, ": "); i >= 0 && rawErrorFragmentRe.MatchString(cleaned[i+2:]) {
+		cleaned = strings.TrimRight(cleaned[:i], " \t\r\n:;,.-")
+	}
+
+	if cleaned == "" || rawErrorFragmentRe.MatchString(cleaned) {
+		return fallback
+	}
+	return cleaned
+}
+
 // ErrorTranslator handles the translation of technical errors to user-friendly messages
 type ErrorTranslator struct {
 	// Map of technical error patterns to user-friendly Vietnamese messages

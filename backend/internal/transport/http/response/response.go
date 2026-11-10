@@ -100,7 +100,7 @@ func BadRequest(c *gin.Context, message string) {
 func BadRequestWithCode(c *gin.Context, message, code string) {
 	// Clean the message to remove any technical array indexing
 	translator := GetErrorTranslator()
-	cleanedMessage := translator.CleanMessage(message)
+	cleanedMessage := sanitizeInternalDetails(translator.CleanMessage(message), constants.MsgInvalidRequestBodyVN)
 
 	response := ErrorResponse{
 		Status:     "error",
@@ -118,7 +118,7 @@ func Unauthorized(c *gin.Context, message string) {
 func UnauthorizedWithCode(c *gin.Context, message, code string) {
 	response := ErrorResponse{
 		Status:     "error",
-		Message:    message,
+		Message:    sanitizeInternalDetails(message, constants.MsgUnauthorized),
 		HTTPStatus: http.StatusUnauthorized,
 	}
 
@@ -132,7 +132,7 @@ func Forbidden(c *gin.Context, message string) {
 func ForbiddenWithCode(c *gin.Context, message, code string) {
 	response := ErrorResponse{
 		Status:     "error",
-		Message:    message,
+		Message:    sanitizeInternalDetails(message, constants.MsgForbidden),
 		HTTPStatus: http.StatusForbidden,
 		Code:       code,
 	}
@@ -147,7 +147,7 @@ func NotFound(c *gin.Context, message string) {
 func NotFoundWithCode(c *gin.Context, message, code string) {
 	response := ErrorResponse{
 		Status:     "error",
-		Message:    message,
+		Message:    sanitizeInternalDetails(message, constants.MsgNotFound),
 		HTTPStatus: http.StatusNotFound,
 	}
 
@@ -161,7 +161,7 @@ func Conflict(c *gin.Context, message string) {
 func ConflictWithCode(c *gin.Context, message, code string) {
 	response := ErrorResponse{
 		Status:     "error",
-		Message:    message,
+		Message:    sanitizeInternalDetails(message, constants.MsgConflict),
 		HTTPStatus: http.StatusConflict,
 	}
 
@@ -186,7 +186,7 @@ func InternalServerErrorWithCode(c *gin.Context, message, code string) {
 	}
 	response := ErrorResponse{
 		Status:     "error",
-		Message:    message,
+		Message:    sanitizeInternalDetails(message, constants.MsgInternalServerErrorVN),
 		HTTPStatus: http.StatusInternalServerError,
 	}
 
@@ -209,10 +209,29 @@ func TooManyRequests(c *gin.Context, message string, retryAfter int) {
 func ServiceUnavailableWithCode(c *gin.Context, message, code string) {
 	c.JSON(http.StatusServiceUnavailable, ErrorResponse{
 		Status:     "error",
-		Message:    message,
+		Message:    sanitizeInternalDetails(message, constants.MsgInternalServerErrorVN),
 		HTTPStatus: http.StatusServiceUnavailable,
 		Code:       code,
 	})
+}
+
+// domainErrorFallback picks the friendly replacement used when a domain
+// error's message turns out to carry server internals. (PAYR-37)
+func domainErrorFallback(errType string) string {
+	switch errType {
+	case "NOT_FOUND", "not_found":
+		return constants.MsgNotFound
+	case "VALIDATION_ERROR", "validation_error":
+		return constants.MsgInvalidRequestBodyVN
+	case "UNAUTHORIZED", "unauthorized":
+		return constants.MsgUnauthorized
+	case "FORBIDDEN", "forbidden":
+		return constants.MsgForbidden
+	case "CONFLICT", "conflict":
+		return constants.MsgConflict
+	default:
+		return constants.MsgInternalServerErrorVN
+	}
 }
 
 // NewErrorResponse creates a new error response
@@ -258,7 +277,7 @@ func HandleDomainError(c *gin.Context, err error) {
 
 		response := ErrorResponse{
 			Status:  "error",
-			Message: translatedMessage,
+			Message: sanitizeInternalDetails(translatedMessage, domainErrorFallback(domainErr.Type)),
 			Code:    domainErr.Code,
 			Details: domainErr.Context,
 		}
