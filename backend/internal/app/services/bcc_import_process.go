@@ -86,22 +86,31 @@ func (s *BCCImportService) processAssetData(
 		"employees", len(parsed.Employees), "entries", totalEntries,
 		"rates", len(parsed.ShiftRates))
 
-	// 5-6. Shared setup: month parsing, lock, payrate lookup. The earliest
-	// worked day lets the lookup accept a payrate that starts mid-month but
-	// is already active on the file's first worked day. Date-row files can
-	// straddle months (e.g. 21/08–24/09); only days inside the import month
-	// count, so the payrate probe never targets an out-of-month day.
-	earliestDay := 0
-	if importY, importM, mErr := parseForMonth(effectiveMonth); mErr == nil {
-		earliestDay = earliestInMonthDay(parsed.Employees, importY, importM)
-	}
-	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth, earliestDay)
+	// 5-6. Shared setup: month parsing, lock, per-date payrate resolver.
+	// PAYR-36: every rate lookup resolves the config nearest its own work
+	// date (MAX(from_date) <= date) — no file-level anchor.
+	ictx, releaseLock, err := s.prepareImportContext(ctx, projectID, effectiveMonth)
 	if err != nil {
 		return fail(err.Error())
 	}
 	defer releaseLock()
-	year, month, monthStart, flatRates := ictx.year, ictx.month, ictx.monthStart, ictx.flatRates
+	year, month, monthStart, resolver := ictx.year, ictx.month, ictx.monthStart, ictx.resolver
 	loc := monthStart.Location()
+
+	// One-file-per-month contract (PAYR-36 owner ruling): worked days with
+	// full dates outside the import month fail with a split-file error before
+	// any rate resolution can silently skip them.
+	var workedDates []time.Time
+	for _, emp := range parsed.Employees {
+		for _, e := range emp.Entries {
+			if e.Hours > 0 && e.FullDate != nil {
+				workedDates = append(workedDates, *e.FullDate)
+			}
+		}
+	}
+	if reason := bccCrossMonthError(workedDates, year, month, loc); reason != "" {
+		return fail(reason)
+	}
 
 	// Build rate -> (dayType, hourType) lookup from the project payrate.
 	// Rate is king: as long as the rate matches, the entry is valid.
@@ -112,15 +121,27 @@ func (s *BCCImportService) processAssetData(
 	// rate matching at all — their entries fall back to label + calendar
 	// mapping below. Files that carry rates keep the strict rate path.
 	ratelessFile := len(parsed.ShiftRates) == 0
-	rateToTarget := buildRateToTarget(flatRates, "")
 
 	// 6.5 Auto-create and assign employees from STK sheet if it exists.
 	// Deduce the best position from payrate rates matching BCC shift rates.
-	position := deducePosition(flatRates, parsed.ShiftRates)
+	// Position deduction prices a whole hire from the file's shift-rate row,
+	// so it probes the config active on the file's first worked day — a
+	// per-date lookup through the shared resolver, not an import-wide anchor;
+	// every per-row rate below still resolves its own date.
+	probeDay := 0
+	if importY, importM, mErr := parseForMonth(effectiveMonth); mErr == nil {
+		probeDay = earliestInMonthDay(parsed.Employees, importY, importM)
+	}
+	probeDate := monthStart
+	if probeDay > 0 {
+		probeDate = time.Date(year, month, probeDay, 0, 0, 0, 0, loc)
+	}
+	deduceRates := resolver.ratesFor(probeDate)
+	position := deducePosition(deduceRates, parsed.ShiftRates)
 	stkRows := collectSTKRows(xf, parsed, formatResult.Format)
 	stkNameByCCCD, stkImportErrors := s.autoCreateEmployeesFromSTK(
 		ctx, stkRows, parsed, formatResult.Format,
-		projectID, uploaderID, position, flatRates,
+		projectID, uploaderID, position, deduceRates,
 	)
 	importErrors := stkImportErrors
 
@@ -206,7 +227,9 @@ func (s *BCCImportService) processAssetData(
 				continue
 			}
 
-			target, ok := resolveBCCEntryTarget(parsed.ShiftRates, rateToTarget, flatRates, entry.ShiftLabel, date, ratelessFile, labelKeyedFile)
+			// Rates follow the entry's own work date (PAYR-36): the config
+			// active on `date` prices the row.
+			target, ok := resolveBCCEntryTarget(parsed.ShiftRates, resolver.rateToTargetFor(date, ""), resolver.ratesFor(date), entry.ShiftLabel, date, ratelessFile, labelKeyedFile)
 			if !ok {
 				// A zero-hour cell carries no rate burden, so an unpriced column
 				// is not an error — the weekly paths skip rate resolution for
