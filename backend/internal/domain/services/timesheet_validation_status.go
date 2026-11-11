@@ -27,8 +27,30 @@ func isTimesheetReplacementDelete(ctx context.Context, timesheetID uint) bool {
 	return exists
 }
 
+type timesheetSupplementCoexistKey struct{}
+
+// WithTimesheetSupplementCoexist marks existing rows an add-on-top supplement
+// row is allowed to sit next to: the duplicate check must not treat them as
+// conflicts, while every other validation (the 24h daily cap in particular)
+// keeps counting them as live hours.
+func WithTimesheetSupplementCoexist(ctx context.Context, ids []uint) context.Context {
+	coexist := make(map[uint]struct{}, len(ids))
+	for _, id := range ids {
+		coexist[id] = struct{}{}
+	}
+	return context.WithValue(ctx, timesheetSupplementCoexistKey{}, coexist)
+}
+
+func isTimesheetSupplementCoexist(ctx context.Context, timesheetID uint) bool {
+	coexist, _ := ctx.Value(timesheetSupplementCoexistKey{}).(map[uint]struct{})
+	_, exists := coexist[timesheetID]
+	return exists
+}
+
 func isDuplicateTimesheetConflict(ctx context.Context, existing *domain.Timesheet, currentID uint) bool {
-	return existing != nil && existing.ID != currentID && !isTimesheetReplacementDelete(ctx, existing.ID)
+	return existing != nil && existing.ID != currentID &&
+		!isTimesheetReplacementDelete(ctx, existing.ID) &&
+		!isTimesheetSupplementCoexist(ctx, existing.ID)
 }
 
 // ValidateDuplicateTimesheet checks for duplicate timesheets

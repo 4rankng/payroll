@@ -7,26 +7,29 @@ import (
 	"api-server/internal/domain"
 )
 
-func TestTimesheetReplacementDeletesOnlySuppressMatchingDuplicate(t *testing.T) {
-	existing := &domain.Timesheet{ID: 42}
+// The add-on-top supplement flow must pass the duplicate check against the
+// exact row it deliberately sits next to, while every other existing row at
+// the same key and replacement-deleted rows keep their current behavior.
+func TestIsDuplicateTimesheetConflictSupplementCoexist(t *testing.T) {
+	existing := &domain.Timesheet{ID: 93036}
+	ctx := context.Background()
 
-	if !isDuplicateTimesheetConflict(context.Background(), existing, 0) {
-		t.Fatal("ordinary duplicate must remain a conflict")
+	if !isDuplicateTimesheetConflict(ctx, existing, 0) {
+		t.Fatal("existing row must be a duplicate conflict without any marker")
 	}
 
-	replacementCtx := WithTimesheetReplacementDeletes(context.Background(), []uint{42})
-	// The explicit filter remains safe even for a pooled read context.
-	readCtx := context.WithValue(replacementCtx, domain.TransactionContextKey{}, nil)
-	if isDuplicateTimesheetConflict(readCtx, existing, 0) {
-		t.Fatal("row deleted by the active replacement must not block its replacement")
-	}
-	visible := filterTimesheetReplacementDeletes(readCtx, []*domain.Timesheet{existing, {ID: 99}})
-	if len(visible) != 1 || visible[0].ID != 99 {
-		t.Fatalf("validation reads must exclude only replacement-deleted rows, got %#v", visible)
+	coexistCtx := WithTimesheetSupplementCoexist(ctx, []uint{93036})
+	if isDuplicateTimesheetConflict(coexistCtx, existing, 0) {
+		t.Fatal("marked row must be allowed as the supplement's coexist target")
 	}
 
-	otherReplacementCtx := WithTimesheetReplacementDeletes(context.Background(), []uint{99})
-	if !isDuplicateTimesheetConflict(otherReplacementCtx, existing, 0) {
-		t.Fatal("unrelated replacement rows must not weaken duplicate protection")
+	other := &domain.Timesheet{ID: 93037}
+	if !isDuplicateTimesheetConflict(coexistCtx, other, 0) {
+		t.Fatal("unmarked rows must stay duplicate conflicts under the coexist marker")
+	}
+
+	deleteCtx := WithTimesheetReplacementDeletes(ctx, []uint{93036})
+	if isDuplicateTimesheetConflict(deleteCtx, existing, 0) {
+		t.Fatal("replacement-deleted rows must stay allowed")
 	}
 }

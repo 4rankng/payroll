@@ -494,7 +494,15 @@ func (s *TimesheetDomainService) BulkCreateTimesheets(ctx context.Context, reque
 				"hours_worked", timesheet.HoursWorked,
 				"pay_type", timesheet.PayType)
 
-			if err := s.validationService.ValidateTimesheet(ctx, timesheet); err != nil {
+			// Add-on-top supplements coexist with the existing row at the same
+			// key (typically approved/paid): tell the duplicate check to allow
+			// that exact row instead of rejecting the creation.
+			validateCtx := ctx
+			if req.AddOnTop && existingTimesheet != nil {
+				validateCtx = WithTimesheetSupplementCoexist(validateCtx, []uint{existingTimesheet.ID})
+			}
+
+			if err := s.validationService.ValidateTimesheet(validateCtx, timesheet); err != nil {
 				logger.Error("TimesheetDomainService: Timesheet validation failed",
 					"index", i,
 					"project_id", timesheet.ProjectID,
