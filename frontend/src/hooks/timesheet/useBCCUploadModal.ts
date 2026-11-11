@@ -145,6 +145,7 @@ export function useBCCUploadModal({
   );
 	const [isDragging, setIsDragging] = useState(false);
 	const [includeFlexibleEmployees, setIncludeFlexibleEmployees] = useState(false);
+	const [addOnTop, setAddOnTop] = useState(false);
   const idempotencyKeyRef = useRef<string | null>(null);
   const queryClient = useQueryClient();
 
@@ -231,6 +232,7 @@ export function useBCCUploadModal({
         projectId: effectiveProjectId,
         forMonth: selectedMonth,
         includeFlexibleEmployees,
+        addOnTop,
         idempotencyKey,
       },
       {
@@ -244,10 +246,15 @@ export function useBCCUploadModal({
         },
       },
     );
-  }, [file, effectiveProjectId, includeFlexibleEmployees, queryClient, selectedMonth, upload]);
+  }, [file, effectiveProjectId, includeFlexibleEmployees, addOnTop, queryClient, selectedMonth, upload]);
 
 	const handleIncludeFlexibleEmployeesChange = useCallback((checked: boolean) => {
 		setIncludeFlexibleEmployees(checked);
+		idempotencyKeyRef.current = null;
+	}, []);
+
+	const handleAddOnTopChange = useCallback((checked: boolean) => {
+		setAddOnTop(checked);
 		idempotencyKeyRef.current = null;
 	}, []);
 
@@ -316,11 +323,13 @@ export function useBCCUploadModal({
 		isReady,
 		includeFlexibleEmployees,
 		allowFlexibleEmployeeImport,
+		addOnTop,
 
     // Setters
     setSelectedProjectId,
 		setSelectedMonth,
 		handleIncludeFlexibleEmployeesChange,
+		handleAddOnTopChange,
 
     // Handlers
     handleFileChange,

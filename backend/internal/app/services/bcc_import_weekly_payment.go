@@ -29,6 +29,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	createdAsset *domain.Asset,
 	effectiveMonth string,
 	includeFlexibleEmployees bool,
+	addOnTop bool,
 ) (*BCCImportResult, error) {
 	fail := s.bccFailer(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth)
 
@@ -102,7 +103,7 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 
 	// 8. Preserve reviewed rows, replace pending rows, and create missing rows.
 	entries, staleIDs, protectedSkippedCount, flexibleSkippedCount, replErr := s.planMonthReplacement(
-		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, true)
+		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, true, addOnTop)
 	if replErr != nil {
 		return fail(fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", replErr))
 	}

@@ -95,7 +95,7 @@ func TestAcceptUpload_RejectsUnsupportedWorkbookBeforeSideEffects(t *testing.T) 
 	_, err := (&BCCImportService{}).AcceptUpload(
 		context.Background(),
 		bytes.NewReader(workbookBytes(t, "Sổ theo dõi xe", [][]any{{"STT", "Biển số"}, {1, "29A-12345"}})),
-		"so-theo-doi.xlsx", 1, 1, "admin", "2026-10", false, "key-1",
+		"so-theo-doi.xlsx", 1, 1, "admin", "2026-10", false, false, "key-1",
 	)
 	require.Error(t, err)
 	assert.True(t, domain.IsValidationError(err), "want validation error, got %T: %v", err, err)

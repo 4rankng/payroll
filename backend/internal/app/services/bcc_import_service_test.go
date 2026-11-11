@@ -181,20 +181,20 @@ func TestBuildResult(t *testing.T) {
 }
 
 func TestBCCRequestFingerprintBindsScopeAndContent(t *testing.T) {
-	base := bccRequestFingerprint(10, "2026-07", false, []byte("same workbook"))
-	if base != bccRequestFingerprint(10, "2026-07", false, []byte("same workbook")) {
+	base := bccRequestFingerprint(10, "2026-07", false, false, []byte("same workbook"))
+	if base != bccRequestFingerprint(10, "2026-07", false, false, []byte("same workbook")) {
 		t.Fatal("same request must have a stable fingerprint")
 	}
-	if base == bccRequestFingerprint(11, "2026-07", false, []byte("same workbook")) {
+	if base == bccRequestFingerprint(11, "2026-07", false, false, []byte("same workbook")) {
 		t.Fatal("project must be part of the fingerprint")
 	}
-	if base == bccRequestFingerprint(10, "2026-08", false, []byte("same workbook")) {
+	if base == bccRequestFingerprint(10, "2026-08", false, false, []byte("same workbook")) {
 		t.Fatal("month must be part of the fingerprint")
 	}
-	if base == bccRequestFingerprint(10, "2026-07", false, []byte("different workbook")) {
+	if base == bccRequestFingerprint(10, "2026-07", false, false, []byte("different workbook")) {
 		t.Fatal("file content must be part of the fingerprint")
 	}
-	if base == bccRequestFingerprint(10, "2026-07", true, []byte("same workbook")) {
+	if base == bccRequestFingerprint(10, "2026-07", false, true, []byte("same workbook")) {
 		t.Fatal("flexible-employee import mode must be part of the fingerprint")
 	}
 }
@@ -255,6 +255,7 @@ func TestPlanBCCReplacementSkipsReviewedAndUpsertsPendingOrMissing(t *testing.T)
 		existing,
 		map[uint]struct{}{5: {}},
 		true,
+		false,
 	)
 
 	if len(filtered) != 2 || filtered[0].EmployeeID != 2 || filtered[1].EmployeeID != 3 {
@@ -271,6 +272,71 @@ func TestPlanBCCReplacementSkipsReviewedAndUpsertsPendingOrMissing(t *testing.T)
 	}
 }
 
+func TestPlanBCCReplacementAddOnTopSupplementsProtectedRows(t *testing.T) {
+	date := time.Date(2026, time.August, 8, 0, 0, 0, 0, time.UTC)
+	entries := []domainservices.BulkCreateTimesheetEntry{
+		{EmployeeID: 1, Date: "2026-08-08", HourType: "HC", HoursWorked: 4},
+		{EmployeeID: 2, Date: "2026-08-08", HourType: "HC", HoursWorked: 7.3},
+		// Delete request against a paid row: not an addition, stays a skip.
+		{EmployeeID: 3, Date: "2026-08-08", HourType: "TCN", HoursWorked: 0},
+		{EmployeeID: 4, Date: "2026-08-08", HourType: "HC", HoursWorked: 8},
+		{EmployeeID: 5, Date: "2026-08-08", HourType: "HC", HoursWorked: 1.6},
+	}
+	existing := []*domain.Timesheet{
+		{ID: 11, EmployeeID: 1, Date: date, PayType: "worker.ngày thường.HC", Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPending},
+		{ID: 21, EmployeeID: 2, Date: date, PayType: "worker.ngày thường.HC", Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPaid},
+		{ID: 31, EmployeeID: 3, Date: date, PayType: "worker.ngày thường.TCN", Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPaid},
+		{ID: 41, EmployeeID: 4, Date: date, PayType: "worker.ngày thường.HC", Status: domain.TimesheetStatusPendingApproval, PaymentStatus: domain.PaymentStatusPending},
+	}
+
+	filtered, staleIDs, protectedSkipped, flexibleSkipped := planBCCReplacement(
+		entries,
+		existing,
+		nil,
+		true,
+		true,
+	)
+
+	// Approved and paid keys pass through as supplement rows; employee 4's
+	// pending row replaces (entry stays, old row goes stale); employee 5 is a
+	// plain create; the zero cell stays skipped.
+	if len(filtered) != 4 {
+		t.Fatalf("filtered entries = %#v, want supplements 1+2, replace 4, create 5", filtered)
+	}
+	byEmp := map[uint]domainservices.BulkCreateTimesheetEntry{}
+	for _, e := range filtered {
+		byEmp[e.EmployeeID] = e
+	}
+	for emp := uint(1); emp <= 2; emp++ {
+		e, ok := byEmp[emp]
+		if !ok || !e.AddOnTop {
+			t.Fatalf("employee %d entry = %#v, want AddOnTop supplement", emp, e)
+		}
+	}
+	if e, ok := byEmp[5]; !ok || e.AddOnTop {
+		t.Fatalf("employee 5 entry = %#v, want plain create without AddOnTop", e)
+	}
+	// The pending row still replaces even in add-mode so re-uploading the
+	// same supplement file never doubles draft hours.
+	if len(staleIDs) != 1 || staleIDs[0] != 41 {
+		t.Fatalf("stale IDs = %v, want pending timesheet 41 replaced", staleIDs)
+	}
+	if protectedSkipped != 1 {
+		t.Fatalf("protected skipped = %d, want only the zero-cell delete request", protectedSkipped)
+	}
+	if flexibleSkipped != 0 {
+		t.Fatalf("flexible skipped = %d, want 0", flexibleSkipped)
+	}
+	// Approved/paid rows are never stale: add-mode adds next to them.
+	for _, id := range []uint{11, 21, 31} {
+		for _, stale := range staleIDs {
+			if stale == id {
+				t.Fatalf("finalized timesheet %d must not be stale in add-mode", id)
+			}
+		}
+	}
+}
+
 func TestPlanBCCReplacementKeepsDifferentHourTypesIndependent(t *testing.T) {
 	date := time.Date(2026, time.August, 8, 0, 0, 0, 0, time.UTC)
 	entries := []domainservices.BulkCreateTimesheetEntry{
@@ -282,7 +348,7 @@ func TestPlanBCCReplacementKeepsDifferentHourTypesIndependent(t *testing.T) {
 		Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPending,
 	}}
 
-	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true)
+	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true, false)
 
 	if len(filtered) != 1 || filtered[0].HourType != "TCN" {
 		t.Fatalf("filtered entries = %#v, want only TCN", filtered)
@@ -308,7 +374,7 @@ func TestPlanBCCReplacementProtectsEveryNonEditablePaymentState(t *testing.T) {
 				Status: domain.TimesheetStatusPendingApproval, PaymentStatus: paymentStatus,
 			}}
 
-			filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true)
+			filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true, false)
 			if len(filtered) != 0 || len(staleIDs) != 0 || protectedSkipped != 1 {
 				t.Fatalf("filtered=%v stale=%v protected=%d", filtered, staleIDs, protectedSkipped)
 			}
@@ -328,7 +394,7 @@ func TestPlanBCCReplacementProtectsTimesheetsLinkedToTransferTransaction(t *test
 		TransactionID: &transactionID,
 	}}
 
-	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true)
+	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true, false)
 
 	if len(filtered) != 0 || len(staleIDs) != 0 || protectedSkipped != 1 {
 		t.Fatalf("filtered=%v stale=%v protected=%d, want linked row protected", filtered, staleIDs, protectedSkipped)
@@ -346,7 +412,7 @@ func TestPlanBCCReplacementLegacyKeyProtectsWholeEmployeeDay(t *testing.T) {
 		Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPending,
 	}}
 
-	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, false)
+	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, false, false)
 	if len(filtered) != 0 || len(staleIDs) != 0 || protectedSkipped != 2 {
 		t.Fatalf("filtered=%v stale=%v protected=%d, want whole day protected", filtered, staleIDs, protectedSkipped)
 	}
@@ -452,7 +518,7 @@ func TestPlanBCCReplacementZeroHourEntryDeletesPendingOnly(t *testing.T) {
 		{ID: 21, EmployeeID: 2, Date: date, PayType: "worker.ngày thường.HC", Status: domain.TimesheetStatusApproved, PaymentStatus: domain.PaymentStatusPending},
 	}
 
-	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true)
+	filtered, staleIDs, protectedSkipped, _ := planBCCReplacement(entries, existing, nil, true, false)
 
 	if len(staleIDs) != 1 || staleIDs[0] != 11 {
 		t.Fatalf("stale IDs = %v, want only pending timesheet 11 (zero = delete pending)", staleIDs)

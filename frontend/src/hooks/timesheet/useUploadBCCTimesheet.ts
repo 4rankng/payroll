@@ -8,6 +8,7 @@ interface UploadBCCVariables {
   projectId: number;
 	forMonth: string;
 	includeFlexibleEmployees: boolean;
+	addOnTop: boolean;
 	idempotencyKey: string;
 }
 
@@ -15,8 +16,8 @@ export function useUploadBCCTimesheet() {
   const queryClient = useQueryClient();
 
   return useMutation<PartnerImportFile, Error, UploadBCCVariables>({
-    mutationFn: ({ file, projectId, forMonth, includeFlexibleEmployees, idempotencyKey }) =>
-      timesheetService.uploadBCCFile(file, projectId, forMonth, includeFlexibleEmployees, idempotencyKey),
+    mutationFn: ({ file, projectId, forMonth, includeFlexibleEmployees, addOnTop, idempotencyKey }) =>
+      timesheetService.uploadBCCFile(file, projectId, forMonth, includeFlexibleEmployees, addOnTop, idempotencyKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['partner-imports'] });
     },

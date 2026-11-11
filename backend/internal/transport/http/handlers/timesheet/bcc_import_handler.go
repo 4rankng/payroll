@@ -113,6 +113,17 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		return
 	}
 
+	// "Add on top" supplement mode: approved/paid rows matching an uploaded
+	// cell are not skipped — the import creates additional pending supplement
+	// rows so the finalized rows keep their paid amounts. Available to admin
+	// and partner alike; ticking it is the uploader's explicit ack that the
+	// file's hours are incremental additions.
+	addOnTop, err := strconv.ParseBool(c.DefaultPostForm("add_on_top", "false"))
+	if err != nil {
+		response.BadRequest(c, "add_on_top không hợp lệ")
+		return
+	}
+
 	// Partner users must have write access to the target project.
 	if userRole == string(domain.RolePartner) {
 		canModify, err := h.projectPermissionSvc.CanUserModifyProject(c.Request.Context(), projectID, userID)
@@ -144,6 +155,7 @@ func (h *BCCImportHandler) UploadBCC(c *gin.Context) {
 		userRole,
 		forMonth,
 		includeFlexibleEmployees,
+		addOnTop,
 		idempotencyKey,
 	)
 	if errors.Is(err, appservices.ErrBCCIdempotencyConflict) {

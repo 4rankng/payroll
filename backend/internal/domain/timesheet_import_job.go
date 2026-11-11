@@ -19,6 +19,7 @@ type TimesheetImportJob struct {
 	UploadedBy               uint       `json:"uploaded_by"`
 	UploaderRole             string     `json:"uploader_role"`
 	IncludeFlexibleEmployees bool       `json:"include_flexible_employees" gorm:"column:include_flexible_employees"`
+	AddOnTop                 bool       `json:"add_on_top" gorm:"column:add_on_top"`
 	Status                   string     `json:"status"`
 	IdempotencyKey           string     `json:"-" gorm:"column:idempotency_key"`
 	RequestFingerprint       string     `json:"-" gorm:"column:request_fingerprint"`

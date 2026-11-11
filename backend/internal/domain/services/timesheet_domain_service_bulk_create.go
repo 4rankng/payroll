@@ -13,13 +13,19 @@ import (
 
 // BulkCreateTimesheetEntry represents a single timesheet creation request for bulk operations
 type BulkCreateTimesheetEntry struct {
-	ProjectID       uint    `json:"project_id"`
-	EmployeeID      uint    `json:"employee_id"`
-	Date            string  `json:"date"`
-	HoursWorked     float64 `json:"hours_worked"`
-	HourType        string  `json:"hour_type"`
-	DayType         *string `json:"day_type,omitempty"`
-	RequireApproval bool    `json:"-"`
+	ProjectID   uint    `json:"project_id"`
+	EmployeeID  uint    `json:"employee_id"`
+	Date        string  `json:"date"`
+	HoursWorked float64 `json:"hours_worked"`
+	HourType    string  `json:"hour_type"`
+	DayType     *string `json:"day_type,omitempty"`
+	// AddOnTop marks a supplement entry: when a timesheet already exists for
+	// the same (project, employee, date, paytype), create a NEW pending row
+	// with this entry's hours instead of updating the existing one. Used by
+	// the BCC import "add on top" mode so approved/paid rows keep their paid
+	// amounts and the extra hours go through approval and payment separately.
+	AddOnTop        bool `json:"-"`
+	RequireApproval bool `json:"-"`
 }
 
 // BulkCreateTimesheetResult represents the result of bulk timesheet creation
@@ -225,9 +231,11 @@ func (s *TimesheetDomainService) BulkCreateTimesheets(ctx context.Context, reque
 					} else {
 						payType, err = s.paytypeConstructionService.ConstructPaytype(ctx, req.ProjectID, req.EmployeeID, date, req.HourType, dayType)
 					}
-					if err == nil && ts.ProjectID == req.ProjectID && ts.EmployeeID == req.EmployeeID &&
+					if err == nil && !req.AddOnTop && ts.ProjectID == req.ProjectID && ts.EmployeeID == req.EmployeeID &&
 						ts.Date.Format("2006-01-02") == req.Date && ts.PayType == payType {
-						// Entry will be updated or deleted (hoursWorked=0 means delete)
+						// Entry will be updated or deleted (hoursWorked=0 means delete).
+						// AddOnTop requests create a supplement row instead, so the
+						// existing row's hours stay in the daily total.
 						willBeModified = true
 						break
 					}
@@ -344,7 +352,9 @@ func (s *TimesheetDomainService) BulkCreateTimesheets(ctx context.Context, reque
 		paytypeKey := fmt.Sprintf("%d-%d-%s-%s", req.ProjectID, req.EmployeeID, req.Date, payType)
 		existingTimesheet, exists := existingByPaytypeMap[paytypeKey]
 
-		if exists {
+		// AddOnTop entries never touch the existing row — they always create
+		// a supplement row next to it (see BulkCreateTimesheetEntry.AddOnTop).
+		if exists && !req.AddOnTop {
 			// DELETE path: Check if hoursWorked=0 (delete intent)
 			if req.HoursWorked == 0 {
 				// Validate deletion permissions

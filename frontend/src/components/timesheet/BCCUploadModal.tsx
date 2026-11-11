@@ -447,9 +447,11 @@ export const BCCUploadModal = memo(function BCCUploadModal({
 		isReady,
 		includeFlexibleEmployees,
 		allowFlexibleEmployeeImport: canImportFlexibleEmployees,
-    setSelectedProjectId,
+		addOnTop,
+		setSelectedProjectId,
 		setSelectedMonth,
 		handleIncludeFlexibleEmployeesChange,
+		handleAddOnTopChange,
     handleFileChange,
     handleUpload,
     handleClose,
@@ -580,6 +582,27 @@ export const BCCUploadModal = memo(function BCCUploadModal({
 					</span>
 				</label>
 			  )}
+
+			  {/* Supplement mode: add hours on top of finalized (approved/paid) days */}
+			  <label
+					htmlFor="bcc-add-on-top"
+					className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-950 transition-colors hover:border-blue-300 dark:border-blue-700/50 dark:bg-blue-900/20 dark:text-blue-100"
+				>
+					<Checkbox
+						id="bcc-add-on-top"
+						checked={addOnTop}
+						onCheckedChange={(checked) => handleAddOnTopChange(checked === true)}
+						className="mt-0.5 size-5 border-blue-600 data-[state=checked]:bg-blue-700 data-[state=checked]:text-white"
+					/>
+					<span className="min-w-0 leading-relaxed">
+						<span className="block font-semibold">Bổ sung giờ vào ngày đã chốt</span>
+						<span className="block text-xs text-blue-800 dark:text-blue-200/90">
+							Tôi xác nhận: giờ trong tệp sẽ được <strong>cộng thêm</strong> (tạo dòng bổ sung chờ duyệt)
+							cho các ngày đã duyệt/đã thanh toán, không thay thế dòng cũ. Dòng chờ duyệt vẫn được thay thế
+							như bình thường.
+						</span>
+					</span>
+				</label>
 
               {/* Upload area */}
               <div className="space-y-1.5">

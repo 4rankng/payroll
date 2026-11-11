@@ -247,7 +247,39 @@ describe('useBCCUploadModal', () => {
 		});
 
 		await waitFor(() => {
-			expect(uploadSpy).toHaveBeenCalledWith(file, 12, expect.any(String), true, 'bcc-upload-test-key');
+			expect(uploadSpy).toHaveBeenCalledWith(file, 12, expect.any(String), true, false, 'bcc-upload-test-key');
+		});
+	});
+
+	it('sends the add-on-top supplement ack', async () => {
+		const queryClient = new QueryClient({
+			defaultOptions: {
+				queries: { retry: false },
+				mutations: { retry: false },
+			},
+		});
+		const uploadSpy = vi.spyOn(timesheetService, 'uploadBCCFile').mockResolvedValue(
+			createImport('completed'),
+		);
+		const { result } = renderHook(
+			() => useBCCUploadModal({ projectId: 12, onClose: vi.fn() }),
+			{ wrapper: createWrapper(queryClient) },
+		);
+		const file = new File(['test'], 'bang-cham-cong.xlsx', {
+			type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+		});
+		act(() => {
+			result.current.handleFileChange({ target: { files: [file] } } as unknown as ChangeEvent<HTMLInputElement>);
+		});
+		act(() => {
+			result.current.handleAddOnTopChange(true);
+		});
+		act(() => {
+			result.current.handleUpload();
+		});
+
+		await waitFor(() => {
+			expect(uploadSpy).toHaveBeenCalledWith(file, 12, expect.any(String), false, true, 'bcc-upload-test-key');
 		});
 	});
 

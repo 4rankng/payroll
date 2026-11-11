@@ -79,6 +79,7 @@ func (s *BCCImportService) AcceptUpload(
 	uploaderRole string,
 	forMonth string,
 	includeFlexibleEmployees bool,
+	addOnTop bool,
 	idempotencyKey string,
 ) (*BCCImportResult, error) {
 	data, err := io.ReadAll(io.LimitReader(fileData, maxBCCUploadSize+1))
@@ -95,7 +96,7 @@ func (s *BCCImportService) AcceptUpload(
 		return nil, err
 	}
 
-	fingerprint := bccRequestFingerprint(projectID, forMonth, includeFlexibleEmployees, data)
+	fingerprint := bccRequestFingerprint(projectID, forMonth, includeFlexibleEmployees, addOnTop, data)
 	if existing, lookupErr := s.importJobRepo.GetByIdempotencyKey(ctx, uploaderID, idempotencyKey); lookupErr == nil {
 		if existing.RequestFingerprint != fingerprint {
 			return nil, ErrBCCIdempotencyConflict
@@ -146,6 +147,7 @@ func (s *BCCImportService) AcceptUpload(
 			UploadedBy:               uploaderID,
 			UploaderRole:             uploaderRole,
 			IncludeFlexibleEmployees: includeFlexibleEmployees,
+			AddOnTop:                 addOnTop,
 			Status:                   domain.TimesheetImportStatusPending,
 			IdempotencyKey:           idempotencyKey,
 			RequestFingerprint:       fingerprint,
@@ -255,6 +257,7 @@ func (s *BCCImportService) ProcessPendingJob(ctx context.Context, assetID uint) 
 			asset,
 			job.ForMonth,
 			job.IncludeFlexibleEmployees,
+			job.AddOnTop,
 		)
 		if importErr != nil {
 			rollbackAndFinalize = result != nil
@@ -384,7 +387,7 @@ func (s *BCCImportService) ProcessUpload(
 		return nil, fmt.Errorf("BCCImportService.ProcessUpload: create asset: %w", err)
 	}
 
-	return s.processAssetData(ctx, data, filename, projectID, uploaderID, uploaderRole, createdAsset, forMonth, false)
+	return s.processAssetData(ctx, data, filename, projectID, uploaderID, uploaderRole, createdAsset, forMonth, false, false)
 }
 
 func (s *BCCImportService) updateAssetMetadata(ctx context.Context, assetID uint, meta *BCCImportStats) error {

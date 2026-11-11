@@ -30,6 +30,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	createdAsset *domain.Asset,
 	effectiveMonth string,
 	includeFlexibleEmployees bool,
+	addOnTop bool,
 ) (*BCCImportResult, error) {
 	fail := s.bccFailer(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth)
 
@@ -128,7 +129,7 @@ func (s *BCCImportService) processWeeklyBCCUpload(
 	// 8. Preserve reviewed rows, replace pending rows, and create missing rows.
 	// HourType is part of the key so an OT import cannot replace HC.
 	entries, staleIDs, protectedSkippedCount, flexibleSkippedCount, replErr := s.planMonthReplacement(
-		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, true)
+		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, true, addOnTop)
 	if replErr != nil {
 		return fail(fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", replErr))
 	}

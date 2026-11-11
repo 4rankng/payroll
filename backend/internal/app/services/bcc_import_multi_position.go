@@ -33,6 +33,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 	createdAsset *domain.Asset,
 	effectiveMonth string,
 	includeFlexibleEmployees bool,
+	addOnTop bool,
 ) (*BCCImportResult, error) {
 	fail := s.bccFailer(ctx, createdAsset, uploaderID, projectID, filename, effectiveMonth)
 
@@ -107,7 +108,7 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 9. Preserve reviewed rows, replace pending rows, and create missing rows.
 	entries, staleIDs, protectedSkippedCount, flexibleSkippedCount, perr := s.planMonthReplacement(
-		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, false)
+		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, false, addOnTop)
 	if perr != nil {
 		return fail(fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", perr))
 	}

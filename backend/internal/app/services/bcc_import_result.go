@@ -151,9 +151,9 @@ func safeWeeklyPaymentParseError(err error) string {
 	return "Không thể đọc cấu trúc tệp chấm công. Vui lòng dùng đúng mẫu tệp."
 }
 
-func bccRequestFingerprint(projectID uint, forMonth string, includeFlexibleEmployees bool, data []byte) string {
+func bccRequestFingerprint(projectID uint, forMonth string, includeFlexibleEmployees, addOnTop bool, data []byte) string {
 	hash := sha256.New()
-	_, _ = fmt.Fprintf(hash, "%d:%s:%t:", projectID, forMonth, includeFlexibleEmployees)
+	_, _ = fmt.Fprintf(hash, "%d:%s:%t:%t:", projectID, forMonth, includeFlexibleEmployees, addOnTop)
 	_, _ = hash.Write(data)
 	return fmt.Sprintf("%x", hash.Sum(nil))
 }

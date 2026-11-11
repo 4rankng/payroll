@@ -239,6 +239,7 @@ func (s *BCCImportService) planMonthReplacement(
 	entries []domainservices.BulkCreateTimesheetEntry,
 	flexibleEmployeeIDs map[uint]struct{},
 	hourTypeKeyed bool,
+	addOnTop bool,
 ) (plannedEntries []domainservices.BulkCreateTimesheetEntry, staleIDs []uint, protectedSkipped, flexibleSkipped int, err error) {
 	if len(entries) == 0 {
 		return entries, nil, 0, 0, nil
@@ -249,7 +250,7 @@ func (s *BCCImportService) planMonthReplacement(
 	if terr != nil {
 		return nil, nil, 0, 0, terr
 	}
-	entries, staleIDs, protected, flexible := planBCCReplacement(entries, existingTS, flexibleEmployeeIDs, hourTypeKeyed)
+	entries, staleIDs, protected, flexible := planBCCReplacement(entries, existingTS, flexibleEmployeeIDs, hourTypeKeyed, addOnTop)
 	return entries, staleIDs, protected, flexible, nil
 }
 

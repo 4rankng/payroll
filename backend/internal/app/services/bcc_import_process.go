@@ -26,6 +26,7 @@ func (s *BCCImportService) processAssetData(
 	createdAsset *domain.Asset,
 	forMonth string,
 	includeFlexibleEmployees bool,
+	addOnTop bool,
 ) (*BCCImportResult, error) {
 
 	// effectiveMonth is captured by the fail() closure.
@@ -54,11 +55,11 @@ func (s *BCCImportService) processAssetData(
 	var parsed *excelparser.BCCImportData
 	switch formatResult.Format {
 	case excelparser.FormatMultiPosition:
-		return s.processMultiPositionUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
+		return s.processMultiPositionUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees, addOnTop)
 	case excelparser.FormatWeeklyBCC:
-		return s.processWeeklyBCCUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
+		return s.processWeeklyBCCUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees, addOnTop)
 	case excelparser.FormatWeeklyPayment:
-		return s.processWeeklyPaymentUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees)
+		return s.processWeeklyPaymentUpload(ctx, xf, formatResult, filename, projectID, uploaderID, uploaderRole, createdAsset, effectiveMonth, includeFlexibleEmployees, addOnTop)
 	case excelparser.FormatDateRow:
 		// Partner date-row template (BUMHAN M1-style): entries carry exact
 		// calendar dates and the file has no rate row (rateless path).
@@ -277,7 +278,7 @@ func (s *BCCImportService) processAssetData(
 	// 9. Preserve reviewed rows, replace pending rows, and create missing rows.
 	// Same-bucket entries are collapsed inside planMonthReplacement.
 	entries, staleIDs, protectedSkippedCount, flexibleSkippedCount, replErr := s.planMonthReplacement(
-		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, false)
+		ctx, projectID, year, month, monthStart, loc, entries, flexibleEmployeeIDs, false, addOnTop)
 	if replErr != nil {
 		return fail(fmt.Sprintf("lỗi tải bảng chấm công hiện có: %v", replErr))
 	}

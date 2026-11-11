@@ -50,9 +50,11 @@ function mockModalState(
 	isReady: false,
 	includeFlexibleEmployees: false,
 	allowFlexibleEmployeeImport,
+	addOnTop: false,
     setSelectedProjectId: vi.fn(),
 	setSelectedMonth: vi.fn(),
 	handleIncludeFlexibleEmployeesChange: vi.fn(),
+	handleAddOnTopChange: vi.fn(),
     handleFileChange: vi.fn(),
     handleUpload: vi.fn(),
     handleClose: vi.fn(),
@@ -93,6 +95,21 @@ describe('BCCUploadModal result states', () => {
 		expect(mockUseBCCUploadModal.mock.results[0]?.value.handleIncludeFlexibleEmployeesChange)
 			.toHaveBeenCalledWith(true);
 		expect(screen.getByText('Chỉ tạo ngày chưa có.')).toBeInTheDocument();
+	});
+
+	it('offers the add-on-top supplement ack to admin and partner alike', () => {
+		mockModalState(null);
+		renderModal();
+
+		const checkbox = screen.getByRole('checkbox', {
+			name: /bổ sung giờ vào ngày đã chốt/i,
+		});
+		fireEvent.click(checkbox);
+		expect(mockUseBCCUploadModal.mock.results[0]?.value.handleAddOnTopChange)
+			.toHaveBeenCalledWith(true);
+		// The ack copy states the addition semantics explicitly.
+		expect(screen.getByText(/cộng thêm/i)).toBeInTheDocument();
+		expect(screen.getByText(/không thay thế dòng cũ/i)).toBeInTheDocument();
 	});
 
   it('uses a continuous, scrollable dialog layout for the upload form', () => {

@@ -831,6 +831,7 @@ class TimesheetService {
     projectId: number,
 	forMonth: string,
 	includeFlexibleEmployees: boolean,
+	addOnTop: boolean,
 	idempotencyKey: string,
   ): Promise<PartnerImportFile> {
     const formData = new FormData();
@@ -838,6 +839,7 @@ class TimesheetService {
     formData.append('project_id', String(projectId));
 	formData.append('for_month', forMonth);
 	formData.append('include_flexible_employees', String(includeFlexibleEmployees));
+	formData.append('add_on_top', String(addOnTop));
     const response = await apiClient.post<PartnerImportFile>(
       API_ENDPOINTS.timesheets.partnerImport,
       formData,

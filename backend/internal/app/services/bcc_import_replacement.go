@@ -41,11 +41,21 @@ func bccTimesheetReplacementKey(timesheet *domain.Timesheet, includeHourType boo
 // A row linked to a revenue transaction is protected too: the transfer result
 // may still be finishing its payment-status update asynchronously, so replacing
 // that row would orphan the provider result from the newly-created timesheet.
+//
+// With addOnTop set (the upload dialog's supplement tick), a positive-hours
+// cell whose key hits a protected row is no longer skipped: it passes through
+// marked AddOnTop so bulk create puts a NEW pending supplement row next to the
+// finalized one — the paid row keeps its paid amount and the extra hours go
+// through approval and payment on their own. Zero-hour cells (delete
+// requests) keep the protected skip: deleting approved/paid hours is not an
+// addition. Pending rows still replace, so re-uploading the same file with
+// the tick stays deduped instead of doubling draft hours.
 func planBCCReplacement(
 	entries []domainservices.BulkCreateTimesheetEntry,
 	existingTimesheets []*domain.Timesheet,
 	flexibleEmployeeIDs map[uint]struct{},
 	includeHourType bool,
+	addOnTop bool,
 ) (
 	filteredEntries []domainservices.BulkCreateTimesheetEntry,
 	staleIDs []uint,
@@ -101,6 +111,11 @@ func planBCCReplacement(
 			continue
 		}
 		if _, protected := protectedKeys[key]; protected {
+			if addOnTop && entry.HoursWorked > 0 {
+				entry.AddOnTop = true
+				filteredEntries = append(filteredEntries, entry)
+				continue
+			}
 			protectedSkippedCount++
 			continue
 		}
