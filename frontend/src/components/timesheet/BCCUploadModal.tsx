@@ -596,11 +596,6 @@ export const BCCUploadModal = memo(function BCCUploadModal({
 					/>
 					<span className="min-w-0 leading-relaxed">
 						<span className="block font-semibold">Bổ sung giờ vào ngày đã chốt</span>
-						<span className="block text-xs text-blue-800 dark:text-blue-200/90">
-							Tôi xác nhận: giờ trong tệp sẽ được <strong>cộng thêm</strong> (tạo dòng bổ sung chờ duyệt)
-							cho các ngày đã duyệt/đã thanh toán, không thay thế dòng cũ. Dòng chờ duyệt vẫn được thay thế
-							như bình thường.
-						</span>
 					</span>
 				</label>
 

@@ -107,9 +107,6 @@ describe('BCCUploadModal result states', () => {
 		fireEvent.click(checkbox);
 		expect(mockUseBCCUploadModal.mock.results[0]?.value.handleAddOnTopChange)
 			.toHaveBeenCalledWith(true);
-		// The ack copy states the addition semantics explicitly.
-		expect(screen.getByText(/cộng thêm/i)).toBeInTheDocument();
-		expect(screen.getByText(/không thay thế dòng cũ/i)).toBeInTheDocument();
 	});
 
   it('uses a continuous, scrollable dialog layout for the upload form', () => {
