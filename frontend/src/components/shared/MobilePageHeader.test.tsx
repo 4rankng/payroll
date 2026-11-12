@@ -57,6 +57,11 @@ describe('MobilePageHeader', () => {
     // Stacked layout gives the actions their own full-width row (no theme
     // toggle mounted outside the admin surface → it renders without one).
     expect(actionsContainer).toHaveClass('w-full', 'justify-end');
-    expect(headerRow).toHaveClass('flex-wrap', 'sm:flex-nowrap');
+    // PAYR-38 regression: the header row wraps at every width. The old
+    // `sm:flex-nowrap` variant let the w-full actions block create negative
+    // flex space above 640px and crushed the min-w-0 title block to 0px —
+    // 'Bảng công' rendered one glyph per line on 640–767px viewports.
+    expect(headerRow).toHaveClass('flex-wrap');
+    expect(headerRow).not.toHaveClass('sm:flex-nowrap');
   });
 });

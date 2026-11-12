@@ -75,11 +75,13 @@ export const MobilePageHeader = ({
     >
       <div
         className={cn(
-          'w-full min-h-0 p-0 flex items-center justify-between gap-3',
-          // Inline actions stay beside the title while both fit; on very
-          // narrow phones (the title block cannot shrink past 10rem without
-          // breaking words mid-token) they wrap onto their own row instead.
-          actionsLayout === 'inline' ? 'flex-wrap' : 'flex-wrap sm:flex-nowrap',
+          'w-full min-h-0 p-0 flex items-center justify-between gap-3 flex-wrap',
+          // PAYR-38: the row must wrap at every width. The actions block owns a
+          // full row (w-full) in stacked layout, so a nowrap row above sm left
+          // the flex line with negative free space and crushed the title
+          // block's min-w-0 to 0px — the h1 rendered one glyph per line
+          // (B/à/n/g/…) on 640–767px viewports. Wrapping keeps the title row
+          // full-width at all sizes.
         )}
       >
         <div
