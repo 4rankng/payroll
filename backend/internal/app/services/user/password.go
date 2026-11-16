@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/argon2"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // DefaultHashConfig returns the Argon2id parameters used by UserService.
@@ -81,6 +82,12 @@ func (s *UserService) hashPassword(password string) (string, error) {
 
 // VerifyPasswordHash verifies a password against an encoded hash using constant-time comparison
 func (s *UserService) VerifyPasswordHash(password, encodedHash string) bool {
+	// Legacy bcrypt hashes (one-off imports, e.g. nv478/nv548) verify against
+	// the raw password — they predate the peppering scheme. AuthService.Login
+	// rehashes such accounts to Argon2id after a successful login.
+	if strings.HasPrefix(encodedHash, "$2a$") || strings.HasPrefix(encodedHash, "$2y$") || strings.HasPrefix(encodedHash, "$2b$") {
+		return bcrypt.CompareHashAndPassword([]byte(encodedHash), []byte(password)) == nil
+	}
 	return VerifyArgon2idHash(password, encodedHash, s.hashSecret, s.hashSalt)
 }
 

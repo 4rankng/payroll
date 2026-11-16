@@ -21,6 +21,10 @@ import { AuthBrandMark } from "@/components/auth/AuthBrandMark";
 // plain HTML attributes).
 const ALTCHA_WIDGET_CONFIGURATION = JSON.stringify({ hideLogo: true, hideFooter: true });
 
+// Server-side solutions expire after 5 minutes. Never submit a proof older
+// than this 4-minute client-side cap — remount a fresh challenge instead.
+const CAPTCHA_MAX_SOLUTION_AGE_MS = 4 * 60_000;
+
 /** state + payload last reported by the widget's statechange event. */
 type AltchaRuntimeState = { state: string; payload: string | null };
 
@@ -33,6 +37,11 @@ const Login = () => {
   // Bumped after a submitted payload was consumed server-side so the widget
   // remounts and solves a fresh challenge (solutions are single-use).
   const [captchaRound, setCaptchaRound] = useState(0);
+  // Inline hint for captcha problems (stale/expired proof, failed solve) —
+  // replaces the old reload-on-captcha-error behavior.
+  const [captchaNotice, setCaptchaNotice] = useState<string | null>(null);
+  // True while submit is blocked waiting for the widget to finish solving.
+  const [captchaWaiting, setCaptchaWaiting] = useState(false);
   const loginMutation = useLogin();
   const loginError = loginMutation.error;
   const resetLogin = loginMutation.reset;
@@ -43,6 +52,9 @@ const Login = () => {
   const altchaRef = useRef<AltchaWidgetElement | null>(null);
   const altchaStateRef = useRef<AltchaRuntimeState>({ state: "unverified", payload: null });
   const altchaWaitersRef = useRef<Array<(payload: string | null) => void>>([]);
+  // Date.now() of the last verified solve; guards against submitting a proof
+  // that has aged past the server's 5-minute TTL.
+  const altchaSolvedAtRef = useRef<number | null>(null);
 
   // The widget fetches the challenge itself from the same origin the axios
   // client uses, so a raw fetch("/api/v1/...") mismatch (separate VITE_API_BASE_URL
@@ -77,6 +89,12 @@ const Login = () => {
     const onStateChange = (ev: Event) => {
       const detail = (ev as CustomEvent<{ state: string; payload?: string }>).detail;
       altchaStateRef.current = { state: detail.state, payload: detail.payload ?? null };
+      if (detail.state === "verified" && detail.payload) {
+        altchaSolvedAtRef.current = Date.now();
+        setCaptchaNotice(null);
+      } else if (detail.state === "error" || detail.state === "expired") {
+        altchaSolvedAtRef.current = null;
+      }
       if ((detail.state === "verified" && detail.payload) || detail.state === "error" || detail.state === "expired") {
         const waiters = altchaWaitersRef.current;
         altchaWaitersRef.current = [];
@@ -131,15 +149,19 @@ const Login = () => {
     }
   }, []);
 
-  // Track login outcomes. A captcha rejection is handled by reloading the page
-  // (AC-05): a stale cached PWA bundle without the ALTCHA widget can never
-  // satisfy the server, so the fresh bundle must render; on a current client
-  // the reload equally produces a fresh challenge after a consumed solution.
+  // Track login outcomes. A captcha rejection retries inline: drop the
+  // (single-use, possibly stale) solution, remount the widget with a fresh
+  // challenge and show a hint. The old window.location.reload() here fought a
+  // stale-PWA bundle (AC-05) but trapped slow solvers in a reload loop — a
+  // stale bundle picks up this code on its next visit anyway.
   useEffect(() => {
     if (loginMutation.isError) {
       const message = loginMutation.error?.message?.toLowerCase() ?? "";
       if (message.includes("captcha")) {
-        window.location.reload();
+        altchaStateRef.current = { state: "unverified", payload: null };
+        altchaSolvedAtRef.current = null;
+        setCaptchaRound((round) => round + 1);
+        setCaptchaNotice("Xác thực bảo mật không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
         return;
       }
       setFailedAttempts((attempts) => attempts + 1);
@@ -166,8 +188,21 @@ const Login = () => {
         const serverRequiresCaptcha = await syncCaptchaRequirement();
         const captchaRequired = needsCaptcha || serverRequiresCaptcha;
 
-        let captchaPayload: string | null = altchaStateRef.current.payload;
+        setCaptchaNotice(null);
+        const solvedAt = altchaSolvedAtRef.current;
+        const payloadFresh = solvedAt !== null && Date.now() - solvedAt < CAPTCHA_MAX_SOLUTION_AGE_MS;
+        let captchaPayload: string | null = payloadFresh ? altchaStateRef.current.payload : null;
         if (captchaRequired) {
+          if (!captchaPayload && altchaStateRef.current.payload) {
+            // Solved proof is older than the freshness cap (the server TTL is
+            // 5 minutes) — submitting it would only buy a rejection. Remount a
+            // fresh challenge instead.
+            altchaStateRef.current = { state: "unverified", payload: null };
+            altchaSolvedAtRef.current = null;
+            setCaptchaRound((round) => round + 1);
+            setCaptchaNotice("Xác thực bảo mật đã hết hạn. Vui lòng hoàn tất thử thách mới.");
+            return;
+          }
           if (!captchaPayload && !needsCaptcha) {
             // The server just told us a captcha is needed; the widget mounts on
             // the next render and ticks itself. Let this click go — the next
@@ -176,12 +211,22 @@ const Login = () => {
           }
           if (!captchaPayload) {
             // Widget visible but still solving — wait for verification.
-            captchaPayload = await waitForAltchaPayload();
+            setCaptchaWaiting(true);
+            try {
+              captchaPayload = await waitForAltchaPayload();
+            } finally {
+              setCaptchaWaiting(false);
+            }
+            if (!captchaPayload) {
+              // Errored/timed out — the widget shows its own error; nudge too.
+              setCaptchaNotice("Chưa hoàn tất xác thực bảo mật. Vui lòng đợi hoặc thử lại.");
+              return;
+            }
           }
-          if (!captchaPayload) return; // errored/timed out — the widget shows its own error
           // A solution is single-use server-side: drop it here and remount the
           // widget so the next attempt solves a fresh challenge.
-          altchaStateRef.current.payload = null;
+          altchaStateRef.current = { state: "unverified", payload: null };
+          altchaSolvedAtRef.current = null;
           setCaptchaRound((round) => round + 1);
         }
 
@@ -370,6 +415,11 @@ const Login = () => {
                         auto="onload"
                         configuration={ALTCHA_WIDGET_CONFIGURATION}
                       />
+                      {captchaNotice && (
+                        <p role="status" data-testid="captcha-notice" className="mt-2 text-xs font-medium leading-5 text-fg-warning-primary">
+                          {captchaNotice}
+                        </p>
+                      )}
                     </div>
                   )}
                 </fieldset>
@@ -379,6 +429,11 @@ const Login = () => {
                     <>
                       <AuthSpinner className="size-4" />
                       Đang đăng nhập...
+                    </>
+                  ) : captchaWaiting ? (
+                    <>
+                      <AuthSpinner className="size-4" />
+                      Đang xác thực bảo mật…
                     </>
                   ) : (
                     "Đăng nhập"

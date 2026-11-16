@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
 	"api-server/internal/app/dto"
@@ -326,6 +327,23 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 			return nil, domain.NewInternalError("Không thể cập nhật trạng thái bảo mật tài khoản", err)
 		}
 		return nil, domain.NewUnauthorizedError(constants.MsgInvalidCredentialsVN)
+	}
+
+	// Legacy-hash healing: accounts imported with bcrypt hashes (e.g. nv478,
+	// nv548) verified through the bcrypt fallback in VerifyPasswordHash;
+	// transparently upgrade them to Argon2id on their next successful login.
+	// Healing must never block the login, so errors only warn. Advancing
+	// tokens_invalid_before is harmless here: the caller just proved the
+	// password and has no valid session yet on this path.
+	if !strings.HasPrefix(user.Password, "$argon2id$") {
+		newHash, hashErr := s.userService.HashNewPassword(req.Password)
+		if hashErr != nil {
+			s.logger.Warn("Failed to rehash legacy password hash", "user_id", user.ID, "error", hashErr)
+		} else if err := s.userService.UserRepo.UpdatePasswordAndInvalidateSessions(ctx, user.ID, newHash, clock.Now()); err != nil {
+			s.logger.Warn("Failed to persist rehashed password", "user_id", user.ID, "error", err)
+		} else {
+			user.Password = newHash
+		}
 	}
 
 	// Reset the consecutive-failure counter on successful password verification.

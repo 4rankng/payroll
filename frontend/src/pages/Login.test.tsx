@@ -106,4 +106,30 @@ describe("Login page contract (W10)", () => {
     expect(alert).toHaveAttribute("data-testid", "error-message");
     expect(alert).toHaveTextContent("Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.");
   });
+
+  // Captcha rejections retry inline (stale-proof fix): the widget row stays
+  // mounted with a fresh challenge and a role="status" hint appears — no
+  // window.location.reload().
+  it("captcha rejection shows the inline notice and keeps the widget mounted for retry", async () => {
+    loginState.current = {
+      isPending: false,
+      error: { message: "Xác thực captcha không hợp lệ" },
+      isError: true,
+      isSuccess: false,
+    };
+    mocks.apiGet.mockResolvedValue({ data: { required: true } });
+    render(<MemoryRouter><Login /></MemoryRouter>);
+
+    // Server-required preflight mounts the captcha row.
+    fireEvent.change(screen.getByPlaceholderText("CCCD, số điện thoại hoặc tên đăng nhập"), {
+      target: { value: "frankng" },
+    });
+    fireEvent.blur(screen.getByPlaceholderText("CCCD, số điện thoại hoặc tên đăng nhập"));
+
+    const notice = await screen.findByTestId("captcha-notice");
+    expect(notice).toHaveAttribute("role", "status");
+    expect(notice).toHaveTextContent("Xác thực bảo mật không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
+    // Inline retry: the widget is still there for a fresh challenge.
+    expect(document.querySelectorAll("altcha-widget")).toHaveLength(1);
+  });
 });

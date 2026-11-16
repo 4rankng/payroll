@@ -69,10 +69,10 @@ func (s *UserService) ChangePassword(ctx context.Context, userID uint, currentPa
 		return domain.NewInternalError(constants.MsgFailedToHashNewPasswordVN, err)
 	}
 
-	// Update user password
-	user.Password = hashedPassword
-	err = s.UserRepo.Update(ctx, user)
-	if err != nil {
+	// Update password via the transactional column-scoped helper (matches
+	// ResetUserPassword): never clobbers concurrent profile edits and advances
+	// tokens_invalid_before so other sessions die with the old password.
+	if err := s.UserRepo.UpdatePasswordAndInvalidateSessions(ctx, userID, hashedPassword, s.clk.Now()); err != nil {
 		s.logger.Error("Failed to update user password during change", "error", err, "user_id", userID)
 		return domain.NewInternalError(constants.MsgFailedToUpdateUserPasswordVN, err)
 	}
