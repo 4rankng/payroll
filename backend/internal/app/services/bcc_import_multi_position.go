@@ -67,12 +67,12 @@ func (s *BCCImportService) processMultiPositionUpload(
 
 	// 5. Build CCCD→position map from all position sheets (for STK auto-creation).
 	// Note: PositionEmployeeData.EmployeeCode holds CCCD in the multi-position template.
-	importErrors, cccdToPosition := buildCCCDToPositionMap(parsed)
+	cccdToPosition := buildCCCDToPositionMap(parsed)
 
 	// 6. STK auto-creation with CCCD→position lookup.
 	positionCorrections, stkErrors := s.autoCreateMultiPositionSTK(
 		ctx, xf, cccdToPosition, resolver.positionNamesForMonth(monthStart, monthEnd), projectID, uploaderID)
-	importErrors = append(importErrors, stkErrors...)
+	importErrors := stkErrors
 
 	// 6.5. Apply position corrections via ProjectEmployeeService (outside STK transaction)
 	// to get cache invalidation, event publishing, and timesheet recalculation with
@@ -165,27 +165,23 @@ func validateSheetPositions(
 }
 
 // buildCCCDToPositionMap maps every parsed employee (keyed by the template's
-// EmployeeCode column, which holds CCCD) to their sheet's position. An
-// employee appearing in two different position sheets is an error.
-func buildCCCDToPositionMap(parsed *excelparser.MultiPositionImportData) ([]domain.ImportError, map[string]string) {
-	var importErrors []domain.ImportError
+// EmployeeCode column, which holds CCCD) to the last position sheet that
+// carries them. Working several positions in one file is legitimate — the
+// uploaded workbook is authoritative: every sheet's rows post at that sheet's
+// own position (buildMultiPositionEntries corrects the assignment per sheet),
+// and this map only seeds the STK auto-create default and the position
+// corrections, where the last sheet wins.
+func buildCCCDToPositionMap(parsed *excelparser.MultiPositionImportData) map[string]string {
 	cccdToPosition := make(map[string]string)
 	for _, sheet := range parsed.Sheets {
 		for _, emp := range sheet.Employees {
 			if emp.EmployeeCode == "" { // EmployeeCode is CCCD in multi-position template
 				continue
 			}
-			if existing, dup := cccdToPosition[emp.EmployeeCode]; dup && existing != sheet.Position {
-				importErrors = append(importErrors, domain.ImportError{
-					Employee: emp.FullName,
-					Reason:   fmt.Sprintf("nhân viên \"%s\" xuất hiện ở nhiều sheet vị trí (%s, %s)", emp.FullName, existing, sheet.Position),
-				})
-				continue
-			}
 			cccdToPosition[emp.EmployeeCode] = sheet.Position
 		}
 	}
-	return importErrors, cccdToPosition
+	return cccdToPosition
 }
 
 // autoCreateMultiPositionSTK upserts employees from the STK sheet with the

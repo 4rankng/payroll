@@ -25,6 +25,28 @@ func TestHealMultiPositionAssignment_BareServiceIsNoop(t *testing.T) {
 	assert.Empty(t, byCCCDAndPosition)
 }
 
+// The uploaded workbook is authoritative: an employee working several
+// positions in one file must not error — the map seeds the STK default and
+// position corrections with the last sheet that carries them, while every
+// sheet's rows post at that sheet's own position.
+func TestBuildCCCDToPositionMap_MultiSheetLastWins(t *testing.T) {
+	parsed := &excelparser.MultiPositionImportData{
+		Sheets: []excelparser.PositionSheetData{
+			{Position: "Chia chọn", Employees: []excelparser.PositionEmployeeData{
+				{EmployeeCode: "033072000021", FullName: "Lương Đức Phong"},
+			}},
+			{Position: "Lái xe nâng", Employees: []excelparser.PositionEmployeeData{
+				{EmployeeCode: "033072000021", FullName: "Lương Đức Phong"},
+				{EmployeeCode: "", FullName: "Hàng trống"},
+			}},
+		},
+	}
+
+	cccdToPosition := buildCCCDToPositionMap(parsed)
+	assert.Equal(t, "Lái xe nâng", cccdToPosition["033072000021"])
+	assert.Len(t, cccdToPosition, 1)
+}
+
 func TestValidateSheetPositions_Normalization(t *testing.T) {
 	resolver := mustTestResolver(t, time.Local,
 		testPayrate(1, time.Date(2026, time.October, 1, 0, 0, 0, 0, time.Local), `{
