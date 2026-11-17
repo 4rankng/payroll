@@ -7,6 +7,7 @@ import (
 	"time"
 
 	bootstrapRepos "api-server/internal/app/bootstrap/repositories"
+	appHandlers "api-server/internal/app/handlers"
 	"api-server/internal/app/services"
 	"api-server/internal/app/services/ad_banner"
 	"api-server/internal/app/services/advance_payment"
@@ -275,11 +276,22 @@ func Initialize(repos *bootstrapRepos.Repositories, cfg *appConfig.Config, logge
 	// via a fire-and-forget event that can silently drop (txn 99 / timesheet 11579 bug).
 	settlementUploadService.SetSettlementApplier(settlementEventHandler)
 
+	// Cascade employee profile identity (fullname, CCCD) onto project
+	// assignment denormalized copies. The BCC import resolver indexes
+	// assignments by the copied CCCD; without this subscription a profile edit
+	// strands the copies and the next import reports "Không tìm thấy nhân
+	// viên" for an employee who plainly exists (prod 2026-11-17: 9 drifted
+	// assignment rows, e.g. assignment 1717 CCCD 031172019748 vs profile
+	// 030172019748).
+	employeeIdentitySyncService := employee.NewEmployeeSyncService(repos.ProjectEmployee, repos.Employee, transactionManager, eventBus)
+	eventBus.SubscribeAll(appHandlers.NewEmployeeSyncHandler(employeeIdentitySyncService))
+
 	logger.Info("Event bus initialized with handlers",
 		"audit", true,
 		"cache_invalidation", true,
 		"employee_user_created", true,
 		"settlement", true,
+		"employee_identity_sync", true,
 	)
 
 	// Step 6: Create services that depend on other domain services using ports
