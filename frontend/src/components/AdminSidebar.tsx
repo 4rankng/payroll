@@ -238,7 +238,7 @@ const NavGroup = React.memo(
           {containsActive && !isExpanded && (
             <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-[hsl(var(--primary))]" />
           )}
-          <span className="console-kicker flex-1 text-left !text-white/70 transition-colors group-hover/label:!text-white/90">
+          <span className="console-kicker flex-1 text-left !text-[9px] !font-semibold !text-white/70 transition-colors group-hover/label:!text-white/90">
             {label}
           </span>
           <ChevronDown
