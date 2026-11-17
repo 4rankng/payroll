@@ -7,11 +7,23 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+// Clean normalizes a text cell the way partner files actually ship them:
+// cells escaped as text carry a leading apostrophe or double quote
+// ('030172019748, "8") and identity columns pick up stray padding, which
+// silently breaks CCCD matching, bank-name resolution, and numeric parsing
+// downstream. Strips leading and trailing whitespace, single quotes, and
+// double quotes; interior characters are untouched. A value made only of
+// quotes/whitespace cleans to "".
+func Clean(s string) string {
+	return strings.Trim(s, " \t\n\r'\"")
+}
+
 // Cell reads one cell's formatted string value by 1-based coordinates and
-// trims it. Coordinate or read errors return "" — callers treat that as a
-// blank cell, matching the BCC parsers' long-standing contract.
+// cleans it (whitespace + text-escape quotes). Coordinate or read errors
+// return "" — callers treat that as a blank cell, matching the BCC parsers'
+// long-standing contract.
 //
-// Verbatim port of bccCell (services/excel).
+// Port of bccCell (services/excel).
 func Cell(f *excelize.File, sheet string, col, row int) string {
 	cn, err := excelize.CoordinatesToCellName(col, row)
 	if err != nil {
@@ -21,7 +33,7 @@ func Cell(f *excelize.File, sheet string, col, row int) string {
 	if err != nil {
 		return ""
 	}
-	return strings.TrimSpace(val)
+	return Clean(val)
 }
 
 // NumericCell reads one cell as a raw number, bypassing the cell's display

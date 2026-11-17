@@ -7,6 +7,7 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
+	"api-server/internal/pkg/excelkit"
 	"api-server/internal/pkg/phone"
 )
 
@@ -155,12 +156,14 @@ type stkColumnMap struct {
 	mobile      int
 }
 
-// stkCell reads one trimmed cell by index, tolerating short rows.
+// stkCell reads one cleaned cell by index, tolerating short rows. Clean
+// strips the text-escape quotes ('0301..., "8") partner files carry in
+// identity columns, not just padding.
 func stkCell(row []string, idx int) string {
 	if idx < 0 || idx >= len(row) {
 		return ""
 	}
-	return strings.TrimSpace(row[idx])
+	return excelkit.Clean(row[idx])
 }
 
 // detectSTKHeaderColumns maps a row to column positions by its header labels.
