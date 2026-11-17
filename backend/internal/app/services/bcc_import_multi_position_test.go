@@ -1,13 +1,29 @@
 package services
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	excelparser "api-server/internal/app/services/excel"
+	"api-server/internal/domain"
 
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/text/unicode/norm"
 )
+
+// A bare BCCImportService (no employeeService wired, as in the builder tests)
+// must not heal — the missing-assignment error path stays intact and the
+// lookup maps stay untouched.
+func TestHealMultiPositionAssignment_BareServiceIsNoop(t *testing.T) {
+	svc := &BCCImportService{}
+	byCCCD := map[string]*domain.ProjectEmployee{}
+	byCCCDAndPosition := map[string]*domain.ProjectEmployee{}
+	healed := svc.healMultiPositionAssignment(context.Background(), 76, "030172019748", "Lại Thị Hải Hà", byCCCD, byCCCDAndPosition)
+	assert.Nil(t, healed)
+	assert.Empty(t, byCCCD)
+	assert.Empty(t, byCCCDAndPosition)
+}
 
 func TestValidateSheetPositions_Normalization(t *testing.T) {
 	resolver := mustTestResolver(t, time.Local,

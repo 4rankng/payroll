@@ -386,6 +386,32 @@ func (s *BCCImportService) applyPositionCorrections(ctx context.Context, correct
 	return importErrors
 }
 
+// healMultiPositionAssignment repairs a multi-position row whose CCCD misses
+// the project's assignment index because the assignment's denormalized CCCD
+// copy is stale (a profile edit that never cascaded, or a copy born wrong
+// from an older import). Resolves through the employee profile's current CCCD
+// and re-keys the lookup maps in place so the file's remaining rows resolve
+// without repeating the profile lookup. Same guard as the weekly flows: the
+// assignment's name must match the row's name loosely — a CCCD that belongs
+// to a different person keeps failing loudly. Returns nil when the row cannot
+// be healed; the caller keeps its missing-assignment error path.
+func (s *BCCImportService) healMultiPositionAssignment(
+	ctx context.Context,
+	projectID uint,
+	cccd string,
+	fullName string,
+	byCCCD map[string]*domain.ProjectEmployee,
+	byCCCDAndPosition map[string]*domain.ProjectEmployee,
+) *domain.ProjectEmployee {
+	assignment := healAssignmentFromProfile(ctx, s, projectID, cccd, fullName)
+	if assignment == nil {
+		return nil
+	}
+	byCCCD[cccd] = assignment
+	byCCCDAndPosition[cccd+"|"+strings.ToLower(assignment.Position)] = assignment
+	return assignment
+}
+
 // buildMultiPositionEntries converts parsed position sheets into bulk timesheet
 // entries, matching employees by CCCD+position first. Non-STK employees whose
 // assignment position doesn't match their sheet get corrected in place.
@@ -426,6 +452,12 @@ func (s *BCCImportService) buildMultiPositionEntries(
 			}
 			if assignment == nil {
 				assignment = byCode[empLookupKey]
+			}
+			if assignment == nil {
+				// Last resort, same contract as the weekly flows: the row's
+				// CCCD misses the assignment index while the employee profile
+				// carries it (stale denormalized copy on the assignment).
+				assignment = s.healMultiPositionAssignment(ctx, projectID, empLookupKey, emp.FullName, byCCCD, byCCCDAndPosition)
 			}
 			if assignment == nil {
 				importErrors = append(importErrors, domain.ImportError{

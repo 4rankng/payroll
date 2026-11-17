@@ -29,7 +29,30 @@ func (s *BCCImportService) healAssignmentByProfileCCCD(
 	fullName string,
 	rows weeklyRowResolver,
 ) *domain.ProjectEmployee {
-	if s.employeeService == nil || cccd == "" {
+	assignment := healAssignmentFromProfile(ctx, s, projectID, cccd, fullName)
+	if assignment == nil {
+		return nil
+	}
+	rows.byCCCD[cccd] = assignment
+	return assignment
+}
+
+// healAssignmentFromProfile resolves a BCC row whose CCCD misses the project's
+// assignment index through the employee profile: look the employee up by the
+// row's CCCD, take their active assignment in the project, and accept it only
+// when the assignment's name matches the row's name loosely (a single accent
+// typo is data-entry noise; a CCCD that belongs to a different person must
+// keep failing loudly). Returns nil when the row cannot be healed; the caller
+// keeps its missing-assignment error path. Callers re-key their own lookup
+// index in place with the returned assignment.
+func healAssignmentFromProfile(
+	ctx context.Context,
+	s *BCCImportService,
+	projectID uint,
+	cccd string,
+	fullName string,
+) *domain.ProjectEmployee {
+	if s == nil || s.employeeService == nil || cccd == "" {
 		return nil
 	}
 	emp, err := s.employeeService.GetEmployeeByCCCD(ctx, cccd)
@@ -43,7 +66,6 @@ func (s *BCCImportService) healAssignmentByProfileCCCD(
 	if bccNormNameLoose(assignment.EmployeeName) != bccNormNameLoose(fullName) {
 		return nil
 	}
-	rows.byCCCD[cccd] = assignment
 	slog.Info("BCCImport: healed stale assignment CCCD from employee profile",
 		"assignment_id", assignment.ID,
 		"employee_id", emp.ID,
