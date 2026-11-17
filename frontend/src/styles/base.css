@@ -23,6 +23,13 @@
   html {
     height: 100%;
     background-color: hsl(var(--background));
+    /* Disable WebKit text inflation at every width: iOS Safari auto-enlarges
+       text blocks wider than the viewport, so the desktop admin shell on an
+       iPad (768–1024px) rendered ~2× labels/titles with the content column
+       clipped. The scoped ≤640px rules (employee/settings mobile pages) stay
+       as-is; this blanket rule covers the desktop shell they never touched. */
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
