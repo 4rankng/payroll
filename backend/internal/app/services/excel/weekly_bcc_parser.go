@@ -56,6 +56,18 @@ func ParseWeeklyBCCFile(f *excelize.File, sheetNames []string) (*WeeklyBCCImport
 
 	for _, sheetName := range sheetNames {
 		shiftType := ExtractShiftType(sheetName)
+		if shiftType == "" && isWeeklyBlockBCCSheet(f, sheetName) {
+			// Weekly block layout: identity headers and one merged date cell
+			// per day share a header row, with a label row beneath the day
+			// region (weekly_block_bcc_parser.go). Each label becomes its
+			// own sheet group.
+			sheets, err := parseWeeklyBlockBCCSheet(f, sheetName)
+			if err != nil {
+				return nil, fmt.Errorf("sheet %q: %w", sheetName, err)
+			}
+			result.Sheets = append(result.Sheets, sheets...)
+			continue
+		}
 		if shiftType == "" {
 			continue
 		}

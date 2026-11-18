@@ -33,6 +33,10 @@ fixture. If it takes more, the design has drifted — fix the design.
 
 - **Priority order** in `bccFormatRegistry`: legacy > weekly BCC > weekly
   payment > multi-position > date-row. Reordering changes which files parse.
+  Weekly BCC claims sheets by name prefix (`BCC-`) OR by weekly block content
+  fingerprint (`weekly_block_bcc_parser.go`), and that claim precedes the
+  legacy sheet-name rule: block-layout sheets ship under a plain "BCC " name
+  (trailing space) that the name rule would otherwise claim and fail.
 - **Winner-format contract**: a "BCC"-named sheet can carry a date-row layout
   (T09); `ParseBCCData` overwrites the detected format with the strategy
   winner, and `bcc_import_process.go` keys STK collection, position
@@ -56,7 +60,7 @@ fixture. If it takes more, the design has drifted — fix the design.
 | `bcc_formats.go` | sheet classification + ordered detection registry (routing truth) |
 | `format_detector.go` | `DetectFormat` loop + sheet fingerprints |
 | `bcc_strategy.go` | legacy↔date-row parse arbitration (`ParseBCCData`, Accept verify) |
-| `bcc_parser.go`, `date_row_bcc_parser.go`, `weekly_bcc_parser.go`, `weekly_payment_parser.go`, `multi_position_parser.go`, `stk_parser.go` | per-family parsers |
+| `bcc_parser.go`, `date_row_bcc_parser.go`, `weekly_bcc_parser.go`, `weekly_block_bcc_parser.go`, `weekly_payment_parser.go`, `multi_position_parser.go`, `stk_parser.go` | per-family parsers (`weekly_block_bcc_parser.go` owns the weekly BCC block-layout branch inside `weekly_bcc_parser.go`) |
 | `shared.go` | in-package shared helpers (thin excelkit delegates + predicates) |
 | `timesheet_template_service.go`, `timesheet_import_service.go` | the system-generated template round-trip |
 | `export_service.go` | styling toolkit for exports |

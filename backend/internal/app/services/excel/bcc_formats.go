@@ -29,15 +29,18 @@ type bccSheetClassification struct {
 }
 
 // classifyBCCSheets walks every visible sheet once and classifies it. Sheet
-// rules, in order: hidden sheets are skipped; a "BCC"-named sheet is the
-// legacy candidate; "STK" (case-insensitive, whitespace-trimmed — partners
-// export "STK " etc.) is skipped so the bank sheet never leaks into data
-// detection; "BCC-"-prefixed sheets are weekly BCC; remaining sheets are
-// fingerprinted as weekly payment, then position. The date-row fingerprint
-// runs in a second phase, only when no higher-priority family claimed the
-// workbook: it is the loosest (any full-date header row) and most expensive
-// test, and by registry priority it can only win when everything else is
-// empty — so skipping it otherwise is outcome-identical.
+// rules, in order: hidden sheets are skipped; "STK" (case-insensitive,
+// whitespace-trimmed — partners export "STK " etc.) is skipped so the bank
+// sheet never leaks into data detection; weekly BCC claims "BCC-"-prefixed
+// sheets AND sheets carrying the weekly block content fingerprint — the
+// fingerprint test must precede the name rule because block-layout sheets
+// ship under a plain "BCC " name (trailing space) that the legacy rule would
+// otherwise claim; a remaining "BCC"-named sheet is the legacy candidate;
+// after that, sheets are fingerprinted as weekly payment, then position. The
+// date-row fingerprint runs in a second phase, only when no higher-priority
+// family claimed the workbook: it is the loosest (any full-date header row)
+// and most expensive test, and by registry priority it can only win when
+// everything else is empty — so skipping it otherwise is outcome-identical.
 func classifyBCCSheets(f *excelize.File) bccSheetClassification {
 	var c bccSheetClassification
 	var unmatched []string
@@ -50,15 +53,19 @@ func classifyBCCSheets(f *excelize.File) bccSheetClassification {
 		if !visible {
 			continue
 		}
-		if isBCCSheetName(sheetName) {
-			c.bccSheet = sheetName
-			continue
-		}
 		if isSTKSheetName(sheetName) {
 			continue
 		}
-		if strings.HasPrefix(strings.ToUpper(sheetName), "BCC-") {
+		// The weekly BCC claim must precede the BCC-name rule: block-layout
+		// sheets ship under a plain "BCC " name (trailing space) and the
+		// loose sheet-name rule would otherwise claim them as legacy before
+		// the content fingerprint gets a chance.
+		if strings.HasPrefix(strings.ToUpper(sheetName), "BCC-") || isWeeklyBlockBCCSheet(f, sheetName) {
 			c.weeklyBCC = append(c.weeklyBCC, sheetName)
+			continue
+		}
+		if isBCCSheetName(sheetName) {
+			c.bccSheet = sheetName
 			continue
 		}
 		if isWeeklyPaymentSheet(f, sheetName) {

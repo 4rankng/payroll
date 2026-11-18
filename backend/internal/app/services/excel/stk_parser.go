@@ -181,17 +181,25 @@ func detectSTKHeaderColumns(row []string) *stkColumnMap {
 		}
 	}
 
-	// Pass 1 — specific labels.
+	// Pass 1 — specific labels. Compared both raw-normalized and
+	// whitespace-collapsed: partner sheets carry internal double spaces in
+	// headers ("Ngân  Hàng"), which a single-space contains-match would
+	// miss — the bank column would then go unmapped.
 	for idx, cell := range row {
 		v := normHeader(cell)
-		if v == "" {
+		cv := excelkit.CollapseHeader(cell)
+		if cv == "" {
 			continue
 		}
 		isAccount := v == "stk" || v == "số tk" || v == "so tk" ||
 			strings.Contains(v, "số tài khoản") || strings.Contains(v, "so tai khoan") ||
-			strings.Contains(v, "tài khoản") || strings.Contains(v, "tai khoan")
+			strings.Contains(v, "tài khoản") || strings.Contains(v, "tai khoan") ||
+			strings.Contains(cv, "số tài khoản") || strings.Contains(cv, "so tai khoan") ||
+			strings.Contains(cv, "tài khoản") || strings.Contains(cv, "tai khoan")
 		isBank := strings.Contains(v, "ngân hàng") || strings.Contains(v, "ngan hang") ||
-			v == "bank" || strings.Contains(v, "chi nhánh") || strings.Contains(v, "chi nhanh")
+			v == "bank" || strings.Contains(v, "chi nhánh") || strings.Contains(v, "chi nhanh") ||
+			strings.Contains(cv, "ngân hàng") || strings.Contains(cv, "ngan hang") ||
+			cv == "bank" || strings.Contains(cv, "chi nhánh") || strings.Contains(cv, "chi nhanh")
 		if isAccount {
 			claim(idx, &cols.bankAccount)
 		} else if isBank {

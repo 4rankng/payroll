@@ -66,6 +66,46 @@ func TestParseSTKSheet(t *testing.T) {
 	}
 }
 
+// Partner sheets carry internal double spaces in headers ("Ngân  Hàng");
+// pass 1's whitespace-collapsed comparison must still map the bank columns.
+func TestParseSTKSheet_DoubleSpaceBankHeader(t *testing.T) {
+	f := excelize.NewFile()
+	t.Cleanup(func() { _ = f.Close() })
+
+	sheetName := "STK"
+	if _, err := f.NewSheet(sheetName); err != nil {
+		t.Fatalf("failed to create sheet: %v", err)
+	}
+	headers := []string{"STT", "Họ Tên", "CCCD", "STK", "Ngân  Hàng"}
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		if err := f.SetCellValue(sheetName, cell, h); err != nil {
+			t.Fatal(err)
+		}
+	}
+	data := []any{"1", "Nhan vien 15", "025000000015", "9812345678", "MSB"}
+	for c, v := range data {
+		cell, _ := excelize.CoordinatesToCellName(c+1, 2)
+		if err := f.SetCellValue(sheetName, cell, v); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	rows, err := ParseSTKSheet(f)
+	if err != nil {
+		t.Fatalf("ParseSTKSheet returned unexpected error: %v", err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 parsed row, got %d", len(rows))
+	}
+	if rows[0].BankAccount != "9812345678" {
+		t.Errorf("bank account unmapped under double-space headers: %+v", rows[0])
+	}
+	if rows[0].BankName != "MSB" {
+		t.Errorf("bank name unmapped under double-space headers: %+v", rows[0])
+	}
+}
+
 // TestParseSTKSheet_WithBCClgdFile exercises the parser against the real
 // WeeklyBCC fixture. The LGD STK sheet has a merged title on row 1, column
 // headers on row 2, and a single data row on row 3 — a layout the old

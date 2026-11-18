@@ -48,6 +48,32 @@ func TestCharacterization_DateRow_Bumhan_T08(t *testing.T) {
 	assertGoldenJSON(t, "date_row_bumhan_t08", data)
 }
 
+// Weekly block template (Lear Cát Hài fixture): the sheet is literally named
+// "BCC " (trailing space), so the weekly block content fingerprint must claim
+// it in detection — the legacy sheet-name rule would otherwise take it and
+// fail at processing time — and ParseWeeklyBCCFile must emit weekly sheet
+// groups keyed by the label row.
+func TestCharacterization_Lear_Weekly(t *testing.T) {
+	f := openBCCFixture(t, "weekly_bcc", "lear_monthly.xlsx")
+
+	det, err := DetectFormat(f)
+	if err != nil {
+		t.Fatalf("DetectFormat: %v", err)
+	}
+	if det.Format != FormatWeeklyBCC {
+		t.Fatalf("DetectFormat = %v, want FormatWeeklyBCC (weekly block fingerprint)", det.Format)
+	}
+	if len(det.WeeklyBCCSheets) != 1 || det.WeeklyBCCSheets[0] != "BCC " {
+		t.Fatalf("WeeklyBCCSheets = %v, want [\"BCC \"]", det.WeeklyBCCSheets)
+	}
+
+	data, err := ParseWeeklyBCCFile(f, det.WeeklyBCCSheets)
+	if err != nil {
+		t.Fatalf("ParseWeeklyBCCFile: %v", err)
+	}
+	assertGoldenJSON(t, "lear_weekly", data)
+}
+
 func TestCharacterization_WeeklyBCC_LGD(t *testing.T) {
 	f := openBCCFixture(t, "weekly_bcc", "lgd_weekly.xlsx")
 

@@ -152,6 +152,7 @@ func TestRouting_RealFixturesClassified(t *testing.T) {
 	}{
 		{[]string{"legacy", "eva_t08.xlsx"}, FormatLegacy},
 		{[]string{"date_row", "bumhan_t08.xlsx"}, FormatLegacy}, // sheet name; winner is DateRow
+		{[]string{"weekly_bcc", "lear_monthly.xlsx"}, FormatWeeklyBCC}, // sheet named "BCC "; weekly block fingerprint beats the name rule
 		{[]string{"weekly_bcc", "lgd_weekly.xlsx"}, FormatWeeklyBCC},
 		{[]string{"weekly_payment", "tbd_weekly_payment.xlsx"}, FormatWeeklyPayment},
 		{[]string{"multi_position", "pqc_haiphong.xlsx"}, FormatMultiPosition},
