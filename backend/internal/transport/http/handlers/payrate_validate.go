@@ -371,7 +371,7 @@ func (h *PayrateHandler) applyTemporalConstraints(
 		if linked, linkedErr := h.payrateService.CountTimesheetsLinkedToPayrate(c.Request.Context(), projectID, existing.ID); linkedErr == nil && linked > 0 {
 			fromField.Status = FieldError
 			fromField.Message = constants.MsgCannotUpdatePayrateLinkedTimesheetsVN
-			fromField.Hint = "Hãy tạo cấu hình mức lương mới thay vì sửa cấu hình này."
+			fromField.Hint = fmt.Sprintf("Hãy tạo cấu hình mức lương mới thay vì sửa cấu hình này. Để áp dụng mức mới từ ngày %s, hãy tạo cấu hình mới với Từ ngày = %s.", submittedFrom, submittedFrom)
 			return
 		}
 		hasSibling, siblingErr := h.payrateService.HasSiblingPayrateOnOrAfter(c.Request.Context(), projectID, existing.ID, *fromDate)

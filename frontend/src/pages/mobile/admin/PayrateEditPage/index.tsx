@@ -29,6 +29,7 @@ import {
   backfillCarriedForwardMatrix,
 } from '@/components/payrates/types';
 import { dateToString } from '@/utils/dateHelpers';
+import { defaultCreateEffectiveFrom, earliestAllowedEffectiveFrom } from '@/components/payrates/utils/effectiveDate';
 import { useProject } from '@/hooks/api/useProjects';
 import { authManager } from '@/lib/auth';
 import {
@@ -138,31 +139,29 @@ export default function PayrateEditPageMobile() {
     if (!isNew || carryForwardDone.current || isLoadingProject || isLoadingRates) return;
     carryForwardDone.current = true;
     if (latestPayrate) {
-      const next = new Date(latestPayrate.fromDate + 'T00:00:00');
-      next.setDate(next.getDate() + 1);
       const cloned = JSON.parse(JSON.stringify(latestPayrate.rates)) as PayrateStructure;
       setConfig(prev => ({
         ...prev,
         // Non-flexible carry-forward backfills the full grid (zeros explicit)
         // so the strict client validator accepts the seeded matrix.
         rates: isFlexible ? cloned : backfillCarriedForwardMatrix(cloned),
-        fromDate: dateToString(next),
+        // Default to today floored at the earliest backend-allowed date —
+        // never the past: a past 'Từ ngày' reads as re-pricing history.
+        fromDate: defaultCreateEffectiveFrom(latestPayrate),
       }));
     } else if (isFlexible) {
       setConfig(prev => ({ ...prev, rates: createFlexiblePayrateStructure() }));
     }
   }, [isNew, isLoadingProject, isLoadingRates, isFlexible, latestPayrate]);
 
-  // Create mode appends after the latest config: the date input floors at
-  // latest from_date + 1 (the backend rejects anything on or before it).
+  // Create mode appends after the latest config: the date input floors at the
+  // earliest backend-allowed date (strictly after the latest config AND on or
+  // after the paid floor — the backend rejects anything earlier).
   const minFromDate = useMemo(() => {
     if (editorMode === 'edit') {
       return serverResult?.fields.effective_from.min_value || targetPayrate?.earliest_effective_from;
     }
-    if (!latestPayrate) return undefined;
-    const d = new Date(latestPayrate.fromDate + 'T00:00:00');
-    d.setDate(d.getDate() + 1);
-    return dateToString(d);
+    return earliestAllowedEffectiveFrom(latestPayrate);
   }, [editorMode, serverResult, targetPayrate, latestPayrate]);
 
   useEffect(() => {
@@ -418,7 +417,7 @@ export default function PayrateEditPageMobile() {
                     <PayratePeriodStrip payrates={allPayRatesData?.data ?? []} selectedDate={config.fromDate} />
                     {isNew && latestPayrate && (
                       <p className="mb-1 text-xs text-muted-foreground">
-                        Cấu hình mới áp dụng sau cấu hình hiện hành (từ {minFromDate}). Muốn sửa mức lương đang chạy, hãy chỉnh sửa cấu hình hiện tại.
+                        Cấu hình áp dụng từ ngày này trở đi. Bảng chấm công chưa thanh toán/chưa duyệt từ ngày đó sẽ được tính lại theo mức mới. Muốn sửa mức lương đang chạy, hãy chỉnh sửa cấu hình hiện tại.
                       </p>
                     )}
                     {isEnded && (
