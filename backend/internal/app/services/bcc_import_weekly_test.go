@@ -371,7 +371,8 @@ func TestBuildWeeklyPaymentEntries_ResolvesNameOnlyRow(t *testing.T) {
 	entries, _, totalRows, errs := (&BCCImportService{}).buildWeeklyPaymentEntries(
 		context.Background(), parsed, 2026, time.October, time.UTC,
 		newWeeklyRowResolver(byCCCD, assignments, nil), empNames, nil, map[string]struct{}{},
-		func(time.Time) map[string]int { return flatRates }, 7, false)
+		func(time.Time) map[string]int { return flatRates }, 7, false,
+		weeklySheetPositionPassthrough)
 
 	assert.Empty(t, errs)
 	assert.Equal(t, 1, totalRows)
@@ -577,7 +578,7 @@ func TestBuildWeeklyPaymentPositions_UsesOwningSheet(t *testing.T) {
 		},
 	}
 
-	positions, blocked, errs := buildWeeklyPaymentPositions(sheets)
+	positions, blocked, errs := buildWeeklyPaymentPositions(sheets, weeklySheetPositionPassthrough)
 
 	assert.Equal(t, "Lương 520", positions["CCCD-520"])
 	assert.Equal(t, "Lương 700", positions["CCCD-700"])
@@ -601,7 +602,7 @@ func TestBuildWeeklyPaymentPositions_BlocksEmployeeInMultiplePositionSheets(t *t
 		},
 	}
 
-	positions, blocked, errs := buildWeeklyPaymentPositions(sheets)
+	positions, blocked, errs := buildWeeklyPaymentPositions(sheets, weeklySheetPositionPassthrough)
 
 	assert.NotContains(t, positions, "CCCD-DUP")
 	assert.Contains(t, blocked, "CCCD-DUP")
@@ -656,4 +657,42 @@ func TestHealAssignmentByProfileCCCD_BareServiceIsNoop(t *testing.T) {
 	healed := svc.healAssignmentByProfileCCCD(context.Background(), 10, "011307000923", "Lò Kiều Linh", rows)
 	assert.Nil(t, healed, "bare service must not heal")
 	assert.Empty(t, rows.byCCCD)
+}
+
+// weeklySheetPositionPassthrough stands in for the production resolver
+// closure when a unit test exercises sheet-level bookkeeping only.
+func weeklySheetPositionPassthrough(sheet excelparser.WeeklyPaymentSheetData, _ excelparser.WeeklyPaymentEmployeeData) string {
+	return sheet.Position
+}
+
+// The raw "Lương 8h" integer is the position only when it names one of the
+// positions configured for the import month (POURIN renames its positions to
+// the salary value); otherwise the sheet name stays authoritative (TBD's
+// "Lương 520" sheets whose tier cells name nothing configured).
+func TestWeeklyPaymentPositionResolverAcceptsConfiguredSalaryValue(t *testing.T) {
+	loc := time.Local
+	d := func(y int, m time.Month, day int) time.Time {
+		return time.Date(y, m, day, 0, 0, 0, 0, loc)
+	}
+	novStart, novEnd := d(2026, time.November, 1), d(2026, time.November, 30)
+
+	resolver := mustTestResolver(t, loc,
+		testPayrate(1, novStart, `{"800000.ngày thường.HC":800000,"900000.ngày thường.HC":900000}`),
+	)
+	resolve := weeklyPaymentPositionResolver(resolver, novStart, novEnd)
+
+	sheet := excelparser.WeeklyPaymentSheetData{Position: "Chấm công"}
+	assert.Equal(t, "800000", resolve(sheet, excelparser.WeeklyPaymentEmployeeData{SalaryTierRaw: "800000"}))
+	// Blank or non-integer tier values fall back to the sheet name.
+	assert.Equal(t, "Chấm công", resolve(sheet, excelparser.WeeklyPaymentEmployeeData{SalaryTierRaw: ""}))
+	assert.Equal(t, "Chấm công", resolve(sheet, excelparser.WeeklyPaymentEmployeeData{SalaryTierRaw: "800.5"}))
+
+	// TBD regression: a tier number naming no configured position must not
+	// override the sheet's position.
+	resolverTBD := mustTestResolver(t, loc,
+		testPayrate(2, novStart, `{"Lương 520.ngày thường.HC":65000}`),
+	)
+	resolveTBD := weeklyPaymentPositionResolver(resolverTBD, novStart, novEnd)
+	sheetTBD := excelparser.WeeklyPaymentSheetData{Position: "Lương 520"}
+	assert.Equal(t, "Lương 520", resolveTBD(sheetTBD, excelparser.WeeklyPaymentEmployeeData{SalaryTierRaw: "520000"}))
 }

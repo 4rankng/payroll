@@ -271,7 +271,8 @@ func TestBuildWeeklyPaymentEntriesRatesFollowWorkDate(t *testing.T) {
 	entries, _, totalRows, errs := (&BCCImportService{}).buildWeeklyPaymentEntries(
 		context.Background(), parsed, 2026, time.October, loc,
 		newWeeklyRowResolver(byCCCD, assignments, nil), empNames, nil, map[string]struct{}{},
-		resolver.ratesFor, 7, false)
+		resolver.ratesFor, 7, false,
+		weeklyPaymentPositionResolver(resolver, d(2026, time.October, 1), d(2026, time.November, 1)))
 
 	assert.Equal(t, 1, totalRows) // one employee row; two entries under it
 	if !assert.Len(t, entries, 1) {

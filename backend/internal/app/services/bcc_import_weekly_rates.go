@@ -132,12 +132,15 @@ func weeklyPaymentRateKey(sheetPosition string) wbccRateKey {
 	}
 }
 
-// buildWeeklyPaymentPositions makes the salary sheet the authoritative source
-// for each employee's project position. An employee cannot safely belong to two
-// different salary-tier sheets because assignment position is later used to
-// construct the persisted paytype and resolve the final rate.
+// buildWeeklyPaymentPositions makes the resolved position the authoritative
+// source for each employee's project position. An employee cannot safely
+// belong to two different positions because assignment position is later used
+// to construct the persisted paytype and resolve the final rate. The conflict
+// check compares resolved positions, so the same employee appearing on two
+// sheets only blocks when the sheets resolve differently.
 func buildWeeklyPaymentPositions(
 	sheets []excelparser.WeeklyPaymentSheetData,
+	resolvePosition func(sheet excelparser.WeeklyPaymentSheetData, emp excelparser.WeeklyPaymentEmployeeData) string,
 ) (map[string]string, map[string]struct{}, []domain.ImportError) {
 	positions := make(map[string]string)
 	blocked := make(map[string]struct{})
@@ -153,12 +156,13 @@ func buildWeeklyPaymentPositions(
 				continue
 			}
 
+			resolved := resolvePosition(sheet, employee)
 			existingPosition, exists := positions[cccd]
 			if !exists {
-				positions[cccd] = sheet.Position
+				positions[cccd] = resolved
 				continue
 			}
-			if canonicalBCCRateKeySegment(existingPosition) == canonicalBCCRateKeySegment(sheet.Position) {
+			if canonicalBCCRateKeySegment(existingPosition) == canonicalBCCRateKeySegment(resolved) {
 				continue
 			}
 
@@ -167,12 +171,36 @@ func buildWeeklyPaymentPositions(
 			importErrors = append(importErrors, domain.ImportError{
 				Employee: employee.FullName,
 				Reason: fmt.Sprintf("nhân viên %q xuất hiện ở nhiều sheet vị trí (%s, %s)",
-					employee.FullName, existingPosition, sheet.Position),
+					employee.FullName, existingPosition, resolved),
 			})
 		}
 	}
 
 	return positions, blocked, importErrors
+}
+
+// weeklyPaymentPositionResolver builds the single position-resolution closure
+// both weekly-payment consumers share. Customer-confirmed contract: the raw
+// "Lương 8h" integer IS the position when it names one of the positions
+// configured for the import month (POURIN renames its positions to the salary
+// value, 800000 → "800000"); otherwise the sheet name stays authoritative
+// (TBD's "Lương 520" sheets whose tier cells 520000 name nothing configured).
+func weeklyPaymentPositionResolver(
+	resolver *payrateResolver,
+	monthStart, monthEnd time.Time,
+) func(sheet excelparser.WeeklyPaymentSheetData, emp excelparser.WeeklyPaymentEmployeeData) string {
+	configured := make(map[string]struct{})
+	for _, name := range resolver.positionNamesForMonth(monthStart, monthEnd) {
+		configured[canonicalBCCRateKeySegment(name)] = struct{}{}
+	}
+	return func(sheet excelparser.WeeklyPaymentSheetData, emp excelparser.WeeklyPaymentEmployeeData) string {
+		if candidate := excelparser.PositionFromSalaryValue(emp.SalaryTierRaw); candidate != "" {
+			if _, ok := configured[canonicalBCCRateKeySegment(candidate)]; ok {
+				return candidate
+			}
+		}
+		return sheet.Position
+	}
 }
 
 func planWeeklyPaymentPositionCorrections(

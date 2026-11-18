@@ -56,6 +56,7 @@ func TestValidateBCCWorkbookTemplate_AcceptsSupportedTemplates(t *testing.T) {
 		{"multi_position", "pqc_haiphong.xlsx"},
 		{"weekly_bcc", "lgd_weekly.xlsx"},
 		{"weekly_payment", "tbd_weekly_payment.xlsx"},
+		{"weekly_payment", "pourin_template_sample.xlsx"},
 		{"date_row", "bumhan_t08.xlsx"},
 		{"eva06.xlsx"},
 		{"thai_binh_duong.xlsx"},

@@ -277,14 +277,15 @@ const (
 	MsgExcelFileMinRowsVN                       = "Tệp Excel phải chứa ít nhất 2 hàng (header + dữ liệu)"
 	MsgCannotUpdatePayrateInvalidDateVN         = "Không thể cập nhật mức lương: ngày hiệu lực phải sau ngày chấm công đã trả lương gần nhất"
 	MsgCannotUpdatePayrateConflictingConfigVN   = "Không thể cập nhật mức lương: đã có cấu hình mức lương hiệu lực từ ngày này hoặc muộn hơn"
-	MsgCannotUpdatePayratePastLinkedTimesheetVN = "Không thể cập nhật mức lương: ngày hiệu lực không thể sau bảng công đã áp dụng mức lương này"
+	MsgCannotUpdatePayrateLinkedTimesheetsVN    = "Không thể sửa cấu hình mức lương vì đã có bảng chấm công áp dụng cấu hình này — chỉ có thể tạo cấu hình mới"
 	MsgCannotUpdateEndedPayrateVN               = "Không thể cập nhật cấu hình lương đã kết thúc — hãy chỉnh sửa cấu hình lương hiện hành"
-	MsgCannotDeletePayrateUsedByTimesheetsVN    = "Không thể xóa mức lương đã được sử dụng bởi bảng chấm công"
 	// From-date-only model: a config's end is implied by its successor, so only
-	// the latest config is editable and new configs must start after it.
-	MsgPayrateCreateNotAfterLatestVN       = "Không thể tạo cấu hình mức lương: ngày hiệu lực phải sau cấu hình mới nhất (từ %s). Để sửa mức lương hiện tại, hãy chỉnh sửa cấu hình đang mở"
-	MsgCannotUpdateNonLatestPayrateVN      = "Cấu hình này đã được thay thế bởi cấu hình mới hơn (từ %s) — chỉ xem được. Hãy chỉnh sửa cấu hình mới nhất"
-	MsgCannotDeletePayrateApprovedLinkedVN = "Không thể xóa cấu hình mức lương vì có bảng công đã duyệt hoặc đã trả lương liên kết"
+	// the latest config is editable and new configs must start after it —
+	// unless no mutable timesheet exists on or after the new start, which
+	// allows backdating over an empty timeline.
+	MsgPayrateCreateNotAfterLatestVN        = "Không thể tạo cấu hình mức lương: ngày hiệu lực phải sau cấu hình mới nhất (từ %s). Để sửa mức lương hiện tại, hãy chỉnh sửa cấu hình đang mở"
+	MsgCannotUpdateNonLatestPayrateVN       = "Cấu hình này đã được thay thế bởi cấu hình mới hơn (từ %s) — chỉ xem được. Hãy chỉnh sửa cấu hình mới nhất"
+	MsgCannotDeletePayrateLinkedTimesheetsVN = "Không thể xóa cấu hình mức lương vì đã có bảng chấm công áp dụng cấu hình này — chỉ có thể tạo cấu hình mới"
 	MsgPayrateFoldKeyCollisionVN           = "Trùng tên sau chuẩn hóa: \"%s\" và \"%s\" — mỗi vị trí và khung giờ cần một tên duy nhất"
 	MsgAtLeastOneEntryRequiredVN           = "Ít nhất một mục nhập là bắt buộc"
 	MsgFromDateAfterToDateVN               = "ngày bắt đầu không thể sau ngày kết thúc"
@@ -516,8 +517,7 @@ const (
 	MsgFailedToGenerateKQVN               = "Không thể tạo file kết quả chuyển khoản"
 
 	// Payrate Update Restriction Messages - Vietnamese
-	MsgCannotUpdatePayrateWithTimesheetsVN = "Không thể cập nhật cấu hình mức lương khi đã có bảng chấm công. Chỉ có thể cập nhật ngày kết thúc về hôm nay hoặc sau đó."
-	MsgPayrateAlreadyExistsForDateVN       = "Đã tồn tại mức lương với ngày hiệu lực %s"
+	MsgPayrateAlreadyExistsForDateVN = "Đã tồn tại mức lương với ngày hiệu lực %s"
 
 	// Timesheet Work Period Validation Messages - Vietnamese
 	MsgTimesheetDateOutsideWorkPeriodVN = "Không thể tạo bảng chấm công cho ngày %s. Nhân viên ID %d không được phân công làm việc trong dự án này vào ngày đó. Thời gian phân công: %s đến %s."

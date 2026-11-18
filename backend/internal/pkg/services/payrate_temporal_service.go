@@ -64,9 +64,10 @@ func NewPayrateTemporalService(db *gorm.DB, payrateRepo domain.PayrateRepository
 
 // CreateEffectiveDatedPayrate appends a new version to the project's payrate
 // timeline. The row is inserted open-ended and must start strictly after the
-// latest existing config: an earlier start would rewrite history that
-// timesheets were priced under. Correcting the present goes through the
-// update flow, which re-prices mutable timesheets in place.
+// latest existing config — unless no mutable timesheet exists on or after the
+// requested start, in which case backdating is allowed: nothing exists to
+// re-price, so no history is rewritten. Correcting the present goes through
+// the update flow.
 func (s *PayrateTemporalService) CreateEffectiveDatedPayrate(ctx context.Context, payrate *domain.Payrate) error {
 	payrate.FromDate = toLocalDateOnly(payrate.FromDate)
 
@@ -97,10 +98,10 @@ func (s *PayrateTemporalService) CreateEffectiveDatedPayrate(ctx context.Context
 // scheduling a future change is the create flow, and replaced configs are
 // view-only. Guards, in order:
 //  1. the row must still be the project's latest config
-//  2. the paid floor: start date after the most recent paid timesheet
-//  3. the new from_date must not collide with or pass any sibling config
-//  4. linked timesheets keep their config: the start date cannot move past
-//     the earliest work date priced under it
+//  2. no timesheet may reference the config — any link freezes it, the only
+//     path forward is creating a new config
+//  3. the paid floor: start date after the most recent paid timesheet
+//  4. the new from_date must not collide with or pass a sibling config
 func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context, payrate *domain.Payrate) error {
 	logger := observability.GetLogger()
 	payrate.FromDate = toLocalDateOnly(payrate.FromDate)
@@ -123,15 +124,25 @@ func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context
 			return err
 		}
 
+		// A config with any linked timesheet is frozen history: no rate or
+		// date edit, whatever the rows' payment status. The only path forward
+		// is creating a new config.
+		var linked int64
+		if err := tx.WithContext(ctx).Model(&domain.Timesheet{}).
+			Where("payrate_id = ?", existing.ID).
+			Count(&linked).Error; err != nil {
+			return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to count linked timesheets: %w", err))
+		}
+		if linked > 0 {
+			return domain.NewValidationErrorWithCode(domain.ErrCodePayrateImmutableLinked,
+				constants.MsgCannotUpdatePayrateLinkedTimesheetsVN)
+		}
+
 		if err := s.validateEffectiveDateTx(ctx, tx, payrate.ProjectID, payrate.FromDate); err != nil {
 			return err
 		}
 
 		if err := s.ensureLatestConfigTx(ctx, tx, payrate); err != nil {
-			return err
-		}
-
-		if err := s.ensureEarliestPaidTimesheetCoveredTx(ctx, tx, payrate); err != nil {
 			return err
 		}
 
@@ -147,10 +158,10 @@ func (s *PayrateTemporalService) UpdateEffectiveDatedPayrate(ctx context.Context
 
 // DeleteEffectiveDatedPayrate soft-deletes one config and lets the timeline
 // heal: resolution falls back to the covering config by date, with no
-// end-date rows to repair. Mutable timesheets linked to the deleted row are
-// re-linked and re-priced under that covering config in the same
-// transaction; approved or paid links block the delete outright, because
-// those rows keep the config that priced them.
+// end-date rows to repair. Any linked timesheet — mutable, approved, or
+// paid — blocks the delete outright: those rows keep the config that priced
+// them, and removing it would rewrite pricing history. The path forward is
+// creating a new config instead.
 func (s *PayrateTemporalService) DeleteEffectiveDatedPayrate(ctx context.Context, payrateID uint) (*domain.Payrate, error) {
 	// Project ID is needed to take the timeline lock; load it before opening
 	// the transaction, then re-read the row under the lock.
@@ -173,47 +184,15 @@ func (s *PayrateTemporalService) DeleteEffectiveDatedPayrate(ctx context.Context
 			return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to load payrate: %w", err))
 		}
 
-		var immutable int64
-		if err := tx.WithContext(ctx).Model(&domain.Timesheet{}).
-			Where("payrate_id = ? AND (payment_status = ? OR timesheet_status = ?)",
-				payrate.ID, domain.PaymentStatusPaid, domain.TimesheetStatusApproved).
-			Count(&immutable).Error; err != nil {
-			return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to count linked timesheets: %w", err))
-		}
-		if immutable > 0 {
-			return domain.NewValidationErrorWithCode(domain.ErrCodePayrateImmutableLinked, constants.MsgCannotDeletePayrateApprovedLinkedVN)
-		}
-
 		var linked int64
 		if err := tx.WithContext(ctx).Model(&domain.Timesheet{}).
-			Where("payrate_id = ? AND payment_status <> ? AND timesheet_status <> ?",
-				payrate.ID, domain.PaymentStatusPaid, domain.TimesheetStatusApproved).
+			Where("payrate_id = ?", payrate.ID).
 			Count(&linked).Error; err != nil {
 			return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to count linked timesheets: %w", err))
 		}
-
 		if linked > 0 {
-			var covering domain.Payrate
-			err := tx.WithContext(ctx).
-				Where("project_id = ? AND id <> ? AND from_date < ?", payrate.ProjectID, payrate.ID, toLocalDateOnly(payrate.FromDate)).
-				Order("from_date DESC, id DESC").
-				First(&covering).Error
-			if err != nil {
-				if errors.Is(err, gorm.ErrRecordNotFound) {
-					// No earlier config exists: the linked rows would lose
-					// their price reference entirely.
-					return domain.NewValidationError(constants.MsgCannotDeletePayrateUsedByTimesheetsVN)
-				}
-				return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to find covering payrate: %w", err))
-			}
-			// AfterFind is not reliable for this model — unmarshal manually,
-			// same as every repository read path.
-			if covering.PayrateJSON != "" {
-				covering.Payrate = domain.PayrateConfiguration(covering.PayrateJSON)
-			}
-			if err := s.repriceTimesheetsLinkedToTx(ctx, tx, payrate.ID, &covering); err != nil {
-				return err
-			}
+			return domain.NewValidationErrorWithCode(domain.ErrCodePayrateImmutableLinked,
+				constants.MsgCannotDeletePayrateLinkedTimesheetsVN)
 		}
 
 		if err := tx.WithContext(ctx).Delete(&payrate).Error; err != nil {
@@ -252,6 +231,21 @@ func (s *PayrateTemporalService) CountMutableTimesheetsOnOrAfter(ctx context.Con
 		Count(&count).Error
 	if err != nil {
 		return 0, s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to count mutable timesheets: %w", err))
+	}
+	return count, nil
+}
+
+// CountTimesheetsLinkedToPayrate reports how many timesheets of ANY status
+// reference the config. A config with any linked timesheet is frozen history:
+// editing or deleting it would rewrite what those rows were priced under —
+// the only path forward is creating a new config.
+func (s *PayrateTemporalService) CountTimesheetsLinkedToPayrate(ctx context.Context, projectID, payrateID uint) (int64, error) {
+	var count int64
+	err := s.db.WithContext(ctx).Model(&domain.Timesheet{}).
+		Where("project_id = ? AND payrate_id = ?", projectID, payrateID).
+		Count(&count).Error
+	if err != nil {
+		return 0, s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to count linked timesheets: %w", err))
 	}
 	return count, nil
 }
@@ -325,7 +319,11 @@ func (s *PayrateTemporalService) lockProjectTimelineTx(ctx context.Context, tx *
 }
 
 // ensureCreateAfterLatestTx enforces the append-only timeline: a new config
-// must start strictly after the latest existing one. The structured code lets
+// starts strictly after the latest existing one, with two exceptions that
+// both leave pricing history untouched — backdating to an earlier, unoccupied
+// date over an empty mutable range (nothing exists to re-price), and plain
+// appends. Same-day starts are never allowed: the unique (project,
+// live_from_date) index admits one config per day. The structured code lets
 // API clients branch on the cause; the context names the blocking config.
 func (s *PayrateTemporalService) ensureCreateAfterLatestTx(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate) error {
 	var latest domain.Payrate
@@ -340,10 +338,57 @@ func (s *PayrateTemporalService) ensureCreateAfterLatestTx(ctx context.Context, 
 		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to check latest payrate: %w", err))
 	}
 
-	return domain.NewValidationErrorWithCode(domain.ErrCodePayrateNotLatest,
-		fmt.Sprintf(constants.MsgPayrateCreateNotAfterLatestVN, formatDateString(latest.FromDate))).
-		WithContext("latest_id", latest.ID).
-		WithContext("latest_from_date", formatDateString(latest.FromDate))
+	notLatest := func() error {
+		return domain.NewValidationErrorWithCode(domain.ErrCodePayrateNotLatest,
+			fmt.Sprintf(constants.MsgPayrateCreateNotAfterLatestVN, formatDateString(latest.FromDate))).
+			WithContext("latest_id", latest.ID).
+			WithContext("latest_from_date", formatDateString(latest.FromDate))
+	}
+
+	newDay := toLocalDateOnly(payrate.FromDate)
+	latestDay := toLocalDateOnly(latest.FromDate)
+	if newDay.After(latestDay) {
+		return nil // plain append
+	}
+	if newDay.Equal(latestDay) {
+		return notLatest()
+	}
+
+	// Backdating: only over a range the earlier start would not re-price —
+	// no mutable (unpaid, unapproved) timesheet on or after the new start.
+	mutable, countErr := s.CountMutableTimesheetsOnOrAfter(ctx, payrate.ProjectID, newDay)
+	if countErr != nil {
+		return countErr
+	}
+	if mutable > 0 {
+		return notLatest()
+	}
+
+	// The unique index admits one config per day: an exact collision with any
+	// existing sibling's start date stays a not-latest error.
+	var siblings int64
+	if err := tx.WithContext(ctx).Model(&domain.Payrate{}).
+		Where("project_id = ? AND from_date = ?", payrate.ProjectID, newDay).
+		Count(&siblings).Error; err != nil {
+		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to check sibling payrates: %w", err))
+	}
+	if siblings > 0 {
+		return notLatest()
+	}
+	return nil
+}
+
+// HasPayrateOnDate reports whether any live config starts exactly on the
+// given date. Read-side mirror of the create-path sibling collision guard.
+func (s *PayrateTemporalService) HasPayrateOnDate(ctx context.Context, projectID uint, date time.Time) (bool, error) {
+	var count int64
+	err := s.db.WithContext(ctx).Model(&domain.Payrate{}).
+		Where("project_id = ? AND from_date = ?", projectID, toLocalDateOnly(date)).
+		Count(&count).Error
+	if err != nil {
+		return false, s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to check payrates on date: %w", err))
+	}
+	return count > 0, nil
 }
 
 // ensureRowIsLatestTx rejects edits to a config a newer config has replaced.
@@ -384,33 +429,6 @@ func (s *PayrateTemporalService) ensureLatestConfigTx(ctx context.Context, tx *g
 	}
 	if count > 0 {
 		return domain.NewValidationError(constants.MsgCannotUpdatePayrateConflictingConfigVN)
-	}
-	return nil
-}
-
-// ensureEarliestPaidTimesheetCoveredTx blocks start-date moves that would
-// strand timesheets already linked to this config: immutable rows reference
-// the config they were priced under, so any from_date later than the earliest
-// linked work date would silently reassign them to an older config in
-// date-based resolution. To change rates from a later date, create a new
-// config — the timeline appends instead of splitting.
-func (s *PayrateTemporalService) ensureEarliestPaidTimesheetCoveredTx(ctx context.Context, tx *gorm.DB, payrate *domain.Payrate) error {
-	var earliest struct {
-		MinDate *time.Time
-	}
-	err := tx.WithContext(ctx).
-		Model(&domain.Timesheet{}).
-		Select("MIN(date) as min_date").
-		Where("project_id = ? AND payrate_id = ?", payrate.ProjectID, payrate.ID).
-		Scan(&earliest).Error
-	if err != nil {
-		return s.dbHelper.WrapDatabaseError(fmt.Errorf("failed to find earliest linked timesheet: %w", err))
-	}
-	if earliest.MinDate == nil {
-		return nil
-	}
-	if toLocalDateOnly(payrate.FromDate).After(*earliest.MinDate) {
-		return domain.NewValidationError(constants.MsgCannotUpdatePayratePastLinkedTimesheetVN)
 	}
 	return nil
 }
@@ -513,66 +531,3 @@ func (s *PayrateTemporalService) recalculateMutableTimesheets(ctx context.Contex
 	return nil
 }
 
-// repriceTimesheetsLinkedToTx re-points and re-prices the mutable timesheets
-// linked to a deleted config under its covering config. Same immutability
-// rules as recalculateMutableTimesheets: paid or approved rows keep their
-// price, and a paytype missing from the covering config aborts the
-// transaction rather than silently repricing at zero.
-func (s *PayrateTemporalService) repriceTimesheetsLinkedToTx(ctx context.Context, tx *gorm.DB, fromPayrateID uint, covering *domain.Payrate) error {
-	var project domain.Project
-	if err := tx.WithContext(ctx).Select("id", "is_flexible").First(&project, covering.ProjectID).Error; err != nil {
-		return fmt.Errorf("failed to load project for timesheet re-pricing: %w", err)
-	}
-
-	var timesheets []*domain.Timesheet
-	if err := tx.WithContext(ctx).
-		Where("payrate_id = ? AND payment_status <> ? AND timesheet_status <> ?",
-			fromPayrateID, domain.PaymentStatusPaid, domain.TimesheetStatusApproved,
-		).
-		Find(&timesheets).Error; err != nil {
-		return fmt.Errorf("failed to load linked timesheets: %w", err)
-	}
-	if len(timesheets) == 0 {
-		return nil
-	}
-
-	rateLookup, err := covering.Payrate.RateLookup()
-	if err != nil {
-		return domain.NewValidationError("không thể phân tích cấu hình mức lương: " + err.Error())
-	}
-
-	updatedCount := 0
-	for _, timesheet := range timesheets {
-		rate, err := rateLookup.Get(timesheet.PayType)
-		if err != nil {
-			return domain.NewValidationError(fmt.Sprintf("bảng công %d có loại lương không tồn tại trong cấu hình kế trước", timesheet.ID))
-		}
-
-		amount := domain.ComputeTimesheetAmount(project.IsFlexible, timesheet.HoursWorked, int64(rate))
-
-		result := tx.WithContext(ctx).
-			Model(&domain.Timesheet{}).
-			Where("id = ? AND payment_status <> ? AND timesheet_status <> ?",
-				timesheet.ID,
-				domain.PaymentStatusPaid,
-				domain.TimesheetStatusApproved,
-			).
-			Updates(map[string]any{
-				"payrate_id": covering.ID,
-				"payrate":    int64(rate),
-				"amount":     amount,
-			})
-		if result.Error != nil {
-			return fmt.Errorf("failed to re-price timesheet %d: %w", timesheet.ID, result.Error)
-		}
-		updatedCount += int(result.RowsAffected)
-	}
-
-	observability.GetLogger().Info("re-priced timesheets linked to deleted payrate",
-		"project_id", covering.ProjectID,
-		"covering_payrate_id", covering.ID,
-		"deleted_payrate_id", fromPayrateID,
-		"updated_count", updatedCount,
-	)
-	return nil
-}

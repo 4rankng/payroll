@@ -38,7 +38,6 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	if err != nil {
 		return fail(safeWeeklyPaymentParseError(err))
 	}
-	positionByCCCD, blockedEmployeeCCCDs, positionErrors := buildWeeklyPaymentPositions(parsed.Sheets)
 
 	// 2-3. Shared setup: month parsing, lock, per-date payrate resolver
 	// (PAYR-36: rates resolve by each entry's own work date, never an anchor).
@@ -50,6 +49,14 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	year, month, monthStart := ictx.year, ictx.month, ictx.monthStart
 	loc := monthStart.Location()
 	flatRatesFor := ictx.resolver.ratesFor
+	monthEnd := monthStart.AddDate(0, 1, -1)
+	resolvePosition := weeklyPaymentPositionResolver(ictx.resolver, monthStart, monthEnd)
+
+	// 4. Position per employee — one closure feeds both consumers. Built after
+	// prepareImportContext because resolution checks the positions configured
+	// for the import month via ictx.resolver.
+	positionByCCCD, blockedEmployeeCCCDs, positionErrors := buildWeeklyPaymentPositions(parsed.Sheets, resolvePosition)
+	importErrors := append([]domain.ImportError(nil), positionErrors...)
 
 	// No cross-month check here: weekly-payment entries carry day-of-month
 	// numbers only (WeeklyPaymentEntryData.Day), so a foreign month has no
@@ -57,8 +64,6 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	// (bccCrossMonthError) is enforceable only on full-date templates.
 
 	// 5. STK auto-creation.
-	importErrors := append([]domain.ImportError(nil), positionErrors...)
-
 	stkNameByCCCD, stkRows, stkErrors, failReason := s.autoCreateWeeklyPaymentSTK(
 		ctx, xf, positionByCCCD, blockedEmployeeCCCDs, projectID, uploaderID, year, month, loc)
 	if failReason != "" {
@@ -95,7 +100,8 @@ func (s *BCCImportService) processWeeklyPaymentUpload(
 	// 7. Build timesheet entries for each salary-tier sheet.
 	entries, flexibleEmployeeIDs, totalRows, entryErrors := s.buildWeeklyPaymentEntries(
 		ctx, parsed, year, month, loc, rows, empNames, stkNameByCCCD,
-		blockedEmployeeCCCDs, flatRatesFor, projectID, includeFlexibleEmployees)
+		blockedEmployeeCCCDs, flatRatesFor, projectID, includeFlexibleEmployees,
+		resolvePosition)
 	importErrors = append(importErrors, entryErrors...)
 
 	// 7b. Align assignment start dates with the entries this file proves.
@@ -535,15 +541,19 @@ func (s *BCCImportService) buildWeeklyPaymentEntries(
 	flatRatesFor func(time.Time) map[string]int,
 	projectID uint,
 	includeFlexibleEmployees bool,
+	resolvePosition func(sheet excelparser.WeeklyPaymentSheetData, emp excelparser.WeeklyPaymentEmployeeData) string,
 ) (entries []domainservices.BulkCreateTimesheetEntry, flexibleEmployeeIDs map[uint]struct{}, totalRows int, importErrors []domain.ImportError) {
 	flexibleEmployeeIDs = make(map[uint]struct{})
 	reportedMissingRows := make(map[string]struct{})
 
 	for _, sheet := range parsed.Sheets {
-		sheetPosition := canonicalBCCRateKeySegment(sheet.Position)
-
 		for _, emp := range sheet.Employees {
 			totalRows++
+
+			// The resolved position (configured salary value or sheet name) is
+			// the same one buildWeeklyPaymentPositions used, so assignment
+			// position corrections and rate lookups can never disagree.
+			resolvedPosition := resolvePosition(sheet, emp)
 
 			if isWeeklyBCCEmployeeBlocked(blockedEmployeeCCCDs, emp.EmployeeCode) {
 				continue
@@ -620,7 +630,7 @@ func (s *BCCImportService) buildWeeklyPaymentEntries(
 				}
 
 				shiftRates := buildShiftRatesForShift(flatRatesFor(realDate), entry.ShiftKey)
-				key := weeklyPaymentRateKey(sheetPosition)
+				key := weeklyPaymentRateKey(canonicalBCCRateKeySegment(resolvedPosition))
 				if _, found := shiftRates[key]; !found {
 					name := empNames[assignment.EmployeeID]
 					if name == "" {
@@ -629,7 +639,7 @@ func (s *BCCImportService) buildWeeklyPaymentEntries(
 					importErrors = append(importErrors, domain.ImportError{
 						Employee: name,
 						Reason: fmt.Sprintf("không tìm thấy mức lương cho ca %s, vị trí %s, ngày %s",
-							entry.ShiftKey, sheet.Position, dateStr),
+							entry.ShiftKey, resolvedPosition, dateStr),
 					})
 					continue
 				}

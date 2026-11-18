@@ -70,6 +70,9 @@ func main() {
 	// Phase 3.7: Weekly Payment (Thai Binh Duong format - numeric sheets)
 	runWeeklyPaymentImportTests(client, testData, reporter)
 
+	// Phase 3.8: Weekly Payment POURIN template (full-month variant)
+	runPourinTemplateImportTests(client, testData, reporter)
+
 	// Phase 4: Run Flow 5 - Manual bulk transfer export & import
 	runManualBulkTransferTests(client, testData, reporter)
 

@@ -34,11 +34,12 @@ type WeeklyPaymentShiftRow struct {
 
 // WeeklyPaymentEmployeeData holds parsed data for one employee row.
 type WeeklyPaymentEmployeeData struct {
-	EmployeeCode string // col B = CCCD
-	FullName     string // col C
-	Department   string // col D
-	SalaryTier   int    // col E = "Lương 8h" (informational; not used for rate lookup)
-	Entries      []WeeklyPaymentEntryData
+	EmployeeCode  string // header-detected "Mã nhân viên" column = CCCD
+	FullName      string // header-detected "Họ và tên" column
+	Department    string // header-detected "Bộ phận" column
+	SalaryTier    int    // "Lương 8h" raw integer (informational; not used for rate lookup)
+	SalaryTierRaw string // the tier cell's raw text; PositionFromSalaryValue source
+	Entries       []WeeklyPaymentEntryData
 }
 
 // WeeklyPaymentEntryData holds one (day, shift, hours) entry for an employee.
@@ -118,18 +119,21 @@ func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, year int, month
 		return nil, fmt.Errorf("sheet không có đủ dữ liệu (cần ít nhất 10 hàng)")
 	}
 
-	// Detect header columns (row 8)
-	// A=STT, B=Mã nhân viên, C=Họ Tên, D=Bộ phận, E=Lương 8h
-	hm.empCodeCol = 2    // B
-	hm.fullNameCol = 3   // C
-	hm.departmentCol = 4 // D
-	hm.salaryTierCol = 5 // E
+	// Detect header columns (row 8) by label. Legacy files carry
+	// A=STT, B=Mã nhân viên, C=Họ tên, D=Bộ phận, E=Lương 8h; the POURIN
+	// template inserts D=Ngày đi làm, E=Ngày nghỉ việc, shifting Bộ phận→F and
+	// the salary column→G. First matching column wins; unknown labels keep the
+	// legacy positions (TBD files stay bit-identical).
+	hm.empCodeCol = weeklyPaymentHeaderCol(rows[7], wpHeaderEmpCodeVariants, 2)
+	hm.fullNameCol = weeklyPaymentHeaderCol(rows[7], wpHeaderFullNameVariants, 3)
+	hm.departmentCol = weeklyPaymentHeaderCol(rows[7], wpHeaderDeptVariants, 4)
+	hm.salaryTierCol = weeklyPaymentHeaderCol(rows[7], wpHeaderSalaryVariants, 5)
 
-	// Find first shift column (starts at column F in the template)
+	// Find first shift column (starts right after the salary column)
 	// Row 8 has date values, row 9 has weekday labels, row 10 has shift codes
 	// We scan row 10 to find the first shift code
 	firstShiftCol := 0
-	for colIdx := 5; colIdx < wpMaxColScan; colIdx++ { // Start from column F (index 5)
+	for colIdx := hm.salaryTierCol; colIdx < wpMaxColScan; colIdx++ { // 0-based start: column after salaryTierCol
 		cn, err := excelize.CoordinatesToCellName(colIdx+1, 10) // Row 10
 		if err != nil {
 			break
@@ -146,7 +150,7 @@ func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, year int, month
 	}
 
 	if firstShiftCol == 0 {
-		return nil, fmt.Errorf("không tìm thấy cột mã ca (HC, TCN, NN, TCNN) ở hàng 10")
+		return nil, fmt.Errorf("không tìm thấy cột mã ca (HC, TC, LE, NN, ...) ở hàng 10")
 	}
 	hm.firstShiftCol = firstShiftCol
 
@@ -216,7 +220,13 @@ func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, year int, month
 			}
 
 			if err := validateWeeklyPaymentHeaderDay(year, month, lastColumnDay); err != nil {
-				return nil, fmt.Errorf("cột %s: %w", colName, err)
+				// Partner templates ship the full 1..31 day scaffolding with
+				// row-10 codes even for shorter months; an impossible day is
+				// only a defect when the column actually carries data.
+				if weeklyPaymentColumnHasData(f, sheet, colIdx+1) {
+					return nil, fmt.Errorf("cột %s: %w", colName, err)
+				}
+				continue
 			}
 			hm.shiftCols[colIdx+1] = val
 			hm.dateColumns[colIdx+1] = lastColumnDay
@@ -233,6 +243,19 @@ func buildWeeklyPaymentHeaderMap(f *excelize.File, sheet string, year int, month
 	}
 
 	return hm, nil
+}
+
+// weeklyPaymentHeaderCol returns the 1-based column of the first row-8 cell
+// containing any of the label variants, or fallbackCol when none matches
+// (legacy layout). GetRows may omit trailing blank cells, which the left-to-
+// right scan simply never sees.
+func weeklyPaymentHeaderCol(row []string, variants []string, fallbackCol int) int {
+	for idx, cell := range row {
+		if weeklyPaymentHeaderMatchesFold(strings.TrimSpace(cell), variants...) {
+			return idx + 1
+		}
+	}
+	return fallbackCol
 }
 
 // weeklyPaymentHeaderDay returns the explicitly displayed day in row 8. A
@@ -261,6 +284,27 @@ func weeklyPaymentHeaderDay(f *excelize.File, sheet string, col int) (int, bool,
 		}
 	}
 	return 0, false, fmt.Errorf("giá trị %q không phải ngày", value)
+}
+
+// weeklyPaymentColumnHasData reports whether any employee-row cell in the
+// column carries a value. An impossible day over an empty column is template
+// scaffolding (skip); over a populated column it is mis-dated real data
+// (loud error).
+func weeklyPaymentColumnHasData(f *excelize.File, sheet string, col int) bool {
+	for row := 11; row < wpMaxRowScan; row++ {
+		cn, err := excelize.CoordinatesToCellName(col, row)
+		if err != nil {
+			return false
+		}
+		val, err := f.GetCellValue(sheet, cn)
+		if err != nil {
+			continue
+		}
+		if strings.TrimSpace(val) != "" {
+			return true
+		}
+	}
+	return false
 }
 
 func validateWeeklyPaymentHeaderDay(year int, month time.Month, day int) error {
@@ -302,19 +346,29 @@ func parseWeeklyPaymentEmployees(f *excelize.File, sheet string, hm *weeklyPayme
 			break
 		}
 
-		// Read department and salary tier
+		// Read department and salary tier. The tier cell is display-formatted
+		// ("800.000" under #,##0), so read the raw value: POURIN renames its
+		// payrate positions to exactly this integer, and SalaryTier mirrors
+		// it. Integer only — fractional or non-numeric cells yield 0 and no
+		// position candidate; never float64.
 		department := bccCell(f, sheet, hm.departmentCol, row)
-		salaryTierStr := bccCell(f, sheet, hm.salaryTierCol, row)
 		salaryTier := 0
-		if salaryTierStr != "" {
-			salaryTier, _ = strconv.Atoi(strings.TrimSpace(salaryTierStr))
+		salaryTierRaw := ""
+		if tierCN, cnErr := excelize.CoordinatesToCellName(hm.salaryTierCol, row); cnErr == nil {
+			if raw, rawErr := f.GetCellValue(sheet, tierCN, excelize.Options{RawCellValue: true}); rawErr == nil {
+				salaryTierRaw = strings.TrimSpace(raw)
+				if n, parseErr := strconv.ParseInt(salaryTierRaw, 10, 64); parseErr == nil {
+					salaryTier = int(n)
+				}
+			}
 		}
 
 		emp := WeeklyPaymentEmployeeData{
-			EmployeeCode: empCode,
-			FullName:     fullName,
-			Department:   department,
-			SalaryTier:   salaryTier,
+			EmployeeCode:  empCode,
+			FullName:      fullName,
+			Department:    department,
+			SalaryTier:    salaryTier,
+			SalaryTierRaw: salaryTierRaw,
 		}
 
 		// Parse hour entries from shift columns
@@ -366,16 +420,53 @@ func parseWeeklyPaymentEmployees(f *excelize.File, sheet string, hm *weeklyPayme
 	return employees
 }
 
-// isShiftCode checks if a value is a known shift code.
+// Weekly-payment row-8 identity label variants. Matching folds case but keeps
+// diacritics, like the rest of the family's label idiom: the POURIN template
+// writes the salary column as "Vị trí lương/8h" (lower-case l), the 189 file
+// writes "Lương 8h" — both must match the same variant list.
+var (
+	wpHeaderEmpCodeVariants  = []string{"mã nhân viên", "ma nhan vien"}
+	wpHeaderFullNameVariants = []string{"họ và tên", "ho va ten"}
+	wpHeaderDeptVariants     = []string{"bộ phận", "bo phan"}
+	wpHeaderSalaryVariants   = []string{"lương 8h", "luong 8h", "lương/8h", "luong/8h"}
+)
+
+// weeklyPaymentHeaderMatchesFold reports whether a row-8 header cell contains
+// any of the given variants, case-folded. Deliberately not headerContainsAny:
+// that idiom is case-sensitive and would miss "lương/8h" inside
+// "Vị trí lương/8h".
+func weeklyPaymentHeaderMatchesFold(val string, variants ...string) bool {
+	lower := strings.ToLower(val)
+	for _, v := range variants {
+		if strings.Contains(lower, v) {
+			return true
+		}
+	}
+	return false
+}
+
+// isShiftCode checks if a value is a known shift code. TC/LE cover the
+// compound spellings too: TCN, TCNN, "TC NN", "TC LE".
 func isShiftCode(val string) bool {
 	val = strings.ToUpper(strings.TrimSpace(val))
-	shiftCodes := []string{"HC", "TCN", "NN", "TCNN"}
+	shiftCodes := []string{"HC", "TC", "LE", "NN"}
 	for _, code := range shiftCodes {
 		if strings.Contains(val, code) {
 			return true
 		}
 	}
 	return false
+}
+
+// PositionFromSalaryValue renders the raw "Lương 8h" integer as the position
+// name: 800000 → "800000". Returns "" when the cell is absent or not a whole
+// integer (no float rounding ever applies).
+func PositionFromSalaryValue(rawCell string) string {
+	n, err := strconv.ParseInt(strings.TrimSpace(rawCell), 10, 64)
+	if err != nil {
+		return ""
+	}
+	return strconv.FormatInt(n, 10)
 }
 
 // isStopColumn checks if a column value indicates a stop column (summary, etc.)

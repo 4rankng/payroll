@@ -97,33 +97,87 @@ func TestPayrateTemporalServiceUsesLatestPaidTimesheetWorkDateForEffectiveDate(t
 	}))
 }
 
-func TestPayrateTemporalServiceRejectsCreateOnOrBeforeLatestConfigDate(t *testing.T) {
+// Create appends strictly after the latest config — unless the earlier start
+// touches no mutable timesheet. POURIN: one config from 18/11, zero
+// timesheets in the project; the renamed config must be backdatable to 01/11.
+func TestPayrateTemporalServiceAllowsBackdatedCreateOverEmptyTimeline(t *testing.T) {
 	db := newPayrateTemporalTestDB(t)
 	ctx := context.Background()
 
 	const projectID uint = 49
 	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
-	storedDate := time.Date(2026, 8, 22, 0, 0, 0, 0, time.Local)
-	requestDate := time.Date(2026, 8, 22, 0, 0, 0, 0, time.UTC) // same calendar date, UTC clock
-	repository := &payrateTemporalRepositoryStub{}
-	service := NewPayrateTemporalService(db, repository)
+	service := NewPayrateTemporalService(db, &payrateTemporalRepositoryStub{})
 
 	seedPayrateTemporalPayrate(t, db, &domain.Payrate{
 		ID: 3, ProjectID: projectID,
-		FromDate: storedDate,
+		FromDate: time.Date(2026, 8, 18, 0, 0, 0, 0, time.Local),
 		Payrate:  domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`),
 	})
 
+	require.NoError(t, service.CreateEffectiveDatedPayrate(ctx, &domain.Payrate{
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":800000}}}`),
+	}))
+}
+
+// A mutable timesheet on or after the requested start would be re-priced under
+// the new config, rewriting its pricing history — the create stays blocked.
+func TestPayrateTemporalServiceRejectsBackdatedCreateOverMutableTimesheets(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+
+	const projectID uint = 57
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+	service := NewPayrateTemporalService(db, &payrateTemporalRepositoryStub{})
+
+	seedPayrateTemporalPayrate(t, db, &domain.Payrate{
+		ID: 4, ProjectID: projectID,
+		FromDate: time.Date(2026, 8, 18, 0, 0, 0, 0, time.Local),
+		Payrate:  domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`),
+	})
+	pending := newPayrateTemporalTimesheet(projectID, time.Date(2026, 8, 15, 0, 0, 0, 0, time.Local),
+		domain.TimesheetStatusPendingApproval, domain.PaymentStatusPending)
+	pending.PayrateID = 4
+	seedPayrateTemporalTimesheet(t, db, pending)
+
 	err := service.CreateEffectiveDatedPayrate(ctx, &domain.Payrate{
 		ProjectID: projectID,
-		FromDate:  requestDate,
-		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`),
+		FromDate:  time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":800000}}}`),
 	})
-
 	require.Error(t, err)
 	var domainErr *domain.DomainError
 	require.ErrorAs(t, err, &domainErr)
 	require.Equal(t, domain.ErrCodePayrateNotLatest, domainErr.Code)
+}
+
+// Paid rows on or after the requested start do not lift the create gate (they
+// are not mutable), but the paid floor still rejects the earlier start.
+func TestPayrateTemporalServicePaidFloorStillBlocksBackdatedCreate(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+
+	const projectID uint = 58
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+	service := NewPayrateTemporalService(db, &payrateTemporalRepositoryStub{})
+
+	seedPayrateTemporalPayrate(t, db, &domain.Payrate{
+		ID: 5, ProjectID: projectID,
+		FromDate: time.Date(2026, 8, 18, 0, 0, 0, 0, time.Local),
+		Payrate:  domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`),
+	})
+	paid := newPayrateTemporalTimesheet(projectID, time.Date(2026, 8, 15, 0, 0, 0, 0, time.Local),
+		domain.TimesheetStatusApproved, domain.PaymentStatusPaid)
+	paid.PayrateID = 5
+	seedPayrateTemporalTimesheet(t, db, paid)
+
+	err := service.CreateEffectiveDatedPayrate(ctx, &domain.Payrate{
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":800000}}}`),
+	})
+	require.Error(t, err, "paid floor binds even when no mutable timesheet exists")
 }
 
 func TestPayrateTemporalServiceUsesConfiguredTotalForFlexibleProjects(t *testing.T) {
@@ -446,43 +500,102 @@ func TestPayrateTemporalServiceLatestConfigWithStaleEndDateStaysEditable(t *test
 	require.NoError(t, service.UpdateEffectiveDatedPayrate(ctx, lone))
 }
 
-func TestPayrateTemporalServiceDeleteHealsTimelineAndRepricesMutableLinks(t *testing.T) {
+// A config with ANY linked timesheet is frozen history — mutable links block
+// the delete exactly like paid ones; the path forward is a new config.
+func TestPayrateTemporalServiceDeleteBlockedByAnyLinkedTimesheet(t *testing.T) {
 	db := newPayrateTemporalTestDB(t)
 	ctx := context.Background()
 	service := NewPayrateTemporalService(db, nil)
 
 	const projectID uint = 55
 	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
-	predecessor := &domain.Payrate{
-		ID:        19,
-		ProjectID: projectID,
-		FromDate:  time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
-		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":100000}}}`),
-	}
 	target := &domain.Payrate{
 		ID:        20,
 		ProjectID: projectID,
 		FromDate:  time.Date(2026, 8, 10, 0, 0, 0, 0, time.Local),
 		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`),
 	}
-	seedPayrateTemporalPayrate(t, db, predecessor)
 	seedPayrateTemporalPayrate(t, db, target)
 
 	pending := newPayrateTemporalTimesheet(projectID, time.Date(2026, 8, 11, 0, 0, 0, 0, time.Local), domain.TimesheetStatusPendingApproval, domain.PaymentStatusPending)
 	pending.PayrateID = target.ID
 	seedPayrateTemporalTimesheet(t, db, pending)
 
+	_, err := service.DeleteEffectiveDatedPayrate(ctx, target.ID)
+	require.Error(t, err)
+	var domainErr *domain.DomainError
+	require.ErrorAs(t, err, &domainErr)
+	require.Equal(t, domain.ErrCodePayrateImmutableLinked, domainErr.Code)
+
+	var count int64
+	require.NoError(t, db.Model(&domain.Payrate{}).Where("id = ?", target.ID).Count(&count).Error)
+	require.Equal(t, int64(1), count, "linked timesheets hard-block the delete")
+
+	// The linked row keeps its config and price untouched.
+	assertTimesheetRateOnConfig(t, db, pending.ID, target.ID, 100000)
+}
+
+// A config without linked timesheets deletes freely.
+func TestPayrateTemporalServiceDeletesUnlinkedConfig(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+	service := NewPayrateTemporalService(db, nil)
+
+	const projectID uint = 59
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+	target := &domain.Payrate{
+		ID:        22,
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 10, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`),
+	}
+	seedPayrateTemporalPayrate(t, db, target)
+
 	deleted, err := service.DeleteEffectiveDatedPayrate(ctx, target.ID)
 	require.NoError(t, err)
 	require.Equal(t, target.ID, deleted.ID)
 
-	// Soft-deleted...
 	var count int64
 	require.NoError(t, db.Model(&domain.Payrate{}).Where("id = ?", target.ID).Count(&count).Error)
 	require.Equal(t, int64(0), count)
+}
 
-	// ...and the linked mutable row was re-priced under the covering config.
-	assertTimesheetRateOnConfig(t, db, pending.ID, predecessor.ID, 100000)
+// A config with any linked timesheet refuses rate edits too: the only path
+// forward is creating a new config.
+func TestPayrateTemporalServiceRejectsUpdateWhenTimesheetsLinked(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+	service := NewPayrateTemporalService(db, nil)
+
+	const projectID uint = 60
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+	target := &domain.Payrate{
+		ID:        23,
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 1, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":100000}}}`),
+	}
+	seedPayrateTemporalPayrate(t, db, target)
+
+	pending := newPayrateTemporalTimesheet(projectID, time.Date(2026, 8, 2, 0, 0, 0, 0, time.Local), domain.TimesheetStatusPendingApproval, domain.PaymentStatusPending)
+	pending.PayrateID = target.ID
+	seedPayrateTemporalTimesheet(t, db, pending)
+
+	target.Payrate = domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`)
+	err := service.UpdateEffectiveDatedPayrate(ctx, target)
+	require.Error(t, err)
+	var domainErr *domain.DomainError
+	require.ErrorAs(t, err, &domainErr)
+	require.Equal(t, domain.ErrCodePayrateImmutableLinked, domainErr.Code)
+
+	var persisted domain.Payrate
+	require.NoError(t, db.First(&persisted, target.ID).Error)
+	require.Contains(t, string(persisted.PayrateJSON), "100000", "rates must stay untouched")
+
+	// Unlinking the timesheet restores editability.
+	require.NoError(t, db.Exec("UPDATE timesheets SET deleted_at = ? WHERE id = ?", time.Now(), pending.ID).Error)
+	target.Payrate = domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`)
+	require.NoError(t, service.UpdateEffectiveDatedPayrate(ctx, target))
 }
 
 func TestPayrateTemporalServiceDeleteBlockedByApprovedTimesheets(t *testing.T) {
@@ -679,4 +792,67 @@ func assertTimesheetRateUpdated(t *testing.T, db *gorm.DB, timesheetID, payrateI
 	require.Equal(t, payrateID, timesheet.PayrateID)
 	require.Equal(t, int64(250000), timesheet.PayRate)
 	require.Equal(t, int64(2000000), timesheet.Amount)
+}
+
+// A same-day create stays rejected even over an empty timeline: the unique
+// (project, from_date) index admits exactly one config per day.
+func TestPayrateTemporalServiceRejectsSameDayCreateEvenWhenEmpty(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+
+	const projectID uint = 61
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+	service := NewPayrateTemporalService(db, &payrateTemporalRepositoryStub{})
+
+	seedPayrateTemporalPayrate(t, db, &domain.Payrate{
+		ID: 6, ProjectID: projectID,
+		FromDate: time.Date(2026, 8, 18, 0, 0, 0, 0, time.Local),
+		Payrate:  domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`),
+	})
+
+	err := service.CreateEffectiveDatedPayrate(ctx, &domain.Payrate{
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 18, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":800000}}}`),
+	})
+	require.Error(t, err)
+	var domainErr *domain.DomainError
+	require.ErrorAs(t, err, &domainErr)
+	require.Equal(t, domain.ErrCodePayrateNotLatest, domainErr.Code)
+}
+
+// Backdating onto an occupied sibling start date stays rejected even when the
+// range is empty: the unique index admits one config per day.
+func TestPayrateTemporalServiceRejectsBackdatedCreateOntoOccupiedDate(t *testing.T) {
+	db := newPayrateTemporalTestDB(t)
+	ctx := context.Background()
+
+	const projectID uint = 62
+	require.NoError(t, db.Exec("INSERT INTO projects (id, is_flexible) VALUES (?, ?)", projectID, false).Error)
+	service := NewPayrateTemporalService(db, &payrateTemporalRepositoryStub{})
+
+	for id, day := range map[uint]int{7: 1, 8: 5, 9: 10} {
+		seedPayrateTemporalPayrate(t, db, &domain.Payrate{
+			ID: id, ProjectID: projectID,
+			FromDate: time.Date(2026, 8, day, 0, 0, 0, 0, time.Local),
+			Payrate:  domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":250000}}}`),
+		})
+	}
+
+	err := service.CreateEffectiveDatedPayrate(ctx, &domain.Payrate{
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 5, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":800000}}}`),
+	})
+	require.Error(t, err)
+	var domainErr *domain.DomainError
+	require.ErrorAs(t, err, &domainErr)
+	require.Equal(t, domain.ErrCodePayrateNotLatest, domainErr.Code)
+
+	// An unoccupied date strictly between siblings backdates freely.
+	require.NoError(t, service.CreateEffectiveDatedPayrate(ctx, &domain.Payrate{
+		ProjectID: projectID,
+		FromDate:  time.Date(2026, 8, 3, 0, 0, 0, 0, time.Local),
+		Payrate:   domain.PayrateConfiguration(`{"Công nhân":{"ngày thường":{"08:00-18:00":800000}}}`),
+	}))
 }

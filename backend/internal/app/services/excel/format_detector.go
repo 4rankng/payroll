@@ -143,7 +143,7 @@ func hasWeeklyPaymentHeader(f *excelize.File, sheet string) bool {
 		if headerContainsAny(val, "Bộ phận", "Bo phan") {
 			hasBoPhan = true
 		}
-		if headerContainsAny(val, "Lương 8h", "Luong 8h") {
+		if weeklyPaymentHeaderMatchesFold(val, wpHeaderSalaryVariants...) {
 			hasLuong8h = true
 		}
 	}
@@ -152,7 +152,8 @@ func hasWeeklyPaymentHeader(f *excelize.File, sheet string) bool {
 }
 
 // hasWeeklyPaymentShiftRow checks if row 10 contains any of the shift codes:
-// HC, TCN, NN, TCNN (case-insensitive substring match)
+// HC, TC, LE, NN (case-insensitive substring match; TC/LE also cover TCN,
+// TCNN, "TC NN", "TC LE").
 func hasWeeklyPaymentShiftRow(f *excelize.File, sheet string) bool {
 	rows, err := f.GetRows(sheet)
 	if err != nil || len(rows) < 10 {
@@ -161,7 +162,7 @@ func hasWeeklyPaymentShiftRow(f *excelize.File, sheet string) bool {
 
 	// Row 10 is index 9
 	row := rows[9]
-	shiftCodes := []string{"HC", "TCN", "NN", "TCNN"}
+	shiftCodes := []string{"HC", "TC", "LE", "NN"}
 
 	for _, cell := range row {
 		val := strings.ToUpper(strings.TrimSpace(cell))

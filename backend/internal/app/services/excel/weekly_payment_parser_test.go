@@ -19,6 +19,11 @@ func TestIsShiftCode(t *testing.T) {
 		{"TCN", "TCN", true},
 		{"NN", "NN", true},
 		{"TCNN", "TCNN", true},
+		{"TC", "TC", true},
+		{"compound TC NN", "TC NN", true},
+		{"LE", "LE", true},
+		{"compound TC LE", "TC LE", true},
+		{"lowercase tc nn", "tc nn", true},
 		{"lowercase", "hc", true},
 		{"with space", " HC ", true},
 		{"non-shift", "ABC", false},
@@ -311,6 +316,7 @@ func TestParseWeeklyPaymentFileRejectsDayOutsideMonth(t *testing.T) {
 	setCellValue(f, sheetName, "F8", "32")
 	setCellValue(f, sheetName, "F9", "T2")
 	setCellValue(f, sheetName, "F10", "HC")
+	setCellValue(f, sheetName, "F11", "8") // real data on an impossible day
 
 	_, err := ParseWeeklyPaymentFile(f, []string{sheetName}, "2026-08")
 	if err == nil || !strings.Contains(err.Error(), "nằm ngoài kỳ nhập") {
@@ -318,9 +324,206 @@ func TestParseWeeklyPaymentFileRejectsDayOutsideMonth(t *testing.T) {
 	}
 }
 
+// Templates ship the full 1..31 day scaffolding with row-10 codes even for
+// shorter months: an impossible day over an EMPTY column is scaffolding and
+// must be skipped, not fail the sheet (POURIN uploads THÁNG 11/2026 with day
+// 31 columns whose data cells are blank).
+func TestParseWeeklyPaymentFileSkipsEmptyDayOutsideMonthColumns(t *testing.T) {
+	f := excelize.NewFile()
+	const sheetName = "Lương 520"
+	if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+		t.Fatalf("rename initial sheet: %v", err)
+	}
+
+	setCellValue(f, sheetName, "A8", "STT")
+	setCellValue(f, sheetName, "B8", "Mã nhân viên")
+	setCellValue(f, sheetName, "C8", "Họ và tên")
+	setCellValue(f, sheetName, "D8", "Bộ phận")
+	setCellValue(f, sheetName, "E8", "Lương 8h")
+	setCellValue(f, sheetName, "F8", "30")
+	setCellValue(f, sheetName, "H8", "31")
+	setCellValue(f, sheetName, "F9", "T5")
+	setCellValue(f, sheetName, "H9", "T6")
+	setCellValue(f, sheetName, "F10", "HC")
+	setCellValue(f, sheetName, "G10", "TC")
+	setCellValue(f, sheetName, "H10", "HC")
+	setCellValue(f, sheetName, "I10", "TC")
+	setCellValue(f, sheetName, "B11", "012345678901")
+	setCellValue(f, sheetName, "C11", "Nguyễn Văn Kiên")
+	setCellValue(f, sheetName, "F11", "8")
+	setCellValue(f, sheetName, "G11", "2")
+
+	parsed, err := ParseWeeklyPaymentFile(f, []string{sheetName}, "2026-11")
+	if err != nil {
+		t.Fatalf("ParseWeeklyPaymentFile() error = %v", err)
+	}
+	entries := parsed.Sheets[0].Employees[0].Entries
+	if len(entries) != 2 {
+		t.Fatalf("entry count = %d, want 2 (day-31 columns skipped)", len(entries))
+	}
+	if entries[0].Day != 30 || entries[1].Day != 30 {
+		t.Fatalf("days = %d,%d, want both on day 30", entries[0].Day, entries[1].Day)
+	}
+}
+
 // setCellValue is a helper for test cell value setting.
 func setCellValue(f *excelize.File, sheet, cell, value string) {
 	if err := f.SetCellValue(sheet, cell, value); err != nil {
 		panic(err)
+	}
+}
+
+// TestPositionFromSalaryValue pins the integer-only rendering of the raw
+// "Lương 8h" cell: whole numbers become the position name, anything else
+// (blank, fractional, text) yields no candidate — no float rounding ever.
+func TestPositionFromSalaryValue(t *testing.T) {
+	tests := []struct {
+		name    string
+		rawCell string
+		want    string
+	}{
+		{"integer", "800000", "800000"},
+		{"padded", " 900000 ", "900000"},
+		{"empty", "", ""},
+		{"fractional", "800.5", ""},
+		{"text", "abc", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := PositionFromSalaryValue(tt.rawCell); got != tt.want {
+				t.Errorf("PositionFromSalaryValue(%q) = %q, want %q", tt.rawCell, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestParseWeeklyPaymentFileMonthlyLayout pins the POURIN template layout:
+// identity columns shifted right by "Ngày đi làm"/"Ngày nghỉ việc" (D/E) with
+// Bộ phận at F and the salary header spelled "Vị trí lương/8h" (slash form,
+// lower-case) at G, and the TC/TC NN/LE shift vocabulary — no day sub-column
+// dropped. The tier cell is stored numeric under the #,##0 display format
+// ("800.000"); the raw integer 800000 must win.
+func TestParseWeeklyPaymentFileMonthlyLayoutShiftedIdentityColumns(t *testing.T) {
+	f := excelize.NewFile()
+	const sheetName = "Chấm công"
+	if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+		t.Fatalf("rename initial sheet: %v", err)
+	}
+
+	setCellValue(f, sheetName, "A8", "STT")
+	setCellValue(f, sheetName, "B8", "Mã nhân viên")
+	setCellValue(f, sheetName, "C8", "Họ và tên")
+	setCellValue(f, sheetName, "D8", "Ngày đi làm")
+	setCellValue(f, sheetName, "E8", "Ngày nghỉ việc")
+	setCellValue(f, sheetName, "F8", "Bộ phận")
+	setCellValue(f, sheetName, "G8", "Vị trí lương/8h")
+	setCellValue(f, sheetName, "H8", "1")
+	setCellValue(f, sheetName, "I8", "2")
+	setCellValue(f, sheetName, "J8", "3")
+	setCellValue(f, sheetName, "K8", "4")
+	setCellValue(f, sheetName, "H10", "HC")
+	setCellValue(f, sheetName, "I10", "TC")
+	setCellValue(f, sheetName, "J10", "TC NN")
+	setCellValue(f, sheetName, "K10", "LE")
+
+	setCellValue(f, sheetName, "B11", "002093000710")
+	setCellValue(f, sheetName, "C11", "Lý Văn Thanh")
+	setCellValue(f, sheetName, "F11", "Phân xưởng Trang trí")
+	if err := f.SetCellValue(sheetName, "G11", 800000); err != nil {
+		t.Fatalf("set tier cell: %v", err)
+	}
+	numFmt := "#,##0"
+	styleID, err := f.NewStyle(&excelize.Style{CustomNumFmt: &numFmt})
+	if err != nil {
+		t.Fatalf("new style: %v", err)
+	}
+	if err := f.SetCellStyle(sheetName, "G11", "G11", styleID); err != nil {
+		t.Fatalf("set tier format: %v", err)
+	}
+	setCellValue(f, sheetName, "H11", "8")
+	setCellValue(f, sheetName, "I11", "2")
+	setCellValue(f, sheetName, "J11", "4")
+	setCellValue(f, sheetName, "K11", "6")
+
+	parsed, err := ParseWeeklyPaymentFile(f, []string{sheetName}, "2026-11")
+	if err != nil {
+		t.Fatalf("ParseWeeklyPaymentFile() error = %v", err)
+	}
+	if len(parsed.Sheets) != 1 {
+		t.Fatalf("expected one sheet, got %d", len(parsed.Sheets))
+	}
+	shiftCols := parsed.Sheets[0].ShiftRows.ByCol
+	wantShiftCols := map[int]string{8: "HC", 9: "TC", 10: "TC NN", 11: "LE"}
+	if len(shiftCols) != len(wantShiftCols) {
+		t.Fatalf("shift columns = %#v, want %#v", shiftCols, wantShiftCols)
+	}
+	for col, code := range wantShiftCols {
+		if shiftCols[col] != code {
+			t.Errorf("shift column %d = %q, want %q", col, shiftCols[col], code)
+		}
+	}
+
+	employees := parsed.Sheets[0].Employees
+	if len(employees) != 1 {
+		t.Fatalf("employee count = %d, want 1", len(employees))
+	}
+	emp := employees[0]
+	if emp.Department != "Phân xưởng Trang trí" {
+		t.Errorf("department = %q, want the F-column value", emp.Department)
+	}
+	if emp.SalaryTierRaw != "800000" {
+		t.Errorf("salary tier raw = %q, want the raw integer", emp.SalaryTierRaw)
+	}
+	if emp.SalaryTier != 800000 {
+		t.Errorf("salary tier = %d, want 800000", emp.SalaryTier)
+	}
+	wantEntries := []WeeklyPaymentEntryData{
+		{Day: 1, ShiftKey: "HC", Hours: 8},
+		{Day: 2, ShiftKey: "TC", Hours: 2},
+		{Day: 3, ShiftKey: "TC NN", Hours: 4},
+		{Day: 4, ShiftKey: "LE", Hours: 6},
+	}
+	if len(emp.Entries) != len(wantEntries) {
+		t.Fatalf("entries = %#v, want %d", emp.Entries, len(wantEntries))
+	}
+	for i, want := range wantEntries {
+		got := emp.Entries[i]
+		if got.Day != want.Day || got.ShiftKey != want.ShiftKey || got.Hours != want.Hours {
+			t.Errorf("entry %d = {d%d %s %v}, want {d%d %s %v}", i, got.Day, got.ShiftKey, got.Hours, want.Day, want.ShiftKey, want.Hours)
+		}
+	}
+}
+
+// The POURIN template spells the salary header "Vị trí lương/8h" (slash form,
+// lower-case) — the workbook must still classify as the weekly-payment
+// family instead of falling out of the registry as an unknown template.
+func TestDetectFormatWeeklyPaymentPourinSlashSalaryHeader(t *testing.T) {
+	f := excelize.NewFile()
+	const sheetName = "Chấm công"
+	if err := f.SetSheetName("Sheet1", sheetName); err != nil {
+		t.Fatalf("rename initial sheet: %v", err)
+	}
+
+	setCellValue(f, sheetName, "A8", "STT")
+	setCellValue(f, sheetName, "B8", "Mã nhân viên")
+	setCellValue(f, sheetName, "C8", "Họ và tên")
+	setCellValue(f, sheetName, "D8", "Ngày đi làm")
+	setCellValue(f, sheetName, "E8", "Ngày nghỉ việc")
+	setCellValue(f, sheetName, "F8", "Bộ phận")
+	setCellValue(f, sheetName, "G8", "Vị trí lương/8h")
+	setCellValue(f, sheetName, "H8", "1")
+	setCellValue(f, sheetName, "I8", "2")
+	setCellValue(f, sheetName, "H10", "HC")
+	setCellValue(f, sheetName, "I10", "TC")
+
+	result, err := DetectFormat(f)
+	if err != nil {
+		t.Fatalf("DetectFormat() error = %v", err)
+	}
+	if result.Format != FormatWeeklyPayment {
+		t.Fatalf("DetectFormat() = %v, want %v", result.Format, FormatWeeklyPayment)
+	}
+	if len(result.WeeklyPaymentSheets) != 1 || result.WeeklyPaymentSheets[0] != sheetName {
+		t.Errorf("WeeklyPaymentSheets = %v, want [%s]", result.WeeklyPaymentSheets, sheetName)
 	}
 }

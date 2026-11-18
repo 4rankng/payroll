@@ -365,6 +365,15 @@ func (h *PayrateHandler) applyTemporalConstraints(
 		if existing == nil {
 			return
 		}
+		// Any linked timesheet freezes the config (mirrors the save guard in
+		// UpdateEffectiveDatedPayrate): no edit of rates or start date — the
+		// only path forward is creating a new config.
+		if linked, linkedErr := h.payrateService.CountTimesheetsLinkedToPayrate(c.Request.Context(), projectID, existing.ID); linkedErr == nil && linked > 0 {
+			fromField.Status = FieldError
+			fromField.Message = constants.MsgCannotUpdatePayrateLinkedTimesheetsVN
+			fromField.Hint = "Hãy tạo cấu hình mức lương mới thay vì sửa cấu hình này."
+			return
+		}
 		hasSibling, siblingErr := h.payrateService.HasSiblingPayrateOnOrAfter(c.Request.Context(), projectID, existing.ID, *fromDate)
 		if siblingErr == nil && hasSibling {
 			fromField.Status = FieldError
@@ -374,14 +383,33 @@ func (h *PayrateHandler) applyTemporalConstraints(
 		return
 	}
 
-	// Create: the timeline is append-only — the new config starts strictly
-	// after the latest existing one; correcting the present is an update.
+	// Create: append-only — the new config starts strictly after the latest
+	// existing one; correcting the present is an update. One relaxation,
+	// mirrored from ensureCreateAfterLatestTx: backdating to a strictly
+	// earlier, unoccupied date is allowed when no mutable timesheet exists on
+	// or after the requested start, because nothing exists to re-price.
+	// Same-day and occupied dates stay rejected (unique index: one config per
+	// day).
 	latest, latestErr := h.payrateService.GetLatestPayrateByProject(c.Request.Context(), projectID)
 	if latestErr != nil || latest == nil {
 		return
 	}
 	latestDay := timeutil.StartOfDay(latest.FromDate)
-	if !timeutil.StartOfDay(*fromDate).After(latestDay) {
+	startDay := timeutil.StartOfDay(*fromDate)
+	blocked := true
+	switch {
+	case startDay.After(latestDay):
+		blocked = false
+	case startDay.Equal(latestDay):
+		blocked = true
+	default:
+		mutable, cntErr := h.payrateService.CountMutableTimesheetsOnOrAfter(c.Request.Context(), projectID, *fromDate)
+		if cntErr == nil && mutable == 0 {
+			occupied, occErr := h.payrateService.HasPayrateOnDate(c.Request.Context(), projectID, *fromDate)
+			blocked = occErr != nil || occupied
+		}
+	}
+	if blocked {
 		latestStr := latestDay.Format(timeutil.DateFormat)
 		nextStr := latestDay.AddDate(0, 0, 1).Format(timeutil.DateFormat)
 		fromField.Status = FieldError

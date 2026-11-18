@@ -171,3 +171,15 @@ func (s *PayrateService) HasSiblingPayrateOnOrAfter(ctx context.Context, project
 func (s *PayrateService) CountMutableTimesheetsOnOrAfter(ctx context.Context, projectID uint, fromDate time.Time) (int64, error) {
 	return s.TemporalService.CountMutableTimesheetsOnOrAfter(ctx, projectID, fromDate)
 }
+
+// CountTimesheetsLinkedToPayrate counts the timesheets of any status that
+// reference a config: any link freezes it against edit and delete.
+func (s *PayrateService) CountTimesheetsLinkedToPayrate(ctx context.Context, projectID, payrateID uint) (int64, error) {
+	return s.TemporalService.CountTimesheetsLinkedToPayrate(ctx, projectID, payrateID)
+}
+
+// HasPayrateOnDate reports whether any live config starts exactly on the
+// given date (unique-index collision guard for backdated creates).
+func (s *PayrateService) HasPayrateOnDate(ctx context.Context, projectID uint, date time.Time) (bool, error) {
+	return s.TemporalService.HasPayrateOnDate(ctx, projectID, date)
+}
