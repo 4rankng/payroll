@@ -102,7 +102,7 @@ func findWeeklyBlockLayout(f *excelize.File, sheet string) (weeklyBlockLayout, e
 		}
 
 		anchors := make(map[int]time.Time)
-		for col := nameCol + 1; col <= weeklyBlockScanMaxCol; col++ {
+		for col := nameCol + 1; col <= wbccMaxColScan; col++ {
 			cn, err := excelize.CoordinatesToCellName(col, headerRow)
 			if err != nil {
 				break
@@ -118,7 +118,7 @@ func findWeeklyBlockLayout(f *excelize.File, sheet string) (weeklyBlockLayout, e
 		if len(anchors) < 3 {
 			continue
 		}
-		firstAnchor, lastAnchor := weeklyBlockScanMaxCol, 0
+		firstAnchor, lastAnchor := wbccMaxColScan, 0
 		for col := range anchors {
 			if col < firstAnchor {
 				firstAnchor = col
@@ -129,7 +129,7 @@ func findWeeklyBlockLayout(f *excelize.File, sheet string) (weeklyBlockLayout, e
 		}
 
 		stopCol := 0
-		for col := lastAnchor + 1; col <= weeklyBlockScanMaxCol; col++ {
+		for col := lastAnchor + 1; col <= wbccMaxColScan; col++ {
 			if strings.Contains(normHeader(bccCell(f, sheet, col, headerRow)), "tổng") {
 				stopCol = col
 				break
