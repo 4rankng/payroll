@@ -3,6 +3,7 @@ package excel
 import (
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
@@ -25,12 +26,6 @@ import (
 // (position, ngày thường)). Parsing emits one WeeklyBCCSheetData group per
 // distinct label with ≥ 1 entry; ShiftType is the label verbatim and entries
 // carry the block anchor date.
-
-// weeklyBlockScanMaxCol caps header/anchor/stop-column scans. Real files run
-// the day region out to col EA (131) with the summary block at EB (132) —
-// dateRowBCCScanMax (96) is too small for this layout, so it must not be
-// reused here.
-const weeklyBlockScanMaxCol = 200
 
 // weeklyBlockHeaderScanMaxCol caps the identity-header search width: STT /
 // Mã nhân viên / Họ và tên always sit in the leftmost columns of the sheet.
@@ -65,13 +60,11 @@ var weeklyBlockCanonicalLabels = map[string]bool{
 // sheet accepted here always parses — the isDateRowBCCSheet →
 // findDateRowAndCols pattern.
 type weeklyBlockLayout struct {
-	headerRow      int
 	sttCol         int
 	empCodeCol     int // "Mã nhân viên" — carries the citizen ID (CCCD) in this family
 	nameCol        int // "Họ và tên"
 	labelRow       int
 	firstAnchorCol int
-	lastAnchorCol  int
 	stopCol        int // first "tổng…" header cell right of the day region ("Tổng hợp")
 	anchors        map[int]time.Time
 }
@@ -83,6 +76,9 @@ type weeklyBlockLayout struct {
 // day-number grid can never match. The stop column is the first "tổng…"
 // cell right of the last date anchor; the label row is the first row below
 // the header with ≥ 2 canonical category labels inside the day region.
+//
+// Scans run to wbccMaxColScan (200), not dateRowBCCScanMax (96): real files
+// run the day region out to col EA (131) with the summary block at EB (132).
 func findWeeklyBlockLayout(f *excelize.File, sheet string) (weeklyBlockLayout, error) {
 	for headerRow := 1; headerRow <= 12; headerRow++ {
 		var sttCol, empCodeCol, nameCol int
@@ -164,13 +160,11 @@ func findWeeklyBlockLayout(f *excelize.File, sheet string) (weeklyBlockLayout, e
 		}
 
 		return weeklyBlockLayout{
-			headerRow:      headerRow,
 			sttCol:         sttCol,
 			empCodeCol:     empCodeCol,
 			nameCol:        nameCol,
 			labelRow:       labelRow,
 			firstAnchorCol: firstAnchor,
-			lastAnchorCol:  lastAnchor,
 			stopCol:        stopCol,
 			anchors:        anchors,
 		}, nil
@@ -202,8 +196,10 @@ func parseWeeklyBlockBCCSheet(f *excelize.File, sheet string) ([]WeeklyBCCSheetD
 
 	warnedSpareCols := make(map[int]bool)
 
-	var order []string
-	groups := make(map[string]*WeeklyBCCSheetData)
+	// Groups in first-appearance order. Labels are few (the canonical eight
+	// plus strays), so a plain slice with a linear lookup beats a map plus a
+	// separate ordering slice.
+	var groups []WeeklyBCCSheetData
 
 	blankStreak := 0
 	for row := lay.labelRow + 1; row <= lay.labelRow+weeklyBlockRosterMaxRows; row++ {
@@ -259,34 +255,29 @@ func parseWeeklyBlockBCCSheet(f *excelize.File, sheet string) ([]WeeklyBCCSheetD
 			if !present {
 				continue
 			}
-			g := groups[label]
-			if g == nil {
-				g = &WeeklyBCCSheetData{ShiftType: label}
-				groups[label] = g
-				order = append(order, label)
+			gi := slices.IndexFunc(groups, func(g WeeklyBCCSheetData) bool { return g.ShiftType == label })
+			if gi < 0 {
+				groups = append(groups, WeeklyBCCSheetData{ShiftType: label})
+				gi = len(groups) - 1
 			}
-			idx, ok := cur[label]
+			empIdx, ok := cur[label]
 			if !ok {
-				g.Employees = append(g.Employees, WeeklyBCCEmployeeData{
+				groups[gi].Employees = append(groups[gi].Employees, WeeklyBCCEmployeeData{
 					EmployeeCode: cccd,
 					FullName:     name,
 				})
-				idx = len(g.Employees) - 1
-				cur[label] = idx
+				empIdx = len(groups[gi].Employees) - 1
+				cur[label] = empIdx
 			}
-			g.Employees[idx].Entries = append(g.Employees[idx].Entries, WeeklyBCCEntryData{
+			groups[gi].Employees[empIdx].Entries = append(groups[gi].Employees[empIdx].Entries, WeeklyBCCEntryData{
 				Date:  currentDate,
 				Hours: hours,
 			})
 		}
 	}
 
-	if len(order) == 0 {
+	if len(groups) == 0 {
 		return nil, fmt.Errorf("không tìm thấy dữ liệu nhân viên trong sheet")
 	}
-	out := make([]WeeklyBCCSheetData, 0, len(order))
-	for _, label := range order {
-		out = append(out, *groups[label])
-	}
-	return out, nil
+	return groups, nil
 }
