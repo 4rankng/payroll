@@ -332,12 +332,6 @@ func (h *PayrateHandler) UpdatePayrate(c *gin.Context) {
 		return
 	}
 
-	// Auto-resolve overlapping shifts (wider shift wins)
-	resolved, resolveErr := updatedPayrate.Payrate.ResolveFlexibleOverlaps()
-	if resolveErr == nil {
-		updatedPayrate.Payrate = resolved
-	}
-
 	logger.Info("Payrate validation passed successfully",
 		"payrate_id", uint(id))
 
