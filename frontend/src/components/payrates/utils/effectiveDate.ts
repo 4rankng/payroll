@@ -23,14 +23,21 @@ export function earliestAllowedEffectiveFrom(latest?: LatestPayrateLike): string
 }
 
 /**
- * Default 'Từ ngày' for the create form: today, floored at the earliest
- * backend-allowed date. Defaulting to today keeps the new config
- * forward-looking — a past default (latest config + 1 day) reads as
- * "re-price history from that date", which is not what creating a new
- * config does.
+ * Default 'Từ ngày' for the create form.
+ *
+ * First-ever config (no latest): the first day of the current month, so a new
+ * project's rates cover the whole payroll month instead of starting mid-month.
+ *
+ * Successor config: today, floored at the earliest backend-allowed date.
+ * Defaulting to today keeps the new config forward-looking — a past default
+ * (latest config + 1 day) reads as "re-price history from that date", which is
+ * not what creating a new config does.
  */
 export function defaultCreateEffectiveFrom(latest?: LatestPayrateLike, today: Date = new Date()): string {
   const floor = earliestAllowedEffectiveFrom(latest);
   const todayStr = dateToString(today);
-  return floor && floor > todayStr ? floor : todayStr;
+  if (!floor) {
+    return dateToString(new Date(today.getFullYear(), today.getMonth(), 1));
+  }
+  return floor > todayStr ? floor : todayStr;
 }

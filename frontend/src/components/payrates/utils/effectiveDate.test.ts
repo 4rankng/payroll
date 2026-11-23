@@ -28,8 +28,10 @@ describe("earliestAllowedEffectiveFrom", () => {
 });
 
 describe("defaultCreateEffectiveFrom", () => {
-  it("defaults to today when there is no previous config", () => {
-    expect(defaultCreateEffectiveFrom(null, TODAY)).toBe("2026-11-18");
+  it("defaults to the start of the month for a first-ever config", () => {
+    expect(defaultCreateEffectiveFrom(null, TODAY)).toBe("2026-11-01");
+    expect(defaultCreateEffectiveFrom(undefined, TODAY)).toBe("2026-11-01");
+    expect(defaultCreateEffectiveFrom(null, new Date("2026-01-15T00:00:00"))).toBe("2026-01-01");
   });
 
   it("defaults to today — never to the past latest + 1 (PAYR-39)", () => {
