@@ -225,7 +225,7 @@ export function EmployeeUserAccessTab({ employee }: EmployeeUserAccessTabProps) 
                       setIsRevokeModalOpen(true);
                     }}
                     disabled={revokeAccessMutation.isPending}
-                    className="text-destructive hover:text-destructive h-11 w-11 shrink-0 p-0 sm:h-7 sm:w-7"
+                    className="text-destructive hover:text-destructive h-11 w-11 shrink-0 p-0 sm:h-8 sm:w-8"
                     aria-label={`Thu hồi quyền của ${employeeUser.user_fullname}`}
                   >
                     <Trash2 className="h-3.5 w-3.5" />

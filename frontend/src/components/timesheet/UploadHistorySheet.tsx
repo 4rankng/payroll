@@ -146,7 +146,7 @@ function ImportRow({ item, projectMap, onDownload, showProject }: {
           <Button
             variant="ghost"
             size="icon"
-            className="h-11 w-11 sm:h-7 sm:w-7 text-muted-foreground hover:text-foreground"
+            className="h-11 w-11 sm:h-8 sm:w-8 text-muted-foreground hover:text-foreground"
             onClick={() => onDownload(item.id, item.original_name)}
             title="Tải về tệp gốc"
           >
@@ -288,7 +288,7 @@ export const UploadHistorySheet = memo(function UploadHistorySheet({
         <Button
           variant="outline"
           size="icon"
-          className="h-11 w-11 sm:h-7 sm:w-7"
+          className="h-11 w-11 sm:h-8 sm:w-8"
           disabled={page <= 1}
           onClick={() => setPage((p) => p - 1)}
         >
@@ -297,7 +297,7 @@ export const UploadHistorySheet = memo(function UploadHistorySheet({
         <Button
           variant="outline"
           size="icon"
-          className="h-11 w-11 sm:h-7 sm:w-7"
+          className="h-11 w-11 sm:h-8 sm:w-8"
           disabled={page >= totalPages}
           onClick={() => setPage((p) => p + 1)}
         >

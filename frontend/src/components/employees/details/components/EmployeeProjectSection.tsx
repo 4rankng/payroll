@@ -127,7 +127,7 @@ function ProjectPaymentScheduleControl({
         type="single"
         value={selectedSchedule}
         onValueChange={handleScheduleChange}
-        className="grid grid-cols-2 gap-2"
+        className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-3"
         aria-label="Chọn chu kỳ trả lương"
       >
         {scheduleOptions.map(({ value, label, icon: Icon }) => (
@@ -136,14 +136,14 @@ function ProjectPaymentScheduleControl({
             value={value}
             aria-label={label}
             className={cn(
-              "justify-start gap-2 typography-body-small",
+              "justify-start gap-1.5 px-1.5 min-h-11 typography-body-small",
               "data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-[state=on]:border-primary data-[state=on]:border-2 data-[state=on]:font-medium",
               "data-[state=off]:bg-muted/30 data-[state=off]:text-muted-foreground data-[state=off]:border data-[state=off]:border-border",
               isSelectionDisabled && "pointer-events-none text-foreground" // Use dark color instead of gray
             )}
             disabled={isSelectionDisabled}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-3.5 w-3.5 shrink-0" />
             {label}
           </ToggleGroupItem>
         ))}
@@ -329,7 +329,7 @@ function ProjectCard({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-11 w-11 shrink-0 sm:h-7 sm:w-7"
+                  className="h-11 w-11 shrink-0 sm:h-8 sm:w-8"
                   onClick={handleCancelEditing}
                   disabled={isSubmitting}
                   title="Hủy chỉnh sửa"
@@ -340,7 +340,7 @@ function ProjectCard({
                 <Button
                   size="icon"
                   variant="default"
-                  className="h-11 w-11 shrink-0 sm:h-7 sm:w-7"
+                  className="h-11 w-11 shrink-0 sm:h-8 sm:w-8"
                   onClick={handleApplyEditing}
                   disabled={isSubmitting}
                   title="Áp dụng thay đổi"
@@ -353,7 +353,7 @@ function ProjectCard({
               <Button
                 size="icon"
                 variant="ghost"
-                className="h-11 w-11 shrink-0 sm:h-7 sm:w-7"
+                className="h-11 w-11 shrink-0 sm:h-8 sm:w-8"
                 onClick={handleStartEditing}
                 title="Chỉnh sửa phân công"
               >
@@ -401,35 +401,32 @@ function ProjectCard({
           {/* Position Selector */}
           <div>
             <label className="block typography-label-medium font-medium mb-1 text-foreground">Vị trí:</label>
-            {canEditFields && availablePositions.length === 0 ? (
+            {!canEditFields ? (
+              // Read-only: a disabled Select renders empty when the stored
+              // position is missing from the current payrate's positions, so
+              // show the value (or a placeholder) as plain text instead.
+              <p className="typography-body-small text-foreground break-words">
+                {project.position || <span className="text-muted-foreground/60">Chưa cập nhật</span>}
+              </p>
+            ) : availablePositions.length === 0 ? (
               <Input
                 value={(changes?.position ?? project.position) || ""}
                 onChange={(e) => handlePositionChange(e.target.value)}
                 placeholder="Nhập vị trí công việc"
                 aria-label="Vị trí công việc"
-                disabled={!canEditFields || isSubmitting}
-                className={cn(
-                  "h-11 typography-body-small sm:h-7",
-                  !canEditFields && "opacity-100" // Ensure proper contrast in read-only mode
-                )}
+                disabled={isSubmitting}
+                className="h-11 typography-body-small sm:h-9"
               />
             ) : (
               <Select
-                value={changes?.position ?? project.position ?? undefined}
+                value={(changes?.position ?? project.position) || undefined}
                 onValueChange={handlePositionChange}
-                disabled={!canEditFields || isSubmitting}
+                disabled={isSubmitting}
               >
-                <SelectTrigger aria-label="Vị trí công việc" className={cn(
-                  "h-11 typography-body-small sm:h-7",
-                  !canEditFields && "opacity-100" // Ensure proper contrast in read-only mode
-                )}>
-                  <SelectValue
-                    placeholder={
-                      availablePositions.length === 0
-                        ? "Chưa có bảng lương"
-                        : "Chọn vị trí"
-                    }
-                  />
+                <SelectTrigger aria-label="Vị trí công việc" className="h-11 typography-body-small sm:h-9">
+                  {/* Children fallback keeps a stale position visible even when
+                      it no longer matches any current payrate option. */}
+                  <SelectValue placeholder="Chọn vị trí">{changes?.position ?? project.position}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {availablePositions.map((position: string) => (
@@ -458,7 +455,7 @@ function ProjectCard({
                 aria-label="Ngày bắt đầu phân công"
                 disabled={!canEditFields || isSubmitting}
                 className={cn(
-                  "h-11 min-w-0 typography-body-small flex-1 sm:h-7",
+                  "h-11 min-w-0 typography-body-small flex-1 sm:h-9",
                   !canEditFields && "opacity-100" // Ensure proper contrast in read-only mode
                 )}
               />
@@ -466,7 +463,7 @@ function ProjectCard({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-11 w-11 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0 sm:h-7 sm:w-7"
+                  className="h-11 w-11 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0 sm:h-8 sm:w-8"
                   onClick={() => onRemove?.(project.project_id)}
                   disabled={isRemoving || isSubmitting}
                   title="Gỡ khỏi dự án"
@@ -491,7 +488,7 @@ function ProjectCard({
                 onChange={handleEndDateChange}
                 aria-label="Ngày kết thúc phân công"
                 disabled={isSubmitting}
-                className="h-11 typography-body-small sm:h-7"
+                className="h-11 typography-body-small sm:h-9"
               />
               <p className="typography-label-small text-muted-foreground">
                 Để trống = vô thời hạn

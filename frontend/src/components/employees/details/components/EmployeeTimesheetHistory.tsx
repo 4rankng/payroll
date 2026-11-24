@@ -166,7 +166,7 @@ export const EmployeeTimesheetHistory = memo(({
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lịch sử chấm công</p>
         </div>
         <Select value={selectedMonth} onValueChange={handleMonthChange}>
-          <SelectTrigger aria-label="Tháng chấm công" className="h-11 w-40 text-xs">
+          <SelectTrigger aria-label="Tháng chấm công" className="h-11 w-40 text-xs sm:h-9">
             <SelectValue placeholder="Chọn tháng" />
           </SelectTrigger>
           <SelectContent>
