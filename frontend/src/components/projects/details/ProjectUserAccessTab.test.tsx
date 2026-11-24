@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProjectUserAccessTab } from "./ProjectUserAccessTab";
 import type { Project, ProjectUser } from "@/types/api/project.types";
@@ -9,6 +9,8 @@ let projectUsers: ProjectUser[] = [];
 
 const grantMock = vi.fn();
 const revokeMock = vi.fn();
+const requestAccessMock = vi.fn();
+const releaseAccessMock = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   authManager: {
@@ -21,6 +23,8 @@ vi.mock("@/hooks/api/useProjects", () => ({
   useProjectUsers: () => ({ data: projectUsers, isLoading: false }),
   useGrantProjectAccess: () => ({ mutateAsync: grantMock, isPending: false }),
   useRevokeProjectAccess: () => ({ mutateAsync: revokeMock, isPending: false }),
+  useRequestProjectAccess: () => ({ mutateAsync: requestAccessMock, isPending: false }),
+  useReleaseProjectAccess: () => ({ mutateAsync: releaseAccessMock, isPending: false }),
 }));
 
 vi.mock("@/components/ui/user-selector", () => ({
@@ -32,8 +36,25 @@ vi.mock("@/components/ui/user-selector", () => ({
 }));
 
 vi.mock("@/components/ui/confirm-dialog", () => ({
-  ConfirmDialog: ({ open, title }: { open: boolean; title: string }) =>
-    open ? <div>{title}</div> : null,
+  ConfirmDialog: ({
+    open,
+    title,
+    onConfirm,
+    confirmText,
+  }: {
+    open: boolean;
+    title: string;
+    onConfirm: () => void;
+    confirmText?: string;
+  }) =>
+    open ? (
+      <div>
+        {title}
+        <button type="button" onClick={onConfirm}>
+          {confirmText ?? "confirm"}
+        </button>
+      </div>
+    ) : null,
 }));
 
 const project = {
@@ -76,6 +97,8 @@ describe("ProjectUserAccessTab (PAYR-30)", () => {
   beforeEach(() => {
     grantMock.mockReset();
     revokeMock.mockReset();
+    requestAccessMock.mockReset();
+    releaseAccessMock.mockReset();
     currentRole = "partner";
     currentUserId = 200;
     projectUsers = [creatorRow, managerRow];
@@ -95,15 +118,28 @@ describe("ProjectUserAccessTab (PAYR-30)", () => {
     expect(screen.getByRole("button", { name: /thu hồi quyền của quản lý đối tác/i })).toBeInTheDocument();
   });
 
-  it("partner không quản lý dự án chỉ thấy thông báo không có quyền, không có nút cấp/xóa", () => {
+  it("partner không quản lý dự án thấy thông báo không có quyền + nút yêu cầu quản lý (tự cấp ngay), không có nút cấp/xóa", () => {
     currentUserId = 300;
     projectUsers = [creatorRow, managerRow];
 
     render(<ProjectUserAccessTab project={project} />);
 
     expect(screen.getByText("Không có quyền truy cập")).toBeInTheDocument();
+    // Self-service claim is instant (owner ruling 2026-11-24) — the button
+    // is the only action offered, grant/revoke UI stays hidden.
+    expect(screen.getByRole("button", { name: "Yêu cầu quản lý dự án" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /cấp quyền/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /thu hồi quyền của/i })).not.toBeInTheDocument();
+  });
+
+  it("partner không quản lý thấy nút yêu cầu quản lý gọi request-access ngay lập tức", async () => {
+    currentUserId = 300;
+    projectUsers = [creatorRow, managerRow];
+
+    render(<ProjectUserAccessTab project={project} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Yêu cầu quản lý dự án" }));
+    expect(requestAccessMock).toHaveBeenCalledWith(58);
   });
 
   it("admin thấy nút xóa trên cả row Người tạo", () => {
@@ -122,5 +158,40 @@ describe("ProjectUserAccessTab (PAYR-30)", () => {
     expect(screen.queryByRole("button", { name: /thu hồi quyền của người tạo dự án/i })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /thu hồi quyền của quản lý đối tác/i }));
     expect(screen.getByText("Thu hồi quyền truy cập")).toBeInTheDocument();
+  });
+
+  it("partner quản lý qua cấp quyền (không phải người tạo) thấy nút Yêu cầu loại khỏi dự án", () => {
+    render(<ProjectUserAccessTab project={project} />);
+
+    expect(screen.getByRole("button", { name: "Yêu cầu loại khỏi dự án" })).toBeInTheDocument();
+  });
+
+  it("yêu cầu loại khỏi dự án gọi release-access và báo cho sheet đóng", async () => {
+    const onSelfReleased = vi.fn();
+    releaseAccessMock.mockResolvedValue({ message: "Đã loại bạn khỏi quản lý dự án này" });
+
+    render(<ProjectUserAccessTab project={project} onSelfReleased={onSelfReleased} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Yêu cầu loại khỏi dự án" }));
+    // ConfirmDialog mock wires onConfirm to a button labelled by confirmText.
+    fireEvent.click(screen.getByRole("button", { name: "Loại khỏi dự án" }));
+    await waitFor(() => expect(releaseAccessMock).toHaveBeenCalledWith(58));
+    await waitFor(() => expect(onSelfReleased).toHaveBeenCalled());
+  });
+
+  it("người tạo dự án không thấy nút tự loại (chỉ admin thu hồi được quyền người tạo)", () => {
+    currentUserId = 100; // creator
+
+    render(<ProjectUserAccessTab project={project} />);
+
+    expect(screen.queryByRole("button", { name: "Yêu cầu loại khỏi dự án" })).not.toBeInTheDocument();
+  });
+
+  it("admin không thấy nút tự loại", () => {
+    currentRole = "admin";
+
+    render(<ProjectUserAccessTab project={project} />);
+
+    expect(screen.queryByRole("button", { name: "Yêu cầu loại khỏi dự án" })).not.toBeInTheDocument();
   });
 });

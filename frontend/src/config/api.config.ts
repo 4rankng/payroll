@@ -89,6 +89,8 @@ export const API_ENDPOINTS = {
     assignmentStats: (id: number) => `/projects/${id}/assignment-stats`,
     users: (id: number) => `/projects/${id}/users`,
     userAccess: (projectId: number, userId: number) => `/projects/${projectId}/users/${userId}`,
+    requestAccess: (id: number) => `/projects/${id}/request-access`,
+    releaseAccess: (id: number) => `/projects/${id}/release-access`,
   },
 
   // Pay rates (global)

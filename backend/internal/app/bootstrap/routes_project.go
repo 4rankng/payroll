@@ -38,6 +38,12 @@ func setupProjectRoutes(protected *gin.RouterGroup, container *Container) {
 		projects.GET("/:id/users", container.Handlers.Project.ListProjectUsers)
 		projects.POST("/:id/users", container.Handlers.Project.GrantProjectAccess)
 		projects.DELETE("/:id/users/:userId", container.Handlers.Project.RevokeProjectAccess)
+
+		// Partner self-service: claim / release own management. Instant by
+		// design (owner ruling 2026-11-24) — the service layer enforces role,
+		// idempotency, and creator-protection; no approval step exists.
+		projects.POST("/:id/request-access", container.Handlers.Project.RequestProjectAccess)
+		projects.POST("/:id/release-access", container.Handlers.Project.ReleaseProjectAccess)
 	}
 }
 

@@ -146,3 +146,85 @@ func (h *Handler) RevokeProjectAccess(c *gin.Context) {
 
 	response.Success(c, nil, constants.MsgAccessRevokedSuccessfullyVN)
 }
+
+// RequestProjectAccess lets a partner self-service claim management of a project
+// @Summary Request to manage a project
+// @Description Partner self-service claim: adds the project to the partner's managed list (project_users). Granted immediately — no approval step. Idempotent.
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path int true "Project ID"
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/v1/projects/{id}/request-access [post]
+func (h *Handler) RequestProjectAccess(c *gin.Context) {
+	projectID, ok := helpers.ParseIDParam(c, "id", constants.MsgInvalidProjectIDVN)
+	if !ok {
+		return
+	}
+
+	userID := c.GetUint(constants.CtxUserID)
+	userRole := c.GetString(constants.CtxUserRole)
+
+	alreadyManaged, err := h.projectPermissionService.RequestProjectAccess(
+		c.Request.Context(),
+		projectID,
+		userID,
+		userRole,
+	)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	if alreadyManaged {
+		response.Success(c, nil, constants.MsgUserAlreadyHasAccessToProjectVN)
+		return
+	}
+	response.Success(c, nil, constants.MsgProjectAccessRequestedVN)
+}
+
+// ReleaseProjectAccess lets a partner drop their own project management grant
+// @Summary Release own project management
+// @Description Partner self-service release: removes the caller's own project_users grant immediately — no approval step. Idempotent; the project creator cannot self-release.
+// @Tags projects
+// @Accept json
+// @Produce json
+// @Param id path int true "Project ID"
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/v1/projects/{id}/release-access [post]
+func (h *Handler) ReleaseProjectAccess(c *gin.Context) {
+	projectID, ok := helpers.ParseIDParam(c, "id", constants.MsgInvalidProjectIDVN)
+	if !ok {
+		return
+	}
+
+	userID := c.GetUint(constants.CtxUserID)
+	userRole := c.GetString(constants.CtxUserRole)
+
+	alreadyReleased, err := h.projectPermissionService.RequestProjectRelease(
+		c.Request.Context(),
+		projectID,
+		userID,
+		userRole,
+	)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	if alreadyReleased {
+		response.Success(c, nil, constants.MsgAccessRevokedSuccessfullyVN)
+		return
+	}
+	response.Success(c, nil, constants.MsgProjectAccessReleasedVN)
+}

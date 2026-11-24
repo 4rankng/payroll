@@ -51,9 +51,27 @@ CRUD, import/export, payroll per employee, summary, `GET /missing-bank-details` 
 
 Mobile rules on create/update: duplicate mobiles are always rejected (one number identifies one employee — `identity.Resolver` fails closed otherwise); when the admin setting `employee.mobile_required` is on, every create path (manual form, Excel import, BCC/FlexPay import) must carry a mobile number.
 
+Partner self-service access management (owner ruling 2026-11-24 — granted immediately, **no approval step**, ADR-014):
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/:id/request-access` | Partner claims management of an employee from the global pool: creates an `employee_users` row (self-grant), employee joins the partner's list immediately. Idempotent. |
+| POST | `/:id/release-access` | Partner drops their own `employee_users` relation immediately. Idempotent; the employee creator cannot self-release. |
+
+Both endpoints publish the same audit events as explicit grant/revoke (`EmployeeAccessGrantedEvent` / `EmployeeAccessRevokedEvent` → audit log: who, when, what).
+
 ### Projects (`/api/v1/projects`)
 
 CRUD, payrates per project, timesheets per project, entry table, employee assignment, `POST /activate`, partner summary, `PATCH /:id/employees/:employeeId/checkin-enabled` (enable defers to day 1 of next month; disable is instant), `DELETE /:id/employees/:employeeId/checkin-enabled` (cancel a pending enable), `PATCH /:id/employees/checkin-enabled/bulk`.
+
+Partner self-service access management (owner ruling 2026-11-24 — granted immediately, **no approval step**, ADR-014):
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| POST | `/:id/request-access` | Partner claims project management: creates a `project_users` row (self-grant), project joins the partner's accessible set immediately. Idempotent (creator and grant holders no-op). |
+| POST | `/:id/release-access` | Partner drops their own `project_users` grant immediately. Idempotent; the project creator cannot self-release (owner-privilege strip stays admin-only, PAYR-30). |
+
+Both endpoints publish `ProjectAccessGrantedEvent` / `ProjectAccessRevokedEvent` for the audit log. Explicit grant/revoke via `POST/DELETE /:id/users` is unchanged.
 
 ### Project Employees (`/api/v1/project-employees`)
 

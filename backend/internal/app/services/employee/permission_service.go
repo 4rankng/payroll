@@ -152,6 +152,54 @@ func (s *EmployeePermissionService) RequestEmployeeAccess(ctx context.Context, e
 	return false, nil
 }
 
+// RequestEmployeeRelease lets a partner drop their own employee management
+// relation (owner ruling 2026-11-24: self-removal is instant, no approval).
+// The employee creator manages intrinsically and cannot self-release — an
+// admin or the creator's own row semantics govern that. Idempotent:
+// releasing without a relation row is a success, not an error.
+func (s *EmployeePermissionService) RequestEmployeeRelease(ctx context.Context, employeeID, userID uint, requesterRole string) (alreadyReleased bool, err error) {
+	employee, err := s.employeeRepo.GetByID(ctx, employeeID)
+	if err != nil {
+		return false, err
+	}
+
+	// Self-release is a partner feature; admins revoke via the explicit path.
+	if requesterRole != string(domain.RolePartner) {
+		return false, domain.NewValidationError(constants.MsgOnlyPartnerCanReleaseEmployeeAccessVN)
+	}
+
+	// The creator cannot leave their own employee — their management is
+	// intrinsic (no releasable row), matching the claim service's no-op rule.
+	if userID == employee.CreatedBy {
+		return false, domain.NewForbiddenError(constants.MsgCreatorCannotSelfReleaseEmployeeVN)
+	}
+
+	existing, err := s.employeeUserRepo.GetByEmployeeAndUser(ctx, employeeID, userID)
+	if err != nil {
+		return false, err
+	}
+	if existing == nil {
+		return true, nil
+	}
+
+	// Drop the relation (soft delete), mirroring RevokeEmployeeAccess.
+	if err := s.employeeUserRepo.Delete(ctx, employeeID, userID); err != nil {
+		return false, err
+	}
+
+	// Publish the same permission event as an explicit revoke for audit trail.
+	if s.eventBus != nil {
+		employeeName := strings.TrimSpace(employee.Fullname)
+		actorFullName := audit.GetActorFullName(ctx, s.userRepo, userID)
+		event := domain.NewEmployeeAccessRevokedEvent(ctx, employeeID, employeeName, "", 0, userID, actorFullName)
+		if err := s.eventBus.Publish(ctx, event); err != nil {
+			observability.GetLogger().Error("failed to publish EmployeeAccessRevokedEvent", "error", err)
+		}
+	}
+
+	return false, nil
+}
+
 // RevokeEmployeeAccess revokes employee access from a user
 func (s *EmployeePermissionService) RevokeEmployeeAccess(ctx context.Context, employeeID, userID, revokedBy uint, revokerRole string) error {
 	// Verify revoker is employee creator or admin

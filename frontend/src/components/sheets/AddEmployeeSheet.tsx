@@ -211,7 +211,7 @@ function AddEmployeeSheetComponent({
   const handleClaim = async (employeeId: number) => {
     try {
       await requestAccess.mutateAsync(employeeId);
-      toast({ title: 'Đã thêm nhân viên vào danh sách quản lý của bạn' });
+      toast({ title: 'Đã cấp quyền quản lý nhân viên' });
       handleClose();
     } catch {
       // Error notification handled globally

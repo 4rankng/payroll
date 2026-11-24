@@ -44,6 +44,7 @@ func setupEmployeeRoutes(protected *gin.RouterGroup, container *Container) {
 
 		employees.GET("/:id/users", container.Handlers.EmployeeUsers.ListEmployeeUsers)
 		employees.POST("/:id/request-access", container.Handlers.EmployeeUsers.RequestEmployeeAccess)
+		employees.POST("/:id/release-access", container.Handlers.EmployeeUsers.ReleaseEmployeeAccess)
 		employees.POST("/:id/users", container.Handlers.EmployeeUsers.GrantEmployeeAccess)
 		employees.DELETE("/:id/users/:userId", container.Handlers.EmployeeUsers.RevokeEmployeeAccess)
 

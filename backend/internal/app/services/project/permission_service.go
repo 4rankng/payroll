@@ -192,6 +192,108 @@ func (s *ProjectPermissionService) RevokeProjectAccess(ctx context.Context, proj
 	return nil
 }
 
+// RequestProjectAccess lets a partner self-service claim management of a
+// project: creates a project_users row so the project joins the partner's
+// accessible set (AccessibleBy shared branch). Owner ruling 2026-11-24:
+// requesting is granting — no approval step exists for this flow.
+// Idempotent — creator and existing grant holders succeed without a new row.
+func (s *ProjectPermissionService) RequestProjectAccess(ctx context.Context, projectID, userID uint, requesterRole string) (alreadyManaged bool, err error) {
+	project, err := s.projectRepo.GetByID(ctx, projectID)
+	if err != nil {
+		return false, err
+	}
+
+	// Self-service claim is a partner feature; admins already see everything.
+	if requesterRole != string(domain.RolePartner) {
+		return false, domain.NewValidationError(constants.MsgOnlyPartnerCanRequestProjectAccessVN)
+	}
+
+	// The creator already manages their own project.
+	if userID == project.CreatedBy && project.OwnerRevokedAt == nil {
+		return true, nil
+	}
+
+	// Idempotency: already-granted partners succeed without a duplicate row.
+	existing, err := s.projectUserRepo.GetByProjectAndUser(ctx, projectID, userID)
+	if err != nil {
+		return false, err
+	}
+	if existing != nil {
+		return true, nil
+	}
+
+	projectUser := &domain.ProjectUser{
+		ProjectID: projectID,
+		UserID:    userID,
+		// Self-grant: the requester is both grantee and granter, auditable as such.
+		GrantedBy: userID,
+	}
+
+	if err := s.projectUserRepo.Create(ctx, projectUser); err != nil {
+		return false, err
+	}
+
+	// Publish the same permission event as an explicit grant for audit trail.
+	if s.eventBus != nil {
+		projectName := strings.TrimSpace(project.Name)
+		actorName := audit.GetActorFullName(ctx, s.userRepo, userID)
+		event := domain.NewProjectAccessGrantedEvent(ctx, projectID, projectName, userID, actorName, string(domain.RolePartner), userID, actorName)
+		if err := s.eventBus.Publish(ctx, event); err != nil {
+			observability.GetLogger().Error("failed to publish ProjectAccessGrantedEvent", "error", err)
+		}
+	}
+
+	return false, nil
+}
+
+// RequestProjectRelease lets a partner drop their own explicit project
+// management grant (owner ruling 2026-11-24: self-removal is instant, no
+// approval). The intrinsic creator privilege is NOT releasable here — only an
+// admin strips it (PAYR-30). Idempotent: releasing without a grant row is a
+// success, not an error.
+func (s *ProjectPermissionService) RequestProjectRelease(ctx context.Context, projectID, userID uint, requesterRole string) (alreadyReleased bool, err error) {
+	project, err := s.projectRepo.GetByID(ctx, projectID)
+	if err != nil {
+		return false, err
+	}
+
+	// Self-release is a partner feature; admins revoke via the explicit path.
+	if requesterRole != string(domain.RolePartner) {
+		return false, domain.NewValidationError(constants.MsgOnlyPartnerCanReleaseProjectAccessVN)
+	}
+
+	// A creator leaving their own project would orphan it; that stays an
+	// admin-only revocation (owner-privilege strip, PAYR-30).
+	if userID == project.CreatedBy {
+		return false, domain.NewForbiddenError(constants.MsgCreatorCannotSelfReleaseProjectVN)
+	}
+
+	existing, err := s.projectUserRepo.GetByProjectAndUser(ctx, projectID, userID)
+	if err != nil {
+		return false, err
+	}
+	if existing == nil {
+		return true, nil
+	}
+
+	// Drop the grant (soft delete), mirroring RevokeProjectAccess.
+	if err := s.projectUserRepo.Delete(ctx, projectID, userID); err != nil {
+		return false, err
+	}
+
+	// Publish the same permission event as an explicit revoke for audit trail.
+	if s.eventBus != nil {
+		projectName := strings.TrimSpace(project.Name)
+		actorName := audit.GetActorFullName(ctx, s.userRepo, userID)
+		event := domain.NewProjectAccessRevokedEvent(ctx, projectID, projectName, userID, actorName, userID, actorName)
+		if err := s.eventBus.Publish(ctx, event); err != nil {
+			observability.GetLogger().Error("failed to publish ProjectAccessRevokedEvent", "error", err)
+		}
+	}
+
+	return false, nil
+}
+
 // GetProjectUsers retrieves all users with access to a project, including the owner
 func (s *ProjectPermissionService) GetProjectUsers(ctx context.Context, projectID uint) ([]*domain.ProjectUser, error) {
 	// Get the project to identify the owner

@@ -6,7 +6,7 @@ import { DeleteEmployeeModal } from "./components/DeleteEmployeeModal";
 import { ResetPasswordModalContainer } from "@/components/modals/ResetPasswordModalContainer";
 import { useEmployeeForm } from "@/hooks/employees/useEmployeeForm";
 import { useEmployeeDetails } from "@/hooks/employees/useEmployeeDetails";
-import { useUpdateEmployee, useDeleteEmployee, useRequestEmployeeAccess } from "@/hooks/api/useEmployees";
+import { useUpdateEmployee, useDeleteEmployee, useRequestEmployeeAccess, useReleaseEmployeeAccess } from "@/hooks/api/useEmployees";
 import { useIsMobile } from '@/hooks/useBreakpoint';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
   FileDown,
   Pencil,
   HandHeart,
+  LogOut,
 } from "lucide-react";
 import { authManager } from "@/lib/auth";
 import { format } from "date-fns";
@@ -175,6 +176,18 @@ export function EmployeeDetailsSheet({
       onSuccess: () => handleClose(),
     });
   }, [employee, requestAccess, handleClose]);
+
+  // Self-release (owner ruling 2026-11-24): a partner who manages the
+  // employee via a granted/claimed relation — not the creator — may drop it
+  // instantly. No approval step; the server audits the release.
+  const releaseAccess = useReleaseEmployeeAccess();
+  const canSelfRelease = !isAdmin && !isEmployeeCreator && !isPreviewOnly && !!employee;
+  const handleReleaseAccess = useCallback(() => {
+    if (!employee) return;
+    releaseAccess.mutate(employee.id, {
+      onSuccess: () => handleClose(),
+    });
+  }, [employee, releaseAccess, handleClose]);
 
   const avatar = useMemo(() => ({
     custom: employee ? <EmployeeHeader employee={employee} showName={true} /> : null
@@ -354,7 +367,7 @@ export function EmployeeDetailsSheet({
                     variant="outline"
                     size="sm"
                     onClick={handleEditClick}
-                    className={isNarrowViewport ? "min-h-11 px-3 gap-1 text-xs" : "min-h-11 px-3 gap-1 text-xs"}
+                    className="min-h-11 sm:min-h-9 px-3 gap-1 text-xs"
                   >
                     <Pencil className="h-3 w-3" />
                     Chỉnh sửa
@@ -374,6 +387,23 @@ export function EmployeeDetailsSheet({
                   >
                     <HandHeart className="h-3.5 w-3.5" />
                     Yêu cầu quản lý
+                  </Button>
+                </div>
+              )}
+              {canSelfRelease && (
+                <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+                  <p className="text-xs text-muted-foreground">
+                    Bạn đang quản lý nhân viên này. Bạn có thể tự loại quyền quản lý của mình.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleReleaseAccess}
+                    disabled={releaseAccess.isPending}
+                    className="shrink-0 gap-1.5"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
+                    Yêu cầu loại khỏi quản lý nhân viên
                   </Button>
                 </div>
               )}

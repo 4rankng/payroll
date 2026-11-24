@@ -479,6 +479,17 @@ class EmployeeService {
   }
 
   /**
+   * Partner self-service release: drop the caller's own employee management
+   * relation immediately. Idempotent; the employee creator cannot self-release.
+   */
+  async releaseEmployeeAccess(employeeId: number): Promise<{ message?: string }> {
+    const response = await apiClient.post<null>(
+      `${API_ENDPOINTS.employees.base}/${employeeId}/release-access`
+    );
+    return { message: response.message };
+  }
+
+  /**
    * Get employee payroll history
    */
   async getEmployeePayroll(id: number, filters?: EmployeePayrollFilters): Promise<EmployeePayrollResponse> {

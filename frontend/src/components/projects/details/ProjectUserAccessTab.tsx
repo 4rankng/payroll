@@ -1,28 +1,33 @@
 import { format } from "date-fns";
 import { useState, useMemo } from 'react';
 import { Project, ProjectUser } from '@/types/api/project.types';
-import { useGrantProjectAccess, useRevokeProjectAccess } from '@/hooks/api/useProjects';
+import { useGrantProjectAccess, useRevokeProjectAccess, useRequestProjectAccess, useReleaseProjectAccess } from '@/hooks/api/useProjects';
 import { useProjectAccessManagement } from '@/hooks/useCanEditProject';
 import { UserSelector } from '@/components/ui/user-selector';
 import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { UserPlus, Trash2, Users, ShieldCheck } from 'lucide-react';
+import { UserPlus, Trash2, Users, ShieldCheck, HandHeart, LogOut } from 'lucide-react';
 import { authManager } from '@/lib/auth';
 
 interface ProjectUserAccessTabProps {
   project: Project;
+  /** Called after the caller's own grant is released — the host sheet closes
+   * itself because the project has left the caller's accessible set. */
+  onSelfReleased?: () => void;
 }
 
-export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
+export function ProjectUserAccessTab({ project, onSelfReleased }: ProjectUserAccessTabProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
+  const [isReleaseModalOpen, setIsReleaseModalOpen] = useState(false);
   const [userToRevoke, setUserToRevoke] = useState<ProjectUser | null>(null);
 
   const currentUserId = authManager.getUserId();
   const userRole = authManager.getUserRole();
   const isAdmin = userRole === 'admin';
+  const isPartner = userRole === 'partner';
   const isProjectCreator = project.created_by === currentUserId;
 
   // Shared gate with the details sheet (PAYR-30): a partner-admin is the
@@ -34,6 +39,34 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
   // Mutations
   const grantAccessMutation = useGrantProjectAccess();
   const revokeAccessMutation = useRevokeProjectAccess();
+
+  // Self-service (owner ruling 2026-11-24): claim grants management
+  // immediately; release drops the caller's own grant immediately. Both are
+  // audited server-side — no approval step exists for this flow.
+  const requestAccessMutation = useRequestProjectAccess();
+  const releaseAccessMutation = useReleaseProjectAccess();
+
+  const handleClaimAccess = async () => {
+    try {
+      await requestAccessMutation.mutateAsync(project.id);
+      // The users query invalidates and refetches; the management UI takes
+      // over in place (no approval, no waiting state).
+    } catch (error) {
+      // Error handling is done globally
+    }
+  };
+
+  const handleReleaseAccess = async () => {
+    try {
+      await releaseAccessMutation.mutateAsync(project.id);
+      setIsReleaseModalOpen(false);
+      // The project left this partner's accessible set — let the host sheet
+      // close so they are not staring at a detail view they can no longer read.
+      onSelfReleased?.();
+    } catch (error) {
+      // Error handling is done globally
+    }
+  };
 
   // Get user IDs that already have access to exclude from selector
   const excludeUserIds = useMemo(() => {
@@ -81,7 +114,8 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
     );
   }
 
-  // Show permission denied if the user does not manage this project
+  // Show permission denied if the user does not manage this project —
+  // partners get the instant self-service claim (no approval step).
   if (!canManageProjectAccess) {
     return (
       <div className="mt-3 console-panel p-4">
@@ -93,6 +127,26 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
               Chỉ quản trị viên hoặc người quản lý dự án mới có thể quản lý.
             </p>
           </div>
+          {isPartner && (
+            <Button
+              size="sm"
+              onClick={handleClaimAccess}
+              disabled={requestAccessMutation.isPending}
+              className="mt-1 gap-1.5"
+            >
+              {requestAccessMutation.isPending ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <HandHeart className="h-3.5 w-3.5" />
+                  Yêu cầu quản lý dự án
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -209,6 +263,54 @@ export function ProjectUserAccessTab({ project }: ProjectUserAccessTabProps) {
           </div>
         )}
       </div>
+
+      {/* Self-release (owner ruling 2026-11-24): a granted partner — not the
+          creator — may drop their own management grant instantly. */}
+      {!isAdmin && !isProjectCreator && (
+        <div className="console-panel p-3 space-y-2">
+          <div className="flex items-center gap-1.5">
+            <LogOut className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="console-kicker">Rời quản lý dự án</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Bạn sẽ không còn quản lý hoặc xem dự án này trong danh sách của mình.
+          </p>
+          <div className="pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsReleaseModalOpen(true)}
+              disabled={releaseAccessMutation.isPending}
+              className="gap-1.5"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Yêu cầu loại khỏi dự án
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Release Confirmation Modal */}
+      <ConfirmDialog
+        open={isReleaseModalOpen}
+        onOpenChange={() => setIsReleaseModalOpen(false)}
+        onConfirm={handleReleaseAccess}
+        title="Yêu cầu loại khỏi dự án"
+        description={
+          <div>
+            <p>
+              Bạn có chắc chắn muốn rời quản lý dự án <strong>{project.name}</strong>?
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Quyền quản lý của bạn với dự án này được loại ngay lập tức.
+            </p>
+          </div>
+        }
+        confirmText="Loại khỏi dự án"
+        cancelText="Hủy bỏ"
+        confirmVariant="destructive"
+        loading={releaseAccessMutation.isPending}
+      />
 
       {/* Revoke Access Confirmation Modal */}
       <ConfirmDialog

@@ -155,6 +155,47 @@ func (h *EmployeeUsersHandler) RequestEmployeeAccess(c *gin.Context) {
 	response.Success(c, nil, constants.MsgEmployeeAccessRequestedVN)
 }
 
+// ReleaseEmployeeAccess lets a partner drop their own employee management relation
+// @Summary Release own employee management
+// @Description Partner self-service release: removes the caller's own employee_users relation immediately — no approval step. Idempotent; the employee creator cannot self-release.
+// @Tags employees
+// @Accept json
+// @Produce json
+// @Param id path int true "Employee ID"
+// @Success 200 {object} response.SuccessResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 403 {object} dto.ErrorResponse
+// @Failure 404 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /api/v1/employees/{id}/release-access [post]
+func (h *EmployeeUsersHandler) ReleaseEmployeeAccess(c *gin.Context) {
+	employeeID, ok := helpers.ParseIDParam(c, "id", constants.MsgInvalidEmployeeIDVN)
+	if !ok {
+		return
+	}
+
+	userID := c.GetUint(constants.CtxUserID)
+	userRole := c.GetString(constants.CtxUserRole)
+
+	alreadyReleased, err := h.employeePermissionService.RequestEmployeeRelease(
+		c.Request.Context(),
+		employeeID,
+		userID,
+		userRole,
+	)
+	if err != nil {
+		response.HandleDomainError(c, err)
+		return
+	}
+
+	if alreadyReleased {
+		response.Success(c, nil, constants.MsgAccessRevokedSuccessfullyVN)
+		return
+	}
+	response.Success(c, nil, constants.MsgEmployeeAccessReleasedVN)
+}
+
 // RevokeEmployeeAccess revokes access to an employee from a user
 // @Summary Revoke employee access
 // @Description Revoke access to an employee from a specific user (employee creator or admin can revoke access)

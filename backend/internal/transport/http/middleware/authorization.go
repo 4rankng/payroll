@@ -232,7 +232,14 @@ func (m *AuthorizationMiddleware) isProjectSpecificRoute(path string) bool {
 		// adv_partner is the FlexPay pipeline operator with project-agnostic
 		// write access, and advance projects are routinely admin-created with
 		// no project_users rows — the per-project modify gate would 403 them.
-		!strings.Contains(path, "/advance-request-enabled")
+		!strings.Contains(path, "/advance-request-enabled") &&
+		// Self-service claim targets projects the partner does NOT yet have
+		// access to, and release is idempotent after the grant row is gone —
+		// either could 403 here before the service's own rules run (partner
+		// role, creator protection). Owner ruling 2026-11-24: both are instant
+		// grants with no approval step.
+		!strings.Contains(path, "/request-access") &&
+		!strings.Contains(path, "/release-access")
 }
 
 // extractEmployeeID extracts employee ID from URL path
@@ -291,10 +298,12 @@ func (m *AuthorizationMiddleware) isEmployeeSpecificRoute(path string) bool {
 		return false
 	}
 
-	// Self-service claim: by design it targets employees the partner does NOT
-	// yet have access to — the service layer enforces its own rules (partner
-	// role, idempotency). Blocking it here would make claiming impossible.
-	if strings.Contains(path, "/request-access") {
+	// Self-service claim/release: by design claim targets employees the
+	// partner does NOT yet have access to, and release is idempotent after the
+	// row is gone — either could 403 here before the service's own rules run
+	// (partner role, creator protection). Owner ruling 2026-11-24: both are
+	// instant grants with no approval step.
+	if strings.Contains(path, "/request-access") || strings.Contains(path, "/release-access") {
 		return false
 	}
 

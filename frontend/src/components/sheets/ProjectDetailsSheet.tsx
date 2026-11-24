@@ -365,7 +365,7 @@ function ProjectDetailsSheet({
                 <DollarSign className="h-3.5 w-3.5" />
                 <span className="text-xs font-semibold">Lương</span>
               </TabsTrigger>
-              {canManageProjectAccess && (
+              {canManageProjectAccess || userRole === 'partner' ? (
                 <TabsTrigger
                   value="access"
                   className="min-h-11 sm:min-h-9 flex-1 gap-1.5 rounded-lg px-3 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -373,7 +373,7 @@ function ProjectDetailsSheet({
                   <ShieldCheck className="h-3.5 w-3.5" />
                   <span className="text-xs font-semibold">Phân quyền</span>
                 </TabsTrigger>
-              )}
+              ) : null}
             </TabsList>
           </div>
 
@@ -477,16 +477,19 @@ function ProjectDetailsSheet({
           </TabsContent>
 
           {/* ── Access tab ── */}
-          {canManageProjectAccess && (
+          {/* Partners always see the tab: managers get the grant list, and a
+              partner without a grant gets the instant self-service claim
+              (owner ruling 2026-11-24 — no approval step). */}
+          {canManageProjectAccess || userRole === 'partner' ? (
             <TabsContent value="access" className="mt-0 focus-visible:outline-none">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
                   Phân quyền
                 </p>
               </div>
-              <ProjectUserAccessTab project={project} />
+              <ProjectUserAccessTab project={project} onSelfReleased={closeModal} />
             </TabsContent>
-          )}
+          ) : null}
         </Tabs>
       </SlideSheetTemplate>
 

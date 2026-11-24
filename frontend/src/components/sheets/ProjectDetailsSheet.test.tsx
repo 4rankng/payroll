@@ -211,7 +211,7 @@ describe("ProjectDetailsSheet", () => {
     expect(screen.getAllByText("Phân quyền").length).toBeGreaterThan(0);
   });
 
-  it("hides the Phân quyền tab from a partner without a project grant", () => {
+  it("keeps the Phân quyền tab visible to a partner without a project grant — it is their self-service claim surface (owner ruling 2026-11-24)", () => {
     currentRole = "partner";
     accessManage.list = [];
 
@@ -223,7 +223,9 @@ describe("ProjectDetailsSheet", () => {
       />
     );
 
-    expect(screen.queryByText("Phân quyền")).not.toBeInTheDocument();
+    // Owner ruling 2026-11-24: requesting to manage a project is granted
+    // immediately, so the tab must offer the claim instead of hiding.
+    expect(screen.getAllByText("Phân quyền").length).toBeGreaterThan(0);
   });
 
   it("survives the deep-link loading → loaded transition (hook order, PAYR-30)", () => {

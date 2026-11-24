@@ -486,6 +486,25 @@ export const useRequestEmployeeAccess = () => {
   });
 };
 
+// Partner self-service release: drop the caller's own employee management
+// relation (owner ruling 2026-11-24 — instant, no approval).
+export const useReleaseEmployeeAccess = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (employeeId: number) =>
+      employeeService.releaseEmployeeAccess(employeeId),
+    onSuccess: (response) => {
+      // Scoped list and global pool both change on release
+      queryClient.invalidateQueries({ queryKey: QueryKeys.employees.lists() });
+      if (response.message) {
+        showSuccessNotification(response.message);
+      }
+    },
+    // Error handling is done globally in React Query
+  });
+};
+
 // Get employee by CCCD
 export const useEmployeeByCCCD = (cccd: string, enabled = true) => {
   return useQuery({

@@ -693,3 +693,41 @@ export const useRevokeProjectAccess = () => {
     // Error handling is now done globally in React Query
   });
 };
+
+// Partner self-service claim: manage a project immediately, no approval step
+// (owner ruling 2026-11-24). Lists, detail, users, and summaries all change.
+export const useRequestProjectAccess = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (projectId: number) => projectService.requestProjectAccess(projectId),
+    onSuccess: (response, projectId) => {
+      queryClient.invalidateQueries({ queryKey: QueryKeys.projects.all });
+      queryClient.invalidateQueries({ queryKey: QueryKeys.projects.users(projectId) });
+
+      if (response.message) {
+        showSuccessNotification(response.message);
+      }
+    },
+    // Error handling is now done globally in React Query
+  });
+};
+
+// Partner self-service release: drop the caller's own project management
+// grant immediately, no approval step (owner ruling 2026-11-24).
+export const useReleaseProjectAccess = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (projectId: number) => projectService.releaseProjectAccess(projectId),
+    onSuccess: (response, projectId) => {
+      queryClient.invalidateQueries({ queryKey: QueryKeys.projects.all });
+      queryClient.invalidateQueries({ queryKey: QueryKeys.projects.users(projectId) });
+
+      if (response.message) {
+        showSuccessNotification(response.message);
+      }
+    },
+    // Error handling is now done globally in React Query
+  });
+};

@@ -44,6 +44,7 @@ What other options existed? Why were they rejected?
 | [ADR-010](ADR-010-statistical-forecast-over-ml.md) | Statistical baseline over ML for forecasting | Accepted |
 | [ADR-011](ADR-011-zalo-otp-password-reset.md) | Zalo OTP password reset flow | Accepted |
 | [ADR-012](ADR-012-untitled-ui-pro-frontend-migration.md) | Untitled UI PRO frontend migration (token bridge + vendored UU + compat layer) | Accepted |
+| [ADR-014](ADR-014-self-service-access-management.md) | Self-service employee/project access management without approval (instant grant/release) | Accepted |
 
 ## When to Write a New ADR
 

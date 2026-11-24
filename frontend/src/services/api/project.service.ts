@@ -414,6 +414,27 @@ class ProjectService {
     return response;
   }
 
+  /**
+   * Partner self-service claim: manage a project without an approval step
+   * (granted immediately). Idempotent.
+   */
+  async requestProjectAccess(projectId: number): Promise<{ message?: string }> {
+    const response = await apiClient.post<null>(
+      API_ENDPOINTS.projects.requestAccess(projectId)
+    );
+    return { message: response.message };
+  }
+
+  /**
+   * Partner self-service release: drop the caller's own project management
+   * grant immediately. Idempotent; the project creator cannot self-release.
+   */
+  async releaseProjectAccess(projectId: number): Promise<{ message?: string }> {
+    const response = await apiClient.post<null>(
+      API_ENDPOINTS.projects.releaseAccess(projectId)
+    );
+    return { message: response.message };
+  }
 }
 
 export const projectService = new ProjectService();
