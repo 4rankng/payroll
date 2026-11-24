@@ -37,6 +37,7 @@ import {
   getMonthOptions,
 } from '@/hooks/timesheet/useBCCUploadModal';
 import { groupImportErrors, describeGroupedError } from '@/utils/import-errors';
+import { vietnameseIncludes } from '@/utils/vietnameseNormalization';
 import type { PartnerImportFile } from '@/types/api/timesheet.types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -77,9 +78,9 @@ const ProjectCombobox = memo(function ProjectCombobox({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return projects;
-    const q = search.toLowerCase();
-    return projects.filter((p) => p.name.toLowerCase().includes(q));
+    const q = search.trim();
+    if (!q) return projects;
+    return projects.filter((p) => vietnameseIncludes(p.name, q));
   }, [projects, search]);
 
   const selectedName = useMemo(
