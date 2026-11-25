@@ -48,6 +48,12 @@ vi.mock("@/services/api/client", () => ({
   apiClient: { get: mocks.apiGet },
 }));
 
+// The real widget fetches a live challenge (network) in jsdom; these tests only
+// need the custom element to exist so refs and statechange listeners attach —
+// same harness choice as captcha-error-inline.test.tsx.
+vi.mock("altcha", () => ({}));
+vi.mock("altcha/i18n/vi", () => ({}));
+
 describe("Login page contract (W10)", () => {
   beforeEach(() => {
     mocks.mutateAsync.mockClear();
@@ -178,5 +184,35 @@ describe("Login page contract (W10)", () => {
     expect(mocks.mutateAsync).toHaveBeenCalledWith({ username: "frankng", password: "Admin123" });
     expect(screen.queryByTestId("altcha-captcha")).toBeNull();
     expect(document.querySelectorAll("altcha-widget")).toHaveLength(0);
+  });
+
+  // Owner direction: once the proof verifies, the widget's framed box is gone —
+  // a bare green "Đã xác minh" line shares the forgot-password row and the
+  // widget chrome is hidden while the solved payload stays available on the
+  // still-mounted element.
+  it("verified captcha renders the green line on the forgot-password row and hides the widget box", async () => {
+    mocks.apiGet.mockResolvedValue({ data: { required: true } });
+    render(<MemoryRouter><Login /></MemoryRouter>);
+
+    fireEvent.change(screen.getByPlaceholderText("CCCD, số điện thoại hoặc tên đăng nhập"), {
+      target: { value: "frankng" },
+    });
+    fireEvent.blur(screen.getByPlaceholderText("CCCD, số điện thoại hoặc tên đăng nhập"));
+    await screen.findByTestId("altcha-captcha");
+
+    const widget = document.querySelector("altcha-widget");
+    expect(widget).not.toBeNull();
+    fireEvent(widget!, new CustomEvent("statechange", { detail: { state: "verified", payload: "proof-token" } }));
+
+    const verified = await screen.findByTestId("captcha-verified");
+    expect(verified).toHaveTextContent("Đã xác minh");
+    // Same row as the forgot-password link — one flex row, no separate box.
+    const forgotLink = screen.getByRole("link", { name: "Quên mật khẩu?" });
+    expect(verified.parentElement).toBe(forgotLink.parentElement);
+
+    // The widget box is hidden but stays mounted (payload read on submit).
+    const captchaRow = screen.getByTestId("altcha-captcha");
+    expect(captchaRow).toHaveClass("hidden");
+    expect(captchaRow.querySelector("altcha-widget")).not.toBeNull();
   });
 });

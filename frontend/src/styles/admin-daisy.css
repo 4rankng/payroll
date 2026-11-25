@@ -43,6 +43,18 @@
     display: none;
   }
 
+  /* Owner direction: login captcha renders NO framed widget. .altcha-main (the
+     widget's own background + 1px border + padding, from its injected
+     stylesheet) is stripped to a bare inline line while solving; once verified
+     the widget is hidden entirely and Login.tsx renders a bare green
+     "Đã xác minh" line on the forgot-password row. Same scope + specificity
+     pattern as the PAYR-29 popover rules above. */
+  [data-login-ui] altcha-widget .altcha-main {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
   [data-admin-ui] [data-radix-popper-content-wrapper] {
     z-index: 80 !important;
   }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AlertCircle, Eye, EyeOff, Lock01, ShieldTick, User01 } from "@untitledui/icons";
+import { AlertCircle, CheckCircle, Eye, EyeOff, Lock01, ShieldTick, User01 } from "@untitledui/icons";
 import "altcha";
 import "altcha/i18n/vi";
 import type { AltchaWidgetElement } from "altcha";
@@ -42,6 +42,10 @@ const Login = () => {
   const [captchaNotice, setCaptchaNotice] = useState<string | null>(null);
   // True while submit is blocked waiting for the widget to finish solving.
   const [captchaWaiting, setCaptchaWaiting] = useState(false);
+  // True once the current widget round reports a verified proof. Drives the
+  // compact green "Đã xác minh" line beside the forgot-password link; the
+  // widget's own framed box stays hidden once solved.
+  const [captchaVerified, setCaptchaVerified] = useState(false);
   const loginMutation = useLogin();
   const loginError = loginMutation.error;
   const resetLogin = loginMutation.reset;
@@ -86,14 +90,18 @@ const Login = () => {
   const attachAltcha = useCallback((el: AltchaWidgetElement | null) => {
     altchaRef.current = el;
     if (!el) return;
+    // A remount (fresh captchaRound) starts a fresh challenge: unverified.
+    setCaptchaVerified(false);
     const onStateChange = (ev: Event) => {
       const detail = (ev as CustomEvent<{ state: string; payload?: string }>).detail;
       altchaStateRef.current = { state: detail.state, payload: detail.payload ?? null };
       if (detail.state === "verified" && detail.payload) {
         altchaSolvedAtRef.current = Date.now();
         setCaptchaNotice(null);
+        setCaptchaVerified(true);
       } else if (detail.state === "error" || detail.state === "expired") {
         altchaSolvedAtRef.current = null;
+        setCaptchaVerified(false);
       }
       if ((detail.state === "verified" && detail.payload) || detail.state === "error" || detail.state === "expired") {
         const waiters = altchaWaitersRef.current;
@@ -183,7 +191,10 @@ const Login = () => {
   // Alert copy: the server's own message wins for rate-limit and captcha
   // rejections (both tell the user what to do next — wait, or solve the
   // widget); every other failure stays the generic credentials line.
-  const loginApiError = loginError as ApiError | null;
+  // useLogin's TanStack error is typed Error, but a failed login actually
+  // throws the axios-backed ApiError from apiClient (http_status drives the
+  // copy below) — TS cannot see through the mutation's Error generic.
+  const loginApiError = loginError as unknown as ApiError | null;
   const loginErrorText = loginApiError
     ? loginApiError.http_status === 429
       ? loginApiError.message || "Quá nhiều lần đăng nhập. Vui lòng thử lại sau ít phút."
@@ -415,14 +426,33 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-end pb-3 pt-3">
+                  <div className="flex items-center justify-between gap-2 pb-3 pt-3">
+                    {needsCaptcha && captchaVerified ? (
+                      <span
+                        data-testid="captcha-verified"
+                        role="status"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium leading-5 text-fg-success-primary"
+                      >
+                        <CheckCircle className="size-4 shrink-0" aria-hidden="true" />
+                        Đã xác minh
+                      </span>
+                    ) : (
+                      <span aria-hidden="true" />
+                    )}
                     <Link to="/forgot-password" className="tap-target-44 inline-flex min-h-6 items-center rounded-sm text-xs font-semibold text-brand-secondary underline-offset-2 outline-brand transition duration-100 ease-linear hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
                       Quên mật khẩu?
                     </Link>
                   </div>
 
                   {needsCaptcha && (
-                    <div className="motion-safe:animate-fade-in-up" data-testid="altcha-captcha">
+                    // Once solved, the widget's framed box disappears — the green
+                    // "Đã xác minh" line on the forgot-password row above is the
+                    // only captcha indicator. The element stays mounted: the
+                    // solved payload is still read from it on submit.
+                    <div
+                      className={`motion-safe:animate-fade-in-up${captchaVerified ? " hidden" : ""}`}
+                      data-testid="altcha-captcha"
+                    >
                       <altcha-widget
                         key={captchaRound}
                         ref={attachAltcha}
