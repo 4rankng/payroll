@@ -94,16 +94,29 @@ func (s *AuthService) requiresOTP(user *domain.User) bool {
 // CaptchaRequiredForUsername checks whether a CAPTCHA is needed for the next
 // login attempt on this account (based on consecutive failures). Used by the
 // frontend to decide whether to show the CAPTCHA widget before submitting.
+// The identifier resolution mirrors Login exactly (username → users.cccd →
+// mobile → employee.cccd): a mismatch would let the preflight answer
+// "not required" for an identifier Login still gates, and the browser would
+// then submit without a proof and only learn so from the 400.
 func (s *AuthService) CaptchaRequiredForUsername(ctx context.Context, username string) bool {
 	if s.captchaService == nil || !s.captchaService.Enabled() {
 		return false
 	}
-	user, err := s.userService.UserRepo.GetByUsername(ctx, username)
+	userRepo := s.userService.UserRepo
+	user, err := userRepo.GetByUsername(ctx, username)
 	if err != nil && phone.IsCCCDFormat(username) {
-		user, err = s.userService.UserRepo.GetByCCCD(ctx, username)
+		user, err = userRepo.GetByCCCD(ctx, username)
 	}
 	if err != nil {
 		user, err = s.findUserByMobileIdentifier(ctx, username)
+	}
+	if err != nil {
+		// Employee CCCD: the employee row carries the ID and points at the
+		// login account through user_id — the fourth resolver Login tries.
+		employee, empErr := s.employeeRepo.GetByCCCD(ctx, username)
+		if empErr == nil && employee.UserID != nil {
+			user, err = userRepo.GetByID(ctx, *employee.UserID)
+		}
 	}
 	if err != nil || user == nil {
 		return false
@@ -309,14 +322,25 @@ func (s *AuthService) Login(ctx context.Context, req dto.LoginRequest, ipAddress
 	// tracker (reset on successful login below).
 	if s.captchaService != nil && s.captchaService.RequiredForFailures(user.OTPFailedAttempts) {
 		if !s.captchaService.Verify(ctx, req.CaptchaPayload) {
-			s.writeFailedLoginAudit(ctx, user.ID, req.Username, ipAddress, userAgent, "thất bại: captcha không hợp lệ")
+			// An absent payload means the client never mounted a widget —
+			// tell it a captcha is REQUIRED so it can render one; a present
+			// but failing payload gets the invalid-captcha copy. The frontend
+			// keys the inline-retry flow on the "captcha" substring of the
+			// message, so both must keep naming captcha.
+			msg := constants.MsgCaptchaFailedVN
+			auditReason := "thất bại: captcha không hợp lệ"
+			if req.CaptchaPayload == "" {
+				msg = constants.MsgCaptchaRequiredVN
+				auditReason = "thất bại: thiếu captcha"
+			}
+			s.writeFailedLoginAudit(ctx, user.ID, req.Username, ipAddress, userAgent, auditReason)
 			// Keep the failure counter climbing so the account continues to
 			// escalate toward OTP-lockout; a sustained captcha-failed flood must
 			// not freeze the counter at the threshold indefinitely.
 			if err := s.userService.UserRepo.UpdateOTPLockout(ctx, user.ID, user.OTPFailedAttempts+1, nil); err != nil {
 				return nil, domain.NewInternalError("Không thể cập nhật trạng thái bảo mật tài khoản", err)
 			}
-			return nil, domain.NewValidationError(constants.MsgCaptchaFailedVN)
+			return nil, domain.NewValidationError(msg)
 		}
 	}
 

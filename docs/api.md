@@ -32,8 +32,8 @@ Routes are registered in `backend/internal/app/bootstrap/routes.go` and split ac
 | POST | `/login/verify` | Verify OTP and get JWT |
 | POST | `/login/resend` | Resend OTP |
 | POST | `/google` | Google OAuth login (no OTP required) |
-| GET | `/captcha` | Get self-hosted image CAPTCHA (after 3 failed logins) |
-| GET | `/captcha/required?username=...` | Check whether the account must solve CAPTCHA before login |
+| GET | `/captcha` | Get an ALTCHA proof-of-work challenge for the login widget (required after N consecutive failed logins, default 3) |
+| GET | `/captcha/required?username=...` | Check whether the account must solve CAPTCHA before login. Resolves the identifier exactly like `/login` (username, CCCD, mobile, employee-CCCD). When `/login` is gated and the request carries no `captcha_payload`, it fails 400 `VALIDATION_ERROR` with the "cần xác thực captcha" message so the client can mount the widget |
 | POST | `/logout` | Logout (blacklist token) |
 | GET | `/me` | Get current user profile |
 | PUT | `/me` | Update profile |

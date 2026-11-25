@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"testing"
+	"time"
 
 	"api-server/internal/app/dto"
 	"api-server/internal/app/services/user"
@@ -18,19 +19,32 @@ import (
 // compiling when the interfaces grow.
 type userRepoStub struct {
 	domain.UserRepository
-	byUsername  func(ctx context.Context, username string) (*domain.User, error)
-	byMobile    func(ctx context.Context, mobile string) (*domain.User, error)
-	byID        func(ctx context.Context, id uint) (*domain.User, error)
-	queriedForM []string
+	byUsername       func(ctx context.Context, username string) (*domain.User, error)
+	byCCCD           func(ctx context.Context, cccd string) (*domain.User, error)
+	byMobile         func(ctx context.Context, mobile string) (*domain.User, error)
+	byID             func(ctx context.Context, id uint) (*domain.User, error)
+	updateOTPLockout func(ctx context.Context, userID uint, failedAttempts int, lockedUntil *time.Time) error
+	queriedForM      []string
 }
 
 func (s *userRepoStub) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
 	return s.byUsername(ctx, username)
 }
 
+func (s *userRepoStub) GetByCCCD(ctx context.Context, cccd string) (*domain.User, error) {
+	return s.byCCCD(ctx, cccd)
+}
+
 func (s *userRepoStub) GetByMobile(ctx context.Context, mobile string) (*domain.User, error) {
 	s.queriedForM = append(s.queriedForM, mobile)
 	return s.byMobile(ctx, mobile)
+}
+
+func (s *userRepoStub) UpdateOTPLockout(ctx context.Context, userID uint, failedAttempts int, lockedUntil *time.Time) error {
+	if s.updateOTPLockout == nil {
+		return nil
+	}
+	return s.updateOTPLockout(ctx, userID, failedAttempts, lockedUntil)
 }
 
 func (s *userRepoStub) GetByID(ctx context.Context, id uint) (*domain.User, error) {
@@ -64,6 +78,9 @@ func newMobileAuthService(users *userRepoStub, employees *employeeRepoStub) *Aut
 func notFoundUsersRepo() *userRepoStub {
 	return &userRepoStub{
 		byUsername: func(context.Context, string) (*domain.User, error) {
+			return nil, domain.NewNotFoundError("user not found")
+		},
+		byCCCD: func(context.Context, string) (*domain.User, error) {
 			return nil, domain.NewNotFoundError("user not found")
 		},
 		byMobile: func(context.Context, string) (*domain.User, error) {
