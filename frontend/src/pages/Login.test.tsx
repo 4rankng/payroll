@@ -132,4 +132,51 @@ describe("Login page contract (W10)", () => {
     // Inline retry: the widget is still there for a fresh challenge.
     expect(document.querySelectorAll("altcha-widget")).toHaveLength(1);
   });
+
+  // Regression: the server can demand a captcha while the preflight answered
+  // required=false (counter crosses the threshold between preflight and POST,
+  // or the identifier resolves differently server-side). The rejection must
+  // mount the widget anyway and name captcha — not the generic credentials
+  // line — or the user is locked out with nothing to solve.
+  it("captcha rejection mounts the widget even when the preflight said required=false", async () => {
+    loginState.current = {
+      isPending: false,
+      error: { message: "Tài khoản cần xác thực captcha. Vui lòng hoàn tất captcha rồi đăng nhập lại.", http_status: 400 },
+      isError: true,
+      isSuccess: false,
+    };
+    mocks.apiGet.mockResolvedValue({ data: { required: false } });
+    render(<MemoryRouter><Login /></MemoryRouter>);
+
+    const captchaRow = await screen.findByTestId("altcha-captcha");
+    expect(captchaRow.querySelector("altcha-widget")).not.toBeNull();
+
+    // The alert carries the server's captcha copy, never the vague one.
+    // (The altcha widget renders its own role="alert"; key on the test id.)
+    const alert = screen.getByTestId("error-message");
+    expect(alert).toHaveTextContent("cần xác thực captcha");
+    expect(alert).not.toHaveTextContent("Thông tin đăng nhập không hợp lệ");
+
+    // Inline retry hint under the freshly mounted widget.
+    expect(await screen.findByTestId("captcha-notice")).toHaveTextContent("Xác thực bảo mật không hợp lệ hoặc đã hết hạn");
+  });
+
+  // required=false with no captcha error keeps the form captcha-free.
+  it("does not mount the captcha widget when captcha is not required", async () => {
+    mocks.apiGet.mockResolvedValue({ data: { required: false } });
+    render(<MemoryRouter><Login /></MemoryRouter>);
+
+    fireEvent.change(screen.getByPlaceholderText("CCCD, số điện thoại hoặc tên đăng nhập"), {
+      target: { value: "frankng" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Nhập mật khẩu của bạn"), { target: { value: "Admin123" } });
+    fireEvent.submit(document.querySelector("form")!);
+
+    await waitFor(() => {
+      expect(mocks.mutateAsync).toHaveBeenCalledTimes(1);
+    });
+    expect(mocks.mutateAsync).toHaveBeenCalledWith({ username: "frankng", password: "Admin123" });
+    expect(screen.queryByTestId("altcha-captcha")).toBeNull();
+    expect(document.querySelectorAll("altcha-widget")).toHaveLength(0);
+  });
 });

@@ -158,8 +158,13 @@ const Login = () => {
     if (loginMutation.isError) {
       const message = loginMutation.error?.message?.toLowerCase() ?? "";
       if (message.includes("captcha")) {
+        // A captcha rejection proves the server now requires a proof — mount
+        // the widget immediately, even when the preflight answered
+        // required=false (the counter can cross the threshold between the
+        // preflight and this POST, or the identifier can resolve differently).
         altchaStateRef.current = { state: "unverified", payload: null };
         altchaSolvedAtRef.current = null;
+        setFailedAttempts((attempts) => Math.max(attempts, 3));
         setCaptchaRound((round) => round + 1);
         setCaptchaNotice("Xác thực bảo mật không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
         return;
@@ -174,6 +179,18 @@ const Login = () => {
   }, [emailOrUsername, password]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isDisabled = loginSubmitting || loginMutation.isPending;
+
+  // Alert copy: the server's own message wins for rate-limit and captcha
+  // rejections (both tell the user what to do next — wait, or solve the
+  // widget); every other failure stays the generic credentials line.
+  const loginApiError = loginError as ApiError | null;
+  const loginErrorText = loginApiError
+    ? loginApiError.http_status === 429
+      ? loginApiError.message || "Quá nhiều lần đăng nhập. Vui lòng thử lại sau ít phút."
+      : (loginApiError.message ?? "").toLowerCase().includes("captcha")
+        ? loginApiError.message || "Tài khoản cần xác thực captcha. Vui lòng hoàn tất captcha rồi đăng nhập lại."
+        : "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại."
+    : null;
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -206,7 +223,8 @@ const Login = () => {
           if (!captchaPayload && !needsCaptcha) {
             // The server just told us a captcha is needed; the widget mounts on
             // the next render and ticks itself. Let this click go — the next
-            // submit carries the payload.
+            // submit carries the payload. Say so, or the click looks dead.
+            setCaptchaNotice("Tài khoản cần xác thực captcha. Vui lòng hoàn tất captcha bên dưới rồi đăng nhập lại.");
             return;
           }
           if (!captchaPayload) {
@@ -339,9 +357,7 @@ const Login = () => {
                 >
                   <AlertCircle className="size-5 shrink-0 text-utility-error-700" aria-hidden="true" />
                   <span className="font-semibold leading-5 text-fg-error-primary">
-                    {(((loginMutation.error as unknown) as ApiError)?.http_status === 429
-                      ? (((loginMutation.error as unknown) as ApiError)?.message || "Quá nhiều lần đăng nhập. Vui lòng thử lại sau ít phút.")
-                      : "Thông tin đăng nhập không hợp lệ. Vui lòng thử lại.")}
+                    {loginErrorText}
                   </span>
                 </div>
               )}
