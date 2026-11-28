@@ -382,7 +382,8 @@ export const modalConfig: ModalConfig = {
   permissions: {
     action: 'create',
     subject: 'User',
-    roles: ['admin', 'partner'],
+    // Only admins manage users (canManageUsers) — matches MODAL_PERMISSIONS.
+    roles: ['admin'],
   },
   deeplink: {
     enabled: false,

@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { getConsoleKicker } from "@/lib/console";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts";
 import { Download, Plus } from "lucide-react";
 
 interface UserPageHeaderProps {
@@ -13,6 +14,9 @@ interface UserPageHeaderProps {
 
 export const UserPageHeader = ({ onAddUser, onExportUsers, isExporting = false, totalUsers }: UserPageHeaderProps) => {
   const { pathname } = useLocation();
+  // RBAC: only admins manage users (canManageUsers) — the add-user entry
+  // point never renders for other roles, even if the page itself is reachable.
+  const canManageUsers = useAuth().user?.role === "admin";
 
   return (
     <PageHeader
@@ -27,12 +31,12 @@ export const UserPageHeader = ({ onAddUser, onExportUsers, isExporting = false, 
           variant: 'outline' as const,
           className: isExporting ? 'opacity-50 pointer-events-none' : '',
         },
-        {
+        ...(canManageUsers ? [{
           label: 'Thêm người dùng',
           onClick: onAddUser,
           icon: Plus,
           variant: 'default' as const,
-        },
+        }] : []),
       ]}
     />
   );

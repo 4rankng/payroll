@@ -118,7 +118,9 @@ export const MODAL_PERMISSIONS: Record<string, ModalPermission> = {
     modalId: 'add_user',
     action: 'create',
     subject: 'User',
-    roles: ['admin', 'partner']
+    // Only admins manage users (canManageUsers); CASL already denies partner
+    // create on User, this keeps the role gate consistent with the registry.
+    roles: ['admin']
   },
   edit_user: {
     modalId: 'edit_user',

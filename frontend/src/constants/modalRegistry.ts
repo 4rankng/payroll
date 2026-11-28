@@ -87,7 +87,9 @@ export const MODAL_REGISTRY: Record<ModalId, ModalMetadata> = {
     description: 'Tạo tài khoản người dùng mới',
     category: 'user',
     requiresAuth: true,
-    roles: ['admin', 'partner'],
+    // Only admins manage users (canManageUsers) — partners/adv_partners must
+    // get the unauthorized fallback even when ?modal=add_user is in the URL.
+    roles: ['admin'],
     componentPath: '/src/components/sheets/AddUserSheet',
     hasParams: false
   },

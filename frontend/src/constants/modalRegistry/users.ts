@@ -54,7 +54,9 @@ export const userModals: Record<UserModalId, UserModalMetadata> = {
     description: 'Tạo tài khoản người dùng mới',
     category: 'user',
     requiresAuth: true,
-    roles: ['admin', 'partner'],
+    // Only admins manage users (canManageUsers) — mirrors modalRegistry.ts so
+    // both registries deny non-admin ?modal=add_user access.
+    roles: ['admin'],
     componentPath: 'AddUserSheet',
     hasParams: false,
     permissions: {

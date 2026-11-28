@@ -145,14 +145,17 @@ const UsersPageMobile = () => {
               >
                 <Download01 className="h-4 w-4" aria-hidden="true" />
               </Button>
-              <Button
-                size="sm"
-                className="h-11 px-4 btn-admin-primary shrink-0"
-                onClick={() => openAddUser()}
-              >
-                <Plus className="h-4 w-4 mr-1" aria-hidden="true" />
-                Thêm
-              </Button>
+              {/* RBAC: only admins manage users (canManageUsers). */}
+              {user?.role === "admin" && (
+                <Button
+                  size="sm"
+                  className="h-11 px-4 btn-admin-primary shrink-0"
+                  onClick={() => openAddUser()}
+                >
+                  <Plus className="h-4 w-4 mr-1" aria-hidden="true" />
+                  Thêm
+                </Button>
+              )}
             </div>
           ) : undefined
         }
