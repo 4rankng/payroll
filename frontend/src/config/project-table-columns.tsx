@@ -74,10 +74,15 @@ export const createProjectColumns = (
       const monthly = row.original.monthly_salary_employee_count || 0;
       const total = weekly + monthly;
 
+      // The schedule split is 0 whenever active employees are not on a
+      // weekly/monthly payment_schedule (e.g. flexible), so bind the total
+      // instead of a blank dash — employee_count is always populated.
       if (total === 0) {
         return (
           <div className="flex justify-center">
-            <span className="typography-body-medium text-muted-foreground">—</span>
+            <span className="typography-body-medium font-semibold text-foreground tabular-nums">
+              {row.original.employee_count || 0}
+            </span>
           </div>
         );
       }

@@ -34,7 +34,16 @@ export const createProjectMobileConfig = (
         const monthly = row.monthly_salary_employee_count || 0;
         const total = weekly + monthly;
 
-        if (total === 0) return <span className="text-muted-foreground">—</span>;
+        // Same fallback as the desktop column: the schedule split is 0 when
+        // active employees are not on weekly/monthly schedules — show the
+        // always-populated total instead of a blank dash.
+        if (total === 0) {
+          return (
+            <span className="typography-body-medium font-semibold text-foreground tabular-nums">
+              {row.employee_count || 0}
+            </span>
+          );
+        }
 
         return (
           <div className="flex flex-col gap-0.5">
