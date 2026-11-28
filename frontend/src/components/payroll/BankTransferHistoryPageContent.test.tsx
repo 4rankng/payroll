@@ -357,4 +357,40 @@ describe('BankTransferHistoryPageContent', () => {
     expect(screen.getAllByText('Chưa có giao dịch đã hoàn tất').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Chọn tháng hoặc kỳ lương khác để xem lịch sử.').length).toBeGreaterThan(0);
   });
+
+  it('renders an empty ledger instead of crashing when the payload rows are not an array', () => {
+    // Shape-drift regression: a nested/legacy envelope must never reach the
+    // ledger builder as a non-array (it crashed iterating the rows).
+    useBankTransferHistories.mockReturnValue({
+      data: {
+        status: 'success',
+        message: '',
+        data: {
+          rows: [{
+            employee_id: 82,
+            employee_name: 'LÒ THỊ MINH THU',
+            employee_cccd: '031189014251',
+            project_ids: [1],
+            project_names: ['Dự án Việt Nam'],
+            work_month: '2026-07',
+            cycle: 2,
+            from_date: '2026-07-08',
+            to_date: '2026-07-14',
+            payment_date: '2026-07-17',
+            total_amount: 1_998_000,
+            transfers: [],
+          }],
+        },
+        summary: { total_amount: 1_998_000, transfer_count: 1, employee_count: 1 },
+        pagination: { page: 1, pageSize: 50, totalPages: 1, totalRecords: 1 },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+
+    expect(() => renderContent()).not.toThrow();
+    // The non-array shape degrades to the empty month view, never a crash.
+    expect(screen.getAllByText('Chưa có giao dịch đã hoàn tất').length).toBeGreaterThan(0);
+  });
 });

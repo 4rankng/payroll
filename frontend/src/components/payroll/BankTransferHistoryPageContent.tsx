@@ -219,7 +219,10 @@ export function BankTransferHistoryPageContent({ variant = 'partner' }: BankTran
   }), [cycle, month, page, pageSize, search]);
 
   const { data, isLoading, isError, refetch } = useBankTransferHistories(filters);
-  const records = useMemo(() => data?.data ?? [], [data]);
+  // Shape guard: the payload's rows must be an array before any render path
+  // iterates them (ledger builder, mobile records) — a drifted envelope
+  // renders an empty month instead of crashing the page.
+  const records = useMemo(() => (Array.isArray(data?.data) ? data.data : []), [data]);
   const pagination = data?.pagination;
   const summary = data?.summary;
   const isEmpty = !isLoading && !isError && records.length === 0;

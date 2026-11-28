@@ -14,6 +14,39 @@ export interface PaymentHistoryExportParams {
 }
 
 class PayrollService {
+  /**
+   * The bank-transfer/payment-history envelope must carry the rows array at
+   * `data` with pagination/summary beside it. Guard against shape drift (rows
+   * nested under `data.rows` / `data.data`, or pagination living inside the
+   * nested object) so a mismatch renders an empty ledger instead of crashing
+   * the page with "Cannot read properties of undefined".
+   */
+  private normalizeHistoryPayload<
+    T extends { data: unknown; rows?: unknown; pagination?: unknown; summary?: unknown },
+  >(payload: unknown): T {
+    const envelope = (payload ?? {}) as Record<string, unknown>;
+    const nested =
+      envelope.data && typeof envelope.data === 'object' && !Array.isArray(envelope.data)
+        ? (envelope.data as Record<string, unknown>)
+        : null;
+    const rows: unknown[] = Array.isArray(envelope.data)
+      ? envelope.data
+      : Array.isArray(nested?.rows)
+        ? nested.rows
+        : Array.isArray(nested?.data)
+          ? nested.data
+          : [];
+
+    return {
+      ...envelope,
+      status: typeof envelope.status === 'string' ? envelope.status : 'success',
+      message: typeof envelope.message === 'string' ? envelope.message : '',
+      data: rows,
+      pagination: (envelope.pagination ?? nested?.pagination) as T['pagination'],
+      summary: (envelope.summary ?? nested?.summary) as T['summary'],
+    } as unknown as T;
+  }
+
   async getBankTransferHistories(
     filters: BankTransferHistoryFilters,
   ): Promise<BankTransferHistoryListResponse> {
@@ -21,7 +54,7 @@ class PayrollService {
     const response = await apiClient.get<BankTransferHistoryListResponse>(
       `${API_ENDPOINTS.payrolls.bankTransferHistories}${queryString}`,
     );
-    return response as unknown as BankTransferHistoryListResponse;
+    return this.normalizeHistoryPayload<BankTransferHistoryListResponse>(response);
   }
 
   /**
@@ -32,7 +65,7 @@ class PayrollService {
     const response = await apiClient.get<PaymentHistoryListResponse>(
       `${API_ENDPOINTS.payrolls.histories}${queryString}`
     );
-    return response as unknown as PaymentHistoryListResponse;
+    return this.normalizeHistoryPayload<PaymentHistoryListResponse>(response);
   }
 
   /**
