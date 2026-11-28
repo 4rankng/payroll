@@ -429,12 +429,9 @@ const EntryRow = memo(function EntryRow({ entry, entryIdx, showDate, startsAfter
               </span>
               <p className="text-xs font-bold tabular-nums text-foreground">{format(entryDate, "dd/MM/yyyy")}</p>
             </div>
-          ) : (
-            <span className="ml-4 flex items-center gap-1.5 text-xs font-medium text-muted-foreground" aria-label="Cùng ngày">
-              <span className="h-4 w-px bg-border" />
-              <span className="h-1.5 w-1.5 rounded-full bg-border" />
-            </span>
-          )}
+          ) : null}
+          {/* Continuation rows repeat the date of the row above; no marker —
+              the docx retest flags the old "| •" glyph pair as visual noise. */}
           {entry.force_payroll && <Star className="h-3 w-3 text-yellow-800 fill-yellow-500 shrink-0" />}
         </div>
       </TableCell>
